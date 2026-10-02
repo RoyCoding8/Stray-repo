@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 import pytest
@@ -20,12 +21,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-B3_DB = "inv_d3_b3"
-B3_DSN = os.environ.get(
-    "INV_D3_B3_DSN",
-    "dbname=%s host=/var/run/postgresql user=ubuntu" % B3_DB)
-PG_HOST = "/var/run/postgresql"
-PG_USER = "ubuntu"
+RUN_TOKEN = "invd3%s" % uuid.uuid4().hex[:8]
 MIGRATIONS = ROOT / "migrations"
 
 SW0 = "ad01-w0-dev-sw-00"
@@ -113,35 +109,59 @@ def test_bare_candidate_passes_gate_and_fails_in_child():
             max_queries=16)
 
 
-def _make_fresh_db():
-    assert "live" not in B3_DSN
-    subprocess.run(
-        ["createdb", "-h", PG_HOST, "-U", PG_USER, B3_DB],
-        check=True, capture_output=True, text=True, timeout=60)
+def test_the_case_b3_store_is_named_for_this_run_not_for_the_file():
+    """A name spelled once at module scope is a database the next run destroys.
+
+    `inv_d3_b3` outlives this process, so whoever runs the suite next creates
+    it, fails on "already exists", and on teardown drops the database a
+    concurrent run is still writing to. The store this module's setup builds
+    must carry this run's token, and a second store derived in the same
+    process must differ.
+    """
+    first = _make_fresh_db()
     try:
-        from settlement import db
-        from experiments.coord02 import experience as E
-        db.apply_migrations(B3_DSN, MIGRATIONS)
-        E.designate_db(B3_DSN, kind="disposable",
+        second = _make_fresh_db()
+        try:
+            assert first.name.startswith("s09iso_"), first.name
+            assert RUN_TOKEN in first.name, first.name
+            assert "inv_d3_b3" not in first.name, first.name
+            assert second.name != first.name
+        finally:
+            _drop_db(second)
+    finally:
+        _drop_db(first)
+
+
+def _make_fresh_db():
+    from experiments.ad01.s09_run_isolation import create_disposable_db, \
+        drop_disposable_db
+    from settlement import db
+    from experiments.coord02 import experience as E
+
+    database = create_disposable_db(RUN_TOKEN, migrations_dir=MIGRATIONS)
+    b3_dsn = database.dsn
+    assert "live" not in b3_dsn, b3_dsn
+    try:
+        db.apply_migrations(b3_dsn, MIGRATIONS)
+        E.designate_db(b3_dsn, kind="disposable",
                        purpose="INV-D3 case B3 no-authority refusal pin")
-        E.prepare_disposable_db(B3_DSN, MIGRATIONS)
+        E.prepare_disposable_db(b3_dsn, MIGRATIONS)
     except Exception:
-        subprocess.run(
-            ["dropdb", "-h", PG_HOST, "-U", PG_USER, B3_DB],
-            capture_output=True, text=True, timeout=60)
+        drop_disposable_db(database)
         raise
+    return database
 
 
-def _drop_db():
-    subprocess.run(
-        ["dropdb", "-h", PG_HOST, "-U", PG_USER, B3_DB],
-        capture_output=True, text=True, timeout=60)
+def _drop_db(database):
+    from experiments.ad01.s09_run_isolation import drop_disposable_db
+
+    drop_disposable_db(database)
 
 
-def _row_counts():
+def _row_counts(dsn):
     from settlement import db
     counts = {}
-    with db.connect(B3_DSN) as conn:
+    with db.connect(dsn) as conn:
         for table in ("operations", "receipts", "allocations"):
             counts[table] = conn.execute(
                 "SELECT COUNT(*) FROM %s" % table).fetchone()[0]
@@ -149,20 +169,21 @@ def _row_counts():
 
 
 def test_cli_run_without_authority_refuses_with_zero_writes():
-    _make_fresh_db()
+    database = _make_fresh_db()
+    b3_dsn = database.dsn
     try:
         env = dict(os.environ)
         env["PYTHONPATH"] = str(ROOT / "src") + os.pathsep + env.get(
             "PYTHONPATH", "")
         proc = subprocess.run(
             [sys.executable, "-m", "experiments.ad01.cli", "run",
-             "--dsn", B3_DSN, "--world", "0", "--arm", "I",
+             "--dsn", b3_dsn, "--world", "0", "--arm", "I",
              "--seq", "0", "--max-boundaries", "1"],
             cwd=str(ROOT), capture_output=True, text=True,
             timeout=300, env=env)
         assert proc.returncode == 2, proc.stderr
         assert "explicit caller agenda authority" in proc.stderr
-        assert _row_counts() == {"operations": 0, "receipts": 0,
-                                 "allocations": 0}
+        assert _row_counts(b3_dsn) == {"operations": 0, "receipts": 0,
+                                       "allocations": 0}
     finally:
-        _drop_db()
+        _drop_db(database)

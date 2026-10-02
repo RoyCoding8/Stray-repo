@@ -1,0 +1,20 @@
+live_acquisition verdict: unproven
+
+task_utility verdict: not_comparable
+
+  declared_model_matches_freeze              fail
+      no arm in the freeze claims artifact origin 'model-acquired'
+  bound_equals_candidate                     fail
+      no arm in the freeze claims artifact origin 'model-acquired'
+  executed_bytes_are_the_bound_policy        fail
+      no arm in the freeze claims artifact origin 'model-acquired'
+  dispatch_was_live_not_a_recording          fail
+      no arm in the freeze claims artifact origin 'model-acquired'
+  no_earned_acquired_arm                     fail
+      no arm in the freeze claims artifact origin 'model-acquired'
+  arms_execute_their_own_bound_policy        fail
+      C executed source hashes to 560e17fbfb51, its bound policy is bbeb412d41fb; C executed source hashes to 6e03638cd710, its bound policy is bbeb412d41fb; C executed source hashes to e4c10cafe8a9, its bound policy is bbeb412d41fb
+  normalization_rule_stated                  pass
+      freeze metric_rule={"quality": "normalized_reduction"}
+  shared_tasks_present                       fail
+      acquired arms [], authored arms ['C']

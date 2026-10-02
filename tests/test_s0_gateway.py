@@ -22,6 +22,16 @@ class StubState:
     last_auth = ""
 
 
+def _route(endpoint: str) -> dict[str, str]:
+    return {
+        "endpoint": endpoint,
+        "requested_model": "stub-model",
+        "resolved_model": "stub-model",
+        "provider": "stub",
+        "tier": "free",
+    }
+
+
 class StubHandler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
@@ -77,6 +87,8 @@ class StubHandler(BaseHTTPRequestHandler):
             {
                 "choices": [{"message": {"content": "stub-answer"}, "finish_reason": "stop"}],
                 "model": "stub-model",
+                "provider": "stub",
+                "tier": "free",
                 "usage": {"prompt_tokens": 7, "completion_tokens": 5},
             },
         )
@@ -99,6 +111,8 @@ class StubHandler(BaseHTTPRequestHandler):
                  "output": [{"type": "message",
                              "content": [{"type": "output_text", "text": "stub-resp-part"}]}],
                  "model": "stub-model",
+                 "provider": "stub",
+                 "tier": "free",
                  "usage": {"input_tokens": 7, "output_tokens": 5}},
             )
         return self._send(
@@ -108,6 +122,8 @@ class StubHandler(BaseHTTPRequestHandler):
                         {"type": "message",
                          "content": [{"type": "output_text", "text": "stub-resp"}]}],
              "model": "stub-model",
+             "provider": "stub",
+             "tier": "free",
              "usage": {"input_tokens": 7, "output_tokens": 5}},
         )
 
@@ -123,7 +139,9 @@ def stub():
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     endpoint = f"http://127.0.0.1:{server.server_port}"
-    adapter = gateway_http.HttpGatewayAdapter(endpoint=endpoint, api_key="test-key")
+    adapter = gateway_http.HttpGatewayAdapter(
+        endpoint=endpoint, api_key="test-key", expected_route=_route(endpoint)
+    )
     yield adapter, server.state
     server.shutdown()
     thread.join()
@@ -184,7 +202,7 @@ def test_infer_returns_stub_text_and_usage(stub):
     assert isinstance(result, ModelResponse)
     assert result.text == "stub-answer"
     assert (result.usage.input_tokens, result.usage.output_tokens) == (7, 5)
-    assert result.usage.provider_enforced_ceiling is False
+    assert result.usage.provider_enforced_ceiling is None
     assert result.model_meta.get("simulated") is not True
 
 
@@ -266,7 +284,7 @@ def test_cancelled_operation_reports_cancelled(stub):
     result = adapter.infer(request)
     assert isinstance(result, GatewayError)
     assert result.kind == GatewayErrorKind.CANCELLED
-    assert adapter.cancel_status(request.operation_id) == "confirmed"
+    assert adapter.cancel_status(request.operation_id) == "requested"
 
 
 def test_fake_adapter_never_reports_live():
@@ -286,8 +304,21 @@ def responses_stub():
     server.state.posts = 0
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
+    endpoint = f"http://127.0.0.1:{server.server_port}"
+    # No route pin. These three tests are about what the responses
+    # surface does with a body, not about whether a route can be
+    # attested on it, and the surface cannot: it publishes no
+    # `provider`, so a frozen route is refused before the wire. Pinning
+    # one here made `test_responses_api_failure_is_protocol_error` pass
+    # for the wrong reason, because a route refusal is also a protocol
+    # error. See `tests/test_w1_responses_route_contract.py` for the
+    # refusal itself.
     adapter = gateway_http.HttpGatewayAdapter(
-        endpoint=f"http://127.0.0.1:{server.server_port}", api_key="test-key", api="responses")
+        endpoint=endpoint,
+        api_key="test-key",
+        api="responses",
+        route_mode="paid",
+    )
     yield adapter, server.state
     server.shutdown()
     thread.join()
@@ -363,3 +394,26 @@ def test_gateway_timeout_overrides_refuse_bad_values(monkeypatch):
         except ValueError:
             continue
         raise AssertionError(f"bad timeout {bad!r} was not refused")
+
+
+def test_from_settings_applies_timeout_overrides(monkeypatch):
+    """A configured read timeout must reach the live adapter.
+
+    gateway_timeout_overrides existed but nothing called it, so
+    SETTLEMENT_GATEWAY_TIMEOUT_READ_MS was inert on the live path and the
+    60s read ceiling was not configurable.
+    """
+    from settlement import gateway_http
+    from settlement.config import Settings
+
+    monkeypatch.setenv("SETTLEMENT_GATEWAY_KEY", "sk-test")
+    monkeypatch.setenv("SETTLEMENT_GATEWAY_TIMEOUT_READ_MS", "300000")
+    monkeypatch.setenv("SETTLEMENT_GATEWAY_TIMEOUT_TOTAL_MS", "900000")
+    settings = Settings.from_env()
+
+    adapter = gateway_http.HttpGatewayAdapter.from_settings(
+        settings, api="responses",
+        expected_route={"endpoint": "http://127.0.0.1:1/v1"})
+
+    assert adapter.timeouts["read"] == 300.0
+    assert adapter.total_s == 900.0

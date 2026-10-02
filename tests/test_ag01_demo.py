@@ -5,10 +5,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parent.parent
 SCRIPT = REPO / "scripts" / "agenda01.py"
-DSN = os.environ.get("SETTLEMENT_TEST_DSN",
-                     "postgresql://ubuntu@/agenda01_demo?host=/var/run/postgresql")
+DSN = os.environ.get("SETTLEMENT_TEST_DSN")
+if not DSN:
+    pytest.skip("SETTLEMENT_TEST_DSN is not configured", allow_module_level=True)
 
 JOURNEY_MARKS = ("[propose]", "[grant]", "[admit]", "[dispatch]", "[observe]",
                  "[observe-forged]", "unknown receipt", "[continue]",

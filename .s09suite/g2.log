@@ -1,0 +1,67 @@
+.......................FFFFF.................FFFF....F.................. [ 83%]
+..............                                                           [100%]
+=================================== FAILURES ===================================
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif'
+/usr/lib/python3.12/subprocess.py:1955: FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif'
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif'
+/usr/lib/python3.12/subprocess.py:1955: FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif'
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif'
+/usr/lib/python3.12/subprocess.py:1955: FileNotFoundError: [Errno 2] No such file or directory: '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif'
+E   AssertionError: fatal: repository '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif' does not exist
+      
+    assert 128 == 0
+     +  where 128 = CompletedProcess(args=['git', 'clone', '-q', '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif', '/tmp/pytest-of-ubun...rncode=128, stdout='', stderr="fatal: repository '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif' does not exist\n").returncode
+/home/ubuntu/AI/Agent-Society-v2/tests/test_ec02ad_verif.py:1078: AssertionError: fatal: repository '/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif' does not exist
+E   AssertionError: original probe file missing from tip
+    assert False
+     +  where False = is_file()
+     +    where is_file = PosixPath('/home/ubuntu/AI/Agent-Society-v2/.worktrees/verif/reviews/probes/ec02_completion_review.py').is_file
+/home/ubuntu/AI/Agent-Society-v2/tests/test_ec02ad_verif.py:1123: AssertionError: original probe file missing from tip
+E   AssertionError: assert 'failure' == 'unknown'
+      
+      - unknown
+      + failure
+/home/ubuntu/AI/Agent-Society-v2/tests/test_gateway_usage_unknown.py:232: AssertionError: assert 'failure' == 'unknown'
+E   AssertionError: assert 'failure' == 'unknown'
+      
+      - unknown
+      + failure
+/home/ubuntu/AI/Agent-Society-v2/tests/test_gateway_usage_unknown.py:232: AssertionError: assert 'failure' == 'unknown'
+E   AssertionError: assert 'failure' == 'unknown'
+      
+      - unknown
+      + failure
+/home/ubuntu/AI/Agent-Society-v2/tests/test_gateway_usage_unknown.py:247: AssertionError: assert 'failure' == 'unknown'
+E   AssertionError: assert 'failure' == 'unknown'
+      
+      - unknown
+      + failure
+/home/ubuntu/AI/Agent-Society-v2/tests/test_gateway_usage_unknown.py:247: AssertionError: assert 'failure' == 'unknown'
+E   AssertionError: assert <ResultCode.I...nvalid_input'> == <ResultCode.A...ED: 'applied'>
+      
+      - applied
+      + invalid_input
+/home/ubuntu/AI/Agent-Society-v2/tests/test_steward_leases.py:41: AssertionError: assert <ResultCode.I...nvalid_input'> == <ResultCode.A...ED: 'applied'>
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /home/ubuntu/AI/Agent-Society-v2/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv/lib/python3.12/site-packages/starlette/testclient.py:53
+  /home/ubuntu/AI/Agent-Society-v2/.venv/lib/python3.12/site-packages/starlette/testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_ec02ad_verif.py::test_verif_ad01_sigkill_resume_same_campaign_no_dup_spend
+FAILED tests/test_ec02ad_verif.py::test_verif_ad01_resume_spend_equals_direct_run
+FAILED tests/test_ec02ad_verif.py::test_verif_fresh_checkout_premises_tracked_no_scratch_deps
+FAILED tests/test_ec02ad_verif.py::test_verif_fresh_clone_import_and_collect
+FAILED tests/test_ec02ad_verif.py::test_verif_original_probe_retired_stamp_channel_deleted
+FAILED tests/test_gateway_usage_unknown.py::test_malformed_usage_preserves_partial_evidence_and_reservation[chat]
+FAILED tests/test_gateway_usage_unknown.py::test_malformed_usage_preserves_partial_evidence_and_reservation[responses]
+FAILED tests/test_gateway_usage_unknown.py::test_noncanonical_scale_does_not_settle_provider_charge[chat]
+FAILED tests/test_gateway_usage_unknown.py::test_noncanonical_scale_does_not_settle_provider_charge[responses]
+FAILED tests/test_steward_leases.py::test_lease_expiry_refuses_stale_dispatch_and_fulfill_but_keeps_observation
+10 failed, 76 passed, 2 warnings in 174.90s (0:02:54)
+S09ISO: dropped 3 database(s) for this run

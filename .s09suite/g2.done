@@ -1,0 +1,9 @@
+=== group 2  token=5e9b0002  files=6 ===
+  tests/test_ec02ad_verif.py
+  tests/test_gateway_usage_unknown.py
+  tests/test_steward_leases.py
+  tests/test_s09_test_db_safety.py
+  tests/test_ui_commands.py
+  tests/test_s09_persist_execution.py
+rc=1
+summary: <none: group did not finish>

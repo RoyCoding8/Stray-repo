@@ -49,6 +49,41 @@ ACQUIRED_SOURCE = (
 )
 
 
+USE_POLICY_SOURCE = (
+    "def STEP(view, state):\n"
+    "    eligible = view['eligible_methods']\n"
+    "    if %r not in eligible:\n"
+    "        raise ValueError('the view does not offer the acquired method')\n"
+    "    return {'action': {'kind': 'use_method',\n"
+    "                     'target': view['task_content']['task_id'],\n"
+    "                     'inputs': {'method_id': %r, 'max_queries': 16},\n"
+    "                     'evidence_refs': [],\n"
+    "                     'requested_resources': {'queries': 16}},\n"
+    "            'state': {'selected': %r}}\n")
+
+
+def _use_policy(capability_id: str):
+    """The policy that governs this use episode, from real STEP source.
+
+    The use phase takes its method from an admitted policy action and
+    refuses an episode with no policy in hand, so a constructed method
+    reaches execution only through a policy that names it. The source is
+    parameterised on the id `construct_method` minted, so the assertion
+    below that the record selected that exact id is a statement about the
+    policy and the repertoire together. It is put through the same gate
+    the CLI and `inv01_study` put theirs through, so a policy that would
+    not survive a study refuses here first.
+    """
+    from experiments.ad01 import method_exec, policy_step
+
+    source = USE_POLICY_SOURCE % (capability_id, capability_id,
+                                  capability_id)
+    assert method_exec.verify_step_source(source) == "STEP"
+    policy = policy_step.compile_step(source, origin="<aleb-test>")
+    assert callable(policy)
+    return policy
+
+
 def _fresh_db():
     assert "live" not in DSN
     db.apply_migrations(DSN, MIGRATIONS)
@@ -116,7 +151,8 @@ def test_constructed_program_reaches_later_execution(tmp_path):
     assert member["lineage"]["init_operation"]
     repertoire = {"campaign_id": "ad01-w0-I-90", "members": [member]}
     [record] = trajectory.run_use(
-        repertoire, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0})
+        repertoire, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
+        policy=_use_policy(member["capability_id"]))
     assert record["selected"] == member["capability_id"]
     assert record["executed"] == member["capability_id"]
     assert record["executed_source"] == ACQUIRED_SOURCE

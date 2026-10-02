@@ -1,0 +1,2 @@
+ALTER TABLE receipts
+  ADD COLUMN provenance TEXT NOT NULL DEFAULT '';

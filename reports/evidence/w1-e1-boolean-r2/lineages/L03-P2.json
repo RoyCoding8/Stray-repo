@@ -1,0 +1,195 @@
+{
+ "attempts": [
+  {
+   "arm": "P2",
+   "attempt": 1,
+   "candidate_digest": null,
+   "diagnosis": {
+    "kind": "GatewayErrorKind.TRANSPORT",
+    "reason": "gateway request failed: http 502",
+    "response_digest": "113e30b7c3844432608b0833089e1d66605f676dd14b82d641438ca4bcc9ec5e",
+    "response_received": true,
+    "response_status": 502,
+    "retryable": true,
+    "route_error": null,
+    "stage": "transport",
+    "usage": {
+     "billed": "unknown",
+     "charge_scale": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": "unknown",
+     "output_tokens": "unknown",
+     "provider_enforced_ceiling": "unknown"
+    }
+   },
+   "dispatch": {
+    "accepted_candidate_digest": null,
+    "arm": "P2",
+    "artifact_digest": null,
+    "attempt": 1,
+    "billed": "unknown",
+    "charge_units": "unknown",
+    "details": {
+     "diagnosis": {
+      "kind": "GatewayErrorKind.TRANSPORT",
+      "reason": "gateway request failed: http 502",
+      "response_digest": "113e30b7c3844432608b0833089e1d66605f676dd14b82d641438ca4bcc9ec5e",
+      "response_received": true,
+      "response_status": 502,
+      "retryable": true,
+      "route_error": null,
+      "stage": "transport",
+      "usage": {
+       "billed": "unknown",
+       "charge_scale": "unknown",
+       "charge_units": "unknown",
+       "input_tokens": "unknown",
+       "output_tokens": "unknown",
+       "provider_enforced_ceiling": "unknown"
+      }
+     },
+     "raw_payload": {
+      "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: [{\"predictor_digest\":\"97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f\",\"queries\":8,\"score_overall\":1.0,\"seed\":3,\"split\":\"dev\",\"task_id\":\"rule-dev-2316866b700a\"},{\"predictor_digest\":\"7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515\",\"queries\":8,\"score_overall\":0.75,\"seed\":7,\"split\":\"dev\",\"task_id\":\"rule-dev-398b02c4f7e9\"}]. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+      "raw_response": null
+     },
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": "unknown",
+      "output_tokens": "unknown",
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    "diagnosis": {
+     "kind": "GatewayErrorKind.TRANSPORT",
+     "reason": "gateway request failed: http 502",
+     "response_digest": "113e30b7c3844432608b0833089e1d66605f676dd14b82d641438ca4bcc9ec5e",
+     "response_received": true,
+     "response_status": 502,
+     "retryable": true,
+     "route_error": null,
+     "stage": "transport",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": "unknown",
+      "output_tokens": "unknown",
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    "dispatch_evidence_digest": null,
+    "driver_digest": null,
+    "endpoint": null,
+    "evidence_digest": "9302ecd978fc0c7366d01b42d712fcd8da9033be1e19cb00af39f242ba150583",
+    "input_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+    "kind": "gateway-dispatch",
+    "operation_id": "invl02-output-db5f1a192008-P2-qual-0011-a1",
+    "operation_payload_digest": null,
+    "outcome": "unknown",
+    "package_digest": null,
+    "parent_digest": null,
+    "parse_outcome": "transport-error",
+    "prompt_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+    "provider": null,
+    "raw_payload_digest": "9d00172caec28a739a7034ff537b4e51a563f64eb6b4d420e3e7747f352210a9",
+    "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: [{\"predictor_digest\":\"97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f\",\"queries\":8,\"score_overall\":1.0,\"seed\":3,\"split\":\"dev\",\"task_id\":\"rule-dev-2316866b700a\"},{\"predictor_digest\":\"7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515\",\"queries\":8,\"score_overall\":0.75,\"seed\":7,\"split\":\"dev\",\"task_id\":\"rule-dev-398b02c4f7e9\"}]. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+    "raw_response": null,
+    "receipt_identity": "evidence:240fa6aa23ab2972854ccd7c8f3191333a59c99e7ea92be6d28b4e6a48332fc6",
+    "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "requested_output_cap": 2048,
+    "response_digest": "113e30b7c3844432608b0833089e1d66605f676dd14b82d641438ca4bcc9ec5e",
+    "response_received": true,
+    "response_status": 502,
+    "result_digest": null,
+    "returned_model": null,
+    "round": null,
+    "route_digest": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+    "route_error": null,
+    "source_digest": null,
+    "stop_reason": "",
+    "task_id": "rule-qual-194dba80c87f",
+    "tier": null,
+    "usage": {
+     "billed": "unknown",
+     "charge_scale": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": "unknown",
+     "output_tokens": "unknown",
+     "provider_enforced_ceiling": "unknown"
+    },
+    "version": "invl02-evidence-v2"
+   },
+   "operation_id": "invl02-output-db5f1a192008-P2-qual-0011-a1",
+   "outcome": "transport-loss",
+   "raw_response": null,
+   "reason": "gateway request failed: http 502",
+   "score": null
+  }
+ ],
+ "campaign_id": "w1-e1-boolean-r2",
+ "campaign_version": "w1-e1-boolean-campaign-v2",
+ "guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 7,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 7,
+  "version": "invl02-live-v1"
+ },
+ "lineage": "L03-P2",
+ "offline_verified": true,
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "queries_spent": 8,
+ "reference_scores": {
+  "oracle_overall": 1.0,
+  "zero_predictor_overall": 0.0625
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "schema": "invl02-live-preflight-run-v1",
+ "score_floor": 1.0,
+ "seed": 11,
+ "split": "qual",
+ "study_root": "w1-e1-boolean-r2",
+ "task_id": "rule-qual-194dba80c87f",
+ "treatment": "P2",
+ "treatment_meaning": "prior-task summary: two dev-split predictor digests and their scores, no program text",
+ "verdict": {
+  "arm": "P2",
+  "attempt": 1,
+  "endpoint": null,
+  "operation_id": "invl02-output-db5f1a192008-P2-qual-0011-a1",
+  "outcome": "transport-loss",
+  "prompt_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+  "provider": null,
+  "reason": "gateway request failed: http 502",
+  "recomputable": true,
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "response_digest": "113e30b7c3844432608b0833089e1d66605f676dd14b82d641438ca4bcc9ec5e",
+  "returned_model": null,
+  "route_error": null,
+  "stop_reason": "",
+  "tier": null,
+  "usage": {
+   "billed": "unknown",
+   "charge_scale": "unknown",
+   "charge_units": "unknown",
+   "input_tokens": "unknown",
+   "output_tokens": "unknown",
+   "provider_enforced_ceiling": "unknown"
+  }
+ },
+ "version": "invl02-live-preflight-v1",
+ "written_at": "2026-09-30T04:36:16Z"
+}

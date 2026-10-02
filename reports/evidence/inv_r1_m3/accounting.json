@@ -1,0 +1,53 @@
+{
+ "measured_from": "durable operation identities plus receipt usage; recording doubles billed false; live billed from provider usage",
+ "total": {
+  "construction_calls": 7,
+  "model_calls": 32,
+  "use_records": 24,
+  "witness_queries": 556
+ },
+ "trajectories": [
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w0-I-00",
+   "construction_calls": 1,
+   "model_calls": 4,
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w0-R-00",
+   "construction_calls": 2,
+   "model_calls": 8,
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w1-I-00",
+   "construction_calls": 0,
+   "model_calls": 4,
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w1-R-00",
+   "construction_calls": 3,
+   "model_calls": 8,
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w2-I-00",
+   "construction_calls": 1,
+   "model_calls": 4,
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w2-R-00",
+   "construction_calls": 0,
+   "model_calls": 4,
+   "world": 2
+  }
+ ]
+}

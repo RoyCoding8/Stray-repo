@@ -23,6 +23,26 @@ METHOD_SOURCE = (
 )
 USE_TASK = "ad01-w0-within-sw-00"
 
+# Since 77001fc the use phase takes its method from a policy or refuses, so a
+# call without one returns a record whose `requested` reads `refused`. This
+# test predates that contract and asserted the member's own bytes were run;
+# the policy names the same member, so the bytes under test are unchanged.
+POLICY_SOURCE = (
+    "def policy(view, state):\n"
+    "    return {'action': {'kind': 'use_method',\n"
+    "                      'target': view['task_content']['task_id'],\n"
+    "                      'inputs': {'method_id': %r, 'max_queries': 16},\n"
+    "                      'evidence_refs': [],\n"
+    "                      'requested_resources': {'queries': 16}},\n"
+    "            'state': {'chosen': %r}}\n"
+) % (MEMBER_ID, MEMBER_ID)
+
+
+def _policy():
+    namespace: dict = {}
+    exec(POLICY_SOURCE, namespace)
+    return namespace["policy"]
+
 
 def _member() -> dict:
     return {"capability_id": MEMBER_ID, "method_source": METHOD_SOURCE,
@@ -48,7 +68,8 @@ def test_run_use_executes_outside_menu_member_bytes(tmp_path):
     repertoire = trajectory.load_repertoire(frozen)
     assert repertoire["members"][0] == member
     [record] = trajectory.run_use(
-        repertoire, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0})
+        repertoire, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
+        policy=_policy())
     assert record["requested"] == MEMBER_ID
     assert record["selected"] == MEMBER_ID
     assert record["executed"] == MEMBER_ID

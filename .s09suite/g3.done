@@ -1,0 +1,9 @@
+=== group 3  token=5e9b0003  files=6 ===
+  tests/test_coord02_learning.py
+  tests/test_alee_learner.py
+  tests/test_bdr01_host_boundary.py
+  tests/test_eacq_repair.py
+  tests/test_eng_close1.py
+  tests/test_eng_invb_dispatch.py
+rc=1
+summary: <none: group did not finish>

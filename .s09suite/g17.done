@@ -1,0 +1,10 @@
+=== group 17 CORRECTED: test_conftest_isolation.py with the real tests/ scan ===
+  tests/test_conftest_isolation.py
+rc=0
+summary: 14 passed in 27.41s
+
+NOTE: the g17.log measured with a SCOPED scan is an artifact of this
+lane's own runner and is kept only as g17.log.scoped-ARTIFACT. Two of its
+tests assert on the real suite's seam list (test_every_seam_in_the
+real_suite_is_accounted_for, test_a_shared_store_is_a_seam_whatever_it_is
+named) and cannot hold under a narrowed scan. Not a product failure.

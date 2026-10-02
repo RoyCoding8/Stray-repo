@@ -50,7 +50,7 @@ from settlement.gateway import GatewayAdapter, GatewayError, ModelResponse, Usag
 from settlement.gateway_http import HttpGatewayAdapter
 from settlement.launcher_local import LocalLauncher
 
-from run_live_abc import (_bind_grant_cap, _bundle_manifest, _effective_config,
+from experiments.run_live_abc import (_bind_grant_cap, _bundle_manifest, _effective_config,
                             _parse_ids, _select_launcher, _source_fingerprint)
 
 LIVE_MISSING = ("live dev episode blocked: set SETTLEMENT_GATEWAY_ENDPOINT, "
@@ -61,8 +61,8 @@ EPISODE_PHASES = ("admit", "diagnose", "construct", "check", "select",
 
 
 def _fixture_double():
-    from doubles import ScriptedDouble
-    from fault_tasks import DEV_IDS, PANEL_IDS, TASKS, TRANSFER_IDS
+    from experiments.doubles import ScriptedDouble
+    from experiments.fault_tasks import DEV_IDS, PANEL_IDS, TASKS, TRANSFER_IDS
 
     fixes = {t["id"]: t["fixed"] for t in TASKS}
     broken = {t["id"]: t["broken"] for t in TASKS}
@@ -357,7 +357,7 @@ def _episode_phase_ops(ep: dict, report: dict, use: dict) -> dict:
 
 def _run_subsequent_use(args: argparse.Namespace,
                         run_allocation: str, report: dict) -> dict:
-    from fault_tasks import BY_ID
+    from experiments.fault_tasks import BY_ID
 
     transfer = [i for i in BY_ID if i.startswith("transfer")]
     panel = [i for i in BY_ID if i.startswith("panel")]
@@ -547,13 +547,13 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
         print(f"discovery: {live['discovery']}; auth: {live['auth']}",
               file=sys.stderr)
-        from fault_tasks import DEV_IDS, PANEL_IDS, TRANSFER_IDS
+        from experiments.fault_tasks import DEV_IDS, PANEL_IDS, TRANSFER_IDS
 
         dev_ids, panel_ids, transfer_ids = DEV_IDS, PANEL_IDS, TRANSFER_IDS
     dev_ids = _parse_ids(args.dev) or dev_ids
     panel_ids = _parse_ids(args.panel) or panel_ids
     transfer_ids = _parse_ids(args.transfer) or transfer_ids
-    from fault_tasks import BY_ID as _BY_ID
+    from experiments.fault_tasks import BY_ID as _BY_ID
 
     _unknown = [i for i in (dev_ids + panel_ids + transfer_ids)
                 if i not in _BY_ID]
@@ -569,7 +569,7 @@ def main(argv: list[str] | None = None) -> int:
         if grant_units:
             print(f"grant cap: {grant_units} units;"
                   f" sub-allocation: {run_allocation}", file=sys.stderr)
-        from fault_tasks import BY_ID
+        from experiments.fault_tasks import BY_ID
 
         tasks = [BY_ID[i] for i in (dev_ids + panel_ids + transfer_ids)]
         if simulated:

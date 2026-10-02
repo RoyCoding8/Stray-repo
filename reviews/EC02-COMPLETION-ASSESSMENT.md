@@ -79,4 +79,4 @@ The eight M4 real-PG tests and the full runtime suite were not rerun here; their
 
 ## Architectural consequence
 
-Do not redesign the learner because a fake gateway returned empty or unchanged sources failed grading. Close the shared execution/evidence path once, close EC02 under its actual candidate/grant outcome, and reuse that path for [Autonomous Development 01](../docs/design/AUTONOMOUS-DEVELOPMENT-01.md). A positive SWE-team result is not a prerequisite for testing system-chosen investigations. The next batch is specified in [the consolidated worker assignment](../WORKER-EC02-CLOSURE-AND-AUTONOMOUS-DEVELOPMENT-01.md).
+Do not redesign the learner because a fake gateway returned empty or unchanged sources failed grading. Close the shared execution/evidence path once, close EC02 under its actual candidate/grant outcome, and reuse that path for [Autonomous Development 01](../docs/design/AUTONOMOUS-DEVELOPMENT-01.md). A positive SWE-team result is not a prerequisite for testing system-chosen investigations. The next batch is specified in [the consolidated worker assignment](../docs/HISTORY.md#worker-ec02-closure-and-autonomous-development-01).

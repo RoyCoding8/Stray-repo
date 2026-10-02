@@ -1,0 +1,120 @@
+{
+ "accounting_kinds": [
+  "estimate",
+  "measured",
+  "internal_charge",
+  "provider_billing"
+ ],
+ "allocation_id": "inv_r1_m3_run7",
+ "caps": {
+  "deadline_s": 3600,
+  "max_boundaries": 36,
+  "max_construction_calls": 24,
+  "max_execution_units": 5328,
+  "max_model_calls": 360,
+  "max_witness_queries": 960,
+  "trajectories": 6
+ },
+ "deadline_s": 3600,
+ "effective_config": {
+  "construction": {
+   "deadline_ms": 300000,
+   "max_output_tokens": 2048
+  },
+  "deadline_s": 3600,
+  "gateway": {
+   "api": "responses",
+   "endpoint_env": "SETTLEMENT_GATEWAY_ENDPOINT"
+  },
+  "learner": {
+   "deadline_ms": 300000,
+   "max_output_tokens": 2048
+  },
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider": "live",
+  "reasoning_effort": "high",
+  "sandbox": {
+   "max_output_bytes": 1048576,
+   "profile": "local-process",
+   "settle_s": 80,
+   "timeout_ms": 30000
+  }
+ },
+ "freeze": {
+  "repertoire-w0-I.json": "84bc61938c4ecb175ce74ee0a9ebca6de2e056cba6e454021d51121a6e868990",
+  "repertoire-w0-R.json": "33867e87d93507b2544f25b1bfa70c067d064e651641d318a94fb374f679dc37",
+  "repertoire-w1-I.json": "f08b9b240c325f3ca1b95fb3ce8401c4a08d083747e098d2e0b1fd859b664109",
+  "repertoire-w1-R.json": "13726872fdbfa988ea855a08e6d110fa9106ff066c7fca0abfaa7e09be7c2f7d",
+  "repertoire-w2-I.json": "5b8eebc6229895d81a12896ee0e822ddde2c13f7c8c32760f1fd6f4483523370",
+  "repertoire-w2-R.json": "94f87de7b6d1729338fc34ddcb285e21158aa25b4f962ff7ee2155c2244b119b"
+ },
+ "grant": 64,
+ "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+ "panel": {
+  "calibration_world": 0,
+  "comparison_worlds": [
+   1,
+   2
+  ],
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "freeze_id": "ad01"
+ },
+ "per_trajectory_caps": {
+  "diagnostic_queries": 96,
+  "max_boundaries": 6,
+  "max_construction_calls": 4,
+  "max_dev_episodes": 3,
+  "max_lineages": 2,
+  "max_model_calls": 60,
+  "max_witness_queries_per_development": 16
+ },
+ "provider": "live",
+ "reasoning_effort": "high",
+ "started_at": "2026-09-26 17:49:40.128502+00:00",
+ "study_root": "inv_r1_m3_run7",
+ "trajectories": [
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w0-I-00",
+   "construction_calls": 1,
+   "model_calls": 4,
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w0-R-00",
+   "construction_calls": 2,
+   "model_calls": 8,
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w1-I-00",
+   "construction_calls": 0,
+   "model_calls": 4,
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w1-R-00",
+   "construction_calls": 3,
+   "model_calls": 8,
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w2-I-00",
+   "construction_calls": 1,
+   "model_calls": 4,
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w2-R-00",
+   "construction_calls": 0,
+   "model_calls": 4,
+   "world": 2
+  }
+ ],
+ "wall_deadline_at": "2026-09-26 18:49:40.128502+00:00"
+}

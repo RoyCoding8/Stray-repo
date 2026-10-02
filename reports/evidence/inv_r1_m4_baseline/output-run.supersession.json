@@ -1,0 +1,13 @@
+{
+  "artifact": "reports/evidence/inv_r1_m4_baseline/output-run.json",
+  "artifact_sha256": "04443c9fc39fc277fa87f68cdef78308ac784924d2013f7fa65e5ef68b5548b6",
+  "shape": "VESSEL",
+  "verdict": "CONTAINER_MISLABELLED",
+  "finding": "B8 / N-411",
+  "annotation": "reports/evidence/inv_r1_m4_baseline/PROVENANCE.md",
+  "void_scope": [],
+  "surviving_claim": null,
+  "superseded_by": null,
+  "container_mislabelled": true,
+  "note": "The file is correct and the directory name is not. void_scope is empty on purpose: nothing in the 276249 bytes is wrong, and a marker that voided any of it would destroy the only copy of eight raw model responses. The defect is a non-path referent -- this is an r4-protocol output-shape bundle filed under the M4 baseline study, so the container misleads. Decided by source_identity 472ddedc7d29..., where r4's own grant-binding.json records 954ddd7b2..., so this run is not the run r4's grant authorized. This file must not be moved or renamed: _settled_study in experiments/ad01/s09_exposure_ledger.py returns on the first sorted rglob('output-run.json') match, so relocating it would reorder which file answers first in the exposure ceiling. The wrong directory is the evidence."
+}

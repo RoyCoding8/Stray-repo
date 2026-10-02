@@ -1,0 +1,427 @@
+{
+ "acquisition_census": {
+  "acquire_site_count": 41,
+  "acquire_sites": [
+   {
+    "file": "experiments/ad01/construct.py",
+    "function": "acquisition_origin",
+    "line": 156
+   },
+   {
+    "file": "experiments/ad01/control_arm.py",
+    "function": "acquisition_identity",
+    "line": 485
+   },
+   {
+    "file": "experiments/ad01/control_arm_result.py",
+    "function": "split_acquired_orderings",
+    "line": 73
+   },
+   {
+    "file": "experiments/ad01/e2_gate_report.py",
+    "function": "replica_acquired_records",
+    "line": 183
+   },
+   {
+    "file": "experiments/ad01/e2_replication.py",
+    "function": "acquire_one",
+    "line": 760
+   },
+   {
+    "file": "experiments/ad01/e2_replication.py",
+    "function": "acquire_with_retry",
+    "line": 823
+   },
+   {
+    "file": "experiments/ad01/e2_replication.py",
+    "function": "score_acquired",
+    "line": 1214
+   },
+   {
+    "file": "experiments/ad01/frontier.py",
+    "function": "validate_acquisition_evidence",
+    "line": 447
+   },
+   {
+    "file": "experiments/ad01/frontier.py",
+    "function": "_durable_acquisition",
+    "line": 914
+   },
+   {
+    "file": "experiments/ad01/frontier.py",
+    "function": "retain_acquisition",
+    "line": 1526
+   },
+   {
+    "file": "experiments/ad01/learner.py",
+    "function": "acquisition_cost_arms",
+    "line": 684
+   },
+   {
+    "file": "experiments/ad01/learner_revision.py",
+    "function": "judge_acquisition",
+    "line": 221
+   },
+   {
+    "file": "experiments/ad01/learner_revision.py",
+    "function": "acquire",
+    "line": 404
+   },
+   {
+    "file": "experiments/ad01/live_construct.py",
+    "function": "read_acquisition_evidence",
+    "line": 203
+   },
+   {
+    "file": "experiments/ad01/live_construct.py",
+    "function": "find_acquisition_operation",
+    "line": 305
+   },
+   {
+    "file": "experiments/ad01/live_construct.py",
+    "function": "validate_acquired_provenance",
+    "line": 966
+   },
+   {
+    "file": "experiments/ad01/live_construct.py",
+    "function": "_require_acquisition_package",
+    "line": 976
+   },
+   {
+    "file": "experiments/ad01/live_construct.py",
+    "function": "retain_acquired",
+    "line": 987
+   },
+   {
+    "file": "experiments/ad01/live_construct.py",
+    "function": "bind_retained_acquisition",
+    "line": 1312
+   },
+   {
+    "file": "experiments/ad01/s09_acquisition_audit.py",
+    "function": "acquisition_possible",
+    "line": 128
+   },
+   {
+    "file": "experiments/ad01/s09_m2_rubric.py",
+    "function": "_acquisition_axis_value",
+    "line": 368
+   },
+   {
+    "file": "experiments/ad01/s09_study_protocol.py",
+    "function": "classify_acquisition",
+    "line": 802
+   },
+   {
+    "file": "experiments/ad01/s09_verdict.py",
+    "function": "_no_earned_acquired_leg",
+    "line": 659
+   },
+   {
+    "file": "experiments/ad01/s09_verdict.py",
+    "function": "live_acquisition_verdict",
+    "line": 689
+   },
+   {
+    "file": "experiments/ad01/w1_e1_campaign_r2.py",
+    "function": "acquisition_census",
+    "line": 144
+   },
+   {
+    "file": "experiments/coord02/experience.py",
+    "function": "_acquire_probe_plan_entry",
+    "line": 913
+   },
+   {
+    "file": "experiments/coord02/experience.py",
+    "function": "_acquisition_step",
+    "line": 966
+   },
+   {
+    "file": "experiments/coord02/experience.py",
+    "function": "acquire_episodes",
+    "line": 981
+   },
+   {
+    "file": "experiments/coord02/experience.py",
+    "function": "acquire",
+    "line": 1232
+   },
+   {
+    "file": "scripts/ad01_r3_compare.py",
+    "function": "acquire",
+    "line": 134
+   },
+   {
+    "file": "scripts/ad01_r3_compare.py",
+    "function": "use_acquired",
+    "line": 257
+   },
+   {
+    "file": "scripts/ad01_r3_compare.py",
+    "function": "use_acquired_arms",
+    "line": 306
+   },
+   {
+    "file": "scripts/ad01_r4_compare.py",
+    "function": "acquire",
+    "line": 188
+   },
+   {
+    "file": "scripts/ad01_r4_compare.py",
+    "function": "use_acquired",
+    "line": 315
+   },
+   {
+    "file": "scripts/ad01_r4_compare.py",
+    "function": "use_acquired_arms",
+    "line": 362
+   },
+   {
+    "file": "scripts/inv01_study.py",
+    "function": "_v1_acquisition_budget",
+    "line": 701
+   },
+   {
+    "file": "scripts/run_bounded.py",
+    "function": "acquire",
+    "line": 296
+   },
+   {
+    "file": "scripts/s09_verify.py",
+    "function": "_check_acquired_members",
+    "line": 236
+   },
+   {
+    "file": "src/settlement/steward.py",
+    "function": "reacquire_lease",
+    "line": 195
+   },
+   {
+    "file": "src/settlement/store.py",
+    "function": "_acquire_work",
+    "line": 1015
+   },
+   {
+    "file": "src/settlement/store.py",
+    "function": "acquire_work",
+    "line": 1049
+   }
+  ],
+  "adjudicated_acquire_sites": [
+   {
+    "acquires": "STEP python source",
+    "db_bound": true,
+    "e1_path": false,
+    "entry_point": "live_construct.construct_live_method at :850 wraps it; scripts/ad01_r3_compare.py:134 and ad01_r4_compare.py:188 are its shipped callers",
+    "site": "experiments/ad01/construct.py:209 construct_method",
+    "why": "the real non-Boolean acquisition path in the tree. It takes a provider's `entry` source, gates it on a settled store receipt, and mints a STEP artifact. It needs a PostgreSQL DSN at its first statement, so it cannot run here, and its world is the invl01/invl02 method world rather than a Boolean, ordering or SWE policy world."
+   },
+   {
+    "acquires": "a learner revision",
+    "db_bound": false,
+    "e1_path": false,
+    "site": "experiments/ad01/learner_revision.py:404 acquire",
+    "why": "E4's channel. It admits bytes under a freeze and rejects an incumbent-verbatim reply, but the artifact it admits is a revision, not a representation program, so it does not fill an E1 cell."
+   },
+   {
+    "acquires": "a packet `entry`",
+    "db_bound": true,
+    "e1_path": false,
+    "site": "experiments/ad01/e2_replication.py:760 acquire_one",
+    "why": "E2's replica. Broker-bound, and it lives in the same method world as construct_method."
+   },
+   {
+    "acquires": "coord02 construction lineages",
+    "db_bound": true,
+    "e1_path": false,
+    "site": "experiments/coord02/experience.py:1232 acquire",
+    "why": "coord02's construction loop, broker-bound, in its own agenda world."
+   },
+   {
+    "acquires": "core.py / adapter.py / procedure.py",
+    "db_bound": true,
+    "e1_path": false,
+    "site": "experiments/representation/acquire/campaign.py:337 construct_slot",
+    "why": "the representation panel's own reducer world, broker-bound."
+   },
+   {
+    "acquires": "nothing",
+    "db_bound": false,
+    "e1_path": false,
+    "site": "experiments/ad01/s09_acquisition_audit.py:128 acquisition_possible",
+    "why": "an auditor that reports on a written run directory. It dispatches nothing, so its name is in the search and it is not a path."
+   },
+   {
+    "acquires": "nothing",
+    "db_bound": false,
+    "e1_path": false,
+    "site": "experiments/ad01/live_construct.py:987 retain_acquired",
+    "why": "retention and provenance bookkeeping over bytes already acquired. No dispatch."
+   },
+   {
+    "acquires": "nothing",
+    "db_bound": true,
+    "e1_path": false,
+    "site": "src/settlement/store.py:1049 acquire_work",
+    "why": "a store operation that grants a lease to a worker. The word names an ownership hand-off, not a construction."
+   }
+  ],
+  "answer": "no. The Boolean cell is the only one with a shipped acquisition path, and the non-Boolean cells are not waiting on a model -- no prompt asks for them, and their record builders take no text.",
+  "boolean_path": {
+   "operation_identity": "experiments/ad01/live_construct.py:113",
+   "payload_parser": "experiments/ad01/live_construct.py:952",
+   "payload_validator": "experiments/ad01/live_construct.py:917",
+   "prompt_renderer": "experiments/ad01/live_construct.py:100",
+   "task_source": "experiments/ad01/live_construct.py:1449"
+  },
+  "boolean_path_is_the_only_one": true,
+  "conclusion": "E1's acquisition column is one cell wide, and that is a property of the shipped harness rather than of the model. Two paths do put model bytes into executable artifacts, and both are reducer panels bound to a PostgreSQL store this host does not have, in worlds outside the E1 matrix. Reporting them as E1 acquisition would be a substitution.",
+  "counter_path_found": {
+   "binding": "construct.acquisition_origin at construct.py:156 reads a settled receipt from a PostgreSQL store, so the origin it awards is `model-acquired` only when the store can prove a live provider answered. With no DSN this host cannot run it, and a path that awards `fixture-stand-in` is not acquisition.",
+   "step_python": "experiments/ad01/construct.py:388 and :492",
+   "world": "the software and graph reducer world, not a Boolean, ordering or SWE policy world"
+  },
+  "method": "every `def` containing 'acqui' is read off the parsed source of experiments/, scripts/ and src/; every non-Boolean record builder is checked for whether it takes text; and the two paths that do take model bytes are named with what binds them.",
+  "offline": true,
+  "other_live_construction_site": {
+   "acquires": "core.py / adapter.py / procedure.py / lessons.md",
+   "db_bound": true,
+   "dsn_from": "SETTLEMENT_TEST_DSN or SETTLEMENT_DSN (campaign.py:132), both unset here",
+   "not_e1": "it produces reducer source for a different experiment's world, and it is durable-broker bound, so it cannot run on this host either.",
+   "site": "experiments/representation/acquire/campaign.py:337 construct_slot",
+   "world": "the representation panel's own atom-index reduction world"
+  },
+  "question": "starting from a provider's response text, is there a shipped path that yields an artifact a representation's executor will load and run, for any representation or world other than the Boolean output-shape predictor?",
+  "record_builders": {
+   "action-graph-boolean": {
+    "builder": "s09_representation_matrix.graph_policy_record",
+    "detail": "an authored dict literal. The Boolean graph executor loads it (boolean_graph_policy.py:348) and runs it, so the executor is real and reachable; nothing asks a model to write one.",
+    "reads_model_text": false,
+    "signature": "graph_policy_record(policy_id=...)",
+    "source": "s09_representation_matrix.py:187"
+   },
+   "action-graph-ordering": {
+    "builder": "s09_representation_matrix.ordering_graph_record",
+    "detail": "an authored dict literal, and one the Boolean-typed executor refuses at load. `ordering_graph_policy` closes that gap for an authored record; it takes a record, not text.",
+    "reads_model_text": false,
+    "signature": "ordering_graph_record(policy_id=...)",
+    "source": "s09_representation_matrix.py:369"
+   },
+   "action-graph-swe": {
+    "builder": "s09_swe_binding.swe_graph_record",
+    "detail": "an authored dict literal. The cell is unfillable for a separate recorded reason, in s09_swe_ast.missing_cells().",
+    "reads_model_text": false,
+    "signature": "swe_graph_record(policy_id=...)",
+    "source": "s09_swe_binding.py:141"
+   },
+   "step-python": {
+    "builder": "policy_step.make_policy_artifact",
+    "detail": "THE COUNTER-PATH, and it is real. This is the one builder in the tree that takes source text, and construct.py:388 and :492 both feed it a response parsed by packet.parse_construction_response. So a provider's bytes CAN become a STEP artifact here. Two things stop it being an E1 cell and both are recorded rather than argued: the path is bound to a PostgreSQL DSN (construct.py:156 acquisition_origin reads the store's receipt) which this host does not have, and its world is the software/graph reducer world, not a Boolean/ordering/SWE policy world. It is the invl02 family, not the E1 matrix.",
+    "reads_model_text": true,
+    "signature": "make_policy_artifact(source, origin=...)",
+    "source": "policy_step.py"
+   },
+   "typed-ast-boolean": {
+    "builder": "boolean_ast_policy.make_record equivalent, reached through s09_swe_ast.make_record",
+    "detail": "the document is built by `document(policy_id, index)` from an authored table keyed on the lineage index. There is no text parameter.",
+    "reads_model_text": false,
+    "signature": "make_record(policy_id, *, index=0)",
+    "source": "s09_swe_ast.py:193"
+   },
+   "typed-ast-ordering": {
+    "builder": "ordering_ast_policy.make_ordering_ast_record",
+    "detail": "built from `ordering_document(policy_id)`, an authored literal. `make_ordering_ast_record` is even given at ordering_ast_policy.py:142 a no-argument call, so there is nowhere for model text to enter.",
+    "reads_model_text": false,
+    "signature": "make_ordering_ast_record(policy_id=...)",
+    "source": "ordering_ast_policy.py:142"
+   }
+  },
+  "refusals_that_make_it_boolean_only": {
+   "operation_identity_rejects_a_non_frozen_seed": {
+    "accepted": false,
+    "detail": "LiveRefused: output operation has an unfrozen task or attempt"
+   },
+   "operation_identity_rejects_a_non_frozen_split": {
+    "accepted": false,
+    "detail": "LiveRefused: output operation has an unknown arm or task"
+   }
+  }
+ },
+ "campaign_id": "w1-e1-boolean-r2",
+ "cap_sheet": "reports/cap-sheets/w1-e1-cap.md",
+ "cell": {
+  "representation": "output-shape predictor",
+  "task": "the frozen qual split at seed 11 with all eight queries already spent, so the model is asked to commit rather than probe",
+  "world": "boolean"
+ },
+ "dispatch_deadline_ms": 300000,
+ "dispatch_deadline_note": "the shipped preflight's own 300s, not a number chosen to make the campaign finish. r1 measured 55s on this prompt and 110s with no response at 110s; shortening the deadline would manufacture transport loss and call it a result",
+ "limits": {
+  "automatic_retries": 0,
+  "initial_dispatches": 4,
+  "max_dispatches": 8,
+  "max_output_tokens": 2048,
+  "max_response_characters": 512,
+  "repairs_per_task": 1
+ },
+ "lineage": {
+  "harness_repair_relied_on": "3721cd6, `route_matches` is the one comparison of a whole returned route",
+  "new_study_root_reason": "the cap sheet requires a fresh root with explicit allocation; reusing OUTPUT_STUDY_ROOT would merge this campaign's dispatches into an already-accounted study",
+  "protocol_id": "invl02-output-shape-550b-r4-v1",
+  "protocol_study_root": "invl02-output-shape-550b-r4",
+  "standing_authority": "live testing on a verified free model, this assignment"
+ },
+ "planned": {
+  "attempt_ceiling": 8,
+  "cap_sheet_formula": "N = 4 x supported cells x treatments",
+  "lineages_per_treatment": 4,
+  "model_call_ceiling": 16,
+  "repairs_note": "unspent, and not spendable here: render_output_prompt refuses an attempt outside (1, 2) and output_operation_id refuses any seed outside the frozen pair, so a repair would have to reuse the same task and the same identity",
+  "repairs_planned": 0,
+  "treatments": [
+   "P1",
+   "P2"
+  ]
+ },
+ "prompt_digests": {
+  "P1": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+  "P2": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2"
+ },
+ "prompts": {
+  "P1": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+  "P2": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: [{\"predictor_digest\":\"97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f\",\"queries\":8,\"score_overall\":1.0,\"seed\":3,\"split\":\"dev\",\"task_id\":\"rule-dev-2316866b700a\"},{\"predictor_digest\":\"7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515\",\"queries\":8,\"score_overall\":0.75,\"seed\":7,\"split\":\"dev\",\"task_id\":\"rule-dev-398b02c4f7e9\"}]. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters."
+ },
+ "reason_superseded": "r1's eight lineages all ended in route-refusal or transport-loss because the route contract had two halves that disagreed on `provider`. That is a harness fact, not a model result, so r1 is retained as invalid rather than repaired. r2 runs on the repaired contract under a new freeze and a new study root; no r1 cell is carried forward, repaired or selectively re-run.",
+ "reference_scores": {
+  "oracle_overall": 1.0,
+  "zero_predictor_overall": 0.0625
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "route_api": "chat",
+ "route_note": "the credential is never written to this directory; the guard enforces endpoint, model, provider and tier on every response, so a paid route is refused as 'route-refusal' before it can be mistaken for a model result",
+ "schema": "w1-e1-boolean-campaign-v2",
+ "score_floor": 1.0,
+ "score_floor_note": "the shipped constant, untuned; 1.0 is the oracle, not the do-nothing baseline",
+ "stopping_rule": "the study stops when the cell is filled; a stop, unknown or no-candidate outcome does not authorise a replacement episode, and no repair is attempted",
+ "supersedes": "w1-e1-boolean-r1",
+ "task": {
+  "input_cardinality": 4,
+  "output_cardinality": 4,
+  "queries_spent": 8,
+  "seed": 11,
+  "split": "qual",
+  "task_id": "rule-qual-194dba80c87f"
+ },
+ "treatments": {
+  "P1": "interface-only acquisition: the frozen public view and nothing else",
+  "P2": "prior-task summary: two dev-split predictor digests and their scores, no program text"
+ },
+ "written_at": "2026-09-30T04:26:12Z"
+}

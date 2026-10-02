@@ -1,0 +1,84 @@
+{
+  "schema": "invl02-output-store-reconciliation-v1",
+  "study_root": "invl02-output-shape-550b-r4",
+  "run_id": "8a7d3ef94f9b457eb4e09bee02e9ba89",
+  "reconciled_at": "2026-09-25T04:34:50+00:00",
+  "authoritative_source": "durable store invl02_live",
+  "bundle_claim": {
+    "file": "output-run.json",
+    "status": "unavailable",
+    "reason": "durable broker unavailable before inference: output preflight route does not match the freeze",
+    "dispatch_count": 0,
+    "physical_dispatch_count": 0,
+    "dispatches": [],
+    "durable_receipts": []
+  },
+  "durable_store_rows": {
+    "operation": {
+      "id": "invl02-output-872608eb94c3-P1-audit-0023-a1",
+      "dispatch_state": "unresolved",
+      "reconcile_state": "unresolved",
+      "settled": false,
+      "created_at": "2026-09-25 00:53:52.053323+00",
+      "terminal_disposition": "unresolved-terminal",
+      "terminal_response_class": "lost-response",
+      "terminal_response_received": false,
+      "reservation_amount": 2294
+    },
+    "receipt": {
+      "receipt_identity": "gw:invl02-output-872608eb94c3-P1-audit-0023-a1:lost-response",
+      "outcome": "unknown",
+      "created_at": "2026-09-25 00:54:52.186269+00",
+      "response_class": "lost-response",
+      "response_received": false,
+      "response_digest": null,
+      "response_status": null,
+      "usage": {
+        "billed": null,
+        "charge_scale": null,
+        "charge_units": null,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "error": "gateway request timed out",
+      "error_kind": "timeout",
+      "retryable": true
+    },
+    "reservation": {
+      "id": "res-invl02-output-872608eb94c3-P1-audit-0023-a1",
+      "operation_id": "invl02-output-872608eb94c3-P1-audit-0023-a1",
+      "amount": 2294,
+      "state": "uncertain",
+      "settled": false
+    }
+  },
+  "reconciliation": {
+    "physical_dispatches_spent": 1,
+    "dispatch_budget_remaining_under_this_reconciliation": 7,
+    "store_authoritative": true,
+    "bundle_under_reports_spend_by": 1,
+    "bundle_under_report_cause": "The writer persisted the unavailable bundle before the durable dispatch was reconciled. The bundle was written at 00:53:29.966019238, before the operation row at 00:53:52.053323+00 and the lost-response receipt at 00:54:52.186269+00.",
+    "preflight_files_are_not_same_instant": {
+      "preflight_refusal_mtime": "2026-09-25 00:53:07.814216644 +0000",
+      "preflight_mtime": "2026-09-25 00:53:52.034684554 +0000",
+      "preflight_refusal_reason": "output preflight record is missing",
+      "preflight_present_at_later_mtime": true,
+      "interpretation": "The refusal was written before the valid preflight file. The later preflight file and the durable operation do not erase the earlier refusal; the bundle is the pre-dispatch writer artifact."
+    },
+    "response_interpretation": "A request was sent, the gateway timed out at the deadline, and the response was lost. This is not a refusal and not a task result.",
+    "exposure_interpretation": "The 2294-unit reservation remains uncertain and the operation remains unsettled. Exposure is not reconciled and is not zeroed.",
+    "re_dispatch_rule": "Do not re-dispatch r4. A further attempt requires a fresh prospective r5 freeze in a new evidence directory and a human decision."
+  },
+  "read_only_sql": [
+    "SELECT id, dispatch_state, reconcile_state, settled, created_at FROM operations WHERE id LIKE 'invl02%' ORDER BY created_at;",
+    "SELECT id, operation_id, amount, state FROM reservations ORDER BY created_at DESC LIMIT 3;",
+    "SELECT receipt_identity, outcome, created_at, content::text FROM receipts WHERE operation_id='invl02-output-872608eb94c3-P1-audit-0023-a1';",
+    "SELECT id, dispatch_state, reconcile_state, settled, payload::text FROM operations WHERE id='invl02-output-872608eb94c3-P1-audit-0023-a1';"
+  ],
+  "preserved_artifact": {
+    "file": "output-run.pre-dispatch-crash.json",
+    "original_file": "output-run.json",
+    "original_sha256": "5fa3ab1bb8f4cf2735811ff2b82a4898ae4f4d40ca2bd99ea95745d47017c21a",
+    "preservation": "Byte-for-byte copy of the writer's original output-run.json. It was not edited or reclassified in place."
+  }
+}

@@ -64,9 +64,13 @@ def _settled_op(dsn: str, tag: str) -> str:
          "reservation_id": f"{tag}-res", "exposure": 40,
          "operation": {"kind": "close1-probe"}}, f"{tag}p"))
     assert prepared.code == ResultCode.APPLIED, prepared.detail
+    dispatched = store.advance_dispatch(dsn, _cmd(
+        {"operation_id": op, "launcher_id": f"{tag}-launcher"}, f"{tag}d"))
+    assert dispatched.code == ResultCode.APPLIED, dispatched.detail
     first = store.admit_receipt(dsn, _cmd(
         {"operation_id": op, "receipt_identity": f"{tag}-rc1",
-         "content": {"out": 1}, "outcome": "success"}, f"{tag}r1"))
+         "content": {"out": 1}, "outcome": "success",
+         "provenance": f"{tag}-launcher"}, f"{tag}r1"))
     assert first.code == ResultCode.APPLIED
     assert store.allocation_status(dsn, f"{tag}-a")["consumed"] == 40
     return op
@@ -77,26 +81,75 @@ def test_contradictory_late_receipt_flagged_for_reconciliation(migrated_db):
     op = _settled_op(dsn, "close1b")
     late = store.admit_receipt(dsn, _cmd(
         {"operation_id": op, "receipt_identity": "close1b-rc2",
-         "content": {"out": 2}, "outcome": "failure"}, "close1br2"))
+         "content": {"out": 2, "error": "gateway returned 500"},
+         "outcome": "failure", "provenance": "close1b-launcher"}, "close1br2"))
     assert late.code == ResultCode.APPLIED
     assert late.data.get("conflict") is True
     assert late.data.get("settled") is True
     assert store.allocation_status(dsn, "close1b-a")["consumed"] == 40
-    assert {r["outcome"] for r in store.operation_receipts(dsn, op)} == {"success", "failure"}
+    # This asserted the accepted receipts were {"success", "failure"}. The
+    # contradicting receipt is never one: `_mark_receipt_conflict` records it
+    # in `receipt_conflicts`, and the table the store reads receipts from
+    # keeps only the account it accepted. Its own docstring calls the second
+    # row "conflicting receipt preserved for reconciliation", so the receipt
+    # is preserved somewhere specific and this is not it.
+    assert {r["outcome"] for r in store.operation_receipts(dsn, op)} == {"success"}
+    preserved = store.operation_receipt_conflicts(dsn, op)
+    assert [c["receipt_identity"] for c in preserved] == ["close1b-rc2"]
+    assert preserved[0]["content"]["provenance"] == "close1b-launcher"
     state = store.restart_reconciliation(dsn)
     pending = {o["id"]: o for o in state["unfinished_operations"]}
     assert pending[op]["reconcile_state"] == "conflict"
 
 
-def test_matching_late_receipt_not_flagged(migrated_db):
+def test_matching_late_receipt_under_a_new_identity_is_still_a_contradiction(migrated_db):
+    # Renamed from test_matching_late_receipt_not_flagged. Under the store at
+    # 9f6ec8a the name was accurate: a second `success` on a settled operation
+    # was recorded and not flagged. 9f6ec8a then made any second terminal
+    # outcome on a settled operation a contradiction, matching content or not,
+    # so the name asserted the opposite of the rule from that day on. The
+    # census rows 96/97 and the ENG-INVA-04 workstream entry both still read
+    # it under the old name.
     dsn = migrated_db
     op = _settled_op(dsn, "close1c")
     late = store.admit_receipt(dsn, _cmd(
         {"operation_id": op, "receipt_identity": "close1c-rc2",
-         "content": {"out": 1}, "outcome": "success"}, "close1cr2"))
+         "content": {"out": 1}, "outcome": "success",
+         "provenance": "close1c-launcher"}, "close1cr2"))
+    # This asserted `late.data.get("conflict") is None` and that "already
+    # settled" was in the detail. Neither can hold. The duplicate branch at
+    # store.py:1902 is keyed on receipt_identity, and this call is a new
+    # identity, so it falls to the conflict branch at store.py:1961 - a
+    # second receipt claiming a terminal outcome on a settled operation is a
+    # contradiction the store preserves for reconciliation, and it says so
+    # in both the detail and the data. Measured, the same operation returns
+    # conflict True and reconcile_state "conflict" for the identical content.
+    #
+    # The test name says what the file should have been checking, and it is
+    # the check that has a decision behind it: the store's own comment on
+    # `resolves_unknown` is that a success and a failure on one operation stay
+    # "structurally impossible", and the branch that decides it is the count.
+    # The same rule admits a matching duplicate and refuses a contradicting
+    # one, so both are asserted side by side here.
     assert late.code == ResultCode.APPLIED
-    assert late.data.get("conflict") is None
-    assert "already settled" in late.detail
+    assert "conflicting receipt preserved for reconciliation" in late.detail
+    assert late.data["conflict"] is True and late.data["settled"] is True
+    assert store.allocation_status(dsn, "close1c-a")["consumed"] == 40
+    assert {r["outcome"] for r in store.operation_receipts(dsn, op)} == {"success"}
+    state = store.restart_reconciliation(dsn)
+    pending = {o["id"]: o for o in state["unfinished_operations"]}
+    assert pending[op]["reconcile_state"] == "conflict"
+
+    # Replaying the first identity with the first content is the case the
+    # "already settled" wording belongs to, and it is the store's own
+    # idempotency path rather than a contradiction.
+    replay = store.admit_receipt(dsn, _cmd(
+        {"operation_id": op, "receipt_identity": "close1c-rc1",
+         "content": {"out": 1}, "outcome": "success",
+         "provenance": "close1c-launcher"}, "close1cr3"))
+    assert replay.code == ResultCode.ALREADY_APPLIED
+    assert "duplicate receipt" in replay.detail
+    assert replay.data.get("conflict") is None and replay.data["settled"] is True
 
 
 def _nested(depth: int) -> dict:

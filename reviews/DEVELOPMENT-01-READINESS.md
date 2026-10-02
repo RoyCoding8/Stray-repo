@@ -72,4 +72,4 @@ A local gateway was subsequently supplied by the human, along with model `claude
 
 ## Next action
 
-Implement [Development 02](../WORKER-DEVELOPMENT-02-PROMPT.md): resolve these four seams and make decision context operational for diagnosis, construction and fresh-worker continuation. Preserve the fixture, keep live evidence separate, and carry controlled prototype limitations forward. Broader recovery, scheduler, deployment and statistical-calibration work stays on the roadmap.
+Implement [Development 02](../docs/HISTORY.md#worker-development-02-prompt): resolve these four seams and make decision context operational for diagnosis, construction and fresh-worker continuation. Preserve the fixture, keep live evidence separate, and carry controlled prototype limitations forward. Broader recovery, scheduler, deployment and statistical-calibration work stays on the roadmap.

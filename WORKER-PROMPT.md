@@ -1,86 +1,109 @@
-# Initial implementation assignment: Agent-Society v2
+# Current assignment: complete the Stage 9 research comparison
 
-You are the implementation engineer for this project. The human has chosen this private Git repository as the collaboration channel between you and an architecture/review agent:
+You are the implementation and experiment coordinator in a fresh session. Complete the connected research batch below, including repairs and independent verification. Do not stop after infrastructure tests or replace the research with another general bug sweep.
 
-`the configured repository`
+The aim is general autonomous investigation, acquired executable methods and eventually improvement of the learner itself. SWE, Boolean and ordering tasks are experimental worlds, not a restriction on the eventual system. Stage 8 is closed at its bounded scope; Stage 9 is active. Useful learning, transfer and recursive improvement remain unproven.
 
-Implement the assignment below, verify it, make coherent commits, and push your branch. Commit and push are authorized; do not ask for confirmation again. Work only in this checkout; the committed files provide the assignment and design.
+## Start here
 
-## 1. Start here
+1. Read AGENTS.md, reports/PROJECT-LEDGER.md and IMPLEMENTATION-WORKFLOW.md.
+2. Read reviews/STAGE-09-TRANSFER-ASSESSMENT.md, then reports/STAGE-09-TRANSFER-BRIEF.md for the worker's underlying delivery. Treat the latter's completion claims as claims to check.
+3. Read docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md and the contracts relevant to your first lane. Use docs/design/README.md to find them; do not reread every historical assignment.
+4. Inspect local Git state, worktrees, active processes, database ownership and available runtime. Fetch origin. The reviewed implementation base is c06b3e90e6daf5b95238707664364f48abb73044; d0a95eb adds its assessment. This handoff is on codex/stage09-clean-handoff.
+5. Merge the handoff into codex/implementation-investigation-learning-02, or a clean integration branch based on it, before assigning lanes. Do not reset an active checkout. Verify ancestry and account for any newer commits.
 
-Read `AGENTS.md`, `IMPLEMENTATION-WORKFLOW.md` and `COLLABORATION.md`. Confirm the checkout's origin and inspect its status before changing anything. Fetch origin. The seed design is on `origin/codex/architecture-handoff`. For the first implementation, create `codex/implementation-s0-s3` from that seed. If that implementation branch already exists, inspect and continue it rather than replacing its history; deliberately merge applicable new handoff instructions after reviewing the diff. Preserve any existing work; never reset, clean, or force-push to make the checkout match your expectations.
+Use reports/PLAN.md for the task graph. Update the existing ledger and prompt in place when scope changes; old assignments are historical, indexed in docs/HISTORY.md.
 
-All required design documents are committed under `docs/design/`. Read them in this order:
+## What is already known
 
-1. `README.md` in the repository root: scope and file map.
-2. `docs/design/GLOSSARY.md`: precise vocabulary.
-3. `docs/design/REFINED-ARCHITECTURE.md`: purpose, mechanisms, abstract semantics, invariants, failure cases and experimental obligations.
-4. `docs/design/REPRESENTATION-DESIGN.md`: the selected representation contracts.
-5. `docs/design/TECHNOLOGY-DECISIONS.md`: selected technology, primary sources, assumptions and limits.
-6. `docs/design/PRACTICAL-SPECIFICATION.md`: normative implementation requirements and acceptance gates.
-7. `docs/design/REFINEMENT-ROADMAP.md`: design history and open empirical obligations.
+- Existing runtime and representation instruments are valuable. Preserve them unless a concrete causal defect requires replacement.
+- The small live reducer campaign in reports/evidence/invl02_liveacq_r4/ has six construction attempts, three acquired ENTRY wrappers delegating to authored ddmin, and three surviving paired outcomes. Their mean normalized-reduction delta is -0.15277777777777776 versus control. This is evidence of wrapper acquisition with worse outcomes on those pairs; it is not the full representation matrix.
+- The SWE qualification rows use fixture/authored programs. They do not demonstrate model-acquired STEP/AST/graph policies.
+- The reviewed builder sample contains four AST records but one unique AST program, four graph records but one unique graph program, and authored STEP controls. Distinguish construction events, unique source programs and retained artifact records. Independent model calls may legitimately converge to identical programs.
+- E2 and E4 were closed unrun using old exposure as a blanket blocker. That contradicts the authorized separate-allocation design. The old exposure stays unresolved; it does not consume a new campaign's dispatch count.
+- E2's constant terminal 'preserved' flag cannot measure experience benefit. It does not show that the experiment is impossible.
+- E3 has conflicting prose about controls. Recompute scoped tables from source records before claiming a win.
+- The review ran 43 tests successfully and hit one Windows-only AST child failure because the child imports Unix resource. No live calls or real-DB gates were rerun by that review. Historical broad suite numbers are not current qualification.
 
-The old constitution and D1-D82 appear only in a historical replacement map. They are not missing dependencies or additional binding constraints. References to the earlier no-implementation design pass describe its provenance. This assignment authorizes implementation in this repository.
+## Authority and experimental limits
 
-## 2. The outcome
+The user has authorized live testing on a verified free model and does not require token minimization. This is standing authorization for fresh, prospectively bounded studies in this assignment. Do not ask again merely because a new study namespace or freeze is required.
 
-Build S0-S3 from the practical specification: a functioning first learning system, with the relevant operator interface and real verification. Stop at the S3 review boundary after pushing the implementation and evidence. Do not expand into S4-S7 during this assignment unless the human explicitly changes its scope.
+Discover the configured route and credentials locally without printing secrets. Verify the actual route and free-tier restrictions before inference; do not assume an old model still exists. No paid fallback and no Jev calls. If free status cannot be established or the service requires new credentials, report that specific external dependency while continuing independent work.
 
-The system should let a temporary worker perform a bounded investigation, preserve what happened, resume through a fresh worker, develop and retain an executable method, and test whether that retained method benefits independently selected tasks. Software diagnosis is the first proving ground; the architecture remains general.
+Freeze a finite cap sheet for each new campaign, derived from its complete matrix: construction, development repairs, child/model calls, controls, repeats, retries and resume. Existing frozen caps remain immutable. Larger new studies are allowed; an old 64-call or eight-call study is not a global limit. Persist counters and pending exposure before effects, including crashes. Free price does not make usage, compute or experimental opportunity unmeasured.
 
-A collection of placeholders, interfaces, fake workers and simulated successes does not satisfy this assignment. Simulations are useful for deterministic tests and may demonstrate the pipeline, but their results must remain labeled as simulated. Actual learning claims require the corresponding real experiment.
+Keep old reservations under their original grants and report them separately. 5563 is a historical internal estimated exposure subtotal, not money, a dispatch count or necessarily the current total. Do not settle it by assumption. Do not reuse spent grants or restart terminal historical rounds. Create a fresh study root with explicit allocation and lineage to the standing authorization.
 
-## 3. Required slices
+Pin source, route, model, effort, protocols, selectors and limits before assessment. A route/model change requires a new freeze, with old results retained; do not mix the runs as though comparable.
 
-- **S0:** reproducible dependency/image manifest, configuration and explicit grants, database constraints/migrations, admitted execution profile, and separate gateway discovery/authentication/inference checks.
-- **S1:** a real bounded investigation loop, domain transition protocol, operation identities, reservation and settlement, durable workflow recovery, and usable operator inspection/control.
-- **S2:** immutable artifacts, grouped evidence derivations, current invalidation, constructed context with provenance, and fresh-worker continuation with unresolved effects preserved.
-- **S3:** executable candidate packages, frozen candidate/reference trials, attributable results, scoped release and actual method reuse; run the A/B/C comparison specified in section 11 of the practical specification when the environment permits it.
+## Milestones and dependency order
 
-Use the selected Python/PostgreSQL/DBOS foundation, controlled gateway transport and gVisor execution profile. Implement the narrow runtime contracts required for these slices. Keep the first composition interpreter small while preserving the chosen semantics. Generated code must not run in the trusted application process.
+### W0 — reconcile and establish readiness
 
-Do not downgrade generated execution to an unrestricted subprocess when a sandbox is missing. Do not substitute an in-memory store for the required durability and concurrency tests. Preserve current authority checks even when an attempt pins an older capability version.
+Map TR-01 through TR-05 to evidence, confirming or rebutting each with concrete records. Correct current status; retain original bundles and mark superseded interpretations.
 
-## 4. How to work
+Inventory reusable production paths for STEP, typed AST, action graph, experience, autonomous selection and learner revision. Identify which paths are actually connected and what must change. Produce a short crosswalk in PLAN, not a new architecture framework.
 
-Act as the implementation coordinator. The human authorizes parallel subagents and Git worktrees, and token expenditure is not a limiting consideration for this implementation assignment. Follow `IMPLEMENTATION-WORKFLOW.md`: establish common contracts, construct a dependency graph, delegate bounded tasks into separate worktrees, and integrate them through explicit review and test gates. Do not request subagent permission again for this assignment.
+Run a small real child and real gateway probe under the intended profile before large campaigns. Prove response capture, artifact binding, execution, receipt export and offline reconstruction. Distinguish route refusal, transport loss, empty content, invalid program and a poor task result. Failed preflight cannot be reported as model inability.
 
-Keep `reports/PLAN.md` with task ownership, requirement IDs, dependencies, base commits, branches/worktrees, file ownership and acceptance checks. Reserve the integration branch and shared contracts/configuration for the coordinator. Give every specialist the exact design sections and available skills to read. Specialists commit to their own branches and write separate task reports; the coordinator owns the consolidated reports and final integrated verification.
+Repair material authority, provenance or accounting defects before affected live work. Other lanes may continue independently. A missing Unix resource module requires a supported Linux execution environment or an explicit deployment limitation, never removing the child limits.
 
-Parallelize independent engineering and adversarial review; sequence shared contract decisions, migrations and integration. Provide isolated test databases/namespaces, ports, runtime state and workspaces. A Git worktree does not isolate these resources by itself. Start with a coordinator, two or three implementation specialists and a validation/review specialist where supported, then adjust the team to ready work and actual machine capacity.
+### W1 / E1 — connected representation and acquisition comparison
 
-This is bounded engineering design, not a fully enumerated coding recipe: the semantics and technology direction are selected, while concrete schemas, interfaces, compatibility, fixtures, UI and experimental implementation still require judgment. Make routine choices yourself. Use compact functions and meaningful database constraints. Avoid inline comments, duplicated logic, generic wrapper layers, unused extension points, and tests that merely repeat implementation expressions. Keep operator wording truthful and specific.
+Use one shared controlled path for authored baseline, interface-only acquisition and experience-conditioned acquisition. Compare executable STEP, typed AST and action graph on Boolean, ordering and substantive SWE worlds where each can express the required behavior.
 
-Follow the substantive design unless a concrete contradiction, dependency incompatibility, or measured failure requires a change. Record such a change with the affected requirement, evidence, selected alternative and consequence in `reports/DECISIONS.md`. Do not silently rewrite a requirement to make a failing test pass. For an unresolved material conflict, finish independent work and leave a precise question in the review request.
+Target at least four independent construction opportunities per supported representation/world/acquisition-treatment cell. Record all attempts, failed constructions, selected and rejected programs. Select and repair using development information only. Do not substitute an authored solver after acquisition fails and count that as the learned arm.
 
-Check primary documentation for the actual locked dependency versions. Do not assume every API in current online documentation exists in an older package pin. Commit the tested lock, runtime/image metadata, and reproducible setup instructions. Do not copy source code or development databases from the old project.
+Verify substantive learner behavior: observation-dependent probes, edits or actions reach the shared executor and affect the trajectory. A wrapper calling a fixed reducer remains labeled as such. Preserve that acquisition evidence without presenting it as invented investigation strategy.
 
-An unavailable optional plugin or skill is not a reason to abandon otherwise feasible implementation; use the committed specification directly. If the environment cannot run subagents, preserve the dependency-aware workflow and execute it serially, with the limitation reported.
+For SWE, target at least four distinct families and 24 held-out instances if the instrument supports genuine diversity. Deduplicate finite target support in tiny worlds. Freeze family/template separation before evaluation; do not create replication by renaming the same hidden target.
 
-## 5. Gateway, resources and unavailable infrastructure
+If a representation cannot express a required action, show the concrete limitation, leave the cell missing and continue supported cells. Do not hide a Python interpreter beneath an AST/graph label or build a general DSL platform just to fill the matrix.
 
-The human will supply an external inference endpoint; do not build a multi-provider gateway service. Implement its narrow adapter contract, configuration, typed errors, deadlines, request attribution and usage accounting. Fake adapters are permitted in tests. Do not invent credentials or report a simulated response as live inference.
+Report per-world and per-lineage outcomes, common-support paired comparisons, failures and resource distributions. Qualification fixtures are separate from the live results.
 
-You may build and verify everything independent of the live endpoint before it is available. Likewise, an unavailable Linux/gVisor environment is an unverified integration gate, not a reason to weaken isolation or claim containment was tested. Make the remaining setup and exact commands reproducible for the human or reviewer.
+### W2 / E2 — experience, retention and transfer
 
-Live API expenditure requires a configured endpoint and an explicit resource grant supplied for that run. A grant must cover the actual billable exposure; usage estimates alone do not establish a hard monetary ceiling. Do not ask for these inputs until there is a concrete run ready and independent work is complete. A missing input must be stated specifically.
+On supported acquisition paths compare relevant experience, no experience and equally sized irrelevant or shuffled experience. Keep interfaces, opportunity and assessment equal. Verify what information each treatment actually receives.
 
-## 6. Verification and experiment
+Measure selected probes, decision sequences, intermediate failures, reduction/quality and complete resource vectors. Terminal preservation can be a validity condition but cannot be the sole benefit metric when constant by construction.
 
-Map applicable requirement IDs to actual checks in `reports/VERIFICATION.md`. Include exact commands, tested revision, environment versions, outcomes and limitations. Distinguish static/unit, real Postgres, real sandbox, live gateway, recovery and learning tests.
+Compare retained-method reuse against cold reacquisition and within-domain versus held-out-domain adaptation where applicable. Add controlled changes in observations to test causal sensitivity. An unchanged decision may be a real null; do not require a difference before admitting a result.
 
-Exercise concurrency and failures at the actual boundaries. In particular: last-unit reservation races; duplicate commands and receipts; stale ownership; a broker crash after sending; domain commit before workflow checkpoint; evidence retraction racing release; artifact publication failure; and cancellation while an external outcome is unknown.
+Run at least two independent campaign namespaces for replication where the first valid campaign leaves supported arms. Keep mutable state and assessment feedback separate. A rerun after an apparatus failure is not scientific replication.
 
-The A/B/C experiment compares ordinary baseline behavior, retained textual lessons, and retained executable methods. Permit equally strong within-task tool use, match total resources and task exposure, include acquisition costs, and keep final evaluation tasks independent of development examples. A fresh worker must actually invoke the retained method. Report regressions and inconclusive outcomes. Do not alter the test after seeing which arm wins.
+### W3 / E3 — autonomous investigation selection
 
-Finite-panel observed gains are sufficient for a limited experimental release if its obligations hold. They do not justify a general statistical superiority claim. A failed learning hypothesis is a legitimate result; fixing the experimental result by hiding failed cases is not.
+Exercise the actual policy that selects investigations, diagnostics, reuse, continuation and stopping under a shared finite budget. Compare against a competent development-fitted allocation control and the specified default.
 
-## 7. Commit, report and push
+Trace each decision into admitted operations and outcomes. Recompute the disputed budget tables. Label any held-out best-in-space oracle as a retrospective reference, not a deployable control trained on held-out results.
 
-Make reviewable commits as coherent slices stabilize. Use specific commit messages. Commit implementation, migrations, tests, lock files, documentation and suitably sized reproducibility evidence. Exclude credentials, local environment files, database contents, caches, sandbox scratch and bulk run output. A private repository is still the shared source and evidence channel, not the runtime data directory.
+Use fresh evaluation tasks and show which choices the system made. Do not call a scripted campaign order an autonomous agenda, or infer general agency from a single finite benchmark.
 
-Complete `reports/IMPLEMENTATION-STATUS.md`, `reports/VERIFICATION.md`, `reports/DECISIONS.md` and `reviews/REQUEST.md` according to `COLLABORATION.md`. The review request must identify the seed/base commit and implementation tip, summarize changed behavior, list unmet gates and give exact reproduction commands. Never claim the final reporting commit's own hash inside that same file; use the implementation tip and supply the final pushed HEAD in your final response.
+### W4 / E4 — one executable learner revision
 
-Push `codex/implementation-s0-s3` to origin with its upstream configured. Verify the remote branch points to your final local commit. If transport/authentication prevents pushing, preserve all local commits and report the exact failure; do not fabricate publication.
+Connect a revisable decision that changes how new capabilities are acquired: diagnostic evidence selection, probe allocation, candidate construction or development-only repair policy. It must alter the learner, not just solve the downstream task or add advice to a prompt.
 
-Your final response must include: remote branch, final pushed commit, completed slices, verification performed, experiment result or exact blocker, and remaining material issues. Then wait for review at the agreed S3 boundary. Future revisions will arrive through commits and the review protocol.
+Freeze the allowed interface. The reviser cannot modify grants, accounting, execution limits, evaluators or sealed assessments. Qualify it with an independently written known-effect revision, no-op control and a disconnect counterexample.
+
+Attempt acquisition of a revision through the real model path. Compare revised and incumbent learners on a fresh acquisition cohort with equal opportunity and limits; evaluate the descendants they produce. If no revision is admissible, report that observed result and retain the qualified mechanism separately. Do not declare this milestone ineligible just because an unrelated acquired reducer was only a task solver.
+
+### W5 — integration, analysis and handback
+
+Follow IMPLEMENTATION-WORKFLOW.md for parallel ownership, serial integration and three independent review passes. Use a large useful swarm, not four generalists serializing the entire batch. Separate runtime repairs, representation instruments, worlds, experiments, controls, evidence checking and independent reviews into disjoint lanes. Queue dependent work rather than give two agents one file.
+
+The coordinator owns experiment authority and the final source freeze. Reviewer/maintenance lanes can run alongside long experiments without mutating their pinned source. When a bug invalidates a campaign, preserve it as invalid and use a new freeze; do not selectively repair favorable cells.
+
+Before delivery:
+- Check the public entry path with reviewer-authored bytes and evidence disconnects.
+- Demonstrate a clean verifier baseline and that each intended tamper produces an added failure.
+- Export enough raw construction, execution and receipt evidence to recompute verdicts offline. Verify exports before deleting receipt databases.
+- Run affected gates on the final integrated source and appropriately broader checks. Report incomplete, skipped and failed runs exactly; never combine counts into a fictional suite.
+- Produce one completion matrix for W0–W5 and E1–E4 with implemented, qualified, attempted, completed or specifically blocked states. A negative valid study can complete its question; unrun studies do not.
+- Issue separate verdicts for mechanism, acquisition, task utility, transfer, autonomous selection and learner improvement. Identify no more than three decision-relevant bottlenecks and recommend what architecture to keep, simplify or change.
+- Update reports/PROJECT-LEDGER.md and the roadmap. Keep Stage 9 active unless the assigned evidence supports closure. Push, verify remote equality, and clean only owned disposable work.
+
+## Stopping condition
+
+Complete the supported matrix and analysis, not an unlimited search for a positive result. Predetermine sampling and selection rules, preserve nulls and failed attempts, and do not tune on sealed outcomes. If a genuine external dependency prevents an experiment, finish independent milestones and give a reproducible blocker with the exact remaining work. No cosmetic cleanup or extra test count can replace the missing empirical answer.

@@ -60,6 +60,9 @@ class ScriptLauncher:
     def prior_send(self, operation_id: str) -> bool:
         return operation_id in self.sent_set
 
+    def prove_never_sent(self, operation_id: str, dispatch_generation: int | None = None) -> bool:
+        return operation_id not in self.sent_set
+
     def stop(self, operation_id: str) -> bool:
         return True
 
@@ -81,7 +84,8 @@ class CountingGateway:
         self.calls.append(request.operation_id)
         return ModelResponse(request.operation_id, f"answer-{len(self.calls)}",
                              {"simulated": True},
-                             Usage(charge_units=3, billed=True), "stop")
+                             Usage(input_tokens=3, output_tokens=2, charge_units=3,
+                                   charge_scale=1000, billed=True), "stop")
 
 
 def _rewind_to_prepared(dsn, op_id):
@@ -101,12 +105,41 @@ def test_p3i_model_rewind_never_reinfers(migrated_db):
     first = broker.dispatch_operation(dsn, "opm", launchers={}, gateway=gateway,
                                       ownership_generation=gen)
     assert first.dispatch_state == "observed" and gateway.calls == ["opm"]
+    settled_once = store.allocation_status(dsn, "a1")["consumed"]
+    assert settled_once == 3, "a billed model call settles its measured charge once"
     _rewind_to_prepared(dsn, "opm")
     retry = broker.dispatch_operation(dsn, "opm", launchers={}, gateway=gateway,
                                       ownership_generation=gen)
     assert retry.sent_this_call is False
     assert retry.next_decision == "needs-reconciliation"
     assert gateway.calls == ["opm"]
+    assert store.allocation_status(dsn, "a1")["consumed"] == settled_once
+
+
+def test_p3i_billed_model_without_token_counts_never_settles(migrated_db):
+    dsn = migrated_db
+    gen = _setup(dsn)
+    _model(dsn)
+
+    class Uncounted(CountingGateway):
+        def infer(self, request):
+            self.calls.append(request.operation_id)
+            return ModelResponse(request.operation_id, "answer",
+                                 {"simulated": True},
+                                 Usage(charge_units=3, billed=True), "stop")
+
+    gateway = Uncounted()
+    status = broker.dispatch_operation(dsn, "opm", launchers={}, gateway=gateway,
+                                       ownership_generation=gen)
+    assert gateway.calls == ["opm"]
+    assert status.next_decision == "receipt-admission-refused"
+    assert broker.read_operation(dsn, "opm")["settled"] is False
+    assert store.allocation_status(dsn, "a1")["consumed"] == 0
+    _rewind_to_prepared(dsn, "opm")
+    retry = broker.dispatch_operation(dsn, "opm", launchers={}, gateway=gateway,
+                                      ownership_generation=gen)
+    assert retry.next_decision != "terminal"
+    assert store.allocation_status(dsn, "a1")["consumed"] == 0
 
 
 def test_p3i_sandbox_rewind_fresh_launcher_never_resends(migrated_db):
@@ -167,7 +200,7 @@ def test_p3i_concurrent_redispatch_sends_once(migrated_db):
     dsn = migrated_db
     gen = _setup(dsn)
     _sandbox(dsn)
-    store.advance_dispatch(dsn, _cmd({"operation_id": "op1", "launcher_id": "gone",
+    store.advance_dispatch(dsn, _cmd({"operation_id": "op1", "launcher_id": "fake-1",
                                       "provider_id": ""}))
     assert broker.reconcile(dsn, "op1", {}).decision == "unresolved-liability"
     generation = int(broker.read_operation(dsn, "op1")["payload"]["_dispatch_generation"])
@@ -188,6 +221,45 @@ def test_p3i_concurrent_redispatch_sends_once(migrated_db):
         t.join()
     assert len(launchers["local-process"].sends) == 1
     assert broker.read_operation(dsn, "op1")["dispatch_state"] == "observed"
+    assert sum(r.sent_this_call for r in results) == 1
+
+
+def test_p3i_redispatch_refused_when_no_launcher_can_attest(migrated_db):
+    dsn = migrated_db
+    gen = _setup(dsn)
+    _sandbox(dsn)
+    store.advance_dispatch(dsn, _cmd({"operation_id": "op1", "launcher_id": "gone",
+                                      "provider_id": ""}))
+    assert broker.reconcile(dsn, "op1", {}).decision == "unresolved-liability"
+    generation = int(broker.read_operation(dsn, "op1")["payload"]["_dispatch_generation"])
+    launchers = {"local-process": ScriptLauncher()}
+    status = broker.redispatch_after_reset(
+        dsn, "op1", launchers, ownership_generation=gen,
+        expected_generation=generation)
+    assert status.next_decision == "refused-never-sent-proof"
+    assert status.sent_this_call is False
+    assert launchers["local-process"].sends == []
+    assert broker.read_operation(dsn, "op1")["dispatch_state"] == "unresolved"
+    assert int(broker.read_operation(dsn, "op1")["payload"]["_dispatch_generation"]) == generation
+
+
+def test_p3i_redispatch_refused_when_launcher_already_sent(migrated_db):
+    dsn = migrated_db
+    gen = _setup(dsn)
+    _sandbox(dsn)
+    store.advance_dispatch(dsn, _cmd({"operation_id": "op1", "launcher_id": "fake-1",
+                                      "provider_id": ""}))
+    assert broker.reconcile(dsn, "op1", {}).decision == "unresolved-liability"
+    generation = int(broker.read_operation(dsn, "op1")["payload"]["_dispatch_generation"])
+    launcher = ScriptLauncher()
+    launcher.sent_set.add("op1")
+    status = broker.redispatch_after_reset(
+        dsn, "op1", {"local-process": launcher}, ownership_generation=gen,
+        expected_generation=generation)
+    assert status.next_decision == "refused-never-sent-proof"
+    assert status.sent_this_call is False
+    assert launcher.sends == []
+    assert broker.read_operation(dsn, "op1")["dispatch_state"] == "unresolved"
 
 
 def test_p3i_reset_refuses_dispatching_with_unknown_receipt(migrated_db):

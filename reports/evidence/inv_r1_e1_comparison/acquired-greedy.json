@@ -1,0 +1,20 @@
+{
+ "campaign_id": "ad01-w1-acquired",
+ "members": [
+  {
+   "authored": false,
+   "capability_id": "acquired-sw-greedy-choice",
+   "entry": "ENTRY",
+   "method_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n    return result\n",
+   "origin": "model-acquired",
+   "params": {
+    "method": "greedy"
+   },
+   "scope": {
+    "family": "software"
+   },
+   "source_digest": "cfadd1a521205cfd33a41fe5c8f19dacdf19fd78ab5c705034e1f544d73e6f80"
+  }
+ ],
+ "queries": 96
+}

@@ -1,0 +1,35 @@
+{
+ "condition": "relevant-versus-shuffled",
+ "detail": {
+  "irrelevant_method": "none",
+  "relevant_method": "none"
+ },
+ "differs": true,
+ "irrelevant": {
+  "arm": "irrelevant",
+  "diagnostic": "software",
+  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "error": "",
+  "max_queries": 1,
+  "method": "none",
+  "operation_id": "ad01-w1-transfer-gr-00-e2-irrelevant",
+  "prompt_chars": 0,
+  "question": "What is the status of software capability ad01-sw?"
+ },
+ "irrelevant_chars": 382,
+ "observable": "proposal (question, diagnostic, requested_resources)",
+ "outcome": "differs",
+ "relevant": {
+  "arm": "relevant",
+  "diagnostic": "graph",
+  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "error": "",
+  "max_queries": 3,
+  "method": "none",
+  "operation_id": "ad01-w1-transfer-gr-00-e2-relevant",
+  "prompt_chars": 0,
+  "question": "What is the current capability level for graph development tasks?"
+ },
+ "relevant_chars": 382,
+ "target_task_id": "ad01-w1-transfer-gr-00"
+}

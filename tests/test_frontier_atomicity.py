@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import frontier
 from experiments.ad01 import improve_channel as channel
 
@@ -121,3 +122,168 @@ def test_incomplete_round_receipt_is_refused(tmp_path):
         store.record_round_command(
             1, 0, action={"kind": "wait", "inputs": {}, "requested_resources": {}},
             state={}, receipt={}, executed_digest="a" * 64)
+
+
+def test_effect_cannot_settle_before_a_durable_charge(tmp_path):
+    store = _store(tmp_path)
+    effect = store.accept("opp-probe", store.active_digest)
+    store._doc["pending_effects"][0]["charged"] = False
+    store._doc["pending_effects"][0]["charged_resources"] = {}
+    store.save()
+    observation = _observation(effect)
+
+    with pytest.raises(frontier.Refused, match="charge"):
+        store.settle(effect["effect_id"], observation)
+
+    assert store.settled_effects == []
+    assert store.authority["queries_used"] == 1
+
+
+def test_attributed_observation_cannot_reuse_an_unattributed_identity(tmp_path):
+    store = _store(tmp_path)
+    store.observe({"observation_id": "obs-shared", "task": "unattributed",
+                   "verdict": "observed"})
+    effect = store.admit_and_spend(
+        "opp-probe", store.active_digest, {"queries": 1, "steps": 1},
+        effect_identity={"operation_id": "op-probe"})
+
+    with pytest.raises(frontier.Refused, match="observation.*identity"):
+        store.complete_effect(effect["effect_id"], {
+            **_observation(effect), "observation_id": "obs-shared"})
+
+    assert len(store.observations) == 1
+    assert store.settled_effects == []
+
+
+def test_restart_rejects_duplicate_observation_identity(tmp_path):
+    store = _store(tmp_path)
+    store._doc["observations"] = [
+        {"observation_id": "obs-shared", "task": "one", "verdict": "observed"},
+        {"observation_id": "obs-shared", "task": "two", "verdict": "observed"},
+    ]
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="observation.*identity"):
+        frontier.FrontierStore(str(store.path))
+
+
+def test_restart_rejects_two_observations_for_one_settled_effect(tmp_path):
+    store = _store(tmp_path)
+    effect = store.admit_and_spend(
+        "opp-probe", store.active_digest, {"queries": 1, "steps": 1},
+        effect_identity={"operation_id": "op-probe"})
+    first = _observation(effect)
+    store.complete_effect(effect["effect_id"], first)
+    second = {**first, "observation_id": "obs-second"}
+    store._doc["observations"].append(second)
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="observation.*effect"):
+        frontier.FrontierStore(str(store.path))
+
+
+def test_write_path_rejects_two_observations_for_one_effect(tmp_path):
+    store = _store(tmp_path)
+    effect = store.admit_and_spend(
+        "opp-probe", store.active_digest, {"queries": 1, "steps": 1},
+        effect_identity={"operation_id": "op-probe"})
+    first = _observation(effect)
+    store.complete_effect(effect["effect_id"], first)
+
+    with pytest.raises(frontier.Refused, match="observation.*effect"):
+        store.observe({**first, "observation_id": "obs-second"})
+
+    assert len(store.observations) == 1
+
+
+@pytest.mark.parametrize("resources", [
+    {},
+    {"queries": 0},
+    {"queries": -1},
+    {"queries": True},
+    {"queries": float("inf")},
+    {"unknown": 1},
+])
+@pytest.mark.parametrize("record_kind", ["effect", "round-journal"])
+def test_restart_rejects_invalid_charged_resource_projection(
+        tmp_path, resources, record_kind):
+    store = _store(tmp_path)
+    if record_kind == "effect":
+        store.admit_and_spend(
+            "opp-probe", store.active_digest, {"queries": 1, "steps": 1},
+            effect_identity={"operation_id": "op-probe"})
+        charged = store._doc["pending_effects"][0]
+    else:
+        channel.drive_improve_round(
+            store, rules.make_task("dev", 4), round_no=1,
+            admit_probes=True)
+        charged = next(
+            entry for entry in store._doc["round_journal"]
+            if entry["charged"])
+    charged["charged_resources"] = resources
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="resource|charge"):
+        frontier.FrontierStore(str(store.path))
+
+
+@pytest.mark.parametrize("record_kind", ["effect", "round-journal"])
+def test_restart_rejects_missing_charged_resource_projection(
+        tmp_path, record_kind):
+    store = _store(tmp_path)
+    if record_kind == "effect":
+        store.admit_and_spend(
+            "opp-probe", store.active_digest, {"queries": 1, "steps": 1},
+            effect_identity={"operation_id": "op-probe"})
+        charged = store._doc["pending_effects"][0]
+    else:
+        channel.drive_improve_round(
+            store, rules.make_task("dev", 4), round_no=1,
+            admit_probes=True)
+        charged = next(
+            entry for entry in store._doc["round_journal"]
+            if entry["charged"])
+    del charged["charged_resources"]
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="resource|charge"):
+        frontier.FrontierStore(str(store.path))
+
+
+def test_restart_rejects_tampered_historical_round_result(tmp_path):
+    store = _store(tmp_path)
+    channel.drive_improve_round(
+        store, rules.make_task("dev", 4), round_no=1, admit_probes=True)
+    store._doc["round_results"][0]["log"][0]["result"] = "forged"
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="round result|identity"):
+        frontier.FrontierStore(str(store.path))
+
+
+@pytest.mark.parametrize("field", ["rounds", "improvement_log"])
+def test_restart_rejects_removed_dead_round_projection(tmp_path, field):
+    store = _store(tmp_path)
+    store._doc[field] = [{"forged": True}]
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="round|projection"):
+        frontier.FrontierStore(str(store.path))
+
+
+def test_restart_rejects_malformed_evidence_record_as_refusal(tmp_path):
+    store = _store(tmp_path)
+    store._doc["evidence"] = [[]]
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="evidence.*object|projection"):
+        frontier.FrontierStore(str(store.path))
+
+
+def test_restart_rejects_malformed_accepted_revision_as_refusal(tmp_path):
+    store = _store(tmp_path)
+    store._doc["accepted_revisions"] = [[]]
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="accepted revision"):
+        frontier.FrontierStore(str(store.path))

@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from psycopg.conninfo import conninfo_to_dict
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -19,10 +20,32 @@ DSN = os.environ.get(
 MISSING_DSN = "dbname=ec02test_p3e_missing host=/var/run/postgresql user=ubuntu"
 MIGRATIONS = ROOT / "migrations"
 
+# This battery truncates its store, so the property worth asserting is that the
+# store is disposable and private to the run -- not that it carries the name
+# this module defaults to. `tests/conftest_isolation.py` hands every session
+# `s09iso_<token>_<original>`, so a name comparison could never hold and the
+# seam was pinned rather than redirected. The shared and live names are the
+# ones that must actually be refused.
+_SHARED_PREFIX = "ec02test_"
+_SHARED_NAMES = ("postgres", "template0", "template1")
+
+
+def _assert_disposable_store(dsn: str) -> str:
+    """Refuse a store this battery must not empty, and return its dbname."""
+    name = conninfo_to_dict(dsn).get("dbname") or ""
+    if not name:
+        raise AssertionError("P3E_DSN carries no dbname: %r" % (dsn,))
+    if (name.startswith(("live", _SHARED_PREFIX)) or name.endswith("_live")
+            or name in _SHARED_NAMES):
+        raise AssertionError(
+            "the pass-3 entry battery truncates its store, so it must not be "
+            "aimed at a shared or live database, got %r" % (name,))
+    return name
+
 
 @pytest.fixture()
 def pg():
-    assert DSN.split("dbname=")[1].split()[0] == "ec02test_p3e_entry"
+    _assert_disposable_store(DSN)
     from settlement import db
     db.apply_migrations(DSN, MIGRATIONS)
     with db.connect(DSN) as conn:

@@ -1,0 +1,25 @@
+=== RELEVANT ===
+Write one python policy that decides how to investigate.
+Family: .
+Interface: exactly one module-level function STEP(view, state).
+The view holds task_content, observations, open_questions,
+last_result, eligible_methods, remaining and contract_versions.
+Return exactly {"action": <action>, "state": <object>}.
+Action kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.
+Entry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.
+Source must be non-empty python source that parses with exactly one module-level function carrying the entry name.
+Budget: {}.
+Prior observations: [{"task_id":"ad01-w1-dev-gr-00","verdict":"unmeasured"},{"task_id":"ad01-w1-dev-gr-01","verdict":"unmeasured"},{"task_id":"ad01-w1-dev-gr-02","verdict":"unmeasured"}]
+
+=== IRRELEVANT ===
+Write one python policy that decides how to investigate.
+Family: .
+Interface: exactly one module-level function STEP(view, state).
+The view holds task_content, observations, open_questions,
+last_result, eligible_methods, remaining and contract_versions.
+Return exactly {"action": <action>, "state": <object>}.
+Action kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.
+Entry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.
+Source must be non-empty python source that parses with exactly one module-level function carrying the entry name.
+Budget: {}.
+Prior observations: [{"task_id":"ad01-w1-within-sw-01","verdict":"unmeasured"}]

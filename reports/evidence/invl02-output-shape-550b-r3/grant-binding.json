@@ -1,0 +1,43 @@
+{
+  "schema": "settlement-gateway/live-grant-binding-v1",
+  "authorized_on": "2026-09-24",
+  "authorization_source": "human standing authorization for Nemotron Ultra 550B free route, restated in WORKER-STAGE-09-LIVE-RESUME-2026-09-24.md and reports/cap-sheets/invl02-live-grant.md",
+  "bound_study": {
+    "study_root": "invl02-output-shape-550b-r1",
+    "protocol": "invl02-output-shape-550b-r1-v1",
+    "run_id": "32ef91020a3141769bc73f7c28f81bcd",
+    "freeze_digest": "ad3de342bad6f723db2e559942387d06506534fffbae2d5828e7758b70047509",
+    "source_identity": "ad685e8d698966c72617a3b505f74f9ab6e9dda331146efa64bffaf5ebb0a202",
+    "freeze_path": "reports/evidence/invl02-output-shape-550b-r3/freeze.json"
+  },
+  "bound_route": {
+    "endpoint": "http://localhost:4000/v1",
+    "provider": "nvidia",
+    "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "tier": "free"
+  },
+  "bound_limits": {
+    "max_dispatches": 8,
+    "initial_dispatches": 4,
+    "max_output_tokens": 2048,
+    "max_response_characters": 512,
+    "repairs_per_task": 1,
+    "automatic_retries": 0
+  },
+  "preconditions_checked_before_dispatch": {
+    "frozen_source_digests_match_working_tree": true,
+    "route_digest": "8bf8cbe66279c4651140227678b3f98a55ca791b0f70cca18d3c6e4b5ccd0399",
+    "route_still_in_live_model_catalog": true,
+    "prior_physical_dispatches_for_this_study": 0,
+    "route_changed_since_freeze": false,
+    "cost_changed_since_freeze": false
+  },
+  "scope_limits": [
+    "Free route only. If the route becomes paid or ambiguous, do not dispatch.",
+    "At most eight physical model dispatches for this study, per the frozen limits.",
+    "Credentials never enter Git, reports, or evidence.",
+    "This grant expires with the study and is not carried to any other study root."
+  ],
+  "grant_marker": "derived from the user's standing authorization; the runtime value is set only for this invocation and is not recorded in any tracked file"
+}

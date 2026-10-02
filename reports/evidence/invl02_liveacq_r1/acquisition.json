@@ -1,0 +1,123 @@
+{
+ "acquired": true,
+ "capability_id": "policy-sw-e910a154",
+ "entry": "STEP",
+ "origin_label": "acquired",
+ "source": "def STEP(view, state):\n    # Initialize state if not present\n    if state is None:\n        state = {\n            \"diagnosed\": [],\n            \"method_used\": None,\n            \"steps\": 0\n        }\n    \n    # Increment step counter\n    state[\"steps\"] = state.get(\"steps\", 0) + 1\n    \n    # Safety stop after too many steps\n    if state[\"steps\"] > 20:\n        return {\"action\": {\"kind\": \"stop\", \"target\": \"\", \"inputs\": {}, \"evidence_refs\": [], \"requested_resources\": {}}, \"state\": state}\n    \n    # Get open questions\n    open_questions = view.get(\"open_questions\", [])\n    \n    # If there are open questions not yet diagnosed, diagnose the first one\n    for i, q in enumerate(open_questions):\n        if i not in state[\"diagnosed\"]:\n            state[\"diagnosed\"].append(i)\n            return {\n                \"action\": {\n                    \"kind\": \"diagnose\",\n                    \"target\": q,\n                    \"inputs\": {},\n                    \"evidence_refs\": [],\n                    \"requested_resources\": {}\n                },\n                \"state\": state\n            }\n    \n    # If all questions diagnosed, check eligible methods\n    eligible_methods = view.get(\"eligible_methods\", [])\n    if eligible_methods and state[\"method_used\"] is None:\n        # Use the first eligible method\n        method_name = eligible_methods[0]\n        state[\"method_used\"] = method_name\n        return {\n            \"action\": {\n                \"kind\": \"use_method\",\n                \"target\": method_name,\n                \"inputs\": {},\n                \"evidence_refs\": [],\n                \"requested_resources\": {}\n            },\n            \"state\": state\n        }\n    \n    # If a method was used and we have a last_result, propose revision\n    last_result = view.get(\"last_result\")\n    if last_result and state[\"method_used\"] is not None:\n        return {\n            \"action\": {\n                \"kind\": \"propose_revision\",\n                \"target\": \"solution\",\n                \"inputs\": {\"content\": str(last_result)},\n                \"evidence_refs\": [],\n                \"requested_resources\": {}\n            },\n            \"state\": state\n        }\n    \n    # If no eligible methods, try to construct one based on task content\n    if not eligible_methods and state.get(\"constructed\", False) is False:\n        state[\"constructed\"] = True\n        return {\n            \"action\": {\n                \"kind\": \"construct_method\",\n                \"target\": \"investigation_method\",\n                \"inputs\": {\"description\": \"Method to investigate software issue\"},\n                \"evidence_refs\": [],\n                \"requested_resources\": {}\n            },\n            \"state\": state\n        }\n    \n    # Default: stop\n    return {\n        \"action\": {\n            \"kind\": \"stop\",\n            \"target\": \"\",\n            \"inputs\": {},\n            \"evidence_refs\": [],\n            \"requested_resources\": {}\n        },\n        \"state\": state\n    }",
+ "executed_sha256": "e910a154eba95305059e5dacc0cdc4e1853bc7654012e1f4cef78a686dcc0bdf",
+ "lineage": {
+  "campaign_id": "liveacq01",
+  "lineage": 1,
+  "study_root": "liveacq-study-01",
+  "init_operation": "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+  "repair_operation": null,
+  "init_failure": null,
+  "init_response_digest": "2f31e69efdcb8359166e7ae4655d1f822e9734441a76fafb3e2e6d4c02cfcc93",
+  "calls_made": 1,
+  "response_digest": "2f31e69efdcb8359166e7ae4655d1f822e9734441a76fafb3e2e6d4c02cfcc93"
+ },
+ "acquisition_evidence": {
+  "operation_id": "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+  "version": "invl02-acquisition-evidence-v1",
+  "prompt_digest": "19ab090fc9d0694127ecd934f55301f07d2b92ee6ca461b0f95c19c7a9469894",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "receipt_identity": "gw:ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+  "response_digest": "2f31e69efdcb8359166e7ae4655d1f822e9734441a76fafb3e2e6d4c02cfcc93",
+  "route": {
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "provider": "nvidia",
+   "tier": "free"
+  },
+  "simulated": null,
+  "earned": false,
+  "reason": "requested model 'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free' is not the resolved 'nvidia/nemotron-3-ultra-550b-a55b:free'"
+ },
+ "operation_ids": [
+  "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init"
+ ],
+ "validation": {
+  "gate": "ok",
+  "dry_run": {
+   "action_kind": "construct_method",
+   "state_bytes": 33,
+   "operation_id": "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init-validate"
+  }
+ },
+ "guard_spent_dispatches": 1,
+ "guard_refusals": "",
+ "ledger": [
+  {
+   "version": "invl02-evidence-v2",
+   "kind": "gateway-dispatch",
+   "operation_id": "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+   "attempt": 1,
+   "outcome": "success",
+   "arm": null,
+   "task_id": null,
+   "source_digest": null,
+   "artifact_digest": null,
+   "input_digest": "19ab090fc9d0694127ecd934f55301f07d2b92ee6ca461b0f95c19c7a9469894",
+   "result_digest": "2f31e69efdcb8359166e7ae4655d1f822e9734441a76fafb3e2e6d4c02cfcc93",
+   "package_digest": null,
+   "parent_digest": null,
+   "round": null,
+   "dispatch_evidence_digest": null,
+   "driver_digest": null,
+   "operation_payload_digest": null,
+   "raw_payload_digest": "0587fa7d66e610d8d6fc90b37daad88364e658878cad6c0e16eef25349261066",
+   "route_digest": "3a7e612a242dfcd1c90b5553560b2a1c10f3fea78e6eeb99f2847512e9ecbe65",
+   "parse_outcome": "pending",
+   "accepted_candidate_digest": null,
+   "receipt_identity": "evidence:c60e77991d8fd57d32377f12bb724d84087aa975f27d7e3547cf148668fa3643",
+   "evidence_digest": "e4e877ded3cb75ff74c2cb84b575e08da29c73b6543244c2aba20efd6953eaa7",
+   "details": {
+    "raw_payload": {
+     "raw_prompt": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): fb028907a3385c7d66b3a34785beced40a36f86a0e1e98388007350aace08d63\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"deadline_ms\": 300000, \"max_output_tokens\": 2048, \"max_queries\": 16, \"model_calls\": 8}.",
+     "raw_response": "{\"entry\": \"def STEP(view, state):\\n    # Initialize state if not present\\n    if state is None:\\n        state = {\\n            \\\"diagnosed\\\": [],\\n            \\\"method_used\\\": None,\\n            \\\"steps\\\": 0\\n        }\\n    \\n    # Increment step counter\\n    state[\\\"steps\\\"] = state.get(\\\"steps\\\", 0) + 1\\n    \\n    # Safety stop after too many steps\\n    if state[\\\"steps\\\"] > 20:\\n        return {\\\"action\\\": {\\\"kind\\\": \\\"stop\\\", \\\"target\\\": \\\"\\\", \\\"inputs\\\": {}, \\\"evidence_refs\\\": [], \\\"requested_resources\\\": {}}, \\\"state\\\": state}\\n    \\n    # Get open questions\\n    open_questions = view.get(\\\"open_questions\\\", [])\\n    \\n    # If there are open questions not yet diagnosed, diagnose the first one\\n    for i, q in enumerate(open_questions):\\n        if i not in state[\\\"diagnosed\\\"]:\\n            state[\\\"diagnosed\\\"].append(i)\\n            return {\\n                \\\"action\\\": {\\n                    \\\"kind\\\": \\\"diagnose\\\",\\n                    \\\"target\\\": q,\\n                    \\\"inputs\\\": {},\\n                    \\\"evidence_refs\\\": [],\\n                    \\\"requested_resources\\\": {}\\n                },\\n                \\\"state\\\": state\\n            }\\n    \\n    # If all questions diagnosed, check eligible methods\\n    eligible_methods = view.get(\\\"eligible_methods\\\", [])\\n    if eligible_methods and state[\\\"method_used\\\"] is None:\\n        # Use the first eligible method\\n        method_name = eligible_methods[0]\\n        state[\\\"method_used\\\"] = method_name\\n        return {\\n            \\\"action\\\": {\\n                \\\"kind\\\": \\\"use_method\\\",\\n                \\\"target\\\": method_name,\\n                \\\"inputs\\\": {},\\n                \\\"evidence_refs\\\": [],\\n                \\\"requested_resources\\\": {}\\n            },\\n            \\\"state\\\": state\\n        }\\n    \\n    # If a method was used and we have a last_result, propose revision\\n    last_result = view.get(\\\"last_result\\\")\\n    if last_result and state[\\\"method_used\\\"] is not None:\\n        return {\\n            \\\"action\\\": {\\n                \\\"kind\\\": \\\"propose_revision\\\",\\n                \\\"target\\\": \\\"solution\\\",\\n                \\\"inputs\\\": {\\\"content\\\": str(last_result)},\\n                \\\"evidence_refs\\\": [],\\n                \\\"requested_resources\\\": {}\\n            },\\n            \\\"state\\\": state\\n        }\\n    \\n    # If no eligible methods, try to construct one based on task content\\n    if not eligible_methods and state.get(\\\"constructed\\\", False) is False:\\n        state[\\\"constructed\\\"] = True\\n        return {\\n            \\\"action\\\": {\\n                \\\"kind\\\": \\\"construct_method\\\",\\n                \\\"target\\\": \\\"investigation_method\\\",\\n                \\\"inputs\\\": {\\\"description\\\": \\\"Method to investigate software issue\\\"},\\n                \\\"evidence_refs\\\": [],\\n                \\\"requested_resources\\\": {}\\n            },\\n            \\\"state\\\": state\\n        }\\n    \\n    # Default: stop\\n    return {\\n        \\\"action\\\": {\\n            \\\"kind\\\": \\\"stop\\\",\\n            \\\"target\\\": \\\"\\\",\\n            \\\"inputs\\\": {},\\n            \\\"evidence_refs\\\": [],\\n            \\\"requested_resources\\\": {}\\n        },\\n        \\\"state\\\": state\\n    }\", \"notes\": \"Policy that diagnoses open questions, uses eligible methods, constructs methods if needed, and proposes revisions based on results.\"}"
+    },
+    "route": {
+     "adapter": "http",
+     "contract": "settlement-gateway/http-responses-v1",
+     "response_received": true,
+     "endpoint": "http://localhost:4000/v1",
+     "request_endpoint": "http://localhost:4000/v1",
+     "returned_endpoint": "http://127.0.0.1:4000/v1",
+     "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "provider": "nvidia",
+     "tier": "free"
+    },
+    "stop_reason": "stop",
+    "usage": {
+     "input_tokens": 439,
+     "output_tokens": 1594,
+     "charge_units": "unknown",
+     "charge_scale": "unknown",
+     "provider_enforced_ceiling": "unknown",
+     "billed": "unknown"
+    }
+   },
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "endpoint": "http://localhost:4000/v1",
+   "provider": "nvidia",
+   "tier": "free",
+   "requested_output_cap": 2048,
+   "response_digest": "2f31e69efdcb8359166e7ae4655d1f822e9734441a76fafb3e2e6d4c02cfcc93",
+   "prompt_digest": "19ab090fc9d0694127ecd934f55301f07d2b92ee6ca461b0f95c19c7a9469894",
+   "raw_prompt": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): fb028907a3385c7d66b3a34785beced40a36f86a0e1e98388007350aace08d63\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"deadline_ms\": 300000, \"max_output_tokens\": 2048, \"max_queries\": 16, \"model_calls\": 8}.",
+   "raw_response": "{\"entry\": \"def STEP(view, state):\\n    # Initialize state if not present\\n    if state is None:\\n        state = {\\n            \\\"diagnosed\\\": [],\\n            \\\"method_used\\\": None,\\n            \\\"steps\\\": 0\\n        }\\n    \\n    # Increment step counter\\n    state[\\\"steps\\\"] = state.get(\\\"steps\\\", 0) + 1\\n    \\n    # Safety stop after too many steps\\n    if state[\\\"steps\\\"] > 20:\\n        return {\\\"action\\\": {\\\"kind\\\": \\\"stop\\\", \\\"target\\\": \\\"\\\", \\\"inputs\\\": {}, \\\"evidence_refs\\\": [], \\\"requested_resources\\\": {}}, \\\"state\\\": state}\\n    \\n    # Get open questions\\n    open_questions = view.get(\\\"open_questions\\\", [])\\n    \\n    # If there are open questions not yet diagnosed, diagnose the first one\\n    for i, q in enumerate(open_questions):\\n        if i not in state[\\\"diagnosed\\\"]:\\n            state[\\\"diagnosed\\\"].append(i)\\n            return {\\n                \\\"action\\\": {\\n                    \\\"kind\\\": \\\"diagnose\\\",\\n                    \\\"target\\\": q,\\n                    \\\"inputs\\\": {},\\n                    \\\"evidence_refs\\\": [],\\n                    \\\"requested_resources\\\": {}\\n                },\\n                \\\"state\\\": state\\n            }\\n    \\n    # If all questions diagnosed, check eligible methods\\n    eligible_methods = view.get(\\\"eligible_methods\\\", [])\\n    if eligible_methods and state[\\\"method_used\\\"] is None:\\n        # Use the first eligible method\\n        method_name = eligible_methods[0]\\n        state[\\\"method_used\\\"] = method_name\\n        return {\\n            \\\"action\\\": {\\n                \\\"kind\\\": \\\"use_method\\\",\\n                \\\"target\\\": method_name,\\n                \\\"inputs\\\": {},\\n                \\\"evidence_refs\\\": [],\\n                \\\"requested_resources\\\": {}\\n            },\\n            \\\"state\\\": state\\n        }\\n    \\n    # If a method was used and we have a last_result, propose revision\\n    last_result = view.get(\\\"last_result\\\")\\n    if last_result and state[\\\"method_used\\\"] is not None:\\n        return {\\n            \\\"action\\\": {\\n                \\\"kind\\\": \\\"propose_revision\\\",\\n                \\\"target\\\": \\\"solution\\\",\\n                \\\"inputs\\\": {\\\"content\\\": str(last_result)},\\n                \\\"evidence_refs\\\": [],\\n                \\\"requested_resources\\\": {}\\n            },\\n            \\\"state\\\": state\\n        }\\n    \\n    # If no eligible methods, try to construct one based on task content\\n    if not eligible_methods and state.get(\\\"constructed\\\", False) is False:\\n        state[\\\"constructed\\\"] = True\\n        return {\\n            \\\"action\\\": {\\n                \\\"kind\\\": \\\"construct_method\\\",\\n                \\\"target\\\": \\\"investigation_method\\\",\\n                \\\"inputs\\\": {\\\"description\\\": \\\"Method to investigate software issue\\\"},\\n                \\\"evidence_refs\\\": [],\\n                \\\"requested_resources\\\": {}\\n            },\\n            \\\"state\\\": state\\n        }\\n    \\n    # Default: stop\\n    return {\\n        \\\"action\\\": {\\n            \\\"kind\\\": \\\"stop\\\",\\n            \\\"target\\\": \\\"\\\",\\n            \\\"inputs\\\": {},\\n            \\\"evidence_refs\\\": [],\\n            \\\"requested_resources\\\": {}\\n        },\\n        \\\"state\\\": state\\n    }\", \"notes\": \"Policy that diagnoses open questions, uses eligible methods, constructs methods if needed, and proposes revisions based on results.\"}",
+   "stop_reason": "stop",
+   "usage": {
+    "input_tokens": 439,
+    "output_tokens": 1594,
+    "charge_units": "unknown",
+    "charge_scale": "unknown",
+    "provider_enforced_ceiling": "unknown",
+    "billed": "unknown"
+   },
+   "billed": "unknown",
+   "charge_units": "unknown",
+   "route_error": null
+  }
+ ]
+}

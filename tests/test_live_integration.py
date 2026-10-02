@@ -90,7 +90,7 @@ def test_guard_preserves_unknown_usage_in_ledger_and_dispatch():
     from settlement.gateway import ModelRequest, Usage
 
     usage = Usage(input_tokens=None, output_tokens=None, charge_units=None,
-                  charge_scale=None, billed=None)
+                  charge_scale=None, provider_enforced_ceiling=None, billed=None)
     guard = live.LiveGuard(
         _ScriptGateway(["ok"], usage=usage), pinned_model="test-model",
         ceiling=1)
@@ -100,7 +100,7 @@ def test_guard_preserves_unknown_usage_in_ledger_and_dispatch():
     expected = {
         "input_tokens": "unknown", "output_tokens": "unknown",
         "charge_units": "unknown", "charge_scale": "unknown",
-        "provider_enforced_ceiling": False, "billed": "unknown"}
+        "provider_enforced_ceiling": "unknown", "billed": "unknown"}
 
     assert response.text == "ok"
     assert guard.ledger[0]["usage"] == expected

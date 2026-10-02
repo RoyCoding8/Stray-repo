@@ -1,0 +1,184 @@
+{
+ "acquired": 3,
+ "acquired_arms": 6,
+ "acquired_use_records": 3,
+ "arms": [
+  {
+   "acquired": false,
+   "arm": "arm_so00",
+   "capability_id": null,
+   "earned": null,
+   "elapsed_s": 122.4,
+   "reason": "live method acquisition failed: construction call ad01-r4acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init left no settled response",
+   "task_id": "ad01-w0-within-sw-00",
+   "use_error": null
+  },
+  {
+   "acquired": true,
+   "arm": "arm_gr01",
+   "capability_id": "acquired-gr-3df03ec1",
+   "earned": true,
+   "elapsed_s": 46.4,
+   "reason": null,
+   "task_id": "ad01-w0-within-gr-00",
+   "use_error": null
+  },
+  {
+   "acquired": true,
+   "arm": "arm_so02",
+   "capability_id": "acquired-sw-c20f2724",
+   "earned": true,
+   "elapsed_s": 106.5,
+   "reason": null,
+   "task_id": "ad01-w1-within-sw-00",
+   "use_error": null
+  },
+  {
+   "acquired": true,
+   "arm": "arm_gr03",
+   "capability_id": "acquired-gr-63d3d820",
+   "earned": true,
+   "elapsed_s": 40.7,
+   "reason": null,
+   "task_id": "ad01-w1-within-gr-00",
+   "use_error": null
+  },
+  {
+   "acquired": false,
+   "arm": "arm_so04",
+   "capability_id": null,
+   "earned": null,
+   "elapsed_s": 122.6,
+   "reason": "live method acquisition failed: construction call ad01-r4acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init left no settled response",
+   "task_id": "ad01-w2-within-sw-00",
+   "use_error": null
+  },
+  {
+   "acquired": false,
+   "arm": "arm_gr05",
+   "capability_id": null,
+   "earned": null,
+   "elapsed_s": 122.3,
+   "reason": "live method acquisition failed: construction call ad01-r4acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init left no settled response",
+   "task_id": "ad01-w2-within-gr-00",
+   "use_error": null
+  }
+ ],
+ "ceiling_derivation": {
+  "construction_call_ceiling": 4,
+  "dispatch_ceiling": 12,
+  "margin_execs": 6,
+  "note": "one model call per task plus one repair slot per task, and retries are zero, so the ceiling is twice the task count",
+  "per_sandbox_exec_units": 111,
+  "stop_settle_s": 80,
+  "timeout_ms": 30000,
+  "use_execs": 12,
+  "validation_execs": 6
+ },
+ "ceilings": {
+  "max_construction_calls": 12,
+  "max_execution_units": 2664,
+  "max_model_calls": 24,
+  "max_witness_queries": 0
+ },
+ "control_distinct": false,
+ "control_distinct_refusal": "refused: control is not distinct from the acquired arm: 3 task(s) are on one arm only",
+ "control_records": 6,
+ "earned": 3,
+ "gate_split": {
+  "converged": 0,
+  "differing_budget": 0,
+  "one_arm_returned_no_candidate": 0,
+  "paired_tasks": 3,
+  "same_candidate": 0,
+  "same_executed_policy": 0,
+  "same_source": 0,
+  "same_strategy": 0,
+  "same_walk": 0,
+  "unmeasured_walk": 0,
+  "unnamed_executed_policy": 0,
+  "unpaired_tasks": 3
+ },
+ "guard": {
+  "ceiling": 12,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 6,
+  "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 6,
+  "version": "invl02-live-v1"
+ },
+ "mean_acquired_minus_control": -0.15277777777777776,
+ "panel": [
+  "ad01-w0-within-sw-00",
+  "ad01-w0-within-gr-00",
+  "ad01-w1-within-sw-00",
+  "ad01-w1-within-gr-00",
+  "ad01-w2-within-sw-00",
+  "ad01-w2-within-gr-00"
+ ],
+ "per_task_deltas": {
+  "ad01-w0-within-gr-00": -0.16666666666666666,
+  "ad01-w1-within-gr-00": -0.16666666666666666,
+  "ad01-w1-within-sw-00": -0.125
+ },
+ "utility": "CONTROL_WINS",
+ "verdicts": {
+  "acquisition_basis": "acquisition bytes and receipts under reports/evidence/invl02_liveacq_r4: freeze policy identities, construction requests, operation receipts and sealed use records",
+  "live_acquisition": "true",
+  "live_acquisition_legs": [
+   {
+    "evidence": "all 3 construction requests persisted the pinned model 'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'",
+    "name": "declared_model_matches_freeze",
+    "status": "pass"
+   },
+   {
+    "evidence": "arm_gr01 candidate=3df03ec1971d bound=3df03ec1971d source_digest=3df03ec1971d; arm_gr03 candidate=63d3d82087b3 bound=63d3d82087b3 source_digest=63d3d82087b3; arm_so02 candidate=c20f2724999e bound=c20f2724999e source_digest=c20f2724999e",
+    "name": "bound_equals_candidate",
+    "status": "pass"
+   },
+   {
+    "evidence": "over 3 executed records: arm_gr01 on ad01-w0-within-gr-00 hashes to 3df03ec1971d, bound policy is 3df03ec1971d; arm_gr03 on ad01-w1-within-gr-00 hashes to 63d3d82087b3, bound policy is 63d3d82087b3; arm_so02 on ad01-w1-within-sw-00 hashes to c20f2724999e, bound policy is c20f2724999e",
+    "name": "executed_bytes_are_the_bound_policy",
+    "status": "pass"
+   },
+   {
+    "evidence": "ad01-r4acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init outcome=success identity=gw:ad01-r4acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'; ad01-r4acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init outcome=success identity=gw:ad01-r4acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'; ad01-r4acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init outcome=success identity=gw:ad01-r4acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'",
+    "name": "dispatch_was_live_not_a_recording",
+    "status": "pass"
+   }
+  ],
+  "task_utility": "loss",
+  "task_utility_basis": "paired sealed-use records under reports/evidence/invl02_liveacq_r4, normalized by the freeze's own metric rule 'normalized_reduction'",
+  "task_utility_legs": [
+   {
+    "evidence": "arm_gr01 executed source hashes to 3df03ec1971d, its bound policy is 3df03ec1971d; arm_gr03 executed source hashes to 63d3d82087b3, its bound policy is 63d3d82087b3; arm_so02 executed source hashes to c20f2724999e, its bound policy is c20f2724999e; C executed source hashes to 560e17fbfb51, its bound policy is bbeb412d41fb; C executed source hashes to 6e03638cd710, its bound policy is bbeb412d41fb; C executed source hashes to e4c10cafe8a9, its bound policy is bbeb412d41fb",
+    "name": "arms_execute_their_own_bound_policy",
+    "status": "pass"
+   },
+   {
+    "evidence": "freeze metric_rule={\"quality\": \"normalized_reduction\"}",
+    "name": "normalization_rule_stated",
+    "status": "pass"
+   },
+   {
+    "evidence": "3 shared tasks: ad01-w0-within-gr-00, ad01-w1-within-gr-00, ad01-w1-within-sw-00",
+    "name": "shared_tasks_present",
+    "status": "pass"
+   },
+   {
+    "evidence": "no shared task was served by a fallback",
+    "name": "no_fallback_on_shared_tasks",
+    "status": "pass"
+   },
+   {
+    "evidence": "mean acquired-minus-authored normalized reduction -11458333333333333/75000000000000000 over 3 shared tasks: ad01-w0-within-gr-00=-0.16666666666666666, ad01-w1-within-gr-00=-0.16666666666666666, ad01-w1-within-sw-00=-0.125",
+    "name": "paired_normalized_reduction",
+    "status": "pass"
+   }
+  ]
+ }
+}

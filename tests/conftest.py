@@ -8,6 +8,11 @@ import pytest
 
 from settlement import db
 
+from conftest_isolation import pytest_configure, pytest_unconfigure  # noqa: F401
+
+
+TRUNCATE_DSN_ENV = "SETTLEMENT_TEST_TRUNCATE_DSN"
+
 
 def _dsn() -> str:
     dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
@@ -23,6 +28,13 @@ def dsn():
 
 @pytest.fixture()
 def migrated_db(dsn):
+    truncate_dsn = os.environ.get(TRUNCATE_DSN_ENV, "")
+    if not truncate_dsn:
+        pytest.fail(
+            f"{TRUNCATE_DSN_ENV} must be set to authorize test truncation")
+    if truncate_dsn != dsn:
+        pytest.fail(
+            f"{TRUNCATE_DSN_ENV} must match SETTLEMENT_TEST_DSN")
     db.apply_migrations(dsn, Path(__file__).parent.parent / "migrations")
     with db.connect(dsn) as conn:
         with conn.cursor() as cur:
@@ -50,3 +62,26 @@ def tmp_roots(tmp_path):
 
 def unique(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:8]}"
+
+
+@pytest.fixture(autouse=True)
+def _isolate_campaign_namespace():
+    """Reset the process-global campaign namespace around every test.
+
+    `trajectory.NAMESPACE_TOKEN` is module state, and `s09_pilot.run_study`
+    sets it without ever clearing it. Without this, the first test that runs a
+    study leaves its token behind and every later test in the session mints
+    campaign ids carrying someone else's token. That is how one test file's
+    leak reached nine others as `malformed campaign id`, and it is a property
+    of the ordering rather than of any one file.
+
+    Resetting per test is the only place that can hold: pinning it in each
+    file leaves the next file exposed to whichever ran first.
+    """
+    from experiments.ad01 import trajectory
+    previous = trajectory.NAMESPACE_TOKEN
+    trajectory.set_namespace_token("")
+    try:
+        yield
+    finally:
+        trajectory.set_namespace_token(previous)

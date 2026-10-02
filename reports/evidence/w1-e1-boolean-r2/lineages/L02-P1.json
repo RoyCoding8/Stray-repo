@@ -1,0 +1,151 @@
+{
+ "attempts": [
+  {
+   "arm": "P1",
+   "attempt": 1,
+   "candidate_digest": null,
+   "dispatch": {
+    "accepted_candidate_digest": null,
+    "arm": "P1",
+    "artifact_digest": null,
+    "attempt": 1,
+    "billed": "unknown",
+    "charge_units": "unknown",
+    "details": {
+     "raw_payload": {
+      "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+      "raw_response": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits) and 4 outputs (bits). We have observed 8 examples (x from 0 to 15, but only 8 given). We need to commit one executable predictor built only from the public hypothesis class. The predictor is defined by specs: for each of the 4 outputs, we give a spec: {\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]}. The mask is a 4-bit mask indicating which input bits are used in the affine part (XOR of selected inputs). The pair is either null or a pair of indices (i,j) for the pairwise product (AND) that is XORed. The const is a constant 0 or 1 XORed.\n\nWe have 4 outputs, so we need 4 such specs.\n\nWe have 8 observed input-output pairs. We need to find a hypothesis from the class that fits all observed data. Since the hypothesis class size is 224, and we have 8 examples, we can try to infer the rule.\n\nLet's denote inputs as bits x0, x1, x2, x3 (since x is given as integer 0-15, we can interpret as 4-bit binary). The observed data:\n\nx=1 (0001) -> y=[0,0,1,0]\nx=4 (0100) -> y=[0,0,0,0]\nx=7 (0111) -> y=[0,1,1,0]\nx=8 (1000) -> y=[1,1,1,0]\nx=11 (1011) -> y=[0,1,1,0]\nx=13 (1101) -> y=[0,1,1,0]\nx=14 (1110) -> y=[1,1,1,0]\nx=15 (1111) -> y=[0,0,1,1]\n\nWe need to find for each output bit a function of the form: f(x) = const XOR (sum_{i in mask} x_i) XOR (x_i * x_j if pair not null). All operations mod 2.\n\nWe have 4 outputs. Let's analyze each output column.\n\nOutput 0 (first bit of y):\nx=1:0\n4:0\n7:0\n8:1\n11:0\n13:0\n14:1\n15:0\n\nSo output0 = 1 for x=8 (1000) and x=14 (1110). Others 0.\n\nOutput1:\n1:0\n4:0\n7:1\n8:1\n11:1\n13:1\n14:1\n15:0\n\nOutput1 = 1 for x=7,8,11,13,14; 0 for 1,4,15.\n\nOutput2:\n1:1\n4:0\n7:1\n8:1\n11:1\n13:1\n14:1\n15:1\n\nOutput2 = 1 for all except x=4 (0100). So output2 = NOT (x=4?) Actually x=4 is 0100. Let's see pattern: maybe output2 = x0 OR x1 OR x2 OR x3? But x=4 has only x2=1? Wait indexing: typically bits: x = 8*x3 + 4*x2 + 2*x1 + 1*x0? Or maybe x0 is LSB? Let's define: x in binary as 4 bits: b3 b2 b1 b0 (b3 MSB). For x=1: 0001 -> b0=1. x=4: 0100 -> b2=1. x=7: 0111 -> b2=1,b1=1,b0=1. x=8: 1000 -> b3=1. x=11: 1011 -> b3=1,b1=1,b0=1. x=13: 1101 -> b3=1,b2=1,b0=1. x=14: 1110 -> b3=1,b2=1,b1=1. x=15: 1111 -> all 1.\n\nOutput2 is 0 only when x=4 (0100). That is b2=1, others 0. So output2 = 1 except when (b3=0,b2=1,b1=0,b0=0). That is a specific minterm. But our hypothesis class is affine plus possibly one pairwise product. Can we represent that? Let's see.\n\nOutput3:\n1:0\n4:0\n7:0\n8:0\n11:0\n13:0\n14:0\n15:1\n\nOutput3 = 1 only for x=15 (1111). So output3 = b3 & b2 & b1 & b0? But that's a 4-way AND, not in our class (only one pairwise product). However, note that the class says \"affine over four inputs, optionally XORed with one pairwise input product\". That means each output is of the form: affine (XOR of some inputs plus constant) XOR (xi * xj) for at most one pair (i,j). So it's a degree-2 polynomial with at most one quadratic term.\n\nWe need to find such functions that match the 8 data points. Since we have 8 examples, and the class size is 224, there may be multiple hypotheses. We need to pick one that fits.\n\nLet's try to solve for each output.\n\nWe have 4 inputs. Let's denote variables: a,b,c,d for bits (maybe a=x3, b=x2, c=x1, d=x0). But careful: The mask is 0..15, which is a 4-bit mask. The pair indices are likely 0..3. We need to decide mapping from integer x to bits. Usually in such tasks, x is a 4-bit number, and the bits are indexed 0..3 (maybe 0 is LSB). The mask is a 4-bit mask where bit i corresponds to input i. The pair [i,j] with i<j? Probably.\n\nLet's assume input bits: x0 = LSB (value 1), x1 = value 2, x2 = value 4, x3 = value 8. So x = x0 + 2*x1 + 4*x2 + 8*x3.\n\nThen the examples in bits (x3,x2,x1,x0):\n1: 0,0,0,1\n4: 0,1,0,0\n7: 0,1,1,1\n8: 1,0,0,0\n11: 1,0,1,1\n13: 1,1,0,1\n14: 1,1,1,0\n15: 1,1,1,1\n\nNow output vectors (y0,y1,y2,y3) as given.\n\nLet's write each output as function of x3,x2,x1,x0.\n\nOutput0 (y0):\n(0,0,0,1)->0\n(0,1,0,0)->0\n(0,1,1,1)->0\n(1,0,0,0)->1\n(1,0,1,1)->0\n(1,1,0,1)->0\n(1,1,1,0)->1\n(1,1,1,1)->0\n\nWe want y0 = const XOR (mask bits) XOR (xi*xj if pair).\n\nLet's list the truth table for y0 on these 8 points. We can try to find an affine function (without pairwise) that fits? Check if it's affine. An affine function is linear (XOR of subset) plus constant. Over GF(2), an affine function has the property that for any two points, f(x)+f(y)+f(z) = f(x+y+z) if linear? Actually easier: we can try to see if there is an affine function that matches these 8 points. Since there are 4 variables, an affine function has 5 parameters (constant + 4 coefficients). We have 8 equations, so it's overdetermined. But maybe with pairwise term we can fit.\n\nLet's try to see if y0 can be expressed as something like x3 XOR something? Look at points where y0=1: (1,0,0,0) and (1,1,1,0). Both have x3=1. But (1,0,1,1) has x3=1 but y0=0. (1,1,0,1) has x3=1 but y0=0. (1,1,1,1) has x3=1 but y0=0. So not simply x3.\n\nMaybe y0 = x3 AND (something)? But we only have one pairwise product. Could be x3 * x2"
+     },
+     "route": {
+      "adapter": "http",
+      "contract": "settlement-gateway/http-chat-completions-v1",
+      "endpoint": "http://localhost:4000/v1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "provider": "Nvidia",
+      "request_endpoint": "http://localhost:4000/v1",
+      "response_received": true,
+      "returned_endpoint": null,
+      "tier": "free"
+     },
+     "stop_reason": "length",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 370,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    "dispatch_evidence_digest": null,
+    "driver_digest": null,
+    "endpoint": "http://localhost:4000/v1",
+    "evidence_digest": "f34f079c0622aca3e7a35dcc54855985754ec4731560df1c636224fb920177c3",
+    "input_digest": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+    "kind": "gateway-dispatch",
+    "operation_id": "invl02-output-296693cd08b8-P1-qual-0011-a1",
+    "operation_payload_digest": null,
+    "outcome": "success",
+    "package_digest": null,
+    "parent_digest": null,
+    "parse_outcome": "pending",
+    "prompt_digest": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+    "provider": "Nvidia",
+    "raw_payload_digest": "9af209c9935bf24da7b34248f13b1df1502fe29d51db11a6c9ca81331168c1c1",
+    "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+    "raw_response": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits) and 4 outputs (bits). We have observed 8 examples (x from 0 to 15, but only 8 given). We need to commit one executable predictor built only from the public hypothesis class. The predictor is defined by specs: for each of the 4 outputs, we give a spec: {\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]}. The mask is a 4-bit mask indicating which input bits are used in the affine part (XOR of selected inputs). The pair is either null or a pair of indices (i,j) for the pairwise product (AND) that is XORed. The const is a constant 0 or 1 XORed.\n\nWe have 4 outputs, so we need 4 such specs.\n\nWe have 8 observed input-output pairs. We need to find a hypothesis from the class that fits all observed data. Since the hypothesis class size is 224, and we have 8 examples, we can try to infer the rule.\n\nLet's denote inputs as bits x0, x1, x2, x3 (since x is given as integer 0-15, we can interpret as 4-bit binary). The observed data:\n\nx=1 (0001) -> y=[0,0,1,0]\nx=4 (0100) -> y=[0,0,0,0]\nx=7 (0111) -> y=[0,1,1,0]\nx=8 (1000) -> y=[1,1,1,0]\nx=11 (1011) -> y=[0,1,1,0]\nx=13 (1101) -> y=[0,1,1,0]\nx=14 (1110) -> y=[1,1,1,0]\nx=15 (1111) -> y=[0,0,1,1]\n\nWe need to find for each output bit a function of the form: f(x) = const XOR (sum_{i in mask} x_i) XOR (x_i * x_j if pair not null). All operations mod 2.\n\nWe have 4 outputs. Let's analyze each output column.\n\nOutput 0 (first bit of y):\nx=1:0\n4:0\n7:0\n8:1\n11:0\n13:0\n14:1\n15:0\n\nSo output0 = 1 for x=8 (1000) and x=14 (1110). Others 0.\n\nOutput1:\n1:0\n4:0\n7:1\n8:1\n11:1\n13:1\n14:1\n15:0\n\nOutput1 = 1 for x=7,8,11,13,14; 0 for 1,4,15.\n\nOutput2:\n1:1\n4:0\n7:1\n8:1\n11:1\n13:1\n14:1\n15:1\n\nOutput2 = 1 for all except x=4 (0100). So output2 = NOT (x=4?) Actually x=4 is 0100. Let's see pattern: maybe output2 = x0 OR x1 OR x2 OR x3? But x=4 has only x2=1? Wait indexing: typically bits: x = 8*x3 + 4*x2 + 2*x1 + 1*x0? Or maybe x0 is LSB? Let's define: x in binary as 4 bits: b3 b2 b1 b0 (b3 MSB). For x=1: 0001 -> b0=1. x=4: 0100 -> b2=1. x=7: 0111 -> b2=1,b1=1,b0=1. x=8: 1000 -> b3=1. x=11: 1011 -> b3=1,b1=1,b0=1. x=13: 1101 -> b3=1,b2=1,b0=1. x=14: 1110 -> b3=1,b2=1,b1=1. x=15: 1111 -> all 1.\n\nOutput2 is 0 only when x=4 (0100). That is b2=1, others 0. So output2 = 1 except when (b3=0,b2=1,b1=0,b0=0). That is a specific minterm. But our hypothesis class is affine plus possibly one pairwise product. Can we represent that? Let's see.\n\nOutput3:\n1:0\n4:0\n7:0\n8:0\n11:0\n13:0\n14:0\n15:1\n\nOutput3 = 1 only for x=15 (1111). So output3 = b3 & b2 & b1 & b0? But that's a 4-way AND, not in our class (only one pairwise product). However, note that the class says \"affine over four inputs, optionally XORed with one pairwise input product\". That means each output is of the form: affine (XOR of some inputs plus constant) XOR (xi * xj) for at most one pair (i,j). So it's a degree-2 polynomial with at most one quadratic term.\n\nWe need to find such functions that match the 8 data points. Since we have 8 examples, and the class size is 224, there may be multiple hypotheses. We need to pick one that fits.\n\nLet's try to solve for each output.\n\nWe have 4 inputs. Let's denote variables: a,b,c,d for bits (maybe a=x3, b=x2, c=x1, d=x0). But careful: The mask is 0..15, which is a 4-bit mask. The pair indices are likely 0..3. We need to decide mapping from integer x to bits. Usually in such tasks, x is a 4-bit number, and the bits are indexed 0..3 (maybe 0 is LSB). The mask is a 4-bit mask where bit i corresponds to input i. The pair [i,j] with i<j? Probably.\n\nLet's assume input bits: x0 = LSB (value 1), x1 = value 2, x2 = value 4, x3 = value 8. So x = x0 + 2*x1 + 4*x2 + 8*x3.\n\nThen the examples in bits (x3,x2,x1,x0):\n1: 0,0,0,1\n4: 0,1,0,0\n7: 0,1,1,1\n8: 1,0,0,0\n11: 1,0,1,1\n13: 1,1,0,1\n14: 1,1,1,0\n15: 1,1,1,1\n\nNow output vectors (y0,y1,y2,y3) as given.\n\nLet's write each output as function of x3,x2,x1,x0.\n\nOutput0 (y0):\n(0,0,0,1)->0\n(0,1,0,0)->0\n(0,1,1,1)->0\n(1,0,0,0)->1\n(1,0,1,1)->0\n(1,1,0,1)->0\n(1,1,1,0)->1\n(1,1,1,1)->0\n\nWe want y0 = const XOR (mask bits) XOR (xi*xj if pair).\n\nLet's list the truth table for y0 on these 8 points. We can try to find an affine function (without pairwise) that fits? Check if it's affine. An affine function is linear (XOR of subset) plus constant. Over GF(2), an affine function has the property that for any two points, f(x)+f(y)+f(z) = f(x+y+z) if linear? Actually easier: we can try to see if there is an affine function that matches these 8 points. Since there are 4 variables, an affine function has 5 parameters (constant + 4 coefficients). We have 8 equations, so it's overdetermined. But maybe with pairwise term we can fit.\n\nLet's try to see if y0 can be expressed as something like x3 XOR something? Look at points where y0=1: (1,0,0,0) and (1,1,1,0). Both have x3=1. But (1,0,1,1) has x3=1 but y0=0. (1,1,0,1) has x3=1 but y0=0. (1,1,1,1) has x3=1 but y0=0. So not simply x3.\n\nMaybe y0 = x3 AND (something)? But we only have one pairwise product. Could be x3 * x2",
+    "receipt_identity": "evidence:c01bd176a49f622df0b7d0d34b6868cf338563b9a065199fc917d88b5535a1b5",
+    "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "requested_output_cap": 2048,
+    "response_digest": "06ba6f9a4bbdd8c3169348afff614cd52e6a9f18d494ffc77788dee4873ac2b3",
+    "result_digest": "06ba6f9a4bbdd8c3169348afff614cd52e6a9f18d494ffc77788dee4873ac2b3",
+    "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "round": 4,
+    "route_digest": "10ebeff23417465d44249c4d042049578a8920c45704f826ea77974a5dd5f1d3",
+    "route_error": null,
+    "source_digest": null,
+    "stop_reason": "length",
+    "task_id": "rule-qual-194dba80c87f",
+    "tier": "free",
+    "usage": {
+     "billed": "unknown",
+     "charge_scale": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": 370,
+     "output_tokens": 2048,
+     "provider_enforced_ceiling": "unknown"
+    },
+    "version": "invl02-evidence-v2"
+   },
+   "operation_id": "invl02-output-296693cd08b8-P1-qual-0011-a1",
+   "outcome": "invalid-program",
+   "raw_response": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits) and 4 outputs (bits). We have observed 8 examples (x from 0 to 15, but only 8 given). We need to commit one executable predictor built only from the public hypothesis class. The predictor is defined by specs: for each of the 4 outputs, we give a spec: {\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]}. The mask is a 4-bit mask indicating which input bits are used in the affine part (XOR of selected inputs). The pair is either null or a pair of indices (i,j) for the pairwise product (AND) that is XORed. The const is a constant 0 or 1 XORed.\n\nWe have 4 outputs, so we need 4 such specs.\n\nWe have 8 observed input-output pairs. We need to find a hypothesis from the class that fits all observed data. Since the hypothesis class size is 224, and we have 8 examples, we can try to infer the rule.\n\nLet's denote inputs as bits x0, x1, x2, x3 (since x is given as integer 0-15, we can interpret as 4-bit binary). The observed data:\n\nx=1 (0001) -> y=[0,0,1,0]\nx=4 (0100) -> y=[0,0,0,0]\nx=7 (0111) -> y=[0,1,1,0]\nx=8 (1000) -> y=[1,1,1,0]\nx=11 (1011) -> y=[0,1,1,0]\nx=13 (1101) -> y=[0,1,1,0]\nx=14 (1110) -> y=[1,1,1,0]\nx=15 (1111) -> y=[0,0,1,1]\n\nWe need to find for each output bit a function of the form: f(x) = const XOR (sum_{i in mask} x_i) XOR (x_i * x_j if pair not null). All operations mod 2.\n\nWe have 4 outputs. Let's analyze each output column.\n\nOutput 0 (first bit of y):\nx=1:0\n4:0\n7:0\n8:1\n11:0\n13:0\n14:1\n15:0\n\nSo output0 = 1 for x=8 (1000) and x=14 (1110). Others 0.\n\nOutput1:\n1:0\n4:0\n7:1\n8:1\n11:1\n13:1\n14:1\n15:0\n\nOutput1 = 1 for x=7,8,11,13,14; 0 for 1,4,15.\n\nOutput2:\n1:1\n4:0\n7:1\n8:1\n11:1\n13:1\n14:1\n15:1\n\nOutput2 = 1 for all except x=4 (0100). So output2 = NOT (x=4?) Actually x=4 is 0100. Let's see pattern: maybe output2 = x0 OR x1 OR x2 OR x3? But x=4 has only x2=1? Wait indexing: typically bits: x = 8*x3 + 4*x2 + 2*x1 + 1*x0? Or maybe x0 is LSB? Let's define: x in binary as 4 bits: b3 b2 b1 b0 (b3 MSB). For x=1: 0001 -> b0=1. x=4: 0100 -> b2=1. x=7: 0111 -> b2=1,b1=1,b0=1. x=8: 1000 -> b3=1. x=11: 1011 -> b3=1,b1=1,b0=1. x=13: 1101 -> b3=1,b2=1,b0=1. x=14: 1110 -> b3=1,b2=1,b1=1. x=15: 1111 -> all 1.\n\nOutput2 is 0 only when x=4 (0100). That is b2=1, others 0. So output2 = 1 except when (b3=0,b2=1,b1=0,b0=0). That is a specific minterm. But our hypothesis class is affine plus possibly one pairwise product. Can we represent that? Let's see.\n\nOutput3:\n1:0\n4:0\n7:0\n8:0\n11:0\n13:0\n14:0\n15:1\n\nOutput3 = 1 only for x=15 (1111). So output3 = b3 & b2 & b1 & b0? But that's a 4-way AND, not in our class (only one pairwise product). However, note that the class says \"affine over four inputs, optionally XORed with one pairwise input product\". That means each output is of the form: affine (XOR of some inputs plus constant) XOR (xi * xj) for at most one pair (i,j). So it's a degree-2 polynomial with at most one quadratic term.\n\nWe need to find such functions that match the 8 data points. Since we have 8 examples, and the class size is 224, there may be multiple hypotheses. We need to pick one that fits.\n\nLet's try to solve for each output.\n\nWe have 4 inputs. Let's denote variables: a,b,c,d for bits (maybe a=x3, b=x2, c=x1, d=x0). But careful: The mask is 0..15, which is a 4-bit mask. The pair indices are likely 0..3. We need to decide mapping from integer x to bits. Usually in such tasks, x is a 4-bit number, and the bits are indexed 0..3 (maybe 0 is LSB). The mask is a 4-bit mask where bit i corresponds to input i. The pair [i,j] with i<j? Probably.\n\nLet's assume input bits: x0 = LSB (value 1), x1 = value 2, x2 = value 4, x3 = value 8. So x = x0 + 2*x1 + 4*x2 + 8*x3.\n\nThen the examples in bits (x3,x2,x1,x0):\n1: 0,0,0,1\n4: 0,1,0,0\n7: 0,1,1,1\n8: 1,0,0,0\n11: 1,0,1,1\n13: 1,1,0,1\n14: 1,1,1,0\n15: 1,1,1,1\n\nNow output vectors (y0,y1,y2,y3) as given.\n\nLet's write each output as function of x3,x2,x1,x0.\n\nOutput0 (y0):\n(0,0,0,1)->0\n(0,1,0,0)->0\n(0,1,1,1)->0\n(1,0,0,0)->1\n(1,0,1,1)->0\n(1,1,0,1)->0\n(1,1,1,0)->1\n(1,1,1,1)->0\n\nWe want y0 = const XOR (mask bits) XOR (xi*xj if pair).\n\nLet's list the truth table for y0 on these 8 points. We can try to find an affine function (without pairwise) that fits? Check if it's affine. An affine function is linear (XOR of subset) plus constant. Over GF(2), an affine function has the property that for any two points, f(x)+f(y)+f(z) = f(x+y+z) if linear? Actually easier: we can try to see if there is an affine function that matches these 8 points. Since there are 4 variables, an affine function has 5 parameters (constant + 4 coefficients). We have 8 equations, so it's overdetermined. But maybe with pairwise term we can fit.\n\nLet's try to see if y0 can be expressed as something like x3 XOR something? Look at points where y0=1: (1,0,0,0) and (1,1,1,0). Both have x3=1. But (1,0,1,1) has x3=1 but y0=0. (1,1,0,1) has x3=1 but y0=0. (1,1,1,1) has x3=1 but y0=0. So not simply x3.\n\nMaybe y0 = x3 AND (something)? But we only have one pairwise product. Could be x3 * x2",
+   "reason": "response of 5092 characters exceeds the frozen limit of 512",
+   "score": null
+  }
+ ],
+ "campaign_id": "w1-e1-boolean-r2",
+ "campaign_version": "w1-e1-boolean-campaign-v2",
+ "guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 2,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 2,
+  "version": "invl02-live-v1"
+ },
+ "lineage": "L02-P1",
+ "offline_verified": true,
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "queries_spent": 8,
+ "reference_scores": {
+  "oracle_overall": 1.0,
+  "zero_predictor_overall": 0.0625
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "schema": "invl02-live-preflight-run-v1",
+ "score_floor": 1.0,
+ "seed": 11,
+ "split": "qual",
+ "study_root": "w1-e1-boolean-r2",
+ "task_id": "rule-qual-194dba80c87f",
+ "treatment": "P1",
+ "treatment_meaning": "interface-only acquisition: the frozen public view and nothing else",
+ "verdict": {
+  "arm": "P1",
+  "attempt": 1,
+  "endpoint": "http://localhost:4000/v1",
+  "operation_id": "invl02-output-296693cd08b8-P1-qual-0011-a1",
+  "outcome": "invalid-program",
+  "prompt_digest": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+  "provider": "Nvidia",
+  "reason": "response of 5092 characters exceeds the frozen limit of 512",
+  "recomputable": true,
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "response_digest": "06ba6f9a4bbdd8c3169348afff614cd52e6a9f18d494ffc77788dee4873ac2b3",
+  "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "route_error": null,
+  "stop_reason": "length",
+  "tier": "free",
+  "usage": {
+   "billed": "unknown",
+   "charge_scale": "unknown",
+   "charge_units": "unknown",
+   "input_tokens": 370,
+   "output_tokens": 2048,
+   "provider_enforced_ceiling": "unknown"
+  }
+ },
+ "version": "invl02-live-preflight-v1",
+ "written_at": "2026-09-30T04:27:35Z"
+}

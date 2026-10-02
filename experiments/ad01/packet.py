@@ -44,6 +44,43 @@ SEALED_KEYS = frozenset({
     "blind_key", "assessment_answer", "use_answers",
 })
 
+# A held-out value shorter than this is not evidence of a leak. A boolean
+# flag or a two-character op name is a substring of ordinary text, so
+# matching on it would refuse every arm rather than the leaking one.
+MIN_HELD_OUT_CHARS = 4
+
+
+def canonical(value) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                      allow_nan=False)
+
+
+def content_digest(value) -> str:
+    import hashlib
+    return hashlib.sha256(canonical(value).encode("utf-8")).hexdigest()
+
+
+def with_held_out_canary(task: dict, marker: str) -> dict:
+    """A copy of `task` carrying `marker` where its answer really is.
+
+    The point of a canary is that it is findable, so it goes where a
+    leaked answer would actually sit: the private side of the task, which
+    `public_task_view` drops and a leak check reads. A marker in a field
+    the public view keeps would prove nothing, and one in a field no task
+    has would never be found at all.
+    """
+    task = dict(task or {})
+    if not str(marker):
+        raise ValueError("a canary needs a marker")
+    return {**task, "witness": {"canary": str(marker)}}
+
+PUBLIC_TASK_FIELDS = frozenset({
+    "family", "seed", "task_id", "template", "split", "world", "kind",
+    "ops", "vertices", "edges", "instrument", "max_queries", "remaining",
+    "observed", "hypothesis_class", "instruction", "committed",
+    "public_ops", "public_observations", "examples", "spec",
+})
+
 
 def _is_sealed_observation(obs: dict) -> bool:
     if not isinstance(obs, dict):
@@ -65,22 +102,90 @@ def _is_sealed_observation(obs: dict) -> bool:
 
 def _strip_value(value):
     if isinstance(value, dict):
-        out = {}
-        for k, v in value.items():
-            if k in SEALED_KEYS or k == "access_label":
-                continue
-            out[k] = _strip_value(v)
-        return out
+        return {k: _strip_value(v) for k, v in value.items()
+                if k not in SEALED_KEYS and k != "access_label"}
     if isinstance(value, list):
         return [_strip_value(v) for v in value]
     return value
 
 
 def strip_task(task: dict | None) -> dict:
-    cleaned = {k: _strip_value(v) for k, v in dict(task or {}).items()
-               if k not in SEALED_KEYS}
-    cleaned.pop("access_label", None)
-    return cleaned
+    return public_task_view(task)
+
+
+def public_task_view(task: dict | None) -> dict:
+    return {k: _strip_value(v) for k, v in dict(task or {}).items()
+            if k in PUBLIC_TASK_FIELDS}
+
+
+def method_task_view(task: dict | None) -> dict:
+    """Task input for a method executor, which is the task's own oracle.
+
+    A method must see the witness it is scored against; a policy must not.
+    Both views drop sealed generic keys, but only the policy view is an
+    allowlist.
+    """
+    return {k: _strip_value(v) for k, v in dict(task or {}).items()
+            if k not in SEALED_KEYS and k != "access_label"}
+
+
+def held_out_values(task: dict | None) -> list:
+    """Every string the public view holds privately, and could not be read.
+
+    The public view is an allowlist, so the private side is whatever it
+    does not carry. A name list would have to be right about both
+    families and would be silently wrong about the third; the difference
+    between the two views cannot be. A value the public view already
+    shows is then dropped even if it is on the private side too: this
+    generator derives the fault name from the template, so the fault
+    string is a substring of a public field and a check that looked for
+    it would fire on every arm, including one carrying no experience.
+    """
+    task = dict(task or {})
+    public = canonical(public_task_view(task))
+    values = []
+    for key, value in task.items():
+        if key in PUBLIC_TASK_FIELDS:
+            continue
+        values.extend(_string_values(value))
+    seen, unique = set(), []
+    for value in values:
+        if len(value) < MIN_HELD_OUT_CHARS or value in seen:
+            continue
+        if value in public:
+            continue
+        seen.add(value)
+        unique.append(value)
+    return sorted(unique)
+
+
+def _string_values(value) -> list:
+    """Every string under `value`, whatever the keys are called.
+
+    The whole private side is walked, not only its sealed keys. A leak
+    check that walked selectively would miss a canary or a planted
+    answer filed under an ordinary name, which is the most likely way
+    for one to arrive.
+    """
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        found = []
+        for item in value.values():
+            found.extend(_string_values(item))
+        return found
+    if isinstance(value, list):
+        found = []
+        for item in value:
+            found.extend(_string_values(item))
+        return found
+    return []
+
+
+def leaked_answers(text: str, task: dict | None) -> list:
+    """Held-out values a rendered arm quotes verbatim."""
+    body = text or ""
+    return [value for value in held_out_values(task) if value in body]
 
 
 def _dev_task_ids() -> set:

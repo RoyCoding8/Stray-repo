@@ -1,0 +1,24 @@
+{
+ "command": "PYTHONPATH=$PWD .venv/bin/pytest tests/test_s09an_evidence.py tests/test_m4_offline_recompute.py tests/test_r123_gates.py -p no:randomly -q",
+ "database_note": "S09ISO dropped 20 disposable database(s) for this run",
+ "exposure_added": 0,
+ "file_digests": {
+  "experiments/ad01/live_construct.py": "baf8c10d48726fc82e5d7f347dcb5f090720b3670afd32bbebe249b9b02ac8e9",
+  "experiments/ad01/offline_recompute.py": "765f877c315838875df81aa67d242fa2d62947c26f53042c0319f8ee9f08424f",
+  "scripts/invl02_live.py": "8f962fa6bb0b80b6e40001d5043b1a0739d8556a2fd7d3765707934d4c56d194",
+  "tests/test_m4_offline_recompute.py": "da21261f799955211c2663bc9b5c05d7ef0232658e3b7fc0bb9981ae4d98d7a1",
+  "tests/test_r123_gates.py": "7cd56cf05b044e2e563c26ea11e2d641a1b6c7424783c341ed65c738f7b64c0d",
+  "tests/test_s09an_evidence.py": "5c63af3fd0c9f5352f45916203b139f190a582db64feb698703ae5369d78e174"
+ },
+ "live_dispatches": 0,
+ "note": "test_s09an_evidence.py holds M4's seven required rejecting examples. Each runs through baseline(), which asserts verify_bundle() == pass before the mutation is applied.",
+ "result": {
+  "errors": 0,
+  "failed": 0,
+  "passed": 109,
+  "seconds": 8.25
+ },
+ "schema": "inv-r1-m4-gate-v1",
+ "skips_or_xfails": [],
+ "source_tip": "4a931a99a64557a19f7588d2cf0ca7572baed4fa"
+}

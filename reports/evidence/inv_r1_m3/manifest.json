@@ -1,0 +1,67 @@
+{
+ "caps_digest": "4dd9599594a732edea8c18260792e28126a5dcfda803fdd1d3b9676bca498146",
+ "freeze": {
+  "repertoire-w0-I.json": "84bc61938c4ecb175ce74ee0a9ebca6de2e056cba6e454021d51121a6e868990",
+  "repertoire-w0-R.json": "33867e87d93507b2544f25b1bfa70c067d064e651641d318a94fb374f679dc37",
+  "repertoire-w1-I.json": "f08b9b240c325f3ca1b95fb3ce8401c4a08d083747e098d2e0b1fd859b664109",
+  "repertoire-w1-R.json": "13726872fdbfa988ea855a08e6d110fa9106ff066c7fca0abfaa7e09be7c2f7d",
+  "repertoire-w2-I.json": "5b8eebc6229895d81a12896ee0e822ddde2c13f7c8c32760f1fd6f4483523370",
+  "repertoire-w2-R.json": "94f87de7b6d1729338fc34ddcb285e21158aa25b4f962ff7ee2155c2244b119b"
+ },
+ "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+ "pilot": {
+  "calibration_trajectories": 2,
+  "comparison_trajectories": 4,
+  "protected_use_records": 24,
+  "worlds": [
+   1,
+   2
+  ]
+ },
+ "provider": "live",
+ "study_root": "inv_r1_m3_run7",
+ "trajectories": [
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w0-I-00",
+   "construction_calls": 1,
+   "model_calls": 4,
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w0-R-00",
+   "construction_calls": 2,
+   "model_calls": 8,
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w1-I-00",
+   "construction_calls": 0,
+   "model_calls": 4,
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w1-R-00",
+   "construction_calls": 3,
+   "model_calls": 8,
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w2-I-00",
+   "construction_calls": 1,
+   "model_calls": 4,
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w2-R-00",
+   "construction_calls": 0,
+   "model_calls": 4,
+   "world": 2
+  }
+ ]
+}

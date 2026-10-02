@@ -1,0 +1,112 @@
+{
+ "attempt_ceiling": 8,
+ "attempts": [
+  {
+   "arm": "P1",
+   "lineage_index": 1,
+   "operation_id": "invl02-output-128636e885b7-P1-qual-0011-a1",
+   "outcome": "invalid-program",
+   "record": "lineages/L01-P1.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-01",
+   "state": "settled"
+  },
+  {
+   "arm": "P1",
+   "lineage_index": 2,
+   "operation_id": "invl02-output-296693cd08b8-P1-qual-0011-a1",
+   "outcome": "invalid-program",
+   "record": "lineages/L02-P1.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-02",
+   "state": "settled"
+  },
+  {
+   "arm": "P1",
+   "lineage_index": 3,
+   "operation_id": "invl02-output-db5f1a192008-P1-qual-0011-a1",
+   "outcome": "transport-loss",
+   "record": "lineages/L03-P1.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-03",
+   "state": "settled"
+  },
+  {
+   "arm": "P1",
+   "lineage_index": 4,
+   "operation_id": "invl02-output-3d4e884ed121-P1-qual-0011-a1",
+   "outcome": "invalid-program",
+   "record": "lineages/L04-P1.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-04",
+   "state": "settled"
+  },
+  {
+   "arm": "P2",
+   "lineage_index": 1,
+   "operation_id": "invl02-output-128636e885b7-P2-qual-0011-a1",
+   "outcome": "invalid-program",
+   "record": "lineages/L01-P2.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-01",
+   "state": "settled"
+  },
+  {
+   "arm": "P2",
+   "lineage_index": 2,
+   "operation_id": "invl02-output-296693cd08b8-P2-qual-0011-a1",
+   "outcome": "invalid-program",
+   "record": "lineages/L02-P2.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-02",
+   "state": "settled"
+  },
+  {
+   "arm": "P2",
+   "lineage_index": 3,
+   "operation_id": "invl02-output-db5f1a192008-P2-qual-0011-a1",
+   "outcome": "transport-loss",
+   "record": "lineages/L03-P2.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-03",
+   "state": "settled"
+  },
+  {
+   "arm": "P2",
+   "lineage_index": 4,
+   "operation_id": "invl02-output-3d4e884ed121-P2-qual-0011-a1",
+   "outcome": "invalid-program",
+   "record": "lineages/L04-P2.json",
+   "round_run_id": "w1-e1-boolean-r2-lineage-04",
+   "state": "settled"
+  }
+ ],
+ "attempts_planned": 8,
+ "attempts_settled": 8,
+ "campaign_id": "w1-e1-boolean-r2",
+ "closed_at": "2026-09-30T04:39:07Z",
+ "dispatches_refunded": 0,
+ "dispatches_spent": 8,
+ "driver_faults": [],
+ "final_guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 8,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 8,
+  "version": "invl02-live-v1"
+ },
+ "guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 8,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 8,
+  "version": "invl02-live-v1"
+ },
+ "model_call_ceiling": 16,
+ "opened_at": "2026-09-30T04:26:14Z",
+ "schema": "w1-e1-boolean-campaign-v2",
+ "updated_at": "2026-09-30T04:39:07Z"
+}

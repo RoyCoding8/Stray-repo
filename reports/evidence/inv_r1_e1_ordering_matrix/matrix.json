@@ -1,0 +1,107 @@
+{
+ "audit/5": {
+  "agree": true,
+  "all_pairs_comparable": true,
+  "cells": {
+   "ast": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "graph": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "step": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   }
+  }
+ },
+ "dev/11": {
+  "agree": true,
+  "all_pairs_comparable": true,
+  "cells": {
+   "ast": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "graph": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "step": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   }
+  }
+ },
+ "dev/4": {
+  "agree": true,
+  "all_pairs_comparable": true,
+  "cells": {
+   "ast": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "graph": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "step": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   }
+  }
+ },
+ "dev/7": {
+  "agree": true,
+  "all_pairs_comparable": true,
+  "cells": {
+   "ast": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "graph": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "step": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   }
+  }
+ },
+ "qual/2": {
+  "agree": true,
+  "all_pairs_comparable": true,
+  "cells": {
+   "ast": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "graph": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   },
+   "step": {
+    "overall": 0.0,
+    "queries": 1,
+    "turns": 2
+   }
+  }
+ }
+}

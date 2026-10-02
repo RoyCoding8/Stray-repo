@@ -17,11 +17,13 @@ def _setup(dsn):
     return acquired.data["ownership_generation"]
 
 
-def _prepare(dsn, op_id="op1", body=None, exposure=40, res_id="res-op"):
+def _prepare(dsn, op_id="op1", body=None, exposure=40, res_id="res-op",
+             execution_version="exec-v3"):
     return store.prepare_operation(dsn, _cmd({
         "operation_id": op_id, "attempt_id": "att1", "allocation_id": "a1",
         "reservation_id": res_id, "exposure": exposure,
-        "operation": body or {"kind": "infer", "n": 1}, "execution_version": "exec-v3"}))
+        "operation": body or {"kind": "infer", "n": 1},
+        "execution_version": execution_version}))
 
 
 def test_prepare_is_immutable_and_idempotent(migrated_db):
@@ -74,11 +76,12 @@ def test_receipt_duplicate_conflict_and_settle_once(migrated_db):
                                            "provenance": "gw-1"}))
     assert first.code == ResultCode.APPLIED and first.data["settled"] is True
     dup = store.admit_receipt(dsn, _cmd({"operation_id": "op1", "receipt_identity": "rc1",
-                                         "content": dict(content), "outcome": "success"}))
+                                         "content": dict(content), "outcome": "success",
+                                         "provenance": "gw-1"}))
     assert dup.code == ResultCode.ALREADY_APPLIED
     conflict = store.admit_receipt(dsn, _cmd({"operation_id": "op1", "receipt_identity": "rc1",
                                               "content": {"tokens": 13, "status": "ok"},
-                                              "outcome": "success"}))
+                                              "outcome": "success", "provenance": "gw-1"}))
     assert conflict.code == ResultCode.APPLIED and conflict.data.get("conflict") is True
     assert conflict.data["settled"] is True
     state = store.restart_reconciliation(dsn)
@@ -97,13 +100,15 @@ def test_unknown_outcome_retains_exposure_and_cancel_keeps_late_receipts(migrate
     store.advance_dispatch(dsn, _cmd({"operation_id": "op1", "launcher_id": "L1",
                                       "ownership_generation": gen}))
     unknown = store.admit_receipt(dsn, _cmd({"operation_id": "op1", "receipt_identity": "rc-u",
-                                             "content": {"note": "timeout"}, "outcome": "unknown"}))
+                                             "content": {"note": "timeout"}, "outcome": "unknown",
+                                             "provenance": "L1"}))
     assert unknown.code == ResultCode.APPLIED and unknown.data["settled"] is False
     pending = store.restart_reconciliation(dsn)
     assert pending["unfinished_operations"][0]["dispatch_state"] == "unresolved"
     assert store.request_cancellation(dsn, _cmd({"operation_id": "op1"})).code == ResultCode.APPLIED
     late = store.admit_receipt(dsn, _cmd({"operation_id": "op1", "receipt_identity": "rc-late",
-                                          "content": {"tokens": 3}, "outcome": "success"}))
+                                          "content": {"tokens": 3}, "outcome": "success",
+                                          "provenance": "L1-recovery"}))
     assert late.code == ResultCode.APPLIED and late.data["settled"] is True
     assert store.confirm_cancellation(dsn, _cmd({"operation_id": "op1"})).code == ResultCode.APPLIED
 
@@ -111,7 +116,12 @@ def test_unknown_outcome_retains_exposure_and_cancel_keeps_late_receipts(migrate
 def test_restart_reconciliation_reports_registry(migrated_db):
     dsn = migrated_db
     gen = _setup(dsn)
-    _prepare(dsn, op_id="opA")
+    # A version no other operation in this file carries, so the projection
+    # below is falsifiable on value and not only on which keys are present. A
+    # single operation at the module default is satisfied by any product that
+    # returns the right shape with the wrong number, which is the defect a
+    # projection check exists to catch.
+    _prepare(dsn, op_id="opA", execution_version="exec-v9")
     _prepare(dsn, op_id="opB", res_id="res-B", exposure=10, body={"kind": "exec"})
     store.acquire_work(dsn, _cmd({"attempt_id": "att2", "investigation_id": "i1"}))
     store.advance_dispatch(dsn, _cmd({"operation_id": "opA", "launcher_id": "L9",
@@ -121,4 +131,13 @@ def test_restart_reconciliation_reports_registry(migrated_db):
     live = {a["id"]: a for a in state["live_attempts"]}
     assert live["att1"]["ownership_generation"] == gen
     assert live["att2"]["ownership_generation"] == gen + 1
-    assert state["execution_versions"] == [{"id": "opA", "execution_version": "exec-v3"}]
+    # The projection this test is about, over the two columns that name the
+    # version rather than a copy of the whole row. `a3df674` added `payload`
+    # to the select behind `restart_reconciliation` to record an
+    # unresolved-terminal disposition, and a full-row literal could only be
+    # repaired by deleting the new key from the expectation, which is the
+    # opposite of a check.
+    versions = [(row["id"], row["execution_version"])
+                for row in state["execution_versions"]]
+
+    assert versions == [("opA", "exec-v9")]

@@ -1,0 +1,78 @@
+{
+ "A_committed_result_records_under_reports_evidence_never_modify": [
+  "reports/evidence/inv_r1_e1_control_arm/freeze.json",
+  "reports/evidence/inv_r1_e1_comparison/acquired-greedy.json",
+  "reports/evidence/inv_r1_e1_control_arm_result/study_accounting.json",
+  "reports/evidence/inv_r1_e1_control_distinct_mechanism/result.json",
+  "reports/evidence/inv_r1_e1_control_distinct_mechanism/acquisition_provenance.json",
+  "reports/evidence/inv_r1_e4/result.json",
+  "reports/evidence/inv_r1_e4/run/campaign.json"
+ ],
+ "B_reports_and_reviews_that_state_a_comparison": [
+  "evidence_s09_m3_live/freeze.json",
+  "reports/PLAN.md",
+  "reports/PROJECT-LEDGER.md",
+  "reports/STAGE-09-BOSS-STATUS.md",
+  "reports/STAGE-09-CONNECTED-STATUS.md",
+  "reports/STAGE-09-GENERALITY-CAMPAIGN.md",
+  "reviews/COGNITIVE-BATCH-01-ASSESSMENT.md",
+  "reviews/INVESTIGATION-LEARNING-02-ACQUISITION-ASSESSMENT.md",
+  "reviews/STAGE-09-M3-CONTROL.md",
+  "reviews/STAGE-09-R2-EXECUTION.md"
+ ],
+ "C_mentions_the_origin_without_comparing": [
+  "evidence_s09_m3_live/construction.json",
+  "reports/jev/s09-opus-c2-causal-request.json",
+  "reviews/INVESTIGATION-LEARNING-02-ROUTE-ASSESSMENT.md"
+ ],
+ "code_that_writes_the_label_and_is_not_yet_corrected": {
+  "consequence": "s09_verdict.task_utility_verdict still gates on the string. It will keep accepting an arm labelled acquired until it is given the same receipt check. That is the next seam, not this one.",
+  "note": "These are outside the paths this lane owns. Each still names 'model-acquired' for bytes whose provenance it does not check. Left for their owners, listed so the conflict is visible.",
+  "sites": [
+   "experiments/ad01/control_arm.py:497 (acquisition_identity writes the acquired arm's origin as a literal for the comparison block)",
+   "experiments/ad01/e2_replication.py:1121 (score_acquired passes origin='model-acquired' with no receipt check)",
+   "experiments/ad01/learner_revision.py:108 (ACQUIRED constant)",
+   "experiments/ad01/s09_e2_scored.py:197,277",
+   "experiments/ad01/s09_verdict.py:72 (ORIGIN_ACQUIRED, read by task_utility_verdict to decide an arm is acquired)"
+  ]
+ },
+ "lane_conflicts_reported": {
+  "also_live_in_this_worktree": "Uncommitted edits from another lane to src/settlement/launcher_local.py, experiments/ad01/experience_axis.py and two test files. launcher_local.py is currently a SyntaxError from that in-flight edit, which blocks collection of any test importing settlement.launcher_local. Not this lane's to revert.",
+  "both_edit": [
+   "experiments/ad01/trajectory.py",
+   "experiments/ad01/policy_step.py",
+   "experiments/ad01/control_distinctness.py",
+   "experiments/doubles.py",
+   "experiments/ad01/live_construct.py",
+   "experiments/ad01/construct.py"
+  ],
+  "codex/review-s0-s3-02": "1603 behind, 61 ahead, diverged",
+  "codex/stage-09-architecture-synthesis": "858 behind, 0 ahead"
+ },
+ "purpose": "Every committed artifact whose acquired-vs-control comparison rests on a treatment arm that was never acquired. These are records of what ran. They are not deleted. They are named here so the next reader does not take the comparison at face value.",
+ "the_finding_they_rest_on": {
+  "acquired_arm_executed_bytes_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+  "construction_calls_made": 1,
+  "freeze_field": "reports/evidence/inv_r1_e1_control_arm/freeze.json policy_identities.I.member_digests, keys acquired-gr-b0bd83b7 and acquired-sw-b0bd83b7, both carrying the same digest",
+  "member_records_carry_origin_field": false,
+  "named_for": "both members of the acquired arm, in the freeze below",
+  "scope_of_the_damage": "The treatment arm, not the control. The control was authored and was executed as authored, so comparisons of a constant against ddmin and greedy measure the constant, not acquisition.",
+  "served_by": "InvCQualificationDouble, gateway.api recorded as 'recording-double', model 'inv01-study-double'",
+  "that_digest_is": "experiments/doubles.py:74 ACQUIRED_ORDER_SOURCE, re-measured at this commit"
+ },
+ "what_this_lane_changed": {
+  "committed": [
+   "reports/evidence/inv02_acquisition_provenance/seam.json",
+   "experiments/ad01/live_construct.py (read_acquisition_evidence, find_acquisition_operation)",
+   "experiments/ad01/construct.py (acquisition_origin, threaded through both construction paths and the member record)",
+   "experiments/ad01/trajectory.py (_frozen_policy_origin, replay re-derives instead of asserting)",
+   "tests/test_inv02_acquisition_origin.py (11 tests)",
+   "tests/test_s09m2_construct.py (the assertion that pinned the false value now asserts the earned one)",
+   "reports/evidence/inv02_acquisition_provenance/live_reachability.json"
+  ],
+  "not_touched": [
+   "experiments/doubles.py. Not deleted. tests/test_inv_c_qualification.py:743 asserts member['method_source'] == D.ACQUIRED_ORDER_SOURCE, and tests assert the constant, so deleting it would break the recording pilot that is still the only runnable path. It is now labelled honestly instead of removed.",
+   "control_distinctness.py, untouched. f59326d made it stricter and nothing here weakens it."
+  ]
+ }
+}

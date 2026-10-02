@@ -324,7 +324,7 @@ def _fake_e12_bundle(tmp_path):
                 "task_id": row["task_id"], "split": row["split"],
                 "seed": row["seed"], "history": history,
                 "history_digest": driver._digest(history),
-                "public_input": session.model_input()})
+                "public_input": session.output_model_input()})
             prompt_digest = driver._digest("prompt:%s:%s" % (
                 arm, row["task_id"]))
             evidence_digest = driver._digest("evidence:%s:%s" % (
@@ -443,7 +443,8 @@ def _fake_e12_bundle(tmp_path):
            "held": [{"split": s, "seed": int(v)} for s, v in held],
            "control_boundaries": 0,
            "control": {"effects_settled": 0},
-           "model_total": 6}
+           "model_total": 6,
+           "metric_rule": dict(freeze["metric_rule"])}
     (out / "e12-run.json").write_text(
         json.dumps(e12, sort_keys=True, indent=1, default=str) + "\n")
     return out
@@ -482,7 +483,10 @@ def _write_authoritative_ledger(out):
         sources[arm] = live.source_digest(source)
     for index, task_id in enumerate(freeze["software_tasks"]):
         add("op-d-sw-%d" % index, "P0", task_id, sources["P0"], {
-            "observed": "reduced-%s" % task_id, "queries": 2})
+            "observed": "preserved", "queries": 2})
+        for arm in ("P1", "P2"):
+            add("op-use-d-sw-%s-%d" % (arm, index), arm, task_id,
+                sources[arm], {"observed": "preserved", "queries": 2})
     for op_id in ("op-a-0", "op-t-0"):
         add(op_id, "P0", op_id.removeprefix("op-"), sources["P0"],
             {"status": "recorded"})
@@ -492,7 +496,8 @@ def _write_authoritative_ledger(out):
             {"status": "recorded"})
     for arm in ("P0", "P1", "P2"):
         for entry in e12["held"]:
-            task_id = "rule-%s-%04d" % (entry["split"], int(entry["seed"]))
+            task_id = rules.make_task(
+                entry["split"], int(entry["seed"]))["task_id"]
             prefix = "a" if entry["split"] == "qual" else "t"
             op_id = "op-use-%s-%s-%s" % (prefix, arm, task_id)
             record = next(row for row in e12["arms"][arm]["booleans"]
@@ -542,6 +547,15 @@ def _write_authoritative_ledger(out):
             "source_digest": receipt["source_digest"],
             "artifact_digest": receipt["artifact_digest"]})
     e12["durable_receipts"] = projections
+    e12["dispatch_ledger"].extend([
+        {"operation_id": op_id, "arm": receipt["arm"],
+         "task_id": receipt["task_id"], "attempt": 1,
+         "dispatch_id": "test-dispatch:%s" % op_id,
+         "evidence_digest": receipt.get("dispatch_evidence_digest")
+         or receipt["evidence_digest"]}
+        for op_id, receipt in child_receipts.items()
+        if receipt["task_id"] in set(freeze["software_tasks"])
+    ])
     for dispatch in e12["dispatch_ledger"]:
         receipt = child_receipts[dispatch["operation_id"]]
         dispatch["evidence_digest"] = (
@@ -618,6 +632,22 @@ def test_authoritative_ledger_refuses_global_receipt_identity_collision(tmp_path
             "input_digest", "result_digest", "package_digest", "parent_digest",
             "round", "dispatch_evidence_digest", "raw_payload_digest")}))
     ledger["child_receipts"][second_id] = second
+    path.write_text(json.dumps(ledger))
+    with pytest.raises(ValueError, match="duplicate receipt identity"):
+        driver.export_m4_bundle(out)
+
+
+def test_authoritative_ledger_refuses_child_receipt_identity_collision(tmp_path):
+    out = _fake_e12_bundle(tmp_path)
+    _write_authoritative_ledger(out)
+    path = out / "authoritative-operations.json"
+    ledger = json.loads(path.read_text())
+    first_id = next(iter(ledger["child_receipts"]))
+    second_id = next(op_id for op_id in ledger["child_receipts"]
+                     if op_id != first_id)
+    first = ledger["child_receipts"][first_id]
+    ledger["child_receipts"][second_id]["receipt_identity"] = first[
+        "receipt_identity"]
     path.write_text(json.dumps(ledger))
     with pytest.raises(ValueError, match="duplicate receipt identity"):
         driver.export_m4_bundle(out)
@@ -902,3 +932,15 @@ def test_m4_export_rejects_missing_e12_receipt_from_authoritative_ledger(
 
     with pytest.raises(ValueError, match="receipt set.*unresolved"):
         driver.export_m4_bundle(out)
+
+
+def test_m4_export_exact_tie_selects_the_incumbent(tmp_path):
+    out = _fake_e12_bundle(tmp_path)
+    _write_authoritative_ledger(out)
+
+    bundle = driver.export_m4_bundle(out)
+    verified = m4.verify_bundle(bundle)
+
+    assert bundle["claimed"]["winner"] == "P0"
+    assert verified["status"] == "pass", verified["problems"]
+    assert verified["recomputed"]["comparison"]["winner"] == "P0"

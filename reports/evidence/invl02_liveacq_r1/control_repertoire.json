@@ -1,0 +1,54 @@
+{
+ "campaign_id": "liveacq02",
+ "members": [
+  {
+   "capability_id": "ctl-software-ddmin",
+   "authored": true,
+   "origin": "authored-control",
+   "entry": "ENTRY",
+   "method_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+   "source_digest": "e4c10cafe8a97848212118cabec98f0fa92cf4b6292fd6349ee856614623dbf7",
+   "scope": {
+    "family": "software"
+   },
+   "strategy": "ddmin"
+  },
+  {
+   "capability_id": "ctl-software-greedy",
+   "authored": true,
+   "origin": "authored-control",
+   "entry": "ENTRY",
+   "method_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n",
+   "source_digest": "6e03638cd7100befb3106ab642b49ddc562e64b2d0a4eda80616dcf038692f30",
+   "scope": {
+    "family": "software"
+   },
+   "strategy": "greedy"
+  },
+  {
+   "capability_id": "ctl-graph-ddmin",
+   "authored": true,
+   "origin": "authored-control",
+   "entry": "ENTRY",
+   "method_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='ddmin', max_queries=max_queries)\n",
+   "source_digest": "5b53d4c3c897cc0c27e603bc30b71279a62fd53a8898827124e3e7265416b278",
+   "scope": {
+    "family": "graph"
+   },
+   "strategy": "ddmin"
+  },
+  {
+   "capability_id": "ctl-graph-greedy",
+   "authored": true,
+   "origin": "authored-control",
+   "entry": "ENTRY",
+   "method_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+   "source_digest": "560e17fbfb513145232efd8269a4a0ca618cffcfddc75f5fa801a322b725ff1e",
+   "scope": {
+    "family": "graph"
+   },
+   "strategy": "greedy"
+  }
+ ],
+ "queries": 0
+}

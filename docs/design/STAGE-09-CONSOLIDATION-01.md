@@ -1,6 +1,6 @@
 # Stage 9: consolidate around persistent investigations
 
-Direction for the next batch, based on implementation `f3d20ac` and live evidence `a26408f`. The worker first closes the bounded stage 8 interface failures, tests and reports them, then starts the stage 9 work below. The complete assignment is [the worker prompt](../../WORKER-STAGE-08-CLOSE-STAGE-09-START.md). Stage 9 starts now; useful learning and generality remain unproven.
+Direction for the next batch, based on implementation `f3d20ac` and live evidence `a26408f`. The worker first closes the bounded stage 8 interface failures, tests and reports them, then starts the stage 9 work below. The complete assignment is [the worker prompt](../HISTORY.md#worker-stage-08-close-stage-09-start). Stage 9 starts now; useful learning and generality remain unproven.
 
 ## Evidence and the decision it supports
 

@@ -1,0 +1,29 @@
+{
+  "campaign_id": "ad01-w0-I-00",
+  "members": [
+    {
+      "authored": false,
+      "capability_id": "acquired-sw-2074657c",
+      "construction": {
+        "calls_made": 1,
+        "campaign_id": "ad01-w0-I-00",
+        "init_failure": null,
+        "init_operation": "ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-init",
+        "lineage": 1,
+        "repair_operation": null,
+        "study_root": "inv_r1_m3_run7"
+      },
+      "entry": "ENTRY",
+      "method_source": "def ENTRY(task, oracle, max_queries=16):\n    reduction = reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)\n    return {\"candidate\": reduction[\"candidate\"], \"queries\": reduction[\"queries\"]}",
+      "params": {
+        "max_queries": 10
+      },
+      "qualified_on": "ad01-w0-dev-sw-00",
+      "scope": {
+        "family": "software"
+      },
+      "source_digest": "2074657cfea5b3339703c8ee2c3d931eb20b889b0f407705d517c85e0b0fa3c7"
+    }
+  ],
+  "queries": 96
+}

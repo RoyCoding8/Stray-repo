@@ -2,7 +2,7 @@
 
 Reviewed implementation: `44f1f7c7d6340890f9028de8ef4f3f61e344e4c1`, fetched and checked against the handoff at `123c211`. Review date: 2026-09-20. This review changes no production code and makes no study model calls or database changes.
 
-**Disposition: partial implementation, completion required before live qualification.** Missing live authorization is real, but it is not the only remaining prerequisite. Keep the working broker, contracts and diagnostic fixes. Finish the connected investigation path already specified, without another whole-repository audit or new architecture project. The continuation is [the completion assignment](../WORKER-INVESTIGATION-01-COMPLETION.md).
+**Disposition: partial implementation, completion required before live qualification.** Missing live authorization is real, but it is not the only remaining prerequisite. Keep the working broker, contracts and diagnostic fixes. Finish the connected investigation path already specified, without another whole-repository audit or new architecture project. The continuation is [the completion assignment](../docs/HISTORY.md#worker-investigation-01-completion).
 
 ## Accepted progress and limits
 

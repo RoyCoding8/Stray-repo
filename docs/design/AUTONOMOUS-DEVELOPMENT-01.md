@@ -1,6 +1,6 @@
 # Autonomous Development 01: system-chosen investigations and executable reuse
 
-Selected next prototype design, 2026-09-15. This follows the user's standing generality checkpoint in [the roadmap](REFINEMENT-ROADMAP.md). It does not reinterpret EC02's doubled records as learning or change its frozen experiment. Implementation is included, with dependency gates, in [the combined assignment](../../WORKER-EC02-CLOSURE-AND-AUTONOMOUS-DEVELOPMENT-01.md).
+Selected next prototype design, 2026-09-15. This follows the user's standing generality checkpoint in [the roadmap](REFINEMENT-ROADMAP.md). It does not reinterpret EC02's doubled records as learning or change its frozen experiment. Implementation is included, with dependency gates, in [the combined assignment](../HISTORY.md#worker-ec02-closure-and-autonomous-development-01).
 
 ## 1. The architectural move
 

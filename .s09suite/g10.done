@@ -1,0 +1,5 @@
+=== group 10  token=5e9b000a  files=2 ===
+  tests/test_rpr13_endtoend.py::test_disconnect_negative
+  tests/test_rpr13_endtoend.py::test_no_candidate_path
+rc=1
+summary: 1 failed, 1 passed in 139.61s (0:02:19)

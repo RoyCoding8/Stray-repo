@@ -13,6 +13,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from . import child_limits
 from .common import IncompatibleVersion, ResultCode, SettlementError
 
 GVISOR = "gvisor"
@@ -113,17 +114,10 @@ def scrub_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     return base
 
 
-def _limit_resources(cpu_seconds: int | None, memory_bytes: int | None) -> None:
-    import resource
-
-    if cpu_seconds is not None:
-        resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
-    if memory_bytes is not None:
-        resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
-
-
 def _child_session(cpu_seconds: int | None, memory_bytes: int | None) -> None:
-    _limit_resources(cpu_seconds, memory_bytes)
+    child_limits.apply_child_limits(
+        child_limits.ChildLimits(cpu_seconds=cpu_seconds,
+                                 memory_bytes=memory_bytes))
     os.setsid()
 
 
@@ -165,7 +159,12 @@ def run_local_process(
             cwd=cwd,
             preexec_fn=lambda: _child_session(cpu_seconds, memory_bytes),
         )
-    except OSError as exc:
+    except (OSError, ValueError) as exc:
+        # ValueError is CPython refusing `preexec_fn` on Windows, raised by
+        # `Popen` before any child exists. It is caught here because the
+        # function is going to refuse this child either way: an unbounded one
+        # is what the refusal exists to prevent, and the refusal belongs in the
+        # result this call returns rather than in a traceback out of it.
         return ExecResult(
             profile=LOCAL_PROCESS,
             containment=False,

@@ -1,0 +1,75 @@
+{
+ "agenda_picks": [
+  [
+   "seed-sw-ddmin",
+   2
+  ],
+  [
+   "seed-sw-greedy",
+   2
+  ]
+ ],
+ "arms": {
+  "agenda": {
+   "choices": 2,
+   "picks": [
+    {
+     "capability_id": "seed-sw-ddmin",
+     "max_queries": 2,
+     "rationale": "untried capability ddmin in the software line"
+    },
+    {
+     "capability_id": "seed-sw-greedy",
+     "max_queries": 2,
+     "rationale": "untried capability greedy in the software line"
+    }
+   ],
+   "policy": "agenda",
+   "policy_version": "ad01-policy-portfolio-agenda-v1",
+   "stop_reason": "budget exhausted",
+   "yield": {
+    "diagnoses_correct": 0,
+    "held_out_reduction": 0.08465608465608465,
+    "resources_used": 14,
+    "retained_behaviors": 1
+   }
+  },
+  "control": {
+   "choices": 2,
+   "picks": [
+    {
+     "capability_id": "seed-gr-ddmin",
+     "max_queries": 1,
+     "rationale": "pre-committed graph/ddmin step 1 of 1"
+    },
+    {
+     "capability_id": "seed-sw-ddmin",
+     "max_queries": 1,
+     "rationale": "pre-committed software/ddmin step 1 of 5"
+    }
+   ],
+   "policy": "control",
+   "policy_version": "ad01-policy-portfolio-fixed-v1:graph=ddmin/1;software=ddmin/5",
+   "stop_reason": "budget exhausted",
+   "yield": {
+    "diagnoses_correct": 1,
+    "held_out_reduction": 0.0,
+    "resources_used": 12,
+    "retained_behaviors": 0
+   }
+  }
+ },
+ "budget": 14,
+ "control_picks": [
+  [
+   "seed-gr-ddmin",
+   1
+  ],
+  [
+   "seed-sw-ddmin",
+   1
+  ]
+ ],
+ "picks_differ": true,
+ "world": 0
+}

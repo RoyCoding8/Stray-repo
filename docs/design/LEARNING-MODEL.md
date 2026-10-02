@@ -1,6 +1,6 @@
 # Acquired competence and development episodes
 
-Status: selected design for the first bounded development experiment, 2026-09-10. Inspected base: `be1730d`. This refines R2-R4 and LEARN-1 through LEARN-9; it preserves the existing execution, evidence, authority and release contracts. See [the roadmap](REFINEMENT-ROADMAP.md) and [worker assignment](../../WORKER-DEVELOPMENT-01-PROMPT.md).
+Status: selected design for the first bounded development experiment, 2026-09-10. Inspected base: `be1730d`. This refines R2-R4 and LEARN-1 through LEARN-9; it preserves the existing execution, evidence, authority and release contracts. See [the roadmap](REFINEMENT-ROADMAP.md) and [worker assignment](../HISTORY.md#worker-development-01-prompt).
 
 ## 1. Selected mechanism
 

@@ -1,0 +1,32 @@
+{
+ "amortized_over_uses": {
+  "cold_per_use": 3922.8,
+  "crossover_uses": 5.0,
+  "retained_per_use": 3269.0
+ },
+ "arms": {
+  "cold": {
+   "construction_dispatches": 1,
+   "construction_units": 3269,
+   "reacquires": true,
+   "total_units": 19614,
+   "use_dispatches": 5,
+   "use_units": 16345
+  },
+  "retained": {
+   "construction_dispatches": 0,
+   "construction_units": 0,
+   "reacquires": false,
+   "total_units": 16345,
+   "use_dispatches": 5,
+   "use_units": 16345
+  }
+ },
+ "budget": {
+  "model_calls": 1,
+  "queries": 8
+ },
+ "declared_uses": 5,
+ "units_per_dispatch": 3269,
+ "verdict": "retention pays for itself after 5.0 uses"
+}

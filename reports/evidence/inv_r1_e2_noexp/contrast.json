@@ -1,0 +1,16 @@
+{
+ "none": {
+  "diagnostic": "software",
+  "err": "",
+  "max_queries": 5,
+  "obs_count": 0,
+  "question": "Proceed with development task ad01-w1-dev-gr-00?"
+ },
+ "relevant": {
+  "diagnostic": "graph",
+  "err": "",
+  "max_queries": 3,
+  "obs_count": 3,
+  "question": "How do the graph development tasks perform for relevant vs no experience acquisition?"
+ }
+}

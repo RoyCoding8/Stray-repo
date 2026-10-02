@@ -1,0 +1,355 @@
+{
+  "budget": 8,
+  "development_specs": [
+    "software/rd1",
+    "software/rd2",
+    "software/d1s2",
+    "graph/C5+tree",
+    "graph/C7+tree",
+    "graph/C5+disconnected-path"
+  ],
+  "files": [
+    {
+      "bytes": 373,
+      "digest": "3236d4118c47ad77a50e8b7ec6ea596a2a5e0d6dad43fd105114bdbb243302a1",
+      "path": "world-0/dev/panel-w0-dev-gr-00.json",
+      "task_id": "panel-w0-dev-gr-00"
+    },
+    {
+      "bytes": 447,
+      "digest": "e4c4da1da7fc779ec2339cca6e269912973a1233c1d50ae7e958a76dbda224ce",
+      "path": "world-0/dev/panel-w0-dev-gr-01.json",
+      "task_id": "panel-w0-dev-gr-01"
+    },
+    {
+      "bytes": 430,
+      "digest": "167d6c6f2b3a32a6f730ac95e042d791e3ea8b31958a9a19101d3363340c8eef",
+      "path": "world-0/dev/panel-w0-dev-gr-02.json",
+      "task_id": "panel-w0-dev-gr-02"
+    },
+    {
+      "bytes": 648,
+      "digest": "7dcd1ce2c410dcbfced32586e4ef8ec1b1b7ede3925ebdb0d3c6486b65064030",
+      "path": "world-0/dev/panel-w0-dev-sw-00.json",
+      "task_id": "panel-w0-dev-sw-00"
+    },
+    {
+      "bytes": 578,
+      "digest": "82cbdd915d354743b2dfee309904fadd13bc005c08adc9c84000d2e47e2860da",
+      "path": "world-0/dev/panel-w0-dev-sw-01.json",
+      "task_id": "panel-w0-dev-sw-01"
+    },
+    {
+      "bytes": 649,
+      "digest": "3a4dd5795e0e4df79b4cd6d8743f2288c4b07839a46fd9cf1cbbd2a1ea5e45de",
+      "path": "world-0/dev/panel-w0-dev-sw-02.json",
+      "task_id": "panel-w0-dev-sw-02"
+    },
+    {
+      "bytes": 563,
+      "digest": "ff2db76c63e4cc89aab55d8433f869f330e823c43e7351c32c0efe59a76713b8",
+      "path": "world-0/transfer/panel-w0-transfer-gr-00.json",
+      "task_id": "panel-w0-transfer-gr-00"
+    },
+    {
+      "bytes": 529,
+      "digest": "d0481de23f5250bb42aff70e8e84410490ae867c26692e22740d279e81d13c2a",
+      "path": "world-0/transfer/panel-w0-transfer-gr-01.json",
+      "task_id": "panel-w0-transfer-gr-01"
+    },
+    {
+      "bytes": 529,
+      "digest": "d2fc7b433cd310251e68bfc74649729b457314080c237bf0521b2ba7ade7a0cc",
+      "path": "world-0/transfer/panel-w0-transfer-gr-02.json",
+      "task_id": "panel-w0-transfer-gr-02"
+    },
+    {
+      "bytes": 642,
+      "digest": "2fb200504fbbd7b8171e0038ab92e04a9e72ddafabdd3c0430392b171c1ee672",
+      "path": "world-0/transfer/panel-w0-transfer-sw-00.json",
+      "task_id": "panel-w0-transfer-sw-00"
+    },
+    {
+      "bytes": 712,
+      "digest": "84570e23136f3fd9488772a14eef82abc57dc992a72c76133c36fd627845634b",
+      "path": "world-0/transfer/panel-w0-transfer-sw-01.json",
+      "task_id": "panel-w0-transfer-sw-01"
+    },
+    {
+      "bytes": 783,
+      "digest": "488958f80267e6079ed356702ae9fe5db144b4f0609f8ae457630193ee48455e",
+      "path": "world-0/transfer/panel-w0-transfer-sw-02.json",
+      "task_id": "panel-w0-transfer-sw-02"
+    },
+    {
+      "bytes": 387,
+      "digest": "c19f3840cdfecb07a8f7cfd47912ad43c1ec0c927bfe0203627110d89ba76226",
+      "path": "world-0/within/panel-w0-within-gr-00.json",
+      "task_id": "panel-w0-within-gr-00"
+    },
+    {
+      "bytes": 505,
+      "digest": "dc3fafd2eaea75e0285a665e1ee80b624e660d1773bf5c79d9b9ed0cb43da4d9",
+      "path": "world-0/within/panel-w0-within-gr-01.json",
+      "task_id": "panel-w0-within-gr-01"
+    },
+    {
+      "bytes": 505,
+      "digest": "8178a34084b74a3121b64ac2afc5947dd85366a5ab3a64b01cc4eb9b7bd9ee9c",
+      "path": "world-0/within/panel-w0-within-gr-02.json",
+      "task_id": "panel-w0-within-gr-02"
+    },
+    {
+      "bytes": 601,
+      "digest": "de871cef3fd30d921def564571f5cac2ccd8ef9345f4e827063021dc14d15cc0",
+      "path": "world-0/within/panel-w0-within-sw-00.json",
+      "task_id": "panel-w0-within-sw-00"
+    },
+    {
+      "bytes": 672,
+      "digest": "286997431b1f4ca8533ece0cf51ffc4a0f9391b24b3f5fa527257598dd3ffeff",
+      "path": "world-0/within/panel-w0-within-sw-01.json",
+      "task_id": "panel-w0-within-sw-01"
+    },
+    {
+      "bytes": 671,
+      "digest": "a96a047a30b8b43c1323cb8767310c867d1d4e91daf76e02c9aa74274dc7c390",
+      "path": "world-0/within/panel-w0-within-sw-02.json",
+      "task_id": "panel-w0-within-sw-02"
+    },
+    {
+      "bytes": 373,
+      "digest": "18888b9da1dc6e63907c99015830a439018d95355db6a726bfb48de46b191456",
+      "path": "world-1/dev/panel-w1-dev-gr-00.json",
+      "task_id": "panel-w1-dev-gr-00"
+    },
+    {
+      "bytes": 447,
+      "digest": "dd972bdfcfb6d06ed45e7fd5c94bb02167e48fbf8d4ea6b54b1ab952f865f11b",
+      "path": "world-1/dev/panel-w1-dev-gr-01.json",
+      "task_id": "panel-w1-dev-gr-01"
+    },
+    {
+      "bytes": 430,
+      "digest": "bc3820a56e63e8f79dd6bd23b6a75f9c4d3e65dc0fba288155e465b5dcdc9b3a",
+      "path": "world-1/dev/panel-w1-dev-gr-02.json",
+      "task_id": "panel-w1-dev-gr-02"
+    },
+    {
+      "bytes": 648,
+      "digest": "693cfaa6dbbd6fa4b3f6ae4ee31874091d0de74ff5cd989d795e7f9f4ca43308",
+      "path": "world-1/dev/panel-w1-dev-sw-00.json",
+      "task_id": "panel-w1-dev-sw-00"
+    },
+    {
+      "bytes": 578,
+      "digest": "f947adacad9419fc25603c1c262be03e1a1a13cb5136b503d324ae2a31c90140",
+      "path": "world-1/dev/panel-w1-dev-sw-01.json",
+      "task_id": "panel-w1-dev-sw-01"
+    },
+    {
+      "bytes": 649,
+      "digest": "f223c523045bd3205d1b8c6be31b370f94a2e7b52d04762ce173fa6dc320143c",
+      "path": "world-1/dev/panel-w1-dev-sw-02.json",
+      "task_id": "panel-w1-dev-sw-02"
+    },
+    {
+      "bytes": 563,
+      "digest": "06e7470ea5368c7e3a839e7329d4b36300c463bf0105819d86f2923feb1047a6",
+      "path": "world-1/transfer/panel-w1-transfer-gr-00.json",
+      "task_id": "panel-w1-transfer-gr-00"
+    },
+    {
+      "bytes": 492,
+      "digest": "f8718bc6b63c116a10c9dc3d2e249996ba3db992dce26abec30f3c4a452621d1",
+      "path": "world-1/transfer/panel-w1-transfer-gr-01.json",
+      "task_id": "panel-w1-transfer-gr-01"
+    },
+    {
+      "bytes": 529,
+      "digest": "419379db1fe63b4aff9f852d6b823957606bf391bb49648a6b24b69f89a3897d",
+      "path": "world-1/transfer/panel-w1-transfer-gr-02.json",
+      "task_id": "panel-w1-transfer-gr-02"
+    },
+    {
+      "bytes": 642,
+      "digest": "a6eb8f19be0afda7e59c4205a9407a7b6fcb8c4b909b1f280c1000c9117f7098",
+      "path": "world-1/transfer/panel-w1-transfer-sw-00.json",
+      "task_id": "panel-w1-transfer-sw-00"
+    },
+    {
+      "bytes": 712,
+      "digest": "8cc25265d98337f790403cd4164eb0ed3e411380d8e58174256ead008b304625",
+      "path": "world-1/transfer/panel-w1-transfer-sw-01.json",
+      "task_id": "panel-w1-transfer-sw-01"
+    },
+    {
+      "bytes": 783,
+      "digest": "7755fc444f6b600d318f85a990cb8e7f915cd0d796e9a5b4f39950b06f03fc29",
+      "path": "world-1/transfer/panel-w1-transfer-sw-02.json",
+      "task_id": "panel-w1-transfer-sw-02"
+    },
+    {
+      "bytes": 387,
+      "digest": "ac262a12e200244639314a1a6801b7b0630af473f32e8bdc52bbb9d21b6befa9",
+      "path": "world-1/within/panel-w1-within-gr-00.json",
+      "task_id": "panel-w1-within-gr-00"
+    },
+    {
+      "bytes": 468,
+      "digest": "dd15e627706e264ea8548f6e913871bedbf730a3daae7795433629dc5bff676b",
+      "path": "world-1/within/panel-w1-within-gr-01.json",
+      "task_id": "panel-w1-within-gr-01"
+    },
+    {
+      "bytes": 505,
+      "digest": "ea7c287ff4c16876271a327936f61155e04bf61040a60ac1a8aa948524487de2",
+      "path": "world-1/within/panel-w1-within-gr-02.json",
+      "task_id": "panel-w1-within-gr-02"
+    },
+    {
+      "bytes": 601,
+      "digest": "2c46125498931d7e6fec49fc2cec884fa05795305ce48b38a922389db9f928a2",
+      "path": "world-1/within/panel-w1-within-sw-00.json",
+      "task_id": "panel-w1-within-sw-00"
+    },
+    {
+      "bytes": 672,
+      "digest": "9a1213b6aacc07ce1d3946d49bb48a605bf6d5b0530ac724ebadef5ddd0b2214",
+      "path": "world-1/within/panel-w1-within-sw-01.json",
+      "task_id": "panel-w1-within-sw-01"
+    },
+    {
+      "bytes": 671,
+      "digest": "e5aaa9e7916798a324939cbebb7486bfd38e3962ebc33497dd2bd1df9a2c7f4a",
+      "path": "world-1/within/panel-w1-within-sw-02.json",
+      "task_id": "panel-w1-within-sw-02"
+    },
+    {
+      "bytes": 373,
+      "digest": "b32f3e7ae32350a79dc0795099f2cffd7fab89760438197f1bd3d0dc087f0e58",
+      "path": "world-2/dev/panel-w2-dev-gr-00.json",
+      "task_id": "panel-w2-dev-gr-00"
+    },
+    {
+      "bytes": 447,
+      "digest": "a3783db42cedffade71442484e03eec4e7a4ebb44916914026d69c29f96148be",
+      "path": "world-2/dev/panel-w2-dev-gr-01.json",
+      "task_id": "panel-w2-dev-gr-01"
+    },
+    {
+      "bytes": 430,
+      "digest": "144503f2828aef878f3d38b4ffb30ce130d41437f2cc7b97b474e5395531d24a",
+      "path": "world-2/dev/panel-w2-dev-gr-02.json",
+      "task_id": "panel-w2-dev-gr-02"
+    },
+    {
+      "bytes": 648,
+      "digest": "f3bed6dc325c622b14cc6b411b7ade3f4e866b0779c32e38c1e192f0f60f44eb",
+      "path": "world-2/dev/panel-w2-dev-sw-00.json",
+      "task_id": "panel-w2-dev-sw-00"
+    },
+    {
+      "bytes": 578,
+      "digest": "b3e8ac15f36ca4b0f8f530ac881f8e528b1c2e059b48de382efd82625377dc2f",
+      "path": "world-2/dev/panel-w2-dev-sw-01.json",
+      "task_id": "panel-w2-dev-sw-01"
+    },
+    {
+      "bytes": 649,
+      "digest": "2bcf902e0c531e0bda0333682eadee838acad21de6cb6eebbb2ff52826ce451d",
+      "path": "world-2/dev/panel-w2-dev-sw-02.json",
+      "task_id": "panel-w2-dev-sw-02"
+    },
+    {
+      "bytes": 563,
+      "digest": "75fd5016586b3072a46742d578d01971ef886dab2a3718c5a0f6659c3bad6ac9",
+      "path": "world-2/transfer/panel-w2-transfer-gr-00.json",
+      "task_id": "panel-w2-transfer-gr-00"
+    },
+    {
+      "bytes": 492,
+      "digest": "9475908de3d1427c791739150fae426001153a1286f35d4de48c16bcca96fc26",
+      "path": "world-2/transfer/panel-w2-transfer-gr-01.json",
+      "task_id": "panel-w2-transfer-gr-01"
+    },
+    {
+      "bytes": 529,
+      "digest": "b8e27aae9ba468b434ba0c7bdf324394c81ad8ceee6008628697a5b0a93700ed",
+      "path": "world-2/transfer/panel-w2-transfer-gr-02.json",
+      "task_id": "panel-w2-transfer-gr-02"
+    },
+    {
+      "bytes": 642,
+      "digest": "cecf50b30d351b5e3726cd0565a079932130742d24e35995f86985ae2c75a666",
+      "path": "world-2/transfer/panel-w2-transfer-sw-00.json",
+      "task_id": "panel-w2-transfer-sw-00"
+    },
+    {
+      "bytes": 712,
+      "digest": "282ea3eadf1b200dd08b85325d307b5ec448afe5a204872883311cf4f332cab9",
+      "path": "world-2/transfer/panel-w2-transfer-sw-01.json",
+      "task_id": "panel-w2-transfer-sw-01"
+    },
+    {
+      "bytes": 783,
+      "digest": "94f87bde16d8b3a69ed63043a77d0b109becd8e59d745636b14ef468da0261eb",
+      "path": "world-2/transfer/panel-w2-transfer-sw-02.json",
+      "task_id": "panel-w2-transfer-sw-02"
+    },
+    {
+      "bytes": 387,
+      "digest": "ae0951c6e8f1e28e78606e0eb2d9a74068d19984517393c2c791a53837f52edd",
+      "path": "world-2/within/panel-w2-within-gr-00.json",
+      "task_id": "panel-w2-within-gr-00"
+    },
+    {
+      "bytes": 468,
+      "digest": "99f5b7b76009476cbb4cbed6bb600abaa516d65e814deb297a1a7c21cce9dcd8",
+      "path": "world-2/within/panel-w2-within-gr-01.json",
+      "task_id": "panel-w2-within-gr-01"
+    },
+    {
+      "bytes": 505,
+      "digest": "f5d33ddfdae33d1e46e6c1d1b4be77e65c8583d2116cb89240f705efc5d98427",
+      "path": "world-2/within/panel-w2-within-gr-02.json",
+      "task_id": "panel-w2-within-gr-02"
+    },
+    {
+      "bytes": 601,
+      "digest": "b3680e10626aa94ef2fdf7192ed41bde90b32de58ba880ed943b232695a5e59a",
+      "path": "world-2/within/panel-w2-within-sw-00.json",
+      "task_id": "panel-w2-within-sw-00"
+    },
+    {
+      "bytes": 672,
+      "digest": "608baf25e918018c2b0a87bcd3df335a5e9946721d19637ff2a6d58426e59b4c",
+      "path": "world-2/within/panel-w2-within-sw-01.json",
+      "task_id": "panel-w2-within-sw-01"
+    },
+    {
+      "bytes": 671,
+      "digest": "3d18f5319ba0f650f98dffa5cfd0d6cbd83054ebdc1a3fb85bbdae3a9de3bc62",
+      "path": "world-2/within/panel-w2-within-sw-02.json",
+      "task_id": "panel-w2-within-sw-02"
+    }
+  ],
+  "freeze_id": "ad01-panel-v1",
+  "transfer_specs": [
+    "software/s1c",
+    "software/s2c",
+    "software/s2sc",
+    "graph/C5+shared-edge",
+    "graph/C5+2-trees",
+    "graph/C7+2-trees"
+  ],
+  "version": "AD01-PANEL/1",
+  "within_specs": [
+    "software/s2",
+    "software/s2s",
+    "software/s3",
+    "graph/C5+isolated",
+    "graph/C5+star-distractor",
+    "graph/C7+path-distractor"
+  ]
+}

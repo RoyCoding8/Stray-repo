@@ -1,6 +1,6 @@
 # Investigation 01 completion review at 7941ab4
 
-Reviewed `7941ab43eaf334302aec9cd108bdb9fe014f3f0c`, fetched from the reported completion branch. Review date: 2026-09-20. **Accept the delivered core improvements; do not close the technical batch or describe a human grant as its sole remainder.** Three bounded areas below prevent the intended live qualification. The next task is [study readiness](../WORKER-INVESTIGATION-01-STUDY-READINESS.md), not a new architecture or general audit.
+Reviewed `7941ab43eaf334302aec9cd108bdb9fe014f3f0c`, fetched from the reported completion branch. Review date: 2026-09-20. **Accept the delivered core improvements; do not close the technical batch or describe a human grant as its sole remainder.** Three bounded areas below prevent the intended live qualification. The next task is [study readiness](../docs/HISTORY.md#worker-investigation-01-study-readiness), not a new architecture or general audit.
 
 ## Accepted changes
 

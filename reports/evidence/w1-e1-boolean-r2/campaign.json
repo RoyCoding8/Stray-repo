@@ -1,0 +1,347 @@
+{
+ "authored_baseline": {
+  "arm": "authored-control",
+  "committed": false,
+  "committed_any": false,
+  "comparable": true,
+  "decisions": [
+   {
+    "kind": "probe",
+    "target": "boolean.query"
+   },
+   {
+    "kind": "stop",
+    "target": "boolean.task"
+   }
+  ],
+  "executor": "boolean_graph_policy.choose_action, in-process",
+  "model_calls": 0,
+  "not_counted_as": "a live lineage. It is authored bytes and zero model calls, and a run that scored it as an acquisition would be counting a control as a result.",
+  "origin": "authored-control",
+  "queries_spent": 1,
+  "reading": "the authored arm probes once, then stops without committing: its commit guard is keyed to a fixed constant the observation on this task does not match, so it declines to assert a predictor. Not a crash and not a zero; there is no predictor to score.",
+  "representation": "action-graph",
+  "score": null,
+  "seed": 11,
+  "split": "qual",
+  "step": "unmeasurable on this host: the STEP and typed-AST authored arms both need the bounded child this coordinator cannot spawn, so one of three authored representations is measurable here",
+  "task_id": "rule-qual-194dba80c87f"
+ },
+ "campaign_id": "w1-e1-boolean-r2",
+ "campaign_json_rederived": {
+  "at": "2026-09-30T04:39:44Z",
+  "model_calls": 0,
+  "touched": "campaign.json only",
+  "unchanged": [
+   "exposure.json",
+   "lineages/*.json",
+   "campaign-manifest.json"
+  ],
+  "why": "the running process had imported summarize() before the invalid-program defect split was added, so the first campaign.json omitted invalid_program_defect and response_characters. This file is re-derived from the SAME written lineage records with the fixed summarizer. No model call was made and no lineage record was touched; the exposure ledger is unchanged."
+ },
+ "cell": {
+  "representation": "output-shape predictor",
+  "task": "the frozen qual split at seed 11 with all eight queries already spent, so the model is asked to commit rather than probe",
+  "world": "boolean"
+ },
+ "cells": [
+  {
+   "at_or_above_floor": 0,
+   "candidate_digests": [],
+   "construction_events": 0,
+   "distinct_behaviours": 0,
+   "lineages_run": 4,
+   "outcomes": {
+    "constructed": 0,
+    "empty-content": 0,
+    "invalid-program": 3,
+    "poor-task-result": 0,
+    "pre-dispatch-refusal": 0,
+    "route-refusal": 0,
+    "transport-loss": 1
+   },
+   "records": [
+    "L01-P1",
+    "L02-P1",
+    "L03-P1",
+    "L04-P1"
+   ],
+   "score_distribution": {
+    "max": null,
+    "median": null,
+    "min": null,
+    "n": 0,
+    "values": []
+   },
+   "scores": [],
+   "treatment": "P1",
+   "treatment_meaning": "interface-only acquisition: the frozen public view and nothing else",
+   "verdicts": [
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": "over-length",
+     "lineage": "L01-P1",
+     "operation_id": "invl02-output-128636e885b7-P1-qual-0011-a1",
+     "outcome": "invalid-program",
+     "provider": "Nvidia",
+     "reason": "response of 5211 characters exceeds the frozen limit of 512",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": 5211,
+     "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "score": null,
+     "stop_reason": "length",
+     "tier": "free",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 370,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": "over-length",
+     "lineage": "L02-P1",
+     "operation_id": "invl02-output-296693cd08b8-P1-qual-0011-a1",
+     "outcome": "invalid-program",
+     "provider": "Nvidia",
+     "reason": "response of 5092 characters exceeds the frozen limit of 512",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": 5092,
+     "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "score": null,
+     "stop_reason": "length",
+     "tier": "free",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 370,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": null,
+     "lineage": "L03-P1",
+     "operation_id": "invl02-output-db5f1a192008-P1-qual-0011-a1",
+     "outcome": "transport-loss",
+     "provider": null,
+     "reason": "gateway request failed: http 502",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": null,
+     "returned_model": null,
+     "score": null,
+     "stop_reason": "",
+     "tier": null,
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": "unknown",
+      "output_tokens": "unknown",
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": "over-length",
+     "lineage": "L04-P1",
+     "operation_id": "invl02-output-3d4e884ed121-P1-qual-0011-a1",
+     "outcome": "invalid-program",
+     "provider": "Nvidia",
+     "reason": "response of 6590 characters exceeds the frozen limit of 512",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": 6590,
+     "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "score": null,
+     "stop_reason": "length",
+     "tier": "free",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 370,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    }
+   ],
+   "verified_offline": 4
+  },
+  {
+   "at_or_above_floor": 0,
+   "candidate_digests": [],
+   "construction_events": 0,
+   "distinct_behaviours": 0,
+   "lineages_run": 4,
+   "outcomes": {
+    "constructed": 0,
+    "empty-content": 0,
+    "invalid-program": 3,
+    "poor-task-result": 0,
+    "pre-dispatch-refusal": 0,
+    "route-refusal": 0,
+    "transport-loss": 1
+   },
+   "records": [
+    "L01-P2",
+    "L02-P2",
+    "L03-P2",
+    "L04-P2"
+   ],
+   "score_distribution": {
+    "max": null,
+    "median": null,
+    "min": null,
+    "n": 0,
+    "values": []
+   },
+   "scores": [],
+   "treatment": "P2",
+   "treatment_meaning": "prior-task summary: two dev-split predictor digests and their scores, no program text",
+   "verdicts": [
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": "over-length",
+     "lineage": "L01-P2",
+     "operation_id": "invl02-output-128636e885b7-P2-qual-0011-a1",
+     "outcome": "invalid-program",
+     "provider": "Nvidia",
+     "reason": "response of 5185 characters exceeds the frozen limit of 512",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": 5185,
+     "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "score": null,
+     "stop_reason": "length",
+     "tier": "free",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 578,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": "over-length",
+     "lineage": "L02-P2",
+     "operation_id": "invl02-output-296693cd08b8-P2-qual-0011-a1",
+     "outcome": "invalid-program",
+     "provider": "Nvidia",
+     "reason": "response of 7314 characters exceeds the frozen limit of 512",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": 7314,
+     "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "score": null,
+     "stop_reason": "length",
+     "tier": "free",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 578,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": null,
+     "lineage": "L03-P2",
+     "operation_id": "invl02-output-db5f1a192008-P2-qual-0011-a1",
+     "outcome": "transport-loss",
+     "provider": null,
+     "reason": "gateway request failed: http 502",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": null,
+     "returned_model": null,
+     "score": null,
+     "stop_reason": "",
+     "tier": null,
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": "unknown",
+      "output_tokens": "unknown",
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    {
+     "candidate_digest": null,
+     "invalid_program_defect": "over-length",
+     "lineage": "L04-P2",
+     "operation_id": "invl02-output-3d4e884ed121-P2-qual-0011-a1",
+     "outcome": "invalid-program",
+     "provider": "Nvidia",
+     "reason": "response of 5323 characters exceeds the frozen limit of 512",
+     "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "response_characters": 5323,
+     "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+     "score": null,
+     "stop_reason": "length",
+     "tier": "free",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 578,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    }
+   ],
+   "verified_offline": 4
+  }
+ ],
+ "closed_at": "2026-09-30T04:39:07Z",
+ "counts": {
+  "construction_events": 0,
+  "note": "a construction event is a lineage whose bytes parsed and ran; a unique source program is a distinct candidate digest; a retained artifact record is a file. These are three numbers and only the first is about how many times a model was asked.",
+  "retained_artifact_records": 8,
+  "unique_source_programs": 0
+ },
+ "exposure": {
+  "attempts_planned": 8,
+  "attempts_settled": 8,
+  "dispatches_refunded": 0,
+  "dispatches_spent": 8,
+  "driver_faults": [],
+  "model_call_ceiling": 16
+ },
+ "offline": true,
+ "planned": {
+  "attempt_ceiling": 8,
+  "cap_sheet_formula": "N = 4 x supported cells x treatments",
+  "lineages_per_treatment": 4,
+  "model_call_ceiling": 16,
+  "repairs_note": "unspent, and not spendable here: render_output_prompt refuses an attempt outside (1, 2) and output_operation_id refuses any seed outside the frozen pair, so a repair would have to reuse the same task and the same identity",
+  "repairs_planned": 0,
+  "treatments": [
+   "P1",
+   "P2"
+  ]
+ },
+ "read_at": "2026-09-30T04:39:44Z",
+ "reference_scores": {
+  "oracle_overall": 1.0,
+  "zero_predictor_overall": 0.0625
+ },
+ "schema": "w1-e1-boolean-campaign-v2",
+ "score_floor": 1.0,
+ "supersedes": "w1-e1-boolean-r1",
+ "task": {
+  "input_cardinality": 4,
+  "output_cardinality": 4,
+  "queries_spent": 8,
+  "seed": 11,
+  "split": "qual",
+  "task_id": "rule-qual-194dba80c87f"
+ }
+}

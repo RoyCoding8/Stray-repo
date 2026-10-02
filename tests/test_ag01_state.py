@@ -259,7 +259,8 @@ def test_outcome_refusals(migrated_db):
     clash = broker.admit_launcher_receipt(
         migrated_db, op_b, broker.ReceiptProposal(
             receipt_identity=receipt_b,
-            content={"kind": "observation", "prop": "p", "scope": "transfer",
+            content={"kind": "observation", "adapter": "agenda-probe",
+                     "prop": "p", "scope": "transfer",
                      "dep": "dep-seed", "dep_version": 3, "value": "false",
                      "source_attempt": attempt_b, "receipt": receipt_b, "epoch": 2,
                      "simulated": True},
@@ -283,7 +284,8 @@ def test_outcome_future_epoch_and_bad_value_refused(migrated_db):
     manual = broker.admit_launcher_receipt(
         migrated_db, op, broker.ReceiptProposal(
             receipt_identity="state-traj:rc:manual",
-            content={"kind": "observation", "prop": "p", "scope": "transfer",
+            content={"kind": "observation", "adapter": "agenda-probe",
+                     "prop": "p", "scope": "transfer",
                      "dep": "dep-seed", "dep_version": 3, "value": "maybe",
                      "source_attempt": attempt, "receipt": "state-traj:rc:manual",
                      "epoch": 1, "simulated": True},
@@ -291,6 +293,40 @@ def test_outcome_future_epoch_and_bad_value_refused(migrated_db):
     assert manual.code == ResultCode.APPLIED
     bad = _record(migrated_db, "q-1", attempt, "state-traj:rc:manual")
     assert bad.code == ResultCode.INVALID_INPUT
+
+
+def test_observation_receipt_without_its_adapter_is_refused(migrated_db):
+    """The store requires an observation receipt to name its adapter.
+
+    This is the rule `AgendaProbeLauncher` was silently violating: its
+    receipts carried a `kind` and no `adapter`, so the store refused every
+    one, the operation was left `dispatching`, and the broker reported
+    `needs-reconciliation` for a dispatch that had in fact happened. The
+    refusal is right, so the pin goes on the refusal rather than on the
+    producer: drop the `adapter` from a real launcher's receipt and the
+    store must turn it away, and with it a receipt that does name one.
+    """
+    _propose(migrated_db)
+    admitted = _admit(migrated_db, plan=PLAN, rid="ag01-admit-q-1-probe-a-noadapter")
+    op = admitted.data["operation_id"]
+    sim = _sim(migrated_db, {"p": True})
+    _dispatch(migrated_db, sim, op)
+    real = sim.read_result(op)["p"]
+
+    without = {k: v for k, v in real.items() if k != "adapter"}
+    assert "adapter" in real, "the launcher must have produced one to drop"
+    refused = broker.admit_launcher_receipt(
+        migrated_db, op, broker.ReceiptProposal(
+            receipt_identity="state-traj:rc:no-adapter", content=without,
+            outcome="success", provenance="agenda-sim"))
+    assert refused.code == ResultCode.INVALID_INPUT
+    assert "adapter" in refused.detail
+
+    with_it = broker.admit_launcher_receipt(
+        migrated_db, op, broker.ReceiptProposal(
+            receipt_identity="state-traj:rc:with-adapter", content=real,
+            outcome="success", provenance="agenda-sim"))
+    assert with_it.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED), with_it.detail
 
 
 def test_stale_dependency_invalidates_receipt(migrated_db):

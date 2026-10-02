@@ -105,7 +105,7 @@ def test_measured_costs_read_billed_receipt_content():
 
 def test_unknown_receipt_stays_listed_with_zero_measured():
     _fresh_db()
-    from settlement import broker
+    from settlement import broker, store
     from settlement.loop import Grant, admit_effect, read_measured_costs
 
     _study()
@@ -120,7 +120,13 @@ def test_unknown_receipt_stays_listed_with_zero_measured():
     broker.dispatch_operation(DSN, "model-u", gateway=LostGateway())
     costs = read_measured_costs(DSN, "model-u")
     assert costs["measured"] == 0
-    assert costs["unknown"] == ["gw:model-u:unknown"]
+    assert costs["provider_charge_units"] is None
+    receipt = store.operation_receipts(DSN, "model-u")[-1]
+    assert receipt["outcome"] == "unknown"
+    assert costs["unknown"] == [receipt["receipt_identity"]]
+    assert receipt["receipt_identity"] == "gw:model-u:%s" % receipt["content"][
+        "response_class"]
+    assert receipt["content"]["response_received"] is False
 
 
 def _packet():

@@ -10,7 +10,7 @@ import time
 from settlement import db, store
 from settlement.common import Command, ConflictPayload, ResultCode
 
-from . import method_exec, policy_step, records, seeds, trajectory, worlds
+from . import method_exec, packet, policy_step, records, seeds, trajectory, worlds
 
 
 PANEL_PROTOCOL = "s09-policy-assess-01"
@@ -213,13 +213,14 @@ def _candidate_from_action(task: dict, action: dict) -> tuple[dict | None, int, 
     if type(max_queries) is not int or max_queries < 0:
         return None, 0, 0, 0, "max_queries must be a nonnegative integer"
     started = time.perf_counter_ns()
+    exposed = packet.method_task_view(task)
     if isinstance(source, str) and source:
         entry = inputs.get("entry", "ENTRY")
         member = {"method_source": source, "entry": entry}
         try:
             method_exec.verify_member(member)
             result = method_exec.run_member_out_of_process(
-                member, task, max_queries=max_queries)
+                member, exposed, max_queries=max_queries)
         except Exception as exc:
             return None, 0, 0, _elapsed_ms(started), str(exc)
         return result.get("candidate"), int(result.get("queries", 0)), 0, \
@@ -233,7 +234,8 @@ def _candidate_from_action(task: dict, action: dict) -> tuple[dict | None, int, 
     if capability is None or capability["family"] != task["family"]:
         return None, 0, 0, _elapsed_ms(started), "unknown task method %r" % method_id
     try:
-        result = seeds.run_seed(capability, task, max_queries=max_queries)
+        result = seeds.run_seed(capability, exposed,
+                               max_queries=max_queries)
     except Exception as exc:
         return None, 0, 0, _elapsed_ms(started), str(exc)
     return result.get("candidate"), int(result.get("queries", 0)), 0, \

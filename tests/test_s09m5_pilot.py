@@ -7,7 +7,9 @@ receipt. They stay red until scripts/s09_verify.py names both.
 
 from __future__ import annotations
 
+import contextlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -100,42 +102,34 @@ def test_verifier_names_missing_receipt():
     assert "missing-receipt for-operation op-claimed-1" in out["problems"]
 
 
-DB_A = "s09_m5_pilot"
-DB_B = "s09_m5_pilot_b"
+TOKEN = "m5"
 
 
-def _dsn(db: str) -> str:
-    return "dbname=%s host=/var/run/postgresql user=ubuntu" % db
+@contextlib.contextmanager
+def _store():
+    """One store this run owns, on whichever cluster the operator named.
 
+    A fixed name is shared state on the cluster, so a sibling run's teardown
+    destroys the store this one is still writing to.
+    """
+    from experiments.ad01 import s09_run_isolation as iso
 
-def _make_db(db: str) -> None:
-    import subprocess
-    assert db.startswith("s09_m5_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", db],
-                   check=True, capture_output=True, text=True,
-                   timeout=60)
-    from settlement import db as _db
-    _db.apply_migrations(_dsn(db), ROOT / "migrations")
-
-
-def _drop_db(db: str) -> None:
-    import subprocess
-    subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", db],
-                   capture_output=True, text=True, timeout=60)
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    database = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                        migrations_dir=ROOT / "migrations")
+    try:
+        yield database.dsn
+    finally:
+        iso.drop_disposable_db(database, admin_dsn=admin_dsn)
 
 
 @pytest.fixture(scope="module")
 def pilot_bundle(tmp_path_factory):
     from scripts import s09_pilot as P
-    _make_db(DB_A)
-    try:
+    with _store() as dsn:
         dest = tmp_path_factory.mktemp("r1")
-        bundle = P.run_study(_dsn(DB_A), dest)
+        bundle = P.run_study(dsn, dest, namespace_token="m5a")
         yield bundle, dest
-    finally:
-        _drop_db(DB_A)
 
 
 def test_doubled_pilot_verifies_green(pilot_bundle):
@@ -190,20 +184,75 @@ def test_conformance_replay_recorded(pilot_bundle):
     assert conformance["changed"] != "supported"
 
 
+def _drop_timings(value):
+    """Strip measured durations, which are properties of the host."""
+    if isinstance(value, dict):
+        return {k: _drop_timings(v) for k, v in value.items()
+                if k != "wall_ms"}
+    if isinstance(value, list):
+        return [_drop_timings(v) for v in value]
+    return value
+
+
 def test_doubled_pilot_is_deterministic(pilot_bundle):
     from scripts import s09_pilot as P
     _bundle_a, dest_a = pilot_bundle
-    _make_db(DB_B)
-    try:
+    with _store() as dsn_b:
         dest_b = dest_a.parent / "r2"
-        bundle_b = P.run_study(_dsn(DB_B), dest_b)
-    finally:
-        _drop_db(DB_B)
+        # The same token as run A on purpose. A namespace token is now
+        # mandatory and it changes the study root, the freeze and every
+        # operation id, so two runs under different tokens differ for a
+        # reason that has nothing to do with determinism. Determinism means
+        # the same study twice, which is the same token on two databases.
+        bundle_b = P.run_study(dsn_b, dest_b, namespace_token="m5a")
     names = ("freeze", "development", "construction", "assessment",
              "use_records", "operations", "accounting",
              "refusal_probes", "conformance_replay")
     for name in names:
         text_a = (dest_a / ("%s.json" % name)).read_text()
         text_b = (dest_b / ("%s.json" % name)).read_text()
-        assert json.loads(text_a) == json.loads(text_b), name
+        left, right = json.loads(text_a), json.loads(text_b)
+        if name == "freeze":
+            # `frozen_at` is a wall clock, so two runs of the same study
+            # differ on it by design. What must be reproducible is the
+            # freeze's identity, which is what `freeze_digest` covers, and
+            # the digest deliberately excludes the timestamp.
+            assert left["freeze_digest"] == right["freeze_digest"]
+            left = {k: v for k, v in left.items() if k != "frozen_at"}
+            right = {k: v for k, v in right.items() if k != "frozen_at"}
+        if name == "construction":
+            # `wall_ms` is a duration measured on the machine, not a
+            # property of the study. Two runs of the same frozen study
+            # differ on it and always did; comparing it measures the host,
+            # not the pipeline. Everything else in the construction record
+            # is still compared exactly.
+            left = _drop_timings(left)
+            right = _drop_timings(right)
+        assert left == right, name
     assert V.verify_bundle(bundle_b)["status"] == "pass"
+
+
+def test_the_store_is_named_for_this_run_not_for_the_file():
+    """A fixed name is shared state; a sibling run's teardown destroys it.
+
+    Two runs of this file on one cluster collided on one name, and the first
+    teardown dropped the store the second was still writing to. The name
+    carries a per-run token, so only a name this run minted is ever dropped
+    and a second fixture can never reuse the first one's database.
+    """
+    from experiments.ad01 import s09_run_isolation as iso
+
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    first = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                     migrations_dir=ROOT / "migrations")
+    try:
+        assert first.name.startswith(iso.DB_PREFIX + "_"), first.name
+        assert TOKEN in first.name, first.name
+        again = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                         migrations_dir=ROOT / "migrations")
+        try:
+            assert again.name != first.name
+        finally:
+            iso.drop_disposable_db(again, admin_dsn=admin_dsn)
+    finally:
+        iso.drop_disposable_db(first, admin_dsn=admin_dsn)

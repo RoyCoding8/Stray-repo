@@ -1,0 +1,24 @@
+{
+  "claim": "the acquired arm never acquired anything",
+  "member_ids": ["acquired-sw-b0bd83b7", "acquired-gr-b0bd83b7"],
+  "evidence": {
+    "executed_source_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+    "authored_at": "experiments/doubles.py::ACQUIRED_ORDER_SOURCE",
+    "byte_identical": true,
+    "gateway": "recording-double",
+    "model": "inv01-study-double",
+    "member_origin_field": null,
+    "member_authored_field": false,
+    "freeze_names_origin": "model-acquired",
+    "construction_calls_made": 1
+  },
+  "consequence": "the record's `origin: model-acquired` in freeze.json is not supported by any executed bytes; the bytes are a hand-authored repo constant served by a recording double at the construction seam, and the same bytes appear in all three worlds",
+  "measured_not_inferred": {
+    "acquired_equals_control_greedy_graph": "9/9",
+    "acquired_names_a_strategy_token": false,
+    "same_walk_agreements": 9,
+    "same_answer_agreements": 3,
+    "distinct_minima_under_40_random_orders": "1 on 18/18",
+    "ddmin_vs_greedy_distinct_at_budget_4": "18/18"
+  }
+}

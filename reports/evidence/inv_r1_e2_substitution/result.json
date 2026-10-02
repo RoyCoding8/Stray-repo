@@ -1,0 +1,23 @@
+{
+ "crashes_on_empty_state": true,
+ "findings": [
+  {
+   "class": "construction",
+   "defect": "crashes-on-empty-state",
+   "detail": "The acquired policy guarded `if state is None:` while the STEP contract hands `{}` as the initial state, so `state['diagnostic_attempts']` raised KeyError on the first step. One-line repair (`if not state:`) cleared it."
+  },
+  {
+   "class": "language",
+   "defect": "action-not-an-object",
+   "detail": "The policy returned `{'action': 'diagnose', 'state': ...}` - the action as a bare string rather than the seven-field object the contract requires, so the child refused it with `malformed-step-envelope`."
+  },
+  {
+   "class": "language",
+   "defect": "non-json-state",
+   "detail": "The policy seeded `state['tried_diagnostics'] = set()` and spread it back out. The step state must be a JSON object, so a set cannot cross the envelope."
+  }
+ ],
+ "gate_conclusion": "The gate could not be applied to the acquired policy as written: it failed the execution envelope twice before the evidence question could be asked. That is a construction and language result, not a result about whether the policy reads its evidence. The authored control pair in RESULT.md shows the gate discriminates correctly when given policies that do execute.",
+ "gate_error": "MethodExecutionError: step-failed: {'worker': {'status': 'error', 'data': {}, 'error': 'malformed-step-envelope: STEP must return {\"action\": <action object>, \"state\": <object>}'}, 'timed_out': False, 'wall_ms': 79}",
+ "repair": "if state is None -> if not state"
+}

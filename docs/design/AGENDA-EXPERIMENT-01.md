@@ -1,6 +1,6 @@
 # Agenda experiment 01: representation and falsifiable protocol
 
-Status: protocol selected for the [Agenda 01 implementation assignment](../../WORKER-AGENDA-01.md), not implemented or executed. This refines stage 8.4 of the [roadmap](REFINEMENT-ROADMAP.md) and the policy in [Autonomous agenda](AUTONOMOUS-AGENDA.md). Its executable fixtures and manifest must be frozen before any scored comparison. The [implementation contract](AGENDA-01-IMPLEMENTATION.md) maps these records onto the audited runtime and supplies execution/accounting details.
+Status: protocol selected for the [Agenda 01 implementation assignment](../HISTORY.md#worker-agenda-01), not implemented or executed. This refines stage 8.4 of the [roadmap](REFINEMENT-ROADMAP.md) and the policy in [Autonomous agenda](AUTONOMOUS-AGENDA.md). Its executable fixtures and manifest must be frozen before any scored comparison. The [implementation contract](AGENDA-01-IMPLEMENTATION.md) maps these records onto the audited runtime and supplies execution/accounting details.
 
 The question is narrow: **does requiring an evidence-based reason to continue an investigation improve use of a finite exploration budget, compared with transparent rotation over feasible proposals?** We are testing a decision policy, not whether more records or a busier swarm look intelligent.
 

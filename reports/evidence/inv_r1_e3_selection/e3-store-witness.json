@@ -1,0 +1,483 @@
+{
+ "connected": {
+  "admitted_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 0,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 1,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 2,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 3,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-01"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 8,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 3,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_outcome": "success",
+    "seq": 4,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   }
+  ],
+  "bindings": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 0,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 1,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 2,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 3,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-01"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 8,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 3,
+    "next_decision": "terminal",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_outcome": "success",
+    "seq": 4,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   }
+  ],
+  "budget": 40,
+  "decisions_executed": 5,
+  "decisions_made": 5,
+  "measure_digest": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8",
+  "operations_in_store": 0,
+  "operations_written_by_the_run": 0,
+  "policy_version": "ad01-policy-portfolio-agenda-v1",
+  "receipts": [
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-live-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-sw-ddmin",
+       "charge": 7,
+       "family": "software",
+       "max_queries": 2,
+       "seq": 0,
+       "target": "ad01-w0-dev-sw-00"
+      }
+     }
+    },
+    "content_digest": "559ba13637c137af98efe738e315cc41d3fc4741cf15e4d6bc21f17b790e4028",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-live-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-sw-greedy",
+       "charge": 7,
+       "family": "software",
+       "max_queries": 2,
+       "seq": 1,
+       "target": "ad01-w0-dev-sw-01"
+      }
+     }
+    },
+    "content_digest": "a7c5df5d703a38f01b4307ef6b2119c7fc87c4f7698e71c3c367c7435d8d1511",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-live-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-ddmin",
+       "charge": 7,
+       "family": "graph",
+       "max_queries": 2,
+       "seq": 2,
+       "target": "ad01-w0-dev-gr-00"
+      }
+     }
+    },
+    "content_digest": "20b53a89fc5b708511a67b61a7ec6d41a4d063eec309c3e058d3ea21212f4c33",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-live-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-greedy",
+       "charge": 7,
+       "family": "graph",
+       "max_queries": 2,
+       "seq": 3,
+       "target": "ad01-w0-dev-gr-01"
+      }
+     }
+    },
+    "content_digest": "0eb6e19dd40f0f04cb1215f4400df33cae6c663a46d3658cb494ed9663b7f9f4",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-live-w0-s09sever-9c272c4b-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-greedy",
+       "charge": 8,
+       "family": "graph",
+       "max_queries": 3,
+       "seq": 4,
+       "target": "ad01-w0-dev-gr-00"
+      }
+     }
+    },
+    "content_digest": "3777cd11887c34ba5a7e6c6a2ff725a8757a786f43182b6a87ca1be06051bd8a",
+    "operation_id": "ad01-e3sever-live-w0-s09sever-9c272c4b-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-live-w0-s09sever-9c272c4b-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3"
+   }
+  ],
+  "refused_decisions": [],
+  "refused_operations": [],
+  "run_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 0,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 1,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 2,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 3,
+    "target": "ad01-w0-dev-gr-01"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 8,
+    "family": "graph",
+    "max_queries": 3,
+    "seq": 4,
+    "target": "ad01-w0-dev-gr-00"
+   }
+  ],
+  "run_yield": {
+   "diagnoses_correct": 3,
+   "held_out_reduction": 0.14505654113497252,
+   "resources_used": 36,
+   "retained_behaviors": 3
+  },
+  "sever": false,
+  "stop_reason": "budget exhausted",
+  "witness_is_not_the_study": "bindings are a counterfactual. operations_written_by_the_run is what the E3 path itself persisted, and it is what bounds the claim that decisions reach real admitted operations.",
+  "world": 0
+ },
+ "severed": {
+  "admitted_decisions": [],
+  "bindings": [],
+  "budget": 40,
+  "decisions_executed": 4,
+  "decisions_made": 4,
+  "measure_digest": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8",
+  "operations_in_store": 0,
+  "operations_written_by_the_run": 0,
+  "policy_version": "ad01-policy-portfolio-agenda-v1",
+  "receipts": [
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-sw-ddmin",
+       "charge": 7,
+       "family": "software",
+       "max_queries": 2,
+       "seq": 0,
+       "target": "ad01-w0-dev-sw-00"
+      }
+     }
+    },
+    "content_digest": "0ab865ac9f60f112c7a130f24a52e5f708f27566caa60a06c9063ab2eeba166e",
+    "operation_id": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-cut-w0-s09sever-9c272c4b-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-sw-greedy",
+       "charge": 7,
+       "family": "software",
+       "max_queries": 2,
+       "seq": 1,
+       "target": "ad01-w0-dev-sw-01"
+      }
+     }
+    },
+    "content_digest": "07e2cbf5efc8ffd4ccd67866e673a365b56de3b664f7a1714967086958dbf392",
+    "operation_id": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-cut-w0-s09sever-9c272c4b-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-ddmin",
+       "charge": 7,
+       "family": "graph",
+       "max_queries": 2,
+       "seq": 2,
+       "target": "ad01-w0-dev-gr-00"
+      }
+     }
+    },
+    "content_digest": "3ae471646502c8b0fbda5676989978360ce538997a81c12888c59335ddf1d92f",
+    "operation_id": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-cut-w0-s09sever-9c272c4b-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-greedy",
+       "charge": 7,
+       "family": "graph",
+       "max_queries": 2,
+       "seq": 3,
+       "target": "ad01-w0-dev-gr-01"
+      }
+     }
+    },
+    "content_digest": "1dd11728ba1d2d2f3ecb92ca56093e59a70bfd5a72d8f367c7c62155ea7c1de6",
+    "operation_id": "ad01-e3sever-cut-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3sever-cut-w0-s09sever-9c272c4b-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2"
+   }
+  ],
+  "refused_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 0,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 1,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 2,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 3,
+    "target": "ad01-w0-dev-gr-01"
+   }
+  ],
+  "refused_operations": [],
+  "run_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 0,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 1,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 2,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 3,
+    "target": "ad01-w0-dev-gr-01"
+   }
+  ],
+  "run_yield": {
+   "diagnoses_correct": 0,
+   "held_out_reduction": 0.0,
+   "resources_used": 28,
+   "retained_behaviors": 0
+  },
+  "sever": true,
+  "stop_reason": "portfolio exhausted",
+  "witness_is_not_the_study": "bindings are a counterfactual. operations_written_by_the_run is what the E3 path itself persisted, and it is what bounds the claim that decisions reach real admitted operations.",
+  "world": 0
+ }
+}

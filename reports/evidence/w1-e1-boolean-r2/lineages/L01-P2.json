@@ -1,0 +1,151 @@
+{
+ "attempts": [
+  {
+   "arm": "P2",
+   "attempt": 1,
+   "candidate_digest": null,
+   "dispatch": {
+    "accepted_candidate_digest": null,
+    "arm": "P2",
+    "artifact_digest": null,
+    "attempt": 1,
+    "billed": "unknown",
+    "charge_units": "unknown",
+    "details": {
+     "raw_payload": {
+      "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: [{\"predictor_digest\":\"97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f\",\"queries\":8,\"score_overall\":1.0,\"seed\":3,\"split\":\"dev\",\"task_id\":\"rule-dev-2316866b700a\"},{\"predictor_digest\":\"7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515\",\"queries\":8,\"score_overall\":0.75,\"seed\":7,\"split\":\"dev\",\"task_id\":\"rule-dev-398b02c4f7e9\"}]. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+      "raw_response": "We are given a task: we need to output a predictor from the hypothesis class that fits the observed data. The hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits x0..x3) and 4 outputs. The predictor is defined by specs for each output: each output is an affine function of the four inputs (i.e., linear combination over GF(2) plus constant) optionally XORed with one pairwise product (i.e., AND of two inputs). So each output has: const (0/1), mask (0..15) representing which linear terms (bits of mask correspond to inputs), and pair (null or [i,j] with i<j indices 0..3). The total predictor is an array of 4 such specs.\n\nWe have observed 8 input-output pairs. Inputs given as integers 1,4,7,8,11,13,14,15. These are 4-bit numbers. We need to convert to bits. Let's list them:\n\nx=1 -> binary 0001 (assuming bits order? Usually least significant bit is input 0? We'll assume x0 is LSB, x1 next, etc. So x=1 -> x0=1, x1=0, x2=0, x3=0)\nx=4 -> 0100 -> x0=0,x1=0,x2=1,x3=0\nx=7 -> 0111 -> x0=1,x1=1,x2=1,x3=0\nx=8 -> 1000 -> x0=0,x1=0,x2=0,x3=1\nx=11 -> 1011 -> x0=1,x1=1,x2=0,x3=1? Wait 11 decimal = 1011 binary (8+2+1) so bits: x0=1, x1=1, x2=0, x3=1.\nx=13 -> 1101 -> x0=1,x1=0,x2=1,x3=1\nx=14 -> 1110 -> x0=0,x1=1,x2=1,x3=1\nx=15 -> 1111 -> x0=1,x1=1,x2=1,x3=1\n\nOutputs y are arrays of 4 bits. Let's list them:\n\nx=1: y=[0,0,1,0]\nx=4: y=[0,0,0,0]\nx=7: y=[0,1,1,0]\nx=8: y=[1,1,1,0]\nx=11: y=[0,1,1,0]\nx=13: y=[0,1,1,0]\nx=14: y=[1,1,1,0]\nx=15: y=[0,0,1,1]\n\nWe need to find for each output (0..3) a function of form: f(x) = const XOR (mask & x parity) XOR (x_i & x_j) if pair not null. Where mask is 4-bit, mask & x parity means sum over bits where mask has 1: XOR of those input bits. So essentially affine linear part plus possibly one quadratic term.\n\nWe have 8 data points, 4 outputs. We can try to solve for each output independently? But the hypothesis class allows each output to have its own const, mask, pair. So we can treat each output separately.\n\nWe need to find for each output a specification that matches all 8 observed points. Since the class size is 224, there are limited possibilities. We can brute force conceptually, but we need to compute manually.\n\nLet's denote inputs as vector (x0,x1,x2,x3). For each output k, we have target values.\n\nWe can try to see patterns. Let's write truth table for each output.\n\nOutput 0 (first bit of y):\nx=1 (0001): 0\nx=4 (0100): 0\nx=7 (0111): 0\nx=8 (1000): 1\nx=11 (1011): 0\nx=13 (1101): 0\nx=14 (1110): 1\nx=15 (1111): 0\n\nOutput 1:\nx=1: 0\nx=4: 0\nx=7: 1\nx=8: 1\nx=11: 1\nx=13: 1\nx=14: 1\nx=15: 0\n\nOutput 2:\nx=1: 1\nx=4: 0\nx=7: 1\nx=8: 1\nx=11: 1\nx=13: 1\nx=14: 1\nx=15: 1\n\nOutput 3:\nx=1: 0\nx=4: 0\nx=7: 0\nx=8: 0\nx=11: 0\nx=13: 0\nx=14: 0\nx=15: 1\n\nWe need to find affine + optional pairwise product for each.\n\nLet's analyze output 3 first: only 1 at x=15 (1111), else 0. That looks like AND of all four? But we only allow one pairwise product, not four-way. However, affine plus one pairwise product. Could it be x0*x1? But at x=15, all pairs are 1. At x=14 (1110), x0=0 so any pair involving x0 is 0. But output 3 is 0 at x=14. At x=13 (1101), x1=0 so pairs with x1 are 0. At x=11 (1011), x2=0. At x=8 (1000), only x3=1. At x=7 (0111), x3=0. At x=4 (0100), only x2=1. At x=1 (0001), only x0=1. So the only input where output is 1 is when all four are 1. That is the AND of all four. But our hypothesis class only allows a single pairwise product. However, we can combine with affine part. For example, if we take pair = [0,1] (x0*x1) and then affine part to cancel other cases? But we need to match 8 points. Let's see if we can express the 4-bit AND as affine plus one pairwise product. The function that is 1 only at 1111 is the product of all four. That's degree 4. Our class is degree at most 2. So it's impossible to exactly represent the 4-bit AND with degree 2? But wait, we only have 8 data points, not all 16. The function only needs to match these 8 points. The other 8 points are unobserved. So we can choose any function that fits these 8 points. The hypothesis class has 224 functions, so there may be one that matches these 8 points for output 3.\n\nWe need to find for each output a spec that matches the given 8 points. Since we have 8 points, and each output has 1 bit, we have 8 constraints per output. The number of possible functions in the class for one output: const (2) * mask (16) * pair (1 + 6 = 7) = 2*16*7=224. So exactly the class size. So we need to find one of these 224 that matches the 8 given points for each output. We can do this by reasoning.\n\nLet's denote the function as f(x) = c + sum_{i in mask} x_i + (x_a * x_b if pair else 0) mod 2.\n\nWe can try to solve for each output by checking patterns.\n\nWe have 8 data points. Let's list them with bits:\n\nIndex: x0 x1 x2 x3 | y0 y1 y2 y3\n1: 1 0 0 0 | 0 0 1 0\n4: 0 0 1 0 | 0 0 0 0\n7: 1 1 1 0 | 0 1 1 0\n8: 0 0 0 1 | 1 1 1 0\n11: 1 1 0 1 | 0 1 1 0\n13: 1 0 1 1 | 0 1 1 0\n14: 0 1 1 1 | 1 1 1 0\n15: 1 1 1 1 | 0 0 1 1\n\nWe can try to see linear dependencies. For each output, we can compute the values of all 16 possible affine functions (without pairwise) on these 8 points, and see if any matches. If not, we need"
+     },
+     "route": {
+      "adapter": "http",
+      "contract": "settlement-gateway/http-chat-completions-v1",
+      "endpoint": "http://localhost:4000/v1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "provider": "Nvidia",
+      "request_endpoint": "http://localhost:4000/v1",
+      "response_received": true,
+      "returned_endpoint": null,
+      "tier": "free"
+     },
+     "stop_reason": "length",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 578,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    "dispatch_evidence_digest": null,
+    "driver_digest": null,
+    "endpoint": "http://localhost:4000/v1",
+    "evidence_digest": "78ab8b7ff09f3ebbcaaed135466d5986c5785b21cadcfd60421005dc4ce0298c",
+    "input_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+    "kind": "gateway-dispatch",
+    "operation_id": "invl02-output-128636e885b7-P2-qual-0011-a1",
+    "operation_payload_digest": null,
+    "outcome": "success",
+    "package_digest": null,
+    "parent_digest": null,
+    "parse_outcome": "pending",
+    "prompt_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+    "provider": "Nvidia",
+    "raw_payload_digest": "a37b4d6814a0f3c46cdeb41710dda171f326f71923903cb87d1ea5d8ac43ee91",
+    "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: [{\"predictor_digest\":\"97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f\",\"queries\":8,\"score_overall\":1.0,\"seed\":3,\"split\":\"dev\",\"task_id\":\"rule-dev-2316866b700a\"},{\"predictor_digest\":\"7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515\",\"queries\":8,\"score_overall\":0.75,\"seed\":7,\"split\":\"dev\",\"task_id\":\"rule-dev-398b02c4f7e9\"}]. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+    "raw_response": "We are given a task: we need to output a predictor from the hypothesis class that fits the observed data. The hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits x0..x3) and 4 outputs. The predictor is defined by specs for each output: each output is an affine function of the four inputs (i.e., linear combination over GF(2) plus constant) optionally XORed with one pairwise product (i.e., AND of two inputs). So each output has: const (0/1), mask (0..15) representing which linear terms (bits of mask correspond to inputs), and pair (null or [i,j] with i<j indices 0..3). The total predictor is an array of 4 such specs.\n\nWe have observed 8 input-output pairs. Inputs given as integers 1,4,7,8,11,13,14,15. These are 4-bit numbers. We need to convert to bits. Let's list them:\n\nx=1 -> binary 0001 (assuming bits order? Usually least significant bit is input 0? We'll assume x0 is LSB, x1 next, etc. So x=1 -> x0=1, x1=0, x2=0, x3=0)\nx=4 -> 0100 -> x0=0,x1=0,x2=1,x3=0\nx=7 -> 0111 -> x0=1,x1=1,x2=1,x3=0\nx=8 -> 1000 -> x0=0,x1=0,x2=0,x3=1\nx=11 -> 1011 -> x0=1,x1=1,x2=0,x3=1? Wait 11 decimal = 1011 binary (8+2+1) so bits: x0=1, x1=1, x2=0, x3=1.\nx=13 -> 1101 -> x0=1,x1=0,x2=1,x3=1\nx=14 -> 1110 -> x0=0,x1=1,x2=1,x3=1\nx=15 -> 1111 -> x0=1,x1=1,x2=1,x3=1\n\nOutputs y are arrays of 4 bits. Let's list them:\n\nx=1: y=[0,0,1,0]\nx=4: y=[0,0,0,0]\nx=7: y=[0,1,1,0]\nx=8: y=[1,1,1,0]\nx=11: y=[0,1,1,0]\nx=13: y=[0,1,1,0]\nx=14: y=[1,1,1,0]\nx=15: y=[0,0,1,1]\n\nWe need to find for each output (0..3) a function of form: f(x) = const XOR (mask & x parity) XOR (x_i & x_j) if pair not null. Where mask is 4-bit, mask & x parity means sum over bits where mask has 1: XOR of those input bits. So essentially affine linear part plus possibly one quadratic term.\n\nWe have 8 data points, 4 outputs. We can try to solve for each output independently? But the hypothesis class allows each output to have its own const, mask, pair. So we can treat each output separately.\n\nWe need to find for each output a specification that matches all 8 observed points. Since the class size is 224, there are limited possibilities. We can brute force conceptually, but we need to compute manually.\n\nLet's denote inputs as vector (x0,x1,x2,x3). For each output k, we have target values.\n\nWe can try to see patterns. Let's write truth table for each output.\n\nOutput 0 (first bit of y):\nx=1 (0001): 0\nx=4 (0100): 0\nx=7 (0111): 0\nx=8 (1000): 1\nx=11 (1011): 0\nx=13 (1101): 0\nx=14 (1110): 1\nx=15 (1111): 0\n\nOutput 1:\nx=1: 0\nx=4: 0\nx=7: 1\nx=8: 1\nx=11: 1\nx=13: 1\nx=14: 1\nx=15: 0\n\nOutput 2:\nx=1: 1\nx=4: 0\nx=7: 1\nx=8: 1\nx=11: 1\nx=13: 1\nx=14: 1\nx=15: 1\n\nOutput 3:\nx=1: 0\nx=4: 0\nx=7: 0\nx=8: 0\nx=11: 0\nx=13: 0\nx=14: 0\nx=15: 1\n\nWe need to find affine + optional pairwise product for each.\n\nLet's analyze output 3 first: only 1 at x=15 (1111), else 0. That looks like AND of all four? But we only allow one pairwise product, not four-way. However, affine plus one pairwise product. Could it be x0*x1? But at x=15, all pairs are 1. At x=14 (1110), x0=0 so any pair involving x0 is 0. But output 3 is 0 at x=14. At x=13 (1101), x1=0 so pairs with x1 are 0. At x=11 (1011), x2=0. At x=8 (1000), only x3=1. At x=7 (0111), x3=0. At x=4 (0100), only x2=1. At x=1 (0001), only x0=1. So the only input where output is 1 is when all four are 1. That is the AND of all four. But our hypothesis class only allows a single pairwise product. However, we can combine with affine part. For example, if we take pair = [0,1] (x0*x1) and then affine part to cancel other cases? But we need to match 8 points. Let's see if we can express the 4-bit AND as affine plus one pairwise product. The function that is 1 only at 1111 is the product of all four. That's degree 4. Our class is degree at most 2. So it's impossible to exactly represent the 4-bit AND with degree 2? But wait, we only have 8 data points, not all 16. The function only needs to match these 8 points. The other 8 points are unobserved. So we can choose any function that fits these 8 points. The hypothesis class has 224 functions, so there may be one that matches these 8 points for output 3.\n\nWe need to find for each output a spec that matches the given 8 points. Since we have 8 points, and each output has 1 bit, we have 8 constraints per output. The number of possible functions in the class for one output: const (2) * mask (16) * pair (1 + 6 = 7) = 2*16*7=224. So exactly the class size. So we need to find one of these 224 that matches the 8 given points for each output. We can do this by reasoning.\n\nLet's denote the function as f(x) = c + sum_{i in mask} x_i + (x_a * x_b if pair else 0) mod 2.\n\nWe can try to solve for each output by checking patterns.\n\nWe have 8 data points. Let's list them with bits:\n\nIndex: x0 x1 x2 x3 | y0 y1 y2 y3\n1: 1 0 0 0 | 0 0 1 0\n4: 0 0 1 0 | 0 0 0 0\n7: 1 1 1 0 | 0 1 1 0\n8: 0 0 0 1 | 1 1 1 0\n11: 1 1 0 1 | 0 1 1 0\n13: 1 0 1 1 | 0 1 1 0\n14: 0 1 1 1 | 1 1 1 0\n15: 1 1 1 1 | 0 0 1 1\n\nWe can try to see linear dependencies. For each output, we can compute the values of all 16 possible affine functions (without pairwise) on these 8 points, and see if any matches. If not, we need",
+    "receipt_identity": "evidence:3a74972f57ceb0ea987ea31aaac73a5c45a02b4842936c6aebd5007e2cb528f0",
+    "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "requested_output_cap": 2048,
+    "response_digest": "7e2f24aa65b5bae2421f502dad389a53a1947d200f6aa8482010be75437700d9",
+    "result_digest": "7e2f24aa65b5bae2421f502dad389a53a1947d200f6aa8482010be75437700d9",
+    "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "round": 4,
+    "route_digest": "10ebeff23417465d44249c4d042049578a8920c45704f826ea77974a5dd5f1d3",
+    "route_error": null,
+    "source_digest": null,
+    "stop_reason": "length",
+    "task_id": "rule-qual-194dba80c87f",
+    "tier": "free",
+    "usage": {
+     "billed": "unknown",
+     "charge_scale": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": 578,
+     "output_tokens": 2048,
+     "provider_enforced_ceiling": "unknown"
+    },
+    "version": "invl02-evidence-v2"
+   },
+   "operation_id": "invl02-output-128636e885b7-P2-qual-0011-a1",
+   "outcome": "invalid-program",
+   "raw_response": "We are given a task: we need to output a predictor from the hypothesis class that fits the observed data. The hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits x0..x3) and 4 outputs. The predictor is defined by specs for each output: each output is an affine function of the four inputs (i.e., linear combination over GF(2) plus constant) optionally XORed with one pairwise product (i.e., AND of two inputs). So each output has: const (0/1), mask (0..15) representing which linear terms (bits of mask correspond to inputs), and pair (null or [i,j] with i<j indices 0..3). The total predictor is an array of 4 such specs.\n\nWe have observed 8 input-output pairs. Inputs given as integers 1,4,7,8,11,13,14,15. These are 4-bit numbers. We need to convert to bits. Let's list them:\n\nx=1 -> binary 0001 (assuming bits order? Usually least significant bit is input 0? We'll assume x0 is LSB, x1 next, etc. So x=1 -> x0=1, x1=0, x2=0, x3=0)\nx=4 -> 0100 -> x0=0,x1=0,x2=1,x3=0\nx=7 -> 0111 -> x0=1,x1=1,x2=1,x3=0\nx=8 -> 1000 -> x0=0,x1=0,x2=0,x3=1\nx=11 -> 1011 -> x0=1,x1=1,x2=0,x3=1? Wait 11 decimal = 1011 binary (8+2+1) so bits: x0=1, x1=1, x2=0, x3=1.\nx=13 -> 1101 -> x0=1,x1=0,x2=1,x3=1\nx=14 -> 1110 -> x0=0,x1=1,x2=1,x3=1\nx=15 -> 1111 -> x0=1,x1=1,x2=1,x3=1\n\nOutputs y are arrays of 4 bits. Let's list them:\n\nx=1: y=[0,0,1,0]\nx=4: y=[0,0,0,0]\nx=7: y=[0,1,1,0]\nx=8: y=[1,1,1,0]\nx=11: y=[0,1,1,0]\nx=13: y=[0,1,1,0]\nx=14: y=[1,1,1,0]\nx=15: y=[0,0,1,1]\n\nWe need to find for each output (0..3) a function of form: f(x) = const XOR (mask & x parity) XOR (x_i & x_j) if pair not null. Where mask is 4-bit, mask & x parity means sum over bits where mask has 1: XOR of those input bits. So essentially affine linear part plus possibly one quadratic term.\n\nWe have 8 data points, 4 outputs. We can try to solve for each output independently? But the hypothesis class allows each output to have its own const, mask, pair. So we can treat each output separately.\n\nWe need to find for each output a specification that matches all 8 observed points. Since the class size is 224, there are limited possibilities. We can brute force conceptually, but we need to compute manually.\n\nLet's denote inputs as vector (x0,x1,x2,x3). For each output k, we have target values.\n\nWe can try to see patterns. Let's write truth table for each output.\n\nOutput 0 (first bit of y):\nx=1 (0001): 0\nx=4 (0100): 0\nx=7 (0111): 0\nx=8 (1000): 1\nx=11 (1011): 0\nx=13 (1101): 0\nx=14 (1110): 1\nx=15 (1111): 0\n\nOutput 1:\nx=1: 0\nx=4: 0\nx=7: 1\nx=8: 1\nx=11: 1\nx=13: 1\nx=14: 1\nx=15: 0\n\nOutput 2:\nx=1: 1\nx=4: 0\nx=7: 1\nx=8: 1\nx=11: 1\nx=13: 1\nx=14: 1\nx=15: 1\n\nOutput 3:\nx=1: 0\nx=4: 0\nx=7: 0\nx=8: 0\nx=11: 0\nx=13: 0\nx=14: 0\nx=15: 1\n\nWe need to find affine + optional pairwise product for each.\n\nLet's analyze output 3 first: only 1 at x=15 (1111), else 0. That looks like AND of all four? But we only allow one pairwise product, not four-way. However, affine plus one pairwise product. Could it be x0*x1? But at x=15, all pairs are 1. At x=14 (1110), x0=0 so any pair involving x0 is 0. But output 3 is 0 at x=14. At x=13 (1101), x1=0 so pairs with x1 are 0. At x=11 (1011), x2=0. At x=8 (1000), only x3=1. At x=7 (0111), x3=0. At x=4 (0100), only x2=1. At x=1 (0001), only x0=1. So the only input where output is 1 is when all four are 1. That is the AND of all four. But our hypothesis class only allows a single pairwise product. However, we can combine with affine part. For example, if we take pair = [0,1] (x0*x1) and then affine part to cancel other cases? But we need to match 8 points. Let's see if we can express the 4-bit AND as affine plus one pairwise product. The function that is 1 only at 1111 is the product of all four. That's degree 4. Our class is degree at most 2. So it's impossible to exactly represent the 4-bit AND with degree 2? But wait, we only have 8 data points, not all 16. The function only needs to match these 8 points. The other 8 points are unobserved. So we can choose any function that fits these 8 points. The hypothesis class has 224 functions, so there may be one that matches these 8 points for output 3.\n\nWe need to find for each output a spec that matches the given 8 points. Since we have 8 points, and each output has 1 bit, we have 8 constraints per output. The number of possible functions in the class for one output: const (2) * mask (16) * pair (1 + 6 = 7) = 2*16*7=224. So exactly the class size. So we need to find one of these 224 that matches the 8 given points for each output. We can do this by reasoning.\n\nLet's denote the function as f(x) = c + sum_{i in mask} x_i + (x_a * x_b if pair else 0) mod 2.\n\nWe can try to solve for each output by checking patterns.\n\nWe have 8 data points. Let's list them with bits:\n\nIndex: x0 x1 x2 x3 | y0 y1 y2 y3\n1: 1 0 0 0 | 0 0 1 0\n4: 0 0 1 0 | 0 0 0 0\n7: 1 1 1 0 | 0 1 1 0\n8: 0 0 0 1 | 1 1 1 0\n11: 1 1 0 1 | 0 1 1 0\n13: 1 0 1 1 | 0 1 1 0\n14: 0 1 1 1 | 1 1 1 0\n15: 1 1 1 1 | 0 0 1 1\n\nWe can try to see linear dependencies. For each output, we can compute the values of all 16 possible affine functions (without pairwise) on these 8 points, and see if any matches. If not, we need",
+   "reason": "response of 5185 characters exceeds the frozen limit of 512",
+   "score": null
+  }
+ ],
+ "campaign_id": "w1-e1-boolean-r2",
+ "campaign_version": "w1-e1-boolean-campaign-v2",
+ "guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 5,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 5,
+  "version": "invl02-live-v1"
+ },
+ "lineage": "L01-P2",
+ "offline_verified": true,
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "queries_spent": 8,
+ "reference_scores": {
+  "oracle_overall": 1.0,
+  "zero_predictor_overall": 0.0625
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "schema": "invl02-live-preflight-run-v1",
+ "score_floor": 1.0,
+ "seed": 11,
+ "split": "qual",
+ "study_root": "w1-e1-boolean-r2",
+ "task_id": "rule-qual-194dba80c87f",
+ "treatment": "P2",
+ "treatment_meaning": "prior-task summary: two dev-split predictor digests and their scores, no program text",
+ "verdict": {
+  "arm": "P2",
+  "attempt": 1,
+  "endpoint": "http://localhost:4000/v1",
+  "operation_id": "invl02-output-128636e885b7-P2-qual-0011-a1",
+  "outcome": "invalid-program",
+  "prompt_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+  "provider": "Nvidia",
+  "reason": "response of 5185 characters exceeds the frozen limit of 512",
+  "recomputable": true,
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "response_digest": "7e2f24aa65b5bae2421f502dad389a53a1947d200f6aa8482010be75437700d9",
+  "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "route_error": null,
+  "stop_reason": "length",
+  "tier": "free",
+  "usage": {
+   "billed": "unknown",
+   "charge_scale": "unknown",
+   "charge_units": "unknown",
+   "input_tokens": 578,
+   "output_tokens": 2048,
+   "provider_enforced_ceiling": "unknown"
+  }
+ },
+ "version": "invl02-live-preflight-v1",
+ "written_at": "2026-09-30T04:34:15Z"
+}

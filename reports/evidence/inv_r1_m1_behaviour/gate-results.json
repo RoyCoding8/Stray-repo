@@ -1,0 +1,411 @@
+{
+ "checks": [
+  {
+   "can_fail": {
+    "applied": true,
+    "file": "experiments/ad01/s09_exposure_ledger.py",
+    "mutation": "null_charge_reported_as_zero",
+    "proves": "proven: 2 mapped test(s) turned red under the reinstated defect",
+    "red_node_ids": [
+     "tests/test_s09cs01_budget_denominations.py::test_a_capacity_needing_a_price_refuses_rather_than_defaulting_to_zero",
+     "tests/test_s09cs01_budget_denominations.py::test_a_reported_zero_and_an_unreported_charge_are_different_states",
+     "tests/test_s09cs01_budget_denominations.py::test_a_settled_receipt_with_no_charge_field_reads_as_not_reported",
+     "tests/test_s09cs01_budget_denominations.py::test_not_reported_is_never_a_verified_zero_capacity"
+    ],
+    "red_tests": [
+     "test_a_capacity_needing_a_price_refuses_rather_than_defaulting_to_zero",
+     "test_a_reported_zero_and_an_unreported_charge_are_different_states",
+     "test_a_settled_receipt_with_no_charge_field_reads_as_not_reported",
+     "test_not_reported_is_never_a_verified_zero_capacity"
+    ],
+    "result": {
+     "errors": 0,
+     "failed": 4,
+     "passed": 25,
+     "skipped": 0,
+     "xfailed": 0
+    }
+   },
+   "check": "null_versus_zero_billing",
+   "covered_by": [
+    "tests/test_s09cs01_budget_denominations.py"
+   ],
+   "note": "the `int(charge or 0)` collapse, reinstated at the receipt reader where the zero was born",
+   "requirement": "a missing provider report is not a measured zero, and a reported zero stays a reported zero",
+   "status": "PASS",
+   "tests": [
+    "test_a_settled_receipt_with_no_charge_field_reads_as_not_reported",
+    "test_a_reported_zero_and_an_unreported_charge_are_different_states",
+    "test_no_committed_receipt_is_unmeasured_rather_than_not_reported",
+    "test_a_reported_charge_cannot_be_constructed_without_its_amount"
+   ]
+  },
+  {
+   "can_fail": {
+    "applied": true,
+    "file": "experiments/ad01/s09_exposure_ledger.py",
+    "mutation": "reservation_priced_at_a_fixed_25_units",
+    "proves": "proven: 2 mapped test(s) turned red under the reinstated defect",
+    "red_node_ids": [
+     "tests/test_s09cs01_budget_denominations.py::test_the_estimate_matches_the_broker_schedule_exactly",
+     "tests/test_s09cs01_budget_denominations.py::test_two_different_output_allowances_reserve_differently"
+    ],
+    "red_tests": [
+     "test_the_estimate_matches_the_broker_schedule_exactly",
+     "test_two_different_output_allowances_reserve_differently"
+    ],
+    "result": {
+     "errors": 0,
+     "failed": 2,
+     "passed": 27,
+     "skipped": 0,
+     "xfailed": 0
+    }
+   },
+   "check": "request_dependent_reservation_estimates",
+   "covered_by": [
+    "tests/test_s09cs01_budget_denominations.py"
+   ],
+   "note": "the fixed 25-unit smoke estimate named in the brief, reinstated over the broker's own exposure schedule",
+   "requirement": "the reservation is sized from the real request bounds, not a stand-in per-dispatch constant",
+   "status": "PASS",
+   "tests": [
+    "test_two_different_output_allowances_reserve_differently",
+    "test_a_campaign_is_sized_by_its_own_request_bounds",
+    "test_the_estimate_matches_the_broker_schedule_exactly",
+    "test_the_broker_schedule_reproduces_the_reservation_r4_actually_held"
+   ]
+  },
+  {
+   "can_fail": {
+    "applied": true,
+    "file": "experiments/ad01/s09_exposure_ledger.py",
+    "mutation": "dispatch_allowance_gains_a_unit_ceiling_field",
+    "proves": "proven: 3 mapped test(s) turned red under the reinstated defect",
+    "red_node_ids": [
+     "tests/test_s09cs01_budget_denominations.py::test_a_campaign_is_sized_by_its_own_request_bounds",
+     "tests/test_s09cs01_budget_denominations.py::test_a_capacity_needing_a_price_refuses_rather_than_defaulting_to_zero",
+     "tests/test_s09cs01_budget_denominations.py::test_a_dispatch_allowance_answers_dispatches_only",
+     "tests/test_s09cs01_budget_denominations.py::test_a_launch_plan_refuses_a_dispatch_allowance_with_no_frozen_count",
+     "tests/test_s09cs01_budget_denominations.py::test_a_launch_plan_refuses_when_the_reservation_cannot_be_sized",
+     "tests/test_s09cs01_budget_denominations.py::test_a_new_campaign_gets_a_finite_allowance_while_the_holds_stand",
+     "tests/test_s09cs01_budget_denominations.py::test_a_spent_count_beyond_the_allowance_refuses_rather_than_going_negative",
+     "tests/test_s09cs01_budget_denominations.py::test_dispatches_and_reservation_units_are_different_types",
+     "tests/test_s09cs01_budget_denominations.py::test_launching_a_new_campaign_needs_no_settlement_of_the_old_holds",
+     "tests/test_s09cs01_budget_denominations.py::test_no_unit_figure_reaches_the_resume_path",
+     "tests/test_s09cs01_budget_denominations.py::test_resume_spends_dispatches_and_never_looks_at_units",
+     "tests/test_s09cs01_budget_denominations.py::test_subtracting_reservation_units_from_a_dispatch_allowance_is_impossible",
+     "tests/test_s09cs01_budget_denominations.py::test_the_estimate_matches_the_broker_schedule_exactly",
+     "tests/test_s09cs01_budget_denominations.py::test_two_different_output_allowances_reserve_differently"
+    ],
+    "red_tests": [
+     "test_a_campaign_is_sized_by_its_own_request_bounds",
+     "test_a_capacity_needing_a_price_refuses_rather_than_defaulting_to_zero",
+     "test_a_dispatch_allowance_answers_dispatches_only",
+     "test_a_launch_plan_refuses_a_dispatch_allowance_with_no_frozen_count",
+     "test_a_launch_plan_refuses_when_the_reservation_cannot_be_sized",
+     "test_a_new_campaign_gets_a_finite_allowance_while_the_holds_stand",
+     "test_a_spent_count_beyond_the_allowance_refuses_rather_than_going_negative",
+     "test_dispatches_and_reservation_units_are_different_types",
+     "test_launching_a_new_campaign_needs_no_settlement_of_the_old_holds",
+     "test_no_unit_figure_reaches_the_resume_path",
+     "test_resume_spends_dispatches_and_never_looks_at_units",
+     "test_subtracting_reservation_units_from_a_dispatch_allowance_is_impossible",
+     "test_the_estimate_matches_the_broker_schedule_exactly",
+     "test_two_different_output_allowances_reserve_differently"
+    ],
+    "result": {
+     "errors": 0,
+     "failed": 14,
+     "passed": 15,
+     "skipped": 0,
+     "xfailed": 0
+    }
+   },
+   "check": "dimensional_separation",
+   "covered_by": [
+    "tests/test_s09cs01_budget_denominations.py"
+   ],
+   "note": "a single unit-bearing field on the dispatch type is the whole dimensional error, so the field alone must turn the test red",
+   "requirement": "dispatch counts and reservation units cannot be added to one another",
+   "status": "PASS",
+   "tests": [
+    "test_subtracting_reservation_units_from_a_dispatch_allowance_is_impossible",
+    "test_dispatches_and_reservation_units_are_different_types",
+    "test_a_dispatch_allowance_answers_dispatches_only",
+    "test_the_module_exposes_no_ceiling_minus_carry_headroom"
+   ]
+  },
+  {
+   "can_fail": {
+    "applied": true,
+    "file": "experiments/ad01/s09_exposure_ledger.py",
+    "mutation": "resume_reports_negative_remaining_instead_of_refusing",
+    "proves": "proven: 2 mapped test(s) turned red under the reinstated defect",
+    "red_node_ids": [
+     "tests/test_s09cs01_budget_denominations.py::test_a_spent_count_beyond_the_allowance_refuses_rather_than_going_negative",
+     "tests/test_s09cs01_budget_denominations.py::test_no_unit_figure_reaches_the_resume_path",
+     "tests/test_s09cs01_budget_denominations.py::test_resume_spends_dispatches_and_never_looks_at_units"
+    ],
+    "red_tests": [
+     "test_a_spent_count_beyond_the_allowance_refuses_rather_than_going_negative",
+     "test_no_unit_figure_reaches_the_resume_path",
+     "test_resume_spends_dispatches_and_never_looks_at_units"
+    ],
+    "result": {
+     "errors": 0,
+     "failed": 3,
+     "passed": 26,
+     "skipped": 0,
+     "xfailed": 0
+    }
+   },
+   "check": "durable_resume_consumes_remaining_count_only",
+   "covered_by": [
+    "tests/test_s09cs01_budget_denominations.py"
+   ],
+   "note": "the resume path has no unit to read, so the mutation inverts the one thing it can get wrong: a negative remainder for an over-limit count",
+   "requirement": "a resume reads the remaining dispatch count and no unit figure reaches it",
+   "status": "PASS",
+   "tests": [
+    "test_resume_spends_dispatches_and_never_looks_at_units",
+    "test_no_unit_figure_reaches_the_resume_path",
+    "test_a_new_campaign_gets_a_finite_allowance_while_the_holds_stand"
+   ]
+  },
+  {
+   "can_fail": {
+    "applied": true,
+    "file": "experiments/ad01/s09_exposure_ledger.py",
+    "mutation": "every_study_contributes_regardless_of_settlement",
+    "proves": "proven: 1 mapped test(s) turned red under the reinstated defect",
+    "red_node_ids": [
+     "tests/test_s09cs01_budget_denominations.py::test_the_prior_exposure_is_still_5563_in_the_same_terms"
+    ],
+    "red_tests": [
+     "test_the_prior_exposure_is_still_5563_in_the_same_terms"
+    ],
+    "result": {
+     "errors": 0,
+     "failed": 1,
+     "passed": 28,
+     "skipped": 0,
+     "xfailed": 0
+    }
+   },
+   "check": "old_uncertain_holds_survive",
+   "covered_by": [
+    "tests/test_s09cs01_budget_denominations.py"
+   ],
+   "note": "dropping the unsettled filter releases the settled studies without touching a single held row, which is the settlement the brief forbids",
+   "requirement": "the 5563 held units keep their grant, root and uncertain state, and are never released or settled",
+   "status": "PASS",
+   "tests": [
+    "test_the_prior_exposure_is_still_5563_in_the_same_terms",
+    "test_each_held_unit_carries_its_grant_and_study_root",
+    "test_the_holds_are_counted_once_and_never_released_or_settled",
+    "test_the_older_hold_honors_the_reconciliation_agrees_flag"
+   ]
+  },
+  {
+   "can_fail": {
+    "applied": false,
+    "mutation": null,
+    "proves": "not exercised: see the note on this check",
+    "red_node_ids": [],
+    "red_tests": []
+   },
+   "check": "finite_new_allowance_launches_without_settling_holds",
+   "covered_by": [
+    "tests/test_s09cs01_budget_denominations.py"
+   ],
+   "note": "Not mutated, and the reason is recorded rather than hidden. The mapped test takes a before/after reading of the same computed prior, so it can only detect a caller that mutates that object. Nothing in the production call path does. The check is self-certifying by construction and would need a process-level or persistent-store test to be falsifiable; that is a real limitation of this check, not a claim that it holds.",
+   "requirement": "a new campaign launches on its own finite allowance with the old holds untouched",
+   "status": "PASS",
+   "tests": [
+    "test_a_new_campaign_gets_a_finite_allowance_while_the_holds_stand",
+    "test_launching_a_new_campaign_needs_no_settlement_of_the_old_holds",
+    "test_a_launch_plan_refuses_when_the_reservation_cannot_be_sized",
+    "test_a_launch_plan_refuses_a_dispatch_allowance_with_no_frozen_count"
+   ]
+  },
+  {
+   "can_fail": {
+    "applied": true,
+    "file": "experiments/ad01/live_construct.py",
+    "mutation": "ceiling_counts_attempts_not_durable_sends",
+    "proves": "proven: 1 mapped test(s) turned red under the reinstated defect",
+    "red_node_ids": [
+     "tests/test_s09_n203_dispatch_ceiling.py::test_a_store_refusal_does_not_burn_the_ceiling",
+     "tests/test_s09_n203_dispatch_ceiling.py::test_the_durable_delegate_exempts_a_refused_prepare_and_not_a_sent_one",
+     "tests/test_s09_n203_dispatch_ceiling.py::test_the_marker_is_honoured_only_for_a_bare_raise"
+    ],
+    "red_tests": [
+     "test_a_store_refusal_does_not_burn_the_ceiling",
+     "test_the_durable_delegate_exempts_a_refused_prepare_and_not_a_sent_one",
+     "test_the_marker_is_honoured_only_for_a_bare_raise"
+    ],
+    "result": {
+     "errors": 0,
+     "failed": 3,
+     "passed": 35,
+     "skipped": 0,
+     "xfailed": 0
+    }
+   },
+   "check": "launches_cannot_exceed_the_allowance",
+   "covered_by": [
+    "tests/test_s09_n203_dispatch_ceiling.py",
+    "tests/test_s09cs01_budget_denominations.py"
+   ],
+   "note": "M1's own file reaches this check only arithmetically, through the resume reading. The enforcement is `LiveGuard.infer` in live_construct.py, pinned by the N-203 file, so the mutation sits there rather than in the ledger",
+   "requirement": "no launch may exceed the frozen dispatch count",
+   "status": "PASS",
+   "tests": [
+    "test_ceiling_refusal_never_reaches_the_delegate",
+    "test_already_spent_opens_as_a_spent_count_not_an_attempt_count",
+    "test_a_store_refusal_does_not_burn_the_ceiling",
+    "test_a_spent_count_beyond_the_allowance_refuses_rather_than_going_negative"
+   ]
+  },
+  {
+   "can_fail": {
+    "applied": true,
+    "file": "src/settlement/broker.py",
+    "mutation": "transport_loss_admitted_as_a_success_receipt",
+    "proves": "proven: 1 mapped test(s) turned red under the reinstated defect",
+    "red_node_ids": [
+     "tests/test_broker_dispatch.py::test_model_lost_response_stays_unresolved"
+    ],
+    "red_tests": [
+     "test_model_lost_response_stays_unresolved"
+    ],
+    "result": {
+     "errors": 0,
+     "failed": 1,
+     "passed": 63,
+     "skipped": 0,
+     "xfailed": 0
+    },
+    "second_mutation": {
+     "applied": true,
+     "file": "experiments/ad01/offline_recompute.py",
+     "mutation": "verifier_accepts_any_unresolved_claim",
+     "proves": "proven: 1 mapped test(s) turned red under the reinstated defect",
+     "red_node_ids": [
+      "tests/test_m4_offline_recompute.py::test_malformed_lost_response_marker_still_fails[receipt_updates1]",
+      "tests/test_m4_offline_recompute.py::test_malformed_lost_response_marker_still_fails[receipt_updates2]",
+      "tests/test_m4_offline_recompute.py::test_malformed_lost_response_marker_still_fails[receipt_updates3]",
+      "tests/test_m4_offline_recompute.py::test_malformed_lost_response_marker_still_fails[receipt_updates4]",
+      "tests/test_m4_offline_recompute.py::test_malformed_lost_response_marker_still_fails[receipt_updates5]",
+      "tests/test_m4_offline_recompute.py::test_malformed_lost_response_marker_still_fails[receipt_updates6]",
+      "tests/test_m4_offline_recompute.py::test_malformed_lost_response_marker_still_fails[receipt_updates7]"
+     ],
+     "red_tests": [
+      "test_malformed_lost_response_marker_still_fails"
+     ],
+     "result": {
+      "errors": 0,
+      "failed": 7,
+      "passed": 44,
+      "skipped": 0,
+      "xfailed": 0
+     }
+    }
+   },
+   "check": "unsuccessful_response_is_an_attributable_attempted_effect",
+   "covered_by": [
+    "tests/test_broker_dispatch.py",
+    "tests/test_m4_offline_recompute.py",
+    "tests/test_r4_verify_bundle_authority.py"
+   ],
+   "note": "the brief's own sentence, taken literally: the loss is turned into a success receipt for the same operation, and the operation is still attributable to it, so only the fabricated receipt can catch it. The mirror mutation in the verifier, which would accept any receipt merely claiming an unresolved outcome, is reported as `second_mutation` below",
+   "requirement": "an unsuccessful response is an attempt attributable to one operation; a transport loss stays uncertain and must not become a fabricated response receipt",
+   "status": "PASS",
+   "tests": [
+    "test_model_lost_response_stays_unresolved",
+    "test_lost_response_retains_exposure_and_blocks_resend",
+    "test_output_honest_lost_response_has_no_receipt_contract_problem",
+    "test_output_failed_outcome_cannot_claim_lost_response"
+   ]
+  }
+ ],
+ "command": "PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_broker_dispatch.py -q -p no:randomly; PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_m4_offline_recompute.py -q -p no:randomly; PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_r4_verify_bundle_authority.py -q -p no:randomly; PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_s09_n203_dispatch_ceiling.py -q -p no:randomly; PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_s09cs01_budget_denominations.py -q -p no:randomly",
+ "commit": "488bfecd6926fa197bab50fa5c5a803ec8545ecb",
+ "database_note": "S09ISO dropped 105 disposable database(s) across these 5 runs. Each run builds its own plan in pytest_configure before the test modules import, so no name is shared between them and none is handwritten here. The mutation runs execute inside a temp copy of the tree, whose tests/conftest_isolation.py resolves its repo root under /tmp, so they cannot reach a shared ec02test_* store either.",
+ "exposure_added": 0,
+ "file_digests": {
+  "experiments/ad01/live_construct.py": "4b85744f6edfd7d6aff8cec1221b61c31cbeb3e7c469624f14cf1d4f6bc6227d",
+  "experiments/ad01/m1_behaviour_gate.py": "6413894d65a39551e5e08fadd44206c7b0ab4139956808e0c978c1e2b4d185eb",
+  "experiments/ad01/offline_recompute.py": "765f877c315838875df81aa67d242fa2d62947c26f53042c0319f8ee9f08424f",
+  "experiments/ad01/s09_exposure_ledger.py": "9e2ceec6e3bde6c4d94af8a322e2d52a75938a47756a0e597078c531692525b6",
+  "src/settlement/broker.py": "5c191624ae25040709340cd4701c057fbd2b4ba6f8a7b668594f00871600b359",
+  "tests/test_broker_dispatch.py": "4f385db64d114f22ca8f915a46d8109d0d02b05b72140754edaaed135e6122fa",
+  "tests/test_m4_offline_recompute.py": "da21261f799955211c2663bc9b5c05d7ef0232658e3b7fc0bb9981ae4d98d7a1",
+  "tests/test_r4_verify_bundle_authority.py": "40c9c76b094ae3c265ee3613ff2fc6f0065542b6bd3cedffccc07382d014a5e5",
+  "tests/test_s09_n203_dispatch_ceiling.py": "06ee20392bb34da4f6d6accc1bad4c5b4985a691ea7b4e61032969d40bfa5559",
+  "tests/test_s09cs01_budget_denominations.py": "1e3b9af4495d4098e5459aaf5b62bbdc7da3fa1571e3111a0c8ae86843a8548a"
+ },
+ "live_dispatches": 0,
+ "note": "The eight checks are the eight required behaviour checks at WORKER-STAGE-09-CONNECTED-STUDY.md:43. `tests` names the committed test that pins each; `covered_by` names which of the 5 gate files hold it. The milestone file test_s09cs01_budget_denominations.py covers six of the eight. Check 7 is enforced by LiveGuard.infer in live_construct.py and pinned by test_s09_n203_dispatch_ceiling.py, and check 8 lives in the broker and the bundle verifier, neither of which the milestone file reaches. `can_fail.red_tests` is what a deliberately reinstated defect actually turned red, measured in a throwaway copy; the checkout is never mutated. A check whose `proves` reads mutation_silent is reported, not smoothed over. No wall-clock figure is recorded, so a re-run diffs clean.",
+ "per_file_runs": {
+  "broker_dispatch": {
+   "command": "PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_broker_dispatch.py -q -p no:randomly",
+   "errors": 0,
+   "exit_code": 0,
+   "failed": 0,
+   "file": "tests/test_broker_dispatch.py",
+   "passed": 13,
+   "skipped": 0,
+   "xfailed": 0
+  },
+  "bundle_authority": {
+   "command": "PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_r4_verify_bundle_authority.py -q -p no:randomly",
+   "errors": 0,
+   "exit_code": 0,
+   "failed": 0,
+   "file": "tests/test_r4_verify_bundle_authority.py",
+   "passed": 6,
+   "skipped": 0,
+   "xfailed": 0
+  },
+  "dispatch_ceiling": {
+   "command": "PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_s09_n203_dispatch_ceiling.py -q -p no:randomly",
+   "errors": 0,
+   "exit_code": 0,
+   "failed": 0,
+   "file": "tests/test_s09_n203_dispatch_ceiling.py",
+   "passed": 9,
+   "skipped": 0,
+   "xfailed": 0
+  },
+  "m1": {
+   "command": "PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_s09cs01_budget_denominations.py -q -p no:randomly",
+   "errors": 0,
+   "exit_code": 0,
+   "failed": 0,
+   "file": "tests/test_s09cs01_budget_denominations.py",
+   "passed": 29,
+   "skipped": 0,
+   "xfailed": 0
+  },
+  "offline_recompute": {
+   "command": "PYTHONPATH=$PWD:src:tests .venv/bin/python -m pytest tests/test_m4_offline_recompute.py -q -p no:randomly",
+   "errors": 0,
+   "exit_code": 0,
+   "failed": 0,
+   "file": "tests/test_m4_offline_recompute.py",
+   "passed": 45,
+   "skipped": 0,
+   "xfailed": 0
+  }
+ },
+ "result": {
+  "errors": 0,
+  "failed": 0,
+  "passed": 102,
+  "skipped": 0,
+  "xfailed": 0
+ },
+ "schema": "inv-r1-m1-behaviour-gate-v1"
+}

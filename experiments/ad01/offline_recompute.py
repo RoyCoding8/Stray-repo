@@ -12,17 +12,25 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 import math
+
+from . import paired_results as pairs
+from .live_construct import OUTPUT_PROTOCOL_ID, OUTPUT_STUDY_ROOT
+from .paired_results import Attested, Recomputed
 
 ARMS = ("P0", "P1", "P2")
 ACQUIRED_ARMS = ("P1", "P2")
-OUTPUT_PROTOCOL_ID = "invl02-output-shape-550b-r1-v1"
-OUTPUT_STUDY_ROOT = "invl02-output-shape-550b-r1"
 E12_PROTOCOL_ID = "invl02-live-e12-v1"
+# The verifier is deliberately absent from this list. It re-hashes each path
+# and compares against the freeze, so a verifier in the list can never pass:
+# any edit to it changes the answer, and no frozen bundle verifies clean at any
+# commit afterwards. That is M4's precondition, a baseline that cannot pass
+# cannot establish a tamper test. Its own digest is reported by
+# `verifier_digest` so a reader can still tell which version judged a bundle.
 OUTPUT_CODE_PATHS = (
     "scripts/invl02_live.py",
     "experiments/ad01/live_construct.py",
-    "experiments/ad01/offline_recompute.py",
     "experiments/ad01/frontier.py",
     "src/settlement/gateway_http.py",
 )
@@ -63,12 +71,42 @@ OUTPUT_SCHEMA = "invl02-output-run-v2"
 SCORER_PRIVATE_SCHEMA = "invl02-output-scorer-private-v1"
 M4_STUDY_ROOT = "invl02-live-e12"
 
+# The study roots whose authority this verifier can vouch for. Two of
+# them are pinned by test fixtures rather than by a recorded study, so
+# this set is a floor, not a registry. Growing it needs a study whose
+# evidence directory is on record, not one whose test needs to pass.
+AUTHORITATIVE_STUDY_ROOTS = frozenset({
+    M4_STUDY_ROOT,
+    OUTPUT_STUDY_ROOT,
+    "invl02-live-e0",
+    "invl02-live-e3",
+    "invl02-live-json",
+    "invl02_m4",
+})
+
 FREEZE_REQUIRED = (
     "study_id", "study_root", "arms", "order", "development",
     "assessment", "audit", "construction_allowance", "caps",
     "metric_rule", "resource_rule", "config", "policy_identities",
     "method_repertoires", "arm_contracts", "history_reference", "tasks",
     "freeze_digest",
+)
+
+# A bundle's identity is the study it claims. The bundle-level `study`
+# predates the freeze's `study_id`, so it is checked against that one.
+IDENTITY_KEYS = ("study", "study_id", "study_root")
+
+# The answer-bearing side of a world. A frozen policy source or a method
+# repertoire member that names one of these is not a policy; it has been
+# handed the held-out answer, and any quality it then scores is a lookup.
+# Substring matching is safe here because none of the thirteen policy
+# sources in the tree trips any of these; a real false positive would
+# show up as a rejected bundle, not as a silent pass.
+HIDDEN_ANSWER_MARKERS = (
+    "target_tables", "task_answers", "answer_key", "answer_key_",
+    "private_answer", "hidden_answer", "heldout_answer", "held_out_answer",
+    "ground_truth", "groundtruth", "expected_tables", "scorer_private",
+    "oracle_tables", "solution_tables", "answer_table",
 )
 
 
@@ -92,6 +130,22 @@ def reserve_allowance(arms, init: int, repair: int) -> dict:
     if init < 0 or repair < 0:
         raise ValueError("allowance cannot be negative")
     return {str(arm): {"init": init, "repair": repair} for arm in arms}
+
+
+def select_m4_winner(means: dict[str, float | None], margin: float,
+                     tie: str) -> str | None:
+    available = {arm: mean for arm, mean in means.items()
+                 if mean is not None}
+    if not available:
+        return None
+    ranked = sorted(available, key=lambda arm: (-available[arm], arm))
+    leader = ranked[0]
+    leaders = [arm for arm in ranked if available[arm] == available[leader]]
+    if len(leaders) == 1:
+        second = max((available[arm] for arm in ranked[1:]), default=0.0)
+        if available[leader] - second >= margin:
+            return leader
+    return "P0" if tie == "incumbent" else None
 
 
 def study_worst_case(freeze: dict) -> int:
@@ -209,6 +263,10 @@ def _output_usage_state_problems(receipt: dict) -> list:
     if "settled" not in receipt:
         problems.append("durable-receipt-settled-missing")
     elif receipt.get("settled") is not True:
+        if not _is_lost_response_receipt(receipt):
+            problems.append("durable-receipt-unsettled")
+    elif (_claims_lost_response(receipt)
+          and not _is_lost_response_receipt(receipt)):
         problems.append("durable-receipt-unsettled")
     usage = receipt.get("usage")
     if not isinstance(usage, dict):
@@ -227,7 +285,12 @@ def _output_usage_state_problems(receipt: dict) -> list:
                 or (isinstance(value, float) and not math.isfinite(value))
                 or value < 0):
             problems.append("durable-receipt-usage-state-invalid")
-    if not isinstance(usage.get("billed"), bool):
+    if status in ("unknown", "unresolved"):
+        billed = usage.get("billed")
+        if not (billed is None or billed == "unknown"
+                or isinstance(billed, bool)):
+            problems.append("durable-receipt-usage-state-invalid")
+    elif not isinstance(usage.get("billed"), bool):
         problems.append("durable-receipt-usage-state-invalid")
     if status == "measured":
         for key in ("input_tokens", "output_tokens", "charge_units",
@@ -237,6 +300,14 @@ def _output_usage_state_problems(receipt: dict) -> list:
                     or (isinstance(value, float) and not math.isfinite(value))
                     or value < 0 or (key == "charge_scale" and value <= 0)):
                 problems.append("durable-receipt-usage-state-invalid")
+    if (status == "unresolved" and not _is_lost_response_receipt(receipt)):
+        required = {"input_tokens", "output_tokens", "charge_units",
+                    "charge_scale", "billed"}
+        if (required - set(usage)
+                or any(usage.get(key) is not None
+                       and usage.get(key) != "unknown"
+                       for key in required)):
+            problems.append("durable-receipt-usage-state-invalid")
     return problems
 
 
@@ -249,6 +320,35 @@ _OUTPUT_RECEIPT_BINDING_FIELDS = (
 
 def _output_receipt_binding(receipt: dict) -> dict:
     return {key: receipt.get(key) for key in _OUTPUT_RECEIPT_BINDING_FIELDS}
+
+
+def _claims_lost_response(receipt: dict) -> bool:
+    return (isinstance(receipt, dict)
+            and (receipt.get("response_class") == "lost-response"
+                 or receipt.get("receipt_outcome") == "unknown"
+                 or receipt.get("outcome") == "unresolved"))
+
+
+def _is_lost_response_receipt(receipt: dict) -> bool:
+    usage = receipt.get("usage")
+    required_usage = {
+        "input_tokens", "output_tokens", "charge_units", "charge_scale",
+        "billed"}
+    return (
+        receipt.get("outcome") == "unresolved"
+        and receipt.get("receipt_outcome") == "unknown"
+        and receipt.get("response_class") == "lost-response"
+        and receipt.get("response_received") is False
+        and receipt.get("settled") is False
+        and isinstance(usage, dict)
+        and required_usage <= set(usage)
+        and all(usage.get(key) is None or usage.get(key) == "unknown"
+                for key in required_usage)
+        and _is_count(receipt.get("exposure"))
+        and receipt.get("exposure") > 0
+        and receipt.get("unresolved_exposure") == receipt.get("exposure")
+        and receipt.get("usable_result") is False
+        and receipt.get("result") is None)
 
 
 def _check_freeze(bundle: dict, problems: list) -> dict | None:
@@ -402,6 +502,87 @@ def _check_task_labels(freeze: dict, problems: list) -> None:
             problems.append("frozen-task-label-mismatch %s" % task_id)
         if task.get("target_digest") != source_digest(expected):
             problems.append("frozen-task-target-mismatch %s" % task_id)
+
+
+def _check_study_identity(bundle: dict, freeze: dict,
+                          problems: list) -> None:
+    """A bundle may only claim the study its freeze pins.
+
+    A digest cannot cover a wholesale identity rewrite: swapping every
+    identity key and the digests over them leaves an internally
+    consistent bundle, so the frozen study root has to name a study this
+    verifier recognises.
+    """
+    for key in IDENTITY_KEYS:
+        frozen = freeze.get(key) or (
+            freeze.get("study_id") if key == "study" else None)
+        if frozen is not None and key in bundle and bundle.get(key) != frozen:
+            problems.append("bundle-%s-mismatch" % key)
+    study_root = freeze.get("study_root")
+    if (isinstance(study_root, str)
+            and study_root not in AUTHORITATIVE_STUDY_ROOTS):
+        problems.append("foreign-study-identity %s" % study_root)
+
+
+def _policy_source_arm(freeze: dict) -> dict:
+    """Which arm owns which policy source digest.
+
+    The arms are conditions, so no source can serve two of them. Without
+    this an arm can run a sibling's bytes with every binding in the
+    freeze rewritten to match, and the bundle stays internally
+    consistent while measuring the same policy twice.
+    """
+    owners = {}
+    for arm, identity in (freeze.get("policy_identities") or {}).items():
+        digest = identity.get("source_digest") if isinstance(
+            identity, dict) else None
+        if isinstance(digest, str) and digest:
+            owners.setdefault(digest, set()).add(arm)
+    return owners
+
+
+def _check_source_exclusivity(freeze: dict, problems: list) -> None:
+    for digest, arms in sorted(_policy_source_arm(freeze).items()):
+        if len(arms) > 1:
+            problems.append("source-shared-between-arms %s %s"
+                            % (digest[:12], sorted(arms)))
+
+
+def _hidden_answer_problems(source, label: str) -> list:
+    """Names an answer-bearing field in a policy's own bytes.
+
+    Case-insensitive and substring-based on purpose. The leak a run must
+    not have is a held-out answer inside the bytes a policy can read, and
+    that leak has no single spelling; a scan that only matched the exact
+    names on this list would be defeated by a rename.
+    """
+    if not isinstance(source, str) or not source:
+        return []
+    lowered = source.lower()
+    found = sorted({marker for marker in HIDDEN_ANSWER_MARKERS
+                    if marker in lowered})
+    return ["hidden-answer-contamination %s %s" % (label, marker)
+            for marker in found]
+
+
+def _check_no_hidden_answers(freeze: dict, problems: list) -> None:
+    identities = freeze.get("policy_identities") or {}
+    for arm in sorted(identities):
+        identity = identities[arm]
+        if not isinstance(identity, dict):
+            continue
+        problems.extend(_hidden_answer_problems(
+            identity.get("source"), "policy %s" % arm))
+    repertoires = freeze.get("method_repertoires") or {}
+    for arm in sorted(repertoires):
+        repertoire = repertoires[arm]
+        members = repertoire.get("members") if isinstance(
+            repertoire, dict) else None
+        for member in members or []:
+            source = member.get("method_source") if isinstance(
+                member, dict) else None
+            problems.extend(_hidden_answer_problems(
+                source, "method %s" % arm))
 
 
 def _check_repertoires(freeze: dict, problems: list) -> dict:
@@ -566,6 +747,15 @@ def _check_construction(bundle: dict, freeze: dict, identities: dict,
     return construction if isinstance(construction, dict) else {}
 
 
+def _software_expected_quality(task_id: str) -> str:
+    from . import trajectory, worlds
+    task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+    report = trajectory._check(task, task)
+    if report.get("verdict") != "preserved":
+        raise ValueError("frozen software task is not preserved")
+    return "preserved"
+
+
 def _recomputed_quality(freeze: dict, record: dict) -> float | None:
     if record.get("executed") == "incumbent":
         return None
@@ -593,6 +783,11 @@ def _check_dispatch_ledger(bundle: dict, construction: dict,
     for candidate in bundle.get("candidates") or []:
         if isinstance(candidate, dict):
             expected.update(candidate.get("operation_ids") or [])
+    for record in (bundle.get("software") or {}).get("use_records") or []:
+        if isinstance(record, dict):
+            operation_id = record.get("operation_id")
+            if isinstance(operation_id, str):
+                expected.add(operation_id)
     expected = {op_id for op_id in expected if isinstance(op_id, str)}
     seen = set()
     actual = set()
@@ -698,9 +893,8 @@ def _check_authoritative_protocol(bundle: dict, freeze: dict,
     if not boolean_tasks:
         problems.append("frozen-boolean-task-set-invalid")
         return
-    task_ids = {
-        "rule-%s-%04d" % (split, seed)
-        for split, seed in boolean_tasks.items()}
+    task_ids = {_task_id_for(split, seed)
+                for split, seed in boolean_tasks.items()}
     software_tasks = list(protocol.get("software_tasks") or [])
     if (freeze.get("arms") != protocol.get("arms")
             or freeze.get("order") != protocol.get("order")
@@ -720,8 +914,8 @@ def _check_authoritative_protocol(bundle: dict, freeze: dict,
         task for entry in freeze.get("audit") or []
         if isinstance(entry, dict)
         for task in entry.get("use_tasks") or []}
-    if (assessment_tasks != {"rule-qual-%04d" % boolean_tasks["qual"]}
-            or audit_tasks != {"rule-audit-%04d" % boolean_tasks["audit"]}):
+    if (assessment_tasks != {_task_id_for("qual", boolean_tasks["qual"])}
+            or audit_tasks != {_task_id_for("audit", boolean_tasks["audit"])}):
         problems.append("protocol-split-membership-mismatch")
 
 
@@ -745,24 +939,23 @@ def _check_boolean_candidates(bundle: dict, freeze: dict,
     if not isinstance(candidates, list):
         return
     actual_keys = set()
+    task_ids_by_split = {_task_id_for(split, seed): split
+                         for split, seed in tasks_by_split.items()}
     expected_keys = {
-        (arm, "rule-%s-%04d" % (split, seed))
+        (arm, task_id)
         for arm in ACQUIRED_ARMS
         if identities.get(arm, {}).get("status") == "available"
-        for split, seed in tasks_by_split.items()}
+        for task_id in task_ids_by_split}
     for candidate in candidates:
         if not isinstance(candidate, dict):
             continue
         key = (candidate.get("arm"), candidate.get("task_id"))
         actual_keys.add(key)
         arm, task_id = key
-        if arm not in ACQUIRED_ARMS or task_id not in {
-                "rule-%s-%04d" % (split, seed)
-                for split, seed in tasks_by_split.items()}:
+        if arm not in ACQUIRED_ARMS or task_id not in task_ids_by_split:
             problems.append("candidate-membership-unknown %s-%s" % key)
             continue
-        split = next(split for split, seed in tasks_by_split.items()
-                     if task_id == "rule-%s-%04d" % (split, seed))
+        split = task_ids_by_split[task_id]
         seed = tasks_by_split[split]
         history = [] if arm == "P1" else list(
             (protocol.get("history") or {}).get("P2") or [])
@@ -1045,6 +1238,14 @@ def _check_operations(bundle: dict, episodes: list, construction: dict,
         for op_id in record.get("operation_ids", []) or []:
             claim_operation(op_id, "record:%s" % record.get(
                 "record_id", "?"))
+    for record in (bundle.get("software") or {}).get("use_records") or []:
+        if (not isinstance(record, dict)
+                or record.get("arm") not in ACQUIRED_ARMS):
+            continue
+        op_id = record.get("operation_id")
+        if isinstance(op_id, str):
+            claim_operation(op_id, "software:%s" % record.get(
+                "record_id", "?"))
     if set(operations) != claimed:
         problems.append("dispatch-operation-set-mismatch")
     if set(child_receipts) != claimed:
@@ -1144,6 +1345,42 @@ def _check_operations(bundle: dict, episodes: list, construction: dict,
     return operations, unresolved_receipts
 
 
+def _check_absent_usage(bundle: dict, problems: list) -> None:
+    """A dispatch that reported no usage did not report zero.
+
+    A measured zero is a claim about the provider, and a claim about the
+    provider needs a witness that observed it. So the question is never
+    whether the number is zero, only whether the source names a receipt
+    that could have put it there.
+    """
+    receipts = bundle.get("child_receipts")
+    receipts = receipts if isinstance(receipts, dict) else {}
+    witnessed = any(
+        isinstance(receipt, dict)
+        and isinstance(receipt.get("usage"), dict)
+        and receipt["usage"].get("charge_units") is not None
+        and receipt["usage"].get("charge_units") != "unknown"
+        for receipt in receipts.values())
+    if witnessed:
+        return
+    accounting = bundle.get("accounting")
+    if not isinstance(accounting, dict):
+        return
+    billed = accounting.get("billed_units")
+    if (isinstance(billed, dict) and _is_count(billed.get("measured"))
+            and billed["measured"] == 0
+            and billed.get("measurement_status") == "measured"
+            and not _names_a_provider_witness(billed.get("source"))):
+        problems.append("billed-unknown-scored-as-zero")
+
+
+def _names_a_provider_witness(source) -> bool:
+    if not isinstance(source, str) or not source:
+        return False
+    return any(marker in source.lower() for marker in (
+        "receipt", "provider", "gateway", "attested", "invoice"))
+
+
 def _check_accounting(bundle: dict, recomputed_counts: dict,
                       problems: list) -> None:
     accounting = bundle.get("accounting", {})
@@ -1194,6 +1431,98 @@ def _check_accounting(bundle: dict, recomputed_counts: dict,
                                                recomputed_counts[key]))
 
 
+def _check_resume(bundle: dict, total_model: int, problems: list) -> dict:
+    """A resume ledger must not lower a count the lineage already proves.
+
+    A resume record says where the run picked up and how many calls had
+    been consumed by then. The dispatches in the bundle are the whole
+    visible run, so by the time the run reached `resumed_at_dispatch` it
+    had already spent at least that many. A carried count below that is
+    the count going backwards: a restart that forgot what it had done.
+    A carried count above the visible dispatches is the opposite error, a
+    run claiming history it did not export, and is checked here.
+    """
+    resume = bundle.get("resume")
+    if resume is None:
+        return {}
+    if not isinstance(resume, dict):
+        problems.append("resume-ledger-malformed")
+        return {}
+    for key in ("carried_calls", "resumed_at_dispatch"):
+        if key in resume and not _is_count(resume[key]):
+            problems.append("resume-ledger-field-malformed %s" % key)
+    carried = resume.get("carried_calls")
+    resumed_at = resume.get("resumed_at_dispatch")
+    if not _is_count(carried) or not _is_count(resumed_at):
+        return {}
+    if carried < min(resumed_at, total_model):
+        problems.append("resume-count-rollback carried=%d dispatched=%d"
+                        % (carried, min(resumed_at, total_model)))
+    if carried > total_model:
+        problems.append("resume-count-exceeds-dispatches carried=%d "
+                        "dispatched=%d" % (carried, total_model))
+    return {"carried_calls": carried, "source": resume.get("source"),
+            "resumed_at_dispatch": resumed_at}
+
+
+def recomputed_accounting(bundle: dict) -> dict:
+    """The accounting as typed values, not as loose fields.
+
+    A class the verifier can re-derive from the bundle carries a
+    `Recomputed`; a class only the runtime could measure carries an
+    `Attested` naming its witness. The mapping is the whole point: an
+    attested number cannot be handed to a caller expecting a recount
+    without a type error, and a recount cannot be given a source it did
+    not have.
+    """
+    ledger = bundle.get("dispatch_ledger")
+    dispatches = sum(1 for entry in ledger
+                     if isinstance(entry, dict)
+                     and not entry.get("replay", False)) \
+        if isinstance(ledger, list) else 0
+    witness_acquisition = 0
+    for section in ("development", "assessment", "audit"):
+        for episode in bundle.get(section) or []:
+            if isinstance(episode, dict) and _is_count(
+                    episode.get("witness_queries")):
+                witness_acquisition += episode["witness_queries"]
+    witness_use = 0
+    for record in bundle.get("use_records") or []:
+        if not isinstance(record, dict):
+            continue
+        queries = (record.get("costs") or {}).get("witness_queries")
+        if _is_count(queries):
+            witness_use += queries
+    recounted = {
+        "model_dispatches": dispatches,
+        "tool_queries": witness_acquisition + witness_use,
+        "unresolved_exposure": unresolved_exposure_count(
+            bundle.get("operations") or {}),
+    }
+    table = {}
+    claimed = bundle.get("accounting")
+    claimed = claimed if isinstance(claimed, dict) else {}
+    for name in RESOURCE_CLASSES:
+        entry = claimed.get(name)
+        if name in RECOUNTABLE:
+            table[name] = Recomputed(str(recounted[name]))
+            continue
+        status = entry.get("measurement_status") if isinstance(
+            entry, dict) else None
+        value = entry.get("measured") if isinstance(entry, dict) else None
+        source = (entry.get("source") if isinstance(entry, dict) else "") or ""
+        if status == "measured" and _is_count(value):
+            table[name] = Attested(value, source or "unattested", status)
+        else:
+            # An entry too malformed to attest to is reported as unknown
+            # rather than raised on. This table is built while the bundle
+            # is already failing, and a reporting path that raises erases
+            # every problem found so far.
+            table[name] = Attested(
+                pairs.UNKNOWN, source or "unattested", status or "unknown")
+    return table
+
+
 def _compare(freeze: dict, bundle: dict, records: list,
              qualities: dict, assess: set, audit: set,
              problems: list) -> dict:
@@ -1227,15 +1556,7 @@ def _compare(freeze: dict, bundle: dict, records: list,
     winner = None
     status = "incomplete" if missing else "complete"
     if not missing:
-        ranked = sorted(((mean, arm) for arm, mean in means.items()
-                         if mean is not None), reverse=True)
-        if ranked:
-            best, second = ranked[0][0], (ranked[1][0]
-                                          if len(ranked) > 1 else 0.0)
-            if best - second >= margin:
-                winner = ranked[0][1]
-            elif tie == "incumbent":
-                winner = "P0"
+        winner = select_m4_winner(means, margin, tie)
     claimed = bundle.get("claimed", {})
     if not isinstance(claimed, dict) or "winner" not in claimed:
         problems.append("comparison-claimed-missing")
@@ -1294,12 +1615,26 @@ def _verify_software_domain(bundle: dict, freeze: dict) -> tuple[list, dict]:
             continue
         recomputed.append({
             "arm": record["arm"], "task_id": record["task_id"],
-            "observed": record["observed"], "queries": record["queries"]})
+            "expected": record["expected"], "observed": record["observed"],
+            "queries": record["queries"]})
     if {row.get("task_id") for row in records if isinstance(row, dict)} != tasks:
         problems.append("software-use-task-set-mismatch")
+    expected_keys = {(arm, task_id) for arm in ARMS for task_id in tasks}
+    actual_keys = {(row.get("arm"), row.get("task_id"))
+                   for row in records if isinstance(row, dict)}
+    if actual_keys != expected_keys:
+        problems.append("software-arm-task-membership-mismatch")
+    for row in records:
+        if not isinstance(row, dict):
+            continue
+        expected_quality = _software_expected_quality(str(row.get("task_id")))
+        if row.get("expected") != expected_quality:
+            problems.append("software-frozen-quality-mismatch %s" % (
+                row.get("record_id", "?")))
     expected = [
         {"arm": row["arm"], "task_id": row["task_id"],
-         "observed": row["observed"], "queries": row["queries"]}
+         "expected": row["expected"], "observed": row["observed"],
+         "queries": row["queries"]}
         for row in records if isinstance(row, dict)]
     if outcomes != expected:
         problems.append("software-outcome-mismatch")
@@ -1355,7 +1690,13 @@ def verify_bundle(bundle: dict, scorer_private: dict | None = None) -> dict:
                      or "candidate_view" in bundle
                      or (isinstance(protocol, dict)
                          and protocol.get("protocol") == OUTPUT_PROTOCOL_ID))):
-            return _verify_output(bundle, scorer_private)
+            verified = _verify_output(bundle, scorer_private)
+            verified["verification_scope"] = {
+                "dispatch_authority": "bundle-only",
+                "external_operation_store_checked": False,
+                "sibling_evidence_checked": False,
+            }
+            return verified
         return _verify_m4_bundle(bundle)
     except (TypeError, AttributeError, KeyError, IndexError, ValueError):
         return {"status": "fail", "problems": ["bundle-shape-invalid"],
@@ -1387,6 +1728,9 @@ def _verify_m4_bundle(bundle: dict) -> dict:
     if bundle.get("status") not in (None, "available", "incomplete"):
         problems.append("bundle-status-invalid")
     identities = _check_identities(freeze, problems)
+    _check_study_identity(bundle, freeze, problems)
+    _check_source_exclusivity(freeze, problems)
+    _check_no_hidden_answers(freeze, problems)
     _check_arm_contracts(freeze, identities, problems)
     _check_task_labels(freeze, problems)
     repertoire_digests = _check_repertoires(freeze, problems)
@@ -1472,6 +1816,8 @@ def _verify_m4_bundle(bundle: dict) -> dict:
         "model_dispatches": total_model,
         "tool_queries": witness_acquisition + witness_use,
         "unresolved_exposure": unresolved_receipts}, problems)
+    _check_absent_usage(bundle, problems)
+    resume = _check_resume(bundle, total_model, problems)
     by_arm = {}
     for arm in ARMS:
         arm_qualities = [qualities[r.get("record_id")] for r in records
@@ -1495,6 +1841,11 @@ def _verify_m4_bundle(bundle: dict) -> dict:
                   "use_records": len(records),
                   "worst_case": worst,
                   "quality_by_arm": by_arm,
+                  "resume": resume,
+                  "accounting": {
+                      name: str(value)
+                      for name, value in recomputed_accounting(
+                          bundle).items()},
                   "comparison": comparison}
     recomputed.update(software_recomputed)
     status = "fail" if problems else (
@@ -1525,7 +1876,7 @@ def boolean_candidate_input_digest(task_id: str, split: str, seed: int,
         "task_id": task_id, "split": split, "seed": int(seed),
         "history": list(history),
         "history_digest": source_digest(canonical(list(history))),
-        "public_input": session.model_input()}))
+        "public_input": session.output_model_input()}))
 
 
 def _p0_control_expected(split: str, seed: int) -> dict:
@@ -1548,6 +1899,23 @@ def _p0_control_expected(split: str, seed: int) -> dict:
             "predictor_digest": source_digest(canonical(committed)),
             "result_digest": source_digest(canonical(predictor)),
             "predictor": predictor, "queries": len(session.queried)}
+
+
+def _task_id_for(split: str, seed: Any) -> str:
+    """The instrument's own id for a split and seed, read from the generator."""
+    from . import boolean_rule as rules
+    return rules.make_task(split, int(seed))["task_id"]
+
+
+def verifier_digest() -> str:
+    """This verifier's own digest, reported rather than checked.
+
+    A checker cannot attest its own integrity by re-deriving its hash against
+    a value frozen before it was written; it only ever proves that something
+    changed. Reporting the digest lets a reader bind a verdict to the version
+    that produced it without making the bundle unverifiable by construction.
+    """
+    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def _check_output_digest_maps(freeze: dict, root, problems: list) -> None:
@@ -1661,8 +2029,14 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
             problems.append("run-%s-mismatch" % key.replace("_", "-"))
     if bundle.get("status") not in (None, "available", "incomplete"):
         problems.append("bundle-status-invalid")
-    if bundle.get("status") == "incomplete":
+    if bundle.get("status") in ("incomplete", "unavailable"):
         problems.append("study-incomplete")
+        claims = bundle.get("claims")
+        if claims is not None and claims != {
+                "task_utility": "not-established",
+                "transfer": "not-established",
+                "recursive_improvement": "not-established"}:
+            problems.append("research-claims-invalid")
     if freeze.get("route") != live.OUTPUT_ROUTE:
         problems.append("route-freeze-mismatch")
     if freeze.get("limits") != live.OUTPUT_LIMITS:
@@ -1686,12 +2060,12 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
     else:
         seals = p0.get("task_seals")
         for split, seed in live.OUTPUT_TASKS.items():
-            task_id = "rule-%s-%04d" % (split, int(seed))
+            task_id = _task_id_for(split, seed)
             _task, session = _output_public_task(split, int(seed))
             expected_seal = {
                 "split": split, "seed": int(seed),
                 "public_input_digest": source_digest(
-                    canonical(session.model_input()))}
+                    canonical(session.output_model_input()))}
             if not isinstance(seals, dict) or seals.get(task_id) != expected_seal:
                 problems.append("p0-task-seal-mismatch %s" % task_id)
     from pathlib import Path
@@ -1709,6 +2083,28 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
             live.OUTPUT_PROMPT_TEMPLATE):
         problems.append("prompt-template-digest-mismatch")
     candidate_view = bundle.get("candidate_view") or {}
+    durable_receipts = candidate_view.get("durable_receipts")
+    if not isinstance(durable_receipts, list):
+        problems.append("durable-receipts-missing")
+        durable_receipts = []
+    durable_pairs = [
+        (receipt.get("operation_id"), receipt) for receipt in durable_receipts
+        if isinstance(receipt, dict)
+        and isinstance(receipt.get("operation_id"), str)]
+    durable_operation_ids = [operation_id for operation_id, _receipt
+                             in durable_pairs]
+    durable_by_operation = dict(durable_pairs)
+    duplicate_receipt_operations = {
+        operation_id for operation_id in durable_operation_ids
+        if durable_operation_ids.count(operation_id) > 1}
+    lost_response_disposition = [
+        {"operation_id": operation_id,
+         "reservation_id": receipt.get("reservation_id"),
+         "exposure": receipt["exposure"],
+         "unresolved_exposure": receipt["unresolved_exposure"],
+         "measurement_status": receipt.get("measurement_status")}
+        for operation_id, receipt in sorted(durable_by_operation.items())
+        if _is_lost_response_receipt(receipt)]
     dispatches = candidate_view.get("dispatches")
     if not isinstance(dispatches, list):
         problems.append("dispatches-missing")
@@ -1804,8 +2200,12 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
             seen_ids.add(dispatch_id)
         arm = entry.get("arm")
         task_id = entry.get("task_id")
+        # The id belongs to the generator. Restating the format here meant
+        # that when the worlds made their ids opaque this stopped resolving,
+        # every dispatch fell through as `dispatch-identity-unknown`, and the
+        # route and response checks below it never ran.
         split = next((key for key, seed in live.OUTPUT_TASKS.items()
-                      if task_id == "rule-%s-%04d" % (key, seed)), None)
+                      if task_id == _task_id_for(key, seed)), None)
         if arm not in ("P1", "P2") or split is None:
             problems.append("dispatch-identity-unknown")
             continue
@@ -1819,7 +2219,8 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
                     arm, split))
             physical_keys.add(physical_key)
         expected_operation_id = live.output_operation_id(
-            arm, split, int(live.OUTPUT_TASKS[split]), entry["attempt"])
+            arm, split, int(live.OUTPUT_TASKS[split]), entry["attempt"],
+            round_run_id=freeze["run_id"])
         if op_id != expected_operation_id:
             problems.append("operation-id-not-frozen %s" % op_id)
         operation_binding = (arm, split, entry.get("attempt"))
@@ -1832,23 +2233,36 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
         if entry.get("requested_output_cap") != live.OUTPUT_LIMITS[
                 "max_output_tokens"]:
             problems.append("output-cap-mismatch")
-        actual_route = {key: entry.get(key) for key in
-                        ("returned_model", "endpoint", "provider", "tier")}
-        expected_route = {
-            "returned_model": live.OUTPUT_ROUTE["resolved_model"],
-            "endpoint": live.OUTPUT_ROUTE["endpoint"],
-            "provider": live.OUTPUT_ROUTE["provider"],
-            "tier": live.OUTPUT_ROUTE["tier"]}
-        if actual_route != expected_route:
-            problems.append("route-metadata-mismatch")
         raw_prompt = entry.get("raw_prompt")
         raw_response = entry.get("raw_response")
         if not isinstance(raw_prompt, str) or entry.get("prompt_digest") != \
                 source_digest(raw_prompt):
             problems.append("prompt-digest-mismatch")
-        if not isinstance(raw_response, str) or entry.get("response_digest") \
-                != source_digest(raw_response):
-            problems.append("response-digest-mismatch")
+        # route-refused and transport-error finalize with no observed response, so
+        # they carry neither route metadata nor a raw response; a lost response is
+        # exempt only when its durable receipt proves that same no-observation fact.
+        receipt = durable_by_operation.get(op_id)
+        lost_response = _claims_lost_response(receipt)
+        if lost_response and not _is_lost_response_receipt(receipt):
+            problems.append("durable-receipt-lost-response-invalid %s" % op_id)
+        lost_response_exempt = (lost_response
+                                and _is_lost_response_receipt(receipt))
+        legacy_no_observation = (
+            entry.get("parse_outcome") in {"route-refused", "transport-error"}
+            and not lost_response)
+        if not (legacy_no_observation or lost_response_exempt):
+            actual_route = {key: entry.get(key) for key in
+                            ("returned_model", "endpoint", "provider", "tier")}
+            expected_route = {
+                "returned_model": live.OUTPUT_ROUTE["resolved_model"],
+                "endpoint": live.OUTPUT_ROUTE["endpoint"],
+                "provider": live.OUTPUT_ROUTE["provider"],
+                "tier": live.OUTPUT_ROUTE["tier"]}
+            if actual_route != expected_route:
+                problems.append("route-metadata-mismatch")
+            if not isinstance(raw_response, str) or entry.get("response_digest") \
+                    != source_digest(raw_response):
+                problems.append("response-digest-mismatch")
         if isinstance(raw_response, str) and len(raw_response) > \
                 live.OUTPUT_LIMITS["max_response_characters"]:
             problems.append("response-character-cap-exceeded")
@@ -1857,10 +2271,6 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
         if entry.get("parse_outcome") == "accepted" and not replay:
             accepted.append((arm, split, entry))
     candidate_view = bundle.get("candidate_view") or {}
-    durable_receipts = candidate_view.get("durable_receipts")
-    if not isinstance(durable_receipts, list):
-        problems.append("durable-receipts-missing")
-        durable_receipts = []
     dispatch_by_operation = {
         entry.get("operation_id"): entry for entry in dispatches
         if isinstance(entry, dict) and isinstance(entry.get("operation_id"), str)
@@ -1875,7 +2285,7 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
         if not isinstance(operation_id, str) or not operation_id:
             problems.append("durable-receipt-operation-missing")
             continue
-        if operation_id in durable_by_operation:
+        if operation_id in duplicate_receipt_operations:
             problems.append("multiple-terminal-receipts %s" % operation_id)
             problems.append("duplicate-durable-receipt %s" % operation_id)
         durable_by_operation[operation_id] = receipt
@@ -1900,18 +2310,23 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
                 or not isinstance(receipt.get("usage"), dict)):
             problems.append("durable-receipt-incomplete %s" % operation_id)
         problems.extend(_output_usage_state_problems(receipt))
-        if (receipt.get("outcome") in ("unresolved", "conflict")
-                or receipt.get("settled") is False
-                or receipt.get("dispatch_state") in ("unresolved", "conflict")
-                or receipt.get("reconcile_state") in ("unresolved", "conflict")
-                or receipt.get("conflict") is True
-                or receipt.get("receipt_conflicts")):
+        if (_claims_lost_response(receipt)
+                and not _is_lost_response_receipt(receipt)):
+            problems.append("durable-receipt-lost-response-invalid %s"
+                            % operation_id)
+        if (not _is_lost_response_receipt(receipt)
+                and (receipt.get("outcome") in ("unresolved", "conflict")
+                     or receipt.get("settled") is False
+                     or receipt.get("dispatch_state") in ("unresolved", "conflict")
+                     or receipt.get("reconcile_state") in ("unresolved", "conflict")
+                     or receipt.get("conflict") is True
+                     or receipt.get("receipt_conflicts"))):
             problems.append("durable-receipt-unresolved %s" % operation_id)
         conflicts = receipt.get("receipt_conflicts")
         if conflicts is not None and not isinstance(conflicts, list):
             problems.append("durable-receipt-conflict-state-invalid %s"
                             % operation_id)
-        if conflicts is not None:
+        if conflicts:
             if receipt.get("conflict_count") != len(conflicts):
                 problems.append("durable-receipt-conflict-count-invalid %s"
                                 % operation_id)
@@ -1933,10 +2348,6 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
                         or not isinstance(conflict_usage, dict)
                         or required_usage - set(conflict_usage)
                         or not _is_count(conflict.get("unresolved_exposure"))):
-                    problems.append("durable-receipt-conflict-usage-invalid %s"
-                                    % operation_id)
-                if (isinstance(conflict_usage, dict)
-                        and conflict_usage.get("charge_units") == 0):
                     problems.append("durable-receipt-conflict-usage-invalid %s"
                                     % operation_id)
         if (conflicts and receipt.get("unresolved_exposure")
@@ -2014,19 +2425,19 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
                                 % operation_id)
         elif receipt.get("outcome") not in ("success", "failure", "unresolved"):
             problems.append("durable-receipt-outcome-invalid %s" % operation_id)
-        if (receipt.get("dispatch_state") not in (
-                "observed", "reconciled")
-                or receipt.get("reconcile_state") not in (
-                    "none", "reconciled")):
+        if (not _is_lost_response_receipt(receipt)
+                and (receipt.get("dispatch_state") not in (
+                    "observed", "reconciled")
+                     or receipt.get("reconcile_state") not in (
+                        "none", "reconciled"))):
             problems.append("durable-receipt-unresolved %s" % operation_id)
     incumbent_control = (bundle.get("candidate_view") or {}).get(
         "incumbent_control")
     if not isinstance(incumbent_control, list):
         problems.append("p0-control-missing")
         incumbent_control = []
-    expected_p0_keys = {
-        "rule-%s-%04d" % (split, int(seed))
-        for split, seed in live.OUTPUT_TASKS.items()}
+    expected_p0_keys = {_task_id_for(split, seed)
+                       for split, seed in live.OUTPUT_TASKS.items()}
     actual_p0_keys = {row.get("task_id") for row in incumbent_control
                       if isinstance(row, dict)}
     if actual_p0_keys != expected_p0_keys or len(incumbent_control) != len(
@@ -2039,8 +2450,12 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
             problems.append("malformed-p0-control")
             continue
         task_id = row.get("task_id")
+        # The id belongs to the generator. Restating the format here meant
+        # that when the worlds made their ids opaque this stopped resolving,
+        # every dispatch fell through as `dispatch-identity-unknown`, and the
+        # route and response checks below it never ran.
         split = next((key for key, seed in live.OUTPUT_TASKS.items()
-                      if task_id == "rule-%s-%04d" % (key, seed)), None)
+                      if task_id == _task_id_for(key, seed)), None)
         if split is None:
             problems.append("p0-control-task-unknown")
             continue
@@ -2078,7 +2493,7 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
         for split, seed in live.OUTPUT_TASKS.items():
             _task, session = _output_public_task(split, seed)
             for attempt in (1, 2):
-                raw = live.render_output_prompt(session.model_input(),
+                raw = live.render_output_prompt(session.output_model_input(),
                                                 history, attempt)
                 expected_prompts[(arm, split, attempt)] = raw
                 key = "%s:%s:%d:a%d" % (arm, split, seed, attempt)
@@ -2087,7 +2502,7 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
                     problems.append("frozen-rendered-prompt-mismatch %s" % key)
     for arm in ("P1", "P2"):
         for split, seed in live.OUTPUT_TASKS.items():
-            task_id = "rule-%s-%04d" % (split, seed)
+            task_id = _task_id_for(split, seed)
             records = by_task.get((arm, split), [])
             initial = [entry for entry in records if entry.get("attempt") == 1]
             repairs = [entry for entry in records if entry.get("attempt") == 2]
@@ -2192,10 +2607,51 @@ def _verify_output(bundle: dict, scorer_private: dict | None = None) -> dict:
               "problems": sorted(set(problems)),
               "recomputed": {"dispatches": len(dispatches),
                              "accepted_candidates": len(accepted),
+                             "lost-response-disposition": (
+                                 lost_response_disposition),
                              "tasks": sorted("%s-%s" % key for key in by_task)}}
     return result
 
 
 def verify_bundle_file(path) -> dict:
     from pathlib import Path
-    return verify_bundle(json.loads(Path(path).read_text()))
+    path = Path(path)
+    bundle = json.loads(path.read_text())
+    result = verify_bundle(bundle)
+    if bundle.get("schema") != OUTPUT_SCHEMA:
+        return result
+    result["verification_scope"]["sibling_evidence_checked"] = True
+    preflight = path.with_name("preflight.json")
+    refusal = path.with_name("preflight-refusal.json")
+    if preflight.is_file() and refusal.is_file():
+        try:
+            preflight_record = json.loads(preflight.read_text())
+            refusal_record = json.loads(refusal.read_text())
+        except (OSError, ValueError):
+            preflight_record = None
+            refusal_record = None
+        if isinstance(preflight_record, dict) and isinstance(
+                refusal_record, dict):
+            expected_preflight = {
+                "protocol": bundle.get("protocol", {}).get("protocol"),
+                "study_root": bundle.get("study_root"),
+                "run_id": bundle.get("run_id"),
+                "source_identity": bundle.get("source_identity"),
+                "freeze_digest": bundle.get("freeze_digest"),
+                "route": bundle.get("protocol", {}).get("route"),
+                "route_digest": source_digest(canonical(
+                    bundle.get("protocol", {}).get("route"))),
+            }
+            identity = {key: expected_preflight[key] for key in (
+                "protocol", "study_root", "run_id", "source_identity",
+                "freeze_digest")}
+            if (preflight_record == expected_preflight
+                    and {key: refusal_record.get(key) for key in identity}
+                    == identity):
+                problems = result.setdefault("problems", [])
+                if "preflight-refusal-contradicts-valid-preflight" not in problems:
+                    problems.append(
+                        "preflight-refusal-contradicts-valid-preflight")
+                result["status"] = "fail"
+                result["problems"] = sorted(set(problems))
+    return result

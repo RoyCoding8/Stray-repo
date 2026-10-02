@@ -1,0 +1,63 @@
+{
+ "status": "incomplete",
+ "dispatch_count": 8,
+ "receipts": 8,
+ "dispatches": [
+  {
+   "arm": "P1",
+   "task": "rule-audit-3e6793197303",
+   "attempt": 1,
+   "parse_outcome": "too-long",
+   "len": 6478
+  },
+  {
+   "arm": "P1",
+   "task": "rule-audit-3e6793197303",
+   "attempt": 2,
+   "parse_outcome": "too-long",
+   "len": 4863
+  },
+  {
+   "arm": "P1",
+   "task": "rule-qual-b1f3b9f69cec",
+   "attempt": 1,
+   "parse_outcome": "too-long",
+   "len": 7422
+  },
+  {
+   "arm": "P1",
+   "task": "rule-qual-b1f3b9f69cec",
+   "attempt": 2,
+   "parse_outcome": "too-long",
+   "len": 7339
+  },
+  {
+   "arm": "P2",
+   "task": "rule-audit-3e6793197303",
+   "attempt": 1,
+   "parse_outcome": "too-long",
+   "len": 4792
+  },
+  {
+   "arm": "P2",
+   "task": "rule-audit-3e6793197303",
+   "attempt": 2,
+   "parse_outcome": "too-long",
+   "len": 5592
+  },
+  {
+   "arm": "P2",
+   "task": "rule-qual-b1f3b9f69cec",
+   "attempt": 1,
+   "parse_outcome": "too-long",
+   "len": 7213
+  },
+  {
+   "arm": "P2",
+   "task": "rule-qual-b1f3b9f69cec",
+   "attempt": 2,
+   "parse_outcome": "too-long",
+   "len": 6648
+  }
+ ]
+}

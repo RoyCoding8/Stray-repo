@@ -9,7 +9,18 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
+
+# Run as a script, `sys.path[0]` is `scripts/`, so `experiments` and `src` are
+# both unimportable and the run that cross-checks a bundle in a subprocess
+# silently fell back to a hardcoded construction ceiling and reported
+# `code-ceiling-unreadable`. The sibling scripts here already do this.
+_ROOT = Path(__file__).resolve().parent.parent
+for _entry in (str(_ROOT / "src"), str(_ROOT)):
+    if _entry not in sys.path:
+        sys.path.insert(0, _entry)
 
 ACCOUNTING_CATEGORIES = (
     "construction",
@@ -19,6 +30,20 @@ ACCOUNTING_CATEGORIES = (
     "use",
     "repair",
 )
+
+# The only per-request transport field a bundle persists. A request
+# addressed to a model other than the frozen one did not travel the
+# declared transport, and no receipt makes the two agree.
+REQUEST_IDENTITY_FIELDS = ("model",)
+
+# What the freeze asserts about the transport, checked for self
+# consistency only: the bundle persists no per-request adapter or
+# endpoint, so these cannot be compared against anything.
+GATEWAY_IDENTITY_FIELDS = ("model", "adapter", "api", "endpoint_digest")
+
+# A dispatch label, not source bytes, so a record naming it is not
+# claiming a digest of executable code.
+INCUMBENT_SOURCE = "incumbent"
 
 
 def empty_accounting() -> dict:
@@ -30,9 +55,20 @@ def canonical(data) -> str:
     return json.dumps(data, sort_keys=True, separators=(",", ":"))
 
 
+NON_IDENTITY_FREEZE_FIELDS = ("freeze_digest", "frozen_at")
+
+
 def freeze_digest(freeze: dict) -> str:
+    """Digest over what identifies the freeze, not when it was taken.
+
+    ``frozen_at`` is excluded deliberately. A wall-clock field inside the
+    identity would make the digest differ on every call for an otherwise
+    identical freeze, and a freeze that cannot be reproduced is not a freeze.
+    The timestamp still rides in the bundle so a receipt predating it is
+    detectable; it just does not name the study.
+    """
     body = {key: value for key, value in freeze.items()
-            if key != "freeze_digest"}
+            if key not in NON_IDENTITY_FREEZE_FIELDS}
     return hashlib.sha256(canonical(body).encode("utf-8")).hexdigest()
 
 
@@ -40,15 +76,375 @@ def _is_count(value) -> bool:
     return type(value) is int and value >= 0
 
 
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+class Severity(str, Enum):
+    """How a finding bears on the verdict.
+
+    UNPROVEN is not a pass and not a failure. The evidence needed to
+    decide is absent from the bundle, so the bundle cannot support the
+    claim either way. It is surfaced so a reviewer sees the gap, and it
+    is not counted against the bundle.
+    """
+
+    REFUSAL = "refusal"
+    UNPROVEN = "unproven"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class Finding(str, Enum):
+    """Stable machine-readable reasons a bundle is refused or left open.
+
+    The wire form is the enum value, so a caller that predates a member
+    still parses. Members are append-only; names never change meaning.
+    """
+
+    REQUEST_MODEL_NOT_FROZEN = "request-model-not-frozen"
+    REQUEST_MODEL_MISSING = "request-model-missing"
+    GATEWAY_IDENTITY_MISSING = "gateway-identity-missing"
+    GATEWAY_CONFIG_MISSING = "gateway-config-missing"
+    EXECUTED_SOURCE_UNATTRIBUTED = "executed-source-unattributed"
+    EXECUTED_SOURCE_MISMATCH = "executed-source-mismatch"
+    BOUND_POLICY_SOURCE_MISSING = "bound-policy-source-missing"
+    BOUND_POLICY_DIGEST_MISMATCH = "bound-policy-digest-mismatch"
+    EXECUTED_POLICY_NOT_BOUND = "executed-policy-not-bound"
+    ACQUIRED_MEMBER_IS_AUTHORED = "acquired-member-is-authored"
+    POLICY_EXECUTION_UNPROVEN = "policy-execution-unproven"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def severity(self) -> Severity:
+        if self in (Finding.POLICY_EXECUTION_UNPROVEN,
+                    Finding.ACQUIRED_MEMBER_IS_AUTHORED):
+            return Severity.UNPROVEN
+        return Severity.REFUSAL
+
+
+@dataclass(frozen=True)
+class Problem:
+    """One refusal or one open question, with a branchable reason."""
+
+    reason: Finding
+    subject: str
+    detail: str = ""
+
+    def wire(self) -> str:
+        """The legacy ``"<reason> <subject> <detail>"`` problem string."""
+        return " ".join(part for part in
+                        (str(self.reason), self.subject, self.detail)
+                        if part).strip()
+
+
+class Refusals:
+    """Accumulator for refusals and for what the bundle cannot prove."""
+
+    def __init__(self) -> None:
+        self.typed: list = []
+
+    def add(self, reason: Finding, subject: str, detail: str = "") -> Problem:
+        problem = Problem(reason, subject, detail)
+        self.typed.append(problem)
+        return problem
+
+    def refusals(self) -> list:
+        return [problem for problem in self.typed
+                if problem.reason.severity() is Severity.REFUSAL]
+
+    def unproven(self) -> list:
+        return [problem for problem in self.typed
+                if problem.reason.severity() is Severity.UNPROVEN]
+
+    def strings(self) -> list:
+        return sorted({problem.wire() for problem in self.refusals()})
+
+
+def _repertoire_digests(freeze: dict, arm) -> set:
+    """Method digests the freeze froze for ``arm``."""
+    repertoires = freeze.get("method_repertoires")
+    if not isinstance(repertoires, dict):
+        return set()
+    repertoire = repertoires.get(arm)
+    if not isinstance(repertoire, dict):
+        return set()
+    return {member.get("source_digest")
+            for member in repertoire.get("members") or []
+            if isinstance(member, dict) and isinstance(
+                member.get("source_digest"), str)}
+
+
+def _authored_digests(freeze: dict) -> set:
+    """Digests of every source the bundle itself declares authored.
+
+    An arm whose artifact origin names authorship is a constant the
+    study wrote rather than a method it acquired.
+    """
+    digests = set()
+    identities = freeze.get("policy_identities")
+    for identity in (identities or {}).values():
+        if not isinstance(identity, dict):
+            continue
+        source = identity.get("source")
+        artifact = identity.get("artifact")
+        origin = artifact.get("origin") if isinstance(artifact, dict) else None
+        if isinstance(source, str) and source and origin and \
+                "authored" in str(origin):
+            digests.add(_sha256_text(source))
+    return digests
+
+
+def _authored_policy_digests(freeze: dict) -> set:
+    """Digests of policies the freeze declares to be authored controls."""
+    digests = set()
+    identities = freeze.get("policy_identities")
+    for identity in (identities or {}).values():
+        if not isinstance(identity, dict):
+            continue
+        artifact = identity.get("artifact")
+        origin = artifact.get("origin") if isinstance(artifact, dict) else None
+        digest = identity.get("source_digest")
+        if isinstance(digest, str) and origin and "authored" in str(origin):
+            digests.add(digest)
+    return digests
+
+
+def _lineage_episodes(bundle: dict) -> dict:
+    """Episodes keyed by campaign id, the builder side of a member."""
+    episodes = {}
+    for episode in list(bundle.get("development") or []) + list(
+            bundle.get("assessment") or []):
+        if isinstance(episode, dict) and isinstance(
+                episode.get("campaign_id"), str):
+            episodes[episode["campaign_id"]] = episode
+    return episodes
+
+
+def _episode_policy(episode) -> str:
+    if not isinstance(episode, dict):
+        return ""
+    for field in ("executed_policy_digest", "policy_digest"):
+        value = episode.get(field)
+        if isinstance(value, str) and value:
+            return value
+    return ""
+
+
+def _check_acquired_members(bundle: dict, freeze: dict,
+                            refusals: Refusals) -> None:
+    """A member labelled acquired must not be an authored constant.
+
+    The label is the claim under test. A member carrying
+    ``authored: false`` is asserting the study acquired those bytes from
+    a model. Two things falsify that: the bytes are one the freeze itself
+    declares authored, or the campaign that built the member ran a policy
+    the freeze declares an authored control. Either way the member is a
+    constant the study wrote, and a use record citing it as acquired is
+    citing the study's own handiwork.
+    """
+    repertoires = freeze.get("method_repertoires")
+    if not isinstance(repertoires, dict):
+        return
+    authored = _authored_digests(freeze)
+    authored_policies = _authored_policy_digests(freeze)
+    episodes = _lineage_episodes(bundle)
+    for arm in sorted(repertoires):
+        repertoire = repertoires.get(arm)
+        if not isinstance(repertoire, dict):
+            continue
+        for index, member in enumerate(repertoire.get("members") or []):
+            if not isinstance(member, dict) or member.get("authored"):
+                continue
+            subject = "%s#%d" % (arm, index)
+            digest = member.get("source_digest")
+            source = member.get("method_source")
+            if isinstance(source, str) and source:
+                recomputed = _sha256_text(source)
+                if digest != recomputed:
+                    refusals.add(Finding.EXECUTED_SOURCE_MISMATCH, subject,
+                                 "recorded=%r recomputed=%s" % (digest,
+                                                                recomputed))
+                    continue
+            if isinstance(digest, str) and digest in authored:
+                refusals.add(Finding.ACQUIRED_MEMBER_IS_AUTHORED, subject,
+                             "declared-authored")
+                continue
+            construction = member.get("construction")
+            campaign = construction.get("campaign_id") if isinstance(
+                construction, dict) else None
+            builder = _episode_policy(episodes.get(campaign)) if isinstance(
+                campaign, str) else ""
+            if builder and builder in authored_policies:
+                refusals.add(Finding.ACQUIRED_MEMBER_IS_AUTHORED, subject,
+                             "built-by-authored-control")
+
+
+def _frozen_gateway_identity(freeze: dict, refusals: Refusals) -> dict:
+    """The transport the freeze declares, keyed by the fields it pins."""
+    config = freeze.get("config")
+    if not isinstance(config, dict):
+        refusals.add(Finding.GATEWAY_CONFIG_MISSING, "config")
+        return {}
+    identity = {}
+    for field in GATEWAY_IDENTITY_FIELDS:
+        if field not in config:
+            refusals.add(Finding.GATEWAY_IDENTITY_MISSING, "config", field)
+            continue
+        identity[field] = config[field]
+    return identity
+
+
+def _check_request_provenance(bundle: dict, freeze: dict,
+                              refusals: Refusals) -> None:
+    """Every persisted model request must name the frozen model.
+
+    A bundle is only a record of a live run if the requests it persists
+    were addressed to the model the freeze declared. A request addressed
+    elsewhere is a doubled run wearing a live freeze, and no receipt can
+    make the two agree.
+    """
+    identity = _frozen_gateway_identity(freeze, refusals)
+    model = identity.get("model")
+    construction = bundle.get("construction")
+    if not isinstance(construction, dict):
+        return
+    for arm, entry in sorted(construction.items()):
+        if not isinstance(entry, dict):
+            continue
+        for index, request in enumerate(entry.get(
+                "construction_requests") or []):
+            subject = "%s#%d" % (arm, index)
+            if not isinstance(request, dict):
+                refusals.add(Finding.REQUEST_MODEL_MISSING, subject)
+                continue
+            for field in REQUEST_IDENTITY_FIELDS:
+                if field not in request:
+                    refusals.add(Finding.REQUEST_MODEL_MISSING, subject,
+                                 field)
+                    continue
+                if model is not None and request.get(field) != model:
+                    refusals.add(
+                        Finding.REQUEST_MODEL_NOT_FROZEN, subject,
+                        "%s=%r" % (field, request.get(field)))
+
+
+def _check_digest_provenance(bundle: dict, freeze: dict,
+                             refusals: Refusals) -> None:
+    """Re-derive digests and require every executed source to be claimed.
+
+    Two claims are checked because each fails on its own: a recorded
+    digest that does not match the bytes beside it, and an executed
+    source no frozen arm offers.
+
+    What is deliberately *not* checked is whether the executed method
+    equals the arm's bound policy. It cannot: a bound policy selects a
+    method rather than being one, so ``executed_source_digest`` is a
+    method digest by construction. Requiring the two to match would
+    refuse every well-formed bundle, including one built by the same
+    pilot. Whether the bound policy actually governed the use is a
+    separate question, handled by ``_check_policy_execution``.
+    """
+    construction = bundle.get("construction")
+    bound = {}
+    for arm, entry in sorted((construction or {}).items()
+                             if isinstance(construction, dict) else ()):
+        if not isinstance(entry, dict) or entry.get("status") != "available":
+            continue
+        source = entry.get("policy_source")
+        subject = str(arm)
+        if not isinstance(source, str) or not source:
+            refusals.add(Finding.BOUND_POLICY_SOURCE_MISSING, subject)
+            continue
+        recomputed = _sha256_text(source)
+        if entry.get("source_digest") != recomputed:
+            refusals.add(
+                Finding.BOUND_POLICY_DIGEST_MISMATCH, subject,
+                "recorded=%r recomputed=%s" % (entry.get("source_digest"),
+                                               recomputed))
+        bound[arm] = recomputed
+
+    repertoires = freeze.get("method_repertoires")
+    repertoires = repertoires if isinstance(repertoires, dict) else {}
+    incumbent = _sha256_text(INCUMBENT_SOURCE)
+
+    use_records = bundle.get("use_records")
+    for record in use_records if isinstance(use_records, list) else []:
+        if not isinstance(record, dict):
+            continue
+        subject = str(record.get("record_id", "?"))
+        arm = record.get("study_arm")
+        source = record.get("executed_source")
+        if isinstance(source, str) and source and source != INCUMBENT_SOURCE:
+            recomputed = _sha256_text(source)
+            recorded = record.get("executed_source_digest")
+            if recorded != recomputed:
+                refusals.add(Finding.EXECUTED_SOURCE_MISMATCH, subject,
+                             "recorded=%r recomputed=%s" % (
+                                 recorded, recomputed))
+        if not isinstance(arm, str) or arm not in repertoires:
+            continue
+        if record.get("executed") in ("incumbent", "refused"):
+            continue
+        executed = record.get("executed_source_digest")
+        if not isinstance(executed, str) or not executed:
+            continue
+        if executed in _repertoire_digests(freeze, arm) or \
+                executed in bound.get(arm, set()) or executed == incumbent:
+            continue
+        refusals.add(Finding.EXECUTED_SOURCE_UNATTRIBUTED, subject,
+                     "arm=%s" % arm)
+
+
+def _check_policy_execution(bundle: dict, freeze: dict,
+                            refusals: Refusals) -> None:
+    """A claimed executed policy must be corroborated, or left open.
+
+    A use record's ``executed_policy_digest`` is written as
+    ``executed or expected``: when the store yields exactly one policy
+    digest it is reported, and when the store yields nothing the bound
+    digest is copied into its place. The scalar cannot distinguish a
+    policy that ran from a bound policy that was merely available, so a
+    record carrying it is not evidence that the policy governed the use.
+
+    The disambiguator is the persisted list of digests actually read
+    back. A populated list that contains the scalar corroborates the
+    claim; a list that does not contain it contradicts it. Where no list
+    is persisted the bundle carries no evidence either way, which is
+    unproven rather than a failure, and is surfaced so the gap is
+    visible instead of silent.
+    """
+    use_records = bundle.get("use_records")
+    for record in use_records if isinstance(use_records, list) else []:
+        if not isinstance(record, dict):
+            continue
+        claimed = record.get("executed_policy_digest")
+        if not isinstance(claimed, str) or not claimed:
+            continue
+        observed = record.get("executed_policy_digests")
+        if isinstance(observed, list) and observed:
+            if claimed not in observed:
+                refusals.add(Finding.EXECUTED_POLICY_NOT_BOUND,
+                             str(record.get("record_id", "?")),
+                             "not-in-observed-list")
+            continue
+        refusals.add(Finding.POLICY_EXECUTION_UNPROVEN,
+                     str(record.get("record_id", "?")),
+                     "no-observed-list")
+
+
 def verify_bundle(bundle: dict) -> dict:
     problems: list = []
+    refusals = Refusals()
     if not isinstance(bundle, dict):
         return {"status": "incomplete", "problems": ["empty-bundle"],
-                "recomputed": {}}
+                "findings": [], "recomputed": {}}
     freeze = bundle.get("freeze")
     if not isinstance(freeze, dict):
         return {"status": "incomplete", "problems": ["missing-freeze"],
-                "recomputed": {}}
+                "findings": [], "recomputed": {}}
     for key in ("study_id", "study_root", "arms", "order", "development",
                 "construction_allowance", "assessment", "caps",
                 "metric_rule", "resource_rule", "config",
@@ -276,11 +672,14 @@ def verify_bundle(bundle: dict) -> dict:
                 "learning-policy", None):
             problems.append("wrong-policy-artifact-kind %s" % (
                 record.get("record_id", "?")))
-        if record.get("executed") != "incumbent" and not record.get(
-                "policy_digest"):
+        # A record that ran nothing is exempt: it has no executed bytes to
+        # attribute. `incumbent` is the old fallback label and `refused` is
+        # what replaced it, so both mean the same thing to this check.
+        ran_nothing = record.get("executed") in ("incumbent", "refused")
+        if not ran_nothing and not record.get("policy_digest"):
             problems.append("executed-record-missing-policy-digest %s" % (
                 record.get("record_id", "?")))
-        if record.get("executed") != "incumbent":
+        if not ran_nothing:
             executed_digest = record.get("executed_source_digest")
             if not isinstance(executed_digest, str) or not executed_digest:
                 problems.append("executed-source-digest-missing %s" % (
@@ -369,6 +768,12 @@ def verify_bundle(bundle: dict) -> dict:
         if conformance.get("changed") == "supported":
             problems.append("conformance-changed-supported")
 
+    _check_request_provenance(bundle, freeze, refusals)
+    _check_digest_provenance(bundle, freeze, refusals)
+    _check_acquired_members(bundle, freeze, refusals)
+    _check_policy_execution(bundle, freeze, refusals)
+    problems.extend(problem.wire() for problem in refusals.refusals())
+
     recomputed = {"model_calls": total_model,
                   "construction_calls": total_construction,
                   "witness_acquisition": total_witness,
@@ -378,7 +783,17 @@ def verify_bundle(bundle: dict) -> dict:
                   "claimed_operations": len(claimed_ops)}
     status = "pass" if not problems else "fail"
     return {"status": status, "problems": sorted(set(problems)),
+            "findings": [_wire(problem) for problem in sorted(
+                refusals.typed,
+                key=lambda p: (str(p.reason), p.subject, p.detail))],
             "recomputed": recomputed}
+
+
+def _wire(problem: Problem) -> dict:
+    return {"reason": str(problem.reason),
+            "severity": str(problem.reason.severity()),
+            "subject": problem.subject,
+            "detail": problem.detail}
 
 
 def verify_bundle_dir(path) -> dict:

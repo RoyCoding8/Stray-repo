@@ -1,0 +1,17 @@
+{
+ "dispatch_count": 0,
+ "freeze_digest": "ad4188300eaef2a39497d1b821bced8d083435665868e66322dc764f4478e823",
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "reason": "output preflight record is missing",
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "route_digest": "8bf8cbe66279c4651140227678b3f98a55ca791b0f70cca18d3c6e4b5ccd0399",
+ "run_id": "8a7d3ef94f9b457eb4e09bee02e9ba89",
+ "source_identity": "954ddd7b27b78cdacbffecf666878ff66c2b5cd989f59797ba2adc074c21aab2",
+ "study_root": "invl02-output-shape-550b-r4"
+}

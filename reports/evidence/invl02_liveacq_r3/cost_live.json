@@ -1,0 +1,38 @@
+{
+ "dispatch_allowance": {
+  "guard_ceiling": 12,
+  "guard_spent_dispatches": 9,
+  "note": "a lost response is still a send; the guard counts it and so does this",
+  "refunded_pre_gateway": 0,
+  "status": "REPORTED"
+ },
+ "internal_held_units": {
+  "free_units_at_end": 0,
+  "note": "all reservations settled; nothing left held",
+  "status": "REPORTED"
+ },
+ "lost_responses": {
+  "count": 1,
+  "note": "receipts with outcome=failure and no token usage; the provider may or may not have answered and billed.",
+  "operation_ids": [
+   "ad01-r3acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init"
+  ],
+  "status": "UNCERTAIN"
+ },
+ "provider_billing": {
+  "billed_reported_null": 5,
+  "charge_units_reported_null": 5,
+  "input_tokens": 8178,
+  "note": "every settled gateway receipt carries billed=null and charge_units=null, so the token counts are known and the charge is not. This is not zero.",
+  "output_tokens": 4308,
+  "settled_success_receipts": 5,
+  "status": "UNMEASURED"
+ },
+ "reservation_allowance": {
+  "campaign_units": 209216,
+  "source": "s09_cap_sheet unit allowance times (acquisitions*2 + 1) plus _v1_use_arms()-1",
+  "status": "REPORTED",
+  "study_units_authorized": 1882944
+ },
+ "supersedes": "cost.json labels provider_billing NOT_REPORTED with the recording-double reason, which is the wrong label for a live run. The four measured numbers are here."
+}

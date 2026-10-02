@@ -38,7 +38,12 @@ def test_lease_expiry_refuses_stale_dispatch_and_fulfill_but_keeps_observation(m
     assert steward.expire_lease(dsn, _cmd({"attempt_id": "w1"})).code == ResultCode.APPLIED
     lease = steward.read_lease(dsn, "w1")
     assert lease is not None and lease["state"] == "expired"
+    # w1 was acquired against a1, and 5577a89 made an attempt-bound
+    # operation name that binding. Preparing without it raised
+    # ConflictPayload, which surfaced as INVALID_INPUT and stopped the
+    # test before the two stale-generation refusals it is named for.
     assert store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
+                                              "allocation_id": "a1",
                                               "operation": {"effect": "note"}})).code == ResultCode.APPLIED
     stale_dispatch = steward.dispatch_guarded(
         dsn, Command(request_id=f"req_{uuid.uuid4().hex[:12]}",

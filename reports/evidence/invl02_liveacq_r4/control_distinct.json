@@ -1,0 +1,31 @@
+{
+ "distinct": false,
+ "gate": "control_distinct",
+ "raised": false,
+ "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) are on one arm only",
+ "verdict": {
+  "converged": [],
+  "differing_budget": [],
+  "distinct": false,
+  "one_arm_returned_no_candidate": [],
+  "paired_tasks": [
+   "ad01-w0-within-gr-00",
+   "ad01-w1-within-gr-00",
+   "ad01-w1-within-sw-00"
+  ],
+  "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) are on one arm only",
+  "same_candidate": [],
+  "same_executed_policy": [],
+  "same_source": [],
+  "same_strategy": [],
+  "same_walk": [],
+  "unmeasured_walk": [],
+  "unnamed_executed_policy": [],
+  "unpaired_tasks": [
+   "ad01-w0-within-sw-00",
+   "ad01-w2-within-gr-00",
+   "ad01-w2-within-sw-00"
+  ],
+  "version": "ad01-control-distinctness/2"
+ }
+}

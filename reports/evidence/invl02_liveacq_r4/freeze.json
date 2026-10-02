@@ -1,0 +1,96 @@
+{
+ "config": {
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"
+ },
+ "metric_rule": {
+  "quality": "normalized_reduction"
+ },
+ "policy_identities": {
+  "C": {
+   "artifact": {
+    "applicability": {
+     "families": [
+      "graph",
+      "software"
+     ]
+    },
+    "entry": "ENTRY",
+    "kind": "method-repertoire",
+    "members": [
+     "ctl-software-ddmin",
+     "ctl-software-greedy",
+     "ctl-graph-ddmin",
+     "ctl-graph-greedy"
+    ],
+    "origin": "authored-control"
+   },
+   "member_digests": {
+    "ctl-graph-ddmin": "5b53d4c3c897cc0c27e603bc30b71279a62fd53a8898827124e3e7265416b278",
+    "ctl-graph-greedy": "560e17fbfb513145232efd8269a4a0ca618cffcfddc75f5fa801a322b725ff1e",
+    "ctl-software-ddmin": "e4c10cafe8a97848212118cabec98f0fa92cf4b6292fd6349ee856614623dbf7",
+    "ctl-software-greedy": "6e03638cd7100befb3106ab642b49ddc562e64b2d0a4eda80616dcf038692f30"
+   },
+   "source_digest": "bbeb412d41fb6219860ac872b14cefa7ffbdc2efc5349b6b2bae36772ed2fb39"
+  },
+  "arm_gr01": {
+   "artifact": {
+    "applicability": {
+     "families": []
+    },
+    "entry": "ENTRY",
+    "kind": "method-repertoire",
+    "members": [
+     "acquired-gr-3df03ec1"
+    ],
+    "origin": "model-acquired"
+   },
+   "member_digests": {
+    "acquired-gr-3df03ec1": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672"
+   },
+   "source_digest": "c465c671107362463807cb7cee08aa3e3712f046440681e132e7ec9ef399f9c2"
+  },
+  "arm_gr03": {
+   "artifact": {
+    "applicability": {
+     "families": []
+    },
+    "entry": "ENTRY",
+    "kind": "method-repertoire",
+    "members": [
+     "acquired-gr-63d3d820"
+    ],
+    "origin": "model-acquired"
+   },
+   "member_digests": {
+    "acquired-gr-63d3d820": "63d3d82087b30507a2f64b6ff00e1411571e99990284d0118633a8af9c993aa3"
+   },
+   "source_digest": "7aaaac70b6c9130e2ca2a05333cb60b95daf21779c9c4dca427b9671c9e97df3"
+  },
+  "arm_so02": {
+   "artifact": {
+    "applicability": {
+     "families": []
+    },
+    "entry": "ENTRY",
+    "kind": "method-repertoire",
+    "members": [
+     "acquired-sw-c20f2724"
+    ],
+    "origin": "model-acquired"
+   },
+   "member_digests": {
+    "acquired-sw-c20f2724": "c20f2724999ede96aa773de545bc12791da09ea15b063a97aa9406433286a56b"
+   },
+   "source_digest": "b42d3c568f53d76e334ef51e53de834f5fb572bf6bfc8eb7b337d06b1d9aba0e"
+  }
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "selector_tables_measured": true,
+ "study_root": "s09iso-r4cmp0a04ad05-root"
+}

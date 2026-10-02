@@ -1,0 +1,44 @@
+{
+ "claim": "the acquired arm is a recording double whose graph half walks identically to the control's greedy member, so the 8 same_walk tasks are the double reproducing a method it was handed rather than two methods converging",
+ "measured_on": "reports/evidence/inv_r1_e1_control_walk",
+ "executed_bytes": {
+  "acquired": "acquired-gr-b0bd83b7, acquired-sw-b0bd83b7",
+  "acquired_executed_source_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+  "authored_at": "experiments/doubles.py::ACQUIRED_ORDER_SOURCE",
+  "byte_identical_to_double": true,
+  "gateway": "recording-double",
+  "model": "inv01-study-double",
+  "origin_earned": "fixture-stand-in"
+ },
+ "walk_evidence": {
+  "source_of_truth": "method_exec.serve, on the host side of the oracle channel, written during the run",
+  "records_with_a_walk": 53,
+  "records_total": 54,
+  "the_one_without": "ad01-w2-transfer-gr-00 on arm C fell back to incumbent at the execution ceiling and correctly reports no walk"
+ },
+ "the_split": {
+  "paired_tasks": 18,
+  "same_walk": 8,
+  "converged": 3,
+  "same_candidate": 11,
+  "unmeasured_walk": 1,
+  "unnamed_executed_policy": 1,
+  "all_same_walk_are_graph": true,
+  "all_converged_are_software": true
+ },
+ "why_the_graph_half_walks_the_same": {
+  "control_routing": "the authored selector routes 8 of 9 graph tasks to ctl-graph-greedy and 8 of 9 software tasks to ctl-software-ddmin",
+  "the_double_is_a_single_atom_greedy_sweep": "ACQUIRED_ORDER_SOURCE's shrink() removes one atom at a time and restarts the sweep after each accept, which is greedy_reduce's loop",
+  "budget_4_leaves_no_divergence": "at max_queries 4 the double and ctl-graph-greedy produce byte-identical question sequences on 9 of 9 graph tasks; ddmin diverges on the second question on 9 of 9",
+  "not_an_order_identity": "the two deletion orders are not equal (0 of 9 identical), so the match is behavioural at this budget rather than a shared constant",
+  "at_higher_budgets_the_walks_separate": {
+   "budget_4": {"greedy_same_walk": "9/9", "ddmin_same_walk": "0/9"},
+   "budget_8": {"greedy_same_walk": "9/9", "ddmin_same_walk": "0/9"},
+   "budget_12": {"greedy_same_walk": "4/9", "ddmin_same_walk": "0/9"},
+   "budget_16": {"greedy_same_walk": "1/9", "ddmin_same_walk": "0/9"}
+  }
+ },
+ "consequence": "the 8 same_walk tasks are the recording double replaying a greedy sweep that the authored control also runs. They are not evidence about acquisition and they are not a convergence. The 3 converged software tasks are the only agreements in this run that two genuinely different walks produced, and the recorded measurement puts the preserved minimum unique on 18 of 18 tasks under 40 random deletion orders, so those 3 are a property of the panel rather than a defect in either arm",
+ "what_this_does_not_establish": "nothing here says a real acquisition is impossible. A lane is testing that. This says the run as it stands cannot separate the two mechanisms on the graph family, because the acquired member is a hand-authored greedy sweep and the control routes every graph task to greedy",
+ "the_control_is_unchanged": "the panel, the selector, and the task list are untouched. Routing graph to ddmin would remove the same_walk and is a panel change, so it is left to the operator and justified from the property that a control column must contain a member the treatment cannot be, not from this gate's output"
+}

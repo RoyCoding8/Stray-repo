@@ -1,0 +1,22 @@
+live_acquisition verdict: true
+
+task_utility verdict: loss
+
+  declared_model_matches_freeze              pass
+      all 3 construction requests persisted the pinned model 'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'
+  bound_equals_candidate                     pass
+      arm_gr01 candidate=3df03ec1971d bound=3df03ec1971d source_digest=3df03ec1971d; arm_gr03 candidate=63d3d82087b3 bound=63d3d82087b3 source_digest=63d3d82087b3; arm_so02 candidate=c20f2724999e bound=c20f2724999e source_digest=c20f2724999e
+  executed_bytes_are_the_bound_policy        pass
+      over 3 executed records: arm_gr01 on ad01-w0-within-gr-00 hashes to 3df03ec1971d, bound policy is 3df03ec1971d; arm_gr03 on ad01-w1-within-gr-00 hashes to 63d3d82087b3, bound policy is 63d3d82087b3; arm_so02 on ad01-w1-within-sw-00 hashes to c20f2724999e, bound policy is c20f2724999e
+  dispatch_was_live_not_a_recording          pass
+      ad01-r4acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init outcome=success identity=gw:ad01-r4acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'; ad01-r4acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init outcome=success identity=gw:ad01-r4acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'; ad01-r4acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init outcome=success identity=gw:ad01-r4acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'
+  arms_execute_their_own_bound_policy        pass
+      arm_gr01 executed source hashes to 3df03ec1971d, its bound policy is 3df03ec1971d; arm_gr03 executed source hashes to 63d3d82087b3, its bound policy is 63d3d82087b3; arm_so02 executed source hashes to c20f2724999e, its bound policy is c20f2724999e; C executed source hashes to 560e17fbfb51, its bound policy is bbeb412d41fb; C executed source hashes to 6e03638cd710, its bound policy is bbeb412d41fb; C executed source hashes to e4c10cafe8a9, its bound policy is bbeb412d41fb
+  normalization_rule_stated                  pass
+      freeze metric_rule={"quality": "normalized_reduction"}
+  shared_tasks_present                       pass
+      3 shared tasks: ad01-w0-within-gr-00, ad01-w1-within-gr-00, ad01-w1-within-sw-00
+  no_fallback_on_shared_tasks                pass
+      no shared task was served by a fallback
+  paired_normalized_reduction                pass
+      mean acquired-minus-authored normalized reduction -11458333333333333/75000000000000000 over 3 shared tasks: ad01-w0-within-gr-00=-0.16666666666666666, ad01-w1-within-gr-00=-0.16666666666666666, ad01-w1-within-sw-00=-0.125

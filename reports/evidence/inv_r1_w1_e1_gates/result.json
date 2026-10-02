@@ -1,0 +1,1029 @@
+{
+  "blocking_seam": {
+    "ast_validator_accepts_a_swe_repair": {
+      "accepted": false,
+      "refusal": "ActionRefused: action 'use' is not available in the Boolean world"
+    },
+    "ast_view_types": [
+      "action_schema",
+      "instrument",
+      "observed",
+      "public_world",
+      "remaining",
+      "task_id"
+    ],
+    "ast_view_types_carry_the_program": false,
+    "conclusion": "a World value names three action targets, so the five-kind SWE vocabulary does not fit the three-target value without a shape change, and World.field_type falls back to the ordering observation regex, so a swe guard field resolves to None",
+    "graph_executor_takes_a_world_value": true,
+    "graph_world_make_view_is_the_boolean_policy_one": true,
+    "ordering_allowed_kinds": [
+      "construct",
+      "probe",
+      "stop"
+    ],
+    "ordering_observation_paths": [
+      "earlier",
+      "left",
+      "right"
+    ],
+    "swe_action_kinds": [
+      "check",
+      "construct",
+      "observe",
+      "probe",
+      "stop",
+      "use"
+    ],
+    "swe_allowed_kinds": [
+      "check",
+      "construct",
+      "observe",
+      "stop",
+      "use"
+    ],
+    "swe_observation_keys": [
+      "actual",
+      "expected",
+      "kind",
+      "test"
+    ],
+    "world_field_type_falls_back_to_the_ordering_regex": true,
+    "world_observation_field_regex": "observed\\.(?P<x>[0-9]+)\\.(?P<key>left|right|earlier)",
+    "world_value_field_count": 12
+  },
+  "branch": "codex/implementation-investigation-learning-02",
+  "control_column": {
+    "acquired": {
+      "executed_policy_ids": {
+        "acquired-sw-58d90427": 12,
+        "incumbent": 12
+      },
+      "software_final_measure": [
+        8,
+        10,
+        8,
+        11,
+        11,
+        7,
+        5,
+        10,
+        8,
+        8,
+        11,
+        9
+      ],
+      "strategies": {
+        "(none named)": 12,
+        "greedy": 12
+      }
+    },
+    "authored": {
+      "executed_policy_ids": {
+        "incumbent": 12,
+        "seed-sw-greedy": 12
+      },
+      "software_final_measure": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "strategies": {
+        "(none named)": 12,
+        "greedy": 12
+      }
+    },
+    "ddmin_files_under_evidence_ad01": []
+  },
+  "gate_report": {
+    "c3_authored_vs_c3_trajectories": {
+      "differing_budget": [
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 16
+          },
+          "task_id": "ad01-w0-transfer-sw-00"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 16
+          },
+          "task_id": "ad01-w0-transfer-sw-01"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 13
+          },
+          "task_id": "ad01-w0-transfer-sw-02"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 14
+          },
+          "task_id": "ad01-w0-within-sw-00"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 16
+          },
+          "task_id": "ad01-w0-within-sw-01"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 15
+          },
+          "task_id": "ad01-w0-within-sw-02"
+        }
+      ],
+      "distinct": false,
+      "paired_tasks": [
+        "ad01-w0-transfer-gr-00",
+        "ad01-w0-transfer-gr-01",
+        "ad01-w0-transfer-gr-02",
+        "ad01-w0-transfer-sw-00",
+        "ad01-w0-transfer-sw-01",
+        "ad01-w0-transfer-sw-02",
+        "ad01-w0-within-gr-00",
+        "ad01-w0-within-gr-01",
+        "ad01-w0-within-gr-02",
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ],
+      "refusal": "refused: control is not distinct from the acquired arm: 6 task(s) ran one strategy on both arms; 6 task(s) ran one executed policy id on both arms; 6 task(s) returned a byte-identical candidate on both arms",
+      "same_candidate": [
+        {
+          "candidate_digest": [
+            "f82d7178996ff18e3da788ee60a41073b7828e3c71fae59355883d538acb19ad"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w0-transfer-gr-00"
+        },
+        {
+          "candidate_digest": [
+            "41d61c1bda0c9796015b39c8ec3435457d224c78fe0d791d9a86c0732cb80a9f"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w0-transfer-gr-01"
+        },
+        {
+          "candidate_digest": [
+            "5748d6fa233d17c1345b0014f49f3982416af85992bd887692b6ac5f7ab619a1"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w0-transfer-gr-02"
+        },
+        {
+          "candidate_digest": [
+            "099f18c664977b65dd2f8b0ea69d3aae10d53558656b7635c64190ecc17bd4df"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w0-within-gr-00"
+        },
+        {
+          "candidate_digest": [
+            "0cb1a458c21b290178d69dbb52b140fbae1c3a07334d4674450e8841aaae155d"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w0-within-gr-01"
+        },
+        {
+          "candidate_digest": [
+            "f9ac3e3c7ba17922118983defcac01ebfee460ce2463bbcbec52741cde4b4414"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w0-within-gr-02"
+        }
+      ],
+      "same_executed_policy": [
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w0-transfer-gr-00"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w0-transfer-gr-01"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w0-transfer-gr-02"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w0-within-gr-00"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w0-within-gr-01"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w0-within-gr-02"
+        }
+      ],
+      "same_strategy": [
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w0-transfer-sw-00"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w0-transfer-sw-01"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w0-transfer-sw-02"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w0-within-sw-00"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w0-within-sw-01"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w0-within-sw-02"
+        }
+      ],
+      "unnamed_executed_policy": [],
+      "unpaired_tasks": [],
+      "version": "ad01-control-distinctness/1"
+    },
+    "c3_authored_vs_c3_trajectories_w1": {
+      "differing_budget": [
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 15
+          },
+          "task_id": "ad01-w1-transfer-sw-00"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 16
+          },
+          "task_id": "ad01-w1-transfer-sw-01"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 16
+          },
+          "task_id": "ad01-w1-transfer-sw-02"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 12
+          },
+          "task_id": "ad01-w1-within-sw-00"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 16
+          },
+          "task_id": "ad01-w1-within-sw-01"
+        },
+        {
+          "queries": {
+            "acquired": 4,
+            "control": 15
+          },
+          "task_id": "ad01-w1-within-sw-02"
+        }
+      ],
+      "distinct": false,
+      "paired_tasks": [
+        "ad01-w1-transfer-gr-00",
+        "ad01-w1-transfer-gr-01",
+        "ad01-w1-transfer-gr-02",
+        "ad01-w1-transfer-sw-00",
+        "ad01-w1-transfer-sw-01",
+        "ad01-w1-transfer-sw-02",
+        "ad01-w1-within-gr-00",
+        "ad01-w1-within-gr-01",
+        "ad01-w1-within-gr-02",
+        "ad01-w1-within-sw-00",
+        "ad01-w1-within-sw-01",
+        "ad01-w1-within-sw-02"
+      ],
+      "refusal": "refused: control is not distinct from the acquired arm: 6 task(s) ran one strategy on both arms; 6 task(s) ran one executed policy id on both arms; 6 task(s) returned a byte-identical candidate on both arms",
+      "same_candidate": [
+        {
+          "candidate_digest": [
+            "9b16021fd0ea1ad56b552f695fea5208a1dd8e4bbfbfd4f79ae73b9885a3db2a"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w1-transfer-gr-00"
+        },
+        {
+          "candidate_digest": [
+            "b43edd43f278962910aed3422184f2aef9ceac01ff5ef4965cb0387d3f7fa7e7"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w1-transfer-gr-01"
+        },
+        {
+          "candidate_digest": [
+            "e851dafabebb273bc919f60d348a4a3e7a85d96d4d42252ebe4085feb099ea89"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w1-transfer-gr-02"
+        },
+        {
+          "candidate_digest": [
+            "915b23ebcebc1dc13fbb2c219c4a17eb9dd7860da0aa521142c29379109e600d"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w1-within-gr-00"
+        },
+        {
+          "candidate_digest": [
+            "9ae3714605fd675b84abbfe1cdd556cba2b2663e6b8ee70e1f0fbe3decfc25d6"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w1-within-gr-01"
+        },
+        {
+          "candidate_digest": [
+            "23db8df4d07e9b0391e2b465fe07c05c3100e7cbe0257e08e74599e2839c2f08"
+          ],
+          "executed": {
+            "acquired": [
+              "incumbent"
+            ],
+            "control": [
+              "incumbent"
+            ]
+          },
+          "task_id": "ad01-w1-within-gr-02"
+        }
+      ],
+      "same_executed_policy": [
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w1-transfer-gr-00"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w1-transfer-gr-01"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w1-transfer-gr-02"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w1-within-gr-00"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w1-within-gr-01"
+        },
+        {
+          "executed": [
+            "incumbent"
+          ],
+          "task_id": "ad01-w1-within-gr-02"
+        }
+      ],
+      "same_strategy": [
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w1-transfer-sw-00"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w1-transfer-sw-01"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w1-transfer-sw-02"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w1-within-sw-00"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w1-within-sw-01"
+        },
+        {
+          "executed": {
+            "acquired": [
+              "acquired-sw-58d90427"
+            ],
+            "control": [
+              "seed-sw-greedy"
+            ]
+          },
+          "strategy": [
+            "greedy"
+          ],
+          "task_id": "ad01-w1-within-sw-02"
+        }
+      ],
+      "unnamed_executed_policy": [],
+      "unpaired_tasks": [],
+      "version": "ad01-control-distinctness/1"
+    },
+    "experience_varies": {
+      "arm": "e1-ad01-acquired",
+      "distinct_verdicts": 1,
+      "methods_named": [
+        "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+        "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+        "incumbent"
+      ],
+      "observations": 72,
+      "observations_read": 72,
+      "refusal": "refused: the e1-ad01-acquired arm's experience is a constant: 72 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+      "varies": false,
+      "verdicts": [
+        "preserved"
+      ],
+      "version": "ad01-experience-variation/1"
+    },
+    "menu": {
+      "bound": [
+        "ddmin__ddmin_reduce",
+        "ddmin_reduce",
+        "graph_atoms",
+        "greedy__greedy_reduce",
+        "greedy_reduce",
+        "reduce_graph",
+        "reduce_software",
+        "software_atoms"
+      ],
+      "defaulting_priority": [
+        "ddmin__ddmin_reduce",
+        "ddmin_reduce",
+        "greedy__greedy_reduce",
+        "greedy_reduce"
+      ],
+      "defaulting_strategy": [],
+      "host_only": [
+        "oracle.query"
+      ],
+      "note": "a default for `priority` is the order inside one strategy, not the strategy, and the member may pass its own; a default for `method` is the answer",
+      "open": true,
+      "version": "ad01-menu-openness/1",
+      "wrappers_build": true
+    }
+  },
+  "instrument": "software-fault-repair-v1",
+  "lane": "W1",
+  "live_dispatches": {
+    "count": 0,
+    "currencies": {},
+    "provider_reported_zero": null,
+    "why": "the SWE world is a local oracle and every lineage is an authored policy artifact, so the whole E1 matrix is recomputable in-process; nothing in this lane called the gateway, the broker, or a database"
+  },
+  "swe": {
+    "common_path_refusal": "non-contract-action-kind",
+    "common_path_usable": false,
+    "derived_bounds": {
+      "max_turns": 307,
+      "probe_budget": 303,
+      "probe_budget_worst_case": 302,
+      "suspect_cap": 10,
+      "suspect_cap_worst_rank": 10
+    },
+    "extra_in_swe": [
+      "entry",
+      "last_effect",
+      "max_budget",
+      "public_tests",
+      "source",
+      "structure",
+      "symptom"
+    ],
+    "fields_published_by_swe": [
+      "action_schema",
+      "entry",
+      "instrument",
+      "last_effect",
+      "max_budget",
+      "public_tests",
+      "remaining",
+      "source",
+      "split",
+      "structure",
+      "symptom",
+      "task_id"
+    ],
+    "fields_required_by_harness": [
+      "action_schema",
+      "hypothesis_class",
+      "instrument",
+      "max_queries",
+      "observed",
+      "remaining",
+      "split",
+      "task_id"
+    ],
+    "lineages": [
+      {
+        "build_error": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "episodes": 39,
+        "name": "action-graph-L0",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "action-graph"
+      },
+      {
+        "build_error": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "episodes": 39,
+        "name": "action-graph-L1",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "action-graph"
+      },
+      {
+        "build_error": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "episodes": 39,
+        "name": "action-graph-L2",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "action-graph"
+      },
+      {
+        "build_error": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "episodes": 39,
+        "name": "action-graph-L3",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "action-graph"
+      },
+      {
+        "build_error": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "episodes": 39,
+        "name": "typed-ast-L0",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "typed-ast"
+      },
+      {
+        "build_error": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "episodes": 39,
+        "name": "typed-ast-L1",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "typed-ast"
+      },
+      {
+        "build_error": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "episodes": 39,
+        "name": "typed-ast-L2",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "typed-ast"
+      },
+      {
+        "build_error": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "episodes": 39,
+        "name": "typed-ast-L3",
+        "refusals": 39,
+        "repairs": 0,
+        "representation": "typed-ast"
+      }
+    ],
+    "lineages_executed_episodes": 0,
+    "lineages_run": 16,
+    "missing_cells": [
+      {
+        "lineage": "typed-ast-L0",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "typed-ast-L1",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "typed-ast-L2",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "typed-ast-L3",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "action-graph-L0",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      },
+      {
+        "lineage": "action-graph-L1",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      },
+      {
+        "lineage": "action-graph-L2",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      },
+      {
+        "lineage": "action-graph-L3",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      },
+      {
+        "lineage": "typed-ast-L0",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "typed-ast-L1",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "typed-ast-L2",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "typed-ast-L3",
+        "reason": "validator refused code.repair: action 'use' is not available in the Boolean world | node set refuses view.source: probe.name: unknown view field 'source' | node set refuses view.symptom: probe.name: unknown view field 'symptom' | node set refuses view.public_tests: probe.name: unknown view field 'public_tests' | node set refuses view.coverage: probe.name: unknown view field 'coverage' | loader accepted a repair in the frozen grammar, so the limit is the world binding and the view, not the node set",
+        "representation_kind": "typed-ast"
+      },
+      {
+        "lineage": "action-graph-L0",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      },
+      {
+        "lineage": "action-graph-L1",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      },
+      {
+        "lineage": "action-graph-L2",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      },
+      {
+        "lineage": "action-graph-L3",
+        "reason": "loader refused a swe repair under the ordering World: node repair arm 0 action: action 'use' is not available in the ordering world | loader refused a guard on a swe observation: node repair arm 0 guard references unknown field 'observed.0.actual' | no swe World value exists; the executor's vocabulary is per-World and a swe observation is {test, expected, actual, kind}, naming none of the admitted paths ['earlier', 'left', 'right']",
+        "representation_kind": "action-graph"
+      }
+    ],
+    "missing_from_swe": [
+      "hypothesis_class",
+      "max_queries",
+      "observed"
+    ],
+    "probe_budget_reach": {
+      "dev": {
+        "by_mechanism": {
+          "inverted_guard": {
+            "instances": 3,
+            "reached": 3
+          },
+          "off_by_one": {
+            "instances": 3,
+            "reached": 3
+          },
+          "stale_accumulator": {
+            "instances": 3,
+            "reached": 3
+          }
+        },
+        "fault_line_reached": 9,
+        "instances": 9,
+        "probe_budget": 303,
+        "rate": 1.0,
+        "split": "dev"
+      },
+      "held_out": {
+        "by_mechanism": {
+          "double_count": {
+            "instances": 6,
+            "reached": 6
+          },
+          "dropped_guard": {
+            "instances": 6,
+            "reached": 6
+          },
+          "index_drift": {
+            "instances": 6,
+            "reached": 6
+          },
+          "missing_advance": {
+            "instances": 6,
+            "reached": 6
+          },
+          "swapped_window": {
+            "instances": 6,
+            "reached": 6
+          }
+        },
+        "fault_line_reached": 30,
+        "instances": 30,
+        "probe_budget": 303,
+        "rate": 1.0,
+        "split": "held_out"
+      }
+    },
+    "representations": {
+      "action-graph": {
+        "matches_recorded": true,
+        "n": 156,
+        "recorded": {
+          "n": 156,
+          "refused": 156,
+          "repaired": 0,
+          "unrepaired": 0
+        },
+        "refused": 156,
+        "refused_all": true,
+        "repaired": 0,
+        "unrepaired": 0
+      },
+      "python-step": {
+        "carried_from": "reports/evidence/inv_r1_e1_swe_ceiling/matrix.json",
+        "matches_recorded": true,
+        "measured_this_run": false,
+        "n": 156,
+        "recorded": {
+          "n": 156,
+          "refused": 0,
+          "repaired": 124,
+          "unrepaired": 32
+        },
+        "refused": 0,
+        "refused_all": false,
+        "repaired": 124,
+        "unrepaired": 32
+      },
+      "typed-ast": {
+        "matches_recorded": true,
+        "n": 156,
+        "recorded": {
+          "n": 156,
+          "refused": 156,
+          "repaired": 0,
+          "unrepaired": 0
+        },
+        "refused": 156,
+        "refused_all": true,
+        "repaired": 0,
+        "unrepaired": 0
+      }
+    },
+    "rows": 312,
+    "run_path": "world driver (experiments.ad01.s09_swe_world.run_episode)",
+    "support": {
+      "dev_instances": 9,
+      "dev_mechanisms": 3,
+      "dev_templates": 3,
+      "distinct_faulty_programs": 30,
+      "held_out_families": 15,
+      "held_out_instances": 30,
+      "held_out_mechanisms": 5,
+      "held_out_templates": 6,
+      "lineages_per_cell": 4,
+      "mechanisms": 8,
+      "missing_representations": [
+        "typed-ast",
+        "action-graph"
+      ],
+      "structures": 3,
+      "supported_representations": [
+        "python-step"
+      ]
+    }
+  },
+  "version": "ad01-e1-gates-probe/1"
+}

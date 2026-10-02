@@ -48,6 +48,7 @@ def _synthetic_e12(tmp_path):
         **_run_identity(freeze),
         "status": "incomplete",
         "execution_status": "incomplete",
+        "metric_rule": dict(freeze["metric_rule"]),
         "dispatch_ledger": [],
         "durable_receipts": [],
         "held": [{"split": "qual", "seed": 11},
@@ -88,13 +89,15 @@ def _write_synthetic_authority(out, e12):
             op_id, arm, task_id, source_digest, result)
 
     for index, task_id in enumerate(freeze["software_tasks"]):
-        add("op-d-sw-%d" % index, "P0", task_id,
-            p0["source_digest"], {"observed": "software-baseline",
-                                  "queries": 0})
+        for arm in ("P0", "P1", "P2"):
+            op_id = ("op-d-sw-%d" % index if arm == "P0"
+                     else "op-use-d-sw-%s-%d" % (arm, index))
+            add(op_id, arm, task_id, p0["source_digest"],
+                {"observed": "preserved", "queries": 2})
     for held in e12["held"]:
         split = held["split"]
         seed = int(held["seed"])
-        task_id = "rule-%s-%04d" % (split, seed)
+        task_id = rules.make_task(split, seed)["task_id"]
         prefix = "a" if split == "qual" else "t"
         boolean = next(
             row for row in e12["arms"]["P0"]["booleans"]
@@ -115,7 +118,7 @@ def _write_synthetic_authority(out, e12):
         for held in e12["held"]:
             split = held["split"]
             seed = int(held["seed"])
-            task_id = "rule-%s-%04d" % (split, seed)
+            task_id = rules.make_task(split, seed)["task_id"]
             prefix = "a" if split == "qual" else "t"
             add("op-use-%s-%s-%s" % (prefix, arm, task_id), arm, task_id,
                 source, {"observed": "synthetic fixture", "queries": 0})
@@ -137,7 +140,8 @@ def _write_synthetic_authority(out, e12):
          "evidence_digest": receipt.get("dispatch_evidence_digest")
          or receipt["evidence_digest"]}
         for op_id, receipt in receipts.items()
-        if receipt["task_id"] in {"construct-P1", "construct-P2"}
+        if (receipt["task_id"] in set(freeze["software_tasks"])
+                or receipt["task_id"] in {"construct-P1", "construct-P2"})
     ]
     (out / "e12-run.json").write_text(json.dumps(e12) + "\n")
     return operations, child_receipts
@@ -166,8 +170,8 @@ def _bound_acquired_store(path, arm="P1"):
     response = guard.infer(ModelRequest(
         model="test-model", messages=({"role": "user", "content": raw_prompt},),
         max_output_tokens=8, deadline_ms=1000, operation_id=operation_id),
-        evidence={"arm": arm, "task": "rule-dev-0004", "attempt": 1,
-                  "raw_prompt": raw_prompt})
+        evidence={"arm": arm, "task": rules.make_task("dev", 4)["task_id"],
+                  "attempt": 1, "raw_prompt": raw_prompt})
     dispatch = guard.provenance(operation_id)
     package = live.parse_and_build_live_package(
         dict(base), response.text, "acquired-%s-r1" % arm,
@@ -274,11 +278,12 @@ def test_m4_verification_refuses_missing_or_mismatched_receipts(tmp_path):
         freeze["software_tasks"])
     assert bundle["software"]["outcomes"] == [
         {"arm": row["arm"], "task_id": row["task_id"],
-         "observed": row["observed"], "queries": row["queries"]}
+         "expected": row["expected"], "observed": row["observed"],
+         "queries": row["queries"]}
         for row in bundle["software"]["use_records"]
     ]
     assert offline_recompute.verify_bundle(bundle)["recomputed"][
-        "software_use_records"] == len(freeze["software_tasks"])
+        "software_use_records"] == 3 * len(freeze["software_tasks"])
 
     bundle["operations"]["op-a-0"]["receipts"] = []
     failed = offline_recompute.verify_bundle(bundle)

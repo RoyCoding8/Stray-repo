@@ -1,0 +1,1999 @@
+[
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.7,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w0-within-sw-00-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5301,
+   "task_id": "ad01-w0-within-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "e5df8fd1cf28e1cf0acf6ffa2e979eba7f5d02f38e3e17985d2c8ac30c9dea45",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "d93a04bfb26d526c0f744a7ba901c74395a4900ee4070e4c7fe261f1d39f54c8",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "c1720230ecb25da2f80ab85990aa1eb074c610f06e889c9ac731c0a70afb4329",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "0952268866694bb477a13b53835263750b860e97654cebf0e3f7a3dc60aa5f39",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w0-within-sw-00",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w0-within-sw-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.7692307692307693,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w0-within-sw-01-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "b",
+     "op": "get"
+    }
+   ],
+   "seed": 5302,
+   "task_id": "ad01-w0-within-sw-01",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "027e3d7957aa3dbe9ef4e1640900850f5cab8b8d1c3e4086c2d49bae8887ee19",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "e11af353b43d357b805cbfd583df301294c1309829c44a213106ad582ba5f4ce",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "33f3a81d5d4b7c735221d28b9e5c4bd1bb5b2fec84baa8be4d4d81fb51fcb0b6",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "47e003023d0f6a7aa47870e82ee4e9e07fddca0b28e9901e25668186d371a983",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w0-within-sw-01",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w0-within-sw-01",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 14,
+  "normalized_reduction": 0.7857142857142857,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w0-transfer-sw-00-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    }
+   ],
+   "seed": 5301,
+   "task_id": "ad01-w0-transfer-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v4"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v2"
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "c4ddb7d78ad588cab345f299c725fa843241d676a593108ee75d76716fb8e559",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "271887dc512162c086f43c5259fc0887af929a835b010fac83a6d7ef8b931af0",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "1f20e3f29aedfdc5e72f52f0d52f29513ed199c1d325dcf811fa9f2f8fb5ce05",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "8baa2cf91dbfeee93b72b932f3f5bd5a184248bf7186b19e9ddafff6c3a51d99",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w0-transfer-sw-00",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w0-transfer-sw-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.16666666666666666,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w0-within-gr-00-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ]
+   ],
+   "family": "graph",
+   "seed": 5401,
+   "task_id": "ad01-w0-within-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "06c1bf1e0af9ba0f5e152f7f44c864ad9476924b474b5cd654b53af870f7d37f",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "ed5c358df776f4286045412378eb54d49445ede80722d30deb05c8364327ed00",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "0d96e6ef6d6bc9985bcfd3ee578c1183868f79ac734ffb3c1abcf9d68da62b33",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "8e8025a89ba6e57ed3aec4956c9c814c181a49063bf2fe059ee162384e06c223",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w0-within-gr-00",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w0-within-gr-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 14,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.125,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w0-within-gr-01-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "family": "graph",
+   "seed": 5402,
+   "task_id": "ad01-w0-within-gr-01",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "9215d1bead1a427ffa5267eea22e143917dd4f43a1fe5a0cb0da4a5282d5e3e4",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "1ed6ddffc0feb440288ffbdd474acbaeec275536445b74be03c2718345aacdef",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "bc1d807c1f043d1deabfaeea1c3bdaa094ca680acf9c5fa30e34b5533eed626e",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "2f2a272f03a9eb1bb17d0a4f0037259a3941b8559c5bb6435c4c073cee402960",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w0-within-gr-01",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w0-within-gr-01",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 18,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.1,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w0-transfer-gr-00-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ]
+   ],
+   "family": "graph",
+   "seed": 5401,
+   "task_id": "ad01-w0-transfer-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "5796920a150743c5eda5f18157d0eb0746355333d12c576a8da073961a3d0c85",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "1095d1fce822fa1f7847bc2b7987004317947435ac0445b8afb607757c5399c0",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "5dd15445833989b250fbd49a3aa9f1033c428bb82823c7860c430298aa251d31",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "e53884fdf7db4654ba4ca6e3a7ea4c8c367e30fdb0ca38fdd0bbd3a4ccb83980",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w0-transfer-gr-00",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w0-transfer-gr-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 5,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 8,
+  "normalized_reduction": 0.375,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w1-within-sw-00-ctl-software-greedy"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-within-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v2"
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "51a9ff28e5d5a88f012b64f54d94ac8f2300c98665acaf3cdb85016f9be053e0",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "c13154cf603f68788bd1f1e48e06c4f75f2ecacd014e118de38f8708fa72849a",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "1ea72183008b27a610f46a4213b0fd3324ae6fe3bbfb40dbdfa808fc0421ee2b",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "6ebb53e6658bcbb8523241dbb7310764c26a72d9143709612a22893779d333e4",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w1-within-sw-00",
+  "release_id": null,
+  "requested": "ctl-software-greedy",
+  "selected": "ctl-software-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w1-within-sw-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 9,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.3076923076923077,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w1-within-sw-01-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5402,
+   "task_id": "ad01-w1-within-sw-01",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v3"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "64761b75403c24be4b158631d2c71428c085989b9dde19013cb6d005d13f2986",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "ff55bd24fcce596e09bbc387b7923929b0647fdcb6ba3fc96d3e41d9ba8d2d33",
+    "reason": "witness-lost-agree",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "3c8efee6987edf282131d5f29aa92816b23fac4fefa5622b89f3a3862e0288c0",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "9bc2eebb0aba9e47340c177b3c12ef6ea481ce7c4196d56dbc139a8693395ab5",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w1-within-sw-01",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w1-within-sw-01",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 8,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 11,
+  "normalized_reduction": 0.2727272727272727,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w1-transfer-sw-00-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-transfer-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "str",
+     "value": "v4"
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "a77110fb204201965adfa0127fd0b9b57a19014337dbb3681f68b8738477c147",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "94008349aea0feaf6391a9d814431a8e405db0c24bd26ff9b18b5384e51e678e",
+    "reason": "witness-lost-agree",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "3efa78c8056b082c8eff61349c50e0364e1471a5e1c49f5a48c8e1455d5cf631",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "eb74e6efce385e492a3529e132d476ecdcf3a4b93905cc362e0d836741cd0c7f",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w1-transfer-sw-00",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w1-transfer-sw-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.16666666666666666,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w1-within-gr-00-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-within-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "8ab369e73b4f1330f05b6cf0fc1b4457719ae43313bd575a7c1088c16f9b989f",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "f9a9a6ea3738546bcdb94a6c21106e3fd31ab1b3ea587c94c9dd688b91f83558",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "378731a6ef49b2c852cdbbbbe25122786752289ad61d998cc0a09648e4f87567",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "c1b093164ad4b66232448ede3a7f14704291e0b46a0f4a12fd883fe27b0f15b9",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w1-within-gr-00",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w1-within-gr-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 14,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.125,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w1-within-gr-01-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "family": "graph",
+   "seed": 5502,
+   "task_id": "ad01-w1-within-gr-01",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "b48d893b39f991288719f66bd852543ec3de9d3d27e6cc24954897b20f75e92b",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "10e7be3a054f20c3097e5ab84d5d6ef24e4b56197f89184e4a9b64f0e87cb902",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "b5a2a13984ff7d09e0c134b8f63ec96cc75d38037ed6a0f04590020fb55d2a8f",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "66205e4c77bd339bb763fa58a03f783d72288e122b669a64ea442502869bc0ba",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w1-within-gr-01",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w1-within-gr-01",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 18,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.1,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w1-transfer-gr-00-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-transfer-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "476b42e181d960d8a03193522d53ffbeea4d4e1c6be2bfef04f10df4da3657bd",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "0bf011b5c8982e9cd6a294edc8ccddb332e72ba0e14e95bbab335d402d55ae53",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "cb5d243e7453e497ed36e54e7e7cf25db6833db9dbc59c0f7ee495ebf005d0e8",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "194a33955cfae592d4f5ed4ef9ecb2988dffd2a03897666dd49fdf6026cba666",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w1-transfer-gr-00",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w1-transfer-gr-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.7692307692307693,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w2-within-sw-00-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    }
+   ],
+   "seed": 5501,
+   "task_id": "ad01-w2-within-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v2"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "d34a568bd7db1e2425f2a78af7d3ba2d363ce419cdf092dc5a602fb2c3c112fc",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "11f0a181bc570cfa372cb1d59aa88a7fc6abdfc5b89fcf22f52cac9bf617df2b",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "ebe94e8b5be23d4e2c661774ca04a8ec23fae670f5e843d2db689a20892466e0",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "13bd798a209402834a9b9be6278a1282a276d793a360fb07b733013948372fcc",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w2-within-sw-00",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w2-within-sw-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.7,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w2-within-sw-01-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "b",
+     "op": "get"
+    }
+   ],
+   "seed": 5502,
+   "task_id": "ad01-w2-within-sw-01",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v3"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "c503089a351dab855ae14e1ec8a416c845612401e9a35e70a39ce5979c137368",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "ec83950a95694143dad5f37628310b7fb480b00b8bf0eac8b746fbb5e15422fd",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "c2c42713f1c297428386614127f1850a9c138f377e8b77903598d6206cda5c91",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "df26e5deedd2e8f963c9a1aeb00fd3922f35bbb96e1c984aa9ab624e6d6b5105",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w2-within-sw-01",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w2-within-sw-01",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "ctl-software-ddmin",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 7,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.3,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w2-transfer-sw-00-ctl-software-ddmin"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o2",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5501,
+   "task_id": "ad01-w2-transfer-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "7633ccf4d04745a665ff0cfad616967325512e60772c09a8860da86ab6e6e168",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "ff9e41a6e8707adb562cbad1ee25e216a5d578af96d362ea5d0a6c8911d0033c",
+    "reason": "witness-lost-agree",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "8fa5054aa814b5cd4c3edf443322a465e6227ea25a620b8e136c29b1e08b3a7c",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "f29e23b962285b2aa7a356c6a8b9505b6e51ca951439ef46d001a553e9029a66",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w2-transfer-sw-00",
+  "release_id": null,
+  "requested": "ctl-software-ddmin",
+  "selected": "ctl-software-ddmin",
+  "study_arm": "C",
+  "task_id": "ad01-w2-transfer-sw-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.16666666666666666,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w2-within-gr-00-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ]
+   ],
+   "family": "graph",
+   "seed": 5601,
+   "task_id": "ad01-w2-within-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "0bc27c7695e051dd7d03c135eba68909fb72fe98487131de08a042ad2d228191",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "98ac91fe6c5ba485409165cb16ae993ea3fd69a4ad1a64cd2ca431e5a8f33a6a",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "9bc64c1ae6752eaf20753b0397b83432ff159a002fadce5342a58161adcb73b2",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "74c658990312ec53b086dd4f754498d5251fafe7f395cb46cf3d25eec5dd547b",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w2-within-gr-00",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w2-within-gr-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 14,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.125,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w2-within-gr-01-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "family": "graph",
+   "seed": 5602,
+   "task_id": "ad01-w2-within-gr-01",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "83d68fd1d0adde26a26c505a58930417b0c90f95b626fee41362c12a9a65a65b",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "100de13ce7cd5a01338c06bb0b141ee02a3acfc5c56a887434b469f91e3341b1",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "c3e44ea795dc17df452bed73fb7d5946c0e00d7b47c154fa6e9ca1b53c667557",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "055087a4ca96243b16bff5c1135850cd8dc6cae2fdfe55691a7fc8952293c7c0",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w2-within-gr-01",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w2-within-gr-01",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "C",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "ctl-graph-greedy",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 18,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.1,
+  "operation_ids": [
+   "ad01-ad01-ctl-use-ad01-w2-transfer-gr-00-ctl-graph-greedy"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ]
+   ],
+   "family": "graph",
+   "seed": 5601,
+   "task_id": "ad01-w2-transfer-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "7844947bdae9d2dcad61dc2a47807eddbcf5f8b2e368acb09ab5f7662582bc1a",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "f777b59550e4518b4ea83d636622d49ba6e4c2bcd6d4cea451138c83a7c2a30c",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "0b30278c0007b5ec8d6769f22d3d65709628db91a3af21636a39f32bd7b74f6e",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "2ffe226539630b2fad27fa89cf1208123f5d40f098a5cc5f2c7bf72d07302e7d",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   }
+  ],
+  "record_id": "ad01-ctl-C-ad01-w2-transfer-gr-00",
+  "release_id": null,
+  "requested": "ctl-graph-greedy",
+  "selected": "ctl-graph-greedy",
+  "study_arm": "C",
+  "task_id": "ad01-w2-transfer-gr-00",
+  "use_policy_source_digest": "cb9b4bf7d115ba107a704b396aeb917289f5519d57bb5f57aa6534645ef53a21",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "arm_so00",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "acquired-sw-c20f2724",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_software(task, oracle, max_queries=max_queries, method=\"ddmin\")\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.7,
+  "operation_ids": [
+   "ad01-r3acq-t0-ad01-w0-within-sw-00-use-ad01-w0-within-sw-00-acquired-sw-c20f2724"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5301,
+   "task_id": "ad01-w0-within-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "e5df8fd1cf28e1cf0acf6ffa2e979eba7f5d02f38e3e17985d2c8ac30c9dea45",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "d93a04bfb26d526c0f744a7ba901c74395a4900ee4070e4c7fe261f1d39f54c8",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "c1720230ecb25da2f80ab85990aa1eb074c610f06e889c9ac731c0a70afb4329",
+    "reason": "observation-missing",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "0952268866694bb477a13b53835263750b860e97654cebf0e3f7a3dc60aa5f39",
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "86eb3b841734d2a837d6a45ca9403c4fba092421fbe92ca0fcfa699ca4576181",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "e20026a0a7506fd9083b3c3dfd1511605c269a4f101ff598831ad11a3f54e12b",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "a1b731e6d661ff0325fa656dea74f3792679b2d6818921f76ad295848138b122",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "ac482e08db5acf4dc2b2ad4c900cfedc3111e0a96d616b1bc55136cfdf833a97",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "e20026a0a7506fd9083b3c3dfd1511605c269a4f101ff598831ad11a3f54e12b",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   }
+  ],
+  "record_id": "r3acq-t0-ad01-w0-within-sw-00-arm_so00-ad01-w0-within-sw-00",
+  "release_id": null,
+  "requested": "acquired-sw-c20f2724",
+  "selected": "acquired-sw-c20f2724",
+  "study_arm": "arm_so00",
+  "task_id": "ad01-w0-within-sw-00",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "arm_gr01",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "acquired-gr-3df03ec1",
+  "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_graph(task, oracle, max_queries=max_queries, method=\"ddmin\")\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+  "fallback_reason": "",
+  "final_measure": 12,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.0,
+  "operation_ids": [
+   "ad01-r3acq-t1-ad01-w0-within-gr-00-use-ad01-w0-within-gr-00-acquired-gr-3df03ec1"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     2,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5401,
+   "task_id": "ad01-w0-within-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "query_trace": [
+   {
+    "candidate_digest": "06c1bf1e0af9ba0f5e152f7f44c864ad9476924b474b5cd654b53af870f7d37f",
+    "reason": "ok-incumbent",
+    "verdict": "preserved"
+   },
+   {
+    "candidate_digest": "d4a2d483831fb1fa51935f1db9e741c3ce83f88d328fe69fbf3f7ff4ae2c1f95",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "9913434e579ed03ddd15ef95c980ca8893bdbbf8a50ec93148f7a2c22618e216",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "e95a86f75ac36c16ca961c830c4dd0b325eee53f3d37b346bdbf9d7dbbb9d17f",
+    "reason": "witness-lost-bipartite",
+    "verdict": "not_preserved"
+   },
+   {
+    "candidate_digest": "ea352b33110d83097d738c19b88b97ecf1e09ab5d597cf6401e5689e1fc68037",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "adc93a5c7869840c098d975e084d3d38450f5a7d368da3dcf247e4f49b2742f4",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "d35296336891589bc2609f96c2e50d8f181fb2b9bcbb01927bd02c52e1a9841e",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "27d841a74ca05e2163bea3ab765754f68f2539f964bbee82c8cf0938360f070c",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "330eed5b871bb6f702858f318fbbdae012baaf7712b3e03db1745a0ffaa2eeb5",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "adc1adaae75caf1aaf1e4466f592d935637d5e8decb3ac1c99662a5b0ab7cff2",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "d7adc82a11d18f8c69b50f6c28c062833c8e8088da28f709f91b2e6c39117ff9",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "a0ec9b65fa25e9b78a9efcbe7d84048702178f3148dc71e0606f9d5d798c6f92",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "dc046070f7ff8f86d7b0d083eb613e1a6c9ceb4c4abe51170cf68d056e2f819a",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "52e92eeea3c827625a780c6dfa857cb0fd62e8f04b9c8f9d57a31342deac04f6",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "ce131c80486651594a66c66beadd97074f28856507d7f2aa0b7edab8b8998301",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   },
+   {
+    "candidate_digest": "d3a38a8056bd4fd5874a0eed2d456446b8608e7580601f613cfafac5364f0aad",
+    "reason": "budget-exhausted",
+    "verdict": "unknown"
+   }
+  ],
+  "record_id": "r3acq-t1-ad01-w0-within-gr-00-arm_gr01-ad01-w0-within-gr-00",
+  "release_id": null,
+  "requested": "acquired-gr-3df03ec1",
+  "selected": "acquired-gr-3df03ec1",
+  "study_arm": "arm_gr01",
+  "task_id": "ad01-w0-within-gr-00",
+  "verdict": "preserved",
+  "world": 0
+ }
+]

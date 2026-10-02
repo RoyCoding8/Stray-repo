@@ -2,6 +2,17 @@
 
 The host owns the query budget and exposes only JSON oracle verdicts.
 Local-process provides process separation, not hostile-code containment.
+
+The child contract's wrappers are generated per binding from the callee's
+own signature. The uniform template they replaced gave every binding
+`(task, oracle, *, method="ddmin", max_queries=16)`, and four of the six
+do not have that shape, so a member that trusted the contract and omitted
+`method` still ran, on ddmin, without choosing it. A generated wrapper
+passes a strategy through and never supplies one, so omitting it fails
+execution; a binding needing a value the child cannot supply and the menu
+does not offer as a choice is refused when the contract is built.
+`verify_child_contract` is that refusal, and `run_member_out_of_process`
+calls it before anything is staged.
 """
 
 from __future__ import annotations
@@ -18,7 +29,7 @@ from pathlib import Path
 
 from experiments.representation import checkers
 from settlement import broker
-from settlement.common import ResultCode
+from settlement.common import ResultCode, payload_digest
 from settlement.launcher_local import PROFILE, LocalLauncher
 
 DEFAULT_TIMEOUT_MS = 30_000
@@ -36,59 +47,640 @@ class MethodExecutionError(Exception):
 
 CHILD_CONTRACT_VERSION = "ad01-child-v1"
 
+# The budget a child wrapper hands its callee when the model does not ask
+# for one. It is a budget, not a strategy: no wrapper passes `method`.
+DEFAULT_CHILD_BUDGET = 16
+
+# The name a wrapper accepts the budget under, when the callee declares
+# none of its own. `max_queries` and not `budget`, because every archived
+# member and every seed source in the campaign already spells it that way
+# and a rename breaks eleven archived executions for no gain. The
+# parameter's own name is used whenever the callee declares one.
+DEFAULT_CHILD_BUDGET_PARAM = "max_queries"
+
+# The key a reduction primitive returns its surviving atom indices under.
+# The child adapter rebuilds the candidate from it, so a primitive that
+# returned a different key would hand the model a candidate it did not
+# reach, and the adapter would be wrong in a way no signature check sees.
+_RETURN_KEY = "kept"
+
+# The values a menu asks the model for, and that no wrapper may ever
+# supply. `method` is here because it is the choice the whole comparison
+# turns on, and it was the one value a uniform wrapper handed out for
+# free. A binding requiring one of these is buildable; a binding
+# requiring anything else the child cannot supply is not.
+_CHOICE_PARAMS = frozenset({"method", "priority"})
+
+
+def _callables() -> dict:
+    """The menu's entries, without their signatures.
+
+    Separate from `child_contract` because the signatures are rendered
+    from the wrappers, and the wrappers are generated from this. Signing
+    the table here and building the wrappers from the signed table is
+    the loop that kept a hand-written string and a generated wrapper
+    disagreeing about the same call.
+    """
+    callables = {
+        # A callable with a binding is executed in the child. A callable
+        # without one is a host affordance (`oracle.query`) and never is.
+        # The distinction decides the refusal in `verify_child_contract`,
+        # and it is stated because the two lists are read as one menu
+        # and a model cannot tell which is which.
+        "software_atoms": {
+            "returns": "tuple (build, priority) for the software family",
+            "origin": "authored-supplied-rpr01",
+            "binding": "reducers.software_atoms",
+        },
+        "graph_atoms": {
+            "returns": "tuple (build, priority) for the graph family",
+            "origin": "authored-supplied-rpr01",
+            "binding": "reducers.graph_atoms",
+        },
+        "reduce_software": {
+            "returns": ("dict with candidate (software-shaped) and "
+                        "queries used"),
+            "origin": "authored-supplied-rpr01",
+            "binding": "reducers.reduce_software",
+        },
+        "reduce_graph": {
+            "returns": ("dict with candidate (graph-shaped) and "
+                        "queries used"),
+            "origin": "authored-supplied-rpr01",
+            "binding": "reducers.reduce_graph",
+        },
+        "oracle.query": {
+            "returns": ("the verdict report for that candidate; "
+                        "past the query budget it returns unknown "
+                        "with reason budget-exhausted"),
+            "origin": "host-oracle",
+        },
+    }
+    # The menu is a menu or it is not. Four of the five entries above can
+    # be built, but only `reduce_software` and `reduce_graph` are direct
+    # reducers; a control column drawn from a menu of two names is not a
+    # comparison, and the two composed entries are what makes the two
+    # strategies reachable by name without `reduce_*` to dispatch them.
+    for method, name in sorted(_STRATEGY_METHODS.items()):
+        callables[name] = {
+            "returns": "dict with kept, queries, accepted, status, candidate",
+            "origin": "authored-supplied-rpr01",
+            "binding": "reducers.%s" % name,
+        }
+        callables["%s__%s" % (method, name)] = {
+            "returns": "dict with kept, queries, accepted, status, candidate",
+            "origin": "authored-composed",
+            "binding": "reducers.%s" % name,
+        }
+    return callables
+
 
 def child_contract() -> dict:
+    callables = _callables()
+    wrappers = _wrapper_signatures({"callables": callables})
+    for name, spec in callables.items():
+        spec["signature"] = _rendered_signature(name, spec, wrappers)
     return {
         "version": CHILD_CONTRACT_VERSION,
         "entry": entry_contract()["params"],
-        "callables": {
-            "reduce_software": {
-                "signature": ("reduce_software(task, oracle, *, "
-                              "method=\"ddmin\"|\"greedy\", "
-                              "max_queries=16)"),
-                "returns": ("dict with candidate (software-shaped) and "
-                            "queries used"),
-                "origin": "authored-supplied-rpr01",
-                "binding": "reducers.reduce_software",
-            },
-            "reduce_graph": {
-                "signature": ("reduce_graph(task, oracle, *, "
-                              "method=\"ddmin\"|\"greedy\", "
-                              "max_queries=16)"),
-                "returns": ("dict with candidate (graph-shaped) and "
-                            "queries used"),
-                "origin": "authored-supplied-rpr01",
-                "binding": "reducers.reduce_graph",
-            },
-            "oracle.query": {
-                "signature": "oracle.query(candidate)",
-                "returns": ("the verdict report for that candidate; "
-                            "past the query budget it returns unknown "
-                            "with reason budget-exhausted"),
-                "origin": "host-oracle",
-            },
-        },
+        "callables": callables,
+        "binding_rule": ("a callable carrying `binding` is executed in the"
+                         " child; a callable without one is a host affordance"
+                         " and is never executed"),
+        "choice_rule": (
+            "A binding may require %s. The child wrapper accepts these as"
+            " keyword arguments and supplies no value for them, so a"
+            " member that omits one fails execution and a member that"
+            " supplies one is the only thing that ever reaches the"
+            " callee. A binding requiring any other value the child cannot"
+            " supply is refused when the contract is built, not defaulted."
+            % (list(_CHOICE_PARAMS),)),
+        "adapters": (
+            "The two reduction primitives take atoms rather than a task, and"
+            " the child cannot invent atoms. The child adapter below binds"
+            " them to `task` and `oracle` exactly as reduce_software and"
+            " reduce_graph do, so composing the primitives by hand and"
+            " calling the composed reducers are the same bytes. A primitive"
+            " whose return shape the adapter cannot adapt is not offered."),
     }
 
 
-def _child_wrapper_source() -> str:
-    lines = []
-    for name, spec in child_contract()["callables"].items():
-        target = spec.get("binding")
-        if target is None:
+# The child namespace, and the only host module a binding may name. The
+# child binds `reducers` under exactly this name, so the host's
+# resolution has to go through the same table rather than through the
+# host's own import machinery, where `reducers` is a name nobody binds.
+_CHILD_NAMESPACE = {"reducers": "experiments.representation.reducers"}
+
+
+def _bound_names(contract: dict) -> list:
+    return sorted(name for name, spec in contract["callables"].items()
+                  if spec.get("binding") is not None)
+
+
+def _resolve_binding(target: str) -> object:
+    """The callable a binding names, refused if the name does not resolve.
+
+    Resolution is by attribute walk from the child namespace, never by the
+    last dotted segment. `ddmin_reduce` and `reduce_software` are both
+    reducers whose own name does not contain the string `ddmin`, and a
+    name-matched resolution would have found `reduce_software` for both.
+    """
+    import importlib
+
+    module_name, _, attribute = target.rpartition(".")
+    if not module_name or not attribute:
+        raise MethodExecutionError("refused: binding is not a dotted path")
+    if module_name not in _CHILD_NAMESPACE:
+        raise MethodExecutionError(
+            "refused: binding names module %r, which the child does not"
+            " bind" % module_name)
+    try:
+        module = importlib.import_module(_CHILD_NAMESPACE[module_name])
+    except (ImportError, ValueError) as exc:
+        raise MethodExecutionError(
+            "refused: binding module %r does not import"
+            % module_name) from exc
+    target_object = getattr(module, attribute, None)
+    if not callable(target_object):
+        raise MethodExecutionError(
+            "refused: binding %r does not name a callable" % target)
+    return target_object
+
+
+def _binding_profile(target_object: object) -> dict:
+    """What a wrapper must pass, read off the callable rather than a string.
+
+    Every field the child can supply has a name the callable can receive.
+    The child's two are `task` and `oracle`; the child's budget keyword is
+    whichever of `max_queries` or `priority` the callee declares with a
+    default, so the two never compete. A required name on neither list is
+    the model's to answer, and a required name that is neither child-side
+    nor a choice is a binding the wrapper cannot honestly build, so it
+    refuses rather than inventing a value.
+    """
+    import inspect
+
+    try:
+        signature = inspect.signature(target_object)
+    except (TypeError, ValueError) as exc:
+        raise MethodExecutionError(
+            "refused: binding signature is not introspectable") from exc
+    parameter = inspect.Parameter
+    signature_parameters = signature.parameters
+    kinds = {name: value.kind for name, value in signature_parameters.items()}
+    required = [name for name, value in signature_parameters.items()
+                if value.default is inspect.Parameter.empty
+                and value.kind in (parameter.POSITIONAL_ONLY,
+                                   parameter.POSITIONAL_OR_KEYWORD,
+                                   parameter.KEYWORD_ONLY)]
+    budget = _budget_parameter(signature_parameters)
+    budget_param = budget or DEFAULT_CHILD_BUDGET_PARAM
+    supplies = {
+        name: "task" if name == "task" else "oracle" for name in kinds
+        if name in ("task", "oracle")
+    }
+    keyword_only = sorted(name for name, kind in kinds.items()
+                          if kind == parameter.KEYWORD_ONLY)
+    return {
+        "name": target_object.__name__,
+        "parameters": sorted(kinds),
+        "required": sorted(required),
+        "supplies": supplies,
+        "choices": [name for name in required if name in _CHOICE_PARAMS],
+        "keyword_only": keyword_only,
+        "budget": budget_param,
+        "bindable": [name for name in required if name not in supplies
+                     and name not in _CHOICE_PARAMS],
+    }
+
+
+def _budget_parameter(signature_parameters) -> str | None:
+    """The parameter a child's `budget` stands for, or None if it has none.
+
+    `max_queries` and `priority` are both budgets the model may vary, and
+    one of them may hold a default. Which one is read here, so the default
+    belongs to the model and not to the wrapper. A budget the callee
+    declares required is not one: a wrapper defaulting it would be choosing
+    the budget for the model, which is the same defect as choosing the
+    strategy for it.
+    """
+    import inspect
+
+    empty = inspect.Parameter.empty
+    for name in ("max_queries", "priority"):
+        parameter = signature_parameters.get(name)
+        if parameter is not None and parameter.default is not empty \
+                and parameter.kind in (
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    inspect.Parameter.KEYWORD_ONLY):
+            return name
+    return None
+
+
+def _required_unsupplied(required: list, supplies: dict) -> list:
+    """Required names no child-side value fills, choices excluded."""
+    return [name for name in required
+            if name not in supplies and name not in _CHOICE_PARAMS]
+
+
+def _wrapper_for(name: str, target: str, profile: dict) -> str:
+    """One wrapper, generated for one binding, with no strategy default.
+
+    A binding needing a value the child cannot supply and the model was
+    never asked for raises here, so a menu entry can never run with an
+    authored answer standing in for a choice. `method` is a choice, so it
+    is passed through and never supplied: that is the whole difference
+    between this and the uniform template that made every acquisition
+    greedy without its model choosing greedy.
+    """
+    missing = profile["bindable"]
+    if missing:
+        raise MethodExecutionError(
+            "refused: %s requires %s, which the child cannot supply and"
+            " the menu does not offer as a choice; the wrapper would have"
+            " to invent a value" % (target, ", ".join(missing)))
+    passed = ", ".join("%s=%s" % (parameter, source)
+                       for parameter, source in sorted(
+                           profile["supplies"].items()))
+    return ("def %s(task, oracle, *, %s=%d, **kwargs):\n"
+            "    return %s(%s, **kwargs)\n"
+            % (name, profile["budget"] or DEFAULT_CHILD_BUDGET_PARAM,
+               DEFAULT_CHILD_BUDGET, target, passed))
+
+
+# The child adapter for the two reduction primitives. They take atoms
+# rather than a task, and the child holds a task and an oracle, so the
+# adapter reads the family's atom source, passes the task's own atom
+# count, and threads the oracle through. It is what makes the primitives
+# offered at all: a wrapper built from a signature alone would refuse
+# them for needing `count`, `build` and `probe`, which is where four of
+# the six bindings were left with a signature no callee had.
+#
+# The adapter passes the family's authored priority to `greedy_reduce`,
+# which is what `reduce_software` and `reduce_graph` do. A member that
+# wants a different one passes `priority` and the adapter uses it.
+_CHILD_ADAPTER_SUPPORT = (
+    "def __atom_source(family):\n"
+    "    if family == 'software':\n"
+    "        return reducers.software_atoms\n"
+    "    if family == 'graph':\n"
+    "        return reducers.graph_atoms\n"
+    "    raise ValueError('unknown-family')\n"
+    "def __atom_count(task, family):\n"
+    "    if family == 'software':\n"
+    "        return len(task['ops'])\n"
+    "    if family == 'graph':\n"
+    "        return len(task['vertices']) + len(task['edges'])\n"
+    "    raise ValueError('unknown-family')\n"
+    "def __probe(oracle):\n"
+    # The oracle already returns a report shaped {"verdict": ...}, which
+    # is exactly what a primitive subscripts. Wrapping it again makes the
+    # verdict a dict, every comparison against the string PRESERVED fail,
+    # and the primitive return the incumbent after one query on every
+    # task. `reduce_software` passes the oracle straight through for the
+    # same reason.
+    "    return lambda candidate: oracle.query(candidate)\n"
+    "def __candidate(build, result):\n"
+    "    return build(result['%(kept)s'])\n"
+)
+
+# A primitive name, and the strategy its composed entry fixes. Read
+# together so `ddmin__ddmin_reduce` is one declared pair and not a name
+# parsed back apart by each caller.
+_PRIMITIVE_ADAPTERS = {
+    "ddmin_reduce": (
+        "def __adapt_ddmin_reduce(task, oracle, *, family, method=None,\n"
+        "                       priority=None, max_queries=16):\n"
+        "    if method not in (None, 'ddmin'):\n"
+        "        raise ValueError('unknown-method')\n"
+        "    build, authored = __atom_source(family)(task)\n"
+        "    result = reducers.ddmin_reduce(\n"
+        "        __atom_count(task, family), build, __probe(oracle),\n"
+        "        max_queries=max_queries)\n"
+        "    result['candidate'] = __candidate(build, result)\n"
+        "    return result\n"),
+    "greedy_reduce": (
+        "def __adapt_greedy_reduce(task, oracle, *, family, method=None,\n"
+        "                          priority=None, max_queries=16):\n"
+        "    if method not in (None, 'greedy'):\n"
+        "        raise ValueError('unknown-method')\n"
+        "    build, authored = __atom_source(family)(task)\n"
+        "    result = reducers.greedy_reduce(\n"
+        "        __atom_count(task, family), build, __probe(oracle),\n"
+        "        priority=authored if priority is None else priority,\n"
+        "        max_queries=max_queries)\n"
+        "    result['candidate'] = __candidate(build, result)\n"
+        "    return result\n"),
+}
+
+_STRATEGY_METHODS = {"ddmin": "ddmin_reduce", "greedy": "greedy_reduce"}
+
+# The strategies a member may choose between by name. Written out here
+# because they are a property of the campaign, not of any callee's
+# signature: the model has to be told the menu, and the wrapper must supply
+# nothing from it. The text is load-bearing. It is the open menu, and it is
+# the reason a member that omits `method` fails execution rather than
+# running on the authored answer.
+_STRATEGY_MENU = "one of \"ddmin\" or \"greedy\"; you must name one"
+
+_KEYWORD_ONLY_NOTE = ("everything after * is a keyword argument; passing"
+                      " one positionally raises TypeError")
+
+_FORWARDED_CHOICE_NOTE = (
+    "**kwargs forwards a keyword the callee declares, so %s must be passed"
+    " by name and the wrapper supplies no value for it")
+
+_COMPOSED_NOTE = ("the strategy is fixed to %r and you cannot choose"
+                  " another")
+
+_GUARD_NOTE = ("%s has no value of its own: omit it and this entry runs the"
+               " strategy it is named for, and passing any other name"
+               " raises ValueError")
+
+
+def _composed_strategy(name: str) -> str | None:
+    """The strategy a composed name commits to, or None if it is not one.
+
+    Split on `__` by the same rule `_composed_method` uses, and read
+    through that function rather than repeated here, so a name is parsed
+    one way. The note is load-bearing in the other direction from the menu
+    note: a control column is drawn by naming one of these, and a member
+    that believed it could choose differently would be wrong.
+    """
+    return _composed_method(name) if "__" in name else None
+
+
+def _rendered_signature(name: str, spec: dict, wrappers: dict) -> str:
+    """The call form of the wrapper the child binds, read off the wrapper.
+
+    The prose and the wrapper were two hand-maintained descriptions of one
+    call, and they drifted: the table declared `method` as the third
+    positional argument while `_wrapper_for` bound it keyword-only, so a
+    model that obeyed the contract passed `verify_member` and died with a
+    `TypeError` in the child. Rendering from the wrapper's own
+    `inspect.signature` makes the `*` a fact about the binding rather than
+    about a string.
+
+    The wrapper is what is rendered, not the callee. A member cannot call
+    the callee — the child binds the wrapper under the menu name — and
+    the callee's own parameter list is not the wrapper's either: the
+    wrapper forwards a choice through `**kwargs`, and `**kwargs` is not a
+    name a model can write, so a callee rendering would hand the model a
+    `method` position the bytes refuse.
+
+    Defaults are rendered too. A default is what a model reads to decide
+    it need not choose, and `max_queries` is a budget rather than an
+    answer, so hiding one and showing the other is the difference the
+    whole comparison turns on.
+    """
+    if spec.get("binding") is None:
+        return "oracle.query(candidate)"
+    wrapper = wrappers.get(name)
+    if wrapper is None:
+        raise MethodExecutionError(
+            "refused: %r has a binding but the child binds no wrapper for it"
+            % name)
+    positional, keyword_only, var_keyword, guarded = _split_keyword_only(
+        wrapper, name, spec)
+    choices = _binding_choices(spec)
+    notes = []
+    if choices and not guarded:
+        notes.append(_STRATEGY_MENU)
+    if keyword_only:
+        notes.append(_KEYWORD_ONLY_NOTE)
+    if var_keyword and choices:
+        notes.append(_FORWARDED_CHOICE_NOTE % ", ".join(
+            "'%s'" % choice for choice in choices))
+    if guarded:
+        notes.append(_GUARD_NOTE % " and ".join(
+            "'%s'" % parameter for parameter in guarded))
+    composed = _composed_strategy(name)
+    if composed is not None:
+        notes.append(_COMPOSED_NOTE % composed)
+    return " ".join(
+        ["%s(%s)" % (name, ", ".join(positional + ["*"] + keyword_only
+                                      + var_keyword))] + notes)
+
+
+def _binding_choices(spec: dict) -> list:
+    """The choices a member must name to call this entry, or none.
+
+    Read from the callee through `_binding_profile`, which derives the
+    list from `inspect.signature`. The wrapper forwards these through
+    `**kwargs` rather than declaring them, so the callee is the only
+    place the names are written down.
+    """
+    if spec.get("binding") is None:
+        return []
+    return _binding_profile(_resolve_binding(spec["binding"]))["choices"]
+
+
+def _split_keyword_only(wrapper, name: str, spec: dict) -> tuple:
+    """A bound wrapper's parameters, split by the kind that decides a call.
+
+    `inspect` already marks what follows a `*` as KEYWORD_ONLY, so this
+    renders that region behind the separator rather than re-deriving it:
+    a parameter listed after the `*` is one a call cannot pass positionally,
+    and one listed before it is one it can. `**kwargs` is rendered by name
+    because it is the route a choice takes into the callee, and a model
+    cannot write a value for it — only a keyword the callee declares.
+
+    A parameter whose default is the strategy is the one case where a
+    default is not rendered as `name=value`. The adapted primitives
+    declare `method=None` to check that a name matches the strategy the
+    entry is already named for; there is no value behind the `None`, and
+    writing `method=None` would both be a lie about the call and read, to
+    the two gates that watch for a defaulted strategy, as a menu
+    answering itself. Such a parameter is left unrendered and described in
+    the notes. `priority` is not swept in with it: a `None` priority is
+    the authored order inside one strategy, which a member may replace
+    and the gates treat as a budget rather than an answer.
+    """
+    import inspect
+
+    parameter = inspect.Parameter
+    positional, keyword_only, var_keyword, guarded = [], [], [], []
+    for value in wrapper.parameters.values():
+        is_guard = (value.name == "method" and value.default is None)
+        rendered = (value.name if is_guard or value.default is parameter.empty
+                    else "%s=%r" % (value.name, value.default))
+        if is_guard:
+            guarded.append(value.name)
+        if value.kind is parameter.VAR_KEYWORD:
+            var_keyword.append("**" + value.name)
+        elif value.kind is parameter.VAR_POSITIONAL:
+            raise MethodExecutionError(
+                "refused: a bound wrapper takes *args, so its rendered"
+                " signature would not describe the call")
+        elif value.kind is parameter.KEYWORD_ONLY:
+            keyword_only.append(rendered)
+        else:
+            positional.append(rendered)
+    if guarded and _adapter_for(name, _binding_profile(
+            _resolve_binding(spec["binding"]))) is None:
+        raise MethodExecutionError(
+            "refused: %r defaults %s to None outside the adapter that"
+            " checks it, where the default would reach the callee"
+            % (name, ", ".join(guarded)))
+    return positional, keyword_only, var_keyword, guarded
+
+
+def _wrapper_signatures(contract: dict | None = None) -> dict:
+    """The child's wrappers, built and introspected, keyed by menu name.
+
+    The wrappers are the bytes the model has to be able to call, and they
+    are generated per binding from `inspect.signature`. Reading the
+    contract's prose off them means there is one description of a call and
+    it is the one that runs; a wrapper that does not build refuses here
+    instead of leaving a menu entry with a signature nothing implements.
+
+    Built from `_callables`, never from `child_contract`, because the
+    contract is what is being rendered from these.
+    """
+    import inspect
+
+    if contract is None:
+        contract = {"callables": _callables()}
+    namespace = {"reducers": _import_reducers()}
+    try:
+        source = _child_wrapper_source(contract)
+        exec(compile(source, "<child-wrappers>", "exec"),  # noqa: S102
+             namespace)
+    except Exception as exc:
+        raise MethodExecutionError(
+            "refused: the child wrappers do not build") from exc
+    return {name: inspect.signature(namespace[name])
+            for name in _bound_names(contract) if name in namespace}
+
+
+def _import_reducers() -> object:
+    """The module the child's namespace binds, resolved the child's way."""
+    import importlib
+
+    return importlib.import_module(_CHILD_NAMESPACE["reducers"])
+
+
+def _adapter_for(name: str, profile: dict) -> str | None:
+    """An adapter for a primitive that takes atoms, or None if it fits.
+
+    Bound by name, never by a suffix match. A suffix match is what mistook
+    `ddmin_reduce` for a dispatcher of `method=ddmin`, and the menu grew a
+    `method` default on a callable that has no `method` parameter.
+    """
+    if name in _PRIMITIVE_ADAPTERS and "count" in profile["parameters"]:
+        return _PRIMITIVE_ADAPTERS[name]
+    return None
+
+
+def _composed_method(name: str) -> str:
+    """The strategy a composed name fixes, read from the primitive it wraps.
+
+    Split on `__` and not on the last dotted segment. `ddmin__ddmin_reduce`
+    carries `ddmin` twice, and a reader looking for the nearest strategy
+    token finds the primitive's own name, which is a different thing from
+    the strategy the wrapper commits to.
+    """
+    head, separator, _ = name.partition("__")
+    if not separator or head not in _STRATEGY_METHODS:
+        raise MethodExecutionError(
+            "refused: %r is not a composed menu entry" % name)
+    return head
+
+
+def _composed_source(name: str) -> str | None:
+    """The wrapper for a composed entry, or None if the name is not one."""
+    if "__" not in name:
+        return None
+    method = _composed_method(name)
+    primitive = name.split("__", 1)[1]
+    return ("def %s(task, oracle, *, %s=%d):\n"
+            "    return __adapt_%s(task, oracle, family=task['family'],\n"
+            "                         method=%r, max_queries=%s)\n"
+            % (name, DEFAULT_CHILD_BUDGET_PARAM, DEFAULT_CHILD_BUDGET,
+               primitive, method, DEFAULT_CHILD_BUDGET_PARAM))
+
+
+def _adapter_source(contract: dict) -> str:
+    blocks = [_CHILD_ADAPTER_SUPPORT % {"kept": _RETURN_KEY}]
+    for name in _bound_names(contract):
+        target = contract["callables"][name]["binding"]
+        profile = _binding_profile(_resolve_binding(target))
+        template = _adapter_for(name, profile)
+        if template is None:
             continue
-        lines.append(
-            "def %s(task, oracle, *, method=\"ddmin\", max_queries=16):\n"
-            "    return %s(task, oracle, method=method,"
-            " max_queries=max_queries)" % (name, target))
-    return "\n".join(lines) + "\n" if lines else ""
+        if profile["name"] != name:
+            raise MethodExecutionError(
+                "refused: binding %r for %s names a callable called %r,"
+                " and the child adapter is written for the reduction"
+                " primitives" % (target, name, profile["name"]))
+        blocks.append(template)
+    return "\n".join(blocks) + "\n"
+
+
+def _child_wrapper_source(contract: dict | None = None) -> str:
+    """The child's wrappers, one per binding, each built from its signature.
+
+    This replaced a single template that every binding was asked to wear:
+    `(task, oracle, *, method="ddmin", max_queries=16)`. Four of the six
+    do not have that shape, so the template supplied a `method` the
+    contract had said there was no default for, and supplied arguments for
+    parameters the callable does not have. A binding still needs a value
+    the child cannot supply and the menu does not offer as a choice; that
+    one refuses here, naming the callable, rather than executing a default
+    nobody chose.
+    """
+    contract = child_contract() if contract is None else contract
+    blocks = [_adapter_source(contract)]
+    for name in _bound_names(contract):
+        target = contract["callables"][name]["binding"]
+        composed = _composed_source(name)
+        if composed is not None:
+            blocks.append(composed)
+            continue
+        profile = _binding_profile(_resolve_binding(target))
+        adapted = _adapter_for(name, profile)
+        if profile["name"] != name and adapted is None:
+            raise MethodExecutionError(
+                "refused: binding %r for %s names a callable called %r"
+                % (target, name, profile["name"]))
+        if adapted is not None:
+            blocks.append("def %s(task, oracle, *, family, method=None,\n"
+                          "            priority=None, max_queries=%d):\n"
+                          "    return __adapt_%s(task, oracle, family=family,"
+                          " method=method,\n"
+                          "                         priority=priority,"
+                          " max_queries=max_queries)\n"
+                          % (name, DEFAULT_CHILD_BUDGET, name))
+            continue
+        blocks.append(_wrapper_for(name, target, profile))
+    return "\n".join(blocks)
+
+
+def verify_child_contract(contract: dict | None = None) -> dict:
+    """The menu, or a refusal naming the callable that cannot be built.
+
+    Called before any child is staged, so a member is never run against a
+    wrapper that would hand it a strategy it did not choose. Raises rather
+    than returning a reason, because every caller is a gate.
+    """
+    contract = child_contract() if contract is None else contract
+    if contract.get("version") != CHILD_CONTRACT_VERSION:
+        raise MethodExecutionError("refused: unknown child contract version")
+    wrappers = _child_wrapper_source(contract)
+    return {
+        "version": contract["version"],
+        "bound": _bound_names(contract),
+        "host_only": sorted(set(contract["callables"])
+                            - set(_bound_names(contract))),
+        "wrappers": wrappers,
+    }
 
 
 def _child_binding_source() -> str:
+    contract = child_contract()
     return ("\n".join(
         "module.__dict__[%r] = %s" % (name, name)
-        for name, spec in child_contract()["callables"].items()
-        if spec.get("binding") is not None) + "\n")
+        for name in _bound_names(contract)) + "\n")
 
 
 def entry_contract() -> dict:
@@ -221,6 +813,37 @@ def _source_digest(source: str) -> str:
     return hashlib.sha256(source.encode("utf-8")).hexdigest()
 
 
+def _record_query(trace: list, candidate, verdict) -> None:
+    """One row per query the member actually asked, in the order it asked.
+
+    Written on the host side, in `serve`, immediately after
+    `oracle.query` returns, because that is the only place the child
+    cannot rewrite. The child's own `Proxy` sees a verdict and a counter
+    and nothing else; if the trace were assembled from what the member
+    reports about itself, a member could report a walk it did not take.
+
+    The candidate is digested rather than kept whole. A trace is evidence
+    about which questions were asked, and the questions are small compared
+    to the runs that hold them: a graph candidate carries every vertex and
+    every edge, and 18 tasks times 4 queries of those would multiply the
+    use record for no question the gate asks. The digest is over the
+    canonical candidate, so two members asking byte-identical questions
+    produce byte-identical rows and the comparison is exact.
+
+    The row carries the graded verdict and its bounded reason alongside the
+    digest. A walk is the sequence of (question, answer) pairs, not the
+    questions alone: two members asking the same four candidates and being
+    graded the same four ways took the same walk, and one that asked a
+    different fourth question did not.
+    """
+    trace.append({
+        "candidate_digest": _source_digest(_canonical_input(candidate)
+                                            .decode("utf-8")),
+        "verdict": str((verdict or {}).get("verdict", "")),
+        "reason": str((verdict or {}).get("reason", "")),
+    })
+
+
 def _canonical_input(data) -> bytes:
     return json.dumps(data, sort_keys=True, separators=(",", ":")).encode(
         "utf-8")
@@ -285,7 +908,26 @@ def _stage_source(path: Path, source: str, expected: str, *,
     if preserve and path.exists():
         _verified_source_digest(path, expected)
         return
-    path.write_bytes(source.encode("utf-8"))
+    _stage_text(path, source, expected)
+
+
+def _stage_text(path: Path, text: str, expected: str) -> None:
+    """Write `text` so the bytes on disk hash to `expected`, or refuse.
+
+    Every staged artifact is hashed in memory and re-hashed from disk
+    before and after dispatch, so a write that is not byte-exact makes the
+    operation unverifiable. Python's text-mode `write_text` translates each
+    `\\n` to `os.linesep` on Windows, so a driver written that way is 16 bytes
+    longer on disk than the string the digest was taken from, and
+    `_verify_operation_provenance` refuses before anything is dispatched.
+    Text therefore reaches disk through this one function, encoded
+    explicitly, and the bytes written are checked against the digest rather
+    than assumed to be it.
+    """
+    raw = text.encode("utf-8")
+    if hashlib.sha256(raw).hexdigest() != expected:
+        raise MethodExecutionError("refused: staged text digest mismatch")
+    path.write_bytes(raw)
 
 
 def _durable_operation(dsn: str, operation_id: str) -> dict | None:
@@ -308,16 +950,36 @@ def _durable_operation(dsn: str, operation_id: str) -> dict | None:
             "settled": bool(settled), "payload": payload or {}}
 
 
+def _reclaimable(state: str | None, receipted: bool) -> bool:
+    """Whether the broker can still recover this operation by re-sending it.
+
+    The one shape that is recoverable is a `dispatching` operation holding
+    no receipt: the dispatch was advanced, the worker was never started, and
+    `broker.redispatch_after_reset` re-sends it once the launcher attests it
+    was never sent. A receipt changes the answer even when the state does
+    not. A receipted `dispatching` operation already ran, and re-sending it
+    is a second execution of work whose result is already stored, so it is
+    answered from that receipt instead of being reclaimed.
+
+    Everything else stays refused. `conflict` and `unresolved` are verdicts
+    the store reached deliberately, and a crash artefact is not evidence
+    strong enough to overturn either. Loosening this for a receipted or an
+    unresolved operation is a double-execution bug, not a recovery.
+    """
+    return state == "dispatching" and not receipted
+
+
 def _durable_receipt(dsn: str, operation_id: str) -> dict | None:
     from settlement import db
     operation = _durable_operation(dsn, operation_id)
-    if operation is not None and (
-            operation.get("reconcile_state") == "conflict"
-            or operation.get("dispatch_state") == "unresolved"
-            or (not operation.get("settled")
-                and operation.get("dispatch_state") != "prepared")):
+    if operation is None:
+        raise MethodExecutionError(
+            "refused: durable child operation is missing")
+    if (operation.get("reconcile_state") in ("conflict", "unresolved")
+            or operation.get("dispatch_state") == "unresolved"):
         raise MethodExecutionError(
             "refused: durable child operation is conflicted or unresolved")
+    state = operation.get("dispatch_state")
     with db.connect(dsn) as conn:
         cursor = conn.execute(
             "SELECT receipt_identity, outcome, content, content_digest"
@@ -328,25 +990,46 @@ def _durable_receipt(dsn: str, operation_id: str) -> dict | None:
         if not rows and hasattr(cursor, "fetchone"):
             row = cursor.fetchone()
             rows = [] if row is None else [row]
+    if not operation.get("settled") and state != "prepared" \
+            and not _reclaimable(state, bool(rows)):
+        raise MethodExecutionError(
+            "refused: durable child operation is conflicted or unresolved")
     if not rows:
         return None
-    identities = []
+    if state == "prepared":
+        raise MethodExecutionError(
+            "refused: durable receipt exists for undispatched child operation")
+    receipts = []
     for row in rows:
-        identity = str(row[0])
-        content = row[2]
-        if any(identity == prior[0] and row[1] == prior[1]
-               and content == prior[2] for prior in identities):
-            continue
-        identities.append((identity, row[1], content))
-    if len(identities) != 1:
+        if isinstance(row, dict):
+            identity = row.get("receipt_identity")
+            outcome = row.get("outcome")
+            content = row.get("content")
+            stored_digest = row.get("content_digest")
+        else:
+            identity, outcome, content, stored_digest = row
+        if not isinstance(identity, str) or not identity:
+            raise MethodExecutionError(
+                "refused: durable child receipt identity is missing")
+        if not isinstance(content, dict):
+            raise MethodExecutionError(
+                "refused: durable child receipt content is not an object")
+        expected_digest = payload_digest(content)
+        if stored_digest != expected_digest:
+            raise MethodExecutionError(
+                "refused: durable child receipt content digest mismatch")
+        receipt = (str(identity), str(outcome), content, expected_digest)
+        if receipt not in receipts:
+            receipts.append(receipt)
+    if len(receipts) != 1:
         raise MethodExecutionError(
             "refused: durable child operation has conflicting receipts")
-    identity, outcome, content = identities[0]
+    identity, outcome, content, content_digest = receipts[0]
     if outcome != "success":
         raise MethodExecutionError(
             "refused: durable child operation has no successful receipt")
     return {**content, "outcome": outcome, "receipt_identity": identity,
-            "_operation": operation}
+            "content_digest": content_digest, "_operation": operation}
 
 
 def _result(receipt: dict | None, member: dict, operation_id: str | None,
@@ -400,6 +1083,7 @@ def run_member_out_of_process(member: dict, task: dict, *,
                               allocation_id: str | None = None,
                               operation_id: str | None = None) -> dict:
     entry = verify_member(member)
+    verify_child_contract()
     if dsn is not None and (not allocation_id or not operation_id):
         raise MethodExecutionError("refused: execution needs explicit authority and identity")
     operation_id = operation_id or "member"
@@ -433,12 +1117,12 @@ def run_member_out_of_process(member: dict, task: dict, *,
         input_data = {"task": task, "max_queries": max_queries}
         (work / "task.json").write_bytes(_canonical_input(input_data))
         driver_source = _DRIVER % (entry, argc)
-        driver = work / "driver.py"
-        driver.write_text(driver_source, encoding="utf-8")
         provenance = _operation_provenance(
             member["method_source"], driver_source, input_data,
             source_path="member.py", driver_path="driver.py",
             input_path="task.json")
+        driver = work / provenance["driver_path"]
+        _stage_text(driver, driver_source, provenance["driver_digest"])
         _verify_operation_provenance(work, provenance)
         socket_path = "ad01-" + hashlib.sha256(str(work).encode()).hexdigest()
         launcher = LocalLauncher(work / "launcher")
@@ -460,10 +1144,18 @@ def run_member_out_of_process(member: dict, task: dict, *,
                     receipt, member, operation_id, executed_digest)
                 result.update(_result_provenance(
                     member["method_source"], input_data, payload, provenance))
+                # The member did not ask anything in this process. The
+                # receipt replays a settled operation, and a walk that was
+                # never walked here is not an empty walk, it is an absent
+                # one. `None` says that, where `[]` would say the member
+                # ran and asked nothing, which is a different claim and
+                # the one the gate must not mistake for a match.
+                result["query_trace"] = None
                 return result
             _verified_source_digest(work / "member.py", requested_digest)
         stopped = threading.Event()
         errors = []
+        trace: list = []
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server:
             server.bind(chr(0) + socket_path)
             server.listen(1)
@@ -483,7 +1175,9 @@ def run_member_out_of_process(member: dict, task: dict, *,
                             if not isinstance(message, dict) or set(message) != {"candidate"} \
                                     or not isinstance(message["candidate"], dict):
                                 raise ValueError("query-needs-candidate")
-                            verdict = oracle.query(message["candidate"])
+                            candidate = message["candidate"]
+                            verdict = oracle.query(candidate)
+                            _record_query(trace, candidate, verdict)
                             reply = json.dumps({"verdict": verdict,
                                                 "queries": oracle.queries_used}).encode()
                             link.sendall(len(reply).to_bytes(4, "big") + reply)
@@ -517,6 +1211,7 @@ def run_member_out_of_process(member: dict, task: dict, *,
             member["method_source"], input_data, payload, provenance))
         if dsn is None:
             result["queries"] = oracle.queries_used
+        result["query_trace"] = trace
         return result
 
 
@@ -706,11 +1401,11 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
         input_bytes = _canonical_input(input_data)
         (work / "step.json").write_bytes(input_bytes)
         driver_source = _STEP_DRIVER % (entry,)
-        driver = work / "driver.py"
-        driver.write_text(driver_source, encoding="utf-8")
         provenance = _operation_provenance(
             source, driver_source, input_data, source_path="policy.py",
             driver_path="driver.py", input_path="step.json")
+        driver = work / provenance["driver_path"]
+        _stage_text(driver, driver_source, provenance["driver_digest"])
         _verify_operation_provenance(work, provenance)
         launcher = LocalLauncher(work / "launcher")
         payload = {"profile": PROFILE, "argv": [sys.executable, str(driver), str(work)],

@@ -69,8 +69,57 @@ def _size(task: dict, candidate: dict) -> tuple:
     return total(task), total(candidate)
 
 
-def campaign_id(world: int, arm: str, seq: int = 0) -> str:
-    return "ad01-w%d-%s-%02d" % (world, arm, seq)
+NAMESPACE_TOKEN = ""
+
+
+def set_namespace_token(token: str) -> str:
+    """Set the token every campaign id in this process carries.
+
+    Module state rather than a parameter, because the campaign id is built in
+    a dozen places and threading a parameter through all of them would leave
+    the collision intact in the ones somebody forgets. A run sets it once at
+    entry; an unset token reproduces the old behaviour exactly.
+    """
+    global NAMESPACE_TOKEN
+    NAMESPACE_TOKEN = "".join(
+        ch for ch in str(token) if ch.isalnum() or ch in "-_")
+    return NAMESPACE_TOKEN
+
+
+def _parse_campaign_id(cid: str) -> tuple:
+    """Split a campaign id into world, arm, seq and its namespace token.
+
+    The token is a suffix the id gained when namespaces were introduced, so
+    both the four-part and five-part forms are live. Rejecting either shape
+    would make ids the system itself mints unresumable.
+    """
+    parts = cid.split("-")
+    if parts[0] != "ad01" or parts[2] not in ("I", "R") or len(parts) < 4:
+        raise ValueError("malformed campaign id %r" % (cid,))
+    try:
+        world, arm, seq = int(parts[1][1:]), parts[2], int(parts[3])
+    except ValueError:
+        raise ValueError("malformed campaign id %r" % (cid,))
+    # Everything after the sequence is the token, and a token may itself carry
+    # dashes because the sanitiser keeps them. Splitting on every dash and
+    # expecting a fifth part would truncate `tok-9` to `tok`.
+    token = "-".join(parts[4:])
+    return world, arm, seq, token
+
+
+def campaign_id(world: int, arm: str, seq: int = 0,
+                token: str = "") -> str:
+    """A campaign id, namespaced by the run token when one is supplied.
+
+    The token is a suffix so every existing `ad01-` prefix match keeps
+    working, which is why it is not a prefix. Without it two runs mint the
+    same campaign id, and since receipts are looked up by operation id
+    before dispatch, the second run replays the first run's response.
+    """
+    base = "ad01-w%d-%s-%02d" % (world, arm, seq)
+    cleaned = "".join(ch for ch in str(token or NAMESPACE_TOKEN)
+                      if ch.isalnum() or ch in "-_")
+    return "%s-%s" % (base, cleaned) if cleaned else base
 
 
 def _alloc_id(cid: str) -> str:
@@ -811,7 +860,9 @@ def _construct_policy_revision(investigation: dict, seen: dict, seed_obs: dict,
                 panel=panel, rule=rule)
             candidate_source = freeze["source"]
             candidate_record = policy_step.make_policy_artifact(
-                candidate_source, origin="model-acquired",
+                candidate_source,
+                origin=(candidate.get("policy_artifact") or {}).get(
+                    "origin") or "fixture-stand-in",
                 parent_digest=proposal["parent_digest"],
                 applicability=scope)
             policy_step.verify_policy_record(candidate_record)
@@ -829,7 +880,10 @@ def _construct_policy_revision(investigation: dict, seen: dict, seed_obs: dict,
                 incumbent_artifact=incumbent_record,
                 panel=panel, rule=rule, scope=scope,
                 protocol_id=policy_assess.PANEL_PROTOCOL,
-                evaluator_version=policy_assess.EVALUATOR_VERSION)
+                evaluator_version=policy_assess.EVALUATOR_VERSION,
+                gateway=construction["gateway"],
+                allocation_id=_alloc_id(construction["cid"]),
+                model=construction["model"])
             stored = records.load_assessment(
                 construction["dsn"], proposal["proposal_id"],
                 freeze["candidate_digest"])
@@ -898,6 +952,27 @@ def _construct_policy_revision(investigation: dict, seen: dict, seed_obs: dict,
     return observation, episode, int(episode.get("queries", 0))
 
 
+def _frozen_policy_origin(dsn: str, candidate_digest: str,
+                          source: str) -> str | None:
+    """Re-earn the origin of frozen bytes instead of re-reading a label.
+
+    A freeze stores source and digest, never an origin, so a replay that
+    wanted to call these bytes `model-acquired` had to write the string. It
+    now looks up the operation whose settled response parses to exactly these
+    bytes and re-derives the origin from that receipt, so a replay of a
+    fixture-served release labels it `fixture-stand-in` and a replay with no
+    receipt at all is refused rather than asserted.
+    """
+    from . import live_construct
+    operation_id = live_construct.find_acquisition_operation(
+        dsn, candidate_digest)
+    if operation_id is None:
+        return None
+    from . import construct
+    return construct.acquisition_origin(dsn, operation_id, source)[
+        "origin"]
+
+
 def _resolve_policy_consumer(dsn: str, release_id: str, family: str, *,
                              cid: str, charter: dict, world: int, arm: str,
                              study_root: str, gateway, model: str):
@@ -923,9 +998,14 @@ def _resolve_policy_consumer(dsn: str, release_id: str, family: str, *,
     proposal = records.load_revision_proposal(dsn, proposal_id)
     if proposal is None:
         return None, "policy release %r has no revision proposal" % release_id
+    origin = _frozen_policy_origin(dsn, candidate_digest, source)
+    if origin is None:
+        return None, (
+            "policy release %r refused: no settled construction operation "
+            "produced its frozen bytes, so the origin is unknown" % release_id)
     try:
         record = policy_step.make_policy_artifact(
-            source, origin="model-acquired",
+            source, origin=origin,
             parent_digest=proposal.get("parent_digest"),
             applicability=dict(proposal.get("scope") or {}))
         policy_step.verify_policy_record(record)
@@ -1245,6 +1325,10 @@ def load_repertoire(path) -> dict:
                 raise ValueError(
                     "acquired member %r bytes do not match their digest" % (
                         member.get("capability_id"),))
+            if member.get("capability_id") in seeds._KNOWN:
+                raise ValueError(
+                    "acquired member %r claims a reserved seed capability id" % (
+                        member.get("capability_id"),))
     return repertoire
 
 
@@ -1260,37 +1344,150 @@ def _run_member(member: dict, task: dict, *,
     if max_queries is not None:
         budgeted = min(budgeted, int(max_queries))
     if known:
-        return seeds.run_seed(known[0], task, max_queries=budgeted)
+        result = seeds.run_seed(known[0], task, max_queries=budgeted)
+        result["executed_source"] = known[0]["method"]
+        # The host's own dispatch table ran this, in this process, with no
+        # oracle channel to observe. The control arm is routed around this
+        # branch by its `ctl-` ids so the trace it is compared on is
+        # measured rather than absent, and a member that does reach here
+        # says so rather than reporting an empty walk it did not take.
+        result["query_trace"] = None
+        return result
     from . import method_exec
-    return method_exec.run_member_out_of_process(
+    result = method_exec.run_member_out_of_process(
         member, task, max_queries=budgeted, dsn=dsn,
         allocation_id=allocation_id, operation_id=operation_id,
         **({} if timeout_ms is None else {"timeout_ms": timeout_ms}))
+    result["executed_source"] = member["method_source"]
+    return result
 
 
-def _use_refusal(repertoire: dict, task: dict, dsn: str | None,
-                 release_id: str | None) -> str:
-    domain = task["family"]
-    if dsn is None or not release_id:
-        return "no eligible repertoire member for %s" % domain
-    from .selection import active_binding_for, binding_provenance
-    binding = active_binding_for(dsn, domain, release_id=release_id)
-    if binding is None:
-        return "no active binding for release %r (family %s)" % (
-            release_id, domain)
-    wanted = list(binding.get("versions") or [])
-    members = list(repertoire.get("members", []))
-    if not any(m.get("capability_id") in set(wanted) for m in members):
-        return "release %r binds %s, absent from repertoire" % (
-            release_id, wanted)
-    pinned = str(binding_provenance(binding).get("candidate_digest")
-                 or "")
-    return "release %r pins bytes %s, repertoire member bytes differ" % (
-        release_id, pinned[:12])
+class _UsePolicyRefused(Exception):
+    """Never downgraded to a method fallback."""
+
+
+def _use_policy_action(policy, view: dict, state: dict) -> dict:
+    """The method identity lives in the admitted action, not in the
+    repertoire, so an episode with no action in hand is not one this can
+    build. No path out of here supplies a method of its own. A policy that
+    raises or returns an action the STEP ABI rejects is a refusal here,
+    not an exception out of the use phase: a broken policy must not abort
+    an episode the way a missing one must not substitute a method.
+    """
+    from . import policy_step
+    if policy is None:
+        raise _UsePolicyRefused("use ran with no policy: the method identity"
+                                " must come from an admitted policy action")
+    if hasattr(policy, "decide"):
+        decision = _call(policy.decide, {
+            "observations": [{"task_id": view["task_content"]["task_id"]}]},
+            state, boundary={"seq": 0}, experience={})
+        if not isinstance(decision, dict) \
+                or decision.get("status") == "refused":
+            raise _UsePolicyRefused("policy refused: %s"
+                                    % (decision or {}).get("reason", ""))
+        action = decision.get("action")
+    else:
+        action = _call(policy, view, state)
+        if isinstance(action, dict) and "action" in action:
+            action = action["action"]
+    try:
+        return policy_step.validate_action(action)
+    except (TypeError, ValueError) as invalid:
+        raise _UsePolicyRefused("policy admitted no valid action: %s"
+                                % invalid) from invalid
+
+
+def _call(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except Exception as exc:
+        raise _UsePolicyRefused("policy raised: %s" % exc) from exc
+
+
+def _use_admitted_method(action: dict) -> str:
+    """A policy admitting a kind that runs no method, or naming no member,
+    gets a refusal rather than a substitution the policy never asked for.
+    """
+    if action.get("kind") != "use_method":
+        raise _UsePolicyRefused(
+            "admitted %r action runs no task method" % (action.get("kind"),))
+    inputs = action.get("inputs")
+    method_id = inputs.get("method_id") if isinstance(inputs, dict) else None
+    if not isinstance(method_id, str) or not method_id:
+        raise _UsePolicyRefused("admitted use_method names no method")
+    return method_id
+
+
+def _member_digest(member: dict) -> str:
+    import hashlib
+
+    return str(member.get("source_digest") or hashlib.sha256(
+        str(member.get("method_source") or "").encode("utf-8")).hexdigest())
+
+
+def _use_governed_member(repertoire: dict, task: dict, policy, *,
+                         dsn: str | None,
+                         release_id: str | None) -> tuple:
+    from . import packet as _use_packet
+    view = {
+        "task_content": _use_packet.strip_task(task),
+        "observations": [], "open_questions": [], "last_result": None,
+        "eligible_methods": [m.get("capability_id")
+                             for m in repertoire.get("members", [])],
+        "remaining": {},
+    }
+    action = _use_policy_action(policy, view, {})
+    method_id = _use_admitted_method(action)
+    member = next((m for m in repertoire.get("members", [])
+                   if m.get("capability_id") == method_id), None)
+    if member is None:
+        raise _UsePolicyRefused("admitted %r is absent from the repertoire"
+                                % (method_id,))
+    if (member.get("scope", {}) or {}).get("family") != task.get("family"):
+        raise _UsePolicyRefused(
+            "admitted %r is scoped to %r and cannot answer a %s task"
+            % (method_id, (member.get("scope") or {}).get("family"),
+               task.get("family")))
+    if not _select_member({"members": [member]}, task, dsn=dsn,
+                          release_id=release_id):
+        raise _UsePolicyRefused(
+            "release %r pins bytes %s, which repertoire member %r does not"
+            " carry" % (release_id, _member_digest(member)[:12], method_id))
+    inputs = action.get("inputs") or {}
+    max_queries = inputs.get("max_queries")
+    if type(max_queries) is not int or max_queries < 0:
+        raise _UsePolicyRefused("admitted use_method carries no query budget")
+    return dict(member), max_queries
+
+
+def _policy_refused_record(repertoire: dict, world: int, arm: str,
+                           task_id: str, domain: str, release_id, reason: str
+                           ) -> dict:
+    """A distinct `status` is the point. `selected` and `executed` both
+    read `refused`, so a caller that branches on those alone cannot read
+    this as the incumbent an empty repertoire also produces.
+    """
+    from . import checker
+    return {
+        "record_id": "%s-%s-%s" % (repertoire["campaign_id"], arm, task_id),
+        "world": world, "arm": arm, "task_id": task_id, "domain": domain,
+        "freeze": worlds.FREEZE_ID,
+        "freeze_digest": checker.freeze_digest(worlds.FROZEN_DIR),
+        "release_id": release_id,
+        "status": "refused",
+        "verdict": "refused",
+        "initial_measure": 0, "final_measure": 0,
+        "normalized_reduction": 0.0, "output": {}, "operation_ids": [],
+        "costs": {"witness_queries": 0},
+        "requested": "refused", "selected": "refused", "executed": "refused",
+        "executed_source": "refused", "query_trace": None,
+        "fallback_reason": reason,
+    }
 
 
 def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
-            base_costs: dict, *, dsn: str | None = None,
+            base_costs: dict, *, policy=None, dsn: str | None = None,
             allocation_id: str | None = None,
             release_id: str | None = None) -> list:
     from . import checker
@@ -1304,63 +1501,59 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
     for task_id in use_tasks:
         task = worlds.load_task(worlds.FROZEN_DIR, task_id)
         domain = task["family"]
-        member = _select_member(repertoire, task, dsn=dsn,
-                                release_id=release_id)
+        try:
+            member, method_queries = _use_governed_member(
+                repertoire, task, policy, dsn=dsn, release_id=release_id)
+        except _UsePolicyRefused as refusal:
+            records.append(_policy_refused_record(
+                repertoire, world, arm, task_id, domain, release_id,
+                str(refusal)))
+            continue
         operation_ids = []
         execution = None
-        if member is not None and dsn is not None:
+        if dsn is not None:
             execution = {"dsn": dsn, "allocation_id": allocation_id,
                          "operation_id": _versioned_use_op_id(
                              repertoire["campaign_id"], task_id,
                              member["capability_id"])}
-        if member is None:
-            requested = selected = "incumbent"
+        requested = selected = member["capability_id"]
+        from .method_exec import MethodExecutionError
+        try:
+            result = _run_member(member, task, max_queries=method_queries,
+                                 **(execution or {}))
+        except MethodExecutionError as exc:
+            if execution:
+                from settlement import broker
+                if broker.read_operation(dsn, execution["operation_id"]) is not None:
+                    operation_ids = [execution["operation_id"]]
             output = controls.incumbent(task)
-            queries = 0
-            reason = _use_refusal(repertoire, task, dsn, release_id)
-            executed_source = "incumbent"
-        else:
-            requested = selected = member["capability_id"]
-            from .method_exec import MethodExecutionError
-            try:
-                result = _run_member(member, task, **(execution or {}))
-            except MethodExecutionError as exc:
-                if execution:
-                    from settlement import broker
-                    if broker.read_operation(dsn, execution["operation_id"]) is not None:
-                        operation_ids = [execution["operation_id"]]
-                output = controls.incumbent(task)
-                report = _check(task, output)
-                initial, final = _size(task, output)
-                records.append({
-                    "record_id": "%s-%s-%s" % (repertoire["campaign_id"],
-                                               arm, task_id),
-                    "world": world, "arm": arm, "task_id": task_id,
-                    "domain": domain, "freeze": worlds.FREEZE_ID,
-                    "freeze_digest": checker.freeze_digest(
-                        worlds.FROZEN_DIR),
-                    "release_id": release_id,
-                    "verdict": report["verdict"],
-                    "initial_measure": initial, "final_measure": final,
-                    "normalized_reduction": 0.0,
-                    "output": output, "operation_ids": operation_ids,
-                    "costs": {**base_costs, "witness_queries": 0},
-                    "requested": requested, "selected": selected,
-                    "executed": "incumbent",
-                    "executed_source": "incumbent",
-                    "fallback_reason": "member execution failed: %s"
-                                       % exc})
-                continue
-            output = result["candidate"]
-            queries = result["queries"]
-            reason = ""
-            operation_ids = list(result.get("operation_ids") or [])
-            executed_source = member.get("method_source")
-            if executed_source is None:
-                known = next(c for c in seeds.SEED_CAPABILITIES
-                             if c["capability_id"]
-                             == member["capability_id"])
-                executed_source = known["method"]
+            report = _check(task, output)
+            initial, final = _size(task, output)
+            records.append({
+                "record_id": "%s-%s-%s" % (repertoire["campaign_id"],
+                                           arm, task_id),
+                "world": world, "arm": arm, "task_id": task_id,
+                "domain": domain, "freeze": worlds.FREEZE_ID,
+                "freeze_digest": checker.freeze_digest(
+                    worlds.FROZEN_DIR),
+                "release_id": release_id,
+                "verdict": report["verdict"],
+                "initial_measure": initial, "final_measure": final,
+                "normalized_reduction": 0.0,
+                "output": output, "operation_ids": operation_ids,
+                "costs": {**base_costs, "witness_queries": 0},
+                "requested": requested, "selected": selected,
+                "executed": "incumbent",
+                "executed_source": "incumbent",
+                "query_trace": None,
+                "fallback_reason": "member execution failed: %s"
+                                   % exc})
+            continue
+        output = result["candidate"]
+        queries = result["queries"]
+        reason = ""
+        operation_ids = list(result.get("operation_ids") or [])
+        executed_source = result.get("executed_source")
         report = _check(task, output)
         initial, final = _size(task, output)
         records.append({
@@ -1379,6 +1572,7 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
             "costs": {**base_costs, "witness_queries": queries},
             "requested": requested, "selected": selected,
             "executed": selected, "executed_source": executed_source,
+            "query_trace": result.get("query_trace"),
             "fallback_reason": reason})
     if dsn is not None:
         for record in records:
@@ -1461,15 +1655,15 @@ def resume_campaign(dsn: str, cid: str, charter: dict, caps: dict,
                     constructor: str = "seed", consumer=None,
                     study_root: str | None = None,
                     policy_release: str | None = None) -> dict:
-    parts = cid.split("-")
-    if len(parts) != 4 or parts[0] != "ad01" or parts[2] not in ("I", "R"):
-        raise ValueError("malformed campaign id %r" % (cid,))
-    try:
-        world = int(parts[1][1:])
-        seq = int(parts[3])
-    except ValueError:
-        raise ValueError("malformed campaign id %r" % (cid,))
-    out = run_campaign(world, parts[2], charter, caps, tasks=tasks,
+    world, arm, seq, token = _parse_campaign_id(cid)
+    if token:
+        # The resumed run must be namespaced the same way the id it resumes
+        # was minted, or `run_campaign` builds a different campaign id and the
+        # equality check below fails for a reason that has nothing to do with
+        # the resume. `campaign_id` has appended a token since this parser was
+        # written, and without this the tokenized form was write-only.
+        set_namespace_token(token)
+    out = run_campaign(world, arm, charter, caps, tasks=tasks,
                        capability_id=capability_id,
                        campaign_seq=seq, dsn=dsn,
                        propose=propose, gateway=gateway, model=model,
@@ -1653,6 +1847,35 @@ def _durable_observations(dsn: str, cid: str) -> dict:
             and row["observation"].get("observation_id")}
 
 
+def _observation_is_durable(observation_id, observation, durable) -> bool:
+    """Whether an experience observation is the stored one it claims to be.
+
+    The experience list reaching admission is `packet.project_observations`
+    output, which is deliberately reduced to five fields so assessor detail
+    never reaches a model prompt. Comparing that projection to the stored
+    record with `!=` therefore failed for every settled observation and
+    reported genuine ones as forged on each resume.
+
+    So the check is on identity and provenance: the id must be in the store,
+    and every field the projection preserves must agree with the record.
+    A record under a known id whose content was tampered with, or whose task
+    or capability was swapped, still fails, and an unknown id still fails.
+    """
+    if not observation_id or not isinstance(observation, dict):
+        return False
+    stored = durable.get(observation_id)
+    if not isinstance(stored, dict):
+        return False
+    for field in ("observation_id", "task_id", "capability_id", "verdict"):
+        if observation.get(field) != stored.get(field):
+            return False
+    projected_detail = observation.get("detail")
+    stored_detail = stored.get("detail")
+    if projected_detail is not None and projected_detail != stored_detail:
+        return False
+    return True
+
+
 def admit_investigation(proposal: dict, experience: dict,
                         charter: dict, boundary: dict | None = None,
                         *, durable_observations: dict | None = None,
@@ -1670,8 +1893,8 @@ def admit_investigation(proposal: dict, experience: dict,
                 if isinstance(observation, dict) else None
             if observation_id in trusted:
                 continue
-            if not observation_id or durable_observations.get(
-                    observation_id) != observation:
+            if not _observation_is_durable(
+                    observation_id, observation, durable_observations):
                 forged.append(str(observation_id or "malformed"))
         if forged:
             return {"decision": "refused",

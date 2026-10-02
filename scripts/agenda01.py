@@ -481,9 +481,8 @@ def _need(ok: bool, label: str) -> None:
 
 
 def _scratch_dsn(dsn: str, name: str) -> str:
-    from urllib.parse import urlparse, urlunparse
-    parts = urlparse(dsn)
-    return urlunparse((parts.scheme, parts.netloc, "/" + name, "", parts.query, ""))
+    from psycopg.conninfo import make_conninfo
+    return make_conninfo(dsn, dbname=name)
 
 
 def _create_db(base_dsn: str, name: str) -> str:

@@ -1,0 +1,102 @@
+{
+  "allowance": [
+    {
+      "detail": "M3: two independent initial constructions per representation/world/experience cell",
+      "name": "initial_constructions_per_cell",
+      "origin": "STATED",
+      "sends": 2
+    },
+    {
+      "detail": "M3: at most one repair each",
+      "name": "repairs_per_construction",
+      "origin": "STATED",
+      "sends": 1
+    },
+    {
+      "detail": "M3: three representations times two worlds times two experience treatments",
+      "name": "cells",
+      "origin": "STATED",
+      "sends": 12
+    },
+    {
+      "detail": "M3: up to four contract-shaped route/calibration calls",
+      "name": "route_calibration_calls",
+      "origin": "STATED",
+      "sends": 4
+    },
+    {
+      "detail": "M3: twelve further calls reserved for the transfer diagnostic",
+      "name": "target_adaptation_calls",
+      "origin": "STATED",
+      "sends": 12
+    },
+    {
+      "detail": "M3: 64 physical model sends total including retries, calibration and failed sends",
+      "name": "physical_sends_ceiling",
+      "origin": "STATED",
+      "sends": 64
+    }
+  ],
+  "bounds": [
+    {
+      "detail": "the max_output_tokens of the construction request that was dispatched, not a default",
+      "name": "construction_max_output_tokens",
+      "origin": "DERIVED",
+      "value": "2048"
+    },
+    {
+      "detail": "the message length of that same request",
+      "name": "construction_input_characters",
+      "origin": "DERIVED",
+      "value": "4880"
+    },
+    {
+      "detail": "the per-request deadline frozen beside it",
+      "name": "construction_deadline_ms",
+      "origin": "DERIVED",
+      "value": "300000"
+    },
+    {
+      "detail": "the reasoning effort frozen beside it",
+      "name": "construction_reasoning_effort",
+      "origin": "DERIVED",
+      "value": "high"
+    }
+  ],
+  "construction_request": {
+    "deadline_ms": 300000,
+    "max_output_tokens": 2048,
+    "message_characters": 4880,
+    "reasoning_effort": "high",
+    "source": "reports/evidence/invl02-live/store-reconciliation.json"
+  },
+  "denominations": {
+    "price": "what the provider charges; the free route reports no charge field, so no provider price is derivable here",
+    "reservation_units": "the store's estimated-budget units, derived per request by the broker exposure schedule and consumed as headroom",
+    "sends": "a count of physical model sends, admitted against a dispatch allowance and never reduced by units"
+  },
+  "provider_billing": {
+    "authorized_to_spend": true,
+    "note": "authorization to use the confirmed free route is a separate grant from a receipt measuring a price, and this receipt reported no charge field",
+    "provider_charge_state": "NOT_REPORTED",
+    "units_derivable": false
+  },
+  "route": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "schema": "s09-cap-sheet-v1",
+  "sheet_digest": "f5f55ef19cd53eeb93d4aae8153ae005487560935a6f24fb50dd40d20f540a30",
+  "sheet_id": "invl02-s09-cap",
+  "sources": {
+    "construction_request": "reports/evidence/invl02-live/store-reconciliation.json",
+    "counts": "WORKER-STAGE-09-CONNECTED-STUDY.md M3",
+    "provider_charge": "evidence_s09_route_probe/probe.json",
+    "unit_schedule": "settlement.broker.exposure_schedule(MODEL_INFERENCE, request, 0)"
+  },
+  "total_sends": 64,
+  "unit_allowance": {
+    "note": "estimated-budget reservation units, not a price and not a dispatch count",
+    "per_request_units": 3269,
+    "requests": 64,
+    "unit_kind": "estimated-budget",
+    "units": 209216
+  }
+}

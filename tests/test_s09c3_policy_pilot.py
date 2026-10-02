@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import subprocess
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
@@ -12,8 +11,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
+from experiments.ad01.s09_run_isolation import create_disposable_db, \
+    disposable_db, drop_disposable_db
 from scripts import s09_pilot as pilot
 from scripts import s09_verify as verify
+
+RUN_TOKEN = "c3pilot"
 
 
 def test_freeze_pins_policy_abi_and_n5_panel():
@@ -147,14 +150,10 @@ def test_controlled_http_full_study_freezes_and_verifies_public_path(
         def log_message(self, *_):
             return
 
-    db = "s09_m5_c3_http"
-    dsn = "dbname=%s host=/var/run/postgresql user=ubuntu" % db
-    subprocess.run(["dropdb", "-h", "/var/run/postgresql", "-U", "ubuntu",
-                    db], capture_output=True, text=True, timeout=60)
-    subprocess.run(["createdb", "-h", "/var/run/postgresql", "-U", "ubuntu",
-                    db], check=True, capture_output=True, text=True, timeout=60)
-    from settlement import db as settlement_db
-    settlement_db.apply_migrations(dsn, ROOT / "migrations")
+    database = create_disposable_db(RUN_TOKEN,
+                                    migrations_dir=ROOT / "migrations")
+    dsn = database.dsn
+    assert dsn.count(database.name) == 1, database.name
     server = HTTPServer(("127.0.0.1", 0), Handler)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -163,6 +162,7 @@ def test_controlled_http_full_study_freezes_and_verifies_public_path(
             "S09_CONTROLLED_GATEWAY_ENDPOINT",
             "http://127.0.0.1:%d" % server.server_port)
         bundle = pilot.run_study(dsn, tmp_path, gateway_mode="controlled",
+                                namespace_token="c3",
                                  model="controlled")
         freeze = bundle["freeze"]
         assert freeze["config"]["api"] == "responses"
@@ -193,8 +193,7 @@ def test_controlled_http_full_study_freezes_and_verifies_public_path(
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql", "-U", "ubuntu",
-                        db], capture_output=True, text=True, timeout=60)
+        drop_disposable_db(database)
 
 
 def test_verifier_rejects_policy_execution_without_digest_or_action():
@@ -221,3 +220,30 @@ def test_verifier_rejects_policy_execution_without_digest_or_action():
     out = verify.verify_bundle(bundle)
     assert "policy-digest-missing assess-P0-w1-sw" in out["problems"]
     assert "policy-actions-missing assess-P0-w1-sw" in out["problems"]
+
+
+def test_the_store_is_one_this_run_created():
+    """A dropped store must never be a store somebody else still runs on.
+
+    This file used to drop `s09_m5_c3_http` before creating it, so a sibling
+    run of the same file lost the store mid-study and the verifier then read
+    a torn study as a product defect. The name carries a per-run token, and
+    the run asserts the name appears exactly once in the DSN it hands the
+    study, so a truncated DSN cannot quietly point at another store.
+    """
+    database = create_disposable_db(RUN_TOKEN)
+
+    assert database.name.startswith("s09iso_c3pilot_"), database.name
+    assert database.dsn.count(database.name) == 1, database.dsn
+    drop_disposable_db(database)
+
+
+def test_the_store_survives_a_second_module_scope():
+    """Re-deriving the store must not reuse this module's database.
+
+    The collision that produced the original failures was two runs of this
+    file at once. Each run's fixture mints its own name, so a second fixture
+    can never observe or destroy the first one's database.
+    """
+    with disposable_db(RUN_TOKEN) as other:
+        assert other.name.startswith("s09iso_c3pilot_"), other.name

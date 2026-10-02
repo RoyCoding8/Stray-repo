@@ -1,0 +1,93 @@
+{
+ "acquired": 5,
+ "acquired_arms": 6,
+ "acquired_use_records": 2,
+ "control_distinct": false,
+ "control_distinct_refusal": "refused: control is not distinct from the acquired arm: 1 task(s) ran one strategy on both arms; 1 task(s) returned a byte-identical candidate on both arms, of which 1 took different walks and are reported as converged; 16 task(s) are on one arm only",
+ "control_records": 18,
+ "cost": {
+  "dispatch_allowance": "REPORTED",
+  "internal_held_units": "REPORTED",
+  "provider_billing": "NOT_REPORTED",
+  "reservation_allowance": "REPORTED"
+ },
+ "earned": 5,
+ "gate_split": {
+  "converged": 1,
+  "differing_budget": 0,
+  "one_arm_returned_no_candidate": 0,
+  "paired_tasks": 2,
+  "same_candidate": 1,
+  "same_executed_policy": 0,
+  "same_source": 0,
+  "same_strategy": 1,
+  "same_walk": 0,
+  "unmeasured_walk": 0,
+  "unnamed_executed_policy": 0,
+  "unpaired_tasks": 16
+ },
+ "guard": {
+  "ceiling": 12,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 9,
+  "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 9,
+  "version": "invl02-live-v1"
+ },
+ "mean_acquired_minus_control": -0.08333333333333333,
+ "utility": "CONTROL_WINS",
+ "verdicts": {
+  "acquisition_basis": "acquisition bytes and receipts under /home/ubuntu/AI/Agent-Society-v2/reports/evidence/invl02_liveacq_r3: freeze policy identities, construction requests, operation receipts and sealed use records",
+  "live_acquisition": "unproven",
+  "live_acquisition_legs": [
+   {
+    "evidence": "no arm in the freeze claims artifact origin 'model-acquired'",
+    "name": "declared_model_matches_freeze",
+    "status": "fail"
+   },
+   {
+    "evidence": "no arm in the freeze claims artifact origin 'model-acquired'",
+    "name": "bound_equals_candidate",
+    "status": "fail"
+   },
+   {
+    "evidence": "no arm in the freeze claims artifact origin 'model-acquired'",
+    "name": "executed_bytes_are_the_bound_policy",
+    "status": "fail"
+   },
+   {
+    "evidence": "no arm in the freeze claims artifact origin 'model-acquired'",
+    "name": "dispatch_was_live_not_a_recording",
+    "status": "fail"
+   },
+   {
+    "evidence": "no arm in the freeze claims artifact origin 'model-acquired'",
+    "name": "no_earned_acquired_arm",
+    "status": "fail"
+   }
+  ],
+  "task_utility": "not_comparable",
+  "task_utility_basis": "paired sealed-use records under /home/ubuntu/AI/Agent-Society-v2/reports/evidence/invl02_liveacq_r3, normalized by the freeze's own metric rule 'normalized_reduction'",
+  "task_utility_legs": [
+   {
+    "evidence": "C executed source hashes to 560e17fbfb51, its bound policy is bbeb412d41fb; C executed source hashes to 6e03638cd710, its bound policy is bbeb412d41fb; C executed source hashes to e4c10cafe8a9, its bound policy is bbeb412d41fb",
+    "name": "arms_execute_their_own_bound_policy",
+    "status": "fail"
+   },
+   {
+    "evidence": "freeze metric_rule={\"quality\": \"normalized_reduction\"}",
+    "name": "normalization_rule_stated",
+    "status": "pass"
+   },
+   {
+    "evidence": "acquired arms [], authored arms ['C']",
+    "name": "shared_tasks_present",
+    "status": "fail"
+   }
+  ]
+ }
+}

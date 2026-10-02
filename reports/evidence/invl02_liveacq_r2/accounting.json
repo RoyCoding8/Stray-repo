@@ -1,0 +1,72 @@
+{
+ "per_store": {
+  "r1": {
+   "success": 2,
+   "unknown": 0,
+   "failure": 0,
+   "input_tokens": 439,
+   "output_tokens": 1594
+  },
+  "r2_refused": {
+   "success": 0,
+   "unknown": 1,
+   "failure": 0,
+   "input_tokens": 0,
+   "output_tokens": 0
+  },
+  "r2_comparison": {
+   "success": 0,
+   "unknown": 2,
+   "failure": 0,
+   "input_tokens": 0,
+   "output_tokens": 0
+  },
+  "r2": {
+   "success": 8,
+   "unknown": 4,
+   "failure": 1,
+   "input_tokens": 1454,
+   "output_tokens": 4433
+  }
+ },
+ "totals": {
+  "success": 10,
+  "unknown": 7,
+  "failure": 1
+ },
+ "input_tokens": 1893,
+ "output_tokens": 6027,
+ "receipts_reporting_billed_not_false": 4,
+ "held_units": {
+  "operations_still_dispatching": 0,
+  "total_operations": 13,
+  "note": "held units released; nothing is left mid-dispatch"
+ },
+ "currencies": {
+  "dispatch_allowance": {
+   "spent_sends": 4,
+   "refunded_pre_gateway": 0,
+   "note": "two earned acquisitions plus two probe dispatches; a lost response still counts as a send"
+  },
+  "internal_reservation": {
+   "authorized": 749152,
+   "note": "derived per campaign from PROMPT_BUDGET_CHARS//4 + max_output_tokens, not a hand-set number"
+  },
+  "provider_billing": {
+   "status": "UNMEASURED",
+   "input_tokens": 1893,
+   "output_tokens": 6027,
+   "note": "every settled receipt carries billed=null and charge_units=null, so cost is not zero, it is unreported"
+  },
+  "held_units": {
+   "operations_still_dispatching": 0,
+   "total_operations": 13,
+   "note": "held units released; nothing is left mid-dispatch"
+  }
+ },
+ "lost_responses": {
+  "count": 7,
+  "status": "UNCERTAIN",
+  "note": "receipts with outcome unknown and error_kind timeout; the provider may or may not have answered and billed"
+ }
+}

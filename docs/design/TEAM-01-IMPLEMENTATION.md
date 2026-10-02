@@ -1,6 +1,6 @@
 # Team 01: checked collaboration and retained coordination
 
-Design selected 2026-09-12 against worker `cb8a62a`. Stage 8.6, first bounded implementation and experiment; no team advantage or general learning claim. Read [temporary-team semantics](TEMPORARY-TEAMS.md) for the broader architecture. The [worker packet](../../WORKER-COGNITIVE-BATCH-02.md) assigns this slice and an independent live representation lane.
+Design selected 2026-09-12 against worker `cb8a62a`. Stage 8.6, first bounded implementation and experiment; no team advantage or general learning claim. Read [temporary-team semantics](TEMPORARY-TEAMS.md) for the broader architecture. The [worker packet](../HISTORY.md#worker-cognitive-batch-02) assigns this slice and an independent live representation lane.
 
 The user confirms live execution is available to the worker. This assignment includes required live development, model-derived template construction, all 48 evaluation episodes and all 24 transfer episodes, plus the outstanding live representation campaign. LIVE-01–07 in the worker packet are completion obligations. Doubled mechanism tests remain necessary engineering evidence but do not substitute for these runs. An observed external blocker leaves the affected obligation open; a completed live negative is a valid result.
 

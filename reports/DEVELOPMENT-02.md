@@ -1,6 +1,6 @@
 # DEVELOPMENT-02 — memory/context slice (deterministic)
 
-Current status update, 2026-09-11: the historical deterministic report below is followed by the [live campaign](workstreams/d02live-live.md) at available tip `3857ec4`. Live access and fallback execution have now been exercised. The [review assessment](../reviews/DEVELOPMENT-02-LIVE-EVIDENCE.md) qualifies the all-zero interpretation, missing raw evidence and billing/accounting claims; current work is the [bounded evidence smoke](../WORKER-LIVE-EVIDENCE-PROMPT.md). Statements below about absent live access describe the earlier delivery.
+Current status update, 2026-09-11: the historical deterministic report below is followed by the [live campaign](workstreams/d02live-live.md) at available tip `3857ec4`. Live access and fallback execution have now been exercised. The [review assessment](../reviews/DEVELOPMENT-02-LIVE-EVIDENCE.md) qualifies the all-zero interpretation, missing raw evidence and billing/accounting claims; current work is the [bounded evidence smoke](../docs/HISTORY.md#worker-live-evidence-prompt). Statements below about absent live access describe the earlier delivery.
 
 Coordinator branch: `codex/implementation-development-02` from `e1b95a6`;
 design packet `origin/codex/development-design-02` merged (tip `0816ebf`).

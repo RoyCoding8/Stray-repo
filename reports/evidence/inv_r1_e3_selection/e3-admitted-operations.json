@@ -1,0 +1,394 @@
+{
+ "claim": "E3's decisions reach real admitted operations, written by the E3 path itself, and read back out of the receipts table by SELECT.",
+ "connected": {
+  "admitted_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 0,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 1,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 2,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 3,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-01"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 8,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 3,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_outcome": "success",
+    "seq": 4,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   }
+  ],
+  "bindings": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 0,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "software",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 1,
+    "settled": true,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "receipt_outcome": "success",
+    "seq": 2,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 2,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "receipt_outcome": "success",
+    "seq": 3,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-01"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 8,
+    "dispatch_state": "observed",
+    "family": "graph",
+    "max_queries": 3,
+    "operation_id": "ad01-e3w0-e2a8617c6346-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "receipt_outcome": "success",
+    "seq": 4,
+    "settled": true,
+    "target": "ad01-w0-dev-gr-00"
+   }
+  ],
+  "budget": 40,
+  "decisions_executed": 5,
+  "decisions_made": 5,
+  "measure_digest": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8",
+  "operations_in_store": 5,
+  "operations_written_by_the_run": 5,
+  "policy_version": "ad01-policy-portfolio-agenda-v1",
+  "receipts": [
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3w0-e2a8617c6346-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-sw-ddmin",
+       "charge": 7,
+       "family": "software",
+       "max_queries": 2,
+       "target": "ad01-w0-dev-sw-00"
+      }
+     }
+    },
+    "content_digest": "7e66be85a6a0a6013a9ad30b423fd0f59f5bff3b7958ffb26a215e5a24ab8f5d",
+    "operation_id": "ad01-e3w0-e2a8617c6346-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op0-ad01-w0-dev-sw-00-seed-sw-ddmin-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3w0-e2a8617c6346-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-sw-greedy",
+       "charge": 7,
+       "family": "software",
+       "max_queries": 2,
+       "target": "ad01-w0-dev-sw-01"
+      }
+     }
+    },
+    "content_digest": "5c3d7a52e284bdff1044a38d9a10c08b1458535c3a9fa36f64e0da65e2f29ad1",
+    "operation_id": "ad01-e3w0-e2a8617c6346-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op1-ad01-w0-dev-sw-01-seed-sw-greedy-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3w0-e2a8617c6346-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-ddmin",
+       "charge": 7,
+       "family": "graph",
+       "max_queries": 2,
+       "target": "ad01-w0-dev-gr-00"
+      }
+     }
+    },
+    "content_digest": "47128dfca5b32eeefcfc4712096ad192c2ce599cf40eb250c80090f1fcc9dab0",
+    "operation_id": "ad01-e3w0-e2a8617c6346-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op2-ad01-w0-dev-gr-00-seed-gr-ddmin-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3w0-e2a8617c6346-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-greedy",
+       "charge": 7,
+       "family": "graph",
+       "max_queries": 2,
+       "target": "ad01-w0-dev-gr-01"
+      }
+     }
+    },
+    "content_digest": "03392216fe0641a5f6b49bebcdeffb245d20da783ade7551aa6167b0ffb0f247",
+    "operation_id": "ad01-e3w0-e2a8617c6346-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op3-ad01-w0-dev-gr-01-seed-gr-greedy-d2"
+   },
+   {
+    "content": {
+     "command": "note",
+     "idempotency_key": "ad01-e3w0-e2a8617c6346-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+     "payload": {
+      "decision": {
+       "capability_id": "seed-gr-greedy",
+       "charge": 8,
+       "family": "graph",
+       "max_queries": 3,
+       "target": "ad01-w0-dev-gr-00"
+      }
+     }
+    },
+    "content_digest": "bdad81ced640114aa3e93fd2cd20c97211e327bf8b74fb2453c215a7fa8df92a",
+    "operation_id": "ad01-e3w0-e2a8617c6346-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3",
+    "outcome": "success",
+    "receipt_identity": "inline:ad01-e3w0-e2a8617c6346-op4-ad01-w0-dev-gr-00-seed-gr-greedy-d3"
+   }
+  ],
+  "refused_decisions": [],
+  "refused_operations": [],
+  "run_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 0,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 1,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 2,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 3,
+    "target": "ad01-w0-dev-gr-01"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 8,
+    "family": "graph",
+    "max_queries": 3,
+    "seq": 4,
+    "target": "ad01-w0-dev-gr-00"
+   }
+  ],
+  "run_yield": {
+   "diagnoses_correct": 3,
+   "held_out_reduction": 0.14505654113497252,
+   "resources_used": 36,
+   "retained_behaviors": 3
+  },
+  "sever": false,
+  "stop_reason": "budget exhausted",
+  "the_run_admitted_these_itself": "operations_written_by_the_run is measured across the run and the receipts are SELECTed back out of the store. Nothing here binds a decision to an operation after the fact.",
+  "world": 0
+ },
+ "defect_repaired": "run_investigations took no dsn, so _run_development built a DecisionConsumer with no store and no run ever wrote an operation.",
+ "finding": "N-51",
+ "science_unchanged": {
+  "measure_digest": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8",
+  "note": "Wiring the store changed no number. Every frozen measure at every budget is byte-identical to the run at 52235a6, before the fix. The two-sided result stands as recorded: the agenda retains and diagnoses more at every budget, the control holds out better at 20 and 40, and no benefit is claimed."
+ },
+ "severed": {
+  "admitted_decisions": [],
+  "bindings": [],
+  "budget": 40,
+  "decisions_executed": 4,
+  "decisions_made": 4,
+  "measure_digest": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8",
+  "operations_in_store": 0,
+  "operations_written_by_the_run": 0,
+  "policy_version": "ad01-policy-portfolio-agenda-v1",
+  "receipts": [],
+  "refused_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 0,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 1,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 2,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "disposition": "no-candidate",
+    "fallback_reason": "decision consumer disconnected: investigation portfolio severed for the control condition",
+    "operation_id": "",
+    "seq": 3,
+    "target": "ad01-w0-dev-gr-01"
+   }
+  ],
+  "refused_operations": [],
+  "run_decisions": [
+   {
+    "capability_id": "seed-sw-ddmin",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 0,
+    "target": "ad01-w0-dev-sw-00"
+   },
+   {
+    "capability_id": "seed-sw-greedy",
+    "charge": 7,
+    "family": "software",
+    "max_queries": 2,
+    "seq": 1,
+    "target": "ad01-w0-dev-sw-01"
+   },
+   {
+    "capability_id": "seed-gr-ddmin",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 2,
+    "target": "ad01-w0-dev-gr-00"
+   },
+   {
+    "capability_id": "seed-gr-greedy",
+    "charge": 7,
+    "family": "graph",
+    "max_queries": 2,
+    "seq": 3,
+    "target": "ad01-w0-dev-gr-01"
+   }
+  ],
+  "run_yield": {
+   "diagnoses_correct": 0,
+   "held_out_reduction": 0.0,
+   "resources_used": 28,
+   "retained_behaviors": 0
+  },
+  "sever": true,
+  "stop_reason": "portfolio exhausted",
+  "the_run_admitted_these_itself": "operations_written_by_the_run is measured across the run and the receipts are SELECTed back out of the store. Nothing here binds a decision to an operation after the fact.",
+  "world": 0
+ }
+}

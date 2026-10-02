@@ -1,0 +1,292 @@
+[
+ {
+  "g": 1,
+  "file": "tests/test_dev01_ops.py",
+  "test": "test_deterministic_episode_passes_end_to_end"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_dev01_ops.py",
+  "test": "test_record_carries_source_revision - Asserti..."
+ },
+ {
+  "g": 1,
+  "file": "tests/test_dev01_ops.py",
+  "test": "test_fixture_record_pins_effective_caps_and_bundle"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_dev02_context.py",
+  "test": "test_resume_carries_working_state - Asser..."
+ },
+ {
+  "g": 1,
+  "file": "tests/test_dev02_context.py",
+  "test": "test_revalidate_catches_working_state_change"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_invr3_export.py",
+  "test": "test_valid_pilot_verifies_from_independent_identities"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_invr3_export.py",
+  "test": "test_missing_use_record_fails_for_named_reason"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_invr3_export.py",
+  "test": "test_missing_transition_pair_fails_for_named_reason"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_invr3_export.py",
+  "test": "test_duplicate_use_record_fails_for_named_reason"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_invr3_export.py",
+  "test": "test_altered_query_totals_fail_for_named_reason"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_invr3_export.py",
+  "test": "test_omitted_correction_receipt_fails_for_named_reason"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_invr3_export.py",
+  "test": "test_missing_study_trajectory_fails_for_named_reason"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_broker_dbos.py",
+  "test": "test_record_step_replay_is_idempotent - Ass..."
+ },
+ {
+  "g": 1,
+  "file": "tests/test_broker_prepare.py",
+  "test": "test_model_exposure_scales_with_retries"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_broker_prepare.py",
+  "test": "test_sandbox_prepare_reserves_hard_ceiling"
+ },
+ {
+  "g": 1,
+  "file": "tests/test_agenda_repair.py",
+  "test": "test_repair_scan_converges_advanced_unsent"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_ec02ad_verif.py",
+  "test": "test_verif_ad01_sigkill_resume_same_campaign_no_dup_spend"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_ec02ad_verif.py",
+  "test": "test_verif_ad01_resume_spend_equals_direct_run"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_ec02ad_verif.py",
+  "test": "test_verif_fresh_checkout_premises_tracked_no_scratch_deps"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_ec02ad_verif.py",
+  "test": "test_verif_fresh_clone_import_and_collect"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_ec02ad_verif.py",
+  "test": "test_verif_original_probe_retired_stamp_channel_deleted"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_gateway_usage_unknown.py",
+  "test": "test_malformed_usage_preserves_partial_evidence_and_reservation[chat]"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_gateway_usage_unknown.py",
+  "test": "test_malformed_usage_preserves_partial_evidence_and_reservation[responses]"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_gateway_usage_unknown.py",
+  "test": "test_noncanonical_scale_does_not_settle_provider_charge[chat]"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_gateway_usage_unknown.py",
+  "test": "test_noncanonical_scale_does_not_settle_provider_charge[responses]"
+ },
+ {
+  "g": 2,
+  "file": "tests/test_steward_leases.py",
+  "test": "test_lease_expiry_refuses_stale_dispatch_and_fulfill_but_keeps_observation"
+ },
+ {
+  "g": 3,
+  "file": "tests/test_alee_learner.py",
+  "test": "test_cli_run_doubled_and_use_fresh_process"
+ },
+ {
+  "g": 3,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_acquired_execution_uses_broker_profile"
+ },
+ {
+  "g": 3,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_broker_query_count_survives_replay"
+ },
+ {
+  "g": 3,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_store_backed_use_attributes_sandbox_operations"
+ },
+ {
+  "g": 3,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_failed_member_falls_back_with_attribution"
+ },
+ {
+  "g": 3,
+  "file": "tests/test_eacq_repair.py",
+  "test": "test_validation_child_work_comes_from_the_model"
+ },
+ {
+  "g": 3,
+  "file": "tests/test_eng_invb_dispatch.py",
+  "test": "test_from_settings_honors_responses_shape"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_inva_recovery.py",
+  "test": "test_receipt_identity_bound_to_operation"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_invc3_export.py",
+  "test": "test_export_emits_doubles_transitions - As..."
+ },
+ {
+  "g": 4,
+  "file": "tests/test_invc3_export.py",
+  "test": "test_replay_refuses_mismatches_from_export"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_invc3_export.py",
+  "test": "test_byte_identity_at_receipt_validation_retention_and_use"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_invc3_export.py",
+  "test": "test_cli_export_and_offline_replay - Asser..."
+ },
+ {
+  "g": 4,
+  "file": "tests/test_invc3_study.py",
+  "test": "test_complete_study_on_recordings_with_recompute"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_invd2_settle.py",
+  "test": "test_unbilled_model_call_settles_at_measured_tokens"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_invr1_study_entry.py",
+  "test": "test_cap_sheet_derived_and_billing_split_and_no_replenish"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_m4_clean_baseline.py",
+  "test": "test_the_live_path_now_dispatches_and_settles"
+ },
+ {
+  "g": 4,
+  "file": "tests/test_m4_clean_baseline.py",
+  "test": "test_a_settled_receipt_is_joined_to_its_operation"
+ },
+ {
+  "g": 5,
+  "file": "tests/test_r01_deadline_ui.py",
+  "test": "test_shared_next_decision_matches_single_path"
+ },
+ {
+  "g": 5,
+  "file": "tests/test_r02_explearn.py",
+  "test": "test_deterministic_run_reports_acquisition_and_estimates"
+ },
+ {
+  "g": 7,
+  "file": "tests/test_dev01_compare.py",
+  "test": "test_dev06_abc_affordances_and_accounting"
+ },
+ {
+  "g": 7,
+  "file": "tests/test_rpr01_db.py",
+  "test": "test_lane_database_is_real_postgresql_16 - Ass..."
+ },
+ {
+  "g": 7,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_acquired_execution_uses_broker_profile"
+ },
+ {
+  "g": 7,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_broker_query_count_survives_replay"
+ },
+ {
+  "g": 7,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_store_backed_use_attributes_sandbox_operations"
+ },
+ {
+  "g": 7,
+  "file": "tests/test_bdr01_host_boundary.py",
+  "test": "test_failed_member_falls_back_with_attribution"
+ },
+ {
+  "g": 10,
+  "file": "tests/test_rpr13_endtoend.py",
+  "test": "test_no_candidate_path - AssertionError:..."
+ },
+ {
+  "g": 12,
+  "file": "tests/test_bacq_method.py",
+  "test": "test_run_use_executes_outside_menu_member_bytes"
+ },
+ {
+  "g": 12,
+  "file": "tests/test_team_live.py",
+  "test": "test_live_planner_falls_back_honestly_on_gateway_error"
+ },
+ {
+  "g": 13,
+  "file": "tests/test_m1_shared_executor.py",
+  "test": "test_default_method_fallback_reports_selected_identity"
+ },
+ {
+  "g": 16,
+  "file": "tests/test_s09_store_cleanup.py",
+  "test": "test_c_the_study_admission_path_has_no_production_caller[experiments]"
+ },
+ {
+  "g": 18,
+  "file": "tests/test_ag01_experiment.py",
+  "test": "test_duplicate_outoforder_wakeup_single_effect"
+ },
+ {
+  "g": 18,
+  "file": "tests/test_ag01_experiment.py",
+  "test": "test_duplicate_effect_decisions_charged"
+ }
+]

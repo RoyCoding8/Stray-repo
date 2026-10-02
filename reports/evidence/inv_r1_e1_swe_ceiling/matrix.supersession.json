@@ -1,0 +1,20 @@
+{
+  "artifact": "reports/evidence/inv_r1_e1_swe_ceiling/matrix.json",
+  "artifact_sha256": "5919b662b32e1c819ee0d9381d9f497c5d5bce922b2d3c66461f8ce56936542c",
+  "shape": "EDITS",
+  "verdict": "VOID",
+  "finding": "B2 / N-411",
+  "annotation": "reports/evidence/inv_r1_e1_swe_ceiling/ANNOTATION-B2-EDIT-INTENT.md",
+  "void_scope": [
+    {
+      "pointer": "$",
+      "reason": "60 of 468 rows were hand-edited after generation, and the edit produced a state the generator cannot produce. Measured against d422c93, exactly 60 rows differ and only in actions_emitted and turns, each by one dropped action. run_episode (experiments/ad01/s09_swe_world.py:531) exits three ways and is_terminal is session.is_repaired(), set at :381 only by a successful repair(), so a successful repair is always last in a trace. That law holds for 0 of 468 violations as generated and 4 of 468 as committed: the four are swe-held_out-token-gaps-6bcae7 under python-step L0-L3, each unrepaired with a trace ending in use/code.repair. All 14 other top-level keys, including per_family, paired (1872 entries) and derived_bounds, are byte-identical, so the 124/32/312 census and '16 of 24 families fully repaired' stand on both sides.",
+      "finding": "B2 / N-411"
+    }
+  ],
+  "surviving_claim": "The census survives even though the rows do not. Of 15 top-level keys only rows differs, and the outcome census is 124 repaired / 32 unrepaired / 312 refused on both sides, so every per-family rate a report quotes is unaffected. Total actions move from 47320 to 47260 and no report quotes that. The edit is void as a record of what the generator produced; it is not void as evidence of what somebody believed the artifact should say.",
+  "superseded_by": null,
+  "intact_at_ref": "d422c93",
+  "container_mislabelled": false,
+  "note": "intact_at_ref is the backward edge, and it is a stronger recovery than any successor: d422c93 and d183cbe^ are byte-identical (5167881 B, sha256 5928d4e1f66119a), so restoring the pre-edit file is a git cat-file rather than a re-run. A re-run at HEAD is the wrong route -- 5e368eb changed the writer's row shape, so it would produce a structurally different file rather than a corrected one. The measured edit rule, which ANNOTATION-B2-EDIT-INTENT.md states imprecisely, is: strip the trailing stop from every row whose trace contains a use code.repair AND which does not already end in one. 128 rows contain a repair, 68 already end in one, 60 were editable, and all 60 were edited."
+}

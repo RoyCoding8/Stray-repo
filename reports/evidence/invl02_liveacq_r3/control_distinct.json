@@ -1,0 +1,96 @@
+{
+ "distinct": false,
+ "gate": "control_distinct",
+ "raised": false,
+ "refusal": "refused: control is not distinct from the acquired arm: 1 task(s) ran one strategy on both arms; 1 task(s) returned a byte-identical candidate on both arms, of which 1 took different walks and are reported as converged; 16 task(s) are on one arm only",
+ "verdict": {
+  "converged": [
+   {
+    "candidate_digest": [
+     "0952268866694bb477a13b53835263750b860e97654cebf0e3f7a3dc60aa5f39"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-c20f2724"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "queries": {
+     "acquired": 9,
+     "control": 4
+    },
+    "task_id": "ad01-w0-within-sw-00",
+    "walk_digest": {
+     "acquired": "691c65c84c86d30d19bcf618a67f7a625c7c0b703083c4ec0eea24d4a6ff1b02",
+     "control": "a4c324b149ddaa71cc821e91bdf3fa54922d034026d216d9c8ed34364b41f28a"
+    }
+   }
+  ],
+  "differing_budget": [],
+  "distinct": false,
+  "one_arm_returned_no_candidate": [],
+  "paired_tasks": [
+   "ad01-w0-within-gr-00",
+   "ad01-w0-within-sw-00"
+  ],
+  "refusal": "refused: control is not distinct from the acquired arm: 1 task(s) ran one strategy on both arms; 1 task(s) returned a byte-identical candidate on both arms, of which 1 took different walks and are reported as converged; 16 task(s) are on one arm only",
+  "same_candidate": [
+   {
+    "candidate_digest": [
+     "0952268866694bb477a13b53835263750b860e97654cebf0e3f7a3dc60aa5f39"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-c20f2724"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "task_id": "ad01-w0-within-sw-00"
+   }
+  ],
+  "same_executed_policy": [],
+  "same_source": [],
+  "same_strategy": [
+   {
+    "executed": {
+     "acquired": [
+      "acquired-sw-c20f2724"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "strategy": [
+     "ddmin"
+    ],
+    "task_id": "ad01-w0-within-sw-00"
+   }
+  ],
+  "same_walk": [],
+  "unmeasured_walk": [],
+  "unnamed_executed_policy": [],
+  "unpaired_tasks": [
+   "ad01-w0-transfer-gr-00",
+   "ad01-w0-transfer-sw-00",
+   "ad01-w0-within-gr-01",
+   "ad01-w0-within-sw-01",
+   "ad01-w1-transfer-gr-00",
+   "ad01-w1-transfer-sw-00",
+   "ad01-w1-within-gr-00",
+   "ad01-w1-within-gr-01",
+   "ad01-w1-within-sw-00",
+   "ad01-w1-within-sw-01",
+   "ad01-w2-transfer-gr-00",
+   "ad01-w2-transfer-sw-00",
+   "ad01-w2-within-gr-00",
+   "ad01-w2-within-gr-01",
+   "ad01-w2-within-sw-00",
+   "ad01-w2-within-sw-01"
+  ],
+  "version": "ad01-control-distinctness/2"
+ }
+}

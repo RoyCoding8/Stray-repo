@@ -1,0 +1,19 @@
+{
+  "artifact": "reports/evidence/inv_r1_e3_selection/e3-store-witness.json",
+  "artifact_sha256": "42d16d458d304dbdfed6a622226549efd063289322d917e029a86669afe4dbb5",
+  "shape": "SCOPE",
+  "verdict": "PARTIALLY_VOID",
+  "finding": "B1 / B5",
+  "annotation": "reports/evidence/inv_r1_e3_selection/ANNOTATION-B1-CAUSE.md",
+  "void_scope": [
+    {
+      "pointer": "$.severed",
+      "reason": "A record the committed code cannot produce. $.severed.bindings is [] and $.severed.operations_in_store is 0, but four populated receipts with outcome 'success' sit beside them. At 52235a6 the loop that fills bindings has no sever guard and runs on run.executions in both arms, and sever was applied only at serialization, asymmetrically: 'bindings': [] if sever else bindings hides the local list at line 609, while 'receipts': read_back(dsn, [b['operation_id'] for b in bindings]) reads it and is still full at line 611. read_back short-circuits on an empty id list, so that commit as committed could have produced bindings: [] and receipts: [], never four severed receipts.",
+      "finding": "B1 / B5"
+    }
+  ],
+  "surviving_claim": "Only $.severed is void, and only because it is unreachable rather than corrupt. $.connected is unaffected, and the file's measure_digest ce5a140aff83bccc matches the withdrawn ladder's -- which is what makes this the same N-80 result seen from a second angle. The unsevered replacement at reports/evidence/inv_r1_e3_selection_regen_v2/e3-store-witness-v2.json records bindings: 0 AND receipts: 0 together and remains correct. Editing $.severed to receipts: [] would delete the only proof the defect existed, which is why it is annotated rather than repaired.",
+  "superseded_by": "reports/evidence/inv_r1_e3_selection_regen_v2/e3-store-witness-v2.json",
+  "container_mislabelled": false,
+  "note": "The cause recorded in ANNOTATION-B1-B5.md -- that severing bindings emptied the list passed to read_back -- is wrong, and wrong in the direction that matters: under it the receipts could never have been written. They were written. ANNOTATION-B1-CAUSE.md carries the measured cause; this marker records only which part of the artifact is void."
+}

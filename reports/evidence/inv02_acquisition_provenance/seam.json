@@ -1,0 +1,62 @@
+{
+ "lane_conflicts": {
+  "codex/review-s0-s3-02": "1603 behind edf3649, 61 ahead (diverged)",
+  "codex/stage-09-architecture-synthesis": "858 behind edf3649, 0 ahead",
+  "note": "Both branches edit trajectory.py, policy_step.py, doubles.py and control_distinctness.py. Neither is a live lane on this worktree, but both will conflict on merge."
+ },
+ "live_route_status": {
+  "SETTLEMENT_EXPECTED_ROUTE": {
+   "name": "SETTLEMENT_EXPECTED_ROUTE",
+   "present": false
+  },
+  "SETTLEMENT_GATEWAY_ENDPOINT": {
+   "name": "SETTLEMENT_GATEWAY_ENDPOINT",
+   "present": false
+  },
+  "SETTLEMENT_GATEWAY_KEY": {
+   "name": "SETTLEMENT_GATEWAY_KEY",
+   "present": false
+  },
+  "conclusion": "No live credential or pinned route is present in this worktree's environment, so _v1_select_provider('live') cannot return an HttpGatewayAdapter here. The live path exists and is wired; it is not reachable from this shell.",
+  "models_endpoint": "GET /v1/models -> {\"error\":{\"message\":\"invalid api key\"}}, so the router is up and enforcing auth",
+  "router_reachable": "GET http://127.0.0.1:4000/health -> {\"status\":\"ok\"}"
+ },
+ "measured_at_commit": "e34d00c1138324d46e9807bbce8fac68bdc0cb32",
+ "origin_is_declared_not_earned": {
+  "already_available_but_unused": "POLICY_ORIGINS already contains 'fixture-stand-in' (experiments/ad01/policy_step.py:197), used today only by test fixtures.",
+  "verification": "experiments/ad01/policy_step.py:300 verify_policy_record checks only that origin is in POLICY_ORIGINS. It never asks whether a model produced the bytes.",
+  "writers": [
+   "experiments/ad01/construct.py:362 (gate dry-run)",
+   "experiments/ad01/construct.py:463 (returned artifact)",
+   "experiments/ad01/trajectory.py:863 (frozen candidate)",
+   "experiments/ad01/trajectory.py:980 (bound-policy replay)",
+   "experiments/ad01/control_arm.py:497 (acquired-arm identity block)",
+   "experiments/ad01/e2_replication.py:1121"
+  ]
+ },
+ "question": "What does the construction seam actually do, and is a real acquisition possible now that live sends complete?",
+ "the_seam": {
+  "acquired_arm_bytes_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+  "acquired_arm_bytes_source": "experiments/doubles.py:74 ACQUIRED_ORDER_SOURCE",
+  "construction_calls_made": 1,
+  "member_records_carry_origin_field": false,
+  "same_digest_named_for_both_members": true,
+  "who_serves_them": {
+   "chosen_when": "provider != 'live' (default --provider recording)",
+   "constructor": "scripts/inv01_study.py:299 and :1079",
+   "function": "experiments.doubles.InvCQualificationDouble.infer",
+   "graph_stream_default": "same, 4x",
+   "line": 281,
+   "recorded_as": "gateway.api = 'recording-double' (scripts/inv01_study.py:642), model='inv01-study-double'",
+   "software_stream_default": "4x construction_text(), each defaulting entry=ACQUIRED_ORDER_SOURCE",
+   "stream_selected_by": "_stream(operation_id) -> 'software'|'graph'"
+  },
+  "why_it_reaches_the_member": [
+   "scripts/inv01_study.py:1078-1079 _v1_select_provider returns InvCQualificationDouble whenever provider != 'live'.",
+   "The double's construction streams are pre-seeded with construction_text(), whose entry defaults to ACQUIRED_ORDER_SOURCE.",
+   "construct._call sends the real prompt through broker.ensure_operation + broker.dispatch_operation, so the send is real, the receipt is real, and the operation is settled durably.",
+   "The bytes that come back are the constant, so _evaluate parses and gates them successfully and _member/construct_policy retain them.",
+   "Nothing between the broker and make_policy_artifact inspects which adapter answered."
+  ]
+ }
+}

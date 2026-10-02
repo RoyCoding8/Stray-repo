@@ -1,0 +1,420 @@
+{
+ "ad01-ad01-ctl-use-ad01-w0-transfer-gr-00-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w0-transfer-gr-00-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w0-transfer-gr-00-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w0-transfer-sw-00-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w0-transfer-sw-00-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w0-transfer-sw-00-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w0-within-gr-00-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w0-within-gr-00-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w0-within-gr-00-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w0-within-gr-01-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w0-within-gr-01-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w0-within-gr-01-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w0-within-sw-00-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w0-within-sw-00-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w0-within-sw-00-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w0-within-sw-01-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w0-within-sw-01-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w0-within-sw-01-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w1-transfer-gr-00-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w1-transfer-gr-00-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w1-transfer-gr-00-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w1-transfer-sw-00-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w1-transfer-sw-00-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w1-transfer-sw-00-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w1-within-gr-00-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w1-within-gr-00-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w1-within-gr-00-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w1-within-gr-01-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w1-within-gr-01-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w1-within-gr-01-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w1-within-sw-00-ctl-software-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w1-within-sw-00-ctl-software-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w1-within-sw-00-ctl-software-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w1-within-sw-01-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w1-within-sw-01-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w1-within-sw-01-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w2-transfer-gr-00-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w2-transfer-gr-00-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w2-transfer-gr-00-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w2-transfer-sw-00-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w2-transfer-sw-00-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w2-transfer-sw-00-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w2-within-gr-00-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w2-within-gr-00-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w2-within-gr-00-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w2-within-gr-01-ctl-graph-greedy": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w2-within-gr-01-ctl-graph-greedy",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w2-within-gr-01-ctl-graph-greedy_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w2-within-sw-00-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w2-within-sw-00-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w2-within-sw-00-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-ad01-ctl-use-ad01-w2-within-sw-01-ctl-software-ddmin": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-ad01-ctl-use-ad01-w2-within-sw-01-ctl-software-ddmin",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-ctl-use-ad01-w2-within-sw-01-ctl-software-ddmin_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": true,
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init",
+    "usage": {
+     "billed": null,
+     "charge_scale": null,
+     "charge_units": null,
+     "input_tokens": 1764,
+     "model_calls": 1,
+     "output_tokens": 562,
+     "provider_enforced_ceiling": null
+    }
+   }
+  ]
+ },
+ "ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-validate-l1-init": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-validate-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-validate-l1-init_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-r3acq-t0-ad01-w0-within-sw-00-use-ad01-w0-within-sw-00-acquired-sw-c20f2724": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-r3acq-t0-ad01-w0-within-sw-00-use-ad01-w0-within-sw-00-acquired-sw-c20f2724",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-r3acq-t0-ad01-w0-within-sw-00-use-ad01-w0-within-sw-00-acquired-sw-c20f2724_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": true,
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init",
+    "usage": {
+     "billed": null,
+     "charge_scale": null,
+     "charge_units": null,
+     "input_tokens": 1522,
+     "model_calls": 1,
+     "output_tokens": 874,
+     "provider_enforced_ceiling": null
+    }
+   }
+  ]
+ },
+ "ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-validate-l1-init": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-validate-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-validate-l1-init_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-r3acq-t1-ad01-w0-within-gr-00-use-ad01-w0-within-gr-00-acquired-gr-3df03ec1": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-r3acq-t1-ad01-w0-within-gr-00-use-ad01-w0-within-gr-00-acquired-gr-3df03ec1",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-r3acq-t1-ad01-w0-within-gr-00-use-ad01-w0-within-gr-00-acquired-gr-3df03ec1_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-r3acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-r3acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "failure",
+    "receipt_identity": "gw:ad01-r3acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init:observed-provider-failure",
+    "usage": {
+     "billed": null,
+     "charge_scale": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": true,
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init",
+    "usage": {
+     "billed": null,
+     "charge_scale": null,
+     "charge_units": null,
+     "input_tokens": 1522,
+     "model_calls": 1,
+     "output_tokens": 849,
+     "provider_enforced_ceiling": null
+    }
+   }
+  ]
+ },
+ "ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-validate-l1-init": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-validate-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-validate-l1-init_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": true,
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init",
+    "usage": {
+     "billed": null,
+     "charge_scale": null,
+     "charge_units": null,
+     "input_tokens": 1848,
+     "model_calls": 1,
+     "output_tokens": 1142,
+     "provider_enforced_ceiling": null
+    }
+   }
+  ]
+ },
+ "ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-validate-l1-init": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-validate-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-validate-l1-init_exec-default.result",
+    "usage": null
+   }
+  ]
+ },
+ "ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": true,
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init",
+    "usage": {
+     "billed": null,
+     "charge_scale": null,
+     "charge_units": null,
+     "input_tokens": 1522,
+     "model_calls": 1,
+     "output_tokens": 881,
+     "provider_enforced_ceiling": null
+    }
+   }
+  ]
+ },
+ "ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-validate-l1-init": {
+  "effect": "sandbox-exec",
+  "operation_id": "ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-validate-l1-init",
+  "receipts": [
+   {
+    "model_meta_present": false,
+    "outcome": "success",
+    "receipt_identity": "local:ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-validate-l1-init_exec-default.result",
+    "usage": null
+   }
+  ]
+ }
+}

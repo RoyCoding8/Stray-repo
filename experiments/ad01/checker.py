@@ -13,7 +13,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from experiments.representation import checkers, graphs, software
+from experiments.representation import checkers
 
 from . import worlds
 
@@ -33,12 +33,6 @@ def _check(task: dict, candidate: dict) -> dict:
     if task["family"] == "software":
         return checkers.check_software(task, candidate)
     return checkers.check_graph(task, candidate)
-
-
-def _measure(task: dict, candidate: dict) -> int:
-    if task["family"] == "software":
-        return software.measure(candidate["ops"])
-    return graphs.measure(candidate)
 
 
 def _expected_cells(root) -> set:
@@ -99,10 +93,37 @@ def _verify_record(record: dict, root, unevaluable: list) -> list:
     if task["family"] != family:
         problems.append("domain-mismatch %s" % rid)
         return problems
+    if record.get("status") == "refused":
+        # A use that never ran has no quality to verify, and giving it one of
+        # the four execution verdicts would claim a measurement nobody made.
+        # It is checked for the fields a refusal must still carry, and then
+        # left out of the quality path entirely.
+        problems.extend(_verify_refusal(record, rid))
+        return problems
     if record.get("verdict") not in VERDICTS:
         problems.append("bad-verdict %s" % rid)
         return problems
     return problems + _verify_quality(record, task, unevaluable)
+
+
+def _verify_refusal(record: dict, rid: str) -> list:
+    """What a refusal still has to be true about.
+
+    The reason is the whole content of a refusal, so an empty one is
+    indistinguishable from a crash. The executed fields must all read
+    `refused` too: a record that refused and also names a selected method is
+    the exact shape the distinct `status` was added to prevent.
+    """
+    problems = []
+    if not str(record.get("fallback_reason") or "").strip():
+        problems.append("refusal-without-reason %s" % rid)
+    for field in ("requested", "selected", "executed", "executed_source"):
+        if record.get(field) != "refused":
+            problems.append("refused-record-claims-execution %s" % rid)
+            break
+    if record.get("operation_ids"):
+        problems.append("refused-record-has-operations %s" % rid)
+    return problems
 
 
 def _verify_quality(record: dict, task: dict, unevaluable: list) -> list:
@@ -138,11 +159,15 @@ def _verify_quality(record: dict, task: dict, unevaluable: list) -> list:
         problems.append("quality-mismatch %s recomputed=%s" %
                         (rid, report["verdict"]))
         return problems
-    if _measure(task, output) != final:
+    true_initial, true_final = report["initial_measure"], report["measure"]
+    if initial != true_initial:
+        unevaluable.append("measure-mismatch %s" % rid)
+        return problems + _verify_costs(record, unevaluable)
+    if final != true_final:
         problems.append("measure-mismatch %s" % rid)
         return problems
     if record["verdict"] == "preserved":
-        want = (initial - final) / initial
+        want = (true_initial - true_final) / true_initial
     else:
         want = 0.0
     if abs(record.get("normalized_reduction", -1) - want) > 1e-9:

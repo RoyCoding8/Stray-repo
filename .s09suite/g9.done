@@ -1,0 +1,5 @@
+=== group 9  token=5e9b0009  files=2 ===
+  tests/test_rpr13_endtoend.py::test_invalid_selected_procedure_refuses_with_reason
+  tests/test_rpr13_endtoend.py::test_sensitivity_behavioral_not_cosmetic
+rc=0
+summary: 2 passed in 208.52s (0:03:28)

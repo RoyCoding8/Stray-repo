@@ -1,0 +1,39 @@
+{
+ "dispatch_allowance": {
+  "allocation_id": "s09iso-ctlwalk657f900a-root",
+  "by_effect": {
+   "model-inference": 40,
+   "sandbox-exec": 66
+  },
+  "dispatch_states": {
+   "observed": 106
+  },
+  "operations": 106,
+  "reconcile_states": {
+   "none": 106
+  },
+  "settled": 106,
+  "status": "REPORTED",
+  "uncertain": 0,
+  "uncertain_note": "an operation that was dispatched and is not settled may have spent a provider call whose response was lost; its cost is uncertain, not zero",
+  "unsettled": 0,
+  "unsettled_operation_ids": []
+ },
+ "internal_held_units": {
+  "free_units": 209216,
+  "note": "free = authorized minus consumed minus children's authorization",
+  "status": "REPORTED"
+ },
+ "provider_billing": {
+  "note": "a spend that cannot be read is UNMEASURED, never zero",
+  "reason": "recording doubles bill false; the run made no provider call to bill",
+  "status": "NOT_REPORTED"
+ },
+ "reservation_allowance": {
+  "campaign_units": 209216,
+  "campaigns": 6,
+  "source": "s09_cap_sheet unit allowance times the campaign count plus one per control arm",
+  "status": "REPORTED",
+  "study_units_authorized": 1673728
+ }
+}

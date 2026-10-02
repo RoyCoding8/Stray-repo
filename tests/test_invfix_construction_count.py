@@ -9,15 +9,14 @@ only, never shared owners' databases.
 from __future__ import annotations
 
 import json
-import os
 import sys
+import uuid
 from pathlib import Path
-
-import pytest
 
 from experiments.ad01 import construct as C
 from experiments.ad01 import trajectory, worlds
-from settlement import broker, db
+from experiments.ad01.s09_run_isolation import DB_PREFIX, admin_dsn, \
+    create_disposable_db, drop_disposable_db
 from settlement.gateway import (
     GatewayAdapter,
     GatewayStatus,
@@ -28,9 +27,9 @@ from settlement.gateway import (
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-PID = os.getpid()
-DSN = "dbname=inv_fix_construct_%d host=/var/run/postgresql user=ubuntu" % PID
+RUN_TOKEN = "invfix%s" % uuid.uuid4().hex[:8]
 MIGRATIONS = ROOT / "migrations"
+ADMIN = admin_dsn()
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -44,23 +43,13 @@ ACQUIRED_SOURCE = (
 
 
 def _fresh_db():
-    with db.connect(
-            "dbname=postgres host=/var/run/postgresql user=ubuntu",
-            autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute('DROP DATABASE IF EXISTS "inv_fix_construct_%d"'
-                        % PID)
-            cur.execute('CREATE DATABASE "inv_fix_construct_%d"' % PID)
-    db.apply_migrations(DSN, MIGRATIONS)
+    database = create_disposable_db(RUN_TOKEN, admin_dsn=ADMIN,
+                                    migrations_dir=MIGRATIONS)
+    return database, database.dsn
 
 
-def _drop_db():
-    with db.connect(
-            "dbname=postgres host=/var/run/postgresql user=ubuntu",
-            autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute('DROP DATABASE IF EXISTS "inv_fix_construct_%d"'
-                        % PID)
+def _drop_db(database):
+    drop_disposable_db(database, admin_dsn=ADMIN)
 
 
 class FlakyRepairAdapter(GatewayAdapter):
@@ -95,8 +84,29 @@ class FlakyRepairAdapter(GatewayAdapter):
         return False
 
 
+def test_the_store_is_named_for_this_run_not_for_this_process():
+    """A pid suffix is a collision once two runs share a pid across worktrees.
+
+    The whole suite ships in every worktree on one cluster, so a name derived
+    from the process id is shared state between a run in this worktree and a
+    sibling's. The name must carry the per-run token, and a second store
+    derived in the same process must not land on this one.
+    """
+    first = create_disposable_db(RUN_TOKEN, admin_dsn=ADMIN)
+    try:
+        second = create_disposable_db(RUN_TOKEN, admin_dsn=ADMIN)
+        try:
+            assert first.name.startswith(DB_PREFIX + "_"), first.name
+            assert RUN_TOKEN in first.name, first.name
+            assert second.name != first.name
+        finally:
+            drop_disposable_db(second, admin_dsn=ADMIN)
+    finally:
+        drop_disposable_db(first, admin_dsn=ADMIN)
+
+
 def test_repair_transport_call_stays_counted():
-    _fresh_db()
+    database, DSN = _fresh_db()
     try:
         cid = "ad01-w0-I-94"
         trajectory.authorize_campaign(DSN, cid, authorized=100000)
@@ -119,4 +129,4 @@ def test_repair_transport_call_stays_counted():
         assert member["lineage"]["calls_made"] == 3
         assert len(member["operation_ids"]) == 3
     finally:
-        _drop_db()
+        _drop_db(database)

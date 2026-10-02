@@ -12,10 +12,32 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
-STUDY_ID = "s09-pilot-n5"
-STUDY_ROOT = "s09-m5-pilot"
+STUDY_ID_FAMILY = "s09-pilot-n5"
+STUDY_ROOT_FAMILY = "s09-m5-pilot"
+STUDY_ID = STUDY_ID_FAMILY
+STUDY_ROOT = STUDY_ROOT_FAMILY
+NAMESPACE_TOKEN = ""
+
+
+def study_identity(token: str) -> tuple:
+    """Study id and root for one run, namespaced by a per-run token.
+
+    Derived from the immutable families rather than the current values, which
+    are reassigned per run: appending to the current value double-appended on
+    the second run, so two runs in one process produced `family-token-token`
+    and the same study id in a test and a different one in a study.
+    """
+    cleaned = "".join(ch for ch in str(token) if ch.isalnum() or ch in "-_")
+    if not cleaned:
+        raise ValueError(
+            "a study run needs a namespace token; two runs without distinct"
+            " tokens share operation ids and replay each other's receipts")
+    return ("%s-%s" % (STUDY_ID_FAMILY, cleaned),
+            "%s-%s" % (STUDY_ROOT_FAMILY, cleaned))
+
 ARMS = ["P0", "P1", "P2"]
 PER_EPISODE_STEPS = 6
 PER_EPISODE_CALLS = 6
@@ -306,6 +328,99 @@ METHOD_SOURCE = (
 )
 
 
+def _use_phase_policy_source(arm: str, entry: dict, freeze: dict,
+                             repertoire: dict | None = None):
+    """The arm's policy source for the use phase, or None when it has none.
+
+    The investigation policy and the use-phase policy are different jobs. The
+    investigation policy constructs a method; the use phase needs one that
+    names a method to run. Feeding the investigation policy to `run_use`
+    produced the refusal "admitted 'construct_method' action runs no task
+    method", which is the system telling the truth about a policy asked the
+    wrong question. So the use phase gets a policy built for its own step.
+    """
+    if arm == "P0":
+        return _use_phase_from(arm, repertoire)
+    if entry.get("status") != "available":
+        return None
+    source = entry.get("policy_source")
+    if not isinstance(source, str) or not source:
+        identity = (freeze.get("policy_identities") or {}).get(arm) or {}
+        source = identity.get("source")
+    if not isinstance(source, str) or not source:
+        return None
+    if "use_method" in source:
+        return source
+    return _use_phase_from(arm, repertoire)
+
+
+def _use_phase_from(arm: str, repertoire: dict | None = None) -> str:
+    """A use-phase policy naming a capability the repertoire actually holds.
+
+    The repertoire is built by the development campaigns, so its members are
+    constructed capabilities rather than seed ones. Naming a seed here produced
+    the refusal "admitted 'seed-sw-greedy' is absent from the repertoire",
+    which is the system correctly refusing a method it cannot run. So the
+    policy names the first member the repertoire really has.
+    """
+    method = "seed-sw-greedy"
+    if isinstance(repertoire, dict):
+        members = [m for m in (repertoire.get("members") or [])
+                   if isinstance(m, dict)]
+        for member in members:
+            candidate = member.get("capability_id")
+            if isinstance(candidate, str) and candidate:
+                method = candidate
+                break
+    return (USE_PHASE_POLICY_SOURCE
+            .replace("__FAMILY__", "software")
+            .replace("__METHOD__", method))
+
+
+def _use_phase_policy(arm: str, entry: dict, freeze: dict,
+                      repertoire: dict | None = None):
+    """Compile the arm's use-phase policy source into a callable, or None.
+
+    The result is a callable, not a source string. `run_use` calls the
+    policy, and a string that is merely stored raises at the call and is
+    recorded as a policy that failed rather than one that governed.
+    """
+    from experiments.ad01 import policy_step
+    source = _use_phase_policy_source(arm, entry, freeze, repertoire)
+    if not source:
+        return None
+    return policy_step.compile_step(source, origin="<use-policy:%s>" % arm)
+
+
+USE_PHASE_POLICY_SOURCE = (
+    "def STEP(view, state):\n"
+    "    task = view['task_content']\n"
+    "    if state.get('used'):\n"
+    "        return {'action': {'kind': 'stop', 'target': task['task_id'],\n"
+    "                  'inputs': {'reason': 'use complete'},\n"
+    "                  'evidence_refs': [], 'requested_resources': {}},\n"
+    "                'state': state}\n"
+    "    return {'action': {'kind': 'use_method',\n"
+    "                      'target': task['task_id'],\n"
+    "                      'inputs': {'method_id': '__METHOD__',\n"
+    "                                 'max_queries': 16},\n"
+    "                      'evidence_refs': [],\n"
+    "                      'requested_resources': {'queries': 16}},\n"
+    "            'state': {'used': True}}\n"
+)
+
+
+def _frozen_at() -> str:
+    """When the freeze was taken, so a receipt predating it is detectable.
+
+    Without this the namespace-age check is unmeasurable: nothing in the
+    bundle says when the run began, so a settled receipt from an earlier run
+    and one from this run are indistinguishable. A naive timestamp would be
+    wrong too, because the comparison happens against database timestamps.
+    """
+    return datetime.now(timezone.utc).isoformat()
+
+
 def _assess_specs() -> list:
     specs = []
     for arm in ARMS:
@@ -423,6 +538,7 @@ def build_freeze(*, gateway_mode: str = "doubles", gateway=None,
         "policy_identities": {},
         "method_repertoires": {},
         "phase": "initial",
+        "frozen_at": _frozen_at(),
     }
     from scripts.s09_verify import freeze_digest
     freeze["freeze_digest"] = freeze_digest(freeze)
@@ -458,6 +574,23 @@ def _policy_digests(dsn: str, cid: str) -> list:
         if isinstance(digest, str) and digest not in digests:
             digests.append(digest)
     return digests
+
+
+def _use_policy_provenance(record: dict) -> dict:
+    """What a use record can claim about the policy that governed it.
+
+    ``executed_policy_digest`` is written as ``executed or expected``, so the
+    scalar alone reads the same for a store read and a copy of the bound
+    digest. Persisting the list read back separates them, and the flag
+    states the case in one word so a reader never has to infer it.
+    """
+    observed = [digest for digest in record.get("executed_policy_digests", [])
+                if isinstance(digest, str) and digest]
+    claimed = record.get("executed_policy_digest", "")
+    return {"executed_policy_digests": observed,
+            "executed_policy_digest": claimed,
+            "policy_store_read": bool(observed),
+            "policy_actions": list(record.get("policy_actions") or [])}
 
 
 def _operation_requests(dsn: str, op_ids: list) -> list:
@@ -569,7 +702,8 @@ def _http_gateway(endpoint: str):
         raise ValueError("controlled gateway endpoint is required")
     costs = []
     adapter = HttpGatewayAdapter(
-        endpoint=endpoint, api="responses", client=_CostCapturingClient(costs))
+        endpoint=endpoint, api="responses", route_mode="paid",
+        client=_CostCapturingClient(costs))
     adapter._s09_costs = costs
     return adapter
 
@@ -939,7 +1073,12 @@ def _study_report(construction: dict, assessment: list,
 
 def run_study(dsn: str, out_dir, *,
               gateway_mode: str = "doubles", gateway=None,
-              model: str = "recorded-double") -> dict:
+              model: str = "recorded-double",
+              namespace_token: str = "") -> dict:
+    global STUDY_ID, STUDY_ROOT
+    from experiments.ad01 import trajectory as _trajectory
+    STUDY_ID, STUDY_ROOT = study_identity(namespace_token)
+    _trajectory.set_namespace_token(namespace_token)
     provided_gateway = gateway is not None
     if gateway_mode == "live":
         import os
@@ -1109,6 +1248,7 @@ def run_study(dsn: str, out_dir, *,
                     "operation_ids": [], "executed_source": executed,
                     "executed_source_digest": "", "policy_digest": "",
                     "policy_artifact_kind": None,
+                    **_use_policy_provenance(record),
                     "fallback_reason": "%s %s" % (prefix, entry.get(
                         "reason", "candidate unavailable"))})
             continue
@@ -1129,9 +1269,10 @@ def run_study(dsn: str, out_dir, *,
                               "queries": use_repertoire.get("queries", 0),
                               "members": [dict(member) for member in
                                           use_repertoire.get("members", [])]}
+        use_policy = _use_phase_policy(arm, entry, freeze, use_repertoire)
         saved_records = trajectory.run_use(
             use_repertoire, spec["world"], "I", list(spec["use_tasks"]), {},
-            dsn=dsn, allocation_id=allocation)
+            policy=use_policy, dsn=dsn, allocation_id=allocation)
         for task_id, saved in zip(spec["use_tasks"], saved_records):
             saved["record_id"] = "%s-%s" % (spec["episode_id"], task_id)
             saved["episode_id"] = spec["episode_id"]
@@ -1139,10 +1280,9 @@ def run_study(dsn: str, out_dir, *,
             saved["arm"] = arm
             saved["release_id"] = release if arm != "P0" else None
             saved["policy_digest"] = record.get("policy_digest", "")
-            saved["executed_policy_digest"] = record.get(
-                "executed_policy_digest", "")
             saved["policy_artifact_kind"] = record.get(
                 "policy_artifact_kind")
+            saved.update(_use_policy_provenance(record))
             source = saved.get("executed_source")
             saved["executed_source_digest"] = (
                 hashlib.sha256(source.encode()).hexdigest()
@@ -1260,6 +1400,7 @@ def main(argv: list | None = None) -> int:
         dest = ""
         mode = "doubles"
         model = "recorded-double"
+        token = ""
         index = 1
         while index < len(args):
             if args[index] == "--dsn":
@@ -1274,17 +1415,26 @@ def main(argv: list | None = None) -> int:
             elif args[index] == "--model":
                 model = args[index + 1]
                 index += 2
+            elif args[index] == "--namespace-token":
+                token = args[index + 1]
+                index += 2
             else:
                 index += 1
         if not dsn or not dest:
             print("usage: s09_pilot.py run --dsn DSN --out DIR"
+                  " --namespace-token T"
                   " [--mode doubles|live] [--model ID]", file=sys.stderr)
             return 2
         if mode == "live" and model == "recorded-double":
             print("live runs require an explicit --model", file=sys.stderr)
             return 2
+        if not token:
+            print("every run needs --namespace-token so two runs cannot"
+                  " mint the same operation ids", file=sys.stderr)
+            return 2
         try:
-            bundle = run_study(dsn, dest, gateway_mode=mode, model=model)
+            bundle = run_study(dsn, dest, gateway_mode=mode, model=model,
+                               namespace_token=token)
         except Exception as exc:
             print("s09-pilot refused: %s" % exc, file=sys.stderr)
             return 3

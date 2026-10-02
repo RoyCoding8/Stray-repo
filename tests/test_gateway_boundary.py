@@ -145,7 +145,9 @@ def test_missing_returned_route_metadata_is_refused() -> None:
     assert isinstance(result, GatewayError)
     assert result.kind == GatewayErrorKind.PROTOCOL
     assert result.retryable is False
-    assert result.usage == Usage(input_tokens=3, output_tokens=2)
+    assert result.usage == Usage(
+        input_tokens=3, output_tokens=2, provider_enforced_ceiling=None
+    )
     assert result.route_error == GatewayRouteError.RESPONSE_METADATA
     assert result.response_received is True
     assert result.response_status == 200

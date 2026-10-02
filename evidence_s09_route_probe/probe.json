@@ -1,0 +1,33 @@
+{
+ "caveats": [
+  "one call on one day, so this is a property of the route today and not a guarantee about the next one",
+  "a 16-token answer says nothing about what a longer construction response would cost",
+  "the reservation requirement is the store's denomination and is not a cost"
+ ],
+ "endpoint_control_plane": "127.0.0.1:4000",
+ "measured_at": "2026-09-26",
+ "probe_id": "s09probe-capability-01",
+ "purpose": "settle whether the free route reports a per-dispatch charge",
+ "reads_as": "the provider reports no charge for this dispatch, so a measured cost per dispatch is zero rather than unknown",
+ "receipt": {
+  "outcome": "success",
+  "receipt_identity": "gw:s09probe-capability-01",
+  "text": "ready",
+  "usage": {
+   "billed": null,
+   "charge_scale": null,
+   "charge_units": null,
+   "input_tokens": 23,
+   "model_calls": 1,
+   "output_tokens": 16,
+   "provider_enforced_ceiling": null
+  }
+ },
+ "request": {
+  "max_output_tokens": 16,
+  "prompt": "Reply with the single word: ready",
+  "reasoning_effort": "low"
+ },
+ "reservation_note": "the store still required 25 units to admit this dispatch, so a study needs reservation headroom even at a measured zero cost",
+ "route": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"
+}

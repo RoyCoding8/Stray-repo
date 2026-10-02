@@ -1,0 +1,439 @@
+{
+ "budgets": [
+  8,
+  14,
+  20,
+  30,
+  40,
+  60
+ ],
+ "crossover": {
+  "agenda_ahead_on_diagnoses_at": [
+   14,
+   40,
+   60
+  ],
+  "agenda_ahead_on_held_out_at": [
+   14,
+   60
+  ],
+  "agenda_ahead_on_retained_throughout": true,
+  "control_ahead_on_held_out_at": [
+   20,
+   40
+  ],
+  "control_saturates_from_budget": 20,
+  "control_schedule_width": 6,
+  "control_spend_plateau": 46,
+  "loose": [
+   {
+    "agenda_ahead_on_diagnoses": false,
+    "agenda_ahead_on_held_out": false,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 6,
+    "agenda_diagnoses": 4,
+    "agenda_held_out": 0.1568834941383961,
+    "agenda_resources": 45,
+    "agenda_retained": 4,
+    "budget": 20,
+    "control_choices": 6,
+    "control_diagnoses": 4,
+    "control_held_out": 0.25346042846042843,
+    "control_resources": 46,
+    "control_retained": 3,
+    "control_spent_its_whole_schedule": true
+   },
+   {
+    "agenda_ahead_on_diagnoses": true,
+    "agenda_ahead_on_held_out": false,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 12,
+    "agenda_diagnoses": 10,
+    "agenda_held_out": 0.21873911007897937,
+    "agenda_resources": 101,
+    "agenda_retained": 10,
+    "budget": 40,
+    "control_choices": 6,
+    "control_diagnoses": 4,
+    "control_held_out": 0.2512025012025012,
+    "control_resources": 46,
+    "control_retained": 3,
+    "control_spent_its_whole_schedule": true
+   },
+   {
+    "agenda_ahead_on_diagnoses": true,
+    "agenda_ahead_on_held_out": true,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 19,
+    "agenda_diagnoses": 17,
+    "agenda_held_out": 0.23355318610220568,
+    "agenda_resources": 167,
+    "agenda_retained": 17,
+    "budget": 60,
+    "control_choices": 6,
+    "control_diagnoses": 4,
+    "control_held_out": 0.12257495590828922,
+    "control_resources": 46,
+    "control_retained": 3,
+    "control_spent_its_whole_schedule": true
+   }
+  ],
+  "per_budget": [
+   {
+    "agenda_ahead_on_diagnoses": true,
+    "agenda_ahead_on_held_out": true,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 5,
+    "agenda_diagnoses": 3,
+    "agenda_held_out": 0.1450565411349725,
+    "agenda_resources": 36,
+    "agenda_retained": 3,
+    "budget": 14,
+    "control_choices": 4,
+    "control_diagnoses": 1,
+    "control_held_out": 0.0,
+    "control_resources": 27,
+    "control_retained": 0,
+    "control_spent_its_whole_schedule": false
+   },
+   {
+    "agenda_ahead_on_diagnoses": false,
+    "agenda_ahead_on_held_out": false,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 6,
+    "agenda_diagnoses": 4,
+    "agenda_held_out": 0.1568834941383961,
+    "agenda_resources": 45,
+    "agenda_retained": 4,
+    "budget": 20,
+    "control_choices": 6,
+    "control_diagnoses": 4,
+    "control_held_out": 0.25346042846042843,
+    "control_resources": 46,
+    "control_retained": 3,
+    "control_spent_its_whole_schedule": true
+   },
+   {
+    "agenda_ahead_on_diagnoses": true,
+    "agenda_ahead_on_held_out": false,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 12,
+    "agenda_diagnoses": 10,
+    "agenda_held_out": 0.21873911007897937,
+    "agenda_resources": 101,
+    "agenda_retained": 10,
+    "budget": 40,
+    "control_choices": 6,
+    "control_diagnoses": 4,
+    "control_held_out": 0.2512025012025012,
+    "control_resources": 46,
+    "control_retained": 3,
+    "control_spent_its_whole_schedule": true
+   },
+   {
+    "agenda_ahead_on_diagnoses": true,
+    "agenda_ahead_on_held_out": true,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 19,
+    "agenda_diagnoses": 17,
+    "agenda_held_out": 0.23355318610220568,
+    "agenda_resources": 167,
+    "agenda_retained": 17,
+    "budget": 60,
+    "control_choices": 6,
+    "control_diagnoses": 4,
+    "control_held_out": 0.12257495590828922,
+    "control_resources": 46,
+    "control_retained": 3,
+    "control_spent_its_whole_schedule": true
+   }
+  ],
+  "per_budget_budgets": [
+   14,
+   20,
+   40,
+   60
+  ],
+  "tight": [
+   {
+    "agenda_ahead_on_diagnoses": true,
+    "agenda_ahead_on_held_out": true,
+    "agenda_ahead_on_retained": true,
+    "agenda_choices": 5,
+    "agenda_diagnoses": 3,
+    "agenda_held_out": 0.1450565411349725,
+    "agenda_resources": 36,
+    "agenda_retained": 3,
+    "budget": 14,
+    "control_choices": 4,
+    "control_diagnoses": 1,
+    "control_held_out": 0.0,
+    "control_resources": 27,
+    "control_retained": 0,
+    "control_spent_its_whole_schedule": false
+   }
+  ]
+ },
+ "ladder": [
+  {
+   "arms": [
+    {
+     "budget": 8,
+     "choices": 3,
+     "held_out_reduction_mean": 0.027296777296777295,
+     "policy": "agenda",
+     "policy_version": "ad01-policy-portfolio-agenda-v1",
+     "resources_used_total": 21,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 2,
+      "resources_used": 21,
+      "retained_behaviors": 1
+     }
+    },
+    {
+     "budget": 8,
+     "choices": 3,
+     "held_out_reduction_mean": 0.0,
+     "policy": "control",
+     "policy_version": "ad01-policy-portfolio-fixed-v1:graph=ddmin/1;software=ddmin/5",
+     "resources_used_total": 19,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 1,
+      "resources_used": 19,
+      "retained_behaviors": 0
+     }
+    }
+   ],
+   "budget": 8
+  },
+  {
+   "arms": [
+    {
+     "budget": 14,
+     "choices": 5,
+     "held_out_reduction_mean": 0.1450565411349725,
+     "policy": "agenda",
+     "policy_version": "ad01-policy-portfolio-agenda-v1",
+     "resources_used_total": 36,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 3,
+      "resources_used": 36,
+      "retained_behaviors": 3
+     }
+    },
+    {
+     "budget": 14,
+     "choices": 4,
+     "held_out_reduction_mean": 0.0,
+     "policy": "control",
+     "policy_version": "ad01-policy-portfolio-fixed-v1:graph=ddmin/1;software=ddmin/5",
+     "resources_used_total": 27,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 1,
+      "resources_used": 27,
+      "retained_behaviors": 0
+     }
+    }
+   ],
+   "budget": 14
+  },
+  {
+   "arms": [
+    {
+     "budget": 20,
+     "choices": 6,
+     "held_out_reduction_mean": 0.1568834941383961,
+     "policy": "agenda",
+     "policy_version": "ad01-policy-portfolio-agenda-v1",
+     "resources_used_total": 45,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 4,
+      "resources_used": 45,
+      "retained_behaviors": 4
+     }
+    },
+    {
+     "budget": 20,
+     "choices": 6,
+     "held_out_reduction_mean": 0.25346042846042843,
+     "policy": "control",
+     "policy_version": "ad01-policy-portfolio-fixed-v1:graph=ddmin/1;software=ddmin/5",
+     "resources_used_total": 46,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 4,
+      "resources_used": 46,
+      "retained_behaviors": 3
+     }
+    }
+   ],
+   "budget": 20
+  },
+  {
+   "arms": [
+    {
+     "budget": 30,
+     "choices": 9,
+     "held_out_reduction_mean": 0.23142960888058928,
+     "policy": "agenda",
+     "policy_version": "ad01-policy-portfolio-agenda-v1",
+     "resources_used_total": 78,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 7,
+      "resources_used": 78,
+      "retained_behaviors": 7
+     }
+    },
+    {
+     "budget": 30,
+     "choices": 6,
+     "held_out_reduction_mean": 0.20093795093795094,
+     "policy": "control",
+     "policy_version": "ad01-policy-portfolio-fixed-v1:graph=ddmin/1;software=ddmin/5",
+     "resources_used_total": 46,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 4,
+      "resources_used": 46,
+      "retained_behaviors": 3
+     }
+    }
+   ],
+   "budget": 30
+  },
+  {
+   "arms": [
+    {
+     "budget": 40,
+     "choices": 12,
+     "held_out_reduction_mean": 0.21873911007897937,
+     "policy": "agenda",
+     "policy_version": "ad01-policy-portfolio-agenda-v1",
+     "resources_used_total": 101,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 10,
+      "resources_used": 101,
+      "retained_behaviors": 10
+     }
+    },
+    {
+     "budget": 40,
+     "choices": 6,
+     "held_out_reduction_mean": 0.2512025012025012,
+     "policy": "control",
+     "policy_version": "ad01-policy-portfolio-fixed-v1:graph=ddmin/1;software=ddmin/5",
+     "resources_used_total": 46,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 4,
+      "resources_used": 46,
+      "retained_behaviors": 3
+     }
+    }
+   ],
+   "budget": 40
+  },
+  {
+   "arms": [
+    {
+     "budget": 60,
+     "choices": 19,
+     "held_out_reduction_mean": 0.23355318610220568,
+     "policy": "agenda",
+     "policy_version": "ad01-policy-portfolio-agenda-v1",
+     "resources_used_total": 167,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 17,
+      "resources_used": 167,
+      "retained_behaviors": 17
+     }
+    },
+    {
+     "budget": 60,
+     "choices": 6,
+     "held_out_reduction_mean": 0.12257495590828922,
+     "policy": "control",
+     "policy_version": "ad01-policy-portfolio-fixed-v1:graph=ddmin/1;software=ddmin/5",
+     "resources_used_total": 46,
+     "worlds": [
+      0,
+      1,
+      2
+     ],
+     "yield_totals": {
+      "diagnoses_correct": 4,
+      "resources_used": 46,
+      "retained_behaviors": 3
+     }
+    }
+   ],
+   "budget": 60
+  }
+ ],
+ "loose_budgets": [
+  20,
+  40,
+  60
+ ],
+ "measure_digest": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8",
+ "tight_budgets": [
+  14
+ ],
+ "worlds": [
+  0,
+  1,
+  2
+ ]
+}

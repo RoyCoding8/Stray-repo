@@ -1,0 +1,2615 @@
+{
+  "accounting": null,
+  "acquired": [],
+  "adaptation": null,
+  "campaign_id": null,
+  "campaign_kind": "census-only",
+  "census": null,
+  "census_only_panels": {
+    "census-graph-transfer/transfer": {
+      "decision_fields": [
+        "method_id",
+        "max_queries"
+      ],
+      "default_cell": "seed-gr-ddmin@8",
+      "family": "graph",
+      "grid": [
+        [
+          "seed-gr-ddmin",
+          32
+        ],
+        [
+          "seed-gr-greedy",
+          32
+        ]
+      ],
+      "max_attainable_negative_delta": 0.238095,
+      "max_attainable_positive_delta": 0.285714,
+      "open_rows": 3,
+      "reading": "a positive paired delta needs a decision that beats the zero-information default. This is the largest such difference the grid admits on this panel, and the number of rows where it is non-zero is the number of tasks on which a positive delta is expressible at all.",
+      "rows": [
+        {
+          "attainable_negative_delta": 0.0,
+          "attainable_positive_delta": 0.1,
+          "ceiling": 0.1,
+          "default": {
+            "normalized_reduction": 0.0,
+            "queries": 8,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-gr-ddmin@8",
+          "distinct_values": [
+            0.0,
+            0.1
+          ],
+          "family": "graph",
+          "floor": 0.0,
+          "grid": {
+            "seed-gr-ddmin@12": {
+              "normalized_reduction": 0.0,
+              "queries": 12,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@16": {
+              "normalized_reduction": 0.0,
+              "queries": 16,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@24": {
+              "normalized_reduction": 0.1,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@32": {
+              "normalized_reduction": 0.1,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@4": {
+              "normalized_reduction": 0.0,
+              "queries": 4,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@8": {
+              "normalized_reduction": 0.0,
+              "queries": 8,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@12": {
+              "normalized_reduction": 0.1,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@16": {
+              "normalized_reduction": 0.1,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@24": {
+              "normalized_reduction": 0.1,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@32": {
+              "normalized_reduction": 0.1,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@4": {
+              "normalized_reduction": 0.1,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@8": {
+              "normalized_reduction": 0.1,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-transfer-gr-00"
+        },
+        {
+          "attainable_negative_delta": 0.235294,
+          "attainable_positive_delta": 0.176471,
+          "ceiling": 0.411765,
+          "default": {
+            "normalized_reduction": 0.23529411764705882,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-gr-ddmin@8",
+          "distinct_values": [
+            0.0,
+            0.235294,
+            0.352941,
+            0.411765
+          ],
+          "family": "graph",
+          "floor": 0.0,
+          "grid": {
+            "seed-gr-ddmin@12": {
+              "normalized_reduction": 0.35294117647058826,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@16": {
+              "normalized_reduction": 0.35294117647058826,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@24": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@32": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@4": {
+              "normalized_reduction": 0.0,
+              "queries": 4,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@8": {
+              "normalized_reduction": 0.23529411764705882,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@12": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@16": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@24": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@32": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 28,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@4": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@8": {
+              "normalized_reduction": 0.4117647058823529,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-transfer-gr-01"
+        },
+        {
+          "attainable_negative_delta": 0.238095,
+          "attainable_positive_delta": 0.285714,
+          "ceiling": 0.52381,
+          "default": {
+            "normalized_reduction": 0.23809523809523808,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-gr-ddmin@8",
+          "distinct_values": [
+            0.0,
+            0.238095,
+            0.333333,
+            0.428571,
+            0.47619,
+            0.52381
+          ],
+          "family": "graph",
+          "floor": 0.0,
+          "grid": {
+            "seed-gr-ddmin@12": {
+              "normalized_reduction": 0.42857142857142855,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@16": {
+              "normalized_reduction": 0.42857142857142855,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@24": {
+              "normalized_reduction": 0.47619047619047616,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@32": {
+              "normalized_reduction": 0.47619047619047616,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@4": {
+              "normalized_reduction": 0.0,
+              "queries": 4,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@8": {
+              "normalized_reduction": 0.23809523809523808,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@12": {
+              "normalized_reduction": 0.5238095238095238,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@16": {
+              "normalized_reduction": 0.5238095238095238,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@24": {
+              "normalized_reduction": 0.5238095238095238,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@32": {
+              "normalized_reduction": 0.5238095238095238,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@4": {
+              "normalized_reduction": 0.3333333333333333,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@8": {
+              "normalized_reduction": 0.42857142857142855,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-transfer-gr-02"
+        }
+      ],
+      "rows_measured": 3
+    },
+    "census-graph-within/within": {
+      "decision_fields": [
+        "method_id",
+        "max_queries"
+      ],
+      "default_cell": "seed-gr-ddmin@8",
+      "family": "graph",
+      "grid": [
+        [
+          "seed-gr-ddmin",
+          32
+        ],
+        [
+          "seed-gr-greedy",
+          32
+        ]
+      ],
+      "max_attainable_negative_delta": 0.210526,
+      "max_attainable_positive_delta": 0.263158,
+      "open_rows": 3,
+      "reading": "a positive paired delta needs a decision that beats the zero-information default. This is the largest such difference the grid admits on this panel, and the number of rows where it is non-zero is the number of tasks on which a positive delta is expressible at all.",
+      "rows": [
+        {
+          "attainable_negative_delta": 0.0,
+          "attainable_positive_delta": 0.166667,
+          "ceiling": 0.166667,
+          "default": {
+            "normalized_reduction": 0.0,
+            "queries": 8,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-gr-ddmin@8",
+          "distinct_values": [
+            0.0,
+            0.083333,
+            0.166667
+          ],
+          "family": "graph",
+          "floor": 0.0,
+          "grid": {
+            "seed-gr-ddmin@12": {
+              "normalized_reduction": 0.0,
+              "queries": 12,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@16": {
+              "normalized_reduction": 0.08333333333333333,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@24": {
+              "normalized_reduction": 0.08333333333333333,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@32": {
+              "normalized_reduction": 0.16666666666666666,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@4": {
+              "normalized_reduction": 0.0,
+              "queries": 4,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@8": {
+              "normalized_reduction": 0.0,
+              "queries": 8,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@12": {
+              "normalized_reduction": 0.16666666666666666,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@16": {
+              "normalized_reduction": 0.16666666666666666,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@24": {
+              "normalized_reduction": 0.16666666666666666,
+              "queries": 23,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@32": {
+              "normalized_reduction": 0.16666666666666666,
+              "queries": 23,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@4": {
+              "normalized_reduction": 0.16666666666666666,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@8": {
+              "normalized_reduction": 0.16666666666666666,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-within-gr-00"
+        },
+        {
+          "attainable_negative_delta": 0.0,
+          "attainable_positive_delta": 0.125,
+          "ceiling": 0.125,
+          "default": {
+            "normalized_reduction": 0.0,
+            "queries": 8,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-gr-ddmin@8",
+          "distinct_values": [
+            0.0,
+            0.125
+          ],
+          "family": "graph",
+          "floor": 0.0,
+          "grid": {
+            "seed-gr-ddmin@12": {
+              "normalized_reduction": 0.0,
+              "queries": 12,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@16": {
+              "normalized_reduction": 0.0,
+              "queries": 16,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@24": {
+              "normalized_reduction": 0.125,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@32": {
+              "normalized_reduction": 0.125,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@4": {
+              "normalized_reduction": 0.0,
+              "queries": 4,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@8": {
+              "normalized_reduction": 0.0,
+              "queries": 8,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@12": {
+              "normalized_reduction": 0.125,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@16": {
+              "normalized_reduction": 0.125,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@24": {
+              "normalized_reduction": 0.125,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@32": {
+              "normalized_reduction": 0.125,
+              "queries": 31,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@4": {
+              "normalized_reduction": 0.125,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@8": {
+              "normalized_reduction": 0.125,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-within-gr-01"
+        },
+        {
+          "attainable_negative_delta": 0.210526,
+          "attainable_positive_delta": 0.263158,
+          "ceiling": 0.473684,
+          "default": {
+            "normalized_reduction": 0.21052631578947367,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-gr-ddmin@8",
+          "distinct_values": [
+            0.0,
+            0.210526,
+            0.368421,
+            0.473684
+          ],
+          "family": "graph",
+          "floor": 0.0,
+          "grid": {
+            "seed-gr-ddmin@12": {
+              "normalized_reduction": 0.3684210526315789,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@16": {
+              "normalized_reduction": 0.3684210526315789,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@24": {
+              "normalized_reduction": 0.47368421052631576,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@32": {
+              "normalized_reduction": 0.47368421052631576,
+              "queries": 32,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@4": {
+              "normalized_reduction": 0.0,
+              "queries": 4,
+              "reason": "ok-incumbent",
+              "verdict": "preserved"
+            },
+            "seed-gr-ddmin@8": {
+              "normalized_reduction": 0.21052631578947367,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@12": {
+              "normalized_reduction": 0.47368421052631576,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@16": {
+              "normalized_reduction": 0.47368421052631576,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@24": {
+              "normalized_reduction": 0.47368421052631576,
+              "queries": 24,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@32": {
+              "normalized_reduction": 0.47368421052631576,
+              "queries": 30,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@4": {
+              "normalized_reduction": 0.3684210526315789,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-gr-greedy@8": {
+              "normalized_reduction": 0.47368421052631576,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-within-gr-02"
+        }
+      ],
+      "rows_measured": 3
+    },
+    "census-software-within/within": {
+      "decision_fields": [
+        "method_id",
+        "max_queries"
+      ],
+      "default_cell": "seed-sw-ddmin@8",
+      "family": "software",
+      "grid": [
+        [
+          "seed-sw-ddmin",
+          32
+        ],
+        [
+          "seed-sw-greedy",
+          32
+        ]
+      ],
+      "max_attainable_negative_delta": 0.538462,
+      "max_attainable_positive_delta": 0.0,
+      "open_rows": 0,
+      "reading": "a positive paired delta needs a decision that beats the zero-information default. This is the largest such difference the grid admits on this panel, and the number of rows where it is non-zero is the number of tasks on which a positive delta is expressible at all.",
+      "rows": [
+        {
+          "attainable_negative_delta": 0.5,
+          "attainable_positive_delta": 0.0,
+          "ceiling": 0.7,
+          "default": {
+            "normalized_reduction": 0.7,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-sw-ddmin@8",
+          "distinct_values": [
+            0.2,
+            0.5,
+            0.7
+          ],
+          "family": "software",
+          "floor": 0.2,
+          "grid": {
+            "seed-sw-ddmin@12": {
+              "normalized_reduction": 0.7,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@16": {
+              "normalized_reduction": 0.7,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@24": {
+              "normalized_reduction": 0.7,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@32": {
+              "normalized_reduction": 0.7,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@4": {
+              "normalized_reduction": 0.7,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@8": {
+              "normalized_reduction": 0.7,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@12": {
+              "normalized_reduction": 0.7,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@16": {
+              "normalized_reduction": 0.7,
+              "queries": 14,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@24": {
+              "normalized_reduction": 0.7,
+              "queries": 14,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@32": {
+              "normalized_reduction": 0.7,
+              "queries": 14,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@4": {
+              "normalized_reduction": 0.2,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@8": {
+              "normalized_reduction": 0.5,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-within-sw-00"
+        },
+        {
+          "attainable_negative_delta": 0.538462,
+          "attainable_positive_delta": 0.0,
+          "ceiling": 0.769231,
+          "default": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-sw-ddmin@8",
+          "distinct_values": [
+            0.230769,
+            0.461538,
+            0.692308,
+            0.769231
+          ],
+          "family": "software",
+          "floor": 0.230769,
+          "grid": {
+            "seed-sw-ddmin@12": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@16": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@24": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@32": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@4": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@8": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@12": {
+              "normalized_reduction": 0.6923076923076923,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@16": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 16,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@24": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 17,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@32": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 17,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@4": {
+              "normalized_reduction": 0.23076923076923078,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@8": {
+              "normalized_reduction": 0.46153846153846156,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-within-sw-01"
+        },
+        {
+          "attainable_negative_delta": 0.454545,
+          "attainable_positive_delta": 0.0,
+          "ceiling": 0.727273,
+          "default": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "default_cell": "seed-sw-ddmin@8",
+          "distinct_values": [
+            0.272727,
+            0.454545,
+            0.727273
+          ],
+          "family": "software",
+          "floor": 0.272727,
+          "grid": {
+            "seed-sw-ddmin@12": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@16": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@24": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@32": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 9,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@4": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-ddmin@8": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@12": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 12,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@16": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 15,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@24": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 15,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@32": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 15,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@4": {
+              "normalized_reduction": 0.2727272727272727,
+              "queries": 4,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "seed-sw-greedy@8": {
+              "normalized_reduction": 0.45454545454545453,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            }
+          },
+          "task_id": "ad01-w0-within-sw-02"
+        }
+      ],
+      "rows_measured": 3
+    }
+  },
+  "freeze": {
+    "body": {
+      "alpha": "descriptive-only",
+      "arms": [
+        "relevant",
+        "none",
+        "irrelevant"
+      ],
+      "budget_search_range": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "budgets": [
+        4,
+        8,
+        12,
+        16,
+        24,
+        32
+      ],
+      "cluster_rule": "(family, template)",
+      "cohort_world": 0,
+      "decision_fields": [
+        "method_id",
+        "max_queries"
+      ],
+      "estimator": "paired per-task normalized_reduction difference, with the decision vector reported beside it",
+      "independent_of": [
+        "invr1e2contrast"
+      ],
+      "namespace": "invr1w2retention",
+      "panels": [
+        {
+          "default_method": "seed-sw-ddmin",
+          "evidence_max_queries": 2,
+          "family": "software",
+          "method_ids": [
+            "seed-sw-ddmin",
+            "seed-sw-greedy"
+          ],
+          "name": "retention",
+          "source_split": "dev",
+          "target_split": "transfer",
+          "target_task_ids": [
+            "ad01-w0-transfer-sw-00",
+            "ad01-w0-transfer-sw-01",
+            "ad01-w0-transfer-sw-02"
+          ]
+        },
+        {
+          "default_method": "seed-sw-ddmin",
+          "evidence_max_queries": 2,
+          "family": "software",
+          "method_ids": [
+            "seed-sw-ddmin",
+            "seed-sw-greedy"
+          ],
+          "name": "adaptation",
+          "source_split": "dev",
+          "target_split": "transfer",
+          "target_task_ids": [
+            "ad01-w0-transfer-sw-00",
+            "ad01-w0-transfer-sw-01",
+            "ad01-w0-transfer-sw-02"
+          ],
+          "within_domain_task_ids": [
+            "ad01-w0-within-sw-00",
+            "ad01-w0-within-sw-01",
+            "ad01-w0-within-sw-02"
+          ],
+          "within_split": "within"
+        }
+      ],
+      "retention_blocker": "assessment_profile.default_repertoire returns the four authored seed ids and e2_replication.eligible_for(task) returns the two belonging to the task's family. Both are closed, frozen and identical for every arm, so a method acquired on one task can never enter another task's repertoire and no difference in method_id can be a retention effect.",
+      "scored_observable": "normalized_reduction, with the decision vector (method_id, max_queries) reported per task"
+    },
+    "freeze_digest": "b15c70a6276f84bab8ccceddda80d99445c22512e3e492915bc4f13dac9bc4ee"
+  },
+  "independent_of": [
+    "invr1e2contrast"
+  ],
+  "inherited_census_defect": {
+    "defect": "e2_contrast_campaign.reachability_census resolves the default from DEFAULT_METHOD = 'seed-sw-ddmin'. On a graph target that cell does not exist in the row's grid, so `default` is None and the row's positive delta is computed against 0.0 rather than against the real default. The prior census never hit it because its panel was software only.",
+    "disagreeing_task_ids": [
+      "ad01-w0-within-gr-02",
+      "ad01-w0-transfer-gr-01",
+      "ad01-w0-transfer-gr-02"
+    ],
+    "disagreements": 3,
+    "not_patched": "e2_contrast_campaign is frozen and is not edited here. This module computes its own default per family and reports the discrepancy.",
+    "reading": "where the two disagree the inherited number is the larger, because it measures the gap from nothing rather than from the zero-information default. Both panels in this campaign are graph panels, so every target measured here is one the inherited function misreads.",
+    "rows": [
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "retention",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-00",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7857142857142857,
+        "this_positive_delta": 0.0
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.285714,
+        "panel": "retention",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-01",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.5,
+        "this_positive_delta": 0.285714
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.111111,
+        "panel": "retention",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-02",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.5555555555555556,
+        "this_positive_delta": 0.111111
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "adaptation",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-00",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7857142857142857,
+        "this_positive_delta": 0.0
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.285714,
+        "panel": "adaptation",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-01",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.5,
+        "this_positive_delta": 0.285714
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.111111,
+        "panel": "adaptation",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-02",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.5555555555555556,
+        "this_positive_delta": 0.111111
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "adaptation",
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-00",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7,
+        "this_positive_delta": 0.0
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "adaptation",
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-01",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7692307692307693,
+        "this_positive_delta": 0.0
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "adaptation",
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-02",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7272727272727273,
+        "this_positive_delta": 0.0
+      },
+      {
+        "agrees": true,
+        "family": "graph",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": false,
+        "inherited_positive_delta": 0.166667,
+        "panel": "census-graph-within",
+        "split": "within",
+        "task_id": "ad01-w0-within-gr-00",
+        "this_default_cell": "seed-gr-ddmin@8",
+        "this_default_value": 0.0,
+        "this_positive_delta": 0.166667
+      },
+      {
+        "agrees": true,
+        "family": "graph",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": false,
+        "inherited_positive_delta": 0.125,
+        "panel": "census-graph-within",
+        "split": "within",
+        "task_id": "ad01-w0-within-gr-01",
+        "this_default_cell": "seed-gr-ddmin@8",
+        "this_default_value": 0.0,
+        "this_positive_delta": 0.125
+      },
+      {
+        "agrees": false,
+        "family": "graph",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": false,
+        "inherited_positive_delta": 0.473684,
+        "panel": "census-graph-within",
+        "split": "within",
+        "task_id": "ad01-w0-within-gr-02",
+        "this_default_cell": "seed-gr-ddmin@8",
+        "this_default_value": 0.21052631578947367,
+        "this_positive_delta": 0.263158
+      },
+      {
+        "agrees": true,
+        "family": "graph",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": false,
+        "inherited_positive_delta": 0.1,
+        "panel": "census-graph-transfer",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-gr-00",
+        "this_default_cell": "seed-gr-ddmin@8",
+        "this_default_value": 0.0,
+        "this_positive_delta": 0.1
+      },
+      {
+        "agrees": false,
+        "family": "graph",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": false,
+        "inherited_positive_delta": 0.411765,
+        "panel": "census-graph-transfer",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-gr-01",
+        "this_default_cell": "seed-gr-ddmin@8",
+        "this_default_value": 0.23529411764705882,
+        "this_positive_delta": 0.176471
+      },
+      {
+        "agrees": false,
+        "family": "graph",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": false,
+        "inherited_positive_delta": 0.52381,
+        "panel": "census-graph-transfer",
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-gr-02",
+        "this_default_cell": "seed-gr-ddmin@8",
+        "this_default_value": 0.23809523809523808,
+        "this_positive_delta": 0.285714
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "census-software-within",
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-00",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7,
+        "this_positive_delta": 0.0
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "census-software-within",
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-01",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7692307692307693,
+        "this_positive_delta": 0.0
+      },
+      {
+        "agrees": true,
+        "family": "software",
+        "inherited_default_cell": [
+          "seed-sw-ddmin",
+          8
+        ],
+        "inherited_default_present": true,
+        "inherited_positive_delta": 0.0,
+        "panel": "census-software-within",
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-02",
+        "this_default_cell": "seed-sw-ddmin@8",
+        "this_default_value": 0.7272727272727273,
+        "this_positive_delta": 0.0
+      }
+    ],
+    "rows_measured": 18
+  },
+  "is_replication_of": null,
+  "key_discrepancy": null,
+  "measureability": {
+    "note": "the terminal verdict is constant by construction, so no claim in this report rests on it. The retained-method leg is unmeasurable on this instrument and is reported as such rather than approximated by a different arm.",
+    "retained_method_leg_blocker": {
+      "mechanism": "assessment_profile.default_repertoire returns the four authored seed ids and e2_replication.eligible_for(task) returns the two belonging to the task's family. Both are closed, frozen and identical for every arm, so a method acquired on one task can never enter another task's repertoire and no difference in method_id can be a retention effect.",
+      "readable_observable": "normalized_reduction, plus the decision vector (method_id, max_queries), which is reported per task and never as the sole benefit metric",
+      "what": "a policy cannot name a method it retained, so the retained-method-reuse leg has no lever on this instrument",
+      "what_this_module_measures_instead": "the transfer-shaped leg of retention: a policy shown a retained method's prior observations against the same policy shown none, paired per task, on the panels whose ceiling is open",
+      "what_would_be_needed": "a repertoire that admits a method acquired on a prior task, and a reducer whose verdict can vary. Neither exists in the frozen instrument, and this campaign edits neither."
+    },
+    "retained_method_leg_measurable": false,
+    "retention_measurable": true,
+    "retention_observable": "normalized_reduction (paired per task), with the decision vector (method_id, max_queries) reported per task",
+    "terminal_verdict_defect": {
+      "consequence": "this campaign reports normalized_reduction and the decision vector instead, and asserts that no claim in the report rests on verdict",
+      "measured": "e2_contrast_campaign.reachability_census records `verdict: preserved` on every cell of every grid it enumerates, and s09_e2_scored's own header says the same: `preserved` is a fixpoint of two composed invariants, not a policy property",
+      "what": "verdict is `preserved` on every reducer outcome, so it cannot vary and cannot carry a retention or adaptation claim"
+    },
+    "terminal_verdict_usable": false
+  },
+  "measured_live": false,
+  "model": null,
+  "namespace": "invr1w2retention",
+  "null_dispatches": [],
+  "offline_only": {
+    "panels_measured_live": [],
+    "target_task_ids": [
+      "ad01-w0-transfer-sw-00",
+      "ad01-w0-transfer-sw-01",
+      "ad01-w0-transfer-sw-02"
+    ],
+    "what": "no dispatch was made. This artifact carries the closure, the defect report and every census, and carries no reading."
+  },
+  "paired": null,
+  "panels": {
+    "adaptation/transfer": {
+      "arm_refusals": null,
+      "family": "software",
+      "n_targets": 3,
+      "paired": null,
+      "reachability_census": {
+        "default_cell": "seed-sw-ddmin@8",
+        "max_attainable_negative_delta": 0.571429,
+        "max_attainable_positive_delta": 0.285714,
+        "open_rows": 2,
+        "rows": [
+          {
+            "attainable_negative_delta": 0.571429,
+            "attainable_positive_delta": 0.0,
+            "ceiling": 0.785714,
+            "default": {
+              "normalized_reduction": 0.7857142857142857,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.214286,
+              0.5,
+              0.642857,
+              0.785714
+            ],
+            "family": "software",
+            "floor": 0.214286,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.6428571428571429,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 16,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.21428571428571427,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.5,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-transfer-sw-00"
+          },
+          {
+            "attainable_negative_delta": 0.285714,
+            "attainable_positive_delta": 0.285714,
+            "ceiling": 0.785714,
+            "default": {
+              "normalized_reduction": 0.5,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.214286,
+              0.285714,
+              0.357143,
+              0.5,
+              0.642857,
+              0.714286,
+              0.785714
+            ],
+            "family": "software",
+            "floor": 0.214286,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.6428571428571429,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.7142857142857143,
+                "queries": 16,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 20,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 20,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.2857142857142857,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.5,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.6428571428571429,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 16,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.21428571428571427,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.35714285714285715,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-transfer-sw-01"
+          },
+          {
+            "attainable_negative_delta": 0.333333,
+            "attainable_positive_delta": 0.111111,
+            "ceiling": 0.666667,
+            "default": {
+              "normalized_reduction": 0.5555555555555556,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.222222,
+              0.333333,
+              0.555556,
+              0.666667
+            ],
+            "family": "software",
+            "floor": 0.222222,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.3333333333333333,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.5555555555555556,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.2222222222222222,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.5555555555555556,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-transfer-sw-02"
+          }
+        ],
+        "rows_measured": 3
+      },
+      "readings": {},
+      "readings_per_arm": {
+        "irrelevant": 0,
+        "none": 0,
+        "relevant": 0
+      },
+      "size_matching": null,
+      "split": "transfer",
+      "targets": [
+        "ad01-w0-transfer-sw-00",
+        "ad01-w0-transfer-sw-01",
+        "ad01-w0-transfer-sw-02"
+      ],
+      "treatment_input_audit": null
+    },
+    "adaptation/within": {
+      "arm_refusals": null,
+      "family": "software",
+      "n_targets": 3,
+      "paired": null,
+      "reachability_census": {
+        "default_cell": "seed-sw-ddmin@8",
+        "max_attainable_negative_delta": 0.538462,
+        "max_attainable_positive_delta": 0.0,
+        "open_rows": 0,
+        "rows": [
+          {
+            "attainable_negative_delta": 0.5,
+            "attainable_positive_delta": 0.0,
+            "ceiling": 0.7,
+            "default": {
+              "normalized_reduction": 0.7,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.2,
+              0.5,
+              0.7
+            ],
+            "family": "software",
+            "floor": 0.2,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.7,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.7,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.7,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.7,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.7,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.7,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.7,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.7,
+                "queries": 14,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.7,
+                "queries": 14,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.7,
+                "queries": 14,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.2,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.5,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-within-sw-00"
+          },
+          {
+            "attainable_negative_delta": 0.538462,
+            "attainable_positive_delta": 0.0,
+            "ceiling": 0.769231,
+            "default": {
+              "normalized_reduction": 0.7692307692307693,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.230769,
+              0.461538,
+              0.692308,
+              0.769231
+            ],
+            "family": "software",
+            "floor": 0.230769,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.6923076923076923,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 16,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 17,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.7692307692307693,
+                "queries": 17,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.23076923076923078,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.46153846153846156,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-within-sw-01"
+          },
+          {
+            "attainable_negative_delta": 0.454545,
+            "attainable_positive_delta": 0.0,
+            "ceiling": 0.727273,
+            "default": {
+              "normalized_reduction": 0.7272727272727273,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.272727,
+              0.454545,
+              0.727273
+            ],
+            "family": "software",
+            "floor": 0.272727,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 15,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 15,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.7272727272727273,
+                "queries": 15,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.2727272727272727,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.45454545454545453,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-within-sw-02"
+          }
+        ],
+        "rows_measured": 3
+      },
+      "readings": {},
+      "readings_per_arm": {
+        "irrelevant": 0,
+        "none": 0,
+        "relevant": 0
+      },
+      "size_matching": null,
+      "split": "within",
+      "targets": [
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ],
+      "treatment_input_audit": null
+    },
+    "retention/transfer": {
+      "arm_refusals": null,
+      "family": "software",
+      "n_targets": 3,
+      "paired": null,
+      "reachability_census": {
+        "default_cell": "seed-sw-ddmin@8",
+        "max_attainable_negative_delta": 0.571429,
+        "max_attainable_positive_delta": 0.285714,
+        "open_rows": 2,
+        "rows": [
+          {
+            "attainable_negative_delta": 0.571429,
+            "attainable_positive_delta": 0.0,
+            "ceiling": 0.785714,
+            "default": {
+              "normalized_reduction": 0.7857142857142857,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.214286,
+              0.5,
+              0.642857,
+              0.785714
+            ],
+            "family": "software",
+            "floor": 0.214286,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 9,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.6428571428571429,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 16,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.21428571428571427,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.5,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-transfer-sw-00"
+          },
+          {
+            "attainable_negative_delta": 0.285714,
+            "attainable_positive_delta": 0.285714,
+            "ceiling": 0.785714,
+            "default": {
+              "normalized_reduction": 0.5,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.214286,
+              0.285714,
+              0.357143,
+              0.5,
+              0.642857,
+              0.714286,
+              0.785714
+            ],
+            "family": "software",
+            "floor": 0.214286,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.6428571428571429,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.7142857142857143,
+                "queries": 16,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 20,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 20,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.2857142857142857,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.5,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.6428571428571429,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 16,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.7857142857142857,
+                "queries": 18,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.21428571428571427,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.35714285714285715,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-transfer-sw-01"
+          },
+          {
+            "attainable_negative_delta": 0.333333,
+            "attainable_positive_delta": 0.111111,
+            "ceiling": 0.666667,
+            "default": {
+              "normalized_reduction": 0.5555555555555556,
+              "queries": 8,
+              "reason": "ok-preserved",
+              "verdict": "preserved"
+            },
+            "default_cell": "seed-sw-ddmin@8",
+            "distinct_values": [
+              0.222222,
+              0.333333,
+              0.555556,
+              0.666667
+            ],
+            "family": "software",
+            "floor": 0.222222,
+            "grid": {
+              "seed-sw-ddmin@12": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@16": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@24": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@32": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@4": {
+                "normalized_reduction": 0.3333333333333333,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-ddmin@8": {
+                "normalized_reduction": 0.5555555555555556,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@12": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 12,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@16": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@24": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@32": {
+                "normalized_reduction": 0.6666666666666666,
+                "queries": 13,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@4": {
+                "normalized_reduction": 0.2222222222222222,
+                "queries": 4,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              },
+              "seed-sw-greedy@8": {
+                "normalized_reduction": 0.5555555555555556,
+                "queries": 8,
+                "reason": "ok-preserved",
+                "verdict": "preserved"
+              }
+            },
+            "task_id": "ad01-w0-transfer-sw-02"
+          }
+        ],
+        "rows_measured": 3
+      },
+      "readings": {},
+      "readings_per_arm": {
+        "irrelevant": 0,
+        "none": 0,
+        "relevant": 0
+      },
+      "size_matching": null,
+      "split": "transfer",
+      "targets": [
+        "ad01-w0-transfer-sw-00",
+        "ad01-w0-transfer-sw-01",
+        "ad01-w0-transfer-sw-02"
+      ],
+      "treatment_input_audit": null
+    }
+  },
+  "qualification_gate": {
+    "consequence": "the retention and adaptation panels must both be on a readable family for a live contrast. This campaign reports the graph panels' censuses, which are valid, and does not run a live contrast on a family the gate cannot read.",
+    "measured": 9,
+    "measured_families": [
+      "software"
+    ],
+    "mechanism": "all five authored qualification policies in e2_replication hardcode a `seed-sw-` method, and score_response refuses an action naming a method outside the target's family, so on a graph target every one of them is refused before it can act",
+    "readable": 9,
+    "readable_families": [
+      "software"
+    ],
+    "reading": "the qualification gate is software-only. A panel whose family is outside readable_families cannot be run on this instrument, and a run on it would refuse at the gate rather than report a number. A census on such a panel still holds: the ceiling is a property of the grid and needs no policy.",
+    "rows": [
+      {
+        "echoer_score": 0.7857142857142857,
+        "family": "software",
+        "panel": "retention",
+        "readable": true,
+        "reader_score": 1.7857142857142856,
+        "reader_scored": true,
+        "separates": true,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-00"
+      },
+      {
+        "echoer_score": 0.5,
+        "family": "software",
+        "panel": "retention",
+        "readable": true,
+        "reader_score": 1.5,
+        "reader_scored": true,
+        "separates": true,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-01"
+      },
+      {
+        "echoer_score": 0.5555555555555556,
+        "family": "software",
+        "panel": "retention",
+        "readable": true,
+        "reader_score": 1.5555555555555556,
+        "reader_scored": true,
+        "separates": true,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-02"
+      },
+      {
+        "echoer_score": 0.7857142857142857,
+        "family": "software",
+        "panel": "adaptation",
+        "readable": true,
+        "reader_score": 1.7857142857142856,
+        "reader_scored": true,
+        "separates": true,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-00"
+      },
+      {
+        "echoer_score": 0.5,
+        "family": "software",
+        "panel": "adaptation",
+        "readable": true,
+        "reader_score": 1.5,
+        "reader_scored": true,
+        "separates": true,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-01"
+      },
+      {
+        "echoer_score": 0.5555555555555556,
+        "family": "software",
+        "panel": "adaptation",
+        "readable": true,
+        "reader_score": 1.5555555555555556,
+        "reader_scored": true,
+        "separates": true,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-02"
+      },
+      {
+        "echoer_score": 0.7,
+        "family": "software",
+        "panel": "adaptation",
+        "readable": true,
+        "reader_score": 1.7,
+        "reader_scored": true,
+        "separates": true,
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-00"
+      },
+      {
+        "echoer_score": 0.7692307692307693,
+        "family": "software",
+        "panel": "adaptation",
+        "readable": true,
+        "reader_score": 1.7692307692307692,
+        "reader_scored": true,
+        "separates": true,
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-01"
+      },
+      {
+        "echoer_score": 0.7272727272727273,
+        "family": "software",
+        "panel": "adaptation",
+        "readable": true,
+        "reader_score": 1.7272727272727273,
+        "reader_scored": true,
+        "separates": true,
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-02"
+      }
+    ]
+  },
+  "repertoire_closure": {
+    "distinct_eligible_sets": [
+      [
+        "seed-sw-ddmin",
+        "seed-sw-greedy"
+      ]
+    ],
+    "every_arm_sees_the_same_eligible_methods": true,
+    "mechanism": "assessment_profile.default_repertoire returns the four authored seed ids and e2_replication.eligible_for(task) returns the two belonging to the task's family. Both are closed, frozen and identical for every arm, so a method acquired on one task can never enter another task's repertoire and no difference in method_id can be a retention effect.",
+    "reading": "a retention contrast needs a policy to be able to name a method it retained. Every target here is shown the same two authored seeds and the gate admits exactly those four ids, so no acquired method can arrive. The method_id leg is therefore not measurable here, and the retention leg is measured on normalized_reduction instead.",
+    "repertoire_closed": true,
+    "rows": [
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "retention",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-00"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "retention",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-01"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "retention",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-02"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "adaptation",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-00"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "adaptation",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-01"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "adaptation",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "transfer",
+        "task_id": "ad01-w0-transfer-sw-02"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "adaptation",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-00"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "adaptation",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-01"
+      },
+      {
+        "eligible_count": 2,
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "family": "software",
+        "panel": "adaptation",
+        "repertoire": [
+          "seed-gr-ddmin",
+          "seed-gr-greedy",
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "repertoire_size": 4,
+        "retained_method_nameable": false,
+        "split": "within",
+        "task_id": "ad01-w0-within-sw-02"
+      }
+    ]
+  },
+  "schema": "s09-w2-retention-v1"
+}

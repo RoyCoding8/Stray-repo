@@ -54,6 +54,6 @@ The source trace and probe support the findings independently. Jev neither autho
 
 ## Completion and authority
 
-Use [WORKER-STAGE-09-COMPLETION.md](../WORKER-STAGE-09-COMPLETION.md) for the whole next assignment, including its explicit free-model live grant. Resolve these integrated requirements together and report what was implemented, what ran live, whether behavior changed, and whether it helped. An executed, valid negative result can close the study; an unconnected live path cannot.
+Use [WORKER-STAGE-09-COMPLETION.md](../docs/HISTORY.md#worker-stage-09-completion) for the whole next assignment, including its explicit free-model live grant. Resolve these integrated requirements together and report what was implemented, what ran live, whether behavior changed, and whether it helped. An executed, valid negative result can close the study; an unconnected live path cannot.
 
 The original assignment forbids changing or deleting other owners' databases. It does not forbid creating isolated databases owned by this assignment. Repair test configuration and create/remap owned test databases rather than presenting missing setup as an inherent external blocker. Preserve any genuine environment limitations and exact run counts.

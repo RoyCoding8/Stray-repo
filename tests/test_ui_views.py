@@ -6,27 +6,43 @@ import pytest
 from fastapi.testclient import TestClient
 
 from settlement import api, evidence, store
-from settlement.common import Command
+from settlement.common import Command, ResultCode
 
 
 def _cmd(payload: dict, **kw) -> Command:
     return Command(request_id=f"req_{uuid.uuid4().hex[:12]}", payload=payload, **kw)
 
 
+def _applied(result) -> None:
+    """Fail the setup step that produced ``result`` if the store refused it.
+
+    Without this the fixture returned the operation a view reads and a refusal
+    was indistinguishable from a view that lost it: `prepare_operation` was
+    called without the `allocation_id` `acquire_work` had bound to the attempt,
+    the store refused with `attempt w1 requires its bound allocation`, the
+    fixture discarded the result, and every assertion downstream read a record
+    that had never been built. The XSS assertions were the worst case, because
+    an escaping check passes as readily on a 404 page as on a rendered one.
+    """
+    assert result.code == ResultCode.APPLIED, f"{result.code}: {result.detail}"
+
+
 @pytest.fixture()
 def client(migrated_db):
     dsn = migrated_db
-    store.seed_allocation(dsn, _cmd({"allocation_id": "a1", "domain": "cpu", "authorized": 100}))
-    store.admit_commitment(dsn, _cmd({"investigation_id": "i1",
-                                      "objective": "<script>alert('x')</script>"}))
-    store.acquire_work(dsn, _cmd({"attempt_id": "w1", "investigation_id": "i1",
-                                  "allocation_id": "a1"}))
-    store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
-                                       "operation": {"effect": "note"}}))
-    store.submit_observation(dsn, _cmd({"attempt_id": "w1",
-                                        "content": {"text": "<script>evil()</script>"}}))
-    evidence.register_observation(dsn, _cmd({}), "w1", {"text": "<script>evil()</script>"},
-                                  source_identity="sensor-1")
+    _applied(store.seed_allocation(
+        dsn, _cmd({"allocation_id": "a1", "domain": "cpu", "authorized": 100})))
+    _applied(store.admit_commitment(dsn, _cmd({"investigation_id": "i1",
+                                               "objective": "<script>alert('x')</script>"})))
+    _applied(store.acquire_work(dsn, _cmd({"attempt_id": "w1", "investigation_id": "i1",
+                                           "allocation_id": "a1"})))
+    _applied(store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
+                                                "allocation_id": "a1",
+                                                "operation": {"effect": "note"}})))
+    _applied(store.submit_observation(dsn, _cmd({"attempt_id": "w1",
+                                                 "content": {"text": "<script>evil()</script>"}})))
+    _applied(evidence.register_observation(dsn, _cmd({}), "w1", {"text": "<script>evil()</script>"},
+                                          source_identity="sensor-1"))
     app = api.create_app(dsn, gateway=None, token="test-token")
     return TestClient(app, headers={"x-operator-token": "test-token"})
 

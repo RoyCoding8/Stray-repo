@@ -272,7 +272,7 @@ def run_restore(backup_dir: str | Path, target_dsn: str,
     with tempfile.TemporaryDirectory(prefix="restore-diff-") as tmp:
         with tarfile.open(backup_dir / "artifacts.tar", "r") as tar:
             tar.extractall(tmp, filter="data")
-        hashed = sorted(str(p.relative_to(tmp)) for p in Path(tmp).rglob("*") if p.is_file())
+        hashed = sorted(p.relative_to(tmp).as_posix() for p in Path(tmp).rglob("*") if p.is_file())
         expected = sorted(e["path"] for e in manifest["artifacts"])
         if hashed != expected:
             mismatches.append("artifact tar contents differ from manifest")

@@ -1,0 +1,25 @@
+{
+ "arm": "control-development",
+ "counted_on": "verdict-and-reason",
+ "distinct_outcomes": 2,
+ "distinct_reasons": 2,
+ "distinct_verdicts": 1,
+ "methods_named": [
+  "ddmin",
+  "greedy"
+ ],
+ "observations": 36,
+ "outcomes": [
+  "preserved/ok-incumbent",
+  "preserved/ok-preserved"
+ ],
+ "reasons": [
+  "ok-incumbent",
+  "ok-preserved"
+ ],
+ "varies": true,
+ "verdicts": [
+  "preserved"
+ ],
+ "version": "ad01-experience-variation/2"
+}

@@ -1,0 +1,19 @@
+{
+  "artifact": "reports/evidence/inv_r1_e3_ladder/e3-postfix-ladder.json",
+  "artifact_sha256": "2d59e0c92ef191dd629606434f0c4a7d098aef730baf2c526e9df73bc32cc109",
+  "shape": "SCOPE",
+  "verdict": "PARTIALLY_VOID",
+  "finding": "B6 / N-80",
+  "annotation": "reports/evidence/inv_r1_e3_ladder/ANNOTATION-B6-REACHABILITY.md",
+  "void_scope": [
+    {
+      "pointer": "$.committed_ladder",
+      "reason": "N-80: a byte-level re-embedding of the withdrawn E3 crossover ladder. Its per-budget choices, held_out_reduction_mean, resources_used_total and yield_totals are identical to reports/evidence/inv_r1_e3_selection/e3-crossover.json at all six budgets, and this file's top-level measure_digest equals that file's. The pre-fix run reused one stateful policy across all eighteen cells, so the control's totals are cumulative prefix sums of one traversal.",
+      "finding": "B6 / N-80"
+    }
+  ],
+  "surviving_claim": "The file is not retracted and the rest of it stands: this is the post-fix ladder, run with one policy per cell, and its own store_verdict is a live result. $.committed_ladder is scoped rather than wrong. It is the pre-fix/post-fix bridge, it is what makes the two ladders comparable, and deleting it would break that comparison permanently. The correct action is narrower than distrust: read this key as the withdrawn pre-fix result, and read every other key as the post-fix one.",
+  "superseded_by": "the same document's post-fix result, under this file's own store_verdict",
+  "container_mislabelled": false,
+  "note": "The artifact contains none of retract/withdrawn/invalid/superseded across its 165045 bytes, and adding one would mean editing the bytes this marker exists to preserve. That is why the marker is a sibling. See reports/STAGE-09-SUPERSESSION.md for the limit this cannot cross."
+}

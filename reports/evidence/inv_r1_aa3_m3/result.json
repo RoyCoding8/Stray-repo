@@ -1,0 +1,792 @@
+{
+ "arms": {
+  "authored-control": {
+   "ad01-w1-within-gr-00": [
+    {
+     "authored": true,
+     "capability_id": "authored-control-graph-ddmin",
+     "costs": {
+      "witness_queries": 16
+     },
+     "executed": "authored-control-graph-ddmin",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='ddmin', max_queries=max_queries)\n",
+     "family": "graph",
+     "initial_size": 12,
+     "kept_size": 11,
+     "normalized_reduction": 0.08333333333333333,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-authored-control-graph-ddmin-ad01-w1-within-gr-00"
+     ],
+     "output": {
+      "edges": [
+       [
+        0,
+        1
+       ],
+       [
+        1,
+        2
+       ],
+       [
+        2,
+        3
+       ],
+       [
+        3,
+        4
+       ],
+       [
+        0,
+        4
+       ]
+      ],
+      "family": "graph",
+      "seed": 5501,
+      "task_id": "ad01-w1-within-gr-00",
+      "vertices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     },
+     "queries": 16,
+     "reason": "ok-preserved",
+     "task_id": "ad01-w1-within-gr-00",
+     "verdict": "preserved"
+    }
+   ],
+   "ad01-w1-within-sw-00": [
+    {
+     "authored": true,
+     "capability_id": "authored-control-software-ddmin",
+     "costs": {
+      "witness_queries": 16
+     },
+     "executed": "authored-control-software-ddmin",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+     "family": "software",
+     "initial_size": 8,
+     "kept_size": 3,
+     "normalized_reduction": 0.625,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-authored-control-software-ddmin-ad01-w1-within-sw-00"
+     ],
+     "output": {
+      "family": "software",
+      "fault": "stale-read",
+      "ops": [
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v1"
+       },
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v2"
+       },
+       {
+        "id": "o0",
+        "key": "c",
+        "op": "get"
+       }
+      ],
+      "seed": 5401,
+      "task_id": "ad01-w1-within-sw-00",
+      "witness": {
+       "faulty": {
+        "type": "str",
+        "value": "v1"
+       },
+       "observation": "o0",
+       "ref": {
+        "type": "str",
+        "value": "v2"
+       }
+      }
+     },
+     "queries": 16,
+     "reason": "ok-preserved",
+     "task_id": "ad01-w1-within-sw-00",
+     "verdict": "preserved"
+    }
+   ],
+   "ad01-w2-within-gr-00": [
+    {
+     "authored": true,
+     "capability_id": "authored-control-graph-ddmin",
+     "costs": {
+      "witness_queries": 16
+     },
+     "executed": "authored-control-graph-ddmin",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='ddmin', max_queries=max_queries)\n",
+     "family": "graph",
+     "initial_size": 12,
+     "kept_size": 11,
+     "normalized_reduction": 0.08333333333333333,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-authored-control-graph-ddmin-ad01-w2-within-gr-00"
+     ],
+     "output": {
+      "edges": [
+       [
+        0,
+        1
+       ],
+       [
+        1,
+        2
+       ],
+       [
+        2,
+        3
+       ],
+       [
+        3,
+        4
+       ],
+       [
+        0,
+        4
+       ]
+      ],
+      "family": "graph",
+      "seed": 5601,
+      "task_id": "ad01-w2-within-gr-00",
+      "vertices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     },
+     "queries": 16,
+     "reason": "ok-preserved",
+     "task_id": "ad01-w2-within-gr-00",
+     "verdict": "preserved"
+    }
+   ],
+   "ad01-w2-within-sw-00": [
+    {
+     "authored": true,
+     "capability_id": "authored-control-software-ddmin",
+     "costs": {
+      "witness_queries": 9
+     },
+     "executed": "authored-control-software-ddmin",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+     "family": "software",
+     "initial_size": 13,
+     "kept_size": 3,
+     "normalized_reduction": 0.7692307692307693,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-authored-control-software-ddmin-ad01-w2-within-sw-00"
+     ],
+     "output": {
+      "family": "software",
+      "fault": "stale-read",
+      "ops": [
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v2"
+       },
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v3"
+       },
+       {
+        "id": "o0",
+        "key": "c",
+        "op": "get"
+       }
+      ],
+      "seed": 5501,
+      "task_id": "ad01-w2-within-sw-00",
+      "witness": {
+       "faulty": {
+        "type": "str",
+        "value": "v2"
+       },
+       "observation": "o0",
+       "ref": {
+        "type": "str",
+        "value": "v3"
+       }
+      }
+     },
+     "queries": 9,
+     "reason": "ok-preserved",
+     "task_id": "ad01-w2-within-sw-00",
+     "verdict": "preserved"
+    }
+   ]
+  },
+  "dev-exp": {
+   "ad01-w1-within-gr-00": [
+    {
+     "authored": false,
+     "costs": {
+      "witness_queries": 0
+     },
+     "executed": "construction-failed",
+     "executed_source": "",
+     "family": "graph",
+     "initial_size": null,
+     "kept_size": null,
+     "normalized_reduction": null,
+     "operation_ids": [],
+     "output": {},
+     "queries": null,
+     "task_id": "ad01-w1-within-gr-00",
+     "verdict": "not-constructed"
+    }
+   ],
+   "ad01-w1-within-sw-00": [
+    {
+     "authored": false,
+     "capability_id": "acquired-check",
+     "costs": {
+      "witness_queries": 16
+     },
+     "executed": "acquired-check",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+     "family": "software",
+     "initial_size": 8,
+     "kept_size": 3,
+     "normalized_reduction": 0.625,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-acquired-check-ad01-w1-within-sw-00"
+     ],
+     "output": {
+      "family": "software",
+      "fault": "stale-read",
+      "ops": [
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v1"
+       },
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v2"
+       },
+       {
+        "id": "o0",
+        "key": "c",
+        "op": "get"
+       }
+      ],
+      "seed": 5401,
+      "task_id": "ad01-w1-within-sw-00",
+      "witness": {
+       "faulty": {
+        "type": "str",
+        "value": "v1"
+       },
+       "observation": "o0",
+       "ref": {
+        "type": "str",
+        "value": "v2"
+       }
+      }
+     },
+     "queries": 16,
+     "reason": "ok-preserved",
+     "task_id": "ad01-w1-within-sw-00",
+     "verdict": "preserved"
+    }
+   ],
+   "ad01-w2-within-gr-00": [
+    {
+     "authored": false,
+     "costs": {
+      "witness_queries": 0
+     },
+     "executed": "construction-failed",
+     "executed_source": "",
+     "family": "graph",
+     "initial_size": null,
+     "kept_size": null,
+     "normalized_reduction": null,
+     "operation_ids": [],
+     "output": {},
+     "queries": null,
+     "task_id": "ad01-w2-within-gr-00",
+     "verdict": "not-constructed"
+    }
+   ],
+   "ad01-w2-within-sw-00": [
+    {
+     "authored": false,
+     "capability_id": "acquired-check",
+     "costs": {
+      "witness_queries": 9
+     },
+     "executed": "acquired-check",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+     "family": "software",
+     "initial_size": 13,
+     "kept_size": 3,
+     "normalized_reduction": 0.7692307692307693,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-acquired-check-ad01-w2-within-sw-00"
+     ],
+     "output": {
+      "family": "software",
+      "fault": "stale-read",
+      "ops": [
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v2"
+       },
+       {
+        "key": "c",
+        "op": "set",
+        "value": "v3"
+       },
+       {
+        "id": "o0",
+        "key": "c",
+        "op": "get"
+       }
+      ],
+      "seed": 5501,
+      "task_id": "ad01-w2-within-sw-00",
+      "witness": {
+       "faulty": {
+        "type": "str",
+        "value": "v2"
+       },
+       "observation": "o0",
+       "ref": {
+        "type": "str",
+        "value": "v3"
+       }
+      }
+     },
+     "queries": 9,
+     "reason": "ok-preserved",
+     "task_id": "ad01-w2-within-sw-00",
+     "verdict": "preserved"
+    }
+   ]
+  },
+  "public-interface": {
+   "ad01-w1-within-gr-00": [
+    {
+     "authored": false,
+     "capability_id": "acquired-check",
+     "costs": {
+      "witness_queries": 0
+     },
+     "executed": "acquired-check",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_graph(task, oracle, \"ddmin\", max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+     "execution_error": "MethodExecutionError: refused: durable child operation has no successful receipt",
+     "family": "graph",
+     "initial_size": null,
+     "kept_size": null,
+     "normalized_reduction": null,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-acquired-check-ad01-w1-within-gr-00"
+     ],
+     "output": {},
+     "queries": null,
+     "task_id": "ad01-w1-within-gr-00",
+     "verdict": "execution-refused"
+    }
+   ],
+   "ad01-w1-within-sw-00": [
+    {
+     "authored": false,
+     "costs": {
+      "witness_queries": 0
+     },
+     "executed": "construction-failed",
+     "executed_source": "",
+     "family": "software",
+     "initial_size": null,
+     "kept_size": null,
+     "normalized_reduction": null,
+     "operation_ids": [],
+     "output": {},
+     "queries": null,
+     "task_id": "ad01-w1-within-sw-00",
+     "verdict": "not-constructed"
+    }
+   ],
+   "ad01-w2-within-gr-00": [
+    {
+     "authored": false,
+     "capability_id": "acquired-check",
+     "costs": {
+      "witness_queries": 0
+     },
+     "executed": "acquired-check",
+     "executed_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_graph(task, oracle, \"ddmin\", max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+     "execution_error": "MethodExecutionError: refused: durable child operation has no successful receipt",
+     "family": "graph",
+     "initial_size": null,
+     "kept_size": null,
+     "normalized_reduction": null,
+     "operation_ids": [
+      "s09iso-m3final-w0-score-acquired-check-ad01-w2-within-gr-00"
+     ],
+     "output": {},
+     "queries": null,
+     "task_id": "ad01-w2-within-gr-00",
+     "verdict": "execution-refused"
+    }
+   ],
+   "ad01-w2-within-sw-00": [
+    {
+     "authored": false,
+     "costs": {
+      "witness_queries": 0
+     },
+     "executed": "construction-failed",
+     "executed_source": "",
+     "family": "software",
+     "initial_size": null,
+     "kept_size": null,
+     "normalized_reduction": null,
+     "operation_ids": [],
+     "output": {},
+     "queries": null,
+     "task_id": "ad01-w2-within-sw-00",
+     "verdict": "not-constructed"
+    }
+   ]
+  }
+ },
+ "construction": [
+  {
+   "admitted": true,
+   "arm": "dev-exp",
+   "budget_kind": "estimated-budget",
+   "currencies": {
+    "billed": null,
+    "dispatches": 1,
+    "input_tokens": null,
+    "internal_charge_scale": null,
+    "internal_charge_units": null,
+    "note": "a free route reports provider cost 0 because the route is free; that is an absence of a price, not a measured zero cost",
+    "output_tokens": null,
+    "provider_enforced_ceiling": null,
+    "provider_reported_cost": null
+   },
+   "dispatched_at": "2026-09-28T18:47:11.164461+00:00",
+   "exposure_units": 3231,
+   "family": "graph",
+   "lineage": 1,
+   "operation_id": "s09iso-m3final-w0-construct-graph-l1-dev-exp",
+   "outcome": "unknown",
+   "parse_failure": "gateway read timed out",
+   "prompt_chars": 4730,
+   "prompt_sha256": "7a9f53b787a90efa5e684767616dde32e71118afd799223dcc0911ee712657c5",
+   "receipt_identity": "gw:s09iso-m3final-w0-construct-graph-l1-dev-exp:lost-response",
+   "response_class": "lost-response",
+   "sent": true,
+   "source": null,
+   "task_id": "ad01-w0-dev-gr-00"
+  },
+  {
+   "admitted": true,
+   "arm": "public-interface",
+   "budget_kind": "estimated-budget",
+   "currencies": {
+    "billed": null,
+    "dispatches": 1,
+    "input_tokens": 1249,
+    "internal_charge_scale": null,
+    "internal_charge_units": null,
+    "note": "a free route reports provider cost 0 because the route is free; that is an absence of a price, not a measured zero cost",
+    "output_tokens": 818,
+    "provider_enforced_ceiling": null,
+    "provider_reported_cost": null
+   },
+   "dispatched_at": "2026-09-28T18:47:35.949265+00:00",
+   "exposure_units": 3165,
+   "family": "graph",
+   "lineage": 1,
+   "operation_id": "s09iso-m3final-w0-construct-graph-l1-public-interface",
+   "outcome": "success",
+   "parse_failure": null,
+   "prompt_chars": 4465,
+   "prompt_sha256": "d87a22190fd104983ca4ab3d1e04e9b1a486607e93d826558c1281a86c4ecaae",
+   "receipt_identity": "gw:s09iso-m3final-w0-construct-graph-l1-public-interface",
+   "response_class": "",
+   "sent": true,
+   "source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_graph(task, oracle, \"ddmin\", max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+   "source_digest": "6c669ba93f785540e6721386ccd9450d4ba1a849eadcd2eddb52e4c72cb664ac",
+   "task_id": "ad01-w0-dev-gr-00"
+  },
+  {
+   "admitted": true,
+   "arm": "dev-exp",
+   "budget_kind": "estimated-budget",
+   "currencies": {
+    "billed": null,
+    "dispatches": 1,
+    "input_tokens": 1723,
+    "internal_charge_scale": null,
+    "internal_charge_units": null,
+    "note": "a free route reports provider cost 0 because the route is free; that is an absence of a price, not a measured zero cost",
+    "output_tokens": 938,
+    "provider_enforced_ceiling": null,
+    "provider_reported_cost": null
+   },
+   "dispatched_at": "2026-09-28T18:48:13.375067+00:00",
+   "exposure_units": 3471,
+   "family": "software",
+   "lineage": 1,
+   "operation_id": "s09iso-m3final-w0-construct-software-l1-dev-exp",
+   "outcome": "success",
+   "parse_failure": null,
+   "prompt_chars": 5689,
+   "prompt_sha256": "9e730a67208e072793fc5837ac4d6f9480f84441195097f8f676f867b21db342",
+   "receipt_identity": "gw:s09iso-m3final-w0-construct-software-l1-dev-exp",
+   "response_class": "",
+   "sent": true,
+   "source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+   "source_digest": "81a15e81634b7a93fd56f4f27ba3d2aa4a6fae374235b14c43d909bf56e089e4",
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  {
+   "admitted": true,
+   "arm": "public-interface",
+   "budget_kind": "estimated-budget",
+   "currencies": {
+    "billed": null,
+    "dispatches": 1,
+    "input_tokens": null,
+    "internal_charge_scale": null,
+    "internal_charge_units": null,
+    "note": "a free route reports provider cost 0 because the route is free; that is an absence of a price, not a measured zero cost",
+    "output_tokens": null,
+    "provider_enforced_ceiling": null,
+    "provider_reported_cost": null
+   },
+   "dispatched_at": "2026-09-28T18:49:13.655623+00:00",
+   "exposure_units": 3405,
+   "family": "software",
+   "lineage": 1,
+   "operation_id": "s09iso-m3final-w0-construct-software-l1-public-interface",
+   "outcome": "unknown",
+   "parse_failure": "gateway read timed out",
+   "prompt_chars": 5427,
+   "prompt_sha256": "c471869253755c258a61289e4d0e7bf9f2d8ef85afb538977b6c086b06ad83ec",
+   "receipt_identity": "gw:s09iso-m3final-w0-construct-software-l1-public-interface:lost-response",
+   "response_class": "lost-response",
+   "sent": true,
+   "source": null,
+   "task_id": "ad01-w0-dev-sw-00"
+  }
+ ],
+ "experience": {
+  "graph": [
+   {
+    "capability_id": "authored-control-graph-ddmin",
+    "detail": {
+     "initial_size": 12,
+     "kept_size": 11,
+     "queries": 16
+    },
+    "method": "ddmin",
+    "normalized_reduction": 0.08333333333333333,
+    "observation_id": "m3-dev-graph-0",
+    "reason": "ok-preserved",
+    "task_id": "ad01-w0-dev-gr-00",
+    "verdict": "preserved"
+   },
+   {
+    "capability_id": "authored-control-graph-ddmin",
+    "detail": {
+     "initial_size": 16,
+     "kept_size": 16,
+     "queries": 16
+    },
+    "method": "ddmin",
+    "normalized_reduction": 0.0,
+    "observation_id": "m3-dev-graph-1",
+    "reason": "ok-incumbent",
+    "task_id": "ad01-w0-dev-gr-01",
+    "verdict": "preserved"
+   }
+  ],
+  "software": [
+   {
+    "capability_id": "authored-control-software-ddmin",
+    "detail": {
+     "initial_size": 14,
+     "kept_size": 3,
+     "queries": 9
+    },
+    "method": "ddmin",
+    "normalized_reduction": 0.7857142857142857,
+    "observation_id": "m3-dev-software-0",
+    "reason": "ok-preserved",
+    "task_id": "ad01-w0-dev-sw-00",
+    "verdict": "preserved"
+   },
+   {
+    "capability_id": "authored-control-software-ddmin",
+    "detail": {
+     "initial_size": 16,
+     "kept_size": 4,
+     "queries": 16
+    },
+    "method": "ddmin",
+    "normalized_reduction": 0.75,
+    "observation_id": "m3-dev-software-1",
+    "reason": "ok-preserved",
+    "task_id": "ad01-w0-dev-sw-01",
+    "verdict": "preserved"
+   }
+  ]
+ },
+ "finished_at": "2026-09-28T18:49:16.166638+00:00",
+ "freeze": {
+  "adapter": "http-responses",
+  "arms": [
+   "dev-exp",
+   "public-interface",
+   "authored-control"
+  ],
+  "control_strategy": "ddmin",
+  "development": {
+   "graph": [
+    "ad01-w0-dev-gr-00",
+    "ad01-w0-dev-gr-01"
+   ],
+   "software": [
+    "ad01-w0-dev-sw-00",
+    "ad01-w0-dev-sw-01"
+   ]
+  },
+  "frozen_at": "2026-09-28T18:46:08.655281+00:00",
+  "max_queries": 16,
+  "menu_open": true,
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "panel": [
+   [
+    "w1",
+    1,
+    "ad01-w1-within-gr-00",
+    "graph"
+   ],
+   [
+    "w1",
+    1,
+    "ad01-w1-within-sw-00",
+    "software"
+   ],
+   [
+    "w2",
+    2,
+    "ad01-w2-within-gr-00",
+    "graph"
+   ],
+   [
+    "w2",
+    2,
+    "ad01-w2-within-sw-00",
+    "software"
+   ]
+  ],
+  "reasoning_effort": "high",
+  "request_bounds": {
+   "deadline_ms": 300000,
+   "max_output_tokens": 2048
+  },
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "route": {
+   "endpoint": "http://localhost:4000/v1",
+   "provider": "nvidia",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "tier": "free"
+  },
+  "store": "s09iso_m3final_37cf4979f732",
+  "study_root": "s09iso-m3final-root"
+ },
+ "gates": {
+  "dev-exp": {
+   "constructed_families": [
+    "software"
+   ],
+   "distinct": false,
+   "refusal": "not-scored: no constructed member for graph"
+  },
+  "experience-detail-graph": {
+   "carries_more_than_verdict": true,
+   "distinct_reasons": [
+    "ok-incumbent",
+    "ok-preserved"
+   ],
+   "distinct_reductions": 2,
+   "distinct_verdicts": 1,
+   "observations": 2
+  },
+  "experience-detail-software": {
+   "carries_more_than_verdict": true,
+   "distinct_reasons": [
+    "ok-preserved"
+   ],
+   "distinct_reductions": 2,
+   "distinct_verdicts": 1,
+   "observations": 2
+  },
+  "experience-graph": {
+   "arm": "dev-exp/graph",
+   "distinct_verdicts": 1,
+   "methods_named": [
+    "ddmin"
+   ],
+   "observations": 2,
+   "refusal": "refused: the dev-exp/graph arm's experience is a constant: 2 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+   "varies": false,
+   "verdicts": [
+    "preserved"
+   ],
+   "version": "ad01-experience-variation/1"
+  },
+  "experience-software": {
+   "arm": "dev-exp/software",
+   "distinct_verdicts": 1,
+   "methods_named": [
+    "ddmin"
+   ],
+   "observations": 2,
+   "refusal": "refused: the dev-exp/software arm's experience is a constant: 2 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+   "varies": false,
+   "verdicts": [
+    "preserved"
+   ],
+   "version": "ad01-experience-variation/1"
+  },
+  "public-interface": {
+   "constructed_families": [
+    "graph"
+   ],
+   "distinct": false,
+   "refusal": "not-scored: no constructed member for software"
+  }
+ },
+ "members": {
+  "authored-control/graph": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "authored-control/software": "def ENTRY(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method='ddmin', max_queries=max_queries)\n",
+  "dev-exp/graph": null,
+  "dev-exp/software": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+  "public-interface/graph": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_graph(task, oracle, \"ddmin\", max_queries)\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+  "public-interface/software": null
+ }
+}

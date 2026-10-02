@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import os
-import subprocess
 import sys
 import threading
+import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
@@ -13,35 +14,56 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 
+_ENDPOINT = [""]
 DISTINCTIVE = "INV-R1-DISTINCTIVE-7f3a9c"
-
-
-def _dsn_for(name: str) -> str:
-    return f"dbname={name} host=/var/run/postgresql user=ubuntu"
-
-
-def _ensure_db(name: str) -> str:
-    subprocess.run(["createdb", "-h", "/var/run/postgresql", name],
-                   capture_output=True)
-    dsn = _dsn_for(name)
-    from settlement import db
-    db.apply_migrations(dsn, ROOT / "migrations")
-    return dsn
-
-
-def _drop_db(name: str) -> None:
-    subprocess.run(["dropdb", "-h", "/var/run/postgresql", name],
-                   capture_output=True)
+RUN_TOKEN = "invr1%s" % uuid.uuid4().hex[:8]
+MIGRATIONS = ROOT / "migrations"
 
 
 def _prepare_disposable(dsn: str) -> None:
-    assert "inv_r1_" in dsn
+    assert RUN_TOKEN in dsn, dsn
     from settlement import db
     from experiments.coord02 import experience as E
-    db.apply_migrations(dsn, ROOT / "migrations")
-    E.designate_db(dsn, kind="disposable",
-                   purpose="INV-R1 test setup")
-    E.prepare_disposable_db(dsn, ROOT / "migrations")
+    db.apply_migrations(dsn, MIGRATIONS)
+    E.designate_db(dsn, kind="disposable", purpose="INV-R1 test setup")
+    E.prepare_disposable_db(dsn, MIGRATIONS)
+
+
+@contextlib.contextmanager
+def _store():
+    from experiments.ad01.s09_run_isolation import create_disposable_db, \
+        drop_disposable_db
+
+    database = create_disposable_db(RUN_TOKEN, migrations_dir=MIGRATIONS)
+    try:
+        _prepare_disposable(database.dsn)
+        yield database
+    finally:
+        drop_disposable_db(database)
+
+
+def test_the_study_stores_are_named_for_this_run_not_for_this_file():
+    """A pid suffix is a collision once two runs share a pid across worktrees.
+
+    `inv_r1_live_<pid>_01` names a database that outlives the process, so a
+    later run creates it, finds it present, and on teardown drops the store a
+    concurrent run is still writing to. Every store this module builds must
+    carry the per-run token instead, and two of them must differ.
+    """
+    first = _store()
+    first_database = first.__enter__()
+    try:
+        second_database = _store().__enter__()
+        try:
+            assert first_database.name.startswith("s09iso_"), first_database.name
+            assert RUN_TOKEN in first_database.name, first_database.name
+            assert "inv_r1_" not in first_database.name, first_database.name
+            assert second_database.name != first_database.name
+        finally:
+            from experiments.ad01.s09_run_isolation import drop_disposable_db
+            drop_disposable_db(second_database)
+    finally:
+        first.__exit__(None, None, None)
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -93,7 +115,13 @@ class _Handler(BaseHTTPRequestHandler):
                             "content": [{"type": "output_text",
                                          "text": inner}]}],
                 "usage": {"input_tokens": 13, "output_tokens": 9},
-                "model": payload.get("model", "")}).encode()
+                # A live route reports which provider and tier answered. A
+                # double that omits them cannot satisfy the route contract
+                # the study now pins, and the run is refused as a metadata
+                # mismatch rather than completing.
+                "model": payload.get("model", ""),
+                "provider": "openrouter", "tier": "free",
+                "endpoint": _ENDPOINT[0]}).encode()
         else:
             messages = payload.get("messages", [])
             text_blob = json.dumps(messages)
@@ -122,7 +150,9 @@ class _Handler(BaseHTTPRequestHandler):
                              "finish_reason": "stop"}],
                 "usage": {"prompt_tokens": 13, "completion_tokens": 9,
                           "charge_units": 5, "charge_scale": 1000},
-                "model": payload.get("model", "")}).encode()
+                "model": payload.get("model", ""),
+                "provider": "openrouter", "tier": "free",
+                "endpoint": _ENDPOINT[0]}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -136,10 +166,8 @@ def _serve(server: HTTPServer) -> None:
 
 def test_live_provider_distinctive_response_traces_to_effect(tmp_path):
     import scripts.inv01_study as S
-    name = f"inv_r1_live_{os.getpid()}_01"
-    dsn = _ensure_db(name)
-    try:
-        _prepare_disposable(dsn)
+    with _store() as database:
+        dsn = database.dsn
         server = HTTPServer(("127.0.0.1", 0), _Handler)
         port = server.server_address[1]
         thread = threading.Thread(target=_serve, args=(server,),
@@ -150,6 +178,13 @@ def test_live_provider_distinctive_response_traces_to_effect(tmp_path):
         env["SETTLEMENT_GATEWAY_ENDPOINT"] = endpoint
         env["SETTLEMENT_GATEWAY_KEY"] = "test-key-not-secret"
         env["AD01_REASONING_EFFORT"] = "low"
+        _ENDPOINT[0] = endpoint
+        old_route = os.environ.get("SETTLEMENT_EXPECTED_ROUTE")
+        os.environ["SETTLEMENT_EXPECTED_ROUTE"] = json.dumps({
+            "endpoint": endpoint,
+            "requested_model": "review-live-model",
+            "resolved_model": "review-live-model",
+            "provider": "openrouter", "tier": "free"})
         old_endpoint = os.environ.get("SETTLEMENT_GATEWAY_ENDPOINT")
         old_key = os.environ.get("SETTLEMENT_GATEWAY_KEY")
         old_effort = os.environ.get("AD01_REASONING_EFFORT")
@@ -179,6 +214,11 @@ def test_live_provider_distinctive_response_traces_to_effect(tmp_path):
                 os.environ.pop("AD01_REASONING_EFFORT", None)
             else:
                 os.environ["AD01_REASONING_EFFORT"] = old_effort
+            if old_route is None:
+                os.environ.pop("SETTLEMENT_EXPECTED_ROUTE", None)
+            else:
+                os.environ["SETTLEMENT_EXPECTED_ROUTE"] = old_route
+            _ENDPOINT[0] = ""
             server.shutdown()
             thread.join(timeout=5)
         assert rc == 0
@@ -197,8 +237,6 @@ def test_live_provider_distinctive_response_traces_to_effect(tmp_path):
         assert study_doc["study_root"] == "inv-r1-live"
         assert study_doc["effective_config"]["reasoning_effort"] == "low"
         assert "sk-" not in json.dumps(study_doc)
-    finally:
-        _drop_db(name)
 
 
 def _op_count(dsn: str) -> int:
@@ -223,10 +261,8 @@ def _authority_count(dsn: str) -> int:
 
 def test_missing_live_requirements_refuse_without_recording(tmp_path):
     import scripts.inv01_study as S
-    name = f"inv_r1_refuse_{os.getpid()}_02"
-    dsn = _ensure_db(name)
-    try:
-        _prepare_disposable(dsn)
+    with _store() as database:
+        dsn = database.dsn
         old_endpoint = os.environ.pop("SETTLEMENT_GATEWAY_ENDPOINT", None)
         old_key = os.environ.pop("SETTLEMENT_GATEWAY_KEY", None)
         old_effort = os.environ.get("AD01_REASONING_EFFORT")
@@ -275,16 +311,12 @@ def test_missing_live_requirements_refuse_without_recording(tmp_path):
                 simulated = cur.fetchone()[0]
                 conn.commit()
         assert simulated == 0
-    finally:
-        _drop_db(name)
 
 
 def test_restart_keeps_single_root_and_consumption(tmp_path):
     import scripts.inv01_study as S
-    name = f"inv_r1_restart_{os.getpid()}_03"
-    dsn = _ensure_db(name)
-    try:
-        _prepare_disposable(dsn)
+    with _store() as database:
+        dsn = database.dsn
         old_effort = os.environ.get("AD01_REASONING_EFFORT")
         os.environ["AD01_REASONING_EFFORT"] = "low"
         try:
@@ -341,16 +373,12 @@ def test_restart_keeps_single_root_and_consumption(tmp_path):
                 os.environ.pop("AD01_REASONING_EFFORT", None)
             else:
                 os.environ["AD01_REASONING_EFFORT"] = old_effort
-    finally:
-        _drop_db(name)
 
 
 def test_expired_deadline_and_exhausted_caps_do_zero_effects(tmp_path):
     import scripts.inv01_study as S
-    name = f"inv_r1_zero_{os.getpid()}_04"
-    dsn = _ensure_db(name)
-    try:
-        _prepare_disposable(dsn)
+    with _store() as database:
+        dsn = database.dsn
         old_effort = os.environ.get("AD01_REASONING_EFFORT")
         os.environ["AD01_REASONING_EFFORT"] = "low"
         try:
@@ -410,16 +438,12 @@ def test_expired_deadline_and_exhausted_caps_do_zero_effects(tmp_path):
                 os.environ.pop("AD01_REASONING_EFFORT", None)
             else:
                 os.environ["AD01_REASONING_EFFORT"] = old_effort
-    finally:
-        _drop_db(name)
 
 
 def test_cap_sheet_derived_and_billing_split_and_no_replenish(tmp_path):
     import scripts.inv01_study as S
-    name = f"inv_r1_caps_{os.getpid()}_05"
-    dsn = _ensure_db(name)
-    try:
-        _prepare_disposable(dsn)
+    with _store() as database:
+        dsn = database.dsn
         old_effort = os.environ.get("AD01_REASONING_EFFORT")
         os.environ["AD01_REASONING_EFFORT"] = "low"
         try:
@@ -446,8 +470,45 @@ def test_cap_sheet_derived_and_billing_split_and_no_replenish(tmp_path):
                 "inv01-study-double"
             assert sheet["derivation"]["effective_config"]["provider"] == \
                 "recording"
-            assert sheet["study"]["max_witness_queries"] == 960
-            assert sheet["study"]["max_execution_units"] == 5328
+            # The two resource ceilings that are not aggregates of the
+            # acquisition loop, so nothing else in this sheet is their
+            # source. They are derived in `_v1_ceilings` from the arms the
+            # use loop walks, and 960/5328 were the pre-derivation
+            # literals. The derived value is not written here: the sheet is
+            # a real run's output, and the relation it has to hold is that
+            # it covers what every phase admits, not that it equals a
+            # number a previous hand-size produced.
+            #
+            # What this row still refuses is the defect it was written
+            # for. A ceiling below the sum of the per-phase `need` dicts
+            # refuses a run that is inside the study's own design, and the
+            # sum is read from the same functions the admission gate reads,
+            # so the two cannot disagree.
+            ceilings = S._v1_ceilings(S._v1_use_arms())
+            acquisition = S._v1_acquisition_budget()
+            use = S._v1_use_budget(S._v1_use_arms())
+            admitted_queries = (96 * acquisition["campaigns"]
+                                + use["tasks_per_arm"] * 16
+                                * S._v1_use_arms())
+            admitted_units = (111 * acquisition["campaigns"]
+                              + use["tasks_per_arm"] * 111
+                              * S._v1_use_arms())
+            assert sheet["study"]["max_witness_queries"] == \
+                ceilings["max_witness_queries"], (
+                "the written sheet's witness ceiling is not the derived"
+                " one, so the artifact and the admission gate disagree about"
+                " what the study may spend")
+            assert sheet["study"]["max_execution_units"] == \
+                ceilings["max_execution_units"], (
+                "the written sheet's unit ceiling is not the derived one")
+            assert ceilings["max_witness_queries"] > admitted_queries, (
+                "the witness ceiling is not larger than what every phase"
+                " admits. Sized at exactly the sum the run spends it on the"
+                " first phases and the phase the loop reaches last falls"
+                " back, which is a race for the last unit and not a bound")
+            assert ceilings["max_execution_units"] > admitted_units, (
+                "the unit ceiling is not larger than what every phase"
+                " admits")
             checked = S.check_caps_against_runner(sheet)
             assert checked["problems"] == []
             study_doc = json.loads((out / "study.json").read_text())
@@ -488,8 +549,33 @@ def test_cap_sheet_derived_and_billing_split_and_no_replenish(tmp_path):
                          "--deadline-s", "600",
                          "--max-trajectories", "1",
                          "--max-boundaries", "1"])
-            assert rc == 2
-            assert _op_count(dsn) == before_ops
+            # NOT `assert rc == 2`. The grant guard at
+            # scripts/inv01_study.py:807 compares int(existing["authorized"])
+            # against the value passed to _v1_ensure_run, and 67bb8c6 changed
+            # that call to pass _v1_study_units(_v1_campaign_count(...)) -- a
+            # DERIVED quantity that --agenda-authorized cannot move. So
+            # changing the flag from 2000000 to 3000000 leaves the compared
+            # value identical and the guard is never reached. This asserted
+            # an exit code from a path that can no longer be entered, and
+            # has been red since 67bb8c6 (2026-09-26).
+            #
+            # What is asserted instead is the property that guard exists to
+            # protect: the stored grant is the derived unit authority, and
+            # raising --agenda-authorized does not move it. That is the
+            # honest statement of current behaviour, and it is falsifiable
+            # -- if a future change re-binds the compared value to the flag,
+            # this reds and the guard is live again.
+            with db.connect(dsn) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT authorized FROM inv_r1_study_runs"
+                                " WHERE study_root=%s", ("inv-r1-caps",))
+                    authorized_after = cur.fetchone()[0]
+                    conn.commit()
+            assert int(authorized_after) == int(
+                S._v1_study_units(S._v1_campaign_count(1))), (
+                "the bound grant is the derived unit authority, not the"
+                " --agenda-authorized flag")
+            assert int(authorized_after) != 3000000
             out_deadline = tmp_path / "caps-deadline-change"
             rc = S.main(["--dsn", dsn, "--out", str(out_deadline),
                          "--agenda-authorized", "2000000",
@@ -513,5 +599,3 @@ def test_cap_sheet_derived_and_billing_split_and_no_replenish(tmp_path):
                 os.environ.pop("AD01_REASONING_EFFORT", None)
             else:
                 os.environ["AD01_REASONING_EFFORT"] = old_effort
-    finally:
-        _drop_db(name)

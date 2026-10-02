@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from urllib.parse import urlparse, urlunparse
 
 import psycopg
+from psycopg.conninfo import make_conninfo
 from psycopg.rows import dict_row
 
 from settlement import agenda, agenda_policy, broker, db, store
@@ -31,8 +31,7 @@ def traj_ids(world_index: int, variant: int, arm: str, tie: int) -> str:
 
 
 def swap_dbname(dsn: str, name: str) -> str:
-    parts = urlparse(dsn)
-    return urlunparse((parts.scheme, parts.netloc, "/" + name, "", parts.query, ""))
+    return make_conninfo(dsn, dbname=name)
 
 
 def create_db(base_dsn: str, name: str) -> str:
@@ -305,18 +304,38 @@ class AgendaBackend:
                                        "receipt_identity": receipt, "scored": scored}))
 
     def charge_aux(self, label: str, amount: int, allocation_id: str) -> str:
-        op_id = f"ag01:{self.traj}:{label}"
-        res_id = f"{op_id}:res"
-        _ok(store.reserve(
-            self.dsn, Command(request_id=f"{op_id}:prep",
-                              payload={"allocation_id": allocation_id,
-                                       "reservation_id": res_id, "amount": amount,
-                                       "operation_id": op_id})), f"reserve {label}")
-        _ok(store.settle_reservation(
-            self.dsn, Command(request_id=f"{op_id}:settle",
-                              payload={"reservation_id": res_id, "outcome": "success",
-                                       "actual_cost": amount})), f"settle {label}")
-        return op_id
+        """Book a non-probe charge: the eval close-out and each recovery drain.
+
+        This is a charge, not an operation. Nothing is dispatched, no adapter
+        runs and no receipt is ever written, so there is no operations row
+        behind it and there must not be one: the checker requires every
+        operations row in the ledger to carry a receipt
+        (`checker.check_trace`, effect-without-receipt), and eval-final
+        produces none.
+
+        The charge therefore reserves and settles on its own identity in one
+        transaction, the shape `agenda._agenda_charge_decision` uses for the
+        per-tick decision cost. `store.reserve` is not usable here because it
+        refuses an operation_id that is not already a row, and this charge
+        never becomes one. Its identity is the returned string, which callers
+        record in their own ledgers and liabilities.
+        """
+        charge_id = f"ag01:{self.traj}:{label}"
+        res_id = f"{charge_id}:res"
+
+        def _fn(cur, control):
+            store._take_reservation(cur, allocation_id, res_id, int(amount), charge_id)
+            store._settle_amount(cur, res_id, "success", int(amount))
+            return (ResultCode.APPLIED, f"charged {amount}",
+                    {"charge_id": charge_id, "amount": int(amount)}, [], [])
+
+        _ok(store.transact(
+            self.dsn,
+            Command(request_id=f"{charge_id}:charge", payload={
+                "allocation_id": allocation_id, "reservation_id": res_id,
+                "amount": int(amount), "charge_id": charge_id}), _fn),
+            f"charge {label}")
+        return charge_id
 
     def export_ledger(self) -> dict:
         with db.read_connect(self.dsn) as conn:

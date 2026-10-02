@@ -90,4 +90,4 @@ The new probes preserve what this revision does. They are not production accepta
 - [ ] Worker completes the existing C1–C5 batch under the replacement handoff, including live work when separately granted.
 - [ ] Assess initiative, investigation, construction and retained use separately, then select the next architectural experiment.
 
-The next useful work is implementation of these settled semantics. More design layers would not resolve the observed disconnect. The full worker assignment is [WORKER-EC02-AD01-BEHAVIORAL-COMPLETION.md](../WORKER-EC02-AD01-BEHAVIORAL-COMPLETION.md).
+The next useful work is implementation of these settled semantics. More design layers would not resolve the observed disconnect. The full worker assignment is [WORKER-EC02-AD01-BEHAVIORAL-COMPLETION.md](../docs/HISTORY.md#worker-ec02-ad01-behavioral-completion).

@@ -1,0 +1,169 @@
+{
+ "cases": [
+  {
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": {
+    "final_measure": 3,
+    "initial_measure": 13,
+    "normalized_reduction": 0.7692307692307693,
+    "queries": 4,
+    "source_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+    "verdict": "preserved"
+   },
+   "committed_output": {
+    "family": "software",
+    "fault": "stale-read",
+    "ops": [
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "id": "o0",
+      "key": "c",
+      "op": "get"
+     }
+    ],
+    "seed": 5501,
+    "task_id": "ad01-w2-within-sw-00",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v2"
+     },
+     "observation": "o0",
+     "ref": {
+      "type": "str",
+      "value": "v3"
+     }
+    }
+   },
+   "entry": "ENTRY",
+   "max_queries": 4,
+   "member_path": "/home/ubuntu/AI/Agent-Society-v2/reports/evidence/inv_r1_m2_join/members/acquired-sw-5b65c917.py",
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": {
+    "final_measure": 3,
+    "initial_measure": 10,
+    "normalized_reduction": 0.7,
+    "queries": 4,
+    "source_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+    "verdict": "preserved"
+   },
+   "committed_output": {
+    "family": "software",
+    "fault": "stale-clear",
+    "ops": [
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "op": "clear"
+     },
+     {
+      "id": "o1",
+      "key": "b",
+      "op": "get"
+     }
+    ],
+    "seed": 5502,
+    "task_id": "ad01-w2-within-sw-01",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v3"
+     },
+     "observation": "o1",
+     "ref": {
+      "type": "missing",
+      "value": null
+     }
+    }
+   },
+   "entry": "ENTRY",
+   "max_queries": 4,
+   "member_path": "/home/ubuntu/AI/Agent-Society-v2/reports/evidence/inv_r1_m2_join/members/acquired-sw-5b65c917.py",
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": {
+    "final_measure": 7,
+    "initial_measure": 10,
+    "normalized_reduction": 0.3,
+    "queries": 4,
+    "source_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+    "verdict": "preserved"
+   },
+   "committed_output": {
+    "family": "software",
+    "fault": "stale-read",
+    "ops": [
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v1"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "id": "o0",
+      "key": "b",
+      "op": "get"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "id": "o1",
+      "key": "a",
+      "op": "get"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+     },
+     {
+      "id": "o2",
+      "key": "a",
+      "op": "get"
+     }
+    ],
+    "seed": 5501,
+    "task_id": "ad01-w2-transfer-sw-00",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v1"
+     },
+     "observation": "o0",
+     "ref": {
+      "type": "str",
+      "value": "v3"
+     }
+    }
+   },
+   "entry": "ENTRY",
+   "max_queries": 4,
+   "member_path": "/home/ubuntu/AI/Agent-Society-v2/reports/evidence/inv_r1_m2_join/members/acquired-sw-5b65c917.py",
+   "task_id": "ad01-w2-transfer-sw-00"
+  }
+ ]
+}

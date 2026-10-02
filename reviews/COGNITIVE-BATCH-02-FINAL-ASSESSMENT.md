@@ -73,4 +73,4 @@ One prospective example, not a demonstrated learned result: instead of retaining
 - [ ] Worker publishes the executed acquisition/reconciliation source and derived accounting/interpretation corrections.
 - [ ] Design role refines executable retained computation separately; no broad learner or runtime rewrite is commissioned.
 
-The bounded handoff is [delivery closure](../WORKER-COGNITIVE-BATCH-02-DELIVERY-CLOSURE.md). Historical records and prior assessments remain intact.
+The bounded handoff is [delivery closure](../docs/HISTORY.md#worker-cognitive-batch-02-delivery-closure). Historical records and prior assessments remain intact.

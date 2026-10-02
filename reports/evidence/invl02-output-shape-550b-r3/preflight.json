@@ -1,0 +1,15 @@
+{
+ "freeze_digest": "ad3de342bad6f723db2e559942387d06506534fffbae2d5828e7758b70047509",
+ "protocol": "invl02-output-shape-550b-r1-v1",
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "route_digest": "8bf8cbe66279c4651140227678b3f98a55ca791b0f70cca18d3c6e4b5ccd0399",
+ "run_id": "32ef91020a3141769bc73f7c28f81bcd",
+ "source_identity": "ad685e8d698966c72617a3b505f74f9ab6e9dda331146efa64bffaf5ebb0a202",
+ "study_root": "invl02-output-shape-550b-r1"
+}

@@ -1,0 +1,2328 @@
+{
+  "accounting": {
+    "billed": "null on every receipt: the adapter read no `billed` key from the provider's usage, and `Usage.billed is None` is how it records that",
+    "billed_values_seen": [
+      "None"
+    ],
+    "charge_units": "null on every receipt: the adapter read no `charge_units` key from the provider's usage",
+    "charge_units_values_seen": [
+      "None"
+    ],
+    "discrepancy": "This route states its price as `usage.cost`, and the adapter reads `billed` and `charge_units`. The `usage` object stored on each receipt is the adapter's own normalised `Usage`, not the provider's raw payload, so it always carries all five keys and the three the route does not supply are `null` rather than missing. The consequence is that `billed` and `charge_units` are indistinguishable here from a provider that returned them as `null`, and `usage.cost` never reaches the store at all. Exposure is therefore counted in dispatches, token counts and estimated-budget units, and no cost figure is asserted from this route in either direction. It is not a statement that the route is free, and not a statement that it is not.",
+    "outcome_counts": {
+      "lost-response": 1,
+      "success": 8
+    },
+    "receipt_count": 9,
+    "receipts": [
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-irrelevant",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 471,
+          "model_calls": 1,
+          "output_tokens": 607,
+          "provider_enforced_ceiling": null
+        }
+      },
+      {
+        "error": "gateway read timed out",
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-none-c1",
+        "outcome": "unknown",
+        "provenance": "gateway",
+        "response_class": "lost-response",
+        "response_received": false,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": null,
+          "output_tokens": null
+        }
+      },
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-relevant",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 471,
+          "model_calls": 1,
+          "output_tokens": 684,
+          "provider_enforced_ceiling": null
+        }
+      },
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-irrelevant",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 471,
+          "model_calls": 1,
+          "output_tokens": 1056,
+          "provider_enforced_ceiling": null
+        }
+      },
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-none",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 382,
+          "model_calls": 1,
+          "output_tokens": 579,
+          "provider_enforced_ceiling": null
+        }
+      },
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-relevant",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 471,
+          "model_calls": 1,
+          "output_tokens": 1455,
+          "provider_enforced_ceiling": null
+        }
+      },
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-irrelevant",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 471,
+          "model_calls": 1,
+          "output_tokens": 1101,
+          "provider_enforced_ceiling": null
+        }
+      },
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-none",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 382,
+          "model_calls": 1,
+          "output_tokens": 1003,
+          "provider_enforced_ceiling": null
+        }
+      },
+      {
+        "error": null,
+        "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-relevant",
+        "outcome": "success",
+        "provenance": "gateway",
+        "response_class": "",
+        "response_received": null,
+        "response_status": null,
+        "route_error": null,
+        "usage": {
+          "billed": null,
+          "charge_scale": null,
+          "charge_units": null,
+          "input_tokens": 471,
+          "model_calls": 1,
+          "output_tokens": 627,
+          "provider_enforced_ceiling": null
+        }
+      }
+    ],
+    "route_error_counts": {},
+    "schema_columns_read": [
+      "content",
+      "content_digest",
+      "created_at",
+      "operation_id",
+      "outcome",
+      "provenance",
+      "receipt_identity"
+    ],
+    "usage_keys_seen": [
+      "billed",
+      "charge_scale",
+      "charge_units",
+      "input_tokens",
+      "model_calls",
+      "output_tokens",
+      "provider_enforced_ceiling"
+    ]
+  },
+  "acquired": [
+    {
+      "arm": "relevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-relevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "af1330dae67f2dfd196a24aa39cae9ac2325cbdc9f3924d08280359684dac2a2",
+      "source_chars": 359,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "none",
+      "attempt": 1,
+      "detail": "the dispatch left no successful receipt",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-none-c1",
+      "parse_problem": "no settled response",
+      "prompt_chars": 1518,
+      "response_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_chars": 0,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "irrelevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-irrelevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "d9b7e4396d7b92f0f02e93a3e6beb3d73203866871787e431e562e6812d373b1",
+      "source_chars": 509,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "relevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-relevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "9fe820038536882c95c5e274c9385ccc72b5df1f11a716e71c43abad6da1da0d",
+      "source_chars": 608,
+      "task_id": "ad01-w0-within-sw-01"
+    },
+    {
+      "arm": "none",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-none",
+      "parse_problem": "",
+      "prompt_chars": 1518,
+      "response_digest": "65723ff2c0a04535ec0e7832f2711c0273fe22aad05c707f9838123ec1aa0aae",
+      "source_chars": 990,
+      "task_id": "ad01-w0-within-sw-01"
+    },
+    {
+      "arm": "irrelevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-irrelevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "38709c39ad684afdd0f352967073d3bded8247b9d2b5c615dadc536d05998e3a",
+      "source_chars": 446,
+      "task_id": "ad01-w0-within-sw-01"
+    },
+    {
+      "arm": "relevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-relevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "6522f9e91c9216548aaf412efdba3eb3a00831638c7e8d29c08f8aa4eb97ea44",
+      "source_chars": 698,
+      "task_id": "ad01-w0-within-sw-02"
+    },
+    {
+      "arm": "none",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-none",
+      "parse_problem": "",
+      "prompt_chars": 1518,
+      "response_digest": "e9dff5044e138c4f858a13ebae934403935062c44720fd58be6f67f63c3fcb14",
+      "source_chars": 1504,
+      "task_id": "ad01-w0-within-sw-02"
+    },
+    {
+      "arm": "irrelevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-irrelevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "684eb85df9c0b47865e39341c277e7acfc406fedb7a36a38d38d13185a3af568",
+      "source_chars": 1274,
+      "task_id": "ad01-w0-within-sw-02"
+    }
+  ],
+  "agreement_with_first": {
+    "irrelevant": {
+      "compared": true,
+      "distinct_replica_readings": {
+        "distinct_evidence_legs": [
+          0.0,
+          1.0
+        ],
+        "distinct_scores": [
+          0.7,
+          0.7692307692307693,
+          1.7272727272727273
+        ],
+        "distinct_selections": [
+          ""
+        ],
+        "tasks": 3
+      },
+      "first": {
+        "agreement": "pass",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "verdict": "preserved"
+      },
+      "per_task": {
+        "ad01-w0-within-sw-00": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "score"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 0.7,
+            "scored": true,
+            "verdict": "preserved"
+          }
+        },
+        "ad01-w0-within-sw-01": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "score"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 0.7692307692307693,
+            "scored": true,
+            "verdict": "preserved"
+          }
+        },
+        "ad01-w0-within-sw-02": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "score",
+            "evidence"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "pass",
+            "evidence": 1.0,
+            "score": 1.7272727272727273,
+            "scored": true,
+            "verdict": "preserved"
+          }
+        }
+      },
+      "replica_tasks": [
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ]
+    },
+    "none": {
+      "compared": true,
+      "distinct_replica_readings": {
+        "distinct_evidence_legs": [
+          0.0
+        ],
+        "distinct_scores": [
+          0.0,
+          0.7692307692307693
+        ],
+        "distinct_selections": [
+          ""
+        ],
+        "tasks": 2
+      },
+      "first": {
+        "agreement": "pass",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "verdict": "preserved"
+      },
+      "per_task": {
+        "ad01-w0-within-sw-01": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "score"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 0.7692307692307693,
+            "scored": true,
+            "verdict": "preserved"
+          }
+        },
+        "ad01-w0-within-sw-02": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "scored",
+            "score",
+            "agreement",
+            "verdict"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "absent",
+            "evidence": 0.0,
+            "score": 0.0,
+            "scored": false,
+            "verdict": ""
+          }
+        }
+      },
+      "replica_tasks": [
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ]
+    },
+    "relevant": {
+      "compared": true,
+      "distinct_replica_readings": {
+        "distinct_evidence_legs": [
+          0.0,
+          1.0
+        ],
+        "distinct_scores": [
+          0.7,
+          0.7272727272727273,
+          1.7692307692307692
+        ],
+        "distinct_selections": [
+          ""
+        ],
+        "tasks": 3
+      },
+      "first": {
+        "agreement": "pass",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "verdict": "preserved"
+      },
+      "per_task": {
+        "ad01-w0-within-sw-00": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "score"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 0.7,
+            "scored": true,
+            "verdict": "preserved"
+          }
+        },
+        "ad01-w0-within-sw-01": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "score",
+            "evidence"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "pass",
+            "evidence": 1.0,
+            "score": 1.7692307692307692,
+            "scored": true,
+            "verdict": "preserved"
+          }
+        },
+        "ad01-w0-within-sw-02": {
+          "agrees_on_compared_fields": false,
+          "fields_absent_from_first": [
+            "evidence_total",
+            "evidence_varied",
+            "selected"
+          ],
+          "fields_compared": [
+            "scored",
+            "score",
+            "evidence",
+            "agreement",
+            "verdict"
+          ],
+          "fields_differing": [
+            "score"
+          ],
+          "first": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 1.0,
+            "scored": true,
+            "verdict": "preserved"
+          },
+          "replica": {
+            "agreement": "pass",
+            "evidence": 0.0,
+            "score": 0.7272727272727273,
+            "scored": true,
+            "verdict": "preserved"
+          }
+        }
+      },
+      "replica_tasks": [
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ]
+    }
+  },
+  "campaign_id": "s09iso-invr1e2contrast-w0",
+  "campaign_kind": "first-contrast",
+  "campaign_side_construction": {
+    "size_matching": "held, and asserted before dispatch",
+    "what": "the relevant arm's experience records are built by this module at EVIDENCE_MAX_QUERIES, not read from e2_replication.measured_observations",
+    "what_it_is_not": "a repair. e2_replication is not edited, and this campaign cannot change what the frozen instrument measures. The same defect still stands in e2_replication.",
+    "why": "the frozen arm grades ok-preserved on all three dev software tasks at MAX_QUERIES=8, so its records differ only in task_id and a contrast read off them measures a constant"
+  },
+  "cap_sheet": {
+    "allowance": {
+      "construction_dispatches": 18,
+      "physical_sends_ceiling": 19,
+      "retry_allowance": 1,
+      "route_probe_dispatches": 1
+    },
+    "bounds": {
+      "deadline_ms": 300000,
+      "max_output_tokens": 2048,
+      "message_characters": 1774,
+      "reasoning_effort": "low",
+      "reasoning_effort_on_the_wire": "none-sent",
+      "why": "the value above is the reservation unit the broker's exposure schedule prices a request at. A frozen route can only be attested on the chat surface, and chat refuses a request carrying a reasoning_effort, so no request in this campaign sends one. The cap sheet prices the request it sends and the receipt records no effort rather than a control the wire never applied."
+    },
+    "evidence_max_queries": 3,
+    "freeze_digest": "845b9f6db78c96412f797c07e0a397e26d7893cfba9f1bfbd60f0e1768e4d92a",
+    "matrix": {
+      "arms": 3,
+      "constructions_per_arm_per_task": 2,
+      "planned_constructions": 18,
+      "route_probes": 1,
+      "target_tasks": 3
+    },
+    "namespace": "invr1e2contrast",
+    "schema": "s09-e2-contrast-cap-v1",
+    "unit_allowance": {
+      "note": "estimated-budget reservation units derived by settlement.broker's exposure schedule, not a price and not a dispatch count",
+      "per_request_units": 2492,
+      "requests": 19,
+      "unit_kind": "estimated-budget",
+      "units": 47348
+    }
+  },
+  "census": {
+    "cluster_count": 2,
+    "cluster_rule": "(family, template)",
+    "clusters": [
+      "stale-clear-core",
+      "stale-read-2chain"
+    ],
+    "family": "software",
+    "minimum_p": "1/2",
+    "required_at_alpha_1_20": 6,
+    "split": "within"
+  },
+  "dispatch_attempts": [
+    {
+      "arm": "relevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-relevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "af1330dae67f2dfd196a24aa39cae9ac2325cbdc9f3924d08280359684dac2a2",
+      "source_chars": 359,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "none",
+      "attempt": 0,
+      "detail": "the dispatch left no successful receipt",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-none",
+      "parse_problem": "no settled response",
+      "prompt_chars": 1518,
+      "response_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_chars": 0,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "none",
+      "attempt": 1,
+      "detail": "the dispatch left no successful receipt",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-none-c1",
+      "parse_problem": "no settled response",
+      "prompt_chars": 1518,
+      "response_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_chars": 0,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "irrelevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-irrelevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "d9b7e4396d7b92f0f02e93a3e6beb3d73203866871787e431e562e6812d373b1",
+      "source_chars": 509,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "relevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-relevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "9fe820038536882c95c5e274c9385ccc72b5df1f11a716e71c43abad6da1da0d",
+      "source_chars": 608,
+      "task_id": "ad01-w0-within-sw-01"
+    },
+    {
+      "arm": "none",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-none",
+      "parse_problem": "",
+      "prompt_chars": 1518,
+      "response_digest": "65723ff2c0a04535ec0e7832f2711c0273fe22aad05c707f9838123ec1aa0aae",
+      "source_chars": 990,
+      "task_id": "ad01-w0-within-sw-01"
+    },
+    {
+      "arm": "irrelevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-01-irrelevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "38709c39ad684afdd0f352967073d3bded8247b9d2b5c615dadc536d05998e3a",
+      "source_chars": 446,
+      "task_id": "ad01-w0-within-sw-01"
+    },
+    {
+      "arm": "relevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-relevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "6522f9e91c9216548aaf412efdba3eb3a00831638c7e8d29c08f8aa4eb97ea44",
+      "source_chars": 698,
+      "task_id": "ad01-w0-within-sw-02"
+    },
+    {
+      "arm": "none",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-none",
+      "parse_problem": "",
+      "prompt_chars": 1518,
+      "response_digest": "e9dff5044e138c4f858a13ebae934403935062c44720fd58be6f67f63c3fcb14",
+      "source_chars": 1504,
+      "task_id": "ad01-w0-within-sw-02"
+    },
+    {
+      "arm": "irrelevant",
+      "attempt": 0,
+      "detail": "",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-02-irrelevant",
+      "parse_problem": "",
+      "prompt_chars": 1774,
+      "response_digest": "684eb85df9c0b47865e39341c277e7acfc406fedb7a36a38d38d13185a3af568",
+      "source_chars": 1274,
+      "task_id": "ad01-w0-within-sw-02"
+    }
+  ],
+  "evidence_budget": {
+    "control_max_queries": 6,
+    "detail_template": "%s on %s at %d queries: %s",
+    "max_queries": 3
+  },
+  "freeze": {
+    "body": {
+      "alpha": "descriptive-only",
+      "arms": [
+        "relevant",
+        "none",
+        "irrelevant"
+      ],
+      "cluster_rule": "(family, template)",
+      "cohort_world": 0,
+      "control_max_queries": 6,
+      "control_split": "transfer",
+      "decision_fields": [
+        "method_id",
+        "max_queries"
+      ],
+      "decision_grid": [
+        [
+          "seed-sw-ddmin",
+          4
+        ],
+        [
+          "seed-sw-ddmin",
+          8
+        ],
+        [
+          "seed-sw-ddmin",
+          12
+        ],
+        [
+          "seed-sw-ddmin",
+          16
+        ],
+        [
+          "seed-sw-ddmin",
+          24
+        ],
+        [
+          "seed-sw-ddmin",
+          32
+        ],
+        [
+          "seed-sw-greedy",
+          4
+        ],
+        [
+          "seed-sw-greedy",
+          8
+        ],
+        [
+          "seed-sw-greedy",
+          12
+        ],
+        [
+          "seed-sw-greedy",
+          16
+        ],
+        [
+          "seed-sw-greedy",
+          24
+        ],
+        [
+          "seed-sw-greedy",
+          32
+        ]
+      ],
+      "estimator": "paired per-task normalized_reduction difference, with the decision vector reported beside it",
+      "evidence_max_queries": 3,
+      "family": "software",
+      "filler_task_ids": [
+        "ad01-w0-dev-gr-00",
+        "ad01-w0-dev-gr-01",
+        "ad01-w0-dev-gr-02"
+      ],
+      "independent_of": [
+        "inv_r1_e2_scored",
+        "inv_r1_e2_replica"
+      ],
+      "max_queries": 8,
+      "namespace": "invr1e2contrast",
+      "scored_observable": "Reading.as_dict (carries normalized_reduction and action, which paired_report reads)",
+      "source_split": "dev",
+      "source_task_ids": [
+        "ad01-w0-dev-sw-00",
+        "ad01-w0-dev-sw-01",
+        "ad01-w0-dev-sw-02"
+      ],
+      "target_split": "within",
+      "target_task_ids": [
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ]
+    },
+    "freeze_digest": "845b9f6db78c96412f797c07e0a397e26d7893cfba9f1bfbd60f0e1768e4d92a"
+  },
+  "graded_outcome_profiles": {
+    "irrelevant": {
+      "delivered_grades": 2,
+      "delivered_grades_seen": [
+        "ok-incumbent, reduction 0",
+        "ok-preserved, reduction 0.211"
+      ],
+      "delivered_uniform": false,
+      "distinct_reasons": [
+        "ok-incumbent",
+        "ok-preserved"
+      ],
+      "distinct_reductions": [
+        0.0,
+        0.210526
+      ],
+      "distinct_task_ids": 3,
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "fields_dropped_by_projection": [
+        "p",
+        "reason",
+        "reduction"
+      ],
+      "projected_record_keys": [
+        "capability_id",
+        "detail",
+        "observation_id",
+        "task_id",
+        "verdict"
+      ],
+      "records": 3,
+      "uniform": false,
+      "verdict_is_constant": true
+    },
+    "relevant": {
+      "delivered_grades": 2,
+      "delivered_grades_seen": [
+        "ok-incumbent, reduction 0",
+        "ok-preserved, reduction 0.5"
+      ],
+      "delivered_uniform": false,
+      "distinct_reasons": [
+        "ok-incumbent",
+        "ok-preserved"
+      ],
+      "distinct_reductions": [
+        0.0,
+        0.5
+      ],
+      "distinct_task_ids": 3,
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "fields_dropped_by_projection": [
+        "reason",
+        "reduction"
+      ],
+      "projected_record_keys": [
+        "capability_id",
+        "detail",
+        "observation_id",
+        "task_id",
+        "verdict"
+      ],
+      "records": 3,
+      "uniform": false,
+      "verdict_is_constant": true
+    }
+  },
+  "independent_of": [
+    "inv_r1_e2_scored",
+    "inv_r1_e2_replica"
+  ],
+  "instrument_qualification": {
+    "blind": {
+      "agreement": "pass",
+      "arm": "blind",
+      "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+      "evidence": 0.0,
+      "evidence_total": 1,
+      "evidence_varied": 0,
+      "score": 0.7,
+      "scored": true,
+      "selected": "seed-sw-ddmin",
+      "verdict": "preserved"
+    },
+    "echo_confound": {
+      "cells": {
+        "none-echoes": {
+          "evidence": 0.0,
+          "evidence_total": 1,
+          "quality": 0.7,
+          "score": 0.7
+        },
+        "none-ignores": {
+          "evidence": 0.0,
+          "evidence_total": 1,
+          "quality": 0.7,
+          "score": 0.7
+        },
+        "relevant-echoes": {
+          "evidence": 0.0,
+          "evidence_total": 1,
+          "quality": 0.7,
+          "score": 0.7
+        },
+        "relevant-ignores": {
+          "evidence": 0.0,
+          "evidence_total": 1,
+          "quality": 0.7,
+          "score": 0.7
+        }
+      },
+      "echo_gap_none": 0.0,
+      "echo_gap_relevant": 0.0,
+      "evidence_leg_is_empty_under_none": true,
+      "leg_separates_reader_from_echoer": false,
+      "quality_is_identical": true,
+      "verdict": "echoing and ignoring score the same under both exposures, because the leg reads the candidate the world produced and neither policy changes what the method runs; a policy that reads the verdicts and re-routes scores above both of them"
+    },
+    "echoer": {
+      "agreement": "pass",
+      "arm": "echoer",
+      "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+      "evidence": 0.0,
+      "evidence_total": 1,
+      "evidence_varied": 0,
+      "score": 0.7,
+      "scored": true,
+      "selected": "seed-sw-ddmin",
+      "verdict": "preserved"
+    },
+    "note": "the leg reads the candidate the world produced under the arm's own verdicts and under flipped ones, so a read earns it only if it changes what the method runs. The plan-only reader is the row that carries the earlier defect: it reads the verdicts and re-plans, its plan reaches no executor, and it scores beside an echoer. A read that does not reach the world is not evidence of anything.",
+    "plan_only_reader": {
+      "agreement": "pass",
+      "arm": "plan-only-reader",
+      "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+      "evidence": 0.0,
+      "evidence_total": 1,
+      "evidence_varied": 0,
+      "score": 0.7,
+      "scored": true,
+      "selected": "seed-sw-ddmin",
+      "verdict": "preserved"
+    },
+    "prompted_shape_earns_evidence": true,
+    "prompted_shape_reader": {
+      "agreement": "pass",
+      "arm": "prompted-shape-reader",
+      "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts differed from the one under the arm's own verdicts",
+      "evidence": 1.0,
+      "evidence_total": 1,
+      "evidence_varied": 1,
+      "score": 1.7,
+      "scored": true,
+      "selected": "seed-sw-ddmin",
+      "verdict": "preserved"
+    },
+    "reader": {
+      "agreement": "pass",
+      "arm": "reader",
+      "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts differed from the one under the arm's own verdicts",
+      "evidence": 1.0,
+      "evidence_total": 1,
+      "evidence_varied": 1,
+      "score": 1.7,
+      "scored": true,
+      "selected": "seed-sw-ddmin",
+      "verdict": "preserved"
+    },
+    "separates_reader_from_blind": true
+  },
+  "is_replication_of": null,
+  "key_discrepancy": {
+    "adapter_reads": [
+      "billed",
+      "charge_scale",
+      "charge_units",
+      "input_tokens",
+      "output_tokens"
+    ],
+    "discrepancy": "This route states its price as `usage.cost`, and the adapter reads `billed` and `charge_units`. The `usage` object stored on each receipt is the adapter's own normalised `Usage`, not the provider's raw payload, so it always carries all five keys and the three the route does not supply are `null` rather than missing. The consequence is that `billed` and `charge_units` are indistinguishable here from a provider that returned them as `null`, and `usage.cost` never reaches the store at all. Exposure is therefore counted in dispatches, token counts and estimated-budget units, and no cost figure is asserted from this route in either direction. It is not a statement that the route is free, and not a statement that it is not.",
+    "null_on_every_receipt": [
+      "billed",
+      "charge_units"
+    ],
+    "receipt_usage_is_adapter_normalised": true,
+    "receipt_usage_keys": [
+      "billed",
+      "charge_scale",
+      "charge_units",
+      "input_tokens",
+      "model_calls",
+      "output_tokens",
+      "provider_enforced_ceiling"
+    ],
+    "route_states_price_as": "usage.cost",
+    "supplied_by_this_route": [
+      "charge_scale",
+      "input_tokens",
+      "output_tokens"
+    ],
+    "usage_cost_reaches_the_store": false
+  },
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "namespace": "invr1e2contrast",
+  "null_dispatches": [
+    {
+      "arm": "none",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-none",
+      "reason": "no settled response",
+      "response_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_chars": 0,
+      "task_id": "ad01-w0-within-sw-00"
+    },
+    {
+      "arm": "none",
+      "operation_id": "s09iso-invr1e2contrast-w0-construct-ad01-w0-within-sw-00-none-c1",
+      "reason": "no settled response",
+      "response_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_chars": 0,
+      "task_id": "ad01-w0-within-sw-00"
+    }
+  ],
+  "paired": {
+    "irrelevant-minus-none": {
+      "contrast_on": "normalized_reduction",
+      "control": "none",
+      "decisions": {
+        "ad01-w0-within-sw-01": {
+          "control": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "differs": false,
+          "treatment": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          }
+        }
+      },
+      "deltas": [
+        0.0
+      ],
+      "estimator": "paired per-task normalized_reduction difference, with the decision vector reported beside it",
+      "paired": {
+        "delta": 0.0,
+        "measured": true,
+        "n": 1,
+        "paired_sd": 0.0,
+        "paired_se": 0.0,
+        "z": null
+      },
+      "paired_by": "target task",
+      "tasks": [
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ],
+      "treatment": "irrelevant",
+      "unscored_tasks": [
+        "ad01-w0-within-sw-02"
+      ]
+    },
+    "relevant-minus-none": {
+      "contrast_on": "normalized_reduction",
+      "control": "none",
+      "decisions": {
+        "ad01-w0-within-sw-01": {
+          "control": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "differs": false,
+          "treatment": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          }
+        }
+      },
+      "deltas": [
+        0.0
+      ],
+      "estimator": "paired per-task normalized_reduction difference, with the decision vector reported beside it",
+      "paired": {
+        "delta": 0.0,
+        "measured": true,
+        "n": 1,
+        "paired_sd": 0.0,
+        "paired_se": 0.0,
+        "z": null
+      },
+      "paired_by": "target task",
+      "tasks": [
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ],
+      "treatment": "relevant",
+      "unscored_tasks": [
+        "ad01-w0-within-sw-02"
+      ]
+    }
+  },
+  "reachability_census": {
+    "decision_fields": [
+      "method_id",
+      "max_queries"
+    ],
+    "default_decision": [
+      "seed-sw-ddmin",
+      8
+    ],
+    "grid": [
+      [
+        "seed-sw-ddmin",
+        4
+      ],
+      [
+        "seed-sw-ddmin",
+        8
+      ],
+      [
+        "seed-sw-ddmin",
+        12
+      ],
+      [
+        "seed-sw-ddmin",
+        16
+      ],
+      [
+        "seed-sw-ddmin",
+        24
+      ],
+      [
+        "seed-sw-ddmin",
+        32
+      ],
+      [
+        "seed-sw-greedy",
+        4
+      ],
+      [
+        "seed-sw-greedy",
+        8
+      ],
+      [
+        "seed-sw-greedy",
+        12
+      ],
+      [
+        "seed-sw-greedy",
+        16
+      ],
+      [
+        "seed-sw-greedy",
+        24
+      ],
+      [
+        "seed-sw-greedy",
+        32
+      ]
+    ],
+    "max_attainable_negative_delta": 0.538462,
+    "max_attainable_positive_delta": 0.0,
+    "reading": "a positive paired delta needs a decision that beats the zero-information default. This is the largest such difference the frozen panel admits, and it is 0.0 when the default is already the best decision available. The negative side is not bounded this way, so a negative delta is the one the instrument can produce.",
+    "rows": [
+      {
+        "attainable_negative_delta": 0.5,
+        "attainable_positive_delta": 0.0,
+        "ceiling": 0.7,
+        "default": {
+          "normalized_reduction": 0.7,
+          "queries": 8,
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        },
+        "distinct_values": [
+          0.2,
+          0.5,
+          0.7
+        ],
+        "floor": 0.2,
+        "grid": {
+          "seed-sw-ddmin@12": {
+            "normalized_reduction": 0.7,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@16": {
+            "normalized_reduction": 0.7,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@24": {
+            "normalized_reduction": 0.7,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@32": {
+            "normalized_reduction": 0.7,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@4": {
+            "normalized_reduction": 0.7,
+            "queries": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@8": {
+            "normalized_reduction": 0.7,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@12": {
+            "normalized_reduction": 0.7,
+            "queries": 12,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@16": {
+            "normalized_reduction": 0.7,
+            "queries": 14,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@24": {
+            "normalized_reduction": 0.7,
+            "queries": 14,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@32": {
+            "normalized_reduction": 0.7,
+            "queries": 14,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@4": {
+            "normalized_reduction": 0.2,
+            "queries": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@8": {
+            "normalized_reduction": 0.5,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          }
+        },
+        "task_id": "ad01-w0-within-sw-00"
+      },
+      {
+        "attainable_negative_delta": 0.538462,
+        "attainable_positive_delta": 0.0,
+        "ceiling": 0.7692307692307693,
+        "default": {
+          "normalized_reduction": 0.7692307692307693,
+          "queries": 8,
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        },
+        "distinct_values": [
+          0.230769,
+          0.461538,
+          0.692308,
+          0.769231
+        ],
+        "floor": 0.23076923076923078,
+        "grid": {
+          "seed-sw-ddmin@12": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@16": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@24": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@32": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@4": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@8": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@12": {
+            "normalized_reduction": 0.6923076923076923,
+            "queries": 12,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@16": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 16,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@24": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 17,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@32": {
+            "normalized_reduction": 0.7692307692307693,
+            "queries": 17,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@4": {
+            "normalized_reduction": 0.23076923076923078,
+            "queries": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@8": {
+            "normalized_reduction": 0.46153846153846156,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          }
+        },
+        "task_id": "ad01-w0-within-sw-01"
+      },
+      {
+        "attainable_negative_delta": 0.454545,
+        "attainable_positive_delta": 0.0,
+        "ceiling": 0.7272727272727273,
+        "default": {
+          "normalized_reduction": 0.7272727272727273,
+          "queries": 8,
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        },
+        "distinct_values": [
+          0.272727,
+          0.454545,
+          0.727273
+        ],
+        "floor": 0.2727272727272727,
+        "grid": {
+          "seed-sw-ddmin@12": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@16": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@24": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@32": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@4": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-ddmin@8": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@12": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 12,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@16": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 15,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@24": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 15,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@32": {
+            "normalized_reduction": 0.7272727272727273,
+            "queries": 15,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@4": {
+            "normalized_reduction": 0.2727272727272727,
+            "queries": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          "seed-sw-greedy@8": {
+            "normalized_reduction": 0.45454545454545453,
+            "queries": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          }
+        },
+        "task_id": "ad01-w0-within-sw-02"
+      }
+    ]
+  },
+  "readings": {
+    "irrelevant": {
+      "ad01-w0-within-sw-00": {
+        "action": {
+          "evidence_refs": [],
+          "inputs": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "kind": "use_method",
+          "requested_resources": {
+            "queries": 8
+          },
+          "target": "ad01-w0-within-sw-00"
+        },
+        "agreement": "pass",
+        "arm": "irrelevant",
+        "candidate": {
+          "family": "software",
+          "fault": "stale-read",
+          "ops": [
+            {
+              "key": "a",
+              "op": "set",
+              "value": "v1"
+            },
+            {
+              "key": "a",
+              "op": "set",
+              "value": "v3"
+            },
+            {
+              "id": "o0",
+              "key": "a",
+              "op": "get"
+            }
+          ],
+          "seed": 5301,
+          "task_id": "ad01-w0-within-sw-00",
+          "witness": {
+            "faulty": {
+              "type": "str",
+              "value": "v1"
+            },
+            "observation": "o0",
+            "ref": {
+              "type": "str",
+              "value": "v3"
+            }
+          }
+        },
+        "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_measure": 3,
+        "control": "seed-sw-ddmin",
+        "control_inputs": {},
+        "control_verdict": "preserved",
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "digest": "79d5401dd3e12bea8e46585e36d89e11fd18ef7312ab24ce8a5e814d10737f56",
+        "evidence": 0.0,
+        "evidence_sites": [
+          "candidate"
+        ],
+        "evidence_total": 1,
+        "evidence_varied": 0,
+        "executed_digest": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f",
+        "executed_source": "seed-sw-ddmin",
+        "family": "software",
+        "initial_measure": 10,
+        "normalized_reduction": 0.7,
+        "origin": "model-acquired",
+        "quality": 0.7,
+        "queries": 8,
+        "query_trace": null,
+        "reason": "the checker graded the candidate preserved and the authored control ok-preserved",
+        "scheme": "s09-e2-scored/1",
+        "score": 0.7,
+        "scored": true,
+        "selected_identity": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-00",
+        "verdict": "preserved"
+      },
+      "ad01-w0-within-sw-01": {
+        "action": {
+          "evidence_refs": [],
+          "inputs": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "kind": "use_method",
+          "requested_resources": {
+            "queries": 8
+          },
+          "target": "ad01-w0-within-sw-01"
+        },
+        "agreement": "pass",
+        "arm": "irrelevant",
+        "candidate": {
+          "family": "software",
+          "fault": "stale-clear",
+          "ops": [
+            {
+              "key": "b",
+              "op": "set",
+              "value": "v1"
+            },
+            {
+              "op": "clear"
+            },
+            {
+              "id": "o1",
+              "key": "b",
+              "op": "get"
+            }
+          ],
+          "seed": 5302,
+          "task_id": "ad01-w0-within-sw-01",
+          "witness": {
+            "faulty": {
+              "type": "str",
+              "value": "v1"
+            },
+            "observation": "o1",
+            "ref": {
+              "type": "missing",
+              "value": null
+            }
+          }
+        },
+        "candidate_digest_alternate": "2c4670a60b6522bf8f3187a3022bb770c6720ad85a8185dc2de6f7707d282fff",
+        "candidate_digest_scored": "2c4670a60b6522bf8f3187a3022bb770c6720ad85a8185dc2de6f7707d282fff",
+        "candidate_measure": 3,
+        "control": "seed-sw-ddmin",
+        "control_inputs": {},
+        "control_verdict": "preserved",
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "digest": "6bc0e6fe06a7ac7511bf591e9599c0914af2cc36fc64d338ff84ee6a7d0f1d9d",
+        "evidence": 0.0,
+        "evidence_sites": [
+          "candidate"
+        ],
+        "evidence_total": 1,
+        "evidence_varied": 0,
+        "executed_digest": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f",
+        "executed_source": "seed-sw-ddmin",
+        "family": "software",
+        "initial_measure": 13,
+        "normalized_reduction": 0.7692307692307693,
+        "origin": "model-acquired",
+        "quality": 0.7692307692307693,
+        "queries": 8,
+        "query_trace": null,
+        "reason": "the checker graded the candidate preserved and the authored control ok-preserved",
+        "scheme": "s09-e2-scored/1",
+        "score": 0.7692307692307693,
+        "scored": true,
+        "selected_identity": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-01",
+        "verdict": "preserved"
+      },
+      "ad01-w0-within-sw-02": {
+        "action": {
+          "evidence_refs": [],
+          "inputs": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "kind": "use_method",
+          "requested_resources": {
+            "queries": 8
+          },
+          "target": "ad01-w0-within-sw-02"
+        },
+        "agreement": "pass",
+        "arm": "irrelevant",
+        "candidate": {
+          "family": "software",
+          "fault": "stale-read",
+          "ops": [
+            {
+              "key": "b",
+              "op": "set",
+              "value": "v4"
+            },
+            {
+              "key": "b",
+              "op": "set",
+              "value": "v2"
+            },
+            {
+              "id": "o0",
+              "key": "b",
+              "op": "get"
+            }
+          ],
+          "seed": 5303,
+          "task_id": "ad01-w0-within-sw-02",
+          "witness": {
+            "faulty": {
+              "type": "str",
+              "value": "v4"
+            },
+            "observation": "o0",
+            "ref": {
+              "type": "str",
+              "value": "v2"
+            }
+          }
+        },
+        "candidate_digest_alternate": "c1cf3cf042cf4f8d2218e01f6deb6d5de70af547d067cdc1a4d045ce7cc5a9df",
+        "candidate_digest_scored": "6f2577a4e335355df259e91b73b4ba2534b9c63a449810429753af2defbee45d",
+        "candidate_measure": 3,
+        "control": "seed-sw-ddmin",
+        "control_inputs": {},
+        "control_verdict": "preserved",
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts differed from the one under the arm's own verdicts",
+        "digest": "44ffb833adb5a6878722b78f66ec53cbd6416276c99d83e5061637905c2e60f4",
+        "evidence": 1.0,
+        "evidence_sites": [
+          "candidate"
+        ],
+        "evidence_total": 1,
+        "evidence_varied": 1,
+        "executed_digest": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f",
+        "executed_source": "seed-sw-ddmin",
+        "family": "software",
+        "initial_measure": 11,
+        "normalized_reduction": 0.7272727272727273,
+        "origin": "model-acquired",
+        "quality": 0.7272727272727273,
+        "queries": 8,
+        "query_trace": null,
+        "reason": "the checker graded the candidate preserved and the authored control ok-preserved",
+        "scheme": "s09-e2-scored/1",
+        "score": 1.7272727272727273,
+        "scored": true,
+        "selected_identity": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-02",
+        "verdict": "preserved"
+      }
+    },
+    "none": {
+      "ad01-w0-within-sw-01": {
+        "action": {
+          "evidence_refs": [],
+          "inputs": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "kind": "use_method",
+          "requested_resources": {
+            "queries": 8
+          },
+          "target": "ad01-w0-within-sw-01"
+        },
+        "agreement": "pass",
+        "arm": "none",
+        "candidate": {
+          "family": "software",
+          "fault": "stale-clear",
+          "ops": [
+            {
+              "key": "b",
+              "op": "set",
+              "value": "v1"
+            },
+            {
+              "op": "clear"
+            },
+            {
+              "id": "o1",
+              "key": "b",
+              "op": "get"
+            }
+          ],
+          "seed": 5302,
+          "task_id": "ad01-w0-within-sw-01",
+          "witness": {
+            "faulty": {
+              "type": "str",
+              "value": "v1"
+            },
+            "observation": "o1",
+            "ref": {
+              "type": "missing",
+              "value": null
+            }
+          }
+        },
+        "candidate_digest_alternate": "2c4670a60b6522bf8f3187a3022bb770c6720ad85a8185dc2de6f7707d282fff",
+        "candidate_digest_scored": "2c4670a60b6522bf8f3187a3022bb770c6720ad85a8185dc2de6f7707d282fff",
+        "candidate_measure": 3,
+        "control": "seed-sw-ddmin",
+        "control_inputs": {},
+        "control_verdict": "preserved",
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "digest": "4fcef4ab2889e8d708289566311f3baa8bee53dfc5ab01bd94a7ae490b17404d",
+        "evidence": 0.0,
+        "evidence_sites": [
+          "candidate"
+        ],
+        "evidence_total": 1,
+        "evidence_varied": 0,
+        "executed_digest": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f",
+        "executed_source": "seed-sw-ddmin",
+        "family": "software",
+        "initial_measure": 13,
+        "normalized_reduction": 0.7692307692307693,
+        "origin": "model-acquired",
+        "quality": 0.7692307692307693,
+        "queries": 8,
+        "query_trace": null,
+        "reason": "the checker graded the candidate preserved and the authored control ok-preserved",
+        "scheme": "s09-e2-scored/1",
+        "score": 0.7692307692307693,
+        "scored": true,
+        "selected_identity": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-01",
+        "verdict": "preserved"
+      },
+      "ad01-w0-within-sw-02": {
+        "action": null,
+        "agreement": "absent",
+        "arm": "none",
+        "candidate": null,
+        "candidate_digest_alternate": "",
+        "candidate_digest_scored": "",
+        "candidate_measure": 0,
+        "control": "",
+        "control_inputs": {},
+        "control_verdict": "",
+        "detail": "unscored: execute: the returned bytes admitted no action that reaches a method executor",
+        "digest": "39365aa3abef7afbf629235cd1472130f80cd149816ab73f285d602b947c5be7",
+        "evidence": 0.0,
+        "evidence_sites": [],
+        "evidence_total": 0,
+        "evidence_varied": 0,
+        "executed_digest": "",
+        "executed_source": "",
+        "family": "software",
+        "initial_measure": 0,
+        "normalized_reduction": 0.0,
+        "origin": "model-acquired",
+        "quality": 0.0,
+        "queries": 0,
+        "query_trace": null,
+        "reason": "",
+        "scheme": "s09-e2-scored/1",
+        "score": 0.0,
+        "scored": false,
+        "selected_identity": "",
+        "task_id": "ad01-w0-within-sw-02",
+        "verdict": ""
+      }
+    },
+    "relevant": {
+      "ad01-w0-within-sw-00": {
+        "action": {
+          "evidence_refs": [],
+          "inputs": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "kind": "use_method",
+          "requested_resources": {
+            "queries": 8
+          },
+          "target": "ad01-w0-within-sw-00"
+        },
+        "agreement": "pass",
+        "arm": "relevant",
+        "candidate": {
+          "family": "software",
+          "fault": "stale-read",
+          "ops": [
+            {
+              "key": "a",
+              "op": "set",
+              "value": "v1"
+            },
+            {
+              "key": "a",
+              "op": "set",
+              "value": "v3"
+            },
+            {
+              "id": "o0",
+              "key": "a",
+              "op": "get"
+            }
+          ],
+          "seed": 5301,
+          "task_id": "ad01-w0-within-sw-00",
+          "witness": {
+            "faulty": {
+              "type": "str",
+              "value": "v1"
+            },
+            "observation": "o0",
+            "ref": {
+              "type": "str",
+              "value": "v3"
+            }
+          }
+        },
+        "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_measure": 3,
+        "control": "seed-sw-ddmin",
+        "control_inputs": {},
+        "control_verdict": "preserved",
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "digest": "ce0aa6fb45925fbbf7192d6344e600125ce4dfaf6761fb005e56f9c901d7f9fb",
+        "evidence": 0.0,
+        "evidence_sites": [
+          "candidate"
+        ],
+        "evidence_total": 1,
+        "evidence_varied": 0,
+        "executed_digest": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f",
+        "executed_source": "seed-sw-ddmin",
+        "family": "software",
+        "initial_measure": 10,
+        "normalized_reduction": 0.7,
+        "origin": "model-acquired",
+        "quality": 0.7,
+        "queries": 8,
+        "query_trace": null,
+        "reason": "the checker graded the candidate preserved and the authored control ok-preserved",
+        "scheme": "s09-e2-scored/1",
+        "score": 0.7,
+        "scored": true,
+        "selected_identity": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-00",
+        "verdict": "preserved"
+      },
+      "ad01-w0-within-sw-01": {
+        "action": {
+          "evidence_refs": [],
+          "inputs": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "kind": "use_method",
+          "requested_resources": {
+            "queries": 8
+          },
+          "target": "ad01-w0-within-sw-01"
+        },
+        "agreement": "pass",
+        "arm": "relevant",
+        "candidate": {
+          "family": "software",
+          "fault": "stale-clear",
+          "ops": [
+            {
+              "key": "b",
+              "op": "set",
+              "value": "v1"
+            },
+            {
+              "op": "clear"
+            },
+            {
+              "id": "o1",
+              "key": "b",
+              "op": "get"
+            }
+          ],
+          "seed": 5302,
+          "task_id": "ad01-w0-within-sw-01",
+          "witness": {
+            "faulty": {
+              "type": "str",
+              "value": "v1"
+            },
+            "observation": "o1",
+            "ref": {
+              "type": "missing",
+              "value": null
+            }
+          }
+        },
+        "candidate_digest_alternate": "bd02a2752b85af1498b64d69e7e16a5bf137e70be39ad6db64297f36257141b1",
+        "candidate_digest_scored": "2c4670a60b6522bf8f3187a3022bb770c6720ad85a8185dc2de6f7707d282fff",
+        "candidate_measure": 3,
+        "control": "seed-sw-ddmin",
+        "control_inputs": {},
+        "control_verdict": "preserved",
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts differed from the one under the arm's own verdicts",
+        "digest": "b0a0a237fce2806874ed09b1d83eac8b607842dabb6bed0910faed7e0d07b3ea",
+        "evidence": 1.0,
+        "evidence_sites": [
+          "candidate"
+        ],
+        "evidence_total": 1,
+        "evidence_varied": 1,
+        "executed_digest": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f",
+        "executed_source": "seed-sw-ddmin",
+        "family": "software",
+        "initial_measure": 13,
+        "normalized_reduction": 0.7692307692307693,
+        "origin": "model-acquired",
+        "quality": 0.7692307692307693,
+        "queries": 8,
+        "query_trace": null,
+        "reason": "the checker graded the candidate preserved and the authored control ok-preserved",
+        "scheme": "s09-e2-scored/1",
+        "score": 1.7692307692307692,
+        "scored": true,
+        "selected_identity": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-01",
+        "verdict": "preserved"
+      },
+      "ad01-w0-within-sw-02": {
+        "action": {
+          "evidence_refs": [],
+          "inputs": {
+            "max_queries": 8,
+            "method_id": "seed-sw-ddmin"
+          },
+          "kind": "use_method",
+          "requested_resources": {
+            "queries": 8
+          },
+          "target": "ad01-w0-within-sw-02"
+        },
+        "agreement": "pass",
+        "arm": "relevant",
+        "candidate": {
+          "family": "software",
+          "fault": "stale-read",
+          "ops": [
+            {
+              "key": "b",
+              "op": "set",
+              "value": "v4"
+            },
+            {
+              "key": "b",
+              "op": "set",
+              "value": "v2"
+            },
+            {
+              "id": "o0",
+              "key": "b",
+              "op": "get"
+            }
+          ],
+          "seed": 5303,
+          "task_id": "ad01-w0-within-sw-02",
+          "witness": {
+            "faulty": {
+              "type": "str",
+              "value": "v4"
+            },
+            "observation": "o0",
+            "ref": {
+              "type": "str",
+              "value": "v2"
+            }
+          }
+        },
+        "candidate_digest_alternate": "6f2577a4e335355df259e91b73b4ba2534b9c63a449810429753af2defbee45d",
+        "candidate_digest_scored": "6f2577a4e335355df259e91b73b4ba2534b9c63a449810429753af2defbee45d",
+        "candidate_measure": 3,
+        "control": "seed-sw-ddmin",
+        "control_inputs": {},
+        "control_verdict": "preserved",
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "digest": "a3ea61bcc41980a8f9c0587a26d2c8a57ef1333996860c8f070a9689f35d9adf",
+        "evidence": 0.0,
+        "evidence_sites": [
+          "candidate"
+        ],
+        "evidence_total": 1,
+        "evidence_varied": 0,
+        "executed_digest": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f",
+        "executed_source": "seed-sw-ddmin",
+        "family": "software",
+        "initial_measure": 11,
+        "normalized_reduction": 0.7272727272727273,
+        "origin": "model-acquired",
+        "quality": 0.7272727272727273,
+        "queries": 8,
+        "query_trace": null,
+        "reason": "the checker graded the candidate preserved and the authored control ok-preserved",
+        "scheme": "s09-e2-scored/1",
+        "score": 0.7272727272727273,
+        "scored": true,
+        "selected_identity": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-02",
+        "verdict": "preserved"
+      }
+    }
+  },
+  "shares_with_prior_namespaces": {
+    "allocation": false,
+    "assessment_feedback": false,
+    "evidence_directory": false,
+    "frozen_contrast_body": false,
+    "mutable_store": false,
+    "operation_ids": false
+  },
+  "sign_flip": {
+    "alpha": "descriptive-only",
+    "corrected": false,
+    "minimum_p": "1",
+    "n_pairs": 1,
+    "nonzero_pairs": 0,
+    "note": "descriptive: the frozen panel offers two software (family, template) clusters, whose minimum two-sided sign-sweep p-value is 1/2, so no p-value this contrast can produce is below the 1/20 the protocol names",
+    "required_clusters_at_alpha_1_20": 6
+  },
+  "size_matching": {
+    "irrelevant": {
+      "characters": 770,
+      "records": 3
+    },
+    "none": {
+      "characters": 2,
+      "note": "empty by construction; the no-experience arm is defined by having the opportunity and not drawing it",
+      "records": 0
+    },
+    "relevant": {
+      "characters": 770,
+      "records": 3
+    }
+  },
+  "treatment_input_audit": {
+    "arms": {
+      "irrelevant": {
+        "dropped_before_the_policy": [
+          "p",
+          "reason",
+          "reduction"
+        ],
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "named_in_prompt_but_not_delivered": [
+          "reason"
+        ],
+        "observations": 3,
+        "prompt_characters": 1774,
+        "prompt_names_fields": [
+          "reason",
+          "task_id",
+          "verdict"
+        ],
+        "prompt_prior_observation_line": "Prior observations: [{\"reason\":\"ok-incumbent\",\"task_id\":\"ad01-w0-dev-gr-00\",\"verdict\":\"preserved\"},{\"reason\":\"ok-incumbent\",\"task_id\":\"ad01-w0-dev-gr-01\",\"verdict\":\"preserved\"},{\"reason\":\"ok-preserved\",\"task_id\":\"ad01-w0-dev-gr-02\",\"verdict\":\"preserved\"}]",
+        "reasons_delivered": [],
+        "record_carries": [
+          "capability_id",
+          "detail",
+          "observation_id",
+          "p",
+          "reason",
+          "reduction",
+          "task_id",
+          "verdict"
+        ],
+        "remaining": {
+          "steps": 1
+        },
+        "verdicts_delivered": [
+          "preserved"
+        ],
+        "view_delivers": [
+          "capability_id",
+          "detail",
+          "observation_id",
+          "task_id",
+          "verdict"
+        ]
+      },
+      "none": {
+        "dropped_before_the_policy": [],
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "named_in_prompt_but_not_delivered": [],
+        "observations": 0,
+        "prompt_characters": 1518,
+        "prompt_names_fields": [],
+        "prompt_prior_observation_line": null,
+        "reasons_delivered": [],
+        "record_carries": [],
+        "remaining": {
+          "steps": 1
+        },
+        "verdicts_delivered": [],
+        "view_delivers": []
+      },
+      "relevant": {
+        "dropped_before_the_policy": [
+          "reason",
+          "reduction"
+        ],
+        "eligible_methods": [
+          "seed-sw-ddmin",
+          "seed-sw-greedy"
+        ],
+        "named_in_prompt_but_not_delivered": [
+          "reason"
+        ],
+        "observations": 3,
+        "prompt_characters": 1774,
+        "prompt_names_fields": [
+          "reason",
+          "task_id",
+          "verdict"
+        ],
+        "prompt_prior_observation_line": "Prior observations: [{\"reason\":\"ok-preserved\",\"task_id\":\"ad01-w0-dev-sw-00\",\"verdict\":\"preserved\"},{\"reason\":\"ok-incumbent\",\"task_id\":\"ad01-w0-dev-sw-01\",\"verdict\":\"preserved\"},{\"reason\":\"ok-preserved\",\"task_id\":\"ad01-w0-dev-sw-02\",\"verdict\":\"preserved\"}]",
+        "reasons_delivered": [],
+        "record_carries": [
+          "capability_id",
+          "detail",
+          "observation_id",
+          "reason",
+          "reduction",
+          "task_id",
+          "verdict"
+        ],
+        "remaining": {
+          "steps": 1
+        },
+        "verdicts_delivered": [
+          "preserved"
+        ],
+        "view_delivers": [
+          "capability_id",
+          "detail",
+          "observation_id",
+          "task_id",
+          "verdict"
+        ]
+      }
+    },
+    "interfaces_equal": true,
+    "notes": [
+      "`packet.project_observations` is an allowlist of five keys. Any record field outside it is dropped before the policy runs, and a field the prompt names is not thereby delivered.",
+      "The none arm is stepped under an empty observation list, which is the honest scoring of a policy shown nothing."
+    ],
+    "opportunity_equal": true
+  }
+}

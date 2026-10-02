@@ -16,6 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
@@ -243,6 +245,16 @@ def test_adopt_at_quiescent_boundary_pins_history_and_resets_state(
     store.settle(pending["effect_id"], store.observations[-1])
     store.adopt_revision(candidate)
     assert store.active_digest == candidate["package_digest"]
+    restarted = frontier.FrontierStore(str(store.path))
+    restarted_pinned = restarted.settled_effects
+    assert [effect["program_digest"] for effect in restarted_pinned] == [
+        base["package_digest"], base["package_digest"]]
+    with pytest.raises(frontier.Refused, match="active program"):
+        restarted.accept("opp-extra", base["package_digest"])
+    restarted._doc["pending_effects"][0]["program_digest"] = "f" * 64
+    restarted.save()
+    with pytest.raises(frontier.Refused, match="effect program"):
+        frontier.FrontierStore(str(restarted.path))
     assert store.private_state == {}
     assert store.retained["evidence_ids"] != []
     pinned = [e for e in store.settled_effects
@@ -289,10 +301,11 @@ def test_fresh_process_inherited_bytes_generate_candidate(tmp_path):
     store.adopt_revision(first["candidate"])
     store.save()
     active_before = store.active_package
-    env = {
-        "PYTHONPATH": ":".join(
-            [str(ROOT), str(ROOT / "src"), str(ROOT / "experiments")])
-    }
+    site_packages = ROOT / ".venv" / "lib" / "python3.12" / "site-packages"
+    pythonpath = [str(ROOT), str(ROOT / "src"), str(ROOT / "experiments")]
+    if site_packages.exists():
+        pythonpath.append(str(site_packages))
+    env = {"PYTHONPATH": ":".join(pythonpath)}
     proc = subprocess.run(
         [sys.executable, "-m", "experiments.ad01.improve_channel",
          str(store.path), "2"],
@@ -312,10 +325,10 @@ def test_fresh_process_inherited_bytes_generate_candidate(tmp_path):
     assert staged["control_id"] == summary["candidate_id"]
     assert staged["parent_digest"] == active_before["package_digest"]
     assert staged["imp_source"] == active_before["imp_source"]
-    assert reloaded._doc["rounds"][-1] == {
-        "round": 2, "candidate_id": summary["candidate_id"],
-        "parent_digest": active_before["package_digest"],
-        "executed_digest": active_before["imp_digest"]}
+    assert "rounds" not in reloaded._doc
+    assert "improvement_log" not in reloaded._doc
+    assert reloaded._doc["round_results"][-1]["candidate"]["control_id"] == \
+        summary["candidate_id"]
 
 
 def test_replay_supported_only_where_compatible_and_prediction_separate(

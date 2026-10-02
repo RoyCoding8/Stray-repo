@@ -10,9 +10,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-DB = "s09o_cycle"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
 MIGRATIONS = ROOT / "migrations"
+TOKEN = "cycle"
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
 CAPS = {"max_boundaries": 2, "diagnostic_queries": 16,
@@ -52,18 +51,19 @@ REJECTED_CANDIDATE = (
 )
 
 
+def _database_name(dsn):
+    return [field for field in dsn.split() if field.startswith("dbname=")][0][7:]
+
+
 @pytest.fixture(scope="module")
 def store():
-    assert DB.startswith("s09o_cycle")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
-    try:
+    from experiments.ad01 import s09_run_isolation as iso
+
+    with iso.disposable_db(TOKEN) as database:
         from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
-    finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                       check=True, capture_output=True, text=True, timeout=60)
+        assert "live" not in database.name
+        db.apply_migrations(database.dsn, MIGRATIONS)
+        yield database.dsn
 
 
 class Provider:
@@ -301,3 +301,34 @@ def test_cycle_parser_has_no_consumer_injection():
     from experiments.ad01 import cli
     with pytest.raises(SystemExit):
         cli.main(["cycle", "--help"])
+
+
+def test_the_store_is_one_this_run_created(store):
+    """A dropped store must never be a store somebody else still runs on.
+
+    A fixed database name is shared state: any other suite that creates the
+    same name destroys this run's rows, and the failures read as product
+    defects in crash-resume and receipt reuse rather than as the collision
+    they are. The name carries a per-run token, so only this run's name is
+    ever destroyed.
+    """
+    name = _database_name(store)
+
+    assert name.startswith("s09iso_cycle_"), name
+    assert store.count(name) == 1, name
+
+
+def test_the_store_survives_a_second_module_scope(store):
+    """Re-deriving the store must not reuse this module's database.
+
+    The collision that produced the original failures was two runs of this
+    file at once. Each run's fixture mints its own name, so a second fixture
+    can never observe or destroy the first one's database.
+    """
+    from experiments.ad01 import s09_run_isolation as iso
+
+    other = iso.create_disposable_db(TOKEN)
+
+    assert other.name != _database_name(store)
+    assert other.name.startswith("s09iso_cycle_")
+    iso.drop_disposable_db(other)

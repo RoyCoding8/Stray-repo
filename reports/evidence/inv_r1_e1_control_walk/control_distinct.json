@@ -1,0 +1,428 @@
+{
+ "distinct": false,
+ "gate": "control_distinct",
+ "raised": false,
+ "refusal": "refused: control is not distinct from the acquired arm: 8 task(s) took the same walk on both arms; 11 task(s) returned a byte-identical candidate on both arms, of which 3 took different walks and are reported as converged; 1 task(s) named no executed policy on at least one arm",
+ "verdict": {
+  "converged": [
+   {
+    "candidate_digest": [
+     "8baa2cf91dbfeee93b72b932f3f5bd5a184248bf7186b19e9ddafff6c3a51d99"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-b0bd83b7"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "queries": {
+     "acquired": 4,
+     "control": 4
+    },
+    "task_id": "ad01-w0-transfer-sw-00",
+    "walk_digest": {
+     "acquired": "b6c28aa5b57bde3f184133423b4102bee921ec0349c94302f38df6707b17570b",
+     "control": "230c37a16bd22fe01c943878cbc15e4a4c1481a9c6636654c6a251b655363ed2"
+    }
+   },
+   {
+    "candidate_digest": [
+     "0952268866694bb477a13b53835263750b860e97654cebf0e3f7a3dc60aa5f39"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-b0bd83b7"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "queries": {
+     "acquired": 4,
+     "control": 4
+    },
+    "task_id": "ad01-w0-within-sw-00",
+    "walk_digest": {
+     "acquired": "e99d6e37362d10fa4380dea6e3d708c05a76c95649def10ad3b0ce707ff6dd49",
+     "control": "a4c324b149ddaa71cc821e91bdf3fa54922d034026d216d9c8ed34364b41f28a"
+    }
+   },
+   {
+    "candidate_digest": [
+     "13bd798a209402834a9b9be6278a1282a276d793a360fb07b733013948372fcc"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-b0bd83b7"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "queries": {
+     "acquired": 4,
+     "control": 4
+    },
+    "task_id": "ad01-w2-within-sw-00",
+    "walk_digest": {
+     "acquired": "3c0a71eb917a52df693896ef279a53578ba1e89d4620970e69666928877d1176",
+     "control": "078635af30c9259157bdfdedceb6a9cecf45583486d125fbbf80c44ed61ecfb6"
+    }
+   }
+  ],
+  "differing_budget": [
+   {
+    "queries": {
+     "acquired": 4,
+     "control": 0
+    },
+    "task_id": "ad01-w2-transfer-gr-00"
+   }
+  ],
+  "distinct": false,
+  "one_arm_returned_no_candidate": [],
+  "paired_tasks": [
+   "ad01-w0-transfer-gr-00",
+   "ad01-w0-transfer-sw-00",
+   "ad01-w0-within-gr-00",
+   "ad01-w0-within-gr-01",
+   "ad01-w0-within-sw-00",
+   "ad01-w0-within-sw-01",
+   "ad01-w1-transfer-gr-00",
+   "ad01-w1-transfer-sw-00",
+   "ad01-w1-within-gr-00",
+   "ad01-w1-within-gr-01",
+   "ad01-w1-within-sw-00",
+   "ad01-w1-within-sw-01",
+   "ad01-w2-transfer-gr-00",
+   "ad01-w2-transfer-sw-00",
+   "ad01-w2-within-gr-00",
+   "ad01-w2-within-gr-01",
+   "ad01-w2-within-sw-00",
+   "ad01-w2-within-sw-01"
+  ],
+  "refusal": "refused: control is not distinct from the acquired arm: 8 task(s) took the same walk on both arms; 11 task(s) returned a byte-identical candidate on both arms, of which 3 took different walks and are reported as converged; 1 task(s) named no executed policy on at least one arm",
+  "same_candidate": [
+   {
+    "candidate_digest": [
+     "1095d1fce822fa1f7847bc2b7987004317947435ac0445b8afb607757c5399c0"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w0-transfer-gr-00"
+   },
+   {
+    "candidate_digest": [
+     "8baa2cf91dbfeee93b72b932f3f5bd5a184248bf7186b19e9ddafff6c3a51d99"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-b0bd83b7"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "task_id": "ad01-w0-transfer-sw-00"
+   },
+   {
+    "candidate_digest": [
+     "ed5c358df776f4286045412378eb54d49445ede80722d30deb05c8364327ed00"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w0-within-gr-00"
+   },
+   {
+    "candidate_digest": [
+     "1ed6ddffc0feb440288ffbdd474acbaeec275536445b74be03c2718345aacdef"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w0-within-gr-01"
+   },
+   {
+    "candidate_digest": [
+     "0952268866694bb477a13b53835263750b860e97654cebf0e3f7a3dc60aa5f39"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-b0bd83b7"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "task_id": "ad01-w0-within-sw-00"
+   },
+   {
+    "candidate_digest": [
+     "0bf011b5c8982e9cd6a294edc8ccddb332e72ba0e14e95bbab335d402d55ae53"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w1-transfer-gr-00"
+   },
+   {
+    "candidate_digest": [
+     "f9a9a6ea3738546bcdb94a6c21106e3fd31ab1b3ea587c94c9dd688b91f83558"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w1-within-gr-00"
+   },
+   {
+    "candidate_digest": [
+     "10e7be3a054f20c3097e5ab84d5d6ef24e4b56197f89184e4a9b64f0e87cb902"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w1-within-gr-01"
+   },
+   {
+    "candidate_digest": [
+     "98ac91fe6c5ba485409165cb16ae993ea3fd69a4ad1a64cd2ca431e5a8f33a6a"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w2-within-gr-00"
+   },
+   {
+    "candidate_digest": [
+     "100de13ce7cd5a01338c06bb0b141ee02a3acfc5c56a887434b469f91e3341b1"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "task_id": "ad01-w2-within-gr-01"
+   },
+   {
+    "candidate_digest": [
+     "13bd798a209402834a9b9be6278a1282a276d793a360fb07b733013948372fcc"
+    ],
+    "executed": {
+     "acquired": [
+      "acquired-sw-b0bd83b7"
+     ],
+     "control": [
+      "ctl-software-ddmin"
+     ]
+    },
+    "task_id": "ad01-w2-within-sw-00"
+   }
+  ],
+  "same_executed_policy": [],
+  "same_source": [],
+  "same_strategy": [],
+  "same_walk": [
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w0-transfer-gr-00",
+    "walk_digest": [
+     "a749ffeefcff4603f2720912e6508e97eceffe2ffd7628be26084c540a96a104"
+    ]
+   },
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w0-within-gr-00",
+    "walk_digest": [
+     "cdaf06efba31ea923178133e488dd93b64df255afacdaa64a524f2b99234d63b"
+    ]
+   },
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w0-within-gr-01",
+    "walk_digest": [
+     "605ea1b4f2d5d0c2eb6619da9cd664847b655da57f22793f5ff68f190fb07eb3"
+    ]
+   },
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w1-transfer-gr-00",
+    "walk_digest": [
+     "8bf02f9a98ac405d36ca1d8fe46a43445e781f0d28b67f9d77c8f1b0f121c7ba"
+    ]
+   },
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w1-within-gr-00",
+    "walk_digest": [
+     "aff4aece17922f0ebebe5480d3d17204a3d7a23d8e9c9ed2e7c8d0981a7a05d1"
+    ]
+   },
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w1-within-gr-01",
+    "walk_digest": [
+     "219ceb4fe32ef4b2b398997f275c6f3c84ddfd9d864956c3c5efea218d76b37b"
+    ]
+   },
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w2-within-gr-00",
+    "walk_digest": [
+     "ecd32b0be50bdc557a6a4a1cb30275f87667fe722c369b8af416279388def462"
+    ]
+   },
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      "ctl-graph-greedy"
+     ]
+    },
+    "queries": 4,
+    "task_id": "ad01-w2-within-gr-01",
+    "walk_digest": [
+     "ed69f892392c4df1d05d8c9251881bc415e08898d38f9c2d9e68830c2da04661"
+    ]
+   }
+  ],
+  "unmeasured_walk": [
+   {
+    "candidates_tied": false,
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      ""
+     ]
+    },
+    "task_id": "ad01-w2-transfer-gr-00",
+    "walk_observed": {
+     "acquired": true,
+     "control": false
+    }
+   }
+  ],
+  "unnamed_executed_policy": [
+   {
+    "executed": {
+     "acquired": [
+      "acquired-gr-b0bd83b7"
+     ],
+     "control": [
+      ""
+     ]
+    },
+    "fallback": {
+     "acquired": [],
+     "control": [
+      "member execution failed: refused: study s09iso-ctlwalk657f900a-root ceiling max_execution_units=7326 reached at 7326"
+     ]
+    },
+    "task_id": "ad01-w2-transfer-gr-00"
+   }
+  ],
+  "unpaired_tasks": [],
+  "version": "ad01-control-distinctness/2"
+ }
+}

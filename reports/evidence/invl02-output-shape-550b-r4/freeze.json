@@ -1,0 +1,91 @@
+{
+ "arms": [
+  "P0",
+  "P1",
+  "P2"
+ ],
+ "code_digests": {
+  "experiments/ad01/frontier.py": "3c074c479ae79eebb3e6ae00785db1db34a73a458fd8352b0ed233f293b4a854",
+  "experiments/ad01/live_construct.py": "90120e4aaf2d6dc80111f5607ec2c7e6fd11df5d5fb0c4a5cea5351597564bff",
+  "experiments/ad01/offline_recompute.py": "2b54e03339151b797a2c6c2b12d96da226bad4b712d4c700d1a6564589b3ca60",
+  "scripts/invl02_live.py": "8b412fa9e94c78cf3660560e2e3e824cd5d724f5a1d7428874d9cc3c02bc6d94",
+  "src/settlement/gateway_http.py": "4a811ab57d5edd3be985480cd2e66661f90e678fc188cee1f3bda972290db72e"
+ },
+ "freeze_digest": "ad4188300eaef2a39497d1b821bced8d083435665868e66322dc764f4478e823",
+ "history": {
+  "P1": {
+   "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "entries": []
+  },
+  "P2": {
+   "digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49"
+  }
+ },
+ "limits": {
+  "automatic_retries": 0,
+  "initial_dispatches": 4,
+  "max_dispatches": 8,
+  "max_output_tokens": 2048,
+  "max_response_characters": 512,
+  "repairs_per_task": 1
+ },
+ "order": [
+  "P0",
+  "P1",
+  "P2"
+ ],
+ "p0_incumbent": {
+  "kind": "fixed-incumbent",
+  "source": "{\"class_digest\":\"285113caf4ab\",\"entrypoint\":\"experiments.ad01.rule_learner.VersionSpaceLearner\",\"kind\":\"fixed-incumbent\",\"query_cap\":8,\"solver\":\"VersionSpaceLearner\"}",
+  "source_digest": "c0379601fe8d62a1ed941e8afa5157154447cb264a21f893d1c918be43ca9328",
+  "task_seals": {
+   "rule-audit-0023": {
+    "public_input_digest": "df71f3b77fe92369e26bb5b1a116ead853f7e6afe45a44545d2190b2bf5a9c60",
+    "seed": 23,
+    "split": "audit"
+   },
+   "rule-qual-0011": {
+    "public_input_digest": "cf582851f5981500a85135a72491a01a9a102a334d0288ef6f0c93360c22681c",
+    "seed": 11,
+    "split": "qual"
+   }
+  }
+ },
+ "prompt": {
+  "rendered_digests": {
+   "P1:audit:23:a1": "6dd539673ccf45ae605020b697e045e707cf5d510c42ff4243a968d00db199d6",
+   "P1:audit:23:a2": "0898165ece4cdb0bee3649760911e8e42f3221703dc38fbe70fad9bf987cb6b3",
+   "P1:qual:11:a1": "c65d624fc9f8d4d9badf68c56770b459d15f98279373cb8ac94dfb4b2ad35c84",
+   "P1:qual:11:a2": "7dd56a6cf4426210211b5cf75844f612c2b952c7677a97ce26a530740a8f2b14",
+   "P2:audit:23:a1": "f7583344cc000ab43380844864bc05073cb78dd26637bd495094c3df273e5d42",
+   "P2:audit:23:a2": "1b0ef77c886a8c5755da1ee88f467fbbdfbd8f712c917b082696f912bcf4d421",
+   "P2:qual:11:a1": "4b3cee00073b495efc573aa1d2ab826a449ab2669d64a993dda9186f74a3cf04",
+   "P2:qual:11:a2": "54692792da6e568994698e2d8aaad8404ef90c45c892d9a034a6b4db9a137590"
+  },
+  "template": "You are completing one finite Boolean-rule task. Public task input: {public_input}. Permitted history: {history}. Attempt {attempt} of 2. Reply with exactly one JSON object and nothing else, shaped {{\"specs\": [{{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]}} x4]}}. Do not include targets, private answers, explanations, or code fences. Keep the response under {max_response_characters} characters.",
+  "template_digest": "4298a08ae992c12c7f8686b48458d082603ea68f14fa8fd3033e81e455cc6ddc"
+ },
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "round": 4,
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "run_id": "8a7d3ef94f9b457eb4e09bee02e9ba89",
+ "source_digests": {
+  "experiments/ad01/boolean_rule.py": "9d730dc25164e845e3c5e95f83b37b7272b87d73777fb62b2abdab0ece684c3e",
+  "experiments/ad01/live_construct.py": "90120e4aaf2d6dc80111f5607ec2c7e6fd11df5d5fb0c4a5cea5351597564bff",
+  "experiments/ad01/rule_learner.py": "d4a45e7abd8e8d6044f2c50b448da82185a588e90a666c3bd1ae55f2462349c2"
+ },
+ "source_identity": "954ddd7b27b78cdacbffecf666878ff66c2b5cd989f59797ba2adc074c21aab2",
+ "stop_rule": "stop on the first route mismatch, missing evidence, or exhausted same-task repair budget; never change limits after an effect",
+ "study": "invl02-output-shape-550b-r4",
+ "study_root": "invl02-output-shape-550b-r4",
+ "tasks": {
+  "audit": 23,
+  "qual": 11
+ }
+}

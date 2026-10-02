@@ -1,0 +1,57 @@
+{
+ "retention": {
+  "cold": {
+   "construction_dispatches": 1,
+   "reacquires": true,
+   "use_dispatches": 5
+  },
+  "crossover_uses": 5,
+  "retained": {
+   "construction_dispatches": 0,
+   "reacquires": false,
+   "use_dispatches": 5
+  },
+  "unit": 3269
+ },
+ "substitution": {
+  "flipped": {
+   "agreement": "pass",
+   "evidence": 0.0,
+   "score": 1.0,
+   "scored": true,
+   "selected": "seed-sw-ddmin",
+   "verdict": "preserved"
+  },
+  "original": {
+   "agreement": "pass",
+   "evidence": 0.0,
+   "score": 1.0,
+   "scored": true,
+   "selected": "seed-sw-ddmin",
+   "verdict": "preserved"
+  },
+  "responds_to_evidence": false
+ },
+ "transfer": {
+  "arms": {
+   "adapted": {
+    "agreement": "absent",
+    "evidence": 0.0,
+    "score": 0.0,
+    "scored": false,
+    "selected": "",
+    "verdict": ""
+   },
+   "target_only": {
+    "agreement": "absent",
+    "evidence": 0.0,
+    "score": 0.0,
+    "scored": false,
+    "selected": "",
+    "verdict": ""
+   }
+  },
+  "equal_length": true,
+  "equal_records": true
+ }
+}

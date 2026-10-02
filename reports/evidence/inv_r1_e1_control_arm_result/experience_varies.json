@@ -1,0 +1,21 @@
+{
+ "gate": "experience_varies",
+ "raised": false,
+ "refusal": "refused: the control arm's experience is a constant: 18 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+ "varies": false,
+ "verdict": {
+  "arm": "control",
+  "distinct_verdicts": 1,
+  "methods_named": [
+   "ddmin",
+   "greedy"
+  ],
+  "observations": 18,
+  "refusal": "refused: the control arm's experience is a constant: 18 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+  "varies": false,
+  "verdicts": [
+   "preserved"
+  ],
+  "version": "ad01-experience-variation/1"
+ }
+}

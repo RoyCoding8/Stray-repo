@@ -1,0 +1,35 @@
+{
+ "arms": {
+  "adapted": {
+   "diagnostic": "software",
+   "err": "",
+   "max_queries": 1,
+   "question": "What is the current capability of the software adaptation for task ad01-w1-dev-sw-00?"
+  },
+  "target-only": {
+   "diagnostic": "graph",
+   "err": "",
+   "max_queries": 3,
+   "question": "Which graph adaptation tasks show the highest discrepancy between source and target distributions?"
+  }
+ },
+ "contrast": {
+  "adapted": {
+   "chars": 382,
+   "family": "source",
+   "name": "adapted",
+   "records": 3
+  },
+  "equal_length": true,
+  "equal_records": true,
+  "source_family": "software",
+  "target_family": "graph",
+  "target_only": {
+   "chars": 382,
+   "family": "target",
+   "name": "target-only",
+   "records": 3
+  },
+  "target_task_id": "ad01-w1-transfer-gr-00"
+ }
+}

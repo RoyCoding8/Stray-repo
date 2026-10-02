@@ -1,0 +1,46 @@
+{
+  "family": "software",
+  "fault": "stale-read",
+  "ops": [
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+    },
+    {
+      "id": "o0",
+      "key": "c",
+      "op": "get"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v2"
+    }
+  ],
+  "seed": 8402,
+  "slack": 1,
+  "task_id": "panel-w1-within-sw-01",
+  "template": "s2s",
+  "witness": {
+    "faulty": {
+      "type": "str",
+      "value": "v2"
+    },
+    "observation": "o0",
+    "ref": {
+      "type": "str",
+      "value": "v4"
+    }
+  }
+}

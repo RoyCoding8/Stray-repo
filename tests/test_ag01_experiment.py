@@ -27,9 +27,9 @@ from settlement.common import Command, ResultCode, SettlementError
 
 POLICY_VERSIONS = {"R": POLICY_R_VERSION, "Q": POLICY_Q_VERSION}
 
-BASE_DSN = os.environ.get(
-    "SETTLEMENT_TEST_DSN",
-    "postgresql://ubuntu@/agenda01_exp?host=/var/run/postgresql")
+BASE_DSN = os.environ.get("SETTLEMENT_TEST_DSN")
+if not BASE_DSN:
+    pytest.skip("SETTLEMENT_TEST_DSN is not configured", allow_module_level=True)
 
 MANIFEST, MHASH = manifest.build()
 WORLDS = {w["world_id"]: w for w in MANIFEST["worlds"]}
@@ -170,14 +170,12 @@ def test_database_prerequisite_explicit():
     except Exception as exc:
         pytest.fail(
             "missing database prerequisite: CREATE DATABASE failed"
-            f" via BASE_DSN={BASE_DSN}"
             f" ({type(exc).__name__}: {exc})")
     try:
         runner.drop_db(BASE_DSN, probe)
     except Exception as exc:
         pytest.fail(
             "missing database prerequisite: DROP DATABASE failed"
-            f" via BASE_DSN={BASE_DSN}"
             f" ({type(exc).__name__}: {exc})")
 
 
@@ -945,3 +943,94 @@ def test_atom_core_malformed_atoms_reports_cause(tmp_path):
     assert envelope["status"] == "refuse"
     assert envelope["reason"] == "malformed"
     assert envelope["detail"] == "encoded atoms must be a nonempty int list"
+
+
+def test_charge_aux_books_a_charge_and_no_operation():
+    """charge_aux is a charge, so it must leave no operations row behind.
+
+    Three entry points are asserted separately on purpose. They agree only
+    while the charge stays a charge: the direct call, the reservation's own
+    operation_id, and the ledger the checker reads. A version that mints an
+    operations row satisfies none of the third, and a version that blanks
+    operation_id fails the checker by collapsing distinct charges into one
+    union key.
+    """
+    _, name, backend = scratch_backend("charge")
+    try:
+        charge_id = backend.charge_aux("eval-final", 3, backend.eval)
+
+        assert backend.operation(charge_id) is None, \
+            "a charge that is never dispatched must not be an operations row"
+
+        with db.read_connect(backend.dsn) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT operation_id, state, amount FROM reservations"
+                            " WHERE id = %s", (f"{charge_id}:res",))
+                row = cur.fetchone()
+            conn.commit()
+        assert row is not None, "the charge must leave a reservation row"
+        operation_id, state, amount = row
+        assert state == "settled"
+        assert int(amount) == 3
+        assert operation_id == charge_id, \
+            "the charge keeps its own identity; reconciliation joins on it"
+
+        status = store.allocation_status(backend.dsn, backend.eval)
+        assert (status["consumed"], status["reserved"]) == (3, 0), status
+    finally:
+        drop_scratch(name)
+
+
+def test_charge_aux_distinct_charges_do_not_collapse():
+    """Two charges on one allocation must sum, not union into a single key.
+
+    The checker adds settled cost per operation id
+    (`checker._union_spent`). An empty operation_id — the literal reading of
+    "stop naming operations" — collapses N recovery drains to one entry and
+    under-reports the spend, which is the exact tamper the checker exists to
+    reject.
+    """
+    _, name, backend = scratch_backend("collapse")
+    try:
+        backend.charge_aux("rec-a1", 1, backend.recovery)
+        backend.charge_aux("rec-a2", 1, backend.recovery)
+
+        ledger = backend.export_ledger()
+        settled, unsettled, reasons = checker._union_spent(ledger, ":recovery", [])
+        assert reasons == [], reasons
+        assert unsettled == 0
+        assert settled == 2, \
+            f"two distinct charges must total 2, got {settled}"
+        assert store.allocation_status(
+            backend.dsn, backend.recovery)["consumed"] == 2
+    finally:
+        drop_scratch(name)
+
+
+def test_charge_aux_refuses_an_unfundable_amount():
+    """An overdraft must leave no reservation and spend no exposure."""
+    _, name, backend = scratch_backend("overdraft2")
+    try:
+        with pytest.raises(SettlementError, match="charge overdraft refused"):
+            backend.charge_aux("overdraft", 10 ** 6, backend.recovery)
+
+        assert backend.export_ledger()["reservations"] == []
+        status = store.allocation_status(backend.dsn, backend.recovery)
+        assert (status["consumed"], status["reserved"]) == (0, 0), status
+    finally:
+        drop_scratch(name)
+
+
+def test_charge_aux_is_idempotent_under_replay():
+    """Replaying the same charge is ALREADY_APPLIED, not a second debit."""
+    _, name, backend = scratch_backend("replay")
+    try:
+        first = backend.charge_aux("eval-final", 4, backend.eval)
+        second = backend.charge_aux("eval-final", 4, backend.eval)
+
+        assert first == second, (first, second)
+        status = store.allocation_status(backend.dsn, backend.eval)
+        assert (status["consumed"], status["reserved"]) == (4, 0), \
+            "a replayed charge must debit exactly once"
+    finally:
+        drop_scratch(name)

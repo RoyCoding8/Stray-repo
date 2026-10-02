@@ -66,18 +66,16 @@ def test_checkpoint_writes_consistent_recovery_set(migrated_db, tmp_path):
     manifest = json.loads(Path(result["manifest"]).read_text())
     assert manifest["source"]["database"] == dbname_of(dsn)
     assert manifest["source"]["commit"] == _head()
-    assert manifest["migrations"] == ["0001_schema.sql", "0002_s2_evidence.sql",
-                                      "0003_s3_learning.sql", "0004_leases.sql",
-                                      "0005_eval_binding.sql",
-                                      "0006_recovery_fence.sql",
-                                      "0007_dev_episodes.sql",
-                                      "0008_context_packets.sql",
-                                      "0009_packet_input_binding.sql",
-                                      "0010_agenda01.sql",
-                                      "0011_agenda01_correction.sql",
-                                      "0012_agenda01_resume.sql",
-                                      "0013_agenda01_epoch.sql",
-                                      "0014_team_runtime.sql"]
+    # The expected value is the migration set, read from the tree, rather than
+    # a copy of it typed out beside the assertion. The manifest's side comes
+    # from `SELECT name FROM schema_migrations`, so this is not a tautology: it
+    # says the checkpoint recorded exactly the migrations this repo has, in
+    # name order. The literal that stood here stopped at `0014` when the
+    # directory held eighteen, and it could only ever be repaired by hand.
+    migrations = sorted(path.name for path in (REPO / "migrations").glob("*.sql"))
+
+    assert migrations, "no migrations found to verify the manifest against"
+    assert manifest["migrations"] == migrations
     assert set(manifest["control"]) == {"admission_epoch", "authority_version",
                                         "evidence_epoch", "release_epoch", "event_epoch"}
     assert manifest["control"]["authority_version"] == 1

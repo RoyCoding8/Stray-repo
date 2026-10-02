@@ -11,9 +11,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
+import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -23,10 +26,13 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from experiments.ad01.agenda_policy import step_policy_consumer
 from experiments.ad01.policy_step import make_policy_artifact
+from experiments.ad01.s09_run_isolation import DB_PREFIX, create_disposable_db, \
+    drop_disposable_db, disposable_db
 
-DB = "s09_c1_continuity"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
-MIGRATIONS = ROOT / "migrations"
+LOCAL_HOST = "/var/run/postgresql"
+LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
+
+RUN_TOKEN = "c1%s" % uuid.uuid4().hex[:10]
 RUNS = ROOT / ".ad01-runs"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
@@ -103,27 +109,82 @@ def _env():
     return env
 
 
+def _dbname(dsn: str) -> str:
+    parsed = urlparse(dsn)
+    if parsed.scheme:
+        return (parsed.path or "/").lstrip("/")
+    fields = dict(field.split("=", 1) for field in dsn.split()
+                  if "=" in field)
+    return fields.get("dbname", "").strip("'\"")
+
+
+def test_the_store_is_named_for_this_run_not_for_the_file():
+    """Two concurrent runs of this module must not share a store.
+
+    The same file ships in every worktree, and each one used to create and
+    drop one fixed name on one shared cluster, so a sibling's teardown
+    destroyed this run's store mid-module. Only the per-run suffix keeps the
+    two disjoint, so that is what this pins.
+    """
+    with disposable_db(RUN_TOKEN) as database:
+        assert database.name.startswith(DB_PREFIX + "_")
+        assert RUN_TOKEN in database.name
+        assert re.fullmatch(r"[0-9a-f]{12}", database.name.rsplit("_", 1)[1])
+
+    again = create_disposable_db(RUN_TOKEN)
+    try:
+        assert again.name != database.name
+    finally:
+        drop_disposable_db(again)
+
+
+def test_a_run_never_reuses_the_store_it_did_not_create():
+    """The suite points every file at one DSN, so a module must not reuse it.
+
+    Taking ``SETTLEMENT_TEST_DSN`` as the store meant a module-scoped fixture
+    truncating whatever an earlier file had written, which is the hazard
+    ``s09_test_db_safety.py`` measures. The DSN is honoured as the admin
+    connection instead, so this run lands on the operator's cluster and still
+    owns the only database it drops.
+    """
+    with disposable_db(RUN_TOKEN) as database:
+        assert database.name != _dbname(LOCAL_DSN)
+        assert database.name != _dbname(
+            "dbname=operator_store host=/var/run/postgresql user=ubuntu")
+        assert database.name not in ("s09_c1_continuity", "operator_store")
+
+
 @pytest.fixture(scope="module")
 def store():
-    assert "live" not in DSN
-    assert DB.startswith("s09_c1_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    """A store this run creates, on whichever cluster the operator named.
+
+    ``SETTLEMENT_TEST_DSN`` is taken as the admin connection rather than as
+    the store, so an operator pointing at a particular PostgreSQL gets this
+    run on that instance without handing the tests a database they would have
+    to empty. Reusing that database is what made this module interfere: the
+    campaign suite points every file at one DSN, so a module-scoped store
+    that truncates it destroys the rows of whichever file ran before.
+    """
+    env_dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
+    admin_dsn = env_dsn or LOCAL_DSN
+    migrations = Path(__file__).resolve().parent.parent / "migrations"
     before = set(p.name for p in RUNS.iterdir()) if RUNS.is_dir() else set()
+    database = create_disposable_db(RUN_TOKEN, admin_dsn=admin_dsn,
+                                    migrations_dir=migrations)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        if RUNS.is_dir():
-            for child in RUNS.iterdir():
-                if child.name not in before:
-                    import shutil
-                    shutil.rmtree(child, ignore_errors=True)
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                        "-U", "ubuntu", DB],
-                       capture_output=True, text=True, timeout=60)
+        drop_disposable_db(database, admin_dsn=admin_dsn)
+        _scrub_new_runs(before)
+
+
+def _scrub_new_runs(before: set) -> None:
+    if not RUNS.is_dir():
+        return
+    import shutil
+    for child in RUNS.iterdir():
+        if child.name not in before:
+            shutil.rmtree(child, ignore_errors=True)
 
 
 def _consumer(dsn, cid, source, gateway=None, max_steps=6):
@@ -318,6 +379,17 @@ def test_exhausted_and_refused_paths_stay_in_history(store):
     assert len(gateway.calls) == 0
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="the settlement store refuses to admit a success model receipt "
+           "whose text is empty (src/settlement/store.py _validate_receipt), "
+           "added by 9f6ec8a three days after this gate was written. The "
+           "integrity rule is deliberate and holds at both layers, so an "
+           "empty-text response can no longer settle; it stays an unsettled "
+           "operation. test_empty_text_is_refused_rather_than_settled pins "
+           "what the product now guarantees. This xfail stays strict, so a "
+           "store that starts admitting empty-text successes again turns the "
+           "suite red instead of passing quietly.")
 def test_settled_receipt_stays_attributable_on_empty_text(store):
     from experiments.ad01 import trajectory
     from experiments.ad01.learner import RecordingGatewayAdapter
@@ -336,6 +408,64 @@ def test_settled_receipt_stays_attributable_on_empty_text(store):
     views = dict(row["policy_input"])["views"]
     assert views[1]["last_result"]["digest"] == hashlib.sha256(
         "".encode()).hexdigest()
+
+
+def test_empty_text_is_refused_rather_than_settled(store):
+    """An empty model response must leave an operation the policy can name.
+
+    A success receipt with no text is indistinguishable from a lost response,
+    so the store refuses it. What the refusal used to leave behind was worse
+    than the refusal: the broker filed the success anyway, the store threw it
+    away, and the operation was left `dispatching` holding a reservation with
+    no receipt and no way to settle it. The response had arrived, so that
+    hold was never a measured exposure.
+
+    The operation is now `observed` as a decided `failure`, carrying the
+    response class and a digest of the bytes that did arrive. The policy
+    property this test exists for is unchanged and asserted below on all
+    three counts: no success receipt, no text, and a step that still
+    refuses and names the operation.
+    """
+    from experiments.ad01 import trajectory
+    from experiments.ad01.learner import RecordingGatewayAdapter
+    from settlement import broker, db
+    cid = trajectory.campaign_id(0, "I", 89)
+    gateway = RecordingGatewayAdapter([{"text": ""}])
+    trajectory.run_campaign(
+        0, "I", CHARTER, {"max_boundaries": 1, "diagnostic_queries": 16,
+                          "model_calls": 60},
+        tasks=[TASK], campaign_seq=89, dsn=store,
+        consumer=_consumer(store, cid, ROUNDTRIP_SOURCE, gateway=gateway))
+
+    model_ops = _model_ops(store, cid, 0)
+    assert len(model_ops) == 1
+    operation_id = model_ops[0]["id"]
+    assert _receipt_text(store, operation_id) is None, \
+        "an empty answer must never be filed as a success"
+    operation = broker.read_operation(store, operation_id)
+    assert operation["dispatch_state"] == "observed"
+    assert operation["settled"] is True
+    assert operation["reconcile_state"] == "none"
+
+    with db.connect(store) as conn:
+        rows = conn.execute(
+            "SELECT receipt_identity, outcome, content FROM receipts"
+            " WHERE operation_id = %s", (operation_id,)).fetchall()
+        conn.commit()
+    assert [row[1] for row in rows] == ["failure"]
+    content = dict(rows[0][2])
+    assert content["response_class"] == "empty-response"
+    assert content["response_received"] is True
+    assert content["text"] == ""
+    assert content["response_digest"] == hashlib.sha256(b"").hexdigest()
+
+    row = _s09_row(store, cid, 0)
+    assert row is not None
+    views = dict(row["policy_input"])["views"]
+    assert views[1]["last_result"] == {
+        "status": "refused",
+        "reason": "model call %s left no settled response" % operation_id,
+        "operation_id": operation_id}
 
 
 def test_pre_effect_step_resumes_without_rerunning_accepted_step(store,

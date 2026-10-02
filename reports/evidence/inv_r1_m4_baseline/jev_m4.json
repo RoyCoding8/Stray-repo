@@ -1,0 +1,13 @@
+{
+ "answers": {
+  "correct_to_stop": {
+   "probability": 0.87,
+   "type": "boolean"
+  },
+  "genuine_blocker": {
+   "probability": 0.34,
+   "type": "boolean"
+  }
+ },
+ "model": "typesafe-ai/jev"
+}

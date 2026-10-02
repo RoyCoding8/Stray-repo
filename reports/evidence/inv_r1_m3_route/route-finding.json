@@ -1,0 +1,19 @@
+{
+ "durable_store": "s09iso_m3run6_6de593ea90c3 (disposable; the receipts are committed here)",
+ "purpose": "First run that produced a settled success on the confirmed free route. The three earlier runs each dispatched and got a `failure` receipt with empty text because the pinned route did not match what the router returns.",
+ "receipts_committed": "receipts.tsv, 35 settled successes and 1 unknown across six campaigns",
+ "route_as_pinned_correctly": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "study": "inv_r1_m3e",
+ "why_the_first_three_failed": {
+  "cause_one": "the pin named `openrouter/...` as the resolved model, but the router reports the provider's own name `nvidia/...`; a resolved model that differs from the requested one is the normal case",
+  "cause_three": "a guard added earlier required resolved_model to equal the study's model, which refuses every real route",
+  "cause_two": "the chat API capitalises the provider as `Nvidia` where the responses API lowercases it, and the adapter compares exactly",
+  "observed": "HTTP 200 with 579 output tokens, discarded as route-metadata-mismatch"
+ }
+}

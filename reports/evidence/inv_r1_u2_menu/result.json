@@ -1,0 +1,287 @@
+{
+ "choice_census": {
+  "budget_kind": "estimated-budget",
+  "child_allocation_id": "s09iso-inv-r1-u2-menu-root/development/u2-census-ff5791da:u2-census-ff5791da",
+  "dispatch_state": "unresolved",
+  "exposure": 2810,
+  "method_named": "none",
+  "operation_id": "u2-census-ff5791da",
+  "prompt_chars": 3045,
+  "prompt_digest": "7f7426ca8dd7e5ed7ae114f3949c7b3b3e7aeeb5ff9c3e913a5f4ce4be46b76e",
+  "receipt_outcome": "unknown",
+  "response_chars": 0,
+  "response_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "status": "dispatched",
+  "store": "s09iso_u2menu_213f45b48aa0"
+ },
+ "execution_probes": {
+  "max_queries": 8,
+  "omitted_method_against_no_default_contract": {
+   "executed_source_digest": "c9e649973471e978b60e13b736017c54bd81f5ffb0ed1230469610bb61f6b06c",
+   "operation_id": null,
+   "queries": 8,
+   "status": "ok"
+  },
+  "primitive_call_against_offered_menu": {
+   "error": "MethodExecutionError: member-failed: {'worker': {'status': 'error', 'data': {}, 'error': \"TypeError: software_atoms() missing 1 required positional argument: 'oracle'\"}, 'timed_out': False, 'wall_ms': 39}",
+   "status": "error"
+  },
+  "task_id": "ad01-w2-within-sw-00"
+ },
+ "menu_audit": {
+  "callables": [
+   {
+    "binding": "reducers.ddmin_reduce",
+    "bound_target": {
+     "defaults": {
+      "max_queries": "16"
+     },
+     "keyword_only": [
+      "max_queries"
+     ],
+     "positional": [
+      "count",
+      "build",
+      "probe"
+     ]
+    },
+    "callable": "ddmin_reduce",
+    "declared_signature": "ddmin_reduce(count, build, probe, *, max_queries=16)",
+    "problems": [
+     "wrapper-defaults-method-to-ddmin-which-is-the-authored-answer",
+     "wrapper-arity-and-names-do-not-fit-binding"
+    ],
+    "wrapper_defaults": {
+     "'ddmin'": true,
+     "16": true,
+     "max_queries": 16,
+     "method": "ddmin"
+    },
+    "wrapper_keyword_only": [
+     "method",
+     "max_queries"
+    ],
+    "wrapper_positional": [
+     "task",
+     "oracle"
+    ],
+    "wrapper_present": true
+   },
+   {
+    "binding": "reducers.graph_atoms",
+    "bound_target": {
+     "defaults": {},
+     "keyword_only": [],
+     "positional": [
+      "task"
+     ]
+    },
+    "callable": "graph_atoms",
+    "declared_signature": "graph_atoms(task)",
+    "problems": [
+     "wrapper-defaults-method-to-ddmin-which-is-the-authored-answer",
+     "wrapper-arity-and-names-do-not-fit-binding"
+    ],
+    "wrapper_defaults": {
+     "'ddmin'": true,
+     "16": true,
+     "max_queries": 16,
+     "method": "ddmin"
+    },
+    "wrapper_keyword_only": [
+     "method",
+     "max_queries"
+    ],
+    "wrapper_positional": [
+     "task",
+     "oracle"
+    ],
+    "wrapper_present": true
+   },
+   {
+    "binding": "reducers.greedy_reduce",
+    "bound_target": {
+     "defaults": {
+      "max_queries": "16",
+      "priority": "None"
+     },
+     "keyword_only": [
+      "priority",
+      "max_queries"
+     ],
+     "positional": [
+      "count",
+      "build",
+      "probe"
+     ]
+    },
+    "callable": "greedy_reduce",
+    "declared_signature": "greedy_reduce(count, build, probe, *, priority=None, max_queries=16)",
+    "problems": [
+     "wrapper-defaults-method-to-ddmin-which-is-the-authored-answer",
+     "wrapper-arity-and-names-do-not-fit-binding"
+    ],
+    "wrapper_defaults": {
+     "'ddmin'": true,
+     "16": true,
+     "max_queries": 16,
+     "method": "ddmin"
+    },
+    "wrapper_keyword_only": [
+     "method",
+     "max_queries"
+    ],
+    "wrapper_positional": [
+     "task",
+     "oracle"
+    ],
+    "wrapper_present": true
+   },
+   {
+    "binding": null,
+    "callable": "oracle.query",
+    "declared_signature": "oracle.query(candidate)",
+    "problems": [
+     "declared-but-not-wrapped"
+    ],
+    "wrapper_present": false
+   },
+   {
+    "binding": "reducers.reduce_graph",
+    "bound_target": {
+     "defaults": {
+      "max_queries": "16"
+     },
+     "keyword_only": [
+      "method",
+      "max_queries"
+     ],
+     "positional": [
+      "task",
+      "oracle"
+     ]
+    },
+    "callable": "reduce_graph",
+    "declared_signature": "reduce_graph(task, oracle, *, method, max_queries) where method is one of \"ddmin\" or \"greedy\" and you must choose it; there is no default",
+    "problems": [
+     "wrapper-defaults-method-to-ddmin-which-is-the-authored-answer",
+     "contract-promises-no-default-wrapper-has-one"
+    ],
+    "wrapper_defaults": {
+     "'ddmin'": true,
+     "16": true,
+     "max_queries": 16,
+     "method": "ddmin"
+    },
+    "wrapper_keyword_only": [
+     "method",
+     "max_queries"
+    ],
+    "wrapper_positional": [
+     "task",
+     "oracle"
+    ],
+    "wrapper_present": true
+   },
+   {
+    "binding": "reducers.reduce_software",
+    "bound_target": {
+     "defaults": {
+      "max_queries": "16"
+     },
+     "keyword_only": [
+      "method",
+      "max_queries"
+     ],
+     "positional": [
+      "task",
+      "oracle"
+     ]
+    },
+    "callable": "reduce_software",
+    "declared_signature": "reduce_software(task, oracle, *, method, max_queries) where method is one of \"ddmin\" or \"greedy\" and you must choose it; there is no default",
+    "problems": [
+     "wrapper-defaults-method-to-ddmin-which-is-the-authored-answer",
+     "contract-promises-no-default-wrapper-has-one"
+    ],
+    "wrapper_defaults": {
+     "'ddmin'": true,
+     "16": true,
+     "max_queries": 16,
+     "method": "ddmin"
+    },
+    "wrapper_keyword_only": [
+     "method",
+     "max_queries"
+    ],
+    "wrapper_positional": [
+     "task",
+     "oracle"
+    ],
+    "wrapper_present": true
+   },
+   {
+    "binding": "reducers.software_atoms",
+    "bound_target": {
+     "defaults": {},
+     "keyword_only": [],
+     "positional": [
+      "task"
+     ]
+    },
+    "callable": "software_atoms",
+    "declared_signature": "software_atoms(task)",
+    "problems": [
+     "wrapper-defaults-method-to-ddmin-which-is-the-authored-answer",
+     "wrapper-arity-and-names-do-not-fit-binding"
+    ],
+    "wrapper_defaults": {
+     "'ddmin'": true,
+     "16": true,
+     "max_queries": 16,
+     "method": "ddmin"
+    },
+    "wrapper_keyword_only": [
+     "method",
+     "max_queries"
+    ],
+    "wrapper_positional": [
+     "task",
+     "oracle"
+    ],
+    "wrapper_present": true
+   }
+  ],
+  "contract_version": "ad01-child-v1",
+  "problem_count": 13,
+  "wrapper_digest": "33443155627cf4aac34565125846767a5e2040b2bdc345512352c35563632b90",
+  "wrapper_source": "def ddmin_reduce(task, oracle, *, method=\"ddmin\", max_queries=16):\n    return reducers.ddmin_reduce(task, oracle, method=method, max_queries=max_queries)\ndef greedy_reduce(task, oracle, *, method=\"ddmin\", max_queries=16):\n    return reducers.greedy_reduce(task, oracle, method=method, max_queries=max_queries)\ndef software_atoms(task, oracle, *, method=\"ddmin\", max_queries=16):\n    return reducers.software_atoms(task, oracle, method=method, max_queries=max_queries)\ndef graph_atoms(task, oracle, *, method=\"ddmin\", max_queries=16):\n    return reducers.graph_atoms(task, oracle, method=method, max_queries=max_queries)\ndef reduce_software(task, oracle, *, method=\"ddmin\", max_queries=16):\n    return reducers.reduce_software(task, oracle, method=method, max_queries=max_queries)\ndef reduce_graph(task, oracle, *, method=\"ddmin\", max_queries=16):\n    return reducers.reduce_graph(task, oracle, method=method, max_queries=max_queries)\n"
+ },
+ "route": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+ "route_diagnosis": {
+  "completion_tokens": 14,
+  "expected_route": {
+   "endpoint": "http://localhost:4000/v1",
+   "provider": "nvidia",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "tier": "free"
+  },
+  "field_mismatches": [
+   "provider"
+  ],
+  "http_status": 200,
+  "model_matches": true,
+  "prompt_tokens": 22,
+  "provider_case_mismatch": true,
+  "provider_reported_cost": 0,
+  "returned_route": {
+   "endpoint": "http://127.0.0.1:4000/v1",
+   "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "provider": "Nvidia",
+   "tier": "free"
+  },
+  "status": "responded"
+ },
+ "source_tip": "a1f514c82c33733324b1f3b6b23df702bd07ebb5"
+}

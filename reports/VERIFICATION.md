@@ -301,3 +301,75 @@ experiment: manifest `a52f3ed7`, 128/128 trajectories complete, checker
 traces in `experiments/agenda01/results/`. Post-freeze touchdown: one
 freeze-test cleanup fix, re-verified standalone (experiment file 18/18) with
 the frozen manifest byte-intact.
+
+## Investigation Learning 02 final handback
+
+Source tip: `f73127fa02a50ba456be92e0f68a5d9aaf1f26d6`. Date: 2026-09-24. This section records the current report handback. It does not change source or evidence.
+
+### Full-suite runs stall in the coord02 family, and that predates this work
+
+A full `pytest` run at this tip does not reach a summary. It stalls in `psycopg.connect` and
+the per-test timeout fires. The visible symptom is a stall in `ep_poll` on a loopback socket
+with no CPU and no output, which reads as a hang.
+
+The mechanism was measured directly rather than inferred. At the moment of a stall the
+server shows a client backend for the test's database in state **`idle in transaction`**
+whose last statement was `COMMIT`: a connection opened a transaction, sent `COMMIT`, and
+never closed. That leaked transaction holds locks, so the test's next `psycopg.connect`
+blocks. The backend disappears when the process dies, which is why it is invisible to any
+check run afterwards, and each stalled run leaves another behind to poison the next.
+
+Two pre-existing conditions allow it. `_fresh_db()` at `tests/test_acct_store_costs.py:46`
+truncates every table in a *shared* database, so any concurrent connection blocks it. And
+`db.connect` at `src/settlement/db.py:17` sets neither `connect_timeout` nor
+`lock_timeout`, so a blocked call waits indefinitely instead of failing.
+
+This is not a regression from the INVL02 work. `tests/test_acct_store_costs.py`,
+`tests/test_bdr02_child_identity.py`, `src/settlement/broker.py`, `src/settlement/db.py`
+and all of `experiments/coord02/` are byte-identical between `2d12d56` and `5148bb0`.
+Running `tests/test_acct_store_costs.py::test_trial_costs_equal_measured_receipt_usage` at
+`2d12d56` reproduces the same stall. 114 of the 220 test files touch this family; the
+remaining 106 contain no reference to `coord02`, `LocalLauncher` or a real database.
+
+That 106-file subset was run at this tip: **962 passed, 267 skipped, 8 failed** in 57s. The
+8 failures are in `tests/test_r01_deadline_ui.py` (4, all deadline/cancel timing) and
+`tests/test_s09o_prelive.py` (4, all study-guard cost refusals, e.g.
+`test_guard_raises_for_nonzero_usage_cost` reporting `DID NOT RAISE StudyGuardRefusal`).
+Both files were left untouched by this work, and both produce **the identical 8 failed,
+4 passed, 6 skipped** at `2d12d56`, so the changes to `src/settlement/gateway.py` and
+`src/settlement/gateway_http.py` introduced no failure here. They are pre-existing.
+
+With the leaked backends cleared, the underlying stall failure surfaces immediately and is
+an ordinary assertion, not a stall: `settlement.common.SettlementError: join undecided: check
+plan_...:r1:check has no observed receipt`. That defect is real, predates this work, and is
+untouched here. The seven live-study gate files have no reference to the affected family
+and pass in about nine seconds.
+
+### Final affected gate
+
+The recorded worker aggregate of **616 passed, 32 skipped** is not reproducible from the cited affected list. The corrected affected result is **135 passed, 16 skipped** with the DSN variables unset. The exact live-study gate separately passed **233** tests. The recorded environment had `SETTLEMENT_TEST_DSN` and `INV_B1_DSN` unset. The exact affected test list from the final repair wave was:
+
+```text
+tests/test_ag01_demo.py
+tests/test_ag01_experiment.py
+tests/test_broker_dbos.py
+tests/test_final_provenance.py
+tests/test_frontier_atomicity.py
+tests/test_inv_b1_contracts.py
+tests/test_m2_frontier_inherit.py
+tests/test_provenance_authority.py
+```
+
+The 32 skips belong to the stale worker aggregate and are not a database-qualified result. Current test database safety requires explicit `SETTLEMENT_TEST_DSN`, a matching `SETTLEMENT_TEST_TRUNCATE_DSN` for destructive fixtures, and explicit `INV_B1_DSN` for the INV-B1 contract gate.
+
+The final frontier evidence worktree gate for the selected frontier gate passed **430** tests with **0 skipped**. This is separate from the corrected **135 passed, 16 skipped** affected result and the **233 passed** live-study gate at `f73127f`. A separate 15-minute full-suite attempt at `f73127f` used disposable DSNs and timed out before pytest printed a summary. It is not a pass, a failure, or a green full-suite result.
+
+### Live and evidence boundary
+
+Fresh route discovery at `f73127f` accepted the 550B route. Evidence: `reports/evidence/invl02-route-discovery-550b-r3/route-discovery.json`, SHA-256 `b41189edd87a28b782cdd723f61f716b0b526f22cbc862e49243bf2897e0904a`.
+
+Fresh output freeze is `reports/evidence/invl02-output-shape-550b-r3/freeze.json` with SHA-256 `5ebc5cfad4a10b8ab912bed36c33c140c6416b4613ac57dfe78f57217a2ef4e1`. Fresh preflight is `reports/evidence/invl02-output-shape-550b-r3/preflight.json` with SHA-256 `0ed8adde9160e909384487ab8b1b2f215509744bac774037cf27b9de0f9a4fc1`.
+
+The earlier pre-live attempt at `f73127f` was refused before dispatch because a fresh human grant was required, and no model inference occurred in that attempt. The 2026-09-24 run then bound the standing authorization to the frozen r3 study, dispatched once, and stopped on the first-route-mismatch rule. The live study is closed unavailable at the route boundary. Historical E0 limitations remain unchanged and retention-only. Historical E12 limitations remain unchanged and incomplete. E3 remains unavailable and unrun. No utility, transfer, or recursive-improvement claim is supported.
+
+The systematic-repair workflow artifact is `/home/ubuntu/.agents/skills/parallel-bugfix/SKILL.md`. It is a workflow record, not a product capability.

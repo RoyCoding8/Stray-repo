@@ -17,6 +17,7 @@ import inspect
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -109,6 +110,158 @@ def test_legacy_sealed_effect_refuses_model_and_revision():
     assert "sealed" in model_effect["reason"]
     revision_effect, *_ = policy_assess._effect(task, _revision_action())
     assert revision_effect["accepted"] is False
+
+
+def test_assessment_model_action_dispatches_and_counts_only_settled_response(
+        monkeypatch):
+    import experiments.ad01.assessment_profile as shared
+    from settlement.common import ResultCode
+
+    calls = []
+
+    def ensure(*args, **kwargs):
+        calls.append(("ensure", args, kwargs))
+        return SimpleNamespace(code=ResultCode.APPLIED, detail="",
+                               data={})
+
+    def dispatch_operation(*args, **kwargs):
+        calls.append(("dispatch", args, kwargs))
+        return SimpleNamespace(next_decision="terminal")
+
+    monkeypatch.setattr(broker, "ensure_operation", ensure)
+    monkeypatch.setattr(broker, "dispatch_operation", dispatch_operation)
+    monkeypatch.setattr(
+        shared, "_settled_model_response",
+        lambda _dsn, _operation_id: ({"text": "settled answer",
+                                      "receipt_identity": "gw:answer"}, None))
+
+    effect = dispatch(
+        profile_name=ASSESSMENT, record=_record(USE_SOURCE), task=_task(),
+        action=_model_action(), ctx=_ctx(ASSESSMENT, _digest(USE_SOURCE)),
+        dsn="assessment-store", allocation_id="assessment-allocation",
+        gateway=object(), model="assessment-model")
+
+    assert effect["accepted"] is True
+    assert effect["model_calls"] == 1
+    assert effect["result"]["text"] == "settled answer"
+    assert [call[0] for call in calls] == ["ensure", "dispatch"]
+    assert calls[0][2]["operation_id"].startswith("m1-assess-")
+    assert calls[1][2]["gateway"] is not None
+
+
+def test_assessment_model_action_without_response_is_not_counted(monkeypatch):
+    import experiments.ad01.assessment_profile as shared
+    from settlement.common import ResultCode
+
+    calls = []
+    monkeypatch.setattr(
+        broker, "ensure_operation",
+        lambda *args, **kwargs: calls.append("ensure") or SimpleNamespace(
+            code=ResultCode.APPLIED, detail="", data={}))
+    monkeypatch.setattr(
+        broker, "dispatch_operation",
+        lambda *args, **kwargs: calls.append("dispatch") or SimpleNamespace(
+            next_decision="needs-reconciliation"))
+    monkeypatch.setattr(
+        shared, "_settled_model_response",
+        lambda _dsn, _operation_id: (None, "no settled response"))
+
+    effect = dispatch(
+        profile_name=ASSESSMENT, record=_record(USE_SOURCE), task=_task(),
+        action=_model_action(), ctx=_ctx(ASSESSMENT, _digest(USE_SOURCE)),
+        dsn="assessment-store", allocation_id="assessment-allocation",
+        gateway=object(), model="assessment-model")
+
+    assert calls == ["ensure", "dispatch"]
+    assert effect["accepted"] is False
+    assert effect["model_calls"] == 0
+    assert effect["candidate"] is None
+    assert "no settled response" in effect["reason"]
+
+
+def test_settled_model_response_rejects_unsettled_operation(monkeypatch):
+    import experiments.ad01.assessment_profile as shared
+    from settlement import store
+
+    monkeypatch.setattr(broker, "read_operation", lambda *_args: {
+        "settled": False, "dispatch_state": "sent",
+        "reconcile_state": "settled"})
+    monkeypatch.setattr(store, "operation_receipts", lambda *_args: [{
+        "outcome": "success", "settled": True, "usable_result": True,
+        "content": {"text": "settled answer"},
+        "receipt_identity": "gw:answer"}])
+
+    response, failure = shared._settled_model_response("assessment-store", "op")
+
+    assert response is None
+    assert "not settled" in failure
+
+
+def test_settled_model_response_rejects_successful_unusable_receipt(monkeypatch):
+    import experiments.ad01.assessment_profile as shared
+    from settlement import store
+
+    monkeypatch.setattr(broker, "read_operation", lambda *_args: {
+        "settled": True, "dispatch_state": "sent",
+        "reconcile_state": "settled"})
+    monkeypatch.setattr(store, "operation_receipts", lambda *_args: [{
+        "outcome": "success", "settled": True, "usable_result": False,
+        "content": {"text": "settled answer"},
+        "receipt_identity": "gw:answer"}])
+
+    response, failure = shared._settled_model_response("assessment-store", "op")
+
+    assert response is None
+    assert "successful usable" in failure
+
+
+def test_shared_assessment_arm_feeds_settled_model_result_to_next_step(
+        monkeypatch):
+    import experiments.ad01.assessment_profile as shared
+    from settlement.common import ResultCode
+
+    source = (
+        "def STEP(view, state):\n"
+        "    if not state.get('asked'):\n"
+        "        return {'action': {'kind': 'request_model',"
+        " 'target': view['task_content']['task_id'], 'inputs': {"
+        "'prompt': 'inspect', 'max_output_tokens': 64},"
+        " 'evidence_refs': [], 'requested_resources': {"
+        "'model_calls': 1}}, 'state': {'asked': True}}\n"
+        "    if view['last_result'] is None:\n"
+        "        return {'action': {'kind': 'stop',"
+        " 'target': view['task_content']['task_id'], 'inputs': {},"
+        " 'evidence_refs': [], 'requested_resources': {}}, 'state': {}}\n"
+        "    return {'action': {'kind': 'use_method',"
+        " 'target': view['task_content']['task_id'], 'inputs': {"
+        "'method_id': 'seed-sw-greedy', 'max_queries': 4},"
+        " 'evidence_refs': [], 'requested_resources': {"
+        "'queries': 4}}, 'state': {'done': True}}\n"
+    )
+    record = _record(source)
+    monkeypatch.setattr(
+        broker, "ensure_operation",
+        lambda *args, **kwargs: SimpleNamespace(code=ResultCode.APPLIED,
+                                               detail="", data={}))
+    monkeypatch.setattr(
+        broker, "dispatch_operation",
+        lambda *args, **kwargs: SimpleNamespace(next_decision="terminal"))
+    monkeypatch.setattr(
+        shared, "_settled_model_response",
+        lambda _dsn, _operation_id: ({"text": "settled answer",
+                                      "receipt_identity": "gw:answer"}, None))
+
+    arm = shared._shared_assessment_arm(
+        record, [TASK_ID], policy_assess.rule_for(resource_ceiling=16),
+        "assessment-arm", dsn="assessment-store",
+        allocation_id="assessment-allocation", gateway=object(),
+        model="assessment-model")
+
+    assert arm["resources"]["model_calls"] == 1
+    assert [effect["kind"] for effect in arm["effects"]] == [
+        "request_model", "use_method"]
+    assert arm["effects"][0]["result"]["text"] == "settled answer"
+    assert arm["quality"]["preserved"] == 1
 
 
 def test_legacy_divergence_demo_same_payload_admitted_by_broker_owner():
@@ -378,21 +531,39 @@ def test_source_freeze_checked_before_any_owner_call():
     assert "scope" in scoped_out["reason"]
 
 
-def test_default_method_fallback_reports_selected_identity():
+def test_unnamed_use_is_refused_and_construct_still_defaults():
     record = _record(USE_SOURCE)
     task = _task()
-    action = _use_action()
-    action["inputs"] = {"max_queries": 4}
+    # An unnamed use_method is refused: it names a method it did not build
+    # (a60798d). The family default survives only for construct_method, the
+    # action that produces one, and it still reports its identity.
+    unnamed = _use_action()
+    unnamed["inputs"] = {"max_queries": 4}
+    refused = dispatch(profile_name=ASSESSMENT, record=record, task=task,
+                       action=unnamed,
+                       ctx=_ctx(ASSESSMENT, _digest(USE_SOURCE)))
+    assert refused["accepted"] is False
+    assert "names no task method" in refused["reason"]
+    assert refused["selected_identity"] is None
+    assert refused["candidate"] is None
+
+    built = {"kind": "construct_method", "target": TASK_ID,
+             "inputs": {"max_queries": 4}, "evidence_refs": [],
+             "requested_resources": {"queries": 4}}
     effect = dispatch(profile_name=ASSESSMENT, record=record, task=task,
-                      action=action,
+                      action=built,
                       ctx=_ctx(ASSESSMENT, _digest(USE_SOURCE)))
     assert effect["accepted"] is True
     assert effect["selected_identity"] == "seed-sw-greedy"
+    assert effect["owner"] == "seeds.run_seed"
+    assert effect["candidate"] is not None
+
     unknown = _use_action(method_id="missing")
-    refused = dispatch(profile_name=ASSESSMENT, record=record, task=task,
-                       action=unknown,
-                       ctx=_ctx(ASSESSMENT, _digest(USE_SOURCE)))
-    assert refused["accepted"] is False
+    unknown_refused = dispatch(profile_name=ASSESSMENT, record=record,
+                               task=task, action=unknown,
+                               ctx=_ctx(ASSESSMENT, _digest(USE_SOURCE)))
+    assert unknown_refused["accepted"] is False
+    assert "unknown task method" in unknown_refused["reason"]
 
 
 def test_sealed_observations_stay_out_of_assessment_views():
@@ -454,5 +625,6 @@ def test_method_owners_receive_stripped_task_only():
     assert len(seen) == 1
     assert "literal-secret-task-answer" not in json.dumps(seen[0],
                                                           sort_keys=True)
-    assert seen[0]["witness"] == task["witness"]
+    assert "hidden_answer" not in seen[0]
+    assert "access_label" not in seen[0]
     assert seen[0]["task_id"] == TASK_ID

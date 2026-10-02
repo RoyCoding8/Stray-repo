@@ -1,0 +1,186 @@
+{
+ "campaign_id": "w1-e1-boolean-r3",
+ "cells": [
+  {
+   "cap_a": "invalid-program",
+   "cap_b": "invalid-program",
+   "cell": "P1-audit-a1-retry1",
+   "characters": 4685,
+   "operation_id": "invl02-output-82bc8a73a8eb-P1-audit-0023-a1",
+   "status": "verified"
+  },
+  {
+   "cell": "P1-audit-a1",
+   "operation_id": "invl02-output-82bc8a73a8eb-P1-audit-0023-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P1-audit-a2-retry1",
+   "operation_id": "invl02-output-343322ab5312-P1-audit-0023-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P1-audit-a2",
+   "operation_id": "invl02-output-343322ab5312-P1-audit-0023-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cap_a": "invalid-program",
+   "cap_b": "invalid-program",
+   "cell": "P1-qual-a1-retry1",
+   "characters": 5425,
+   "operation_id": "invl02-output-eeed9cac5398-P1-qual-0011-a1",
+   "status": "verified"
+  },
+  {
+   "cell": "P1-qual-a1",
+   "operation_id": "invl02-output-eeed9cac5398-P1-qual-0011-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cap_a": "invalid-program",
+   "cap_b": "invalid-program",
+   "cell": "P1-qual-a2-retry1",
+   "characters": 4805,
+   "operation_id": "invl02-output-66d1bf1433a8-P1-qual-0011-a2",
+   "status": "verified"
+  },
+  {
+   "cell": "P1-qual-a2",
+   "operation_id": "invl02-output-66d1bf1433a8-P1-qual-0011-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-audit-a1",
+   "operation_id": "invl02-output-2ce2c25b6b61-P2-audit-0023-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-audit-a2",
+   "operation_id": "invl02-output-41b35b2a8f65-P2-audit-0023-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-qual-a1",
+   "operation_id": "invl02-output-a37af1c6302e-P2-qual-0011-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-qual-a2",
+   "operation_id": "invl02-output-860e83ea073a-P2-qual-0011-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  }
+ ],
+ "denominators": {
+  "failed": 0,
+  "lost_sends": 9,
+  "records_on_disk": 12,
+  "verified": 3,
+  "with_response_bytes": 3
+ },
+ "failures": [],
+ "network_withdrawn": true,
+ "no_response_to_attest": [
+  {
+   "cell": "P1-audit-a1",
+   "operation_id": "invl02-output-82bc8a73a8eb-P1-audit-0023-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P1-audit-a2-retry1",
+   "operation_id": "invl02-output-343322ab5312-P1-audit-0023-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P1-audit-a2",
+   "operation_id": "invl02-output-343322ab5312-P1-audit-0023-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P1-qual-a1",
+   "operation_id": "invl02-output-eeed9cac5398-P1-qual-0011-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P1-qual-a2",
+   "operation_id": "invl02-output-66d1bf1433a8-P1-qual-0011-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-audit-a1",
+   "operation_id": "invl02-output-2ce2c25b6b61-P2-audit-0023-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-audit-a2",
+   "operation_id": "invl02-output-41b35b2a8f65-P2-audit-0023-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-qual-a1",
+   "operation_id": "invl02-output-a37af1c6302e-P2-qual-0011-a1",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  },
+  {
+   "cell": "P2-qual-a2",
+   "operation_id": "invl02-output-860e83ea073a-P2-qual-0011-a2",
+   "outcome": "transport-loss",
+   "status": "no-response-to-attest"
+  }
+ ],
+ "recomputed": [
+  {
+   "cap_a": "invalid-program",
+   "cap_b": "invalid-program",
+   "cell": "P1-audit-a1-retry1",
+   "characters": 4685,
+   "operation_id": "invl02-output-82bc8a73a8eb-P1-audit-0023-a1",
+   "status": "verified"
+  },
+  {
+   "cap_a": "invalid-program",
+   "cap_b": "invalid-program",
+   "cell": "P1-qual-a1-retry1",
+   "characters": 5425,
+   "operation_id": "invl02-output-eeed9cac5398-P1-qual-0011-a1",
+   "status": "verified"
+  },
+  {
+   "cap_a": "invalid-program",
+   "cap_b": "invalid-program",
+   "cell": "P1-qual-a2-retry1",
+   "characters": 4805,
+   "operation_id": "invl02-output-66d1bf1433a8-P1-qual-0011-a2",
+   "status": "verified"
+  }
+ ],
+ "records_seen": 12,
+ "records_verified": 3,
+ "records_with_bytes_to_attest": 3,
+ "route_rule_source": "imported",
+ "withheld_from_verdict": [
+  "reason",
+  "over_length",
+  "cap_b.verdict",
+  "score",
+  "candidate_digest",
+  "outcome"
+ ]
+}

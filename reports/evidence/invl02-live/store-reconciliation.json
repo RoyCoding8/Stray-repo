@@ -1,0 +1,71 @@
+{
+ "authoritative_source": "durable store invl02_live",
+ "durable_store_rows": {
+  "operation": {
+   "admitted_launcher": "gateway",
+   "budget_kind": "estimated-budget",
+   "created_at": "2026-09-23T05:11:24.787335+00:00",
+   "dispatch_state": "unresolved",
+   "effect": "model-inference",
+   "id": "ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "reconcile_state": "unresolved",
+   "request_deadline_ms": 300000,
+   "request_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "settled": false
+  },
+  "receipt": {
+   "created_at": "2026-09-23T05:15:25.157077+00:00",
+   "error": "gateway request timed out",
+   "outcome": "unknown",
+   "receipt_identity": "gw:ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init:unknown",
+   "usage": {
+    "billed": null,
+    "charge_units": null,
+    "input_tokens": null,
+    "output_tokens": null
+   }
+  },
+  "reservation": {
+   "amount": 3269,
+   "created_at": "2026-09-23T05:11:24.787335+00:00",
+   "id": "res-ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "operation_id": "ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "state": "uncertain"
+  },
+  "study_authority": {
+   "allocation_id": "ad01-campaign-invl02-live-e0",
+   "authorized_units": 200000,
+   "created_at": "2026-09-23T05:11:11.371234+00:00",
+   "study_root": "invl02-live-e0"
+  }
+ },
+ "interpretation": {
+  "exposure": "The request was admitted and dispatched through the gateway, the gateway timed out, and the response was lost. The 3269-unit reservation stays uncertain and the operation stays unsettled, so the exposure is now VERIFIED as a figure and remains UNRESOLVED as a debt. Verifying the number does not discharge it.",
+  "other_uncertain_reservations_excluded": 1,
+  "usage": "The receipt reports charge_units and billed as null, so the units are a broker reservation estimate rather than proven billing. The free route reports unknown usage for a lost response, which is why the figure can be recomputed but never settled here."
+ },
+ "re_dispatch_rule": "Do not re-dispatch this operation. A lost response under the durable broker's at-most-once rule means any further attempt is a new operation under a new freeze and a fresh grant.",
+ "read_only_sql": [
+  "SELECT id, dispatch_state, reconcile_state, settled, created_at FROM operations WHERE id='ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init';",
+  "SELECT id, operation_id, amount, state, created_at FROM reservations WHERE id='res-ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init';",
+  "SELECT receipt_identity, outcome, created_at, content::text FROM receipts WHERE operation_id='ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init';",
+  "SELECT study_root, allocation_id, authorized, created_at FROM study_authority WHERE study_root='invl02-live-e0';"
+ ],
+ "reconciled_at": "2026-09-26T07:27:04.754571+00:00",
+ "reservation_recomputation": {
+  "agrees": true,
+  "expression": "4880 // 4 + 1 + 2048 = 3269",
+  "formula": "(message_characters // 4 + 1 + max_output_tokens) * (retries + 1)",
+  "inputs_from": "operations.payload for the same operation id",
+  "ledger_prose_agrees": true,
+  "max_output_tokens": 2048,
+  "message_characters": 4880,
+  "message_count": 1,
+  "recomputed_units": 3269,
+  "reservation_row_units": 3269,
+  "retries": 0
+ },
+ "schema": "s09-prior-store-reconciliation-v1",
+ "study_root": "invl02-live-e0",
+ "why_this_receipt_exists": "The project ledger carried this reservation as 3269 units whose only evidence was prose. The durable store holding the operation was found on the cluster and its reservation inputs are readable, so the figure is now recomputed from the row rather than believed."
+}

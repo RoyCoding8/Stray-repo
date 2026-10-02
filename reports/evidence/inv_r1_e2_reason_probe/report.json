@@ -1,0 +1,124 @@
+{
+  "database": null,
+  "dispatches": 0,
+  "frozen_panel": {
+    "by_budget": {
+      "ad01-w0-dev-sw-00": {
+        "1": {
+          "reason": "ok-incumbent",
+          "verdict": "preserved"
+        },
+        "64": {
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        },
+        "8": {
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        }
+      },
+      "ad01-w0-dev-sw-01": {
+        "1": {
+          "reason": "ok-incumbent",
+          "verdict": "preserved"
+        },
+        "64": {
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        },
+        "8": {
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        }
+      },
+      "ad01-w0-dev-sw-02": {
+        "1": {
+          "reason": "ok-incumbent",
+          "verdict": "preserved"
+        },
+        "64": {
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        },
+        "8": {
+          "reason": "ok-preserved",
+          "verdict": "preserved"
+        }
+      }
+    },
+    "distinct_reasons": [
+      "ok-incumbent",
+      "ok-preserved"
+    ],
+    "max_queries": 8,
+    "reason_varies_with_budget": true,
+    "reasons_at_frozen_budget": [
+      "ok-preserved"
+    ],
+    "source_task_ids": [
+      "ad01-w0-dev-sw-00",
+      "ad01-w0-dev-sw-01",
+      "ad01-w0-dev-sw-02"
+    ],
+    "verdict": "the reason varies with budget on the freeze's own source tasks where the verdict does not, so a reason-rendering arm sees variation the verdict collapses, and it is the gate that stays refused because the gate reads the verdict",
+    "verdict_is_constant": true,
+    "verdicts": [
+      "preserved"
+    ]
+  },
+  "namespace": "inv_r1_e2_reason_probe",
+  "reason_bearing_gate": {
+    "distinct_reasons": 1,
+    "distinct_verdicts": 1,
+    "gate_after": {
+      "distinct_verdicts": 1,
+      "observations": 3,
+      "refusal": "refused: the relevant-with-reason arm's experience is a constant: 3 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+      "varies": false,
+      "verdicts": [
+        "preserved"
+      ]
+    },
+    "gate_before": {
+      "distinct_verdicts": 1,
+      "observations": 3,
+      "refusal": "refused: the relevant-verdict-only arm's experience is a constant: 3 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+      "varies": false,
+      "verdicts": [
+        "preserved"
+      ]
+    },
+    "gate_moved": false,
+    "reasons": [
+      "ok-preserved"
+    ],
+    "records_carry": [
+      "capability_id",
+      "detail",
+      "method",
+      "observation_id",
+      "reason",
+      "task_id",
+      "verdict"
+    ],
+    "verdict": "the gate counts verdicts, so rendering the reason beside the verdict leaves the refusal standing",
+    "verdicts": [
+      "preserved"
+    ]
+  },
+  "supersedes": null,
+  "verdict": "the reason varies with budget on the freeze's own source tasks, so the proposed change would give a policy a varying signal to read, and the gate stays refused because the gate reads the verdict, so a panel that varies and a gate that reads the varied field are both required before a run is worth dispatching",
+  "version": "ad01-e2-reason-probe/1",
+  "world_reason_surface": {
+    "reason_is_constant": false,
+    "reasons": {
+      "ok-incumbent": 96,
+      "ok-preserved": 120
+    },
+    "task_budget_pairs": 216,
+    "verdict_is_constant": true,
+    "verdicts": {
+      "preserved": 216
+    }
+  }
+}

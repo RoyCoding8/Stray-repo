@@ -1,0 +1,52 @@
+{
+  "campaign_id": "ad01-w1-R-00",
+  "members": [
+    {
+      "authored": false,
+      "capability_id": "acquired-sw-b0bd83b7",
+      "construction": {
+        "calls_made": 1,
+        "campaign_id": "ad01-w1-R-00",
+        "init_failure": null,
+        "init_operation": "ad01-ad01-w1-R-00-b0-ad01-w1-dev-sw-00-construct-l1-init",
+        "lineage": 1,
+        "repair_operation": null,
+        "study_root": "s09iso-ctlarm44774aef-root"
+      },
+      "entry": "acquired_order",
+      "method_source": "def acquired_order(task, oracle, max_queries=16):\n    family = task.get(\"family\", \"software\")\n    if isinstance(max_queries, int) and max_queries >= 0:\n        budget = max_queries\n    else:\n        budget = 16\n    used = [0]\n    def ask(candidate):\n        used[0] = used[0] + 1\n        return oracle.query(candidate)\n    def shrink(build, count, order, bulk):\n        full = list(range(count))\n        if budget <= 0:\n            return build(full)\n        first = build(full)\n        if first is None:\n            return build(full)\n        report = ask(first)\n        if not isinstance(report, dict) or report.get(\"verdict\") != \"preserved\":\n            return build(full)\n        keep = full\n        if bulk is not None and used[0] < budget:\n            trial = [i for i in keep if i not in bulk]\n            if trial:\n                cand = build(trial)\n                if cand is not None:\n                    rep = ask(cand)\n                    if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                        keep = trial\n        changed = True\n        while changed and len(keep) > 1:\n            changed = False\n            for atom in [a for a in order if a in keep]:\n                if used[0] >= budget:\n                    return build(keep)\n                trial_keep = [a for a in keep if a != atom]\n                cand = build(trial_keep)\n                if cand is None:\n                    continue\n                rep = ask(cand)\n                if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                    keep = trial_keep\n                    changed = True\n        return build(keep)\n    if family == \"graph\":\n        vertices = list(task.get(\"vertices\", []))\n        edges = [list(e) for e in task.get(\"edges\", [])]\n        units = []\n        for v in vertices:\n            units.append((\"v\", v))\n        for i in range(len(edges)):\n            units.append((\"e\", i))\n        degree = {}\n        for v in vertices:\n            degree[v] = 0\n        for e in edges:\n            degree[e[0]] = degree.get(e[0], 0) + 1\n            degree[e[1]] = degree.get(e[1], 0) + 1\n        def build_graph(keep):\n            kept = set(keep)\n            gone = set()\n            dropped_edges = set()\n            for pos in range(len(units)):\n                if pos not in kept:\n                    if units[pos][0] == \"v\":\n                        gone.add(units[pos][1])\n                    else:\n                        dropped_edges.add(units[pos][1])\n            keep_v = [v for v in vertices if v not in gone]\n            if not keep_v:\n                return None\n            kept_v = set(keep_v)\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\n            return {\"family\": \"graph\", \"task_id\": task.get(\"task_id\"), \"vertices\": keep_v, \"edges\": keep_e, \"seed\": task.get(\"seed\")}\n        v_first = [i for i in range(len(units)) if units[i][0] == \"v\"]\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\n        e_rest = [i for i in range(len(units)) if units[i][0] != \"v\"]\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\n        return {\"candidate\": candidate, \"queries\": used[0]}\n    ops = list(task.get(\"ops\", []))\n    wid = task.get(\"witness\", {}).get(\"observation\")\n    wpos = -1\n    for i, entry in enumerate(ops):\n        if entry.get(\"id\") == wid:\n            wpos = i\n            break\n    hero = ops[wpos].get(\"key\") if wpos >= 0 else None\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\"op\") == \"set\" and o.get(\"key\") == hero and i < wpos]\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\n    def build_sw(keep):\n        kept = [ops[i] for i in sorted(keep)]\n        return {\"family\": \"software\", \"task_id\": task.get(\"task_id\"), \"fault\": task.get(\"fault\"), \"ops\": kept, \"witness\": task.get(\"witness\"), \"seed\": task.get(\"seed\")}\n    if wpos >= 0:\n        order = rest + chain + [wpos]\n        bulk = set(rest)\n    else:\n        order = list(range(len(ops)))\n        bulk = None\n    candidate = shrink(build_sw, len(ops), order, bulk)\n    return {\"candidate\": candidate, \"queries\": used[0]}\n",
+      "params": {
+        "max_queries": 16
+      },
+      "qualified_on": "ad01-w1-dev-sw-00",
+      "scope": {
+        "family": "software"
+      },
+      "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    },
+    {
+      "authored": false,
+      "capability_id": "acquired-gr-b0bd83b7",
+      "construction": {
+        "calls_made": 1,
+        "campaign_id": "ad01-w1-R-00",
+        "init_failure": null,
+        "init_operation": "ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-init",
+        "lineage": 1,
+        "repair_operation": null,
+        "study_root": "s09iso-ctlarm44774aef-root"
+      },
+      "entry": "acquired_order",
+      "method_source": "def acquired_order(task, oracle, max_queries=16):\n    family = task.get(\"family\", \"software\")\n    if isinstance(max_queries, int) and max_queries >= 0:\n        budget = max_queries\n    else:\n        budget = 16\n    used = [0]\n    def ask(candidate):\n        used[0] = used[0] + 1\n        return oracle.query(candidate)\n    def shrink(build, count, order, bulk):\n        full = list(range(count))\n        if budget <= 0:\n            return build(full)\n        first = build(full)\n        if first is None:\n            return build(full)\n        report = ask(first)\n        if not isinstance(report, dict) or report.get(\"verdict\") != \"preserved\":\n            return build(full)\n        keep = full\n        if bulk is not None and used[0] < budget:\n            trial = [i for i in keep if i not in bulk]\n            if trial:\n                cand = build(trial)\n                if cand is not None:\n                    rep = ask(cand)\n                    if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                        keep = trial\n        changed = True\n        while changed and len(keep) > 1:\n            changed = False\n            for atom in [a for a in order if a in keep]:\n                if used[0] >= budget:\n                    return build(keep)\n                trial_keep = [a for a in keep if a != atom]\n                cand = build(trial_keep)\n                if cand is None:\n                    continue\n                rep = ask(cand)\n                if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                    keep = trial_keep\n                    changed = True\n        return build(keep)\n    if family == \"graph\":\n        vertices = list(task.get(\"vertices\", []))\n        edges = [list(e) for e in task.get(\"edges\", [])]\n        units = []\n        for v in vertices:\n            units.append((\"v\", v))\n        for i in range(len(edges)):\n            units.append((\"e\", i))\n        degree = {}\n        for v in vertices:\n            degree[v] = 0\n        for e in edges:\n            degree[e[0]] = degree.get(e[0], 0) + 1\n            degree[e[1]] = degree.get(e[1], 0) + 1\n        def build_graph(keep):\n            kept = set(keep)\n            gone = set()\n            dropped_edges = set()\n            for pos in range(len(units)):\n                if pos not in kept:\n                    if units[pos][0] == \"v\":\n                        gone.add(units[pos][1])\n                    else:\n                        dropped_edges.add(units[pos][1])\n            keep_v = [v for v in vertices if v not in gone]\n            if not keep_v:\n                return None\n            kept_v = set(keep_v)\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\n            return {\"family\": \"graph\", \"task_id\": task.get(\"task_id\"), \"vertices\": keep_v, \"edges\": keep_e, \"seed\": task.get(\"seed\")}\n        v_first = [i for i in range(len(units)) if units[i][0] == \"v\"]\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\n        e_rest = [i for i in range(len(units)) if units[i][0] != \"v\"]\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\n        return {\"candidate\": candidate, \"queries\": used[0]}\n    ops = list(task.get(\"ops\", []))\n    wid = task.get(\"witness\", {}).get(\"observation\")\n    wpos = -1\n    for i, entry in enumerate(ops):\n        if entry.get(\"id\") == wid:\n            wpos = i\n            break\n    hero = ops[wpos].get(\"key\") if wpos >= 0 else None\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\"op\") == \"set\" and o.get(\"key\") == hero and i < wpos]\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\n    def build_sw(keep):\n        kept = [ops[i] for i in sorted(keep)]\n        return {\"family\": \"software\", \"task_id\": task.get(\"task_id\"), \"fault\": task.get(\"fault\"), \"ops\": kept, \"witness\": task.get(\"witness\"), \"seed\": task.get(\"seed\")}\n    if wpos >= 0:\n        order = rest + chain + [wpos]\n        bulk = set(rest)\n    else:\n        order = list(range(len(ops)))\n        bulk = None\n    candidate = shrink(build_sw, len(ops), order, bulk)\n    return {\"candidate\": candidate, \"queries\": used[0]}\n",
+      "params": {
+        "max_queries": 16
+      },
+      "qualified_on": "ad01-w1-dev-gr-00",
+      "scope": {
+        "family": "graph"
+      },
+      "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    }
+  ],
+  "queries": 70
+}

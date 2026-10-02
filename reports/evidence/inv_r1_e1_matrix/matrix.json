@@ -1,0 +1,282 @@
+{
+ "audit/1/8": {
+  "cells": [
+   {
+    "arm_name": "step",
+    "comparable": true,
+    "overall": 0.0,
+    "policy_record_digest": "289f258e3acc3d9fa9d89781317733d6604469b99a57495b7b64050137a0b34d",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "python-step",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0,
+     "queried": 0.0,
+     "unqueried": 0.0
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "ast",
+    "comparable": true,
+    "overall": 0.0,
+    "policy_record_digest": "fc4786086c0720f6eba4bbb264f01a6d5018890ad8ba0b04ec4843fd74a5ec93",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "typed-ast",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0,
+     "queried": 0.0,
+     "unqueried": 0.0
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "graph",
+    "comparable": true,
+    "overall": 0.0,
+    "policy_record_digest": "ad258cdf72277ac85e05580261c001049a4aa2bc5badf4047c6100ba0530de05",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "action-graph",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0,
+     "queried": 0.0,
+     "unqueried": 0.0
+    },
+    "turns_taken": 2
+   }
+  ],
+  "conditions": {
+   "max_queries": 8,
+   "seed": 1,
+   "split": "audit"
+  },
+  "incompatibilities": []
+ },
+ "dev/11/8": {
+  "cells": [
+   {
+    "arm_name": "step",
+    "comparable": true,
+    "overall": 0.0625,
+    "policy_record_digest": "289f258e3acc3d9fa9d89781317733d6604469b99a57495b7b64050137a0b34d",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "python-step",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0625,
+     "queried": 0.0,
+     "unqueried": 0.06666666666666667
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "ast",
+    "comparable": true,
+    "overall": 0.0625,
+    "policy_record_digest": "fc4786086c0720f6eba4bbb264f01a6d5018890ad8ba0b04ec4843fd74a5ec93",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "typed-ast",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0625,
+     "queried": 0.0,
+     "unqueried": 0.06666666666666667
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "graph",
+    "comparable": true,
+    "overall": null,
+    "policy_record_digest": "ad258cdf72277ac85e05580261c001049a4aa2bc5badf4047c6100ba0530de05",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "action-graph",
+    "score": null,
+    "turns_taken": 2
+   }
+  ],
+  "conditions": {
+   "max_queries": 8,
+   "seed": 11,
+   "split": "dev"
+  },
+  "incompatibilities": []
+ },
+ "dev/4/8": {
+  "cells": [
+   {
+    "arm_name": "step",
+    "comparable": true,
+    "overall": 0.1875,
+    "policy_record_digest": "289f258e3acc3d9fa9d89781317733d6604469b99a57495b7b64050137a0b34d",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "python-step",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.1875,
+     "queried": 1.0,
+     "unqueried": 0.13333333333333333
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "ast",
+    "comparable": true,
+    "overall": 0.1875,
+    "policy_record_digest": "fc4786086c0720f6eba4bbb264f01a6d5018890ad8ba0b04ec4843fd74a5ec93",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "typed-ast",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.1875,
+     "queried": 1.0,
+     "unqueried": 0.13333333333333333
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "graph",
+    "comparable": true,
+    "overall": 0.1875,
+    "policy_record_digest": "ad258cdf72277ac85e05580261c001049a4aa2bc5badf4047c6100ba0530de05",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "action-graph",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.1875,
+     "queried": 1.0,
+     "unqueried": 0.13333333333333333
+    },
+    "turns_taken": 2
+   }
+  ],
+  "conditions": {
+   "max_queries": 8,
+   "seed": 4,
+   "split": "dev"
+  },
+  "incompatibilities": []
+ },
+ "dev/7/8": {
+  "cells": [
+   {
+    "arm_name": "step",
+    "comparable": true,
+    "overall": 0.125,
+    "policy_record_digest": "289f258e3acc3d9fa9d89781317733d6604469b99a57495b7b64050137a0b34d",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "python-step",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.125,
+     "queried": 0.0,
+     "unqueried": 0.13333333333333333
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "ast",
+    "comparable": true,
+    "overall": 0.125,
+    "policy_record_digest": "fc4786086c0720f6eba4bbb264f01a6d5018890ad8ba0b04ec4843fd74a5ec93",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "typed-ast",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.125,
+     "queried": 0.0,
+     "unqueried": 0.13333333333333333
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "graph",
+    "comparable": true,
+    "overall": null,
+    "policy_record_digest": "ad258cdf72277ac85e05580261c001049a4aa2bc5badf4047c6100ba0530de05",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "action-graph",
+    "score": null,
+    "turns_taken": 2
+   }
+  ],
+  "conditions": {
+   "max_queries": 8,
+   "seed": 7,
+   "split": "dev"
+  },
+  "incompatibilities": []
+ },
+ "qual/3/8": {
+  "cells": [
+   {
+    "arm_name": "step",
+    "comparable": true,
+    "overall": 0.0625,
+    "policy_record_digest": "289f258e3acc3d9fa9d89781317733d6604469b99a57495b7b64050137a0b34d",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "python-step",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0625,
+     "queried": 0.0,
+     "unqueried": 0.06666666666666667
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "ast",
+    "comparable": true,
+    "overall": 0.0625,
+    "policy_record_digest": "fc4786086c0720f6eba4bbb264f01a6d5018890ad8ba0b04ec4843fd74a5ec93",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "typed-ast",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0625,
+     "queried": 0.0,
+     "unqueried": 0.06666666666666667
+    },
+    "turns_taken": 2
+   },
+   {
+    "arm_name": "graph",
+    "comparable": true,
+    "overall": 0.0625,
+    "policy_record_digest": "ad258cdf72277ac85e05580261c001049a4aa2bc5badf4047c6100ba0530de05",
+    "queries_spent": 1,
+    "reason": "",
+    "representation_kind": "action-graph",
+    "score": {
+     "n_queried": 1,
+     "overall": 0.0625,
+     "queried": 0.0,
+     "unqueried": 0.06666666666666667
+    },
+    "turns_taken": 2
+   }
+  ],
+  "conditions": {
+   "max_queries": 8,
+   "seed": 3,
+   "split": "qual"
+  },
+  "incompatibilities": []
+ }
+}

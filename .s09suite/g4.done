@@ -1,0 +1,11 @@
+=== group 4  token=5e9b0004  files=8 ===
+  tests/test_eng_close1.py
+  tests/test_inva_recovery.py
+  tests/test_invc3_export.py
+  tests/test_invc3_study.py
+  tests/test_invd2_settle.py
+  tests/test_invr1_study_entry.py
+  tests/test_m4_clean_baseline.py
+  tests/test_rec_checkpoint.py
+rc=1
+summary: 10 failed, 27 passed in 99.90s (0:01:39)

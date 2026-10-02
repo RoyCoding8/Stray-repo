@@ -1,0 +1,22 @@
+{
+ "dispatch_allowance": {
+  "reason": "study not bound: no authority for study 's09iso-expaxis64c03bb7-root' in this store; refusing to seed",
+  "status": "UNMEASURED"
+ },
+ "internal_held_units": {
+  "reason": "study not bound: no authority for study 's09iso-expaxis64c03bb7-root' in this store; refusing to seed",
+  "status": "UNMEASURED"
+ },
+ "provider_billing": {
+  "note": "a spend that cannot be read is UNMEASURED, never zero",
+  "reason": "recording doubles bill false; the run made no provider call to bill",
+  "status": "NOT_REPORTED"
+ },
+ "reservation_allowance": {
+  "campaign_units": 209216,
+  "campaigns": 6,
+  "source": "s09_cap_sheet unit allowance times the campaign count plus one per control arm",
+  "status": "REPORTED",
+  "study_units_authorized": 1673728
+ }
+}

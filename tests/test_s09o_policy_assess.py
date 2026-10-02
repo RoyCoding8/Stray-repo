@@ -1,15 +1,13 @@
 import hashlib
 import json
 import os
-import subprocess
 import time
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-DB = "s09o_assess"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
+TOKEN = "o-assess"
 MIGRATIONS = ROOT / "migrations"
 
 
@@ -32,16 +30,15 @@ def _source(kind="construct_method", queries=16):
 
 @pytest.fixture(scope="module")
 def store():
-    assert DB == "s09o_assess"
-    subprocess.run(["createdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    from experiments.ad01 import s09_run_isolation as iso
+
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    database = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                        migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                       check=True, capture_output=True, text=True, timeout=60)
+        iso.drop_disposable_db(database, admin_dsn=admin_dsn)
 
 
 def _artifact(source):
@@ -182,3 +179,29 @@ def test_identical_assessment_is_idempotent(store):
     second = policy_assess.assess_policy(store, **kwargs)
     assert second == first
     assert second["attempt_id"] == first["attempt_id"]
+
+
+def test_the_store_is_named_for_this_run_not_for_the_file():
+    """A fixed name is shared state; a sibling run's teardown destroys it.
+
+    Two runs of this file on one cluster collided on one name, and the first
+    teardown dropped the store the second was still writing to. The name
+    carries a per-run token, so only a name this run minted is ever dropped
+    and a second fixture can never reuse the first one's database.
+    """
+    from experiments.ad01 import s09_run_isolation as iso
+
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    first = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                     migrations_dir=ROOT / "migrations")
+    try:
+        assert first.name.startswith(iso.DB_PREFIX + "_"), first.name
+        assert TOKEN in first.name, first.name
+        again = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                         migrations_dir=ROOT / "migrations")
+        try:
+            assert again.name != first.name
+        finally:
+            iso.drop_disposable_db(again, admin_dsn=admin_dsn)
+    finally:
+        iso.drop_disposable_db(first, admin_dsn=admin_dsn)

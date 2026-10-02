@@ -14,6 +14,7 @@ from settlement import broker
 
 LAUNCHER_ID = "agenda-sim-launcher"
 ADAPTER_KEY = "adapter:agenda-probe"
+ADAPTER_NAME = "agenda-probe"
 PROVENANCE = "agenda-sim"
 
 
@@ -35,7 +36,8 @@ class AgendaProbeLauncher:
 
     def dispatch(self, op: broker.BrokerOp) -> broker.LaunchOutcome:
         payload = dict(op.payload or {})
-        assert payload.get("adapter") == "agenda-probe", payload.get("adapter")
+        adapter = payload.get("adapter")
+        assert adapter == ADAPTER_NAME, adapter
         spec = dict(payload.get("input") or {})
         attempt = spec["attempt_id"]
         dep_versions = dict(spec.get("dep_versions") or {})
@@ -44,7 +46,8 @@ class AgendaProbeLauncher:
             prop = entry["prop"]
             value = self._observe(spec["probe"], int(spec["sample"]), prop)
             content = {
-                "kind": "observation", "prop": prop,
+                "kind": "observation", "adapter": ADAPTER_NAME,
+                "prop": prop,
                 "scope": entry["scope"], "dep": entry["dep"],
                 "dep_version": int(dep_versions.get(entry["dep"], 1)),
                 "value": ("unknown" if value is None
@@ -60,7 +63,8 @@ class AgendaProbeLauncher:
                     outcome=outcome, provenance=PROVENANCE))
             results[prop] = content
         if spec.get("dud"):
-            content = {"kind": "dud", "probe": spec["probe"],
+            content = {"kind": "dud", "adapter": ADAPTER_NAME,
+                       "probe": spec["probe"],
                        "source_attempt": attempt,
                        "receipt": f"{spec['receipt_base']}:dud",
                        "epoch": int(spec["epoch"]), "simulated": True}
@@ -73,7 +77,8 @@ class AgendaProbeLauncher:
         if spec.get("product"):
             claims = {prop: bool(self._claim(prop))
                       for prop in spec["product"]}
-            content = {"kind": "product-claims", "claims": claims,
+            content = {"kind": "product-claims", "adapter": ADAPTER_NAME,
+                       "claims": claims,
                        "source_attempt": attempt,
                        "receipt": f"{spec['receipt_base']}:product",
                        "epoch": int(spec["epoch"]), "simulated": True}

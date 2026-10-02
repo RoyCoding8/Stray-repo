@@ -1,0 +1,26 @@
+{
+ "irrelevant": {
+  "agreement": "pass",
+  "evidence": 0.0,
+  "score": 1.0,
+  "scored": true,
+  "selected": "seed-sw-ddmin",
+  "verdict": "preserved"
+ },
+ "none": {
+  "agreement": "pass",
+  "evidence": 0.0,
+  "score": 1.0,
+  "scored": true,
+  "selected": "seed-sw-ddmin",
+  "verdict": "preserved"
+ },
+ "relevant": {
+  "agreement": "pass",
+  "evidence": 0.0,
+  "score": 1.0,
+  "scored": true,
+  "selected": "seed-sw-ddmin",
+  "verdict": "preserved"
+ }
+}

@@ -18,6 +18,25 @@ from test_r123_gates import (
 )
 
 
+def _output_task_ids_by_split() -> dict:
+    """The output study's task ids, read from the generator.
+
+    These were literal `rule-qual-0011` / `rule-audit-0023` strings. The
+    worlds made their ids opaque so a public id no longer names its own
+    seed, and a test that restates the old format asserts against an id the
+    study can no longer produce - it fails for a reason that has nothing to
+    do with what it is checking.
+    """
+    from experiments.ad01 import boolean_rule
+
+    return {split: boolean_rule.make_task(split, seed)["task_id"]
+            for split, seed in live.OUTPUT_TASKS.items()}
+
+
+def _output_task_ids() -> set:
+    return set(_output_task_ids_by_split().values())
+
+
 def _verify_output(result, tmp_path):
     private = json.loads(
         (tmp_path / "scorer-private.json").read_text())
@@ -345,6 +364,20 @@ def test_m4_export_uses_m4_freeze_identity_and_preserves_e12_digest(tmp_path):
     assert verified["status"] == "pass", verified["problems"]
 
 
+def test_m4_software_quality_is_derived_from_frozen_task(tmp_path):
+    out = _fake_e12_bundle(tmp_path)
+    _write_authoritative_ledger(out)
+    bundle = driver.export_m4_bundle(out)
+    bundle["software"]["use_records"][0]["expected"] = "wrong"
+    bundle["software"]["outcomes"][0]["expected"] = "wrong"
+
+    verified = m4.verify_bundle(bundle)
+
+    assert verified["status"] == "fail"
+    assert any(problem.startswith("software-frozen-quality-mismatch")
+               for problem in verified["problems"])
+
+
 def test_m4_export_includes_and_verifies_software_use_outcomes(tmp_path):
     out = _fake_e12_bundle(tmp_path)
     _write_authoritative_ledger(out)
@@ -354,13 +387,15 @@ def test_m4_export_includes_and_verifies_software_use_outcomes(tmp_path):
     result = driver.verify_m4_bundle(out)
 
     assert [row["task_id"] for row in bundle["software"]["use_records"]] == [
-        task_id for task_id in freeze["software_tasks"]]
+        task_id for task_id in freeze["software_tasks"]
+        for _ in ("P0", "P1", "P2")]
     assert bundle["software"]["outcomes"] == [
-        {"arm": "P0", "task_id": task_id,
-         "observed": "reduced-%s" % task_id, "queries": 2}
-        for task_id in freeze["software_tasks"]]
+        {"arm": arm, "task_id": task_id, "expected": "preserved",
+         "observed": "preserved", "queries": 2}
+        for task_id in freeze["software_tasks"]
+        for arm in ("P0", "P1", "P2")]
     assert result["status"] == "pass", result["problems"]
-    assert result["recomputed"]["software_use_records"] == 2
+    assert result["recomputed"]["software_use_records"] == 6
 
     bundle["software"]["outcomes"][0]["observed"] = "forged"
     (out / "m4-bundle.json").write_text(json.dumps(bundle) + "\n")
@@ -369,13 +404,42 @@ def test_m4_export_includes_and_verifies_software_use_outcomes(tmp_path):
     assert "software-outcome-mismatch" in rejected["problems"]
 
 
+def test_m4_export_uses_frozen_metric_rule(tmp_path):
+    out = _fake_e12_bundle(tmp_path)
+    _write_authoritative_ledger(out)
+    e12_path = out / "e12-run.json"
+    e12 = json.loads(e12_path.read_text())
+    e12["metric_rule"] = {"kind": "mean-quality", "margin": 0.75,
+                          "tie": "incumbent"}
+    freeze = json.loads((out / "freeze.json").read_text())
+    freeze["metric_rule"] = e12["metric_rule"]
+    freeze["freeze_digest"] = driver._digest({
+        key: value for key, value in freeze.items()
+        if key != "freeze_digest"})
+    e12["freeze_digest"] = freeze["freeze_digest"]
+    e12["source_identity"] = freeze["source_identity"]
+    e12_path.write_text(json.dumps(e12) + "\n")
+    (out / "freeze.json").write_text(json.dumps(freeze) + "\n")
+    ledger_path = out / "authoritative-operations.json"
+    ledger = json.loads(ledger_path.read_text())
+    ledger.update({key: e12[key] for key in (
+        "protocol", "run_id", "source_identity", "study", "study_root",
+        "freeze_digest", "route_digest")})
+    ledger_path.write_text(json.dumps(ledger) + "\n")
+
+    bundle = driver.export_m4_bundle(out)
+
+    assert bundle["freeze"]["metric_rule"]["margin"] == 0.75
+    assert m4.verify_bundle(bundle)["recomputed"]["comparison"]["winner"] == "P0"
+
+
 def test_m4_candidate_export_requires_successful_usable_durable_result(tmp_path):
     out = _fake_e12_bundle(tmp_path)
     _write_authoritative_ledger(out)
     e12_path = out / "e12-run.json"
     e12 = json.loads(e12_path.read_text())
     receipt = e12["durable_receipts"][0]
-    receipt.update({"outcome": "failure", "usable_result": False})
+    receipt.update({"outcome": "success", "usable_result": False})
     e12_path.write_text(json.dumps(e12) + "\n")
 
     with pytest.raises(ValueError, match="successful.*usable"):
@@ -392,6 +456,24 @@ def test_m4_export_requires_explicit_ledger_identity(tmp_path):
     path.write_text(json.dumps(ledger))
 
     with pytest.raises(ValueError, match="ledger identity"):
+        driver.export_m4_bundle(out)
+
+
+def test_m4_software_requires_every_frozen_arm_task_membership(tmp_path):
+    out = _fake_e12_bundle(tmp_path)
+    _write_authoritative_ledger(out)
+    freeze = json.loads((out / "freeze.json").read_text())
+    path = out / "authoritative-operations.json"
+    ledger = json.loads(path.read_text())
+    op_id = next(
+        op_id for op_id, receipt in ledger["child_receipts"].items()
+        if receipt.get("arm") == "P2"
+        and receipt.get("task_id") in set(freeze["software_tasks"]))
+    ledger["operations"].pop(op_id)
+    ledger["child_receipts"].pop(op_id)
+    path.write_text(json.dumps(ledger))
+
+    with pytest.raises(ValueError, match="software arm/task membership is incomplete"):
         driver.export_m4_bundle(out)
 
 
@@ -504,6 +586,39 @@ def test_m4_refuses_coherent_candidate_swap():
     assert result["status"] == "fail"
     assert any(problem.startswith("candidate-task-binding-mismatch")
                for problem in result["problems"])
+
+
+def test_e12_boolean_digest_identity_is_single_text_digest_path():
+    legal = json.dumps({"specs": [
+        {"const": 0, "mask": 0, "pair": None},
+        {"const": 0, "mask": 0, "pair": None},
+        {"const": 0, "mask": 0, "pair": None},
+        {"const": 0, "mask": 0, "pair": None},
+    ]})
+
+    class Gateway:
+        def infer(self, request):
+            return ModelResponse(
+                request.operation_id, legal,
+                {"model": live.OUTPUT_ROUTE["resolved_model"],
+                 "endpoint": live.OUTPUT_ROUTE["endpoint"],
+                 "provider": live.OUTPUT_ROUTE["provider"],
+                 "tier": live.OUTPUT_ROUTE["tier"]},
+                Usage(), "stop")
+
+    guard = live.LiveGuard(
+        Gateway(), pinned_model=live.OUTPUT_ROUTE["requested_model"],
+        ceiling=2, expected_route=live.OUTPUT_ROUTE)
+    result = driver.boolean_live_round(
+        guard=guard, model=live.OUTPUT_ROUTE["requested_model"],
+        arm="P1", split="qual", seed=11, history=[], repairs=1)
+    artifact = result["candidate_artifact"]
+    dispatch = result["dispatch_ledger"][-1]
+    assert artifact["input_digest"] == dispatch["input_digest"]
+    assert artifact["prompt_digest"] == dispatch["prompt_digest"]
+    assert artifact["raw_response_digest"] == dispatch["response_digest"]
+    assert artifact["raw_response_digest"] == live.source_digest(
+        artifact["raw_response"])
 
 
 def test_boolean_round_counts_automatic_retries_as_physical_dispatches():
@@ -644,8 +759,30 @@ def test_output_freeze_declares_p0_and_seals_task_identities(tmp_path):
     freeze = driver.freeze_output(tmp_path)
     assert freeze["arms"] == ["P0", "P1", "P2"]
     assert freeze["p0_incumbent"]["kind"] == "fixed-incumbent"
-    assert set(freeze["p0_incumbent"]["task_seals"]) == {
-        "rule-qual-0011", "rule-audit-0023"}
+    assert set(freeze["p0_incumbent"]["task_seals"]) == _output_task_ids()
+
+
+@pytest.mark.parametrize("round_value", [None, 0, 2, "1", True])
+def test_output_run_refuses_missing_or_mismatched_output_round(
+        tmp_path, round_value):
+    from test_output_evidence import _OutputGateway, _responses
+
+    freeze = driver.freeze_output(tmp_path)
+    if round_value is None:
+        freeze.pop("round")
+    else:
+        freeze["round"] = round_value
+    freeze["freeze_digest"] = driver._digest({
+        key: value for key, value in freeze.items()
+        if key != "freeze_digest"})
+    (tmp_path / "freeze.json").write_text(json.dumps(freeze))
+    gateway = _OutputGateway(_responses(), freeze["route"])
+
+    with pytest.raises(ValueError, match="output round identity"):
+        driver.run_output(
+            tmp_path, gateway=gateway,
+            model=freeze["route"]["requested_model"])
+    assert gateway.requests == []
 
 
 def test_output_run_records_p0_control_without_model_dispatch(tmp_path):
@@ -657,8 +794,7 @@ def test_output_run_records_p0_control_without_model_dispatch(tmp_path):
         model=freeze["route"]["requested_model"])
     controls = result["candidate_view"]["incumbent_control"]
     assert [row["arm"] for row in controls] == ["P0", "P0"]
-    assert {row["task_id"] for row in controls} == {
-        "rule-qual-0011", "rule-audit-0023"}
+    assert {row["task_id"] for row in controls} == _output_task_ids()
     assert all(row["model_calls"] == 0 for row in controls)
     assert {row["arm"] for row in result["candidate_view"]["dispatches"]} == {
         "P1", "P2"}
@@ -748,7 +884,8 @@ def test_output_run_rejects_changed_p0_task_seal(tmp_path):
     from test_output_evidence import _OutputGateway, _responses
 
     freeze = driver.freeze_output(tmp_path)
-    freeze["p0_incumbent"]["task_seals"]["rule-qual-0011"]["seed"] = 12
+    qual_id = _output_task_ids_by_split()["qual"]
+    freeze["p0_incumbent"]["task_seals"][qual_id]["seed"] = 12
     freeze["freeze_digest"] = driver._digest({
         key: value for key, value in freeze.items()
         if key != "freeze_digest"})
@@ -805,14 +942,14 @@ def test_verify_output_requires_durable_receipt_for_failed_dispatch(tmp_path):
 
 
 def test_verify_output_keeps_route_refused_dispatch_attributable(tmp_path):
-    from test_output_evidence import _OutputGateway, _legal_text, _responses
+    from test_output_evidence import (
+        _legal_text, _OutputGateway, _responses, _route_response,
+    )
 
     freeze = driver.freeze_output(tmp_path)
     responses = _responses()
-    responses[0] = {
-        "text": _legal_text("qual", 11),
-        "model": "openrouter/other:free",
-    }
+    responses[0] = _route_response(
+        _legal_text("qual", 11), model="openrouter/other:free")
     result = driver.run_output(
         tmp_path, gateway=_OutputGateway(responses, freeze["route"]),
         model=freeze["route"]["requested_model"])
@@ -845,13 +982,15 @@ def test_verify_output_rejects_repair_after_accepted_response(tmp_path):
     first = next(entry for entry in result["candidate_view"]["dispatches"]
                  if entry["parse_outcome"] == "accepted"
                  and entry["attempt"] == 1)
-    split = "qual" if first["task_id"].endswith("0011") else "audit"
-    seed = 11 if split == "qual" else 23
+    # The task id is an HMAC over its split and seed, so it does not carry
+    # the seed. Only the producer's mapping turns it back into a split.
+    split, seed = next((split, seed) for split, seed in live.OUTPUT_TASKS.items()
+                       if m4._task_id_for(split, seed) == first["task_id"])
     _task, session = driver._output_public_task(split, seed)
     history = [] if first["arm"] == "P1" else live.output_permitted_history()
     prompt = live.render_output_prompt(session.model_input(), history, 2)
     operation_id = live.output_operation_id(
-        first["arm"], split, seed, 2)
+        first["arm"], split, seed, 2, round_run_id=freeze["run_id"])
     details = copy.deepcopy(first["details"])
     details["raw_payload"] = {"raw_prompt": prompt, "raw_response": "not json"}
     repair = frontier.make_evidence_record(

@@ -8,7 +8,7 @@ Independent local check: reparsed the committed S constructor response using the
 
 **Proceed through the remaining assignment.** CB2-01's one-task model-to-artifact gate is satisfied; full-panel baseline/resource validity remains to be demonstrated. CB2-02 actual template construction and the final live comparison/transfer are still open. CB2-03 has progressed: historical hybrid and new vertical bundles are tracked, but the final campaign's evidence cannot close until that campaign runs. No new small-defect review was commissioned.
 
-The earlier instruction to prove a vertical path before panels was an execution dependency, not a request to stop and await another approval. The [updated continuation](../WORKER-COGNITIVE-BATCH-02-LIVE-COMPLETION.md) explicitly authorizes completing the remaining sequence without intermediate handback gates. All evidence and findings below remain the historical assessment of `6942fa2`.
+The earlier instruction to prove a vertical path before panels was an execution dependency, not a request to stop and await another approval. The [updated continuation](../docs/HISTORY.md#worker-cognitive-batch-02-live-completion) explicitly authorizes completing the remaining sequence without intermediate handback gates. All evidence and findings below remain the historical assessment of `6942fa2`.
 
 Reviewed worker `6942fa22444485739782f48e28a82ff413748bc3`, against assignment `895afd3`. This is a bounded assessment of the experiment-defining path, not another whole-repository audit. No production code was changed, no paid inference was run, and the 872-test PostgreSQL suite was not independently rerun.
 
@@ -89,4 +89,4 @@ Do not select the first learner revision from these scores. Empty-output retry i
 - [ ] Worker supplies real repair/baseline behavior, real template construction or `none`, and committed live evidence.
 - [ ] Interpret corrected team/retention results before selecting learner revision or consolidating the architecture.
 
-No new review findings were pursued outside these central obligations. A valid completed negative remains acceptable. The next packet is [Cognitive Batch 02 live completion](../WORKER-COGNITIVE-BATCH-02-LIVE-COMPLETION.md).
+No new review findings were pursued outside these central obligations. A valid completed negative remains acceptable. The next packet is [Cognitive Batch 02 live completion](../docs/HISTORY.md#worker-cognitive-batch-02-live-completion).

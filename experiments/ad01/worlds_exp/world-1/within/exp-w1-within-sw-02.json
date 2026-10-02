@@ -1,0 +1,51 @@
+{
+  "family": "software",
+  "fault": "stale-read",
+  "ops": [
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "id": "o0",
+      "key": "a",
+      "op": "get"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+    }
+  ],
+  "seed": 7403,
+  "slack": 3,
+  "task_id": "exp-w1-within-sw-02",
+  "template": "stale-read-2chain",
+  "witness": {
+    "faulty": {
+      "type": "str",
+      "value": "v3"
+    },
+    "observation": "o0",
+    "ref": {
+      "type": "str",
+      "value": "v1"
+    }
+  }
+}

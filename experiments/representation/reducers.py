@@ -141,8 +141,16 @@ def graph_atoms(task: dict):
     return build, priority()
 
 
-def reduce_software(task, oracle, *, method: str = "ddmin",
+def reduce_software(task, oracle, *, method: str,
                     max_queries: int = 16) -> dict:
+    """`method` has no default on purpose.
+
+    It had one, `ddmin`, and every acquisition observed chose it while
+    matching the authored control exactly. A default that is the answer
+    makes the choice untestable: a caller that never chooses looks identical
+    to one that chose correctly. Every caller already passed a method, so
+    making it required cost nothing and removed the excuse.
+    """
     build, order = software_atoms(task)
     probe = lambda cand: oracle.query(cand)  # noqa: E731
     if method == "greedy":
@@ -157,8 +165,9 @@ def reduce_software(task, oracle, *, method: str = "ddmin",
     return result
 
 
-def reduce_graph(task, oracle, *, method: str = "ddmin",
+def reduce_graph(task, oracle, *, method: str,
                  max_queries: int = 16) -> dict:
+    """`method` is required here for the same reason as in `reduce_software`."""
     build, order = graph_atoms(task)
     count = len(task["vertices"]) + len(task["edges"])
     probe = lambda cand: oracle.query(cand)  # noqa: E731

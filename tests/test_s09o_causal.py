@@ -5,14 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import subprocess
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-DB = "s09o_causal"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
+TOKEN = "o-causal"
 MIGRATIONS = ROOT / "migrations"
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -57,16 +55,15 @@ WHITESPACE_CANDIDATE = CONSTRUCT_CANDIDATE + "\n"
 
 @pytest.fixture(scope="module")
 def store():
-    assert DB.startswith("s09o_causal")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    from experiments.ad01 import s09_run_isolation as iso
+
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    database = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                        migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                       check=True, capture_output=True, text=True, timeout=60)
+        iso.drop_disposable_db(database, admin_dsn=admin_dsn)
 
 
 class Provider:
@@ -228,3 +225,29 @@ def test_recorded_decision_sequence_is_not_reproducible_from_the_digest_alone(st
     assert _effect_episode(store, second["campaign_id"])["construction_calls"] == 4
     assert hashlib.sha256(CONSTRUCT_CANDIDATE.encode()).hexdigest() == first_digest
     assert hashlib.sha256(WHITESPACE_CANDIDATE.encode()).hexdigest() == second_digest
+
+
+def test_the_store_is_named_for_this_run_not_for_the_file():
+    """A fixed name is shared state; a sibling run's teardown destroys it.
+
+    The failures that read as product defects in causal discrimination were
+    this: two runs of this file on one cluster, one tearing down the store
+    the other was still writing to. The name carries a per-run token, so
+    only a name this run minted is ever dropped.
+    """
+    from experiments.ad01 import s09_run_isolation as iso
+
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    first = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                     migrations_dir=MIGRATIONS)
+    try:
+        assert first.name.startswith(iso.DB_PREFIX + "_"), first.name
+        assert TOKEN in first.name, first.name
+        again = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                         migrations_dir=MIGRATIONS)
+        try:
+            assert again.name != first.name
+        finally:
+            iso.drop_disposable_db(again, admin_dsn=admin_dsn)
+    finally:
+        iso.drop_disposable_db(first, admin_dsn=admin_dsn)

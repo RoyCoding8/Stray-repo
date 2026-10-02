@@ -56,7 +56,7 @@ def _request(op_id="op-cancel-race"):
 
 def test_cancel_during_blocked_infer_returns_promptly(hang_stub):
     adapter = HttpGatewayAdapter(endpoint=hang_stub, api_key="x",
-                                 timeout_read_ms=25_000)
+                                 timeout_read_ms=25_000, route_mode="paid")
     outcome: dict = {}
 
     def _run():
@@ -77,4 +77,4 @@ def test_cancel_during_blocked_infer_returns_promptly(hang_stub):
     assert not isinstance(result, str)
     assert getattr(result, "kind", None) == GatewayErrorKind.CANCELLED
     assert outcome["elapsed"] < 10.0
-    assert adapter.cancel_status("op-cancel-race") == "confirmed"
+    assert adapter.cancel_status("op-cancel-race") == "worker_stopped"

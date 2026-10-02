@@ -11,11 +11,20 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from conftest_isolation import dbname_of
 
 DSN = os.environ.get(
     "INV_C3_DSN",
     "dbname=inv_c3_export host=/var/run/postgresql user=ubuntu")
 MIGRATIONS = ROOT / "migrations"
+
+# The three stores this battery shares with a sibling study, read off the
+# cluster rather than guessed. `_fresh_db` truncates, so refusing them is the
+# property that matters.
+_SHARED_STORES = frozenset({"inv_c3_export", "inv_c3_study", "inv_c3_cli",
+                            "postgres"})
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -30,7 +39,15 @@ GR0 = "ad01-w0-dev-gr-00"
 
 def _fresh_db(dsn: str):
     assert "live" not in dsn
-    assert dsn.split("dbname=")[1].split()[0].startswith("inv_c3_")
+    # This file destroys and rebuilds its store, so the guard that matters is
+    # the one refusing a store a sibling battery also uses. It used to demand a
+    # leading ``inv_c3_`` instead, which is a naming convention rather than a
+    # safety property, and no per-run name can hold it --
+    # ``conftest_isolation.derived_name`` leads with its own token, so
+    # ``s09iso_<token>_inv_c3_export`` never starts with ``inv_c3_``. The
+    # assertion refused a name the run itself owns, which is the wrong
+    # direction for a truncating file. Same fix as test_invr3_export.py:32.
+    assert dbname_of(dsn) not in _SHARED_STORES, dbname_of(dsn)
     from settlement import db
     from experiments.coord02 import experience as E
     db.apply_migrations(dsn, MIGRATIONS)

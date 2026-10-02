@@ -12,20 +12,32 @@ database or secrets. The frozen scripts/s09_pilot.py stays untouched.
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
+import os
 import sys
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
+try:
+    import fcntl
+except ImportError:  # Windows has no fcntl; msvcrt provides the same lock.
+    fcntl = None
+    import msvcrt
+
+from experiments.ad01 import live_construct as _live_output
 from experiments.ad01.live_construct import LiveGuard as _LiveGuard
 
 STUDY_ROOT_E0 = "invl02-live-e0"
 STUDY_ROOT_E12 = "invl02-live-e12"
-STUDY_ROOT_OUTPUT = "invl02-output-shape-550b-r1"
+OUTPUT_ROUND = _live_output.OUTPUT_ROUND
+STUDY_ROOT_OUTPUT = _live_output.OUTPUT_STUDY_ROOT
 E0_PROTOCOL_ID = "invl02-live-e0-v1"
 E12_PROTOCOL_ID = "invl02-live-e12-v1"
-OUTPUT_PROTOCOL_ID = "invl02-output-shape-550b-r1-v1"
+OUTPUT_PROTOCOL_ID = _live_output.OUTPUT_PROTOCOL_ID
 LIVE_CODE_PATHS = (
     "scripts/invl02_live.py",
     "experiments/ad01/live_construct.py",
@@ -47,13 +59,11 @@ LIVE_SOURCE_PATHS = (
     "experiments/ad01/policy_step.py",
     "experiments/ad01/rule_learner.py",
 )
-OUTPUT_CODE_PATHS = (
-    "scripts/invl02_live.py",
-    "experiments/ad01/live_construct.py",
-    "experiments/ad01/offline_recompute.py",
-    "experiments/ad01/frontier.py",
-    "src/settlement/gateway_http.py",
-)
+# The verifier owns this list, and it deliberately excludes the verifier. Two
+# copies of the same paths drifted apart before, which is how a freeze and its
+# checker ended up disagreeing about what was frozen.
+from experiments.ad01.offline_recompute import (  # noqa: E402
+    OUTPUT_CODE_PATHS, OUTPUT_SOURCE_PATHS)
 OUTPUT_SOURCE_PATHS = (
     "experiments/ad01/boolean_rule.py",
     "experiments/ad01/rule_learner.py",
@@ -198,8 +208,11 @@ def preflight_route(out, *, gateway=None) -> dict:
 def _live_gateway(expected_route: dict | None = None):
     from settlement.config import Settings
     from settlement.gateway_http import HttpGatewayAdapter
+    # `chat`, not `responses`: a frozen route is refused pre-send on the
+    # responses surface, which publishes no provider field, and this adapter
+    # pins one. Refusing would kill every live dispatch here.
     return HttpGatewayAdapter.from_settings(
-        Settings.from_env(), api="responses", expected_route=expected_route)
+        Settings.from_env(), api="chat", expected_route=expected_route)
 
 
 def _guard(gateway, *, pinned_model: str, ceiling: int,
@@ -213,9 +226,45 @@ def _guard(gateway, *, pinned_model: str, ceiling: int,
     return _OutputGuard(gateway, **kwargs)
 
 
-def _already_spent() -> int:
-    import os
-    return int(os.environ.get("S09_STUDY_CALLS_ALREADY_SPENT", "0"))
+def _already_spent(dsn: str, allocation_id: str) -> int:
+    """Sends the study's store already holds under its allocation.
+
+    This read `S09_STUDY_CALLS_ALREADY_SPENT`, and nothing in the repository
+    writes that name: `_load_live_environment` copies four variables out of
+    the environment file and this was not one of them, so the number was
+    hand-authored from a cap sheet and never moved as sends happened. A resume
+    after a crash seeded `LiveGuard.dispatch_count` below the true position
+    and the ceiling was enforced against a fiction, which is the hole
+    `9a1884d` closed in `s09_study_preflight.already_spent_in_store`.
+
+    The currency is `SELECT COUNT(*) FROM operations` under the study's
+    allocation, the same unit `_output_already_spent` counts and the one
+    `LiveGuard`'s own docstring names: a send that reached the store. Every
+    send on these paths goes through `_DurableBrokerOutput.infer`, which
+    passes this allocation to `ensure_operation`, and `authorize_study`
+    returns the stored id for an existing binding, so a resume counts the rows
+    the first run created.
+
+    An unreadable store is an error, not a zero. Returning zero would read as
+    "nothing spent" and re-open the hole for every briefly-unreachable
+    database, which is the same reasoning the preflight's `None` follows.
+    """
+    from settlement import db
+    from psycopg.rows import dict_row
+
+    try:
+        with db.read_connect(dsn) as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    "SELECT COUNT(*) AS spent FROM operations"
+                    " WHERE allocation_id = %s", (allocation_id,))
+                spent = cur.fetchone()["spent"]
+            conn.commit()
+    except Exception as exc:
+        raise ValueError(
+            "the already-spent count is the store's and the store was not "
+            "readable: %s: %s" % (type(exc).__name__, exc)) from exc
+    return int(spent)
 
 
 class _OutputGuard(_LiveGuard):
@@ -303,6 +352,8 @@ def freeze_e12(out) -> dict:
                           for k, v in E12_BOOLEAN_SEEDS.items()},
         "history": {"P1": [], "P2": _permitted_dev_history(
             E12_BOOLEAN_SEEDS["dev"])},
+        "metric_rule": {"kind": "mean-quality", "margin": 0.0,
+                        "tie": "incumbent"},
         "charter": dict(CHARTER), "caps": dict(CAPS),
         "comparison": "P1-without-history-vs-P2-with-history-vs-P0-fixed",
         "stop_rule": ("arm order cannot consume another arm's reserve;"
@@ -375,6 +426,16 @@ def _validate_live_freeze(freeze: dict, study_root: str) -> None:
     if (freeze.get("route_digest") != _digest(freeze.get("route"))
             or freeze.get("source_identity") != _live_source_identity(freeze)):
         raise ValueError("live freeze route or source identity mismatch")
+    if study_root == STUDY_ROOT_E12:
+        rule = freeze.get("metric_rule")
+        margin = rule.get("margin") if isinstance(rule, dict) else None
+        if (not isinstance(rule, dict)
+                or rule.get("kind") != "mean-quality"
+                or isinstance(margin, bool)
+                or not isinstance(margin, (int, float))
+                or margin < 0
+                or rule.get("tie") not in ("incumbent", "none")):
+            raise ValueError("live freeze metric rule is invalid")
     _require_live_digest_maps(freeze, _repo_root())
 
 
@@ -407,16 +468,17 @@ def _output_public_inputs() -> dict:
             if pick is None:
                 break
             learner.observe(pick, session.query(pick))
-        inputs["%s:%d" % (split, int(seed))] = session.model_input()
+        inputs["%s:%d" % (split, int(seed))] = session.output_model_input()
     return inputs
 
 
 def _p0_output_incumbent(public_inputs: dict) -> dict:
+    from experiments.ad01 import boolean_rule as rules
     from experiments.ad01 import live_construct as live
     contract = _p0_incumbent()
     seals = {}
     for split, seed in live.OUTPUT_TASKS.items():
-        task_id = "rule-%s-%04d" % (split, int(seed))
+        task_id = rules.make_task(split, int(seed))["task_id"]
         seals[task_id] = {
             "split": split, "seed": int(seed),
             "public_input_digest": _digest(public_inputs[
@@ -443,6 +505,7 @@ def freeze_output(out) -> dict:
         "protocol": OUTPUT_PROTOCOL_ID,
         "study": STUDY_ROOT_OUTPUT,
         "study_root": STUDY_ROOT_OUTPUT,
+        "round": OUTPUT_ROUND,
         "run_id": uuid.uuid4().hex,
         "route": dict(live.OUTPUT_ROUTE),
         "arms": ["P0", "P1", "P2"],
@@ -497,7 +560,8 @@ def _require_output_digest_maps(freeze: dict, root: Path) -> None:
 def _validate_output_freeze(freeze: dict) -> None:
     from experiments.ad01 import live_construct as live
     if freeze.get("protocol") != OUTPUT_PROTOCOL_ID:
-        raise ValueError("run requires the 550b-r1 output-shape protocol")
+        raise ValueError("run requires the %s output-shape protocol"
+                         % OUTPUT_PROTOCOL_ID)
     if freeze.get("study_root") != STUDY_ROOT_OUTPUT:
         raise ValueError("retired output evidence directory cannot be replayed")
     if (not isinstance(freeze.get("run_id"), str)
@@ -506,6 +570,10 @@ def _validate_output_freeze(freeze: dict) -> None:
     if (freeze.get("arms") != ["P0", "P1", "P2"]
             or freeze.get("order") != ["P0", "P1", "P2"]):
         raise ValueError("output arm contract must include P0, P1, and P2")
+    if (type(freeze.get("round")) is not int
+            or freeze["round"] != OUTPUT_ROUND):
+        raise ValueError(
+            "output round identity does not match the frozen protocol")
     if freeze.get("freeze_digest") != _digest(
             {k: v for k, v in freeze.items() if k != "freeze_digest"}):
         raise ValueError("output freeze digest mismatch")
@@ -538,6 +606,49 @@ def _validate_output_freeze(freeze: dict) -> None:
         raise ValueError("output source identity does not match its digest maps")
 
 
+@dataclass(frozen=True)
+class _OutputDispatchAccounting:
+    state: Literal["reconciled", "incomplete", "unknown"]
+    store_operation_count: int | Literal["unknown"]
+    file_dispatch_count: int
+    file_physical_dispatch_count: int
+
+    def candidate_fields(self) -> dict:
+        reconciled = self.state == "reconciled"
+        return {
+            "dispatch_evidence": {
+                "state": self.state,
+                "store_operation_count": self.store_operation_count,
+                "file_dispatch_count": self.file_dispatch_count,
+                "file_physical_dispatch_count":
+                    self.file_physical_dispatch_count,
+            },
+            "dispatch_count": self.file_dispatch_count if reconciled else "unknown",
+            "physical_dispatch_count": (
+                self.store_operation_count if reconciled else "unknown"),
+        }
+
+
+def _output_dispatch_accounting(
+        dispatches: list, *, store_count: int | None) \
+        -> _OutputDispatchAccounting:
+    file_dispatch_count = len(dispatches)
+    file_physical_dispatch_count = sum(
+        1 for dispatch in dispatches
+        if dispatch.get("replay", False) is False)
+    if store_count is None:
+        state = "unknown"
+    elif store_count == file_physical_dispatch_count:
+        state = "reconciled"
+    else:
+        state = "incomplete"
+    return _OutputDispatchAccounting(
+        state=state,
+        store_operation_count="unknown" if store_count is None else store_count,
+        file_dispatch_count=file_dispatch_count,
+        file_physical_dispatch_count=file_physical_dispatch_count)
+
+
 def _write_preflight_refusal(out: Path, freeze: dict, reason: str) -> None:
     out.mkdir(parents=True, exist_ok=True)
     record = _preflight_record(freeze, dict(freeze.get("route") or {}))
@@ -565,7 +676,17 @@ def _require_route_preflight(out: Path, freeze: dict, label: str) -> None:
         raise ValueError(reason)
 
 
-def _require_output_preflight(out: Path, freeze: dict) -> None:
+def _require_output_preflight(out: Path, freeze: dict, gateway=None) -> None:
+    """The output run must already hold a preflight record for this freeze.
+
+    The repair branch below re-preflights. `gateway` is passed through so the
+    repair uses the same transport the caller supplied, rather than building a
+    second one from the environment; `None` keeps the original construction.
+
+    It is a positional third parameter, not keyword-only, because two test
+    files replace this function with `lambda *_args: None` and a keyword here
+    would break a caller whose stub predates the seam.
+    """
     path = out / "preflight.json"
     if not path.is_file():
         _require_route_preflight(out, freeze, "output")
@@ -576,7 +697,9 @@ def _require_output_preflight(out: Path, freeze: dict) -> None:
             or record.get("route") != freeze.get("route")
             or record.get("route_digest") != _digest(freeze.get("route"))):
         _require_route_preflight(out, freeze, "output")
-    preflight_route(out, gateway=_live_gateway(freeze["route"]))
+    if gateway is None:
+        gateway = _live_gateway(freeze["route"])
+    preflight_route(out, gateway=gateway)
     _require_route_preflight(out, freeze, "output")
 
 
@@ -637,6 +760,29 @@ def _bind_output_dispatches(dispatches: list, durable_receipts: list) -> tuple[l
     return bound_dispatches, bound_receipts
 
 
+def _durable_receipt_error(receipt: dict, request, usage):
+    from settlement.gateway import (
+        GatewayError,
+        GatewayErrorKind,
+        GatewayRouteError,
+    )
+    content = receipt.get("content") or {}
+    route_value = content.get("route_error")
+    return GatewayError(
+        GatewayErrorKind(content.get("error_kind")
+                         or GatewayErrorKind.PROTOCOL.value),
+        str(content.get("error", "durable gateway failure")),
+        bool(content.get("retryable", False)),
+        request.operation_id,
+        usage,
+        response_received=bool(content.get("response_received", False)),
+        response_status=content.get("response_status"),
+        response_digest=content.get("response_digest"),
+        route_error=(GatewayRouteError(route_value)
+                     if route_value is not None else None),
+    )
+
+
 def _durable_conflict_exports(conflicts, exposure) -> list:
     exported = []
     for row in conflicts or []:
@@ -655,6 +801,85 @@ def _durable_conflict_exports(conflicts, exposure) -> list:
             "unresolved_exposure": exposure,
         })
     return exported
+
+
+def _reservation_exposure(dsn: str, prepared_data: dict | None,
+                          operation: dict) -> int | str:
+    reservation_id = operation.get("reservation_id")
+    if isinstance(dsn, str) and ("=" in dsn or "://" in dsn):
+        from settlement import db
+        from psycopg.rows import dict_row
+        if reservation_id:
+            with db.read_connect(dsn) as conn:
+                with conn.cursor(row_factory=dict_row) as cur:
+                    cur.execute(
+                        "SELECT amount, state FROM reservations WHERE id = %s",
+                        (reservation_id,))
+                    reservation = cur.fetchone()
+                conn.commit()
+            if reservation is not None and type(reservation["amount"]) is int \
+                    and reservation["amount"] >= 0:
+                return reservation["amount"]
+    for value in ((prepared_data or {}).get("exposure"),
+                  operation.get("exposure")):
+        if type(value) is int and value >= 0:
+            return value
+    return "unknown"
+
+
+def _durable_usage(content: dict) -> dict:
+    usage = content.get("usage")
+    if usage is None:
+        return {}
+    if not isinstance(usage, dict):
+        raise ValueError("durable receipt usage is malformed")
+    return usage
+
+
+def _durable_receipt_record(receipt: dict, operation: dict,
+                            exposure: int | str, operation_id: str) -> dict:
+    content = receipt.get("content") or {}
+    durable_usage = _durable_usage(content)
+    durable_text = content.get("text")
+    durable_result = (
+        {"raw_response": durable_text}
+        if receipt.get("outcome") == "success"
+        and isinstance(durable_text, str) and durable_text else None)
+    pre_send = content.get("response_class") == "pre-send-route-refusal"
+    if pre_send:
+        exposure = 0
+    settled = operation.get("settled") is True
+    unresolved_exposure = (
+        exposure if exposure == "unknown" else
+        0 if settled else exposure)
+    record = {
+        "operation_id": operation_id,
+        "reservation_id": operation.get("reservation_id"),
+        "receipt_identity": receipt.get("receipt_identity"),
+        "receipt_outcome": receipt.get("outcome"),
+        "outcome": receipt.get("outcome"),
+        "response_class": content.get("response_class"),
+        "response_received": (content.get("response_received")
+                              if type(content.get("response_received")) is bool
+                              else None),
+        "usable_result": bool(durable_result),
+        "result": durable_result,
+        "result_digest": (
+            hashlib.sha256(durable_result["raw_response"].encode("utf-8")).hexdigest()
+            if durable_result is not None else None),
+        "usage": durable_usage,
+        "exposure": exposure,
+        "unresolved_exposure": unresolved_exposure,
+        "dispatch_state": operation.get("dispatch_state", "observed"),
+        "reconcile_state": operation.get("reconcile_state", "none"),
+        "settled": settled,
+        "unsettled": not settled,
+        "conflict": False,
+        "conflict_count": 0,
+        "receipt_conflicts": [],
+    }
+    record["measurement_status"] = _receipt_measurement_status(record)
+    return record
 
 
 class _DurableBrokerOutput:
@@ -681,8 +906,6 @@ class _DurableBrokerOutput:
         from settlement import broker, store
         from settlement.common import ResultCode
         from settlement.gateway import (
-            GatewayError,
-            GatewayErrorKind,
             ModelResponse,
             Usage,
         )
@@ -702,7 +925,8 @@ class _DurableBrokerOutput:
         )
         if prepared.code not in (ResultCode.APPLIED,
                                  ResultCode.ALREADY_APPLIED):
-            raise RuntimeError("durable broker refused %s: %s" % (
+            from experiments.ad01.live_construct import PreGatewayRefusal
+            raise PreGatewayRefusal("durable broker refused %s: %s" % (
                 request.operation_id, prepared.detail))
         if prepared.code == ResultCode.ALREADY_APPLIED:
             prior = broker.read_operation(self.dsn, request.operation_id) or {}
@@ -721,6 +945,8 @@ class _DurableBrokerOutput:
                         "receipt_identity": None,
                         "receipt_outcome": "conflict",
                         "outcome": "conflict",
+                        "response_class": None,
+                        "response_received": None,
                         "usage": {},
                         "exposure": prior.get("exposure"),
                         "unresolved_exposure": prior.get("exposure"),
@@ -739,50 +965,24 @@ class _DurableBrokerOutput:
                     raise RuntimeError(
                         "durable broker replay has multiple terminal receipts")
                 row = prior_receipts[0]
-                content = row.get("content") or {}
-                durable_usage = content.get("usage") or {}
-                durable_text = content.get("text")
-                durable_result = (
-                    {"raw_response": durable_text}
-                    if row.get("outcome") == "success"
-                    and isinstance(durable_text, str) and durable_text else None)
-                durable = {
-                    "operation_id": request.operation_id,
-                    "reservation_id": prior.get("reservation_id"),
-                    "receipt_identity": row.get("receipt_identity"),
-                    "receipt_outcome": row.get("outcome"),
-                    "outcome": row.get("outcome"),
-                    "usable_result": bool(durable_result),
-                    "result": durable_result,
-                    "result_digest": (_digest(durable_result)
-                                      if durable_result is not None else None),
-                    "usage": durable_usage,
-                    "exposure": 0,
-                    "unresolved_exposure": 0,
-                    "dispatch_state": prior.get("dispatch_state", "observed"),
-                    "reconcile_state": prior.get("reconcile_state", "none"),
-                    "settled": True,
-                    "unsettled": False,
-                    "conflict": False,
-                    "conflict_count": 0,
-                    "receipt_conflicts": [],
-                }
-                durable["measurement_status"] = _receipt_measurement_status(
-                    durable)
+                durable = _durable_receipt_record(
+                    row, prior, _reservation_exposure(
+                        self.dsn, prepared.data, prior), request.operation_id)
                 self._record_durable(durable)
+                content = row.get("content") or {}
+                durable_usage = durable["usage"]
                 usage = Usage(
                     input_tokens=durable_usage.get("input_tokens"),
                     output_tokens=durable_usage.get("output_tokens"),
                     charge_units=durable_usage.get("charge_units"),
                     charge_scale=durable_usage.get("charge_scale"),
-                    provider_enforced_ceiling=bool(
-                        durable_usage.get("provider_enforced_ceiling", False)),
+                    provider_enforced_ceiling=(
+                        durable_usage.get("provider_enforced_ceiling")
+                        if "provider_enforced_ceiling" in durable_usage
+                        else None),
                     billed=durable_usage.get("billed"))
                 if row.get("outcome") != "success":
-                    return GatewayError(
-                        GatewayErrorKind.PROTOCOL,
-                        str(content.get("error", "durable replay failure")),
-                        False, request.operation_id, usage)
+                    return _durable_receipt_error(row, request, usage)
                 return ModelResponse(
                     request.operation_id,
                     str(content.get("text", "")),
@@ -831,15 +1031,14 @@ class _DurableBrokerOutput:
                       or dispatch_state == "unresolved"
                       or "unknown" in receipt_outcomes)
         ambiguous = len(receipts) > 1 and not conflict and not unresolved
-        exposure = ((prepared.data or {}).get("exposure")
-                    or operation.get("exposure"))
+        exposure = _reservation_exposure(self.dsn, prepared.data, operation)
         settled = getattr(dispatched, "settled", operation.get(
             "settled", False)) is True
         conflict_exports = _durable_conflict_exports(conflicts, exposure)
         if conflict or unresolved or ambiguous or not settled:
             for row in receipts or [{}]:
                 content = row.get("content") or {}
-                durable_usage = content.get("usage") or {}
+                durable_usage = _durable_usage(content)
                 durable = {
                     "operation_id": request.operation_id,
                     "reservation_id": ((prepared.data or {}).get("reservation_id")
@@ -848,6 +1047,11 @@ class _DurableBrokerOutput:
                     "receipt_outcome": row.get("outcome"),
                     "outcome": ("conflict" if conflict else
                                 "ambiguous" if ambiguous else "unresolved"),
+                    "response_class": content.get("response_class"),
+                    "response_received": (content.get("response_received")
+                                          if type(content.get(
+                                              "response_received")) is bool
+                                          else None),
                     "usage": durable_usage,
                     "exposure": exposure,
                     "unresolved_exposure": exposure if (
@@ -877,61 +1081,32 @@ class _DurableBrokerOutput:
             raise RuntimeError("durable broker returned no receipt for %s: %s" % (
                 request.operation_id, dispatched.next_decision))
         receipt = receipts[0]
-        content = receipt.get("content") or {}
-        durable_usage = content.get("usage") or {}
-        durable_text = content.get("text")
-        durable_result = (
-            {"raw_response": durable_text}
-            if receipt.get("outcome") == "success"
-            and isinstance(durable_text, str) and durable_text else None)
-        durable = {
-            "operation_id": request.operation_id,
-            "reservation_id": ((prepared.data or {}).get("reservation_id")
-                               or operation.get("reservation_id")),
-            "receipt_identity": receipt.get("receipt_identity"),
-            "receipt_outcome": receipt.get("outcome"),
-            "outcome": receipt.get("outcome"),
-            "usable_result": bool(durable_result),
-            "result": durable_result,
-            "result_digest": (_digest(durable_result)
-                              if durable_result is not None else None),
-            "usage": durable_usage,
-            "exposure": exposure,
-            "unresolved_exposure": 0,
-            "dispatch_state": dispatch_state,
-            "reconcile_state": reconcile_state,
-            "settled": settled,
-            "unsettled": False,
-            "conflict": False,
-            "conflict_count": 0,
-            "receipt_conflicts": [],
-        }
+        durable = _durable_receipt_record(
+            receipt, operation, exposure, request.operation_id)
+        durable["reservation_id"] = (
+            (prepared.data or {}).get("reservation_id")
+            or operation.get("reservation_id"))
+        durable["dispatch_state"] = dispatch_state
+        durable["reconcile_state"] = reconcile_state
+        durable["settled"] = settled
+        durable["unsettled"] = not settled
         durable["measurement_status"] = _receipt_measurement_status(durable)
         self._record_durable(durable)
+        content = receipt.get("content") or {}
+        durable_usage = durable["usage"]
         usage = Usage(
             input_tokens=durable_usage.get("input_tokens"),
             output_tokens=durable_usage.get("output_tokens"),
             charge_units=durable_usage.get("charge_units"),
             charge_scale=durable_usage.get("charge_scale"),
-            provider_enforced_ceiling=bool(
-                durable_usage.get("provider_enforced_ceiling", False)),
+            provider_enforced_ceiling=(
+                durable_usage.get("provider_enforced_ceiling")
+                if "provider_enforced_ceiling" in durable_usage
+                else None),
             billed=durable_usage.get("billed"),
         )
         if receipt.get("outcome") != "success":
-            message = str(content.get("error", "durable gateway failure"))
-            if "route" in message.lower():
-                return ModelResponse(
-                    request.operation_id, "",
-                    {"adapter": "durable-broker",
-                     "endpoint": self.expected_route.get("endpoint"),
-                     "model": self.expected_route.get("resolved_model"),
-                     "provider": self.expected_route.get("provider"),
-                     "tier": self.expected_route.get("tier"),
-                     "route_error": message},
-                    usage, "route-refused")
-            return GatewayError(
-                GatewayErrorKind.PROTOCOL, message, False,
-                request.operation_id, usage)
+            return _durable_receipt_error(receipt, request, usage)
         return ModelResponse(
             request.operation_id,
             str(content.get("text", "")),
@@ -971,12 +1146,17 @@ def _is_route_refusal(value) -> bool:
         or ("returned" in reason and "match" in reason))
 
 
+def _finalize_output(guard, operation_id: str, *, freeze: dict, **kwargs):
+    return guard.finalize_evidence(
+        operation_id, round_no=freeze["round"], **kwargs)
+
+
 def _output_task(guard, *, arm: str, split: str, seed: int,
                  history: list, freeze: dict) -> dict:
     from experiments.ad01 import live_construct as live
     from settlement.gateway import GatewayError, ModelRequest
     task, session = _output_public_task(split, int(seed))
-    public_input = session.model_input()
+    public_input = session.output_model_input()
     accepted = None
     score = None
     for attempt in (1, 2):
@@ -985,10 +1165,11 @@ def _output_task(guard, *, arm: str, split: str, seed: int,
             "%s:%s:%d:a%d" % (arm, split, int(seed), attempt))
         if live.response_digest(prompt) != expected_digest:
             raise ValueError("output rendered prompt is not frozen")
-        operation_id = live.output_operation_id(arm, split, int(seed),
-                                                 attempt)
+        operation_id = live.output_operation_id(
+            arm, split, int(seed), attempt, round_run_id=freeze["run_id"])
         evidence = {"arm": arm, "task": task["task_id"],
-                    "attempt": attempt, "raw_prompt": prompt}
+                    "attempt": attempt, "raw_prompt": prompt,
+                    "round": freeze["round"]}
         try:
             response = guard.infer(ModelRequest(
                 model=guard.pinned_model,
@@ -997,33 +1178,42 @@ def _output_task(guard, *, arm: str, split: str, seed: int,
                 deadline_ms=300_000, operation_id=operation_id),
                 evidence=evidence)
         except live.LiveRefused as exc:
-            return {"accepted": False, "route_refused": _is_route_refusal(exc)}
+            route_refused = _is_route_refusal(exc)
+            if route_refused:
+                _finalize_output(
+                    guard, operation_id, freeze=freeze,
+                    parse_outcome="route-refused")
+            return {"accepted": False, "route_refused": route_refused}
         if isinstance(response, GatewayError):
             route_refused = _is_route_refusal(response)
             if route_refused:
-                finalized = guard.finalized_dispatches()
-                if finalized:
-                    finalized[-1]["parse_outcome"] = "route-refused"
+                _finalize_output(
+                    guard, operation_id, freeze=freeze,
+                    parse_outcome="route-refused")
             return {"accepted": False, "route_refused": route_refused}
         text = response.text
         if len(text) > freeze["limits"]["max_response_characters"]:
-            guard.finalize_evidence(operation_id, parse_outcome="too-long")
+            _finalize_output(
+                guard, operation_id, freeze=freeze, parse_outcome="too-long")
             continue
         if not text.strip():
-            guard.finalize_evidence(operation_id, parse_outcome="empty")
+            _finalize_output(
+                guard, operation_id, freeze=freeze, parse_outcome="empty")
             continue
         try:
             candidate = live.extract_and_validate_boolean(text)
             committed = session.commit_predictor(candidate)
         except Exception:
-            guard.finalize_evidence(operation_id, parse_outcome="parse-failed")
+            _finalize_output(
+                guard, operation_id, freeze=freeze,
+                parse_outcome="parse-failed")
             if attempt < 2:
                 continue
             return {"accepted": False, "route_refused": False}
         accepted = _digest(candidate)
         score = session.score(committed)
-        guard.finalize_evidence(
-            operation_id, parse_outcome="accepted",
+        _finalize_output(
+            guard, operation_id, freeze=freeze, parse_outcome="accepted",
             accepted_candidate_digest=accepted,
             parsed_source_digest=accepted)
         break
@@ -1052,7 +1242,258 @@ def _scorer_private_envelope(freeze: dict, scores: list) -> dict:
     return private
 
 
-def run_output(out, *, gateway, model: str) -> dict:
+def _output_lock(out: Path):
+    out.mkdir(parents=True, exist_ok=True)
+    lock = (out / ".output-run.lock").open("w")
+    if fcntl is not None:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+    else:
+        lock.seek(0)
+        msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+    return lock
+
+
+def _write_output_bundle(out: Path, result: dict) -> None:
+    path = out / "output-run.json"
+    temporary = path.with_name(
+        "%s.%s.tmp" % (path.name, os.getpid()))
+    with temporary.open("w") as stream:
+        json.dump(result, stream, sort_keys=True, indent=1)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(path)
+    directory = os.open(out, os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
+
+
+def _prior_output_state(out: Path, freeze: dict) -> tuple[list[dict], list[dict]]:
+    path = out / "output-run.json"
+    if not path.is_file():
+        return [], []
+    try:
+        prior = json.loads(path.read_text())
+    except (OSError, ValueError) as exc:
+        raise ValueError("existing output-run.json is unreadable") from exc
+    if not isinstance(prior, dict):
+        raise ValueError("existing output evidence is malformed")
+    mismatched = [key for key in (
+            "study_root", "run_id", "freeze_digest", "source_identity")
+        if prior.get(key) != freeze.get(key)]
+    if mismatched:
+        raise ValueError(
+            "existing output evidence identity mismatch: %s" % ",".join(mismatched))
+    view = prior.get("candidate_view")
+    if not isinstance(view, dict):
+        raise ValueError("existing output evidence is malformed")
+    dispatches = view.get("dispatches")
+    receipts = view.get("durable_receipts")
+    if not isinstance(dispatches, list):
+        raise ValueError("existing output evidence has malformed dispatches")
+    if not isinstance(receipts, list):
+        raise ValueError("existing output evidence has malformed durable receipts")
+    for receipt in receipts:
+        if not isinstance(receipt, dict) or not isinstance(
+                receipt.get("operation_id"), str) or not isinstance(
+                    receipt.get("receipt_identity"), str):
+            raise ValueError("existing output evidence has malformed receipt")
+    return copy.deepcopy(dispatches), copy.deepcopy(receipts)
+
+
+def _prior_output_dispatches(dispatches: list[dict],
+                             receipts: list[dict]) -> list[dict]:
+    by_operation = {}
+    for receipt in receipts:
+        by_operation.setdefault(receipt["operation_id"], []).append(receipt)
+    prior_dispatches = []
+    for dispatch in dispatches:
+        if not isinstance(dispatch, dict) or not isinstance(
+                dispatch.get("operation_id"), str):
+            raise ValueError("existing output evidence has malformed dispatch")
+        if dispatch.get("replay", False) is not False:
+            continue
+        operation_receipts = by_operation.get(dispatch["operation_id"], [])
+        claimed = dispatch.get("durable_receipt_identity")
+        nested = dispatch.get("durable_receipt")
+        if len(operation_receipts) > 1:
+            raise ValueError(
+                "existing output evidence has multiple durable receipts")
+        if claimed is None and nested is None and not operation_receipts:
+            prior_dispatches.append(copy.deepcopy(dispatch))
+            continue
+        if len(operation_receipts) != 1:
+            raise ValueError(
+                "existing output evidence has no unique durable receipt")
+        preserved = copy.deepcopy(dispatch)
+        receipt = operation_receipts[0]
+        if claimed not in (None, receipt["receipt_identity"]):
+            raise ValueError("existing output evidence has receipt mismatch")
+        preserved["durable_receipt"] = copy.deepcopy(receipt)
+        prior_dispatches.append(preserved)
+    return prior_dispatches
+
+
+def _output_evidence_spent(out: Path, freeze: dict) -> int:
+    """Sends the prior bundle holds, in the unit `_output_already_spent` uses.
+
+    That function counts operations rows, and a prepare the store refused
+    inserted none, so it counts sends. This one counted ledger entries, and
+    the ledger keeps a pre-gateway refusal as a record, so it counted
+    refusals the store never saw. A resume that took this path seeded
+    `already_spent` above the true ceiling position and refused dispatches
+    the run had not spent. The `pre_gateway_refusal` flag the N-203 repair
+    wrote into the entry had no reader until now.
+    """
+    dispatches, receipts = _prior_output_state(out, freeze)
+    return len({
+        dispatch["operation_id"]
+        for dispatch in _prior_output_dispatches(dispatches, receipts)
+        if dispatch.get("pre_gateway_refusal") is not True})
+
+
+def _output_operation_ids(freeze: dict) -> set[str]:
+    from experiments.ad01 import live_construct as live
+    return {
+        live.output_operation_id(
+            arm, split, int(seed), attempt,
+            round_run_id=freeze["run_id"])
+        for arm in freeze["order"] if arm != "P0"
+        for split, seed in freeze["tasks"].items()
+        for attempt in range(
+            1, int(freeze["limits"]["repairs_per_task"]) + 2)
+    }
+
+
+def _output_already_spent(freeze: dict, *, dsn: str) -> int:
+    from settlement import db
+    from psycopg.rows import dict_row
+    operation_ids = _output_operation_ids(freeze)
+    ceiling = int(freeze["limits"]["max_dispatches"])
+    if len(operation_ids) != ceiling:
+        raise ValueError(
+            "output operation id space has %d entries, not max_dispatches=%d"
+            % (len(operation_ids), ceiling))
+    with db.read_connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT COUNT(*) AS spent FROM operations WHERE id = ANY(%s)",
+                (list(operation_ids),))
+            spent = cur.fetchone()["spent"]
+        conn.commit()
+    return int(spent)
+
+
+def _merge_output_evidence(out: Path, freeze: dict, dispatches: list,
+                           durable_receipts: list) -> tuple[list, list]:
+    raw_prior_dispatches, prior_receipts = _prior_output_state(out, freeze)
+    prior_dispatches = _prior_output_dispatches(
+        raw_prior_dispatches, prior_receipts)
+    prior_by_operation = {
+        dispatch.get("operation_id"): dispatch
+        for dispatch in prior_dispatches}
+    current_by_operation = {
+        dispatch.get("operation_id"): dispatch
+        for dispatch in dispatches}
+    current_receipts = [receipt for receipt in durable_receipts
+                        if isinstance(receipt, dict)]
+    current_receipts_by_operation = {
+        operation_id: [receipt for receipt in current_receipts
+                        if receipt.get("operation_id") == operation_id]
+        for operation_id in {receipt.get("operation_id")
+                             for receipt in current_receipts}}
+    prior_receipts_by_operation = {
+        operation_id: [receipt for receipt in prior_receipts
+                       if receipt.get("operation_id") == operation_id]
+        for operation_id in {receipt.get("operation_id")
+                             for receipt in prior_receipts}}
+    if any(len(receipts) != 1 for receipts in current_receipts_by_operation.values()) \
+            or any(len(receipts) != 1 for receipts in prior_receipts_by_operation.values()):
+        raise ValueError("existing output evidence has multiple receipts")
+    merged_receipts = list(current_receipts)
+    for receipt in prior_receipts:
+        operation_id = receipt.get("operation_id")
+        if operation_id not in current_receipts_by_operation:
+            merged_receipts.append(receipt)
+    for prior in prior_dispatches:
+        operation_id = prior.get("operation_id")
+        current = current_by_operation.get(operation_id)
+        if current is None:
+            dispatches.append(copy.deepcopy(prior))
+        elif current.get("replay", False) is True:
+            if prior.get("raw_response") is None:
+                preserved = copy.deepcopy(prior)
+                preserved["replay"] = False
+                dispatches.append(preserved)
+            else:
+                preserved = copy.deepcopy(prior)
+                preserved["outcome"] = "unresolved"
+                preserved["raw_response"] = None
+                preserved["response_digest"] = None
+                preserved["parse_outcome"] = "transport-error"
+                preserved.setdefault("details", {}).setdefault(
+                    "raw_payload", {})["raw_response"] = None
+                dispatches.append(preserved)
+        elif prior.get("raw_response") is None and current.get(
+                "raw_response") is not None:
+            dispatches.append(copy.deepcopy(prior))
+    for dispatch in list(dispatches):
+        if (dispatch.get("outcome") == "unresolved"
+                and dispatch.get("raw_response") is not None):
+            lost = copy.deepcopy(dispatch)
+            lost["outcome"] = "unresolved"
+            lost["raw_response"] = None
+            lost["response_digest"] = None
+            lost["parse_outcome"] = "transport-error"
+            lost["details"] = copy.deepcopy(dispatch.get("details") or {})
+            lost.setdefault("details", {}).setdefault(
+                "raw_payload", {})["raw_response"] = None
+            dispatches.append(lost)
+    for dispatch in dispatches:
+        operation_id = dispatch.get("operation_id")
+        if (dispatch.get("replay", False) is True
+                and operation_id not in prior_by_operation):
+            reconstructed = copy.deepcopy(dispatch)
+            reconstructed["replay"] = False
+            reconstructed["new_dispatch"] = True
+            reconstructed["reconstructed_from_authority"] = True
+            dispatches.append(reconstructed)
+    dispatches.sort(key=lambda dispatch: (
+        dispatch.get("arm", ""), dispatch.get("task_id", ""),
+        dispatch.get("attempt", 0), dispatch.get("raw_response") is not None,
+        bool(dispatch.get("replay", False))))
+    receipts_by_operation = {}
+    for receipt in merged_receipts:
+        receipts_by_operation.setdefault(receipt.get("operation_id"), []).append(receipt)
+    for dispatch in dispatches:
+        receipts = receipts_by_operation.get(dispatch.get("operation_id"), [])
+        if len(receipts) == 1:
+            dispatch["durable_receipt"] = copy.deepcopy(receipts[0])
+    return dispatches, merged_receipts
+
+
+def run_output(out, *, gateway, model: str,
+              incumbent_control: list | None = None,
+              private_p0_scores: list | None = None,
+              spent_dsn: str | None = None) -> dict:
+    out = Path(out)
+    lock = _output_lock(out)
+    try:
+        return _run_output_locked(
+            out, gateway=gateway, model=model,
+            incumbent_control=incumbent_control,
+            private_p0_scores=private_p0_scores,
+            spent_dsn=spent_dsn)
+    finally:
+        lock.close()
+
+
+def _run_output_locked(out: Path, *, gateway, model: str,
+                       incumbent_control: list | None = None,
+                       private_p0_scores: list | None = None,
+                       spent_dsn: str | None = None) -> dict:
     from experiments.ad01 import live_construct as live
     from experiments.ad01 import offline_recompute as offline
     out = Path(out)
@@ -1060,35 +1501,16 @@ def run_output(out, *, gateway, model: str) -> dict:
     _validate_output_freeze(freeze)
     if model != freeze["route"]["requested_model"]:
         raise ValueError("output model does not match the frozen request")
-    incumbent_control = []
-    private_p0_scores = []
-    p0 = freeze["p0_incumbent"]
-    for split, seed in freeze["tasks"].items():
-        result = _run_p0_boolean(split, int(seed))
-        predictor = {"specs": result["predictor_specs"],
-                     "tables": result["predictor_tables"]}
-        result_digest = hashlib.sha256(
-            _canonical(predictor).encode()).hexdigest()
-        control = {
-            "arm": "P0", "executed": "incumbent",
-            "task_id": result["task_id"], "split": split, "seed": int(seed),
-            "source_digest": p0["source_digest"],
-            "predictor_digest": result["predictor_digest"],
-            "result_digest": result_digest, "queries": result["queries"],
-            "model_calls": 0, "predictor": predictor,
-        }
-        incumbent_control.append(control)
-        private_p0_scores.append({
-            "arm": "P0", "task_id": result["task_id"], "split": split,
-            "seed": int(seed), "score": result["score"],
-            "queries": result["queries"],
-            "predictor_digest": result["predictor_digest"],
-            "result_digest": result_digest,
-            "source_digest": p0["source_digest"]})
+    if incumbent_control is None or private_p0_scores is None:
+        incumbent_control, private_p0_scores = _p0_output_controls(freeze)
     permitted = live.output_permitted_history()
+    already_spent = (
+        _output_already_spent(freeze, dsn=spent_dsn)
+        if spent_dsn else _output_evidence_spent(out, freeze))
     guard = _OutputGuard(
         gateway, pinned_model=model,
         ceiling=freeze["limits"]["max_dispatches"],
+        already_spent=already_spent,
         automatic_retries=freeze["limits"]["automatic_retries"],
         expected_route=freeze["route"])
     scores = list(private_p0_scores)
@@ -1119,6 +1541,8 @@ def run_output(out, *, gateway, model: str) -> dict:
     dispatches, durable_receipts = _bind_output_dispatches(
         guard.finalized_dispatches(),
         list(getattr(guard.delegate, "durable_receipts", [])))
+    dispatches, durable_receipts = _merge_output_evidence(
+        out, freeze, dispatches, durable_receipts)
     operation_counts = {}
     for dispatch in dispatches:
         if dispatch.get("replay", False):
@@ -1151,49 +1575,117 @@ def run_output(out, *, gateway, model: str) -> dict:
                            "durable_receipts": durable_receipts},
     }
     private = _scorer_private_envelope(freeze, scores)
-    (out / "output-run.json").write_text(
-        json.dumps(result, sort_keys=True, indent=1) + "\n")
+    _write_output_bundle(out, result)
     (out / "scorer-private.json").write_text(
         json.dumps(private, sort_keys=True, indent=1) + "\n")
     return result
 
 
+def _p0_output_controls(freeze: dict) -> tuple[list, list]:
+    p0 = freeze["p0_incumbent"]
+    incumbent_control = []
+    private_p0_scores = []
+    for split, seed in freeze["tasks"].items():
+        result = _run_p0_boolean(split, int(seed))
+        predictor = {"specs": result["predictor_specs"],
+                     "tables": result["predictor_tables"]}
+        result_digest = hashlib.sha256(
+            _canonical(predictor).encode()).hexdigest()
+        incumbent_control.append({
+            "arm": "P0", "executed": "incumbent",
+            "task_id": result["task_id"], "split": split, "seed": int(seed),
+            "source_digest": p0["source_digest"],
+            "predictor_digest": result["predictor_digest"],
+            "result_digest": result_digest, "queries": result["queries"],
+            "model_calls": 0, "predictor": predictor,
+        })
+        private_p0_scores.append({
+            "arm": "P0", "task_id": result["task_id"], "split": split,
+            "seed": int(seed), "score": result["score"],
+            "queries": result["queries"],
+            "predictor_digest": result["predictor_digest"],
+            "result_digest": result_digest,
+            "source_digest": p0["source_digest"]})
+    return incumbent_control, private_p0_scores
+
+
 def _output_unavailable(out: Path, freeze: dict, reason: str,
                         durable_receipts: list | None = None,
-                        dispatches: list | None = None) -> dict:
+                        dispatches: list | None = None,
+                        incumbent_control: list | None = None,
+                        private_scores: list | None = None, *,
+                        stage: str = "unspecified",
+                        store_operation_count: int | None = None) -> dict:
     from experiments.ad01 import offline_recompute as offline
-    partial = list(dispatches or [])
-    result = {
-        "schema": offline.OUTPUT_SCHEMA,
-        "protocol": freeze,
-        "protocol_id": freeze.get("protocol"),
-        "study": freeze.get("study"),
-        "study_root": freeze.get("study_root"),
-        "run_id": freeze.get("run_id"),
-        "source_identity": freeze.get("source_identity"),
-        "freeze_digest": freeze.get("freeze_digest"),
-        "status": "unavailable",
-        "reason": reason,
-        "candidate_view": {
-            "protocol": freeze.get("protocol"),
-            "route": dict(freeze.get("route") or {}),
-            "incumbent_control": [],
-            "dispatch_count": len(partial),
-            "physical_dispatch_count": len(partial),
-            "replay_count": 0,
-            "automatic_retry_count": 0,
-            "dispatches": partial,
-            "durable_receipts": list(durable_receipts or []),
-        },
-    }
-    (out / "output-run.json").write_text(
-        json.dumps(result, sort_keys=True, indent=1) + "\n")
-    (out / "scorer-private.json").write_text(json.dumps(
-        _scorer_private_envelope(freeze, []), sort_keys=True, indent=1) + "\n")
-    return result
+    out = Path(out)
+    lock = _output_lock(out)
+    try:
+        partial = list(dispatches or [])
+        receipts = list(durable_receipts or [])
+        try:
+            partial, receipts = _merge_output_evidence(
+                out, freeze, partial, receipts)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+        if store_operation_count is None and receipts:
+            store_operation_count = len(receipts)
+        accounting = _output_dispatch_accounting(
+            partial, store_count=store_operation_count)
+        result = {
+            "schema": offline.OUTPUT_SCHEMA,
+            "protocol": freeze,
+            "protocol_id": freeze.get("protocol"),
+            "study": freeze.get("study"),
+            "study_root": freeze.get("study_root"),
+            "run_id": freeze.get("run_id"),
+            "source_identity": freeze.get("source_identity"),
+            "freeze_digest": freeze.get("freeze_digest"),
+            "status": "unavailable",
+            "reason": reason,
+            "unavailability": {"stage": stage},
+            "claims": {
+                "task_utility": "not-established",
+                "transfer": "not-established",
+                "recursive_improvement": "not-established",
+            },
+            "candidate_view": {
+                "protocol": freeze.get("protocol"),
+                "route": dict(freeze.get("route") or {}),
+                "incumbent_control": list(incumbent_control or []),
+                **accounting.candidate_fields(),
+                "replay_count": sum(
+                    1 for dispatch in partial
+                    if dispatch.get("replay", False) is True),
+                "automatic_retry_count": 0,
+                "dispatches": partial,
+                "durable_receipts": receipts,
+            },
+        }
+        _write_output_bundle(out, result)
+        (out / "scorer-private.json").write_text(json.dumps(
+            _scorer_private_envelope(freeze, list(private_scores or [])),
+            sort_keys=True, indent=1) + "\n")
+        return result
+    finally:
+        lock.close()
 
 
-def run_output_live(dsn: str, out) -> dict:
+def run_output_live(dsn: str, out, *, gateway=None) -> dict:
+    """The output study's live path: preflight, authority, dispatch, settle.
+
+    `gateway` is the seam `run_output` already had and this path did not, and
+    it is narrower than it looks. It replaces the transport only. Everything
+    that makes a receipt mean anything is still the live path's own: the
+    frozen route, the frozen prompt digests, the study ceilings from
+    `_output_study_ceilings`, the durable allocation from `_authorize`, and
+    every operation written through `_DurableBrokerOutput`.
+
+    The default is `None` and `None` builds the real `HttpGatewayAdapter`
+    through `_live_gateway`, which is what every production caller gets. A
+    double that were defaulted here would silently fake every live run and
+    leave this whole function unreached, so the injection is explicit and a
+    caller that omits the argument cannot end up anywhere but the provider.
+    """
     _require_grant()
     out = Path(out)
     freeze = json.loads((out / "freeze.json").read_text())
@@ -1202,20 +1694,29 @@ def run_output_live(dsn: str, out) -> dict:
     if model != freeze["route"]["requested_model"]:
         raise ValueError("output model does not match the frozen request")
     try:
-        _require_output_preflight(out, freeze)
+        _require_output_preflight(out, freeze, gateway)
     except Exception as exc:
+        try:
+            store_count = _output_already_spent(freeze, dsn=dsn)
+        except Exception as reconciliation_exc:
+            store_count = None
+            reason = "output preflight unavailable before authority: %s; output store reconciliation unavailable: %s" % (
+                exc, reconciliation_exc)
+        else:
+            reason = "output preflight unavailable before authority: %s" % exc
         return _output_unavailable(
-            out, freeze, "output preflight unavailable before authority: %s" % exc)
+            out, freeze, reason, stage="preflight",
+            store_operation_count=store_count)
     try:
         authority = _authorize(
             dsn, STUDY_ROOT_OUTPUT,
             200_000,
-            {"model_calls": freeze["limits"]["max_dispatches"],
-             "construction_calls": 0})
+            _output_study_ceilings(freeze))
         allocation_id = authority.get("allocation_id")
         if not allocation_id:
             raise ValueError("durable study allocation is unavailable")
-        gateway = _live_gateway(freeze["route"])
+        if gateway is None:
+            gateway = _live_gateway(freeze["route"])
         endpoint = getattr(gateway, "endpoint", freeze["route"]["endpoint"])
         if endpoint.rstrip("/") != freeze["route"]["endpoint"].rstrip("/"):
             raise ValueError("output preflight route does not match the freeze")
@@ -1226,31 +1727,73 @@ def run_output_live(dsn: str, out) -> dict:
             dsn, gateway, allocation_id=allocation_id,
             expected_route=freeze["route"])
     except Exception as exc:
+        try:
+            store_count = _output_already_spent(freeze, dsn=dsn)
+        except Exception as reconciliation_exc:
+            store_count = None
+            reason = "durable broker unavailable before inference: %s; output store reconciliation unavailable: %s" % (
+                exc, reconciliation_exc)
+        else:
+            reason = "durable broker unavailable before inference: %s" % exc
         return _output_unavailable(
-            out, freeze, "durable broker unavailable before inference: %s" % exc)
+            out, freeze, reason, stage="authorization",
+            store_operation_count=store_count)
+    incumbent_control, private_p0_scores = _p0_output_controls(freeze)
     try:
-        result = run_output(out, gateway=durable_gateway, model=model)
+        result = run_output(
+            out, gateway=durable_gateway, model=model,
+            incumbent_control=incumbent_control,
+            private_p0_scores=private_p0_scores,
+            spent_dsn=dsn)
     except Exception as exc:
+        store_count = len(durable_gateway.durable_receipts)
         if not durable_gateway.durable_receipts:
             return _output_unavailable(
                 out, freeze,
                 "durable broker unavailable before inference: %s" % exc,
                 durable_gateway.durable_receipts,
-                durable_gateway.partial_dispatches)
+                durable_gateway.partial_dispatches,
+                incumbent_control, private_p0_scores,
+                stage="inference", store_operation_count=store_count)
         return _output_unavailable(
             out, freeze,
             "durable broker refused an output dispatch: %s" % exc,
             durable_gateway.durable_receipts,
-            durable_gateway.partial_dispatches)
+            durable_gateway.partial_dispatches,
+            incumbent_control, private_p0_scores,
+            stage="inference", store_operation_count=store_count)
     if any(not isinstance(dispatch.get("durable_receipt"), dict)
            for dispatch in result.get("candidate_view", {}).get(
                "dispatches", [])):
+        dispatches = result.get("candidate_view", {}).get("dispatches", [])
+        receipts = result.get("candidate_view", {}).get(
+            "durable_receipts", [])
         return _output_unavailable(
             out, freeze,
             "durable broker receipt missing for a physical output dispatch",
-            result.get("candidate_view", {}).get("durable_receipts", []),
-            result.get("candidate_view", {}).get("dispatches", []))
+            receipts, dispatches,
+            incumbent_control, private_p0_scores,
+            stage="inference", store_operation_count=len(receipts))
     return result
+
+
+def _output_study_ceilings(freeze: dict) -> dict:
+    """What the output study may spend.
+
+    This authorized `construction_calls: 0`, which was unenforced when it was
+    written, so nothing noticed. With the ceiling enforced on the live path a
+    study that authorizes no constructions refuses its first one, so the
+    output study could never acquire anything and the M4 live path could never
+    dispatch at all. The model ceiling comes from the freeze; the construction
+    allowance is at least one, because acquiring is the point of the path.
+    """
+    limits = dict(freeze.get("limits") or {})
+    dispatches = limits.get("max_dispatches")
+    return {
+        "model_calls": int(dispatches) if dispatches else 8,
+        "construction_calls": max(int(limits.get(
+            "max_construction_calls", 0) or 0), 1),
+    }
 
 
 def _authorize(dsn: str, study_root: str, authorized: int,
@@ -1300,30 +1843,32 @@ def _live_opportunities(freeze: dict) -> list:
             "opp-rule-dev-%d" % int(seed), "rule-dev-%04d" % int(seed),
             "what does a probe reveal on rule-dev-%04d" % int(seed),
             instrument="boolean-rule-v1", x=3))
+    from experiments.ad01 import boolean_rule as _rules
+    dev_four = _rules.make_task("dev", 4)["task_id"]
     have_tasks = {o.get("intervention", {}).get("target")
                   for o in opportunities}
     have_ids = {o.get("opportunity_id") for o in opportunities}
     if "opp-first" not in have_ids:
         opportunities.append(_live.live_opportunity(
-            "opp-first", "rule-dev-0004",
-            "what does input 3 reveal on rule-dev-0004",
+            "opp-first", _rules.make_task("dev", 4)["task_id"],
+            "what does input 3 reveals on the dev rule task",
             instrument="boolean-rule-v1", x=3))
     if "opp-followup" not in have_ids:
         opportunities.append(_live.live_opportunity(
-            "opp-followup", "rule-dev-0005",
-            "what does input 11 reveal on rule-dev-0005",
+            "opp-followup", _rules.make_task("dev", 5)["task_id"],
+            "what does input 11 reveals on the dev rule task",
             instrument="boolean-rule-v1", x=11))
-    if "rule-dev-0004" not in have_tasks:
+    if dev_four not in have_tasks:
         opportunities.append(_live.live_opportunity(
-            "opp-rule-dev-4", "rule-dev-0004",
-            "what does input 3 reveal on rule-dev-0004",
+            "opp-rule-dev-4", dev_four,
+            "what does input 3 reveals on the dev rule task",
             instrument="boolean-rule-v1", x=3))
-    if "rule-dev-0005" not in have_tasks:
+    if _rules.make_task("dev", 5)["task_id"] not in have_tasks:
         pass
     if not opportunities:
         opportunities.append(_live.live_opportunity(
-            "opp-rule-dev-4", "rule-dev-0004",
-            "what does input 3 reveal on rule-dev-0004",
+            "opp-rule-dev-4", dev_four,
+            "what does input 3 reveals on the dev rule task",
             instrument="boolean-rule-v1", x=3))
     return opportunities
 
@@ -1347,10 +1892,11 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
     else:
         active = store.active_package
     assert active.get("origin") == "authored-control"
+    dev_task = _rules.make_task("dev", 4)["task_id"]
     preserved = [{"observation_id": "obs-seed",
-                  "task": "rule-dev-0004", "verdict": "preserved"}]
+                  "task": dev_task, "verdict": "preserved"}]
     mismatch = [{"observation_id": "obs-seed",
-                 "task": "rule-dev-0004", "verdict": "mismatch"}]
+                 "task": dev_task, "verdict": "mismatch"}]
     choice_preserved = _live.choose_next_work(store, active, preserved)
     choice_mismatch = _live.choose_next_work(store, active, mismatch)
     task = _rules.make_task("dev", 4)
@@ -1528,6 +2074,7 @@ def _e12_unavailable(out: Path, freeze: dict, reason: str) -> dict:
         "freeze_digest": freeze.get("freeze_digest"),
         "route": dict(freeze.get("route") or {}),
         "route_digest": freeze.get("route_digest"),
+        "metric_rule": dict(freeze.get("metric_rule") or {}),
         "arms": {
             arm: {"status": "unavailable", "reason": reason,
                   "model_calls": 0, "candidate_artifacts": [],
@@ -1577,14 +2124,15 @@ def run_e0(dsn: str, out) -> dict:
     control = _run_frontier_investigation(
         out / "frontier-control.json", freeze, "control",
         guard=None, model=model)
+    already_spent = _already_spent(dsn, allocation_id)
     guard = _guard(durable_gateway, pinned_model=model,
-                   ceiling=freeze["bounds"]["model_calls"],
-                   already_spent=_already_spent(),
+                   ceiling=freeze["bounds"]["model_calls"] + already_spent,
+                   already_spent=already_spent,
                    expected_route=freeze["route"])
     live = _run_frontier_investigation(
         out / "frontier-live.json", freeze, "live",
         guard=guard, model=model)
-    spent = _already_spent()
+    spent = already_spent
     live_calls = max(0, guard.dispatch_count - spent)
     acquisition = live.get("acquisition") or {}
     if acquisition.get("status") == "retained":
@@ -1792,6 +2340,37 @@ def _run_p0_boolean(split: str, seed: int) -> dict:
             "target_tables": list(task["tables"])}
 
 
+def _rebind_boolean_dispatch_input(entries: list, input_digest: str) -> None:
+    from experiments.ad01 import frontier
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict) or entry.get("input_digest") == input_digest:
+            continue
+        rebuilt = frontier.make_evidence_record(
+            entry.get("kind", "gateway-dispatch"), entry.get("operation_id"),
+            entry.get("outcome", "unknown"), attempt=entry.get("attempt"),
+            receipt_identity=entry.get("receipt_identity"),
+            arm=entry.get("arm"), task_id=entry.get("task_id"),
+            source_digest=entry.get("source_digest"),
+            artifact_digest=entry.get("artifact_digest"),
+            input_digest=input_digest,
+            result_digest=entry.get("result_digest"),
+            package_digest=entry.get("package_digest"),
+            parent_digest=entry.get("parent_digest"), round_no=entry.get("round"),
+            dispatch_evidence_digest=entry.get("dispatch_evidence_digest"),
+            details=entry.get("details"))
+        rebuilt.update({key: value for key, value in entry.items()
+                        if key not in {
+                            "version", "kind", "operation_id", "attempt",
+                            "outcome", "arm", "task_id", "source_digest",
+                            "artifact_digest", "input_digest", "result_digest",
+                            "package_digest", "parent_digest", "round",
+                            "dispatch_evidence_digest", "receipt_identity",
+                            "evidence_digest", "raw_payload_digest",
+                            "route_digest", "details"}})
+        rebuilt["input_digest"] = input_digest
+        entries[index] = rebuilt
+
+
 def boolean_live_round(*, guard, model: str, split: str, seed: int,
                        history: list | None = None,
                        repairs: int = 2,
@@ -1799,6 +2378,7 @@ def boolean_live_round(*, guard, model: str, split: str, seed: int,
                        arm: str = "P1") -> dict:
     from experiments.ad01 import boolean_rule as rules
     from experiments.ad01 import live_construct as _live
+    from experiments.ad01 import offline_recompute as _offline
     from experiments.ad01 import rule_learner
     from settlement.gateway import GatewayError, ModelRequest
     task = rules.make_task(split, seed)
@@ -1812,7 +2392,7 @@ def boolean_live_round(*, guard, model: str, split: str, seed: int,
         learner.observe(pick, found)
     queries = len(session.queried)
     history = list(history or [])
-    prompt = (_canonical(session.model_input())
+    prompt = (_canonical(session.output_model_input())
               + "\nPermitted history: %s" % _canonical(history)
               + "\nReply with exactly one JSON object shaped "
               '{"specs": [{"const": 0|1, "mask": 0..15, '
@@ -1825,12 +2405,12 @@ def boolean_live_round(*, guard, model: str, split: str, seed: int,
     candidate = None
     raw_response = None
     response_digest = None
-    prompt_digest = _digest(prompt)
+    prompt_digest = _live.source_digest(prompt)
     while committed is None:
         manual_attempt += 1
         body = prompt if prior is None else "%s\nPRIOR FAILURE: %s" % (
             prompt, prior)
-        prompt_digest = _digest(body)
+        prompt_digest = _live.source_digest(body)
         before = len(guard.finalized_dispatches())
         operation_id = "invl02-boolean-%s-%s-%04d-a%d" % (
             arm, split, int(seed), manual_attempt)
@@ -1849,7 +2429,7 @@ def boolean_live_round(*, guard, model: str, split: str, seed: int,
             continue
         text = (response.text or "").strip()
         raw_response = response.text
-        response_digest = hashlib.sha256(response.text.encode()).hexdigest()
+        response_digest = _live.source_digest(response.text)
         if not text:
             prior = "empty completion"
             if manual_attempt > repairs:
@@ -1870,25 +2450,24 @@ def boolean_live_round(*, guard, model: str, split: str, seed: int,
                 raise ValueError("boolean predictor illegal: %s" % exc)
     if candidate is None or raw_response is None:
         raise ValueError("boolean construction produced no candidate")
-    predictor_digest = _digest(candidate)
+    predictor_digest = _live.source_digest(_canonical(candidate))
     physical_dispatch = [entry for entry in physical
                          if not entry.get("replay", False)]
+    _rebind_boolean_dispatch_input(
+        physical, _offline.boolean_candidate_input_digest(
+            task["task_id"], split, int(seed), history))
     operation_ids = list(dict.fromkeys(
         entry.get("operation_id") for entry in physical
         if isinstance(entry.get("operation_id"), str)))
     score = session.score(committed)
     specs = [dict(s) for s in committed["specs"]]
-    input_binding = {
-        "task_id": task["task_id"], "split": split, "seed": int(seed),
-        "history": list(history), "history_digest": _digest(list(history)),
-        "public_input": session.model_input(),
-    }
     candidate_artifact = {
         "arm": arm, "task_id": task["task_id"], "split": split,
         "seed": int(seed), "raw_response": raw_response,
         "raw_response_digest": response_digest, "predictor": candidate,
         "predictor_digest": predictor_digest,
-        "input_digest": _digest(input_binding),
+        "input_digest": _offline.boolean_candidate_input_digest(
+            task["task_id"], split, int(seed), history),
         "prompt_digest": prompt_digest,
         "history": list(history), "history_digest": _digest(list(history)),
         "manual_attempt": manual_attempt,
@@ -2007,7 +2586,7 @@ def run_e12(dsn: str, out) -> dict:
     audit_seed = int(audit_seeds[0])
     held = [("qual", qual_seed), ("audit", audit_seed)]
     arms: dict = {}
-    spent = _already_spent()
+    spent = _already_spent(dsn, allocation_id)
     snapshots: dict = {}
     for order, arm in enumerate(list(freeze["order"])):
         want_history = [] if arm == "P1" else list(permitted)
@@ -2174,6 +2753,7 @@ def run_e12(dsn: str, out) -> dict:
               "freeze_digest": freeze["freeze_digest"],
               "route": dict(freeze["route"]),
               "route_digest": _digest(freeze["route"]),
+              "metric_rule": dict(freeze["metric_rule"]),
               "arms": arms,
               "dispatch_ledger": dispatch_ledger,
               "durable_receipts": bound_durable_receipts,
@@ -2534,13 +3114,13 @@ def _authoritative_operation_ledger(out: Path, *,
         if len(receipts) != 1:
             raise ValueError("multiple terminal receipts for %s" % op_id)
         for receipt in receipts:
+            claim_receipt(receipt, op_id)
             try:
                 _frontier.validate_evidence_record(receipt)
             except _frontier.Refused as exc:
                 raise ValueError(
                     "authoritative operation receipt is mismatched: %s" % exc
                 ) from exc
-            claim_receipt(receipt, op_id)
             details = receipt.get("details")
             raw_payload = details.get("raw_payload") if isinstance(
                 details, dict) else None
@@ -2556,13 +3136,13 @@ def _authoritative_operation_ledger(out: Path, *,
                 raise ValueError("authoritative operation receipt is mismatched")
     for op_id, receipt in child_receipts.items():
         row = operations.get(op_id)
+        claim_receipt(receipt, op_id, child_path=True)
         try:
             _frontier.validate_evidence_record(receipt)
         except _frontier.Refused as exc:
             raise ValueError(
                 "authoritative child receipt is mismatched: %s" % exc
             ) from exc
-        claim_receipt(receipt, op_id, child_path=True)
         if (not isinstance(row, dict)
                 or not any(r == receipt for r in row.get("receipts", []))):
             raise ValueError("authoritative child receipt is mismatched")
@@ -2631,8 +3211,10 @@ def _validate_candidate_artifact(candidate: dict, *, dispatch_ledger: list,
             or candidate.get("predictor_digest") != _digest(predictor)):
         raise ValueError("candidate predictor does not recompute from raw response")
     task_id = candidate.get("task_id")
+    from experiments.ad01 import boolean_rule as _boolean_rule
     split = next((key for key, seed in tasks.items()
-                  if task_id == "rule-%s-%04d" % (key, int(seed))), None)
+                  if task_id == _boolean_rule.make_task(
+                      key, int(seed))["task_id"]), None)
     if split is None:
         raise ValueError("candidate task is not frozen")
     if not isinstance(durable_receipts, list) or not durable_receipts:
@@ -2708,9 +3290,17 @@ def _validate_candidate_artifact(candidate: dict, *, dispatch_ledger: list,
     return predictor
 
 
+def _m4_software_expected_quality(task_id: str) -> str:
+    from experiments.ad01 import offline_recompute as offline
+    return offline._software_expected_quality(task_id)
+
+
 def _software_domain(child_receipts: dict, tasks: list) -> dict:
     task_set = set(tasks)
     records = []
+    expected_by_task = {
+        task_id: _m4_software_expected_quality(task_id) for task_id in task_set
+    }
     for op_id, receipt in child_receipts.items():
         if receipt.get("task_id") not in task_set:
             continue
@@ -2719,10 +3309,14 @@ def _software_domain(child_receipts: dict, tasks: list) -> dict:
         if (not isinstance(result, dict) or "observed" not in result
                 or receipt.get("result_digest") != _digest(result)):
             raise ValueError("software use receipt has no usable outcome")
+        expected = expected_by_task[receipt["task_id"]]
+        if result.get("observed") != expected:
+            raise ValueError("software observed outcome differs from frozen quality")
         records.append({
             "record_id": "software-%s-%s" % (receipt.get("arm"), op_id),
             "arm": receipt.get("arm"),
             "task_id": receipt.get("task_id"),
+            "expected": expected,
             "operation_id": op_id,
             "receipt_identity": receipt.get("receipt_identity"),
             "input_digest": receipt.get("input_digest"),
@@ -2737,7 +3331,8 @@ def _software_domain(child_receipts: dict, tasks: list) -> dict:
     records.sort(key=lambda row: (row["task_id"], row["arm"], row["operation_id"]))
     outcomes = [
         {"arm": row["arm"], "task_id": row["task_id"],
-         "observed": row["observed"], "queries": row["queries"]}
+         "expected": row["expected"], "observed": row["observed"],
+         "queries": row["queries"]}
         for row in records]
     return {"use_records": records, "outcomes": outcomes}
 
@@ -2756,6 +3351,8 @@ def export_m4_bundle(out_dir) -> dict:
     if any(e12.get(key) != value
            for key, value in expected_identity.items()):
         raise ValueError("E12 run identity is not authoritative")
+    if e12.get("metric_rule") != freeze_live.get("metric_rule"):
+        raise ValueError("E12 metric rule differs from frozen protocol")
     if not (out / "authoritative-operations.json").is_file():
         raise ValueError("M4 export requires an authoritative operation ledger")
     held = _frozen_held_tasks(freeze_live)
@@ -2770,8 +3367,15 @@ def export_m4_bundle(out_dir) -> dict:
         raise ValueError("missing-arm %s" % missing_arms[0])
     operations, child_receipts, authority = _authoritative_operation_ledger(
         out, freeze=freeze_live)
-    software = _software_domain(
-        child_receipts, list(freeze_live.get("software_tasks") or []))
+    software_tasks = list(freeze_live.get("software_tasks") or [])
+    software = _software_domain(child_receipts, software_tasks)
+    software_keys = {(row.get("arm"), row.get("task_id"))
+                     for row in software.get("use_records", [])}
+    expected_software_keys = {(arm, task_id)
+                              for arm in ("P0", "P1", "P2")
+                              for task_id in software_tasks}
+    if software_keys != expected_software_keys:
+        raise ValueError("software arm/task membership is incomplete")
     dispatch_ledger = e12.get("dispatch_ledger")
     if not isinstance(dispatch_ledger, list) or not dispatch_ledger:
         raise ValueError("M4 export requires an E12 physical dispatch ledger")
@@ -2804,8 +3408,11 @@ def export_m4_bundle(out_dir) -> dict:
     if authoritative_pairs != e12_pairs:
         raise ValueError(
             "authoritative/E12 receipt set is unresolved: extra or missing receipts")
-    qual_task = "rule-%s-%04d" % (held[0]["split"], int(held[0]["seed"]))
-    audit_task = "rule-%s-%04d" % (held[1]["split"], int(held[1]["seed"])) \
+    from experiments.ad01 import boolean_rule as _frozen_rule
+    qual_task = _frozen_rule.make_task(
+        held[0]["split"], int(held[0]["seed"]))["task_id"]
+    audit_task = _frozen_rule.make_task(
+        held[1]["split"], int(held[1]["seed"]))["task_id"] \
         if len(held) > 1 else qual_task
     use_tasks = [qual_task, audit_task]
     candidate_tasks = {entry["split"]: int(entry["seed"])
@@ -2815,7 +3422,8 @@ def export_m4_bundle(out_dir) -> dict:
                              .get("P2") or [])}
     tasks = {}
     for task_id in list(freeze_live.get("software_tasks") or []):
-        tasks[str(task_id)] = {"expected": "software-baseline"}
+        tasks[str(task_id)] = {
+            "expected": _m4_software_expected_quality(str(task_id))}
     from experiments.ad01 import boolean_rule as _rules
     for held_task in held:
         split = str(held_task["split"])
@@ -2855,8 +3463,7 @@ def export_m4_bundle(out_dir) -> dict:
                  "diagnostic_queries_per_episode": 8,
                  "study_model_calls": 0,
                  "history_token_ceiling": 10000},
-        "metric_rule": {"kind": "mean-quality", "margin": 0.0,
-                        "tie": "incumbent"},
+        "metric_rule": dict(freeze_live.get("metric_rule") or {}),
         "resource_rule": {"kind": "ceiling",
                           "note": "quality under common ceilings"},
         "config": {"model": str(freeze_live.get("model",
@@ -3273,12 +3880,9 @@ def export_m4_bundle(out_dir) -> dict:
             "status") != "available")
     winner = None
     if not missing:
-        ranked = sorted(((m, a) for a, m in means.items()
-                         if m is not None), reverse=True)
-        if ranked:
-            best = ranked[0][0]
-            second = ranked[1][0] if len(ranked) > 1 else 0.0
-            winner = ranked[0][1] if best - second >= 0.0 else "P0"
+        rule = freeze["metric_rule"]
+        winner = _m4.select_m4_winner(
+            means, rule["margin"], rule["tie"])
     claimed = {"winner": (winner or "none"),
                "note": "offline recomputed means %s" % _canonical(means)}
     bundle = {"schema": _m4.M4_SCHEMA,
@@ -3319,25 +3923,41 @@ def verify_m4_bundle(out_dir) -> dict:
     return result
 
 
-def _artifact_study_root(path: Path):
+def _is_output_study_root(study_root: str) -> bool:
+    """True for any output-shape round, not just the current one.
+
+    recompute() runs against historical evidence directories, whose
+    freezes declare their own round (r2 and r3 both carry the r1 root).
+    Routing only on the current constant would send those bundles down
+    the m4 path and misreport them as unavailable.
+    """
+    if not isinstance(study_root, str):
+        return False
+    name, separator, suffix = study_root.rpartition("-r")
+    return bool(separator) and name == "invl02-output-shape-550b" \
+        and suffix.isdigit()
+
+
+def _artifact_study_root(path: Path) -> tuple[str, str | None]:
     try:
         value = json.loads(path.read_text())
     except (OSError, ValueError):
-        return None
+        return "artifact-unreadable", None
     if not isinstance(value, dict):
-        return None
-    protocol = value.get("protocol")
-    if isinstance(protocol, dict):
-        root = protocol.get("study_root")
-        if isinstance(root, str) and root:
-            return root
-    freeze = value.get("freeze")
-    if isinstance(freeze, dict):
-        root = freeze.get("study_root")
-        if isinstance(root, str) and root:
-            return root
-    root = value.get("study_root")
-    return root if isinstance(root, str) and root else None
+        return "artifact-study-root-invalid", None
+    roots = set()
+    for holder in (value, value.get("protocol"), value.get("freeze")):
+        if not isinstance(holder, dict) or "study_root" not in holder:
+            continue
+        root = holder["study_root"]
+        if not isinstance(root, str) or not root:
+            return "artifact-study-root-invalid", None
+        roots.add(root)
+    if not roots:
+        return "artifact-study-root-missing", None
+    if len(roots) != 1:
+        return "artifact-study-root-invalid", None
+    return "valid", roots.pop()
 
 
 def _write_recompute_result(bundle: Path, name: str, result: dict) -> None:
@@ -3357,27 +3977,38 @@ def recompute(bundle_dir) -> dict:
         _write_recompute_result(bundle, "recompute.json", result)
         return result
     study_root = freeze.get("study_root") if isinstance(freeze, dict) else None
+    if not isinstance(study_root, str) or not study_root:
+        result = {"status": "fail", "problems": ["study-root-invalid"],
+                  "study_root": study_root, "recomputed": {},
+                  "verifier": "offline_recompute.verify_bundle"}
+        _write_recompute_result(bundle, "recompute.json", result)
+        return result
     artifacts = []
-    foreign_roots = []
+    artifact_problems = []
+    foreign_roots = set()
     for name in ("output-run.json", "m4-bundle.json"):
         path = bundle / name
         if not path.is_file():
             continue
-        root = _artifact_study_root(path)
-        if root is None:
-            continue
-        if root == study_root:
+        root_status, root = _artifact_study_root(path)
+        if root_status != "valid":
+            artifact_problems.append("%s %s" % (root_status, name))
+        elif root == study_root:
             artifacts.append((name, path))
         else:
-            foreign_roots.append(root)
+            foreign_roots.add(root)
+    problems = list(artifact_problems)
     if foreign_roots:
-        result = {"status": "fail", "problems": ["mixed-study-artifacts"],
+        problems.append("mixed-study-artifacts")
+    if problems:
+        result = {"status": "fail", "problems": sorted(set(problems)),
                   "study_root": study_root,
-                  "artifact_roots": sorted(set(foreign_roots)),
+                  "artifacts": [name for name, _path in artifacts],
+                  "artifact_roots": sorted(foreign_roots),
                   "recomputed": {}, "verifier": "offline_recompute.verify_bundle"}
         _write_recompute_result(bundle, "recompute.json", result)
         return result
-    if study_root == STUDY_ROOT_OUTPUT and artifacts:
+    if _is_output_study_root(study_root) and artifacts:
         name, path = next(
             ((name, path) for name, path in artifacts
              if name == "output-run.json"), artifacts[0])
@@ -3394,7 +4025,7 @@ def recompute(bundle_dir) -> dict:
                   "verifier": "offline_recompute.verify_bundle"}
         _write_recompute_result(bundle, "output-recompute.json", shaped)
         return shaped
-    if artifacts and study_root != STUDY_ROOT_OUTPUT:
+    if artifacts and not _is_output_study_root(study_root):
         _name, path = next(
             ((name, path) for name, path in artifacts
              if name == "m4-bundle.json"), artifacts[0])
@@ -3553,9 +4184,14 @@ def probe(out, *, read_ms: int = 60000, max_tokens: int = 256,
         api_key=settings.gateway.api_key_env and __import__(
             "os").environ.get(settings.gateway.api_key_env, ""),
         timeout_read_ms=read_ms, api=api)
-    guard = _guard(adapter, pinned_model=model,
-                   ceiling=_already_spent() + 1,
-                   already_spent=_already_spent())
+    # A probe is one diagnostic send against a bare adapter. It is handed no
+    # dsn by the `probe` verb, so it creates no operation row and there is no
+    # store for a count to come from. The old reader took this from
+    # S09_STUDY_CALLS_ALREADY_SPENT, a name nothing writes, so the number was
+    # always 0 by accident. Stating it is the honest version of that: this
+    # path's spend is zero by construction, and a probe that must be counted
+    # against a study needs a --dsn it does not have.
+    guard = _guard(adapter, pinned_model=model, ceiling=1, already_spent=0)
     prompt = ("Reply with exactly one JSON object and nothing else,"
               " shaped {\"entry\": \"ok\"}.")
     started = time.monotonic()

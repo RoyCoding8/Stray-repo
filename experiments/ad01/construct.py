@@ -80,7 +80,8 @@ def _settled_text(dsn: str, operation_id: str) -> str | None:
 
 def _call(dsn: str, *, cid: str, lineage: int, attempt: str,
           prompt: str, budget: dict, gateway: Any, model: str,
-          allocation_id: str, operation_id: str | None = None) -> dict:
+          allocation_id: str, operation_id: str | None = None,
+          resource: str | None = None) -> dict:
     from settlement import broker
     from settlement.common import ResultCode
     from .trajectory import reasoning_effort
@@ -89,15 +90,17 @@ def _call(dsn: str, *, cid: str, lineage: int, attempt: str,
     if settled is not None:
         return {"operation_id": operation_id, "text": settled,
                 "reused": True}
+    payload = {"model": model,
+               "messages": [{"role": "user", "content": prompt}],
+               "max_output_tokens": int(budget.get("max_output_tokens",
+                                                   2048)),
+               "deadline_ms": int(budget.get("deadline_ms", 300_000)),
+               "reasoning_effort": reasoning_effort()}
     ensured = broker.ensure_operation(
         dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
-        payload={"model": model,
-                 "messages": [{"role": "user", "content": prompt}],
-                 "max_output_tokens": int(budget.get("max_output_tokens",
-                                                     2048)),
-                 "deadline_ms": int(budget.get("deadline_ms", 300_000)),
-                 "reasoning_effort": reasoning_effort()},
-        allocation_id=allocation_id)
+        payload=payload,
+        allocation_id=allocation_id,
+        resource=resource)
     if ensured.code not in (ResultCode.APPLIED,
                             ResultCode.ALREADY_APPLIED):
         raise ConstructionFailed("construction call not admitted: %s"
@@ -150,6 +153,24 @@ def _parse_entry(text: str) -> tuple:
     return _packet.parse_construction_response(text)
 
 
+def acquisition_origin(dsn: str, operation_id: str, response_text: str) -> dict:
+    """The origin these bytes earned, plus the evidence for it.
+
+    `model-acquired` is a claim about who wrote the bytes, so it is only
+    available to a response the store can trace to a live provider. A
+    recording double answers on the same operation, settles the same receipt
+    and passes the same gates, so nothing above the receipt distinguishes the
+    two. The receipt does. Anything short of a live provider earns
+    `fixture-stand-in`, which is the truth about a script replayed down a
+    real transport.
+    """
+    from . import live_construct
+    evidence = live_construct.read_acquisition_evidence(
+        dsn, operation_id, response_text)
+    origin = "model-acquired" if evidence["earned"] else "fixture-stand-in"
+    return {"origin": origin, "acquisition_evidence": evidence}
+
+
 def _evaluate(text: str, operation_id: str, task: dict, max_queries: int, *,
               dsn: str, allocation_id: str) -> dict:
     from . import method_exec
@@ -157,6 +178,7 @@ def _evaluate(text: str, operation_id: str, task: dict, max_queries: int, *,
     failure = None
     checked = None
     entry = None
+    earned = acquisition_origin(dsn, operation_id, text)
     if problem:
         failure = {"stage": "parse", "reason": problem,
                    "operation_id": operation_id}
@@ -179,7 +201,9 @@ def _evaluate(text: str, operation_id: str, task: dict, max_queries: int, *,
                            "reason": checked["reason"],
                            "operation_id": operation_id}
     return {"source": source, "entry": entry, "failure": failure,
-            "ok": failure is None, "checked": checked}
+            "ok": failure is None, "checked": checked,
+            "origin": earned["origin"],
+            "acquisition_evidence": earned["acquisition_evidence"]}
 
 
 def construct_method(dsn: str, *, campaign_id: str, task: dict,
@@ -273,6 +297,8 @@ def _member(task: dict, source: str, entry: str, cid: str, lineage: int,
         "scope": {"family": task["family"]}, "authored": False,
         "qualified_on": task.get("task_id", ""),
         "source_digest": _source_digest(source),
+        "origin": init.get("origin", "fixture-stand-in"),
+        "acquisition_evidence": init.get("acquisition_evidence"),
         "lineage": {
             "campaign_id": cid, "lineage": lineage,
             "study_root": study_root,
@@ -351,6 +377,7 @@ def _policy_evaluate(text: str, operation_id: str, task: dict,
     source, problem = _parse_entry(text)
     failure = None
     checked = None
+    earned = acquisition_origin(dsn, operation_id, text)
     if problem:
         failure = {"stage": "parse", "reason": problem,
                    "operation_id": operation_id,
@@ -359,7 +386,7 @@ def _policy_evaluate(text: str, operation_id: str, task: dict,
         try:
             policy_step.verify_policy_record(
                 policy_step.make_policy_artifact(
-                    source, origin="model-acquired"))
+                    source, origin=earned["origin"]))
         except (method_exec.MethodExecutionError, ValueError) as exc:
             failure = {"stage": "gate", "reason": str(exc),
                        "operation_id": operation_id,
@@ -392,7 +419,9 @@ def _policy_evaluate(text: str, operation_id: str, task: dict,
                 }
     return {"source": source, "failure": failure,
             "ok": failure is None, "checked": checked,
-            "response_digest": digest}
+            "response_digest": digest,
+            "origin": earned["origin"],
+            "acquisition_evidence": earned["acquisition_evidence"]}
 
 
 def construct_policy(dsn: str, *, campaign_id: str, task: dict,
@@ -434,7 +463,8 @@ def construct_policy(dsn: str, *, campaign_id: str, task: dict,
                                           prior),
                     budget=budget, gateway=gateway, model=model,
                     allocation_id=allocation_id,
-                    operation_id=operation_id)
+                    operation_id=operation_id,
+                    resource="construction_calls")
             except ConstructionFailed as exc:
                 from settlement import broker
                 exists = broker.read_operation(
@@ -460,7 +490,7 @@ def construct_policy(dsn: str, *, campaign_id: str, task: dict,
             attempts.append({**record, **evaluated})
             if evaluated["failure"] is None:
                 artifact = policy_step.make_policy_artifact(
-                    evaluated["source"], origin="model-acquired",
+                    evaluated["source"], origin=evaluated["origin"],
                     parent_digest=parent_digest,
                     applicability=applicability or {
                         "family": task.get("family", ""),
@@ -498,6 +528,8 @@ def construct_policy(dsn: str, *, campaign_id: str, task: dict,
                         "gate": "ok",
                         "dry_run": evaluated["checked"],
                     },
+                    "acquisition_evidence": evaluated[
+                        "acquisition_evidence"],
                     "operation_ids": operation_ids,
                 }
     raise ConstructionFailed("construction exhausted without a checked"

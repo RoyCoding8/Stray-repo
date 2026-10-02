@@ -1,0 +1,11 @@
+{
+ "envelope_digest": "e41c0cba0710b345779efc11596e8658ff4027ea59a0ba8bda0210bfb6c07301",
+ "freeze_digest": "ad4188300eaef2a39497d1b821bced8d083435665868e66322dc764f4478e823",
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "run_id": "8a7d3ef94f9b457eb4e09bee02e9ba89",
+ "schema": "invl02-output-scorer-private-v1",
+ "scores": [],
+ "source_identity": "954ddd7b27b78cdacbffecf666878ff66c2b5cd989f59797ba2adc074c21aab2",
+ "study": "invl02-output-shape-550b-r4",
+ "study_root": "invl02-output-shape-550b-r4"
+}

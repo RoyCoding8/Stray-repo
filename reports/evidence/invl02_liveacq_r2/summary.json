@@ -1,0 +1,165 @@
+{
+ "accounting": {
+  "currencies": {
+   "dispatch_allowance": {
+    "note": "two earned acquisitions plus two probe dispatches; a lost response still counts as a send",
+    "refunded_pre_gateway": 0,
+    "spent_sends": 4
+   },
+   "held_units": {
+    "note": "held units released; nothing is left mid-dispatch",
+    "operations_still_dispatching": 0,
+    "total_operations": 13
+   },
+   "internal_reservation": {
+    "authorized": 749152,
+    "note": "derived per campaign from PROMPT_BUDGET_CHARS//4 + max_output_tokens, not a hand-set number"
+   },
+   "provider_billing": {
+    "input_tokens": 1893,
+    "note": "every settled receipt carries billed=null and charge_units=null, so cost is not zero, it is unreported",
+    "output_tokens": 6027,
+    "status": "UNMEASURED"
+   }
+  },
+  "held_units": {
+   "note": "held units released; nothing is left mid-dispatch",
+   "operations_still_dispatching": 0,
+   "total_operations": 13
+  },
+  "input_tokens": 1893,
+  "lost_responses": {
+   "count": 7,
+   "note": "receipts with outcome unknown and error_kind timeout; the provider may or may not have answered and billed",
+   "status": "UNCERTAIN"
+  },
+  "output_tokens": 6027,
+  "per_store": {
+   "r1": {
+    "failure": 0,
+    "input_tokens": 439,
+    "output_tokens": 1594,
+    "success": 2,
+    "unknown": 0
+   },
+   "r2": {
+    "failure": 1,
+    "input_tokens": 1454,
+    "output_tokens": 4433,
+    "success": 8,
+    "unknown": 4
+   },
+   "r2_comparison": {
+    "failure": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "success": 0,
+    "unknown": 2
+   },
+   "r2_refused": {
+    "failure": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "success": 0,
+    "unknown": 1
+   }
+  },
+  "receipts_reporting_billed_not_false": 4,
+  "totals": {
+   "failure": 1,
+   "success": 10,
+   "unknown": 7
+  }
+ },
+ "arms": {
+  "arm_gr00": {
+   "acquired": true,
+   "evidence_earned": true,
+   "evidence_reason": "live provider response",
+   "executed_sha256": "f1b674171ad1a3e85001171b7a297b01295e738b48381f65209729fd2df48d32",
+   "family": "graph",
+   "operation_ids": [
+    "ad01-liveacq-gr00-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init"
+   ],
+   "origin_earned": true,
+   "reason": null,
+   "task_id": "ad01-w0-transfer-gr-00"
+  },
+  "arm_gr01": {
+   "acquired": false,
+   "evidence_earned": null,
+   "evidence_reason": null,
+   "executed_sha256": null,
+   "family": "graph",
+   "operation_ids": [],
+   "origin_earned": null,
+   "reason": "LiveRefused: live policy acquisition failed: construction call ad01-liveacq-gr01-b0-ad01-w0-transfer-gr-01-policy-policy-l2-init left no settled response",
+   "task_id": "ad01-w0-transfer-gr-01"
+  },
+  "arm_sw00": {
+   "acquired": true,
+   "evidence_earned": true,
+   "evidence_reason": "live provider response",
+   "executed_sha256": "e910a154eba95305059e5dacc0cdc4e1853bc7654012e1f4cef78a686dcc0bdf",
+   "family": "software",
+   "operation_ids": [
+    "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init"
+   ],
+   "origin_earned": true,
+   "reason": null,
+   "task_id": "ad01-w0-transfer-sw-00"
+  },
+  "arm_sw01": {
+   "acquired": false,
+   "evidence_earned": null,
+   "evidence_reason": null,
+   "executed_sha256": null,
+   "family": "software",
+   "operation_ids": [],
+   "origin_earned": null,
+   "reason": "LiveRefused: live policy acquisition failed: construction call ad01-liveacq-sw01-b0-ad01-w0-transfer-sw-01-policy-policy-l1-init left no settled response",
+   "task_id": "ad01-w0-transfer-sw-01"
+  }
+ },
+ "byte_identical_to_double": {
+  "arm_gr00": false,
+  "arm_sw00": false
+ },
+ "demotion": "none; no_earned_acquired_arm does not fire",
+ "double_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+ "earned_arms": [
+  "arm_gr00",
+  "arm_sw00"
+ ],
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "run": "invl02-liveacq-r2",
+ "use_records": [
+  {
+   "action_kind": "diagnose",
+   "action_target": "task",
+   "arm": "arm_gr00",
+   "executed_source_digest": "f1b674171ad1a3e8",
+   "outcome": "ok",
+   "reason": null,
+   "state_bytes": 11,
+   "task_id": "ad01-w0-transfer-gr-00"
+  },
+  {
+   "action_kind": "construct_method",
+   "action_target": "investigation_method",
+   "arm": "arm_sw00",
+   "executed_source_digest": "e910a154eba95305",
+   "outcome": "ok",
+   "reason": null,
+   "state_bytes": 33,
+   "task_id": "ad01-w0-transfer-sw-00"
+  }
+ ],
+ "verdict": "true"
+}

@@ -1,0 +1,45 @@
+{
+  "adapter_result": {
+    "kind": "GatewayErrorKind.PROTOCOL",
+    "message": "model preflight route refused: model list route metadata does not match",
+    "operation_id": "preflight",
+    "retryable": false
+  },
+  "candidate_route": {
+    "endpoint": "http://localhost:4000/v1",
+    "provider": "nvidia",
+    "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "tier": "free"
+  },
+  "catalog_entry_count": 128,
+  "catalog_sha256": "bc3ea6e24239c80fa1db836592e25fc10ae47295f55ec299d0495af95f758d15",
+  "catalog_status": 200,
+  "credentials_recorded": false,
+  "git_branch": "codex/implementation-investigation-learning-02",
+  "git_commit": "5e0a0ca8974752cb6e7e03bfb6b612f46b684ba8",
+  "loaded_module_path": "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/live_construct.py",
+  "loaded_module_sha256": "a0853f331d583bac7ea00fc65ff1806a2c9cb880260986f43dc1f43025a166be",
+  "model_dispatch_started": false,
+  "outcome": "refused",
+  "read_only": true,
+  "record_version": "invl02-route-discovery-v1",
+  "relevant_entries": [
+    {
+      "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "object": "model",
+      "owned_by": "Openrouter"
+    },
+    {
+      "id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+      "object": "model",
+      "owned_by": "Openrouter"
+    }
+  ],
+  "request_method": "GET",
+  "request_url": "http://localhost:4000/v1/models",
+  "route_id_presence": {
+    "nvidia/nemotron-3-ultra-550b-a55b:free": true,
+    "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free": true
+  }
+}

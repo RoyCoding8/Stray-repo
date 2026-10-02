@@ -17,7 +17,9 @@ from pathlib import Path
 import pytest
 
 from experiments.ad01 import frontier
+from experiments.ad01 import live_construct as live
 from experiments.ad01 import offline_recompute as M4
+from scripts import invl02_live as driver
 
 P0_SRC = ("def STEP(view, state):\n"
           "    return {'action': {'kind': 'diagnose', 'target': 't',"
@@ -813,6 +815,214 @@ def test_m4_tie_rule_is_derived_from_frozen_metric():
 
     assert result["status"] == "pass", result["problems"]
     assert result["recomputed"]["comparison"]["winner"] is None
+
+
+def test_m4_exact_tie_selects_the_incumbent():
+    bundle = demo_bundle()
+    for task_id in ("u-sw-0", "u-gr-0"):
+        bundle["freeze"]["tasks"][task_id]["expected"] = "not-produced"
+    for record in bundle["use_records"]:
+        if record["task_id"] in {"u-sw-0", "u-gr-0"}:
+            record["claimed_verdict"] = "failed"
+    bundle["freeze"]["freeze_digest"] = M4.freeze_digest(bundle["freeze"])
+    bundle["claimed"]["winner"] = "P0"
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "pass", result["problems"]
+    assert result["recomputed"]["comparison"]["winner"] == "P0"
+
+
+def _lost_response_bundle(tmp_path):
+    freeze = driver.freeze_output(tmp_path)
+    result = driver.run_output(
+        tmp_path,
+        gateway=_LostResponseGateway(),
+        model=freeze["route"]["requested_model"])
+    dispatch = next(
+        entry for entry in result["candidate_view"]["dispatches"]
+        if not entry.get("replay", False))
+    receipt = {
+        "operation_id": dispatch["operation_id"],
+        "reservation_id": "reservation-lost-response",
+        "receipt_identity": "gw:%s:lost-response" % dispatch["operation_id"],
+        "receipt_outcome": "unknown",
+        "outcome": "unresolved",
+        "response_class": "lost-response",
+        "response_received": False,
+        "usable_result": False,
+        "result": None,
+        "result_digest": None,
+        "source_digest": dispatch.get("source_digest"),
+        "artifact_digest": dispatch.get("artifact_digest"),
+        "input_digest": dispatch.get("input_digest"),
+        "dispatch_evidence_digest": dispatch["evidence_digest"],
+        "usage": {
+            "input_tokens": None, "output_tokens": None,
+            "charge_units": None, "charge_scale": None, "billed": None},
+        "exposure": 2294,
+        "unresolved_exposure": 2294,
+        "dispatch_state": "unresolved",
+        "reconcile_state": "unresolved",
+        "settled": False,
+        "unsettled": True,
+        "conflict": False,
+        "conflict_count": 0,
+        "receipt_conflicts": [],
+        "measurement_status": "unresolved",
+    }
+    dispatch["durable_receipt"] = copy.deepcopy(receipt)
+    result["candidate_view"]["durable_receipts"] = [receipt]
+    result["status"] = "incomplete"
+    return result
+
+
+class _LostResponseGateway:
+    def infer(self, request):
+        from settlement.gateway import GatewayError, GatewayErrorKind, Usage
+
+        return GatewayError(
+            GatewayErrorKind.TIMEOUT, "lost response body", False,
+            request.operation_id, Usage())
+
+    def check_discovery(self):
+        return "reachable"
+
+    def check_auth(self):
+        return "authenticated"
+
+    def cancel(self, operation_id):
+        return True
+
+
+def test_lost_response_is_recomputed_as_honest_stopped_dispatch(tmp_path):
+    bundle = _lost_response_bundle(tmp_path)
+    operation_id = bundle["candidate_view"]["durable_receipts"][0]["operation_id"]
+    private = json.loads((tmp_path / "scorer-private.json").read_text())
+
+    verified = M4.verify_bundle(bundle, private)
+
+    assert verified["recomputed"]["lost-response-disposition"] == [{
+        "operation_id": operation_id,
+        "reservation_id": "reservation-lost-response",
+        "exposure": 2294,
+        "unresolved_exposure": 2294,
+        "measurement_status": "unresolved",
+    }]
+    assert verified["recomputed"]["accepted_candidates"] == 0
+    assert verified["status"] == "fail"
+    assert "route-metadata-mismatch" not in verified["problems"]
+    assert "response-digest-mismatch" not in verified["problems"]
+    assert "durable-receipt-lost-response-invalid %s" % operation_id not in (
+        verified["problems"])
+
+
+@pytest.mark.parametrize("receipt_updates", [
+    {"response_class": None},
+    {"response_received": None},
+    {"receipt_outcome": None},
+    {"receipt_outcome": "failure"},
+    {"settled": True},
+    {"usage": {}},
+    {"exposure": 0, "unresolved_exposure": 0},
+    {"usable_result": True, "result": {"raw_response": "invented"}},
+])
+def test_malformed_lost_response_marker_still_fails(
+        tmp_path, receipt_updates):
+    bundle = _lost_response_bundle(tmp_path)
+    operation_id = bundle["candidate_view"]["durable_receipts"][0]["operation_id"]
+    receipt = bundle["candidate_view"]["durable_receipts"][0]
+    receipt.update(receipt_updates)
+    dispatch = bundle["candidate_view"]["dispatches"][0]
+    dispatch["durable_receipt"] = copy.deepcopy(receipt)
+    private = json.loads((tmp_path / "scorer-private.json").read_text())
+
+    verified = M4.verify_bundle(bundle, private)
+
+    assert verified["status"] == "fail"
+    assert verified["recomputed"]["lost-response-disposition"] == []
+    assert "durable-receipt-lost-response-invalid %s" % operation_id in (
+        verified["problems"])
+    assert "route-metadata-mismatch" in verified["problems"]
+    assert "response-digest-mismatch" in verified["problems"]
+
+
+def test_missing_lost_response_durable_receipt_still_fails(tmp_path):
+    bundle = _lost_response_bundle(tmp_path)
+    operation_id = bundle["candidate_view"]["dispatches"][0]["operation_id"]
+    bundle["candidate_view"]["durable_receipts"] = []
+    bundle["candidate_view"]["dispatches"][0].pop("durable_receipt")
+    private = json.loads((tmp_path / "scorer-private.json").read_text())
+
+    verified = M4.verify_bundle(bundle, private)
+
+    assert verified["status"] == "fail"
+    assert "missing-durable-receipt %s" % operation_id in verified["problems"]
+    assert "dispatch-operation-receipt-bijection" in verified["problems"]
+
+
+def test_unresolved_receipt_without_lost_marker_still_fails(tmp_path):
+    bundle = _lost_response_bundle(tmp_path)
+    operation_id = bundle["candidate_view"]["durable_receipts"][0]["operation_id"]
+    receipt = bundle["candidate_view"]["durable_receipts"][0]
+    receipt["response_class"] = None
+    receipt["receipt_outcome"] = None
+    bundle["candidate_view"]["dispatches"][0]["durable_receipt"] = copy.deepcopy(
+        receipt)
+    private = json.loads((tmp_path / "scorer-private.json").read_text())
+
+    verified = M4.verify_bundle(bundle, private)
+
+    assert verified["status"] == "fail"
+    assert "durable-receipt-lost-response-invalid %s" % operation_id in (
+        verified["problems"])
+    assert "route-metadata-mismatch" in verified["problems"]
+    assert "response-digest-mismatch" in verified["problems"]
+
+
+def test_observed_response_tampering_still_fails_route_and_digest(tmp_path):
+    freeze = driver.freeze_output(tmp_path)
+    bundle = driver.run_output(
+        tmp_path, gateway=_ObservedResponseGateway("observed response"),
+        model=freeze["route"]["requested_model"])
+    dispatch = bundle["candidate_view"]["dispatches"][0]
+    dispatch["raw_response"] += " "
+    dispatch["returned_model"] = "tampered/model"
+    private = json.loads((tmp_path / "scorer-private.json").read_text())
+
+    verified = M4.verify_bundle(bundle, private)
+
+    assert verified["status"] == "fail"
+    assert "route-metadata-mismatch" in verified["problems"]
+    assert "response-digest-mismatch" in verified["problems"]
+
+
+class _ObservedResponseGateway:
+    def __init__(self, text):
+        self.text = text
+
+    def infer(self, request):
+        from settlement.gateway import ModelResponse, Usage
+
+        return ModelResponse(
+            request.operation_id,
+            self.text,
+            {"model": live.OUTPUT_ROUTE["resolved_model"],
+             "endpoint": live.OUTPUT_ROUTE["endpoint"],
+             "provider": live.OUTPUT_ROUTE["provider"],
+             "tier": live.OUTPUT_ROUTE["tier"]},
+            Usage(input_tokens=3, output_tokens=5, charge_units=0,
+                  charge_scale=1000, billed=False),
+            "stop")
+
+    def check_discovery(self):
+        return "reachable"
+
+    def check_auth(self):
+        return "authenticated"
+
+    def cancel(self, operation_id):
+        return True
 
 
 def test_m4_malformed_complete_schema_returns_specific_structured_failure():

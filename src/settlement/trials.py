@@ -13,7 +13,8 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from . import broker, db, store
-from .common import Command, CommandResult, ResultCode, SettlementError, payload_digest
+from .common import (Command, CommandResult, ConflictPayload, ResultCode,
+                     SettlementError, payload_digest)
 
 OUTCOMES = ("success", "failure", "timeout", "invalid", "unavailable", "infra")
 CATEGORIES = ("construction", "retrieval", "evaluation", "coordination",
@@ -201,6 +202,45 @@ def record_result(dsn: str, cmd: Command, *, assignment_id: str, outcome: str,
 def record_expenditure(dsn: str, protocol_id: str, category: str,
                        amount: int, note: str = "", *,
                        operation_id: str = "") -> dict:
+    """Book one charge against one operation.
+
+    The model, since the identity here was wrong for a money path and the
+    wrongness is not visible in the diff:
+
+    A charge is a *measurement* of a completed operation, not a fact about
+    the operation. ``experiment._op_accounting`` derives the amount from the
+    operation's receipts, reservation state, dispatch state and billing
+    state, and every one of those can still be in motion when the first
+    call arrives. An operation left ``unresolved`` by a killed run reports
+    ``settled: 0``; once ``broker.reconcile`` settles it, the same
+    operation reports a real amount. A mis-typed category is the same
+    shape of error with a smaller blast radius.
+
+    So the idempotency identity covers the whole charge -- protocol,
+    operation, category, amount and note -- not just its subject. Two
+    consequences, and both are the point:
+
+    * A retry of the charge that was already booked carries the same
+      identity, finds its row in ``command_journal`` and returns
+      ``ALREADY_APPLIED``. The ledger is written once. This is duplicate
+      prevention, and it is the property that matters.
+    * A charge that differs in any field is a different request, and is
+      booked as a second row. The ledger is append-only: no code path
+      updates or deletes a row, and ``amount`` is ``CHECK (amount >= 0)``
+      so no row can express a reversal.
+
+    A correction therefore is not a mutation of the original charge, and it
+    is not a second operation either -- the operation really happened once
+    and its receipts say how much it cost. It is a later, better
+    measurement of the same event, and the ledger keeps both so that a
+    reader can see that the first reading was superseded. Callers that
+    aggregate must expect this: ``development_expenditure`` and the
+    ``api.py`` summaries are ``SUM(amount) GROUP BY category`` and will
+    count a corrected charge in full alongside the charge it corrects. That
+    is the honest reading of an append-only unsigned ledger, and it is why
+    a correction is a caller decision and not something this function
+    performs on its own.
+    """
     if category not in CATEGORIES:
         raise SettlementError(f"unknown expenditure category {category!r}")
     if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
@@ -208,9 +248,12 @@ def record_expenditure(dsn: str, protocol_id: str, category: str,
     if not isinstance(operation_id, str) or not operation_id.strip():
         raise SettlementError("expenditure requires a durable operation_id")
     _protocol(dsn, protocol_id)
+    charge = {"protocol_id": protocol_id, "category": category,
+              "amount": amount, "note": note}
     identity = payload_digest({
         "protocol_id": protocol_id,
         "operation_id": operation_id,
+        **charge,
     })
     ledger_note = f"{note} [operation:{operation_id}]"
 
@@ -232,13 +275,7 @@ def record_expenditure(dsn: str, protocol_id: str, category: str,
 
     result = store.transact(
         dsn,
-        Command(request_id=f"trial-expenditure-{identity}", payload={
-            "protocol_id": protocol_id,
-            "operation_id": operation_id,
-            "category": category,
-            "amount": amount,
-            "note": note,
-        }),
+        Command(request_id=f"trial-expenditure-{identity}", payload=charge),
         _fn,
     )
     if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):

@@ -1,0 +1,44 @@
+{
+ "authorization_source": "human standing authorization for the Nemotron Ultra 550B free route, restated by the user in this session as 'go' after the route change was reported; see reports/cap-sheets/invl02-live-grant.md",
+ "authorized_on": "2026-09-25",
+ "bound_limits": {
+  "automatic_retries": 0,
+  "initial_dispatches": 4,
+  "max_dispatches": 8,
+  "max_output_tokens": 2048,
+  "max_response_characters": 512,
+  "repairs_per_task": 1
+ },
+ "bound_route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "bound_study": {
+  "freeze_digest": "ad4188300eaef2a39497d1b821bced8d083435665868e66322dc764f4478e823",
+  "freeze_path": "reports/evidence/invl02-output-shape-550b-r4/freeze.json",
+  "protocol": "invl02-output-shape-550b-r4-v1",
+  "run_id": "8a7d3ef94f9b457eb4e09bee02e9ba89",
+  "source_identity": "954ddd7b27b78cdacbffecf666878ff66c2b5cd989f59797ba2adc074c21aab2",
+  "study_root": "invl02-output-shape-550b-r4"
+ },
+ "preconditions_checked_before_dispatch": {
+  "attestation_live_verified": "provider=nvidia, tier=free, endpoint=127.0.0.1 loopback alias, through the study gateway; zero study dispatches spent on this check",
+  "cost_changed_since_freeze": false,
+  "frozen_source_digests_match_working_tree": true,
+  "prior_physical_dispatches_for_this_study": 0,
+  "route_changed_since_freeze": false,
+  "route_digest": "8642998d03c9d3752e98f99e60b05c5fc3657a31385690c956bc54a75b102b10",
+  "route_still_in_live_model_catalog": true
+ },
+ "predecessor_note": "r3 spent 1 of 8 and closed on its route-mismatch rule. r3 is not replayed: it declares a retired study root and a pre-namespace operation id, both refused by design. Its evidence is preserved unchanged.",
+ "schema": "settlement-gateway/live-grant-binding-v1",
+ "scope_limits": [
+  "Free route only. If the route becomes paid or ambiguous, do not dispatch.",
+  "At most eight physical model dispatches for this study, per the frozen limits.",
+  "Credentials never enter Git, reports, or evidence.",
+  "This grant expires with the study and is not carried to any other study root."
+ ]
+}

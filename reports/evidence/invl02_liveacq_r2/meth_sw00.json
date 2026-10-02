@@ -1,0 +1,119 @@
+{
+ "task_id": "ad01-w0-transfer-sw-00",
+ "family": "software",
+ "campaign_id": "liveacq-msw00",
+ "study_root": "liveacq-study-msw00",
+ "allocation_id": "ad01-campaign-liveacq-msw00",
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider": "nvidia",
+  "tier": "free"
+ },
+ "acquired": false,
+ "reason": "LiveRefused: live method acquisition failed: construction call ad01-liveacq-msw00-b0-ad01-w0-transfer-sw-00-construct-l1-init left no settled response",
+ "guard_spent_dispatches": 1,
+ "guard_refusal": null,
+ "ledger": [
+  {
+   "version": "invl02-evidence-v2",
+   "kind": "gateway-dispatch",
+   "operation_id": "ad01-liveacq-msw00-b0-ad01-w0-transfer-sw-00-construct-l1-init",
+   "attempt": 1,
+   "outcome": "unknown",
+   "arm": null,
+   "task_id": null,
+   "source_digest": null,
+   "artifact_digest": null,
+   "input_digest": "b699d6dce38b31d38a65759e69973c327f2e5d286df3af6b36abd84c38f886ca",
+   "result_digest": null,
+   "package_digest": null,
+   "parent_digest": null,
+   "round": null,
+   "dispatch_evidence_digest": null,
+   "driver_digest": null,
+   "operation_payload_digest": null,
+   "raw_payload_digest": "2b3587ec27d46267fb082b77ae858ffcb696f7c8d38e99c52957c8094faf8f83",
+   "route_digest": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+   "parse_outcome": "transport-error",
+   "accepted_candidate_digest": null,
+   "receipt_identity": "evidence:c21819edf07b79b809685f09201e469d0ef0fab58248358b192520abea6b7ee2",
+   "evidence_digest": "c96a65e8ac04921fd9f108f5f76a4f84e7b4a00be2cc416e6dd03e7fbb92b475",
+   "details": {
+    "raw_payload": {
+     "raw_prompt": "Write one python method that searches explanatory examples.\nFamily: software.\nTask (authoritative content, not a reference): {\"family\": \"software\", \"ops\": [{\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"a\", \"op\": \"del\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}], \"seed\": 5301, \"task_id\": \"ad01-w0-transfer-sw-00\", \"template\": \"stale-read-3chain\"}\nPublic operations: {\"ddmin__ddmin_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin__ddmin_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'ddmin' and you cannot choose another\"}, \"ddmin_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"graph_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the graph family\", \"signature\": \"graph_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}, \"greedy__greedy_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy__greedy_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'greedy' and you cannot choose another\"}, \"greedy_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"software_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the software family\", \"signature\": \"software_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}}\nCandidate shape: {\"family_value\": \"software\", \"legality\": \"candidate ops must be a legal deletion of the task ops holding the witness observation\", \"required_keys\": [\"family\", \"task_id\", \"ops\", \"witness\"]}\nShape example (the incumbent task itself, a valid candidate): {\"family\": \"software\", \"ops\": [{\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"a\", \"op\": \"del\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}], \"seed\": 5301, \"task_id\": \"ad01-w0-transfer-sw-00\", \"template\": \"stale-read-3chain\"}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps witness observation ?: it must stay a legal deletion holding that observation. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-deletion,invalid-candidate,invalid-task,observation-missing,ok-incumbent,ok-preserved,task-mismatch,witness-lost-agree,witness-value-changed.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"deadline_ms\": 165000, \"max_output_tokens\": 4096, \"max_queries\": 16, \"model_calls\": 4}.",
+     "raw_response": null
+    },
+    "diagnosis": {
+     "stage": "transport",
+     "kind": "GatewayErrorKind.TIMEOUT",
+     "reason": "gateway read timed out",
+     "retryable": true,
+     "response_received": false,
+     "response_status": null,
+     "response_digest": null,
+     "route_error": null,
+     "usage": {
+      "input_tokens": "unknown",
+      "output_tokens": "unknown",
+      "charge_units": "unknown",
+      "charge_scale": "unknown",
+      "provider_enforced_ceiling": "unknown",
+      "billed": "unknown"
+     }
+    },
+    "usage": {
+     "input_tokens": "unknown",
+     "output_tokens": "unknown",
+     "charge_units": "unknown",
+     "charge_scale": "unknown",
+     "provider_enforced_ceiling": "unknown",
+     "billed": "unknown"
+    }
+   },
+   "diagnosis": {
+    "stage": "transport",
+    "kind": "GatewayErrorKind.TIMEOUT",
+    "reason": "gateway read timed out",
+    "retryable": true,
+    "response_received": false,
+    "response_status": null,
+    "response_digest": null,
+    "route_error": null,
+    "usage": {
+     "input_tokens": "unknown",
+     "output_tokens": "unknown",
+     "charge_units": "unknown",
+     "charge_scale": "unknown",
+     "provider_enforced_ceiling": "unknown",
+     "billed": "unknown"
+    }
+   },
+   "raw_prompt": "Write one python method that searches explanatory examples.\nFamily: software.\nTask (authoritative content, not a reference): {\"family\": \"software\", \"ops\": [{\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"a\", \"op\": \"del\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}], \"seed\": 5301, \"task_id\": \"ad01-w0-transfer-sw-00\", \"template\": \"stale-read-3chain\"}\nPublic operations: {\"ddmin__ddmin_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin__ddmin_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'ddmin' and you cannot choose another\"}, \"ddmin_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"graph_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the graph family\", \"signature\": \"graph_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}, \"greedy__greedy_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy__greedy_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'greedy' and you cannot choose another\"}, \"greedy_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"software_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the software family\", \"signature\": \"software_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}}\nCandidate shape: {\"family_value\": \"software\", \"legality\": \"candidate ops must be a legal deletion of the task ops holding the witness observation\", \"required_keys\": [\"family\", \"task_id\", \"ops\", \"witness\"]}\nShape example (the incumbent task itself, a valid candidate): {\"family\": \"software\", \"ops\": [{\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"a\", \"op\": \"del\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v2\"}, {\"op\": \"clear\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}], \"seed\": 5301, \"task_id\": \"ad01-w0-transfer-sw-00\", \"template\": \"stale-read-3chain\"}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps witness observation ?: it must stay a legal deletion holding that observation. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-deletion,invalid-candidate,invalid-task,observation-missing,ok-incumbent,ok-preserved,task-mismatch,witness-lost-agree,witness-value-changed.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"deadline_ms\": 165000, \"max_output_tokens\": 4096, \"max_queries\": 16, \"model_calls\": 4}.",
+   "prompt_digest": "b699d6dce38b31d38a65759e69973c327f2e5d286df3af6b36abd84c38f886ca",
+   "raw_response": null,
+   "response_digest": null,
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "returned_model": null,
+   "endpoint": null,
+   "provider": null,
+   "tier": null,
+   "requested_output_cap": 4096,
+   "stop_reason": "",
+   "response_received": false,
+   "response_status": null,
+   "route_error": null,
+   "usage": {
+    "input_tokens": "unknown",
+    "output_tokens": "unknown",
+    "charge_units": "unknown",
+    "charge_scale": "unknown",
+    "provider_enforced_ceiling": "unknown",
+    "billed": "unknown"
+   },
+   "billed": "unknown",
+   "charge_units": "unknown"
+  }
+ ]
+}

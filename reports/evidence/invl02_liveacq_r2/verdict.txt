@@ -1,0 +1,10 @@
+live_acquisition verdict: true
+
+  declared_model_matches_freeze              pass
+      all 2 construction requests persisted the pinned model 'openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'
+  bound_equals_candidate                     pass
+      arm_gr00 candidate=f1b674171ad1 bound=f1b674171ad1 source_digest=f1b674171ad1; arm_sw00 candidate=e910a154eba9 bound=e910a154eba9 source_digest=e910a154eba9
+  executed_bytes_are_the_bound_policy        pass
+      over 2 executed records: arm_gr00 on ad01-w0-transfer-gr-00 hashes to f1b674171ad1, bound policy is f1b674171ad1; arm_sw00 on ad01-w0-transfer-sw-00 hashes to e910a154eba9, bound policy is e910a154eba9
+  dispatch_was_live_not_a_recording          pass
+      ad01-liveacq-gr00-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init outcome=success identity=gw:ad01-liveacq-gr00-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'; ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init outcome=success identity=gw:ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init persisted model='openrouter/nvidia/nemotron-3-ultra-550b-a55b:free'

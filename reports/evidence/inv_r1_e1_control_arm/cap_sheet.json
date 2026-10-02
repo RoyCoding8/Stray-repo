@@ -1,0 +1,90 @@
+{
+ "accounting_kinds": [
+  "estimate",
+  "measured",
+  "internal_charge",
+  "provider_billing"
+ ],
+ "derivation": {
+  "construction_request": {
+   "deadline_ms": 300000,
+   "max_output_tokens": 2048
+  },
+  "deadline_note": "overall study wall clock enforced before each trajectory, per-operation deadlines from runner settings",
+  "effective_config": {
+   "construction": {
+    "deadline_ms": 300000,
+    "max_output_tokens": 2048
+   },
+   "deadline_s": 3000,
+   "gateway": {
+    "api": "recording-double",
+    "endpoint_env": "SETTLEMENT_GATEWAY_ENDPOINT"
+   },
+   "learner": {
+    "deadline_ms": 300000,
+    "max_output_tokens": 2048
+   },
+   "model": "inv01-study-double",
+   "provider": "recording",
+   "reasoning_effort": "low",
+   "sandbox": {
+    "max_output_bytes": 1048576,
+    "profile": "local-process",
+    "settle_s": 80,
+    "timeout_ms": 30000
+   }
+  },
+  "learner_request": {
+   "deadline_ms": 300000,
+   "max_output_tokens": 2048
+  },
+  "model_exposure_kind": "estimated-budget",
+  "packet_version": "ad01-packet-v1",
+  "per_trajectory_boundaries": "WORKER-INVESTIGATION-01-COMPLETION pilot ceiling, enforced in trajectory.run_campaign",
+  "per_trajectory_construction": "construct.CONSTRUCTION_CALL_CEILING",
+  "per_trajectory_dev_episodes": "trajectory.DEV_EPISODE_CAP",
+  "per_trajectory_diagnostic_queries": "6 boundaries times 16 explicit max_queries per development, not a historical average",
+  "per_trajectory_lineages": "construct.MAX_LINEAGES, one init plus at most one repair each",
+  "per_trajectory_model_calls": "caps model_calls, learner plus construction through broker",
+  "query_ceiling_source": "explicit max_queries budgets and diagnostic caps, never a historical average",
+  "sandbox_exposure_kind": "hard-ceiling",
+  "sandbox_exposure_note": "hard-ceiling from timeout plus 80 settle seconds",
+  "sandbox_operation": {
+   "max_output_bytes": 1048576,
+   "profile": "local-process",
+   "timeout_ms": 30000
+  },
+  "study_construction": "6 trajectories times 4 construction calls",
+  "study_execution_units": "acquisition 6 campaigns times 111 plus use 18 tasks per arm times 3 arms times 111 sandbox units",
+  "study_model_calls": "6 trajectories times 60 model calls",
+  "study_witness_queries": "acquisition 6 campaigns times 96 plus use 18 tasks per arm times 3 arms times 16 witness queries, both derived from the need dicts the loops admit against",
+  "token_estimate_kind": "estimated-budget",
+  "token_estimate_note": "broker model exposure sums request characters divided by 4 plus max_output_tokens as an estimate only, never an absolute token bound",
+  "wall_deadline": "persisted wall_deadline_at enforced before each effect with remaining propagated"
+ },
+ "kinds_note": {
+  "estimate": "broker exposure_schedule before effects",
+  "internal_charge": "charge_units reserved against the study allocation",
+  "measured": "receipt usage input/output tokens plus witness queries plus sandbox ops",
+  "provider_billing": "only usage with billed true; recording doubles report billed false"
+ },
+ "per_trajectory": {
+  "diagnostic_queries": 96,
+  "max_boundaries": 6,
+  "max_construction_calls": 4,
+  "max_dev_episodes": 3,
+  "max_lineages": 2,
+  "max_model_calls": 60,
+  "max_witness_queries_per_development": 16
+ },
+ "study": {
+  "deadline_s": 3000,
+  "max_boundaries": 36,
+  "max_construction_calls": 24,
+  "max_execution_units": 7326,
+  "max_model_calls": 360,
+  "max_witness_queries": 2106,
+  "trajectories": 6
+ }
+}

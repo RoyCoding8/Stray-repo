@@ -1,0 +1,23 @@
+#!/bin/sh
+# Idempotent. Prints a refusal on stderr and exits 1 rather than writing a hook
+# that would not run, because a hook nobody installed is a comment.
+set -eu
+
+here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo=$(git rev-parse --show-toplevel)
+
+git config --local core.hooksPath githooks || exit 1
+
+for h in prepare-commit-msg; do
+    if [ ! -x "$here/$h" ]; then
+        printf 'install: %s/%s is missing or not executable\n' "$here" "$h" >&2
+        exit 1
+    fi
+done
+
+[ "$(git config --get core.hooksPath)" = githooks ] || {
+    printf 'install: core.hooksPath did not take\n' >&2
+    exit 1
+}
+
+printf 'install: core.hooksPath=githooks, prepare-commit-msg live for every worktree of %s\n' "$repo"

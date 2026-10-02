@@ -1,0 +1,457 @@
+{
+ "arms": [
+  "P0",
+  "P1",
+  "P2"
+ ],
+ "artifact_kind": "learning-policy",
+ "assessment": [
+  {
+   "arm": "P0",
+   "domain": "software",
+   "episode_id": "assess-P0-w1-software",
+   "investigation_task": "ad01-w1-dev-sw-00",
+   "use_tasks": [
+    "ad01-w1-within-sw-00",
+    "ad01-w1-transfer-sw-00"
+   ],
+   "world": 1
+  },
+  {
+   "arm": "P0",
+   "domain": "graph",
+   "episode_id": "assess-P0-w1-graph",
+   "investigation_task": "ad01-w1-dev-gr-00",
+   "use_tasks": [
+    "ad01-w1-within-gr-00",
+    "ad01-w1-transfer-gr-00"
+   ],
+   "world": 1
+  },
+  {
+   "arm": "P0",
+   "domain": "software",
+   "episode_id": "assess-P0-w2-software",
+   "investigation_task": "ad01-w2-dev-sw-00",
+   "use_tasks": [
+    "ad01-w2-within-sw-00",
+    "ad01-w2-transfer-sw-00"
+   ],
+   "world": 2
+  },
+  {
+   "arm": "P0",
+   "domain": "graph",
+   "episode_id": "assess-P0-w2-graph",
+   "investigation_task": "ad01-w2-dev-gr-00",
+   "use_tasks": [
+    "ad01-w2-within-gr-00",
+    "ad01-w2-transfer-gr-00"
+   ],
+   "world": 2
+  },
+  {
+   "arm": "P1",
+   "domain": "software",
+   "episode_id": "assess-P1-w1-software",
+   "investigation_task": "ad01-w1-dev-sw-00",
+   "use_tasks": [
+    "ad01-w1-within-sw-00",
+    "ad01-w1-transfer-sw-00"
+   ],
+   "world": 1
+  },
+  {
+   "arm": "P1",
+   "domain": "graph",
+   "episode_id": "assess-P1-w1-graph",
+   "investigation_task": "ad01-w1-dev-gr-00",
+   "use_tasks": [
+    "ad01-w1-within-gr-00",
+    "ad01-w1-transfer-gr-00"
+   ],
+   "world": 1
+  },
+  {
+   "arm": "P1",
+   "domain": "software",
+   "episode_id": "assess-P1-w2-software",
+   "investigation_task": "ad01-w2-dev-sw-00",
+   "use_tasks": [
+    "ad01-w2-within-sw-00",
+    "ad01-w2-transfer-sw-00"
+   ],
+   "world": 2
+  },
+  {
+   "arm": "P1",
+   "domain": "graph",
+   "episode_id": "assess-P1-w2-graph",
+   "investigation_task": "ad01-w2-dev-gr-00",
+   "use_tasks": [
+    "ad01-w2-within-gr-00",
+    "ad01-w2-transfer-gr-00"
+   ],
+   "world": 2
+  },
+  {
+   "arm": "P2",
+   "domain": "software",
+   "episode_id": "assess-P2-w1-software",
+   "investigation_task": "ad01-w1-dev-sw-00",
+   "use_tasks": [
+    "ad01-w1-within-sw-00",
+    "ad01-w1-transfer-sw-00"
+   ],
+   "world": 1
+  },
+  {
+   "arm": "P2",
+   "domain": "graph",
+   "episode_id": "assess-P2-w1-graph",
+   "investigation_task": "ad01-w1-dev-gr-00",
+   "use_tasks": [
+    "ad01-w1-within-gr-00",
+    "ad01-w1-transfer-gr-00"
+   ],
+   "world": 1
+  },
+  {
+   "arm": "P2",
+   "domain": "software",
+   "episode_id": "assess-P2-w2-software",
+   "investigation_task": "ad01-w2-dev-sw-00",
+   "use_tasks": [
+    "ad01-w2-within-sw-00",
+    "ad01-w2-transfer-sw-00"
+   ],
+   "world": 2
+  },
+  {
+   "arm": "P2",
+   "domain": "graph",
+   "episode_id": "assess-P2-w2-graph",
+   "investigation_task": "ad01-w2-dev-gr-00",
+   "use_tasks": [
+    "ad01-w2-within-gr-00",
+    "ad01-w2-transfer-gr-00"
+   ],
+   "world": 2
+  }
+ ],
+ "caps": {
+  "assessment_episodes": 12,
+  "construction_calls": 4,
+  "dev_episodes": 4,
+  "diagnostic_queries_per_episode": 16,
+  "per_episode": {
+   "model_calls": 6,
+   "policy_steps": 6
+  },
+  "study_model_calls": 100
+ },
+ "config": {
+  "adapter": "settlement.gateway_http.HttpGatewayAdapter",
+  "api": "responses",
+  "endpoint_digest": "a4843de19c2c6c79c50e46d62a469dba0f50bded97abd120d5a1034acd99d007",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "freeze_id": "ad01",
+  "mode": "live",
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "packet_version": "ad01-packet-v1",
+  "profile": "local-process",
+  "protocol": "broker-v1",
+  "reasoning_effort": "low"
+ },
+ "construction_allowance": {
+  "P1": {
+   "init": 1,
+   "repair": 1
+  },
+  "P2": {
+   "init": 1,
+   "repair": 1
+  }
+ },
+ "construction_experience": {
+  "P1": "interface-and-objective-only",
+  "P2": "permitted-development-observations"
+ },
+ "development": [
+  {
+   "domain": "software",
+   "episode_id": "dev-sw-0",
+   "task_id": "ad01-w0-dev-sw-00",
+   "world": 0
+  },
+  {
+   "domain": "software",
+   "episode_id": "dev-sw-1",
+   "task_id": "ad01-w0-dev-sw-01",
+   "world": 0
+  },
+  {
+   "domain": "graph",
+   "episode_id": "dev-gr-0",
+   "task_id": "ad01-w0-dev-gr-00",
+   "world": 0
+  },
+  {
+   "domain": "graph",
+   "episode_id": "dev-gr-1",
+   "task_id": "ad01-w0-dev-gr-01",
+   "world": 0
+  }
+ ],
+ "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+ "method_repertoires": {
+  "P0": {
+   "member_digests": [
+    "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685",
+    "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+   ],
+   "members": [
+    {
+     "authored": false,
+     "capability_id": "acquired-sw-3834317f",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-I-50",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09-m5-pilot"
+     },
+     "entry": "ENTRY",
+     "method_source": "def ENTRY(task, oracle, max_queries=16):\n    if task['family'] == 'software':\n        return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+     "params": {
+      "max_queries": 15
+     },
+     "qualified_on": "ad01-w0-dev-sw-00",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+    },
+    {
+     "authored": false,
+     "capability_id": "acquired-sw-3834317f",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-I-51",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09-m5-pilot"
+     },
+     "entry": "ENTRY",
+     "method_source": "def ENTRY(task, oracle, max_queries=16):\n    if task['family'] == 'software':\n        return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+     "params": {
+      "max_queries": 15
+     },
+     "qualified_on": "ad01-w0-dev-sw-01",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+    }
+   ]
+  },
+  "P1": {
+   "member_digests": [
+    "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685",
+    "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+   ],
+   "members": [
+    {
+     "authored": false,
+     "capability_id": "acquired-sw-3834317f",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-I-50",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09-m5-pilot"
+     },
+     "entry": "ENTRY",
+     "method_source": "def ENTRY(task, oracle, max_queries=16):\n    if task['family'] == 'software':\n        return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+     "params": {
+      "max_queries": 15
+     },
+     "qualified_on": "ad01-w0-dev-sw-00",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+    },
+    {
+     "authored": false,
+     "capability_id": "acquired-sw-3834317f",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-I-51",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09-m5-pilot"
+     },
+     "entry": "ENTRY",
+     "method_source": "def ENTRY(task, oracle, max_queries=16):\n    if task['family'] == 'software':\n        return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+     "params": {
+      "max_queries": 15
+     },
+     "qualified_on": "ad01-w0-dev-sw-01",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+    }
+   ]
+  },
+  "P2": {
+   "member_digests": [
+    "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685",
+    "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+   ],
+   "members": [
+    {
+     "authored": false,
+     "capability_id": "acquired-sw-3834317f",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-I-50",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09-m5-pilot"
+     },
+     "entry": "ENTRY",
+     "method_source": "def ENTRY(task, oracle, max_queries=16):\n    if task['family'] == 'software':\n        return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+     "params": {
+      "max_queries": 15
+     },
+     "qualified_on": "ad01-w0-dev-sw-00",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+    },
+    {
+     "authored": false,
+     "capability_id": "acquired-sw-3834317f",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-I-51",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09-m5-pilot"
+     },
+     "entry": "ENTRY",
+     "method_source": "def ENTRY(task, oracle, max_queries=16):\n    if task['family'] == 'software':\n        return reducers.reduce_software(task, oracle, method='greedy', max_queries=max_queries)\n    return reducers.reduce_graph(task, oracle, method='greedy', max_queries=max_queries)\n",
+     "params": {
+      "max_queries": 15
+     },
+     "qualified_on": "ad01-w0-dev-sw-01",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685"
+    }
+   ]
+  }
+ },
+ "metric_rule": {
+  "compare": [
+   "P2-vs-P0",
+   "P2-vs-P1"
+  ],
+  "quality": "preserved-verdict-plus-normalized-reduction",
+  "scope": "sealed-use-tasks-only"
+ },
+ "order": [
+  "dev-sw-0",
+  "dev-sw-1",
+  "dev-gr-0",
+  "dev-gr-1",
+  "assess-P0-w1-software",
+  "assess-P0-w1-graph",
+  "assess-P0-w2-software",
+  "assess-P0-w2-graph",
+  "assess-P1-w1-software",
+  "assess-P1-w1-graph",
+  "assess-P1-w2-software",
+  "assess-P1-w2-graph",
+  "assess-P2-w1-software",
+  "assess-P2-w1-graph",
+  "assess-P2-w2-software",
+  "assess-P2-w2-graph"
+ ],
+ "phase": "preassessment",
+ "policy_abi": "ad01-policy-step-v1",
+ "policy_identities": {
+  "P0": {
+   "artifact": {
+    "abi": "ad01-policy-step-v1",
+    "applicability": {
+     "study_id": "s09-pilot-n5"
+    },
+    "dependencies": [],
+    "entry": "STEP",
+    "instruments": [],
+    "kind": "learning-policy",
+    "origin": "authored-control",
+    "parent_digest": null,
+    "source_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+   },
+   "calls": 0,
+   "experience_digest": "",
+   "source": "def STEP(view, state):\n    task = view['task_content']\n    if state.get('used'):\n        return {'action': {'kind': 'stop', 'target': task['task_id'], 'inputs': {'reason': 'policy complete'}, 'evidence_refs': [], 'requested_resources': {}}, 'state': state}\n    return {'action': {'kind': 'construct_method', 'target': task['task_id'], 'inputs': {'diagnostic': task['family'], 'max_queries': 16}, 'evidence_refs': [], 'requested_resources': {'queries': 16}}, 'state': {'used': True}}\n",
+   "source_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+   "status": "available",
+   "task_id": ""
+  },
+  "P1": {
+   "artifact": {
+    "abi": "ad01-policy-step-v1",
+    "applicability": {
+     "family": "software"
+    },
+    "dependencies": [],
+    "entry": "STEP",
+    "instruments": [],
+    "kind": "learning-policy",
+    "origin": "model-acquired",
+    "parent_digest": "b791113da391b7419bdb4cd2c4c02f075713a9e329d7923a5bd76287a6f2cde7",
+    "source_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706"
+   },
+   "calls": 1,
+   "experience_digest": "39043ee722b025ea2b5c8e69f28c2a0b86c884349d37e926aa588640905ab608",
+   "source": "def STEP(view, state):\n    task = view['task_content']\n    if state.get('done'):\n        action = {'kind': 'stop', 'target': task['task_id'],\n                  'inputs': {'reason': 'candidate complete'},\n                  'evidence_refs': [], 'requested_resources': {}}\n    else:\n        action = {'kind': 'construct_method', 'target': task['task_id'],\n                  'inputs': {'max_queries': 4}, 'evidence_refs': [],\n                  'requested_resources': {'queries': 4}}\n    return {'action': action, 'state': {'done': True}}\n",
+   "source_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+   "status": "available",
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  "P2": {
+   "calls": 2,
+   "experience_digest": "351f899db88684f8e08e15e33329f309c38e09b40035012e4cc35149c3e4ca3e",
+   "reason": "policy constructor unavailable: model call cap reached",
+   "status": "unavailable",
+   "task_id": "ad01-w0-dev-sw-00"
+  }
+ },
+ "resource_rule": {
+  "missing_arm_narrows_result": true,
+  "no_replacement_episodes": true,
+  "unknown_blocks_claims": true
+ },
+ "study_id": "s09-pilot-n5",
+ "study_root": "s09-m5-pilot"
+}

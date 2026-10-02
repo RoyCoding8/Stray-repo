@@ -245,6 +245,218 @@ def test_evidence_identity_includes_receipt_identity(tmp_path):
     assert len(store.evidence) == 2
 
 
+def test_identical_evidence_replay_returns_the_durable_record(tmp_path):
+    store = _store(tmp_path)
+    record = frontier.make_evidence_record(
+        "m4-observation", "op-replay", "success",
+        receipt_identity="receipt-replay", task_id="rule-dev-0004",
+        result_digest="a" * 64)
+
+    assert store.record_evidence(record) == record
+    assert store.record_evidence(dict(record)) == record
+    assert store.evidence == [record]
+
+
+def test_repeated_acquisition_retention_is_idempotent(tmp_path):
+    store = _store(tmp_path)
+    store.bind_active(channel.make_control("low"))
+    package = _model_package(store)
+    finalization = next(
+        record for record in store.evidence
+        if record.get("dispatch_evidence_digest") == package["provenance"][
+            "dispatch_evidence_digest"])
+    evidence_before = list(store.evidence)
+
+    result = live.retain_acquired(store, package, finalization)
+
+    assert result == {
+        "package_digest": package["package_digest"],
+        "control_id": package["control_id"]}
+    assert store.evidence == evidence_before
+    assert store.treatment_arms["acquired"] == [package]
+
+
+@pytest.mark.parametrize("field,value", [
+    ("kind", "m4-observation"),
+    ("operation_id", "op-other"),
+    ("attempt", 2),
+    ("outcome", "failure"),
+    ("arm", "P2"),
+    ("task_id", "rule-dev-0005"),
+    ("receipt_identity", "receipt-other"),
+    ("source_digest", "1" * 64),
+    ("artifact_digest", "2" * 64),
+    ("input_digest", "3" * 64),
+    ("result_digest", "4" * 64),
+    ("package_digest", "5" * 64),
+    ("parent_digest", "6" * 64),
+    ("round_no", 4),
+    ("dispatch_evidence_digest", "7" * 64),
+    ("driver_digest", "8" * 64),
+    ("operation_payload_digest", "9" * 64),
+    ("parse_outcome", "parse-failed"),
+    ("accepted_candidate_digest", "a" * 64),
+    ("details", {"raw_payload": {"value": "other"}, "route": {}}),
+])
+def test_finalization_identity_digest_covers_each_identity_field(
+        field, value):
+    identity = {
+        "kind": "gateway-dispatch",
+        "operation_id": "op-finalization",
+        "attempt": 1,
+        "outcome": "success",
+        "arm": "P1",
+        "task_id": "rule-dev-0004",
+        "receipt_identity": "receipt-finalization",
+        "source_digest": "a" * 64,
+        "artifact_digest": "b" * 64,
+        "input_digest": "c" * 64,
+        "result_digest": "d" * 64,
+        "package_digest": "e" * 64,
+        "parent_digest": "f" * 64,
+        "round_no": 3,
+        "dispatch_evidence_digest": "0" * 64,
+        "driver_digest": "1" * 64,
+        "operation_payload_digest": "2" * 64,
+        "parse_outcome": "accepted",
+        "accepted_candidate_digest": "3" * 64,
+        "details": {"raw_payload": {"value": "first"}, "route": {
+            "endpoint": "local"}},
+    }
+    first = frontier.make_evidence_record(**identity)
+    changed = frontier.make_evidence_record(
+        **{**identity, field: value})
+
+    assert first["evidence_digest"] != changed["evidence_digest"]
+
+
+@pytest.mark.parametrize("field,value", [
+    ("requested_model", "other-model"),
+    ("returned_model", "other-model"),
+    ("endpoint", "http://other"),
+    ("provider", "other"),
+    ("tier", "paid"),
+    ("requested_output_cap", 99),
+    ("response_digest", "a" * 64),
+    ("prompt_digest", "b" * 64),
+    ("raw_prompt", "other prompt"),
+    ("raw_response", "other response"),
+    ("stop_reason", "length"),
+    ("usage", {"input_tokens": 1, "output_tokens": 2,
+               "charge_units": 1, "charge_scale": 1,
+               "provider_enforced_ceiling": False, "billed": True}),
+    ("billed", True),
+    ("charge_units", 1),
+    ("route_error", "other"),
+    ("cost_blocked", "blocked"),
+    ("response_received", True),
+    ("response_status", 500),
+    ("exception_class", "OtherError"),
+    ("exception_reason", "other"),
+    ("diagnosis", {"stage": "other"}),
+])
+def test_restart_refuses_mutated_finalization_response_evidence(
+        tmp_path, field, value):
+    store = _store(tmp_path)
+    store.bind_active(channel.make_control("low"))
+    package = _model_package(store)
+    finalization = next(
+        record for record in store._doc["evidence"]
+        if record.get("dispatch_evidence_digest") == package["provenance"][
+            "dispatch_evidence_digest"])
+    before = frontier._evidence_identity_digest(finalization)
+    mutated = {**finalization, field: value}
+
+    assert frontier._evidence_identity_digest(mutated) != before
+
+    finalization.clear()
+    finalization.update(mutated)
+    finalization["evidence_digest"] = frontier._evidence_identity_digest(
+        finalization)
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="identity|acquisition|dispatch"):
+        live.restart_store(store.path)
+
+
+@pytest.mark.parametrize("usage_kwargs", [
+    {"input_tokens": "not-a-number"},
+    {"charge_units": "not-a-number"},
+    {"billed": "not-a-boolean"},
+    {"provider_enforced_ceiling": "not-a-boolean"},
+])
+def test_record_evidence_rejects_malformed_gateway_usage(
+        tmp_path, usage_kwargs):
+    from settlement.gateway import ModelRequest, ModelResponse, Usage
+
+    store = _store(tmp_path)
+
+    class Gateway:
+        def infer(self, request):
+            return ModelResponse(
+                request.operation_id, "response", {}, Usage(**usage_kwargs),
+                "stop")
+
+    guard = live.LiveGuard(Gateway(), pinned_model="test-model", ceiling=1)
+    request = ModelRequest(
+        model="test-model", messages=(), max_output_tokens=8,
+        deadline_ms=1000, operation_id="op-malformed-usage")
+    guard.infer(request)
+    dispatch = guard.provenance(request.operation_id)
+
+    with pytest.raises(frontier.Refused, match="usage|charge|billed"):
+        store.record_evidence(dispatch)
+
+    assert store.evidence == []
+
+
+def test_record_evidence_rejects_malformed_top_level_gateway_usage(
+        tmp_path):
+    store = _store(tmp_path)
+    dispatch = frontier.make_evidence_record(
+        "gateway-dispatch", "op-top-level-usage", "success",
+        receipt_identity="receipt-top-level-usage",
+        task_id="rule-dev-0004", result_digest="a" * 64,
+        details={"raw_payload": {"raw_prompt": "prompt", "raw_response": "ok"}})
+    dispatch["charge_units"] = "not-a-number"
+    dispatch["evidence_digest"] = frontier._evidence_identity_digest(dispatch)
+
+    with pytest.raises(frontier.Refused, match="charge"):
+        store.record_evidence(dispatch)
+
+    assert store.evidence == []
+
+
+def test_restart_refuses_changed_finalization_parse_outcome(tmp_path):
+    store = _store(tmp_path)
+    store.bind_active(channel.make_control("low"))
+    package = _model_package(store)
+    finalization = next(
+        record for record in store._doc["evidence"]
+        if record.get("dispatch_evidence_digest") == package["provenance"][
+            "dispatch_evidence_digest"])
+    finalization["parse_outcome"] = "parse-failed"
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="identity|parse|acquisition"):
+        live.restart_store(store.path)
+
+
+def test_restart_revalidates_historical_accepted_revisions(tmp_path):
+    store = _store(tmp_path)
+    base = channel.make_control("low")
+    store.bind_active(base)
+    first = channel.leaf_construct("high", base, 1)
+    store.adopt_revision(first)
+    second = channel.leaf_construct("low", first, 2)
+    store.adopt_revision(second)
+    store._doc["accepted_revisions"][0]["response_digest"] = "f" * 64
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="accepted revision|lineage"):
+        live.restart_store(store.path)
+
+
 def test_settlement_rejects_observation_for_another_effect(tmp_path):
     store = _store(tmp_path)
     base = channel.make_control("low")
@@ -403,7 +615,7 @@ def test_restart_refuses_coordinated_rewrite_of_material_acquisition_fields(
     treatment.update(mutated)
     store.save()
 
-    with pytest.raises(frontier.Refused, match="acquisition evidence|manifest"):
+    with pytest.raises(frontier.Refused, match="acquisition evidence|manifest|retained"):
         live.restart_store(store.path)
 
 
@@ -439,7 +651,7 @@ def test_restart_refuses_rewritten_finalization_lineage(tmp_path):
         finalization)
     store.save()
 
-    with pytest.raises(frontier.Refused, match="finalization|acquisition evidence"):
+    with pytest.raises(frontier.Refused, match="finalization|acquisition evidence|accepted revision"):
         live.restart_store(store.path)
 
 
@@ -512,4 +724,120 @@ def test_restart_revalidates_post_restart_operation_and_executable_identity(
     store.save()
 
     with pytest.raises(frontier.Refused, match="post-restart|child receipt"):
+        live.restart_store(store.path)
+
+
+def _reseal_evidence(record):
+    record["raw_payload_digest"] = frontier.source_digest(
+        frontier.canonical(record["details"].get("raw_payload")))
+    record["route_digest"] = frontier.source_digest(
+        frontier.canonical(record["details"].get("route")))
+    record["evidence_digest"] = frontier._evidence_identity_digest(record)
+    return record
+
+
+@pytest.mark.parametrize("field,value", [
+    ("task_id", "task-forged"),
+    ("attempt", 2),
+    ("route", {"endpoint": "forged"}),
+])
+def test_restart_refuses_finalization_lineage_drift(tmp_path, field, value):
+    store = _store(tmp_path)
+    base = channel.make_control("low")
+    store.bind_active(base)
+    package = _model_package(store)
+    live.adopt_live_revision(store, package, arm="test")
+    record = next(
+        item for item in store._doc["evidence"]
+        if item.get("dispatch_evidence_digest") == package["provenance"][
+            "dispatch_evidence_digest"])
+    if field == "route":
+        record["details"] = dict(record["details"], route=value)
+    else:
+        record[field] = value
+    _reseal_evidence(record)
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="dispatch evidence|acquisition evidence|projection|accepted revision"):
+        live.restart_store(store.path)
+
+
+def test_restart_refuses_rewritten_original_route(tmp_path):
+    store = _store(tmp_path)
+    base = channel.make_control("low")
+    store.bind_active(base)
+    package = _model_package(store)
+    live.adopt_live_revision(store, package, arm="test")
+    original = next(
+        item for item in store._doc["evidence"]
+        if item.get("evidence_digest") == package["provenance"][
+            "dispatch_evidence_digest"])
+    original["details"] = dict(original["details"], route={"endpoint": "forged"})
+    _reseal_evidence(original)
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="dispatch evidence|acquisition evidence|projection|accepted revision"):
+        live.restart_store(store.path)
+
+
+def test_restart_refuses_fabricated_local_post_restart_replacement(tmp_path):
+    store = _store(tmp_path)
+    store.bind_active(channel.make_control("low"))
+    package = _model_package(store)
+    live.adopt_live_revision(store, package, arm="test")
+    bound = live.bind_retained_acquisition(
+        str(store.path), {"status": "retained", "arm": "test",
+                          "control_id": package["control_id"],
+                          "package_digest": package["package_digest"],
+                          "response_digest": package["response_digest"]},
+        rules.make_task("dev", 4))
+    assert bound["disposition"] == "bound"
+    store = live.restart_store(store.path)
+    record = next(
+        item for item in store._doc["accepted_revisions"]
+        if item["package_digest"] == package["package_digest"])
+    fabricated = dict(record["receipt"])
+    fabricated["receipt_identity"] = "local:" + fabricated["receipt_identity"]
+    _reseal_evidence(fabricated)
+    store._doc["evidence"].append(fabricated)
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="local|rollback|receipt|evidence"):
+        live.restart_store(store.path)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("retained", {"evidence_ids": ["missing"], "obligations": []}),
+    ("obligations", ["valid", 3]),
+    ("outcomes", {"not-canonical": 3}),
+    ("mission", {"objective": "forged", "environments": []}),
+])
+def test_restart_revalidates_retained_projections(tmp_path, field, value):
+    store = _store(tmp_path)
+    if field == "retained":
+        store._doc[field] = value
+    elif field == "obligations":
+        store._doc[field] = value
+    elif field == "outcomes":
+        store._doc[field] = value
+    else:
+        store._doc[field] = value
+        store._doc["environments"] = []
+        store._doc["environment_digest"] = frontier.environment_digest([])
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="retained|obligation|outcome|mission"):
+        live.restart_store(store.path)
+
+
+def test_restart_rejects_missing_durable_evidence_projection(tmp_path):
+    store = _store(tmp_path)
+    evidence = frontier.make_evidence_record(
+        "m4-observation", "op-projection", "success",
+        task_id="rule-dev-0004", result_digest="a" * 64)
+    store.record_evidence(evidence)
+    store._doc["evidence"] = []
+    store.save()
+
+    with pytest.raises(frontier.Refused, match="evidence"):
         live.restart_store(store.path)

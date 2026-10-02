@@ -49,7 +49,12 @@ EVIDENCE_KINDS = (
     "m4-observation",
 )
 EVIDENCE_OUTCOMES = ("success", "failure", "unknown", "unresolved")
+PARSE_OUTCOMES = (
+    "pending", "accepted", "parse-failed", "route-refused",
+    "transport-error", "too-long", "empty",
+)
 SOURCE_ANCHOR_VERSION = "invl02-source-anchor-v1"
+RESOURCE_KEYS = frozenset(("queries", "steps"))
 
 INSTRUMENTS = ("boolean-rule-v1", "deliberation")
 
@@ -64,6 +69,19 @@ def canonical(data) -> str:
 
 def _digest_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+EVIDENCE_RESPONSE_FIELDS = (
+    "requested_model", "returned_model", "endpoint", "provider", "tier",
+    "requested_output_cap", "response_digest", "prompt_digest", "raw_prompt",
+    "raw_response", "stop_reason", "usage", "billed", "charge_units",
+    "route_error", "cost_blocked", "response_received", "response_status",
+    "exception_class", "exception_reason", "diagnosis",
+)
+EVIDENCE_USAGE_COUNT_FIELDS = (
+    "input_tokens", "output_tokens", "charge_units", "charge_scale",
+)
+EVIDENCE_USAGE_BOOL_FIELDS = ("provider_enforced_ceiling", "billed")
 
 
 PACKAGE_MANIFEST_FIELDS = (
@@ -117,11 +135,14 @@ def _evidence_identity_digest(record: dict) -> str:
         "task_id", "receipt_identity",
         "source_digest", "artifact_digest", "input_digest", "result_digest",
         "package_digest", "parent_digest", "round",
-        "dispatch_evidence_digest", "raw_payload_digest",
+        "dispatch_evidence_digest", "raw_payload_digest", "route_digest",
     )
     identity = {key: record.get(key) for key in keys}
-    for key in ("driver_digest", "operation_payload_digest"):
-        if record.get(key) is not None:
+    for key in EVIDENCE_RESPONSE_FIELDS:
+        identity[key] = record.get(key)
+    for key in ("driver_digest", "operation_payload_digest",
+                "parse_outcome", "accepted_candidate_digest"):
+        if key in record:
             identity[key] = record[key]
     return _digest_text(canonical(identity))
 
@@ -141,6 +162,8 @@ def make_evidence_record(kind: str, operation_id: str, outcome: str, *,
                          dispatch_evidence_digest: str | None = None,
                          driver_digest: str | None = None,
                          operation_payload_digest: str | None = None,
+                         parse_outcome: str | None = None,
+                         accepted_candidate_digest: str | None = None,
                          details: dict | None = None) -> dict:
     if kind not in EVIDENCE_KINDS or outcome not in EVIDENCE_OUTCOMES:
         raise Refused("evidence kind or outcome is unknown")
@@ -157,6 +180,7 @@ def make_evidence_record(kind: str, operation_id: str, outcome: str, *,
                 operation_payload_digest = _digest_text(canonical(
                     operation_payload))
     raw_payload_digest = _digest_text(canonical(raw_payload))
+    route_digest = _digest_text(canonical(details.get("route")))
     identity = {
         "version": EVIDENCE_VERSION,
         "kind": kind,
@@ -176,7 +200,13 @@ def make_evidence_record(kind: str, operation_id: str, outcome: str, *,
         "driver_digest": driver_digest,
         "operation_payload_digest": operation_payload_digest,
         "raw_payload_digest": raw_payload_digest,
+        "route_digest": route_digest,
     }
+    if (dispatch_evidence_digest is not None
+            or parse_outcome is not None
+            or accepted_candidate_digest is not None):
+        identity["parse_outcome"] = parse_outcome
+        identity["accepted_candidate_digest"] = accepted_candidate_digest
     receipt = receipt_identity or "evidence:%s" % _digest_text(canonical(identity))
     identity["receipt_identity"] = receipt
     evidence_digest = _evidence_identity_digest(identity)
@@ -186,6 +216,49 @@ def make_evidence_record(kind: str, operation_id: str, outcome: str, *,
         "raw_payload_digest": raw_payload_digest,
         "details": details,
     }
+
+
+def _valid_usage_value(value, *, boolean: bool) -> bool:
+    if value == "unknown":
+        return True
+    return type(value) is bool if boolean else _is_count(value)
+
+
+def _validate_usage_snapshot(usage, *, label: str) -> None:
+    if not isinstance(usage, dict):
+        raise Refused("evidence %s usage is malformed" % label)
+    for key in EVIDENCE_USAGE_COUNT_FIELDS:
+        if key in usage and not _valid_usage_value(
+                usage[key], boolean=False):
+            raise Refused("evidence %s usage %s is malformed" % (label, key))
+    for key in EVIDENCE_USAGE_BOOL_FIELDS:
+        if key in usage and not _valid_usage_value(usage[key], boolean=True):
+            raise Refused("evidence %s usage %s is malformed" % (label, key))
+
+
+def _validate_gateway_usage(record: dict) -> None:
+    for key in ("charge_units", "billed"):
+        if key in record and not _valid_usage_value(
+                record[key], boolean=key == "billed"):
+            raise Refused("evidence gateway %s is malformed" % key)
+    if "usage" in record:
+        usage = record["usage"]
+        _validate_usage_snapshot(usage, label="gateway")
+        for key in ("charge_units", "billed"):
+            if key in record and usage.get(key) != record[key]:
+                raise Refused(
+                    "dispatch evidence gateway %s does not match usage" % key)
+    details = record.get("details")
+    if isinstance(details, dict) and "usage" in details:
+        detail_usage = details["usage"]
+        _validate_usage_snapshot(detail_usage, label="gateway details")
+        if "usage" in record:
+            for key in ("charge_units", "billed"):
+                if (key in record and key in record["usage"]
+                        and record["usage"][key] != detail_usage.get(key)):
+                    raise Refused(
+                        "dispatch evidence gateway %s does not match details usage"
+                        % key)
 
 
 def validate_evidence_record(record: dict, *, kind: str | None = None,
@@ -198,7 +271,7 @@ def validate_evidence_record(record: dict, *, kind: str | None = None,
         "source_digest", "artifact_digest", "input_digest", "result_digest",
         "package_digest", "parent_digest", "round",
         "dispatch_evidence_digest", "evidence_digest", "receipt_identity",
-        "raw_payload_digest", "details",
+        "raw_payload_digest", "route_digest", "details",
     }
     if required - set(record):
         raise Refused("evidence record is incomplete")
@@ -223,13 +296,20 @@ def validate_evidence_record(record: dict, *, kind: str | None = None,
     for key in ("source_digest", "artifact_digest", "input_digest",
                 "result_digest", "package_digest", "parent_digest",
                 "dispatch_evidence_digest", "driver_digest",
-                "operation_payload_digest"):
+                "operation_payload_digest", "route_digest",
+                "accepted_candidate_digest"):
         value = record.get(key)
         if value is not None and (not isinstance(value, str)
                                   or len(value) != 64
                                   or any(character not in "0123456789abcdef"
                                          for character in value)):
             raise Refused("evidence record %s is malformed" % key)
+    if ("parse_outcome" in record and record.get("parse_outcome") is not None
+            and record.get("parse_outcome") not in PARSE_OUTCOMES):
+        raise Refused("evidence record parse outcome is malformed")
+    if record.get("dispatch_evidence_digest") is not None and not {
+            "parse_outcome", "accepted_candidate_digest"} <= set(record):
+        raise Refused("evidence finalization identity is incomplete")
     if record.get("attempt") is not None and (
             type(record.get("attempt")) is not int
             or record.get("attempt") < 1):
@@ -241,9 +321,17 @@ def validate_evidence_record(record: dict, *, kind: str | None = None,
     details = record.get("details")
     if not isinstance(details, dict):
         raise Refused("evidence record details are malformed")
+    if record.get("kind") == "gateway-dispatch":
+        _validate_gateway_usage(record)
+    if details.get("route") is not None and not isinstance(
+            details.get("route"), dict):
+        raise Refused("evidence record route is malformed")
     if record.get("raw_payload_digest") != _digest_text(canonical(
             details.get("raw_payload"))):
         raise Refused("evidence record raw payload digest mismatch")
+    if record.get("route_digest") != _digest_text(canonical(
+            details.get("route"))):
+        raise Refused("evidence record route digest mismatch")
     if record.get("evidence_digest") != _evidence_identity_digest(record):
         raise Refused("evidence record identity digest mismatch")
     return record
@@ -257,21 +345,38 @@ def _is_count(value) -> bool:
     return type(value) is int and value >= 0
 
 
-def _resource_delta(requested: dict) -> dict:
-    if not isinstance(requested, dict) or any(
-            not _is_count(value) for value in requested.values()):
+def _resource_delta(requested: dict, *, require_charge: bool = False) -> dict:
+    if (not isinstance(requested, dict)
+            or set(requested) - RESOURCE_KEYS
+            or any(not _is_count(value) for value in requested.values())):
         raise Refused("requested resources are malformed")
-    return {key: int(requested[key]) for key in sorted(requested)}
+    projection = {key: int(requested[key]) for key in sorted(requested)}
+    if require_charge and (not projection or not any(projection.values())):
+        raise Refused("charged resource projection must be nonzero")
+    return projection
 
 
 def _effect_resources(effect: dict) -> dict:
     charged = effect.get("charged_resources")
     if charged is None:
+        if effect.get("charged") is True:
+            raise Refused("charged resource projection is missing")
         return {}
-    if not isinstance(charged, dict) or any(
-            not _is_count(value) for value in charged.values()):
-        raise Refused("effect charge is malformed")
-    return dict(charged)
+    return _resource_delta(
+        charged, require_charge=effect.get("charged") is True)
+
+
+ROUND_RESULT_FIELDS = ("round", "candidate", "log", "observations", "receipts")
+REVISION_IDENTITY_FIELDS = (
+    "package_digest", "parent_digest", "imp_digest", "response_digest",
+    "provenance_digest", "acquisition_evidence_digest", "acquisition_round",
+    "origin", "source_kind", "arm", "round", "accepted", "retained", "active",
+)
+
+
+def round_result_digest(result: dict) -> str:
+    return _digest_text(canonical({key: result.get(key)
+                                   for key in ROUND_RESULT_FIELDS}))
 
 
 def validate_package(package: dict, *, grant: dict) -> dict:
@@ -372,14 +477,26 @@ def validate_acquisition_evidence(package: dict, original: dict,
             "evidence_digest"):
         raise Refused("finalization does not link original dispatch evidence")
     if any(finalization.get(key) != original.get(key) for key in (
-            "operation_id", "input_digest", "result_digest")):
+            "operation_id", "input_digest", "result_digest", "task_id",
+            "attempt", "arm", "route_digest")):
         raise Refused("dispatch evidence lineage does not match operation")
+    if any(finalization.get(key) != original.get(key)
+           for key in EVIDENCE_RESPONSE_FIELDS):
+        raise Refused("dispatch evidence response identity does not match")
+    if finalization.get("details") != original.get("details"):
+        raise Refused("dispatch evidence details do not match")
+    if (not original.get("task_id") or not original.get("arm")
+            or original.get("attempt") is None):
+        raise Refused("original dispatch has incomplete treatment identity")
     if finalization.get("arm") != original.get("arm"):
         raise Refused("finalization treatment identity does not match dispatch")
     if finalization.get("round") is None or type(
             finalization.get("round")) is not int or finalization[
                 "round"] < 0:
         raise Refused("finalization lineage has no valid round")
+    if (original.get("round") is not None
+            and finalization.get("round") != original.get("round")):
+        raise Refused("finalization round does not match dispatch")
     raw_payload = original.get("details", {}).get("raw_payload")
     if not isinstance(raw_payload, dict):
         raise Refused("dispatch evidence has no raw model response")
@@ -431,7 +548,8 @@ def validate_acquisition_evidence(package: dict, original: dict,
             "response_digest"] or package.get("response_source_digest") != \
             source_digest_value:
         raise Refused("dispatch evidence does not match package lineage")
-    if (finalization.get("source_digest") != source_digest_value
+    if (finalization.get("parse_outcome") != "accepted"
+            or finalization.get("source_digest") != source_digest_value
             or finalization.get("artifact_digest") != package.get(
                 "package_digest")
             or finalization.get("package_digest") != package.get(
@@ -563,11 +681,7 @@ def validate_operate_action(action: dict) -> dict:
             or not isinstance(inputs.get("x"), int)
             or not 0 <= inputs["x"] < 16):
         raise Refused("probe needs an opportunity_id and x in 0..15")
-    resources = action.get("requested_resources")
-    if not isinstance(resources, dict) or any(
-            not _is_count(v) for v in resources.values()):
-        raise Refused("operate action requested_resources must hold"
-                      " nonnegative integers")
+    _resource_delta(action.get("requested_resources"))
     return action
 
 
@@ -600,11 +714,7 @@ def _check_opportunity(opportunity: dict) -> dict:
     if not isinstance(intervention, dict) or intervention.get(
             "instrument") not in INSTRUMENTS:
         raise Refused("opportunity names an inadmissible instrument")
-    resources = opportunity["resources"]
-    if not isinstance(resources, dict) or not _is_count(
-            resources.get("queries")) or not _is_count(
-            resources.get("steps")):
-        raise Refused("opportunity needs finite query/step resources")
+    _resource_delta(opportunity["resources"], require_charge=True)
     if not isinstance(opportunity["opportunity_id"], str) or not \
             opportunity["opportunity_id"]:
         raise Refused("opportunity needs an id")
@@ -616,6 +726,7 @@ def _blank_doc(namespace: str, mission: dict, authority: dict) -> dict:
         "namespace": namespace,
         "frontier_version": FRONTIER_VERSION,
         "mission": dict(mission),
+        "mission_projection": canonical(dict(mission)),
         "environments": list(mission["environments"]),
         "environment_digest": environment_digest(
             mission["environments"]),
@@ -625,6 +736,7 @@ def _blank_doc(namespace: str, mission: dict, authority: dict) -> dict:
         "opportunities": {},
         "observations": [],
         "outcomes": {},
+        "outcomes_projection": canonical({}),
         "predictions": [],
         "obligations": [],
         "pending_effects": [],
@@ -632,13 +744,14 @@ def _blank_doc(namespace: str, mission: dict, authority: dict) -> dict:
         "lineage": [],
         "accepted_revisions": [],
         "retained": {"evidence_ids": [], "obligations": []},
+        "retained_projection": canonical({
+            "evidence_ids": [], "obligations": []}),
         "evidence": [],
+        "evidence_projection": [],
         "private_state": {},
         "staged_candidate": None,
-        "rounds": [],
         "round_results": [],
         "round_journal": [],
-        "improvement_log": [],
         "treatment_arms": {"acquired": []},
     }
 
@@ -646,8 +759,11 @@ def _blank_doc(namespace: str, mission: dict, authority: dict) -> dict:
 class FrontierStore:
     def __init__(self, path) -> None:
         self.path = str(path)
-        with open(self.path, encoding="utf-8") as handle:
-            doc = json.load(handle)
+        try:
+            with open(self.path, encoding="utf-8") as handle:
+                doc = json.load(handle)
+        except (OSError, ValueError) as exc:
+            raise Refused("store %s is unreadable" % self.path) from exc
         if not isinstance(doc, dict) or doc.get("namespace") != \
                 NAMESPACE:
             raise Refused("store %s is outside namespace %s" % (
@@ -656,10 +772,7 @@ class FrontierStore:
             raise Refused("store %s uses an unknown frontier version"
                           % self.path)
         self._doc = doc
-        self._doc.setdefault("accepted_revisions", [])
-        self._doc.setdefault("round_results", [])
-        self._doc.setdefault("round_journal", [])
-        self._validate_round_journal()
+        self._validate_document()
         self._validate_active_package()
 
     @property
@@ -738,7 +851,12 @@ class FrontierStore:
         return self.path + ".source-anchor-" + key + ".json"
 
     def _source_anchor_value(self, original: dict) -> dict:
-        payload = original.get("details", {}).get("raw_payload")
+        details = original.get("details", {})
+        payload = details.get("raw_payload")
+        if not isinstance(details, dict) or (
+                details.get("route") is not None
+                and not isinstance(details.get("route"), dict)):
+            raise Refused("acquisition source anchor route is malformed")
         if not isinstance(payload, dict):
             raise Refused("acquisition source anchor has no raw bytes")
         raw_prompt = payload.get("raw_prompt")
@@ -751,6 +869,7 @@ class FrontierStore:
             "evidence_digest": original.get("evidence_digest"),
             "prompt_digest": _digest_text(raw_prompt),
             "response_digest": _digest_text(raw_response),
+            "route": dict(details.get("route") or {}),
             "raw_prompt": raw_prompt,
             "raw_response": raw_response,
         }
@@ -788,7 +907,8 @@ class FrontierStore:
             raise Refused("acquisition source anchor is missing or unreadable") from exc
         expected = self._source_anchor_value(original)
         if canonical(value) != canonical(expected):
-            raise Refused("acquisition source anchor no longer matches evidence")
+            raise Refused(
+                "acquisition source anchor no longer matches dispatch evidence")
         return value
 
     def _durable_acquisition(self, package: dict,
@@ -857,6 +977,358 @@ class FrontierStore:
                              "executable_digest": None},
             "receipt": None,
         }
+
+    def _validate_document(self) -> None:
+        doc = self._doc
+        if {"rounds", "improvement_log"} & set(doc):
+            raise Refused("removed round projection is present")
+        mission = doc.get("mission")
+        if (not isinstance(mission, dict)
+                or not isinstance(mission.get("objective"), str)
+                or not mission["objective"].strip()
+                or not isinstance(mission.get("environments"), list)
+                or not mission["environments"]):
+            raise Refused("mission projection is invalid")
+        if doc.get("mission_projection") != canonical(mission):
+            raise Refused("mission projection changed")
+        environments = doc.get("environments")
+        if environments != mission["environments"]:
+            raise Refused("mission environment projection changed")
+        if doc.get("environment_digest") != environment_digest(environments):
+            raise Refused("mission environment digest changed")
+        grant = doc.get("grant")
+        used = doc.get("used")
+        if (not isinstance(grant, dict) or set(grant) != {"queries", "steps"}
+                or any(not _is_count(grant.get(key)) for key in grant)
+                or not isinstance(used, dict) or set(used) != {"queries", "steps"}
+                or any(not _is_count(used.get(key)) for key in used)
+                or any(used[key] > grant[key] for key in grant)):
+            raise Refused("authority projection is invalid")
+        opportunities = doc.get("opportunities")
+        if not isinstance(opportunities, dict):
+            raise Refused("opportunity projection is invalid")
+        for opportunity_id, opportunity in opportunities.items():
+            if not isinstance(opportunity_id, str) or not isinstance(
+                    opportunity, dict) or opportunity.get(
+                        "opportunity_id") != opportunity_id:
+                raise Refused("opportunity projection is invalid")
+            _check_opportunity(opportunity)
+            if opportunity.get("status") not in {
+                    "admissible", "accepted", "settled", "done"}:
+                raise Refused("opportunity status is invalid")
+        observations = doc.get("observations")
+        pending_effects = doc.get("pending_effects")
+        if not isinstance(observations, list) or not isinstance(
+                pending_effects, list):
+            raise Refused("observation or effect projection is invalid")
+        observation_ids = set()
+        effects = {effect.get("effect_id"): effect
+                   for effect in pending_effects if isinstance(effect, dict)}
+        for observation in observations:
+            if not isinstance(observation, dict):
+                raise Refused("observation projection is invalid")
+            observation_id = observation.get("observation_id")
+            if (not isinstance(observation_id, str) or not observation_id
+                    or observation_id in observation_ids):
+                raise Refused("observation identity projection is invalid")
+            observation_ids.add(observation_id)
+            effect_id = observation.get("effect_id")
+            if effect_id is not None and effect_id not in effects:
+                raise Refused("observation effect projection is invalid")
+        self._validate_lineage()
+        self._validate_effect_projection()
+        self._validate_retained_projection()
+        self._validate_evidence_projection()
+        self._validate_outcome_projection()
+        obligations = doc.get("obligations")
+        if (not isinstance(obligations, list)
+                or any(not isinstance(item, str) or not item
+                       for item in obligations)
+                or len(set(obligations)) != len(obligations)):
+            raise Refused("obligation projection is invalid")
+        predictions = doc.get("predictions")
+        if (not isinstance(predictions, list)
+                or any(not isinstance(item, dict)
+                       or not isinstance(item.get("key"), dict)
+                       or not isinstance(item.get("hypothesis"), dict)
+                       for item in predictions)):
+            raise Refused("prediction projection is invalid")
+        private_state = doc.get("private_state")
+        if not isinstance(private_state, dict):
+            raise Refused("private state projection is invalid")
+        self._validate_round_journal()
+        self._validate_round_results()
+        self._validate_accepted_revisions()
+        treatment_arms = doc.get("treatment_arms")
+        if (not isinstance(treatment_arms, dict)
+                or not isinstance(treatment_arms.get("acquired"), list)):
+            raise Refused("treatment arm projection is invalid")
+        treatment_digests = set()
+        for package in treatment_arms["acquired"]:
+            validate_package(package, grant=grant)
+            if package.get("origin") != "acquired":
+                raise Refused("treatment arm contains a non-acquired package")
+            if package["package_digest"] in treatment_digests:
+                raise Refused("treatment arm identity is duplicated")
+            treatment_digests.add(package["package_digest"])
+        staged = doc.get("staged_candidate")
+        if staged is not None:
+            validate_package(staged, grant=grant)
+
+    def _validate_effect_projection(self) -> None:
+        effects = self._doc.get("pending_effects")
+        if not isinstance(effects, list):
+            raise Refused("effect projection is invalid")
+        ids = set()
+        attached = {}
+        for observation in self._doc["observations"]:
+            effect_id = observation.get("effect_id")
+            if effect_id is not None:
+                attached.setdefault(effect_id, []).append(observation)
+        if any(len(items) > 1 for items in attached.values()):
+            raise Refused("observation per effect identity is duplicated")
+        lineage_digests = {
+            record["package_digest"] for record in self._doc["lineage"]
+        }
+        for effect in effects:
+            if not isinstance(effect, dict):
+                raise Refused("effect projection is invalid")
+            effect_id = effect.get("effect_id")
+            if (not isinstance(effect_id, str) or not effect_id
+                    or effect_id in ids):
+                raise Refused("effect identity projection is invalid")
+            ids.add(effect_id)
+            if effect.get("opportunity_id") not in self._doc.get(
+                    "opportunities", {}):
+                raise Refused("effect opportunity projection is invalid")
+            if effect.get("program_digest") not in lineage_digests:
+                raise Refused("effect program projection is invalid")
+            if effect.get("status") not in {"pending", "settled"}:
+                raise Refused("effect status projection is invalid")
+            opportunity = self._doc["opportunities"].get(
+                effect["opportunity_id"])
+            expected_status = ("accepted" if effect["status"] == "pending"
+                               else "done")
+            if opportunity.get("status") != expected_status:
+                raise Refused("effect opportunity status projection is invalid")
+            if effect.get("charged") is not True:
+                raise Refused("effect has no durable charge")
+            _effect_resources(effect)
+            _validate_effect_identity(effect.get("expected_identity"))
+            observation_id = effect.get("observation_id")
+            effect_observations = attached.get(effect_id, [])
+            if effect.get("status") == "pending":
+                if observation_id is not None or len(effect_observations) > 1:
+                    raise Refused("pending effect has a settlement projection")
+                continue
+            if (len(effect_observations) != 1
+                    or observation_id != effect_observations[0].get(
+                        "observation_id")):
+                raise Refused("settled effect observation projection is invalid")
+            observation = effect_observations[0]
+            _effect_identity_matches(effect, observation)
+
+    def _validate_retained_projection(self) -> None:
+        retained = self._doc.get("retained")
+        if (not isinstance(retained, dict)
+                or set(retained) != {"evidence_ids", "obligations"}
+                or not isinstance(retained["evidence_ids"], list)
+                or not isinstance(retained["obligations"], list)
+                or any(not isinstance(item, str) or not item
+                       for item in retained["evidence_ids"])
+                or any(not isinstance(item, str) or not item
+                       for item in retained["obligations"])
+                or len(set(retained["evidence_ids"])) != len(
+                    retained["evidence_ids"])
+                or len(set(retained["obligations"])) != len(
+                    retained["obligations"])):
+            raise Refused("retained projection is invalid")
+        if self._doc.get("retained_projection") != canonical(retained):
+            raise Refused("retained projection changed")
+        observation_ids = {item.get("observation_id") for item in
+                           self._doc.get("observations", [])}
+        if any(item not in observation_ids
+               for item in retained["evidence_ids"]):
+            raise Refused("retained evidence projection is invalid")
+        active = self._doc.get("active_package")
+        if (isinstance(active, dict) and active.get("version", 0) > 0
+                and retained["obligations"] != list(
+                    active.get("obligations") or [])):
+            raise Refused("retained obligation projection is invalid")
+
+    def _validate_evidence_projection(self) -> None:
+        evidence = self._doc.get("evidence")
+        projection = self._doc.get("evidence_projection")
+        if not isinstance(evidence, list) or not isinstance(projection, list):
+            raise Refused("evidence projection is invalid")
+        seen_receipts = set()
+        seen_digests = set()
+        for record in evidence:
+            if not isinstance(record, dict):
+                raise Refused("evidence record must be an object")
+            if not isinstance(record.get("details"), dict):
+                raise Refused("evidence record details are malformed")
+            if (record.get("kind") == "gateway-dispatch"
+                    and record.get("outcome") == "success"
+                    and record.get("dispatch_evidence_digest") is None):
+                self._validate_source_anchor(record)
+            validate_evidence_record(record)
+            receipt = record["receipt_identity"]
+            digest = record["evidence_digest"]
+            if receipt in seen_receipts or digest in seen_digests:
+                raise Refused("evidence identity projection is invalid")
+            seen_receipts.add(receipt)
+            seen_digests.add(digest)
+        expected = [{"evidence_digest": item["evidence_digest"],
+                     "receipt_identity": item["receipt_identity"]}
+                    for item in evidence]
+        if projection != expected:
+            raise Refused(
+                "finalization evidence projection changed; dispatch provenance"
+                " is not durable")
+
+    def _validate_outcome_projection(self) -> None:
+        outcomes = self._doc.get("outcomes")
+        if not isinstance(outcomes, dict):
+            raise Refused("outcome projection is invalid")
+        for key, outcome in outcomes.items():
+            try:
+                canonical_key = canonical(json.loads(key))
+            except (TypeError, ValueError) as exc:
+                raise Refused("outcome identity projection is invalid") from exc
+            if not isinstance(key, str) or key != canonical_key:
+                raise Refused("outcome identity projection is invalid")
+            if not isinstance(outcome, dict):
+                raise Refused("outcome projection is invalid")
+        if self._doc.get("outcomes_projection") != canonical(outcomes):
+            raise Refused("outcome projection changed")
+
+    def _validate_round_results(self) -> None:
+        results = self._doc.get("round_results")
+        if not isinstance(results, list):
+            raise Refused("round result projection is invalid")
+        seen = set()
+        for result in results:
+            if (not isinstance(result, dict)
+                    or type(result.get("round")) is not int
+                    or result["round"] < 1
+                    or result["round"] in seen):
+                raise Refused("round result identity is invalid")
+            digest = result.get("result_digest")
+            if (not isinstance(digest, str) or len(digest) != 64
+                    or digest != round_result_digest(result)):
+                raise Refused("round result identity is invalid")
+            if (not isinstance(result.get("log"), list)
+                    or not isinstance(result.get("observations"), list)
+                    or not isinstance(result.get("receipts"), list)):
+                raise Refused("round result projection is invalid")
+            seen.add(result["round"])
+            validate_package(result.get("candidate"), grant=self._doc["grant"])
+            for receipt in result.get("receipts", []):
+                validate_evidence_record(receipt, kind="child-execution",
+                                         outcome="success")
+
+    def _validate_accepted_revisions(self) -> None:
+        records = self._doc.get("accepted_revisions")
+        if not isinstance(records, list):
+            raise Refused("accepted revision projection is invalid")
+        lineage = self._doc.get("lineage")
+        if not isinstance(lineage, list):
+            raise Refused("accepted revision lineage is invalid")
+        packages = {}
+        for record in lineage:
+            if not isinstance(record, dict) or not isinstance(
+                    record.get("package"), dict):
+                raise Refused("accepted revision lineage is invalid")
+            package = record["package"]
+            digest = package.get("package_digest")
+            if not isinstance(digest, str) or not digest or digest in packages:
+                raise Refused("accepted revision lineage is invalid")
+            packages[digest] = package
+        digests = set()
+        evidence = self._doc.get("evidence", [])
+        for record in records:
+            if not isinstance(record, dict):
+                raise Refused("accepted revision projection is invalid")
+            digest = record.get("package_digest")
+            if (not isinstance(digest, str) or not digest
+                    or digest in digests):
+                raise Refused(
+                    "acquisition evidence or accepted revision identity is invalid")
+            package = packages.get(digest)
+            if package is None:
+                raise Refused(
+                    "acquisition evidence or accepted revision identity is invalid")
+            validate_package(package, grant=self._doc["grant"])
+            finalization = (self._durable_acquisition(package)
+                            if package.get("origin") == "acquired" else None)
+            if package.get("origin") != "acquired" and (
+                    record.get("acquisition_evidence_digest") is not None
+                    or record.get("acquisition_round") is not None):
+                raise Refused("authored package carries acquisition lineage")
+            if package.get("origin") == "acquired" and (
+                    finalization is None
+                    or record.get("acquisition_evidence_digest")
+                    != finalization.get("evidence_digest")
+                    or record.get("acquisition_round")
+                    != finalization.get("round")):
+                raise Refused("acquisition finalization lineage changed")
+            if (type(record.get("round")) is not int
+                    or record["round"] < 0
+                    or (record.get("acquisition_round") is not None
+                        and (type(record.get("acquisition_round")) is not int
+                             or record["acquisition_round"] < 0))):
+                raise Refused("accepted revision identity is invalid")
+            expected = self._revision_record(
+                package, arm=record.get("arm"), round_no=record.get("round"),
+                acquisition_evidence_digest=record.get(
+                    "acquisition_evidence_digest"),
+                acquisition_round=record.get("acquisition_round"))
+            if any(record.get(key) != expected.get(key)
+                   for key in REVISION_IDENTITY_FIELDS):
+                if package.get("origin") == "acquired":
+                    raise Refused(
+                        "acquisition evidence or accepted revision lineage"
+                        " is invalid")
+                raise Refused("accepted revision lineage is invalid")
+            digests.add(digest)
+            post_restart = record.get("post_restart")
+            if not isinstance(post_restart, dict):
+                raise Refused("accepted revision post-restart state is missing")
+            receipt = record.get("receipt")
+            if post_restart.get("executed"):
+                _validate_child_receipt(receipt, record, evidence)
+            elif (post_restart.get("operation_ids") != []
+                  or post_restart.get("executable_digest") is not None
+                  or receipt is not None
+                  or record.get("usable_result") is True):
+                raise Refused("accepted revision has an unrecorded receipt")
+            if receipt is not None:
+                if not isinstance(receipt, dict):
+                    raise Refused("accepted revision receipt is malformed")
+                matches = [item for item in evidence
+                           if isinstance(item, dict)
+                           and item.get("evidence_digest") == receipt.get(
+                               "evidence_digest")]
+                if len(matches) != 1 or canonical(matches[0]) != canonical(
+                        receipt):
+                    raise Refused("accepted revision receipt is not durable")
+
+    def _validate_lineage(self) -> None:
+        records = self._doc.get("lineage")
+        if not isinstance(records, list):
+            raise Refused("lineage projection is invalid")
+        for index, record in enumerate(records):
+            if not isinstance(record, dict):
+                raise Refused("lineage projection is invalid")
+            package = record.get("package")
+            validate_package(package, grant=self._doc["grant"])
+            if (record.get("version") != index
+                    or record.get("package_digest") != package.get(
+                        "package_digest")
+                    or record.get("parent_digest") != package.get(
+                        "parent_digest")):
+                raise Refused("lineage projection is invalid")
 
     def _validate_active_package(self) -> dict | None:
         active = self._doc.get("active_package")
@@ -962,9 +1434,10 @@ class FrontierStore:
                    for item in same_receipt + same_digest}
         if not matches:
             return None
-        if len(matches) != 1 or canonical(next(iter(matches.values()))) != canonical(evidence):
+        existing = next(iter(matches.values()))
+        if len(matches) != 1 or canonical(existing) != canonical(evidence):
             raise Refused("evidence identity is already recorded or conflicting")
-        return dict(matches[0])
+        return dict(existing)
 
     def _append_evidence(self, evidence: dict) -> dict:
         existing = self._check_evidence_identity(evidence)
@@ -975,6 +1448,9 @@ class FrontierStore:
                 and evidence.get("dispatch_evidence_digest") is None):
             self._write_source_anchor(evidence)
         self._doc["evidence"].append(dict(evidence))
+        self._doc["evidence_projection"].append({
+            "evidence_digest": evidence["evidence_digest"],
+            "receipt_identity": evidence["receipt_identity"]})
         return dict(evidence)
 
     def record_evidence(self, record: dict) -> dict:
@@ -1001,11 +1477,21 @@ class FrontierStore:
             and str(existing_receipt.get("receipt_identity", "")).startswith(
                 "local:")
             and canonical(existing_receipt) != canonical(evidence))
+        if replacing_local and str(evidence.get(
+                "receipt_identity", "")).startswith("local:"):
+            raise Refused("local post-restart receipt cannot replace a receipt")
         if existing_receipt is not None and not replacing_local:
             if canonical(existing_receipt) != canonical(evidence):
                 raise Refused("accepted revision already has a different receipt")
             self._check_evidence_identity(evidence)
             return dict(record)
+        journal = [entry for entry in self._doc["round_journal"]
+                   if isinstance(entry, dict)
+                   and entry.get("receipt", {}).get("operation_id") ==
+                   evidence.get("operation_id")
+                   and entry.get("round") == record.get("round")]
+        if len(journal) != 1:
+            raise Refused("post-restart receipt is not linked to its round")
         candidate = dict(record)
         candidate["post_restart"] = {
             "executed": True,
@@ -1024,6 +1510,10 @@ class FrontierStore:
         if replacing_local:
             self._doc["evidence"] = [
                 item for item in self._doc["evidence"]
+                if item.get("evidence_digest") != existing_receipt.get(
+                    "evidence_digest")]
+            self._doc["evidence_projection"] = [
+                item for item in self._doc["evidence_projection"]
                 if item.get("evidence_digest") != existing_receipt.get(
                     "evidence_digest")]
         self._check_evidence_identity(evidence)
@@ -1063,8 +1553,11 @@ class FrontierStore:
                 "control_id": bound["control_id"]}
 
     def _validate_round_journal(self) -> None:
+        journal = self._doc.get("round_journal")
+        if not isinstance(journal, list):
+            raise Refused("round journal projection is invalid")
         seen = set()
-        for entry in self._doc["round_journal"]:
+        for entry in journal:
             if not isinstance(entry, dict):
                 raise Refused("round journal entry is malformed")
             round_no = entry.get("round")
@@ -1081,9 +1574,13 @@ class FrontierStore:
                     or not isinstance(entry.get("executed_digest"), str)
                     or not entry["executed_digest"]):
                 raise Refused("round journal receipt is incomplete")
+            validate_evidence_record(
+                entry["receipt"], kind="child-execution", outcome="success")
             if not isinstance(entry.get("charged"), bool):
                 raise Refused("round journal charge state is malformed")
             _effect_resources(entry)
+            if not entry["charged"] and entry.get("charged_resources", {}):
+                raise Refused("uncharged round journal has a charge")
             if "candidate" in entry and not isinstance(
                     entry["candidate"], dict):
                 raise Refused("round journal candidate is malformed")
@@ -1105,6 +1602,8 @@ class FrontierStore:
         if not isinstance(receipt, dict) or not receipt.get(
                 "receipt_identity"):
             raise Refused("round command receipt is incomplete")
+        validate_evidence_record(
+            receipt, kind="child-execution", outcome="success")
         entry = {
             "round": int(round_no), "step": int(step), "action": dict(action),
             "state": dict(state), "receipt": dict(receipt),
@@ -1130,7 +1629,7 @@ class FrontierStore:
             raise Refused("round command is not durably received")
         if entry.get("charged"):
             return self.authority
-        requested = _resource_delta(requested)
+        requested = _resource_delta(requested, require_charge=True)
         self._check_spend(requested)
         for key in ("queries", "steps"):
             self._doc["used"][key] += requested.get(key, 0)
@@ -1267,7 +1766,7 @@ class FrontierStore:
     def admit_and_spend(self, opportunity_id: str, program_digest: str,
                         requested: dict, *,
                         effect_identity: dict | None = None) -> dict:
-        requested = _resource_delta(requested)
+        requested = _resource_delta(requested, require_charge=True)
         active_package = self._validate_active_package()
         if active_package is None:
             raise Refused("effect needs a bound program")
@@ -1331,42 +1830,13 @@ class FrontierStore:
                 "admissible", "accepted", "settled", "done"}:
             raise Refused("opportunity %r is not admissible" % (
                 opportunity_id,))
-        active_package = self._validate_active_package()
-        if active_package is None:
+        if self.active_digest is None:
             raise Refused("effect needs a bound program")
-        active_digest = active_package["package_digest"]
-        if program_digest != active_digest:
+        if program_digest != self.active_digest:
             raise Refused("effect program is not the active program")
-        if effect_identity is None:
-            candidates = [effect for effect in self._doc["pending_effects"]
-                          if effect.get("opportunity_id") == opportunity_id
-                          and effect.get("program_digest") == program_digest]
-        else:
-            identity = _validate_effect_identity(effect_identity)
-            candidates = self._matching_admission(
-                opportunity_id, program_digest, identity)
-        if len(candidates) > 1:
-            raise Refused("effect identity is ambiguous")
-        if candidates:
-            return dict(candidates[0])
-        if record["status"] != "admissible":
-            raise Refused("opportunity has a conflicting effect")
-        effect = {
-            "effect_id": "eff-%s-%d" % (
-                opportunity_id, len(self._doc["pending_effects"])),
-            "opportunity_id": opportunity_id,
-            "program_digest": program_digest,
-            "status": "pending",
-            "charged": False,
-            "charged_resources": {},
-        }
-        effect["expected_identity"] = _validate_effect_identity(
-            effect_identity if effect_identity is not None else
-            {"operation_id": "local:%s" % effect["effect_id"]})
-        record["status"] = "accepted"
-        self._doc["pending_effects"].append(effect)
-        self.save()
-        return dict(effect)
+        return self.admit_and_spend(
+            opportunity_id, program_digest, record["resources"],
+            effect_identity=effect_identity)
 
     def _prepare_observation(self, observation: dict,
                              effect: dict | None = None) -> tuple:
@@ -1416,11 +1886,14 @@ class FrontierStore:
                 if local_identity and "operation_id" not in record:
                     record["operation_id"] = expected["operation_id"]
                 _effect_identity_matches(effect, record)
+        if any(item.get("observation_id") == record.get("observation_id")
+               and item is not record for item in self._doc["observations"]):
+            raise Refused("observation identity is already recorded")
         if record.get("effect_id") is not None and any(
                 item.get("effect_id") == record.get("effect_id")
                 and item.get("observation_id") != record["observation_id"]
                 for item in self._doc["observations"]):
-            raise Refused("effect observation identity is already recorded")
+            raise Refused("observation per effect identity is already recorded")
         return effect, record
 
     def observe(self, observation: dict) -> dict:
@@ -1443,6 +1916,8 @@ class FrontierStore:
                        if item["effect_id"] == effect_id), None)
         if effect is None:
             raise Refused("effect %r is not pending" % (effect_id,))
+        if effect.get("charged") is not True:
+            raise Refused("effect has no durable charge")
         existing = next((item for item in self._doc["observations"]
                          if item.get("effect_id") == effect_id), None)
         if existing is not None:
@@ -1458,6 +1933,8 @@ class FrontierStore:
                     raise Refused("action outcome identity is already recorded")
             if outcome_key is not None:
                 self._doc["outcomes"][outcome_key] = dict(outcome)
+                self._doc["outcomes_projection"] = canonical(
+                    self._doc["outcomes"])
             effect["status"] = "settled"
             effect["observation_id"] = existing["observation_id"]
             opportunity = self._doc["opportunities"].get(effect["opportunity_id"])
@@ -1477,6 +1954,8 @@ class FrontierStore:
         self._doc["observations"].append(record)
         if outcome_key is not None:
             self._doc["outcomes"][outcome_key] = dict(outcome)
+            self._doc["outcomes_projection"] = canonical(
+                self._doc["outcomes"])
         effect["status"] = "settled"
         effect["observation_id"] = record["observation_id"]
         opportunity = self._doc["opportunities"].get(effect["opportunity_id"])
@@ -1490,6 +1969,8 @@ class FrontierStore:
                        if e["effect_id"] == effect_id), None)
         if effect is None:
             raise Refused("effect %r is not pending" % (effect_id,))
+        if effect.get("charged") is not True:
+            raise Refused("effect has no durable charge")
         if not isinstance(observation, dict):
             raise Refused("effect settlement needs an observation")
         stored = next((o for o in self._doc["observations"]
@@ -1527,6 +2008,7 @@ class FrontierStore:
                 return
             raise Refused("action outcome identity is already recorded")
         self._doc["outcomes"][key] = dict(outcome)
+        self._doc["outcomes_projection"] = canonical(self._doc["outcomes"])
         self.save()
 
     def replay(self, action_key: dict) -> dict:
@@ -1586,6 +2068,7 @@ class FrontierStore:
              acquisition_digest, "package": dict(bound)})
         self._doc["private_state"] = {}
         self._doc["retained"] = {"evidence_ids": [], "obligations": []}
+        self._doc["retained_projection"] = canonical(self._doc["retained"])
         if bound["origin"] == "acquired":
             self._doc["treatment_arms"]["acquired"].append(dict(bound))
             self._doc["accepted_revisions"].append(
@@ -1637,6 +2120,7 @@ class FrontierStore:
                              if o.get("observation_id")],
             "obligations": list(bound.get("obligations") or []),
         }
+        self._doc["retained_projection"] = canonical(self._doc["retained"])
         if bound.get("origin") == "acquired" and \
                 bound["package_digest"] not in {
                     c["package_digest"] for c in

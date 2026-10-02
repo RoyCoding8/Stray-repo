@@ -316,7 +316,7 @@ def write_fixtures(root) -> dict:
         target.parent.mkdir(parents=True, exist_ok=True)
         raw = (json.dumps(task, sort_keys=True, indent=2) + "\n").encode()
         target.write_bytes(raw)
-        manifest["files"].append({"path": str(target.relative_to(root)),
+        manifest["files"].append({"path": target.relative_to(root).as_posix(),
                                   "task_id": task["task_id"],
                                   "digest": _digest_bytes(raw),
                                   "bytes": len(raw)})

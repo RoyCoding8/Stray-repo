@@ -75,10 +75,34 @@ def test_public_missing_usage_is_explicitly_unknown(api):
     result = _gateway(api, _MISSING).infer(_request(api))
 
     assert isinstance(result, ModelResponse)
+    assert result.model_meta["model"] is None
     assert result.usage.input_tokens is None
     assert result.usage.output_tokens is None
     assert result.usage.charge_units is None
+    assert result.usage.charge_scale is None
+    assert result.usage.provider_enforced_ceiling is None
     assert result.usage.billed is None
+
+
+def test_public_absent_provider_status_stays_unknown():
+    body = _response_body("responses", _MISSING)
+    del body["status"]
+    raw = json.dumps(body).encode()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=httpx.ByteStream(raw))
+
+    adapter = HttpGatewayAdapter(
+        endpoint="http://127.0.0.1:4999/v1",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        api="responses",
+        route_mode="paid",
+    )
+
+    result = adapter.infer(_request("responses"))
+
+    assert isinstance(result, ModelResponse)
+    assert result.stop_reason == "unknown-status"
 
 
 @pytest.mark.parametrize("api", ["chat", "responses"])
@@ -111,7 +135,8 @@ def test_public_malformed_usage_preserves_partial_evidence(api):
     assert isinstance(result, GatewayError)
     assert result.kind == GatewayErrorKind.PROTOCOL
     assert result.usage == Usage(
-        output_tokens=3, charge_units=7, charge_scale=1000, billed=True)
+        output_tokens=3, charge_units=7, charge_scale=None,
+        provider_enforced_ceiling=None, billed=True)
 
 
 @pytest.mark.parametrize("api", ["chat", "responses"])
@@ -122,7 +147,7 @@ def test_public_explicit_zero_charge_is_measured_zero(api):
     assert isinstance(result, ModelResponse)
     assert result.usage == Usage(
         input_tokens=5, output_tokens=3, charge_units=0,
-        charge_scale=1000, billed=True)
+        charge_scale=None, provider_enforced_ceiling=None, billed=True)
 
 
 @pytest.mark.parametrize("api", ["chat", "responses"])
@@ -133,7 +158,7 @@ def test_public_nonzero_charge_units_are_preserved(api):
     assert isinstance(result, ModelResponse)
     assert result.usage == Usage(
         input_tokens=5, output_tokens=3, charge_units=7,
-        charge_scale=1000, billed=True)
+        charge_scale=None, provider_enforced_ceiling=None, billed=True)
 
 
 @pytest.mark.parametrize("api", ["chat", "responses"])
@@ -146,7 +171,7 @@ def test_noncanonical_charge_scale_is_refused_before_settlement(api):
     assert result.kind == GatewayErrorKind.PROTOCOL
     assert result.usage == Usage(
         input_tokens=5, output_tokens=3, charge_units=7,
-        charge_scale=7, billed=True)
+        charge_scale=7, provider_enforced_ceiling=None, billed=True)
 
 
 def _prepare(dsn: str, operation_id: str) -> int:
@@ -198,13 +223,34 @@ def test_missing_usage_stays_unknown_and_conserves_exposure(api, migrated_db):
 
 
 @pytest.mark.parametrize("api", ["chat", "responses"])
-def test_malformed_usage_preserves_partial_evidence_and_reservation(api, migrated_db):
+def test_malformed_usage_is_a_decided_failure_that_reserves_the_provider_charge(
+        api, migrated_db):
+    """A malformed usage block is evidence, not uncertainty, and it costs.
+
+    The gateway answered 200 with a body. The token count is unusable, but
+    `charge_units: 7` and `billed: true` came back in the same envelope and
+    are the parts a reader would have to trust. So the receipt is a decided
+    `failure` carrying the partial evidence verbatim, and the exposure stays
+    held: nothing is consumed, because `store.receipt_actual_cost` refuses
+    to derive a cost from usage whose `input_tokens` is missing while
+    `billed` is true. Holding is the correct outcome for an unreadable bill,
+    and it is not the same as refusing to have looked.
+
+    This test asserted `outcome == "unknown"` and was written 2026-09-23
+    (`91e8f9d`), 4 hours before `59a10df` (2026-09-24 02:05:57) split the
+    error path three ways and made every response that arrived a decided
+    `failure`. That rule is deliberate and is the same one that released
+    66,447 units at `8943c08` (2026-09-28): an `unknown` re-held the units of
+    a call that had already been answered.
+    """
     status, receipt, ledger, exposure = _dispatch(
         migrated_db, api, "malformed",
         _usage(api, "five", 3, charge_units=7, billed=True))
 
     assert status.dispatch_state == "unresolved"
-    assert receipt["outcome"] == "unknown"
+    assert receipt["outcome"] == "failure"
+    assert receipt["content"]["response_class"] == "observed-provider-failure"
+    assert receipt["content"]["response_received"] is True
     assert receipt["content"]["usage"]["input_tokens"] is None
     assert receipt["content"]["usage"]["output_tokens"] == 3
     assert receipt["content"]["usage"]["charge_units"] == 7
@@ -213,13 +259,32 @@ def test_malformed_usage_preserves_partial_evidence_and_reservation(api, migrate
 
 
 @pytest.mark.parametrize("api", ["chat", "responses"])
-def test_noncanonical_scale_does_not_settle_provider_charge(api, migrated_db):
+def test_noncanonical_scale_is_a_decided_failure_that_settles_no_charge(api, migrated_db):
+    """A noncanonical `charge_scale` is refused before settlement, not deferred.
+
+    `store.receipt_actual_cost` returns `None` for any usage whose
+    `charge_scale` is not `CANONICAL_CHARGE_SCALE` (1000): the provider's
+    own units are not this ledger's units, so 7 provider-scale units cannot
+    be read as 7 settlement units without silently scaling a bill. The
+    evidence rides out untouched so a reader can see what arrived, and the
+    exposure is held rather than consumed on a number that is known to be
+    in the wrong denomination.
+
+    The outcome is `failure`, not `unknown`, and the test asserted
+    `unknown` because it was written at `48d0af6` (2026-09-24 00:55:09) --
+    73 minutes before `59a10df` gave a response that arrived any other
+    name. The `unresolved` dispatch state is unchanged: what the run cannot
+    resolve is the charge, not whether the send happened.
+    """
     status, receipt, ledger, exposure = _dispatch(
         migrated_db, api, "noncanonical",
         _usage(api, 5, 3, charge_units=7, charge_scale=7, billed=True))
 
     assert status.dispatch_state == "unresolved"
-    assert receipt["outcome"] == "unknown"
+    assert receipt["outcome"] == "failure"
+    assert receipt["content"]["response_class"] == "observed-provider-failure"
+    assert receipt["content"]["usage"]["input_tokens"] == 5
+    assert receipt["content"]["usage"]["output_tokens"] == 3
     assert receipt["content"]["usage"]["charge_units"] == 7
     assert receipt["content"]["usage"]["charge_scale"] == 7
     assert (ledger["consumed"], ledger["reserved"]) == (0, exposure)

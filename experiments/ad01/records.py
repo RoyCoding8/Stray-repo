@@ -296,6 +296,41 @@ def _seed_output(task: dict, kind: str) -> dict | None:
         return None
 
 
+def _narrow_assessment_arm(arm: dict) -> dict:
+    cleaned = dict(arm)
+    effects = []
+    for raw_effect in list(cleaned.get("effects") or []):
+        effect = {
+            key: raw_effect.get(key)
+            for key in (
+                "kind", "accepted", "reason", "queries", "model_calls",
+                "wall_ms", "owner", "destination", "selected_identity",
+                "accounting", "source_digest", "scope", "bound")
+            if key in raw_effect
+        }
+        if not isinstance(effect.get("accepted"), bool):
+            effect["accepted"] = bool(effect.get("accepted"))
+        effects.append(effect)
+    cleaned["effects"] = effects
+    return cleaned
+
+
+def _narrow_assessment_effects(episode: dict) -> dict:
+    cleaned = dict(episode)
+    assessment = cleaned.get("assessment")
+    if not isinstance(assessment, dict):
+        return cleaned
+    assessment = dict(assessment)
+    arms = assessment.get("arms")
+    if isinstance(arms, dict):
+        assessment["arms"] = {
+            name: _narrow_assessment_arm(dict(arm or {}))
+            for name, arm in arms.items()
+        }
+    cleaned["assessment"] = assessment
+    return cleaned
+
+
 def _arm_export(arm: dict, task_ids: list[str], rule: dict,
                 evaluator_version: str, assessment_position: int | None,
                 world: int) -> dict:
@@ -306,10 +341,7 @@ def _arm_export(arm: dict, task_ids: list[str], rule: dict,
         if assessment_position is not None:
             item["journal_position"] = assessment_position
         decisions.append(item)
-    effects = [dict(effect) for effect in list(arm.get("effects") or [])]
-    for effect in effects:
-        if not isinstance(effect.get("accepted"), bool):
-            effect["accepted"] = bool(effect.get("accepted"))
+    effects = list(_narrow_assessment_arm(arm).get("effects") or [])
     outputs = []
     for task_id in task_ids:
         task = worlds.load_task(worlds.FROZEN_DIR, task_id)
@@ -511,6 +543,8 @@ def export_campaign(dsn: str, campaign: dict, *, model: str,
         observation = durable.get("observation") or {}
         episode = durable.get("episode") or (
             episodes[seq] if seq < len(episodes) else {})
+        if isinstance(episode, dict):
+            episode = _narrow_assessment_effects(episode)
         remaining = {
             "queries": int(caps.get("diagnostic_queries", 16))
             - queries_so_far,
@@ -678,6 +712,7 @@ def load_export(path) -> dict:
 def verify_byte_chain(export: dict, use_records: list | None = None) -> dict:
     import hashlib
     import json
+    from . import checker
     problems: list = []
     checked = 0
     transitions = list(export.get("transitions", []))
@@ -760,6 +795,19 @@ def verify_byte_chain(export: dict, use_records: list | None = None) -> dict:
         for record in use_records:
             selected = str(record.get("selected", ""))
             executed = str(record.get("executed_source", ""))
+            # A refusal ran nothing, so there are no bytes to bind to a
+            # retained member. `77001fc` made refusal the only outcome
+            # besides execution, and left the check below reading every
+            # non-incumbent record as one that ran -- so a refused episode
+            # was reported as `use-without-retained`, an export failing
+            # over a use phase that was told to stand down. It is checked
+            # for the shape a refusal must still carry instead, which is
+            # what `checker._verify_refusal` already holds the records to.
+            if record.get("status") == "refused":
+                problems.extend(checker._verify_refusal(
+                    record, str(record.get("record_id", "?"))))
+                checked += 1
+                continue
             if selected == "incumbent":
                 if executed != "incumbent":
                     problems.append("incumbent-bytes-mismatch %s" % (
@@ -1313,12 +1361,6 @@ def _verify_policy_export(export: dict, use_records: list) -> list:
             problems.append("V8: use record executed digest/fallback_reason")
     return problems
 REVISION_PROTOCOL = "s09-revision-v1"
-
-
-def _read_conn(dsn: str):
-    from psycopg.rows import dict_row
-    from settlement import db
-    return db.connect(dsn, row_factory=dict_row)
 
 
 def proposal_id_for(investigation_id: str, parent_digest: str,

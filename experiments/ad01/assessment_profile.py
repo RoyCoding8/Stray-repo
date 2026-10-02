@@ -19,6 +19,7 @@ import time
 from dataclasses import dataclass
 
 from settlement import broker
+from settlement.common import ResultCode
 
 from . import method_exec, packet, policy_step, seeds, worlds
 
@@ -74,8 +75,9 @@ PROFILES = _profiles()
 
 
 def make_ctx(*, candidate_digest: str, scope: dict, session: str,
-             qualify_depth: int = 0, remaining: dict | None = None,
-             visible_observation_ids=(), trusted: bool = False) -> dict:
+             qualify_depth: int = 0, step_index: int = 0,
+             remaining: dict | None = None, visible_observation_ids=(),
+             trusted: bool = False) -> dict:
     if not isinstance(candidate_digest, str) or not candidate_digest:
         raise ValueError("ctx needs a candidate digest")
     if not isinstance(scope, dict) or "family" not in scope \
@@ -85,9 +87,11 @@ def make_ctx(*, candidate_digest: str, scope: dict, session: str,
         raise ValueError("ctx needs a session namespace")
     if type(qualify_depth) is not int or qualify_depth < 0:
         raise ValueError("qualify_depth must be a nonnegative integer")
+    if type(step_index) is not int or step_index < 0:
+        raise ValueError("step_index must be a nonnegative integer")
     return {"candidate_digest": candidate_digest, "scope": dict(scope),
             "task_ids": list(scope["task_ids"]), "session": session,
-            "qualify_depth": qualify_depth,
+            "qualify_depth": qualify_depth, "step_index": step_index,
             "remaining": dict(remaining or {"queries": 16,
                                             "model_calls": 2}),
             "visible_observation_ids": tuple(visible_observation_ids or ()),
@@ -111,6 +115,34 @@ def _elapsed_ms(started: int) -> int:
 
 def _source_digest(source: str) -> str:
     return hashlib.sha256(source.encode("utf-8")).hexdigest()
+
+
+def _settled_model_response(dsn: str, operation_id: str) -> tuple[dict | None,
+                                                                  str]:
+    from settlement import store
+
+    operation = broker.read_operation(dsn, operation_id)
+    if operation is None:
+        return None, "model operation is missing"
+    if (operation.get("reconcile_state") in ("conflict", "unresolved")
+            or operation.get("dispatch_state") == "unresolved"
+            or operation.get("settled") is not True):
+        return None, "model operation is not settled"
+    receipts = store.operation_receipts(dsn, operation_id)
+    if len(receipts) != 1:
+        return None, "model operation has conflicting receipts"
+    receipt = receipts[0]
+    if (receipt.get("outcome") != "success"
+            or receipt.get("settled") is not True
+            or receipt.get("usable_result") is not True):
+        return None, "model operation has no successful usable receipt"
+    content = receipt.get("content")
+    if not isinstance(content, dict) or not isinstance(content.get("text"),
+                                                          str) \
+            or not content["text"].strip():
+        return None, "model operation has no response text"
+    return {"text": content["text"],
+            "receipt_identity": str(receipt["receipt_identity"])}, None
 
 
 def build_model_operation(*, profile_name: str, action: dict, model: str,
@@ -141,15 +173,27 @@ def build_model_operation(*, profile_name: str, action: dict, model: str,
             "profile": profile.name, "destination": profile.destination}
 
 
-def _resolve_method(task: dict, inputs: dict) -> tuple:
+def _resolve_method(task: dict, inputs: dict, kind: str = "use_method") -> tuple:
+    """Resolve the method an action names, and the walk it actually took.
+
+    The walk comes back with the candidate. `method_exec.run_member_out_of_process`
+    assembles it host-side, one row per query the member really asked, each
+    carrying the candidate's digest and the verdict and reason the checker
+    graded it `preserved`. It was produced and then dropped here, so a
+    reading recorded only how many queries a run spent and not what it
+    asked — and the questions are the only thing that distinguishes a
+    method that searched from one that was handed its answer. A run with no
+    walk returns `None`, which says the walk was absent rather than empty,
+    and the two are different claims.
+    """
     if "candidate" in inputs:
         return None, 0, 0, 0, None, "none", (
-            "policy-supplied candidate is not a task outcome")
+            "policy-supplied candidate is not a task outcome"), None
     max_queries = inputs.get("max_queries", 16)
     if type(max_queries) is not int or max_queries < 0:
         return None, 0, 0, 0, None, "none", (
-            "max_queries must be a nonnegative integer")
-    exposed = packet.strip_task(task)
+            "max_queries must be a nonnegative integer"), None
+    exposed = packet.method_task_view(task)
     source = inputs.get("method_source") or inputs.get("source")
     started = time.perf_counter_ns()
     if isinstance(source, str) and source:
@@ -160,12 +204,19 @@ def _resolve_method(task: dict, inputs: dict) -> tuple:
             result = method_exec.run_member_out_of_process(
                 member, exposed, max_queries=max_queries)
         except Exception as exc:
-            return None, 0, 0, 0, None, "method_exec", str(exc)
+            return None, 0, 0, 0, None, "method_exec", str(exc), None
         identity = "inline:%s:%s" % (entry, _source_digest(source)[:12])
         return (result.get("candidate"), int(result.get("queries", 0)), 0,
                 _elapsed_ms(started), identity,
-                "method_exec.run_member_out_of_process", None)
+                "method_exec.run_member_out_of_process", None,
+                result.get("query_trace"))
     method_id = inputs.get("method_id")
+    if method_id is None and kind == "use_method":
+        # Only a use names a method it did not build. A construct_method is
+        # the action that produces one, so it legitimately arrives without an
+        # id, and refusing it broke construction rather than fixing anything.
+        return None, 0, 0, 0, None, "none", (
+            "use_method action names no task method"), None
     if method_id is None:
         tag = _FAMILY_TAG.get(task.get("family", ""), "")
         method_id = "seed-%s-greedy" % tag
@@ -174,14 +225,15 @@ def _resolve_method(task: dict, inputs: dict) -> tuple:
     if capability is None or capability["family"] != task.get("family") \
             or method_id not in default_repertoire():
         return None, 0, 0, 0, None, "none", ("unknown task method %r"
-                                          % (inputs.get("method_id"),))
+                                          % (inputs.get("method_id"),)), None
     try:
         result = seeds.run_seed(capability, exposed,
                                 max_queries=max_queries)
     except Exception as exc:
-        return None, 0, 0, 0, None, "seeds", str(exc)
+        return None, 0, 0, 0, None, "seeds", str(exc), None
     return (result.get("candidate"), int(result.get("queries", 0)), 0,
-            _elapsed_ms(started), method_id, "seeds.run_seed", None)
+            _elapsed_ms(started), method_id, "seeds.run_seed", None,
+            result.get("query_trace"))
 
 
 def _check_budget(profile: Profile, action: dict, ctx: dict) -> str | None:
@@ -201,7 +253,9 @@ def _check_budget(profile: Profile, action: dict, ctx: dict) -> str | None:
 
 
 def dispatch(*, profile_name: str, record: dict, task: dict,
-             action: dict, ctx: dict) -> dict:
+             action: dict, ctx: dict, dsn: str | None = None,
+             allocation_id: str | None = None, gateway=None,
+             model: str = "policy-request") -> dict:
     try:
         profile = PROFILES[profile_name]
     except KeyError:
@@ -238,8 +292,8 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
         effect = _refused(profile, kind, "", source_digest, scope)
         return {**effect, "accepted": True, "reason": "no task effect"}
     if kind in ("construct_method", "use_method"):
-        candidate, queries, _calls, wall_ms, identity, owner, failure = \
-            _resolve_method(task, dict(action.get("inputs") or {}))
+        candidate, queries, _calls, wall_ms, identity, owner, failure, walk = \
+            _resolve_method(task, dict(action.get("inputs") or {}), kind)
         if failure is not None:
             return _refused(profile, kind, failure, source_digest, scope)
         return {"profile": profile.name, "kind": kind, "accepted": True,
@@ -247,7 +301,8 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
                 "model_calls": 0, "wall_ms": wall_ms,
                 "selected_identity": identity, "owner": owner,
                 "destination": profile.destination,
-                "source_digest": source_digest, "scope": dict(scope)}
+                "source_digest": source_digest, "scope": dict(scope),
+                "query_trace": walk}
     if kind == "request_model":
         inputs = dict(action.get("inputs") or {})
         prompt = inputs.get("prompt", "")
@@ -263,17 +318,55 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
             return _refused(profile, kind, "model execution is refused"
                             " under %s: declared profile difference"
                             % profile.name, source_digest, scope)
-        operation = build_model_operation(
-            profile_name=profile.name, action=action, model="policy-request",
-            session=ctx["session"], step_index=ctx["qualify_depth"])
+        if dsn is None or not allocation_id or gateway is None:
+            return {**_refused(
+                profile, kind,
+                "model execution needs a durable store, allocation, and gateway",
+                source_digest, scope), "accounting": "not-admitted"}
+        try:
+            operation = build_model_operation(
+                profile_name=profile.name, action=action, model=model,
+                session=ctx["session"],
+                step_index=ctx.get("step_index", ctx["qualify_depth"]))
+            ensured = broker.ensure_operation(
+                dsn, operation_id=operation["operation_id"],
+                effect=operation["effect"], payload=operation["payload"],
+                allocation_id=allocation_id)
+            if ensured.code not in (ResultCode.APPLIED,
+                                    ResultCode.ALREADY_APPLIED):
+                return {**_refused(
+                    profile, kind, "model operation not admitted: %s"
+                    % ensured.detail, source_digest, scope),
+                    "accounting": "not-admitted"}
+            status = broker.dispatch_operation(
+                dsn, operation["operation_id"], launchers={}, gateway=gateway)
+            response, failure = _settled_model_response(
+                dsn, operation["operation_id"])
+        except Exception as exc:
+            return {**_refused(profile, kind, str(exc), source_digest, scope),
+                    "accounting": "unresolved"}
+        if failure is not None:
+            accounting = "unresolved" \
+                if getattr(status, "next_decision", "") in (
+                    "needs-reconciliation", "receipt-admission-refused") \
+                else "failed"
+            return {**_refused(profile, kind, failure, source_digest, scope),
+                    "owner": "broker.model-inference",
+                    "accounting": accounting, "operation": operation,
+                    "selected_identity": operation["operation_id"]}
+        result = {"kind": "model_response", "text": response["text"],
+                  "digest": _source_digest(response["text"]),
+                  "operation_id": operation["operation_id"],
+                  "receipt_identity": response["receipt_identity"]}
         return {"profile": profile.name, "kind": kind, "accepted": True,
-                "reason": "operation constructed; dispatch owns sending",
-                "candidate": None, "queries": 0, "model_calls": 0,
-                "wall_ms": 0, "selected_identity": operation["operation_id"],
+                "reason": "", "candidate": None, "queries": 0,
+                "model_calls": 1, "wall_ms": 0,
+                "selected_identity": operation["operation_id"],
                 "owner": "broker.model-inference",
                 "destination": profile.destination,
                 "source_digest": source_digest, "scope": dict(scope),
-                "operation": operation}
+                "accounting": "settled", "operation": operation,
+                "result": result}
     if kind == "propose_revision":
         inputs = dict(action.get("inputs") or {})
         if inputs.get("request") == "assessment":
@@ -304,7 +397,9 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
 
 
 def _shared_assessment_arm(policy_record: dict, task_ids: list,
-                           rule: dict, session: str) -> dict:
+                           rule: dict, session: str, *, dsn: str | None = None,
+                           allocation_id: str | None = None, gateway=None,
+                           model: str = "policy-request") -> dict:
     from . import policy_assess
     arm = policy_assess._empty_arm(len(task_ids))
     reports = []
@@ -317,6 +412,8 @@ def _shared_assessment_arm(policy_record: dict, task_ids: list,
         last_result = None
         task_report = None
         for step_no in range(rule["max_steps"]):
+            model_remaining = max(0, rule["max_steps"]
+                                  - arm["resources"]["model_calls"])
             view = policy_step.materialize_view(
                 task=task, observations=observations, open_questions=[],
                 last_result=last_result,
@@ -324,7 +421,7 @@ def _shared_assessment_arm(policy_record: dict, task_ids: list,
                                   in seeds.SEED_CAPABILITIES
                                   if item["family"] == task["family"]],
                 remaining={"steps": rule["max_steps"] - step_no,
-                           "model_calls": 1, "queries": 16})
+                           "model_calls": model_remaining, "queries": 16})
             previous = dict(state)
             started = time.perf_counter_ns()
             try:
@@ -353,20 +450,19 @@ def _shared_assessment_arm(policy_record: dict, task_ids: list,
             context = make_ctx(
                 candidate_digest=digest,
                 scope={"family": task["family"], "task_ids": [task_id]},
-                session=session, remaining={"queries": 16, "model_calls": 1},
+                session=session, step_index=step_no,
+                remaining={"queries": 16, "model_calls": model_remaining},
                 visible_observation_ids=tuple(
                     observation["observation_id"]
                     for observation in observations),
                 trusted=True)
             effect = dispatch(
                 profile_name=ASSESSMENT, record=policy_record, task=task,
-                action=action, ctx=context)
+                action=action, ctx=context, dsn=dsn,
+                allocation_id=allocation_id, gateway=gateway, model=model)
             arm["effects"].append(effect)
             arm["resources"]["queries"] += int(effect["queries"])
-            arm["resources"]["model_calls"] += int(
-                effect["model_calls"]
-                + (action["kind"] == "request_model"
-                   and effect["accepted"]))
+            arm["resources"]["model_calls"] += int(effect["model_calls"])
             arm["resources"]["child_wall_ms"] += int(effect["wall_ms"])
             sequence += 1
             if effect["candidate"] is not None:
@@ -377,12 +473,17 @@ def _shared_assessment_arm(policy_record: dict, task_ids: list,
                 task_report = {"report": report, "initial": initial,
                                "final": final}
                 break
-            last_result = {"verdict": "unmeasured", "kind": action["kind"],
-                           "accepted": effect["accepted"]}
+            if effect.get("result") is not None:
+                last_result = dict(effect["result"])
+            else:
+                last_result = {"verdict": "unmeasured", "kind": action["kind"],
+                               "accepted": effect["accepted"]}
             observations.append({
                 "observation_id": "panel-%s-%d" % (task_id, step_no),
                 "task_id": task_id, "verdict": "unmeasured",
-                "detail": {"accepted": effect["accepted"]}})
+                "detail": {"accepted": effect["accepted"],
+                           "accounting": effect.get("accounting", "none"),
+                           "operation_id": effect.get("selected_identity")}})
             if action["kind"] == "stop":
                 break
         reports.append(task_report)
@@ -407,7 +508,9 @@ def assess_policy(dsn: str, *, proposal_id: str, candidate_source: str,
                   incumbent_source: str, incumbent_digest: str,
                   incumbent_artifact: dict, panel: dict, rule: dict,
                   scope: dict, protocol_id: str,
-                  evaluator_version: str) -> dict:
+                  evaluator_version: str, gateway=None,
+                  allocation_id: str | None = None,
+                  model: str = "policy-request") -> dict:
     from . import policy_assess
     frozen = policy_assess._read_journal(
         dsn, policy_assess._protocol_request_id(proposal_id))
@@ -454,10 +557,12 @@ def assess_policy(dsn: str, *, proposal_id: str, candidate_source: str,
                         "policy_source": incumbent_source}
     candidate_arm = _shared_assessment_arm(
         candidate_record, list(panel["task_ids"]), rule_identity,
-        proposal_id + "-candidate")
+        proposal_id + "-candidate", dsn=dsn, allocation_id=allocation_id,
+        gateway=gateway, model=model)
     incumbent_arm = _shared_assessment_arm(
         incumbent_record, list(panel["task_ids"]), rule_identity,
-        proposal_id + "-incumbent")
+        proposal_id + "-incumbent", dsn=dsn, allocation_id=allocation_id,
+        gateway=gateway, model=model)
     outcome, reason = policy_assess._decision(
         candidate_arm, incumbent_arm, rule_identity)
     record = {

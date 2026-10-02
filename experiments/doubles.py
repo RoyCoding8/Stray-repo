@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from fault_tasks import LESSON_OFF_BY_ONE as LESSON_TEXT
+from experiments.fault_tasks import LESSON_OFF_BY_ONE as LESSON_TEXT
 from settlement.gateway import (GatewayAdapter, GatewayError, GatewayErrorKind, GatewayStatus,
                                 ModelRequest, ModelResponse, Usage)
 

@@ -1,0 +1,19 @@
+{
+ "task_id": "ad01-w0-transfer-gr-01",
+ "family": "graph",
+ "campaign_id": "liveacq-gr01",
+ "study_root": "liveacq-study-gr01",
+ "allocation_id": "ad01-campaign-liveacq-gr01",
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider": "nvidia",
+  "tier": "free"
+ },
+ "acquired": false,
+ "reason": "LiveRefused: live policy acquisition failed: construction call ad01-liveacq-gr01-b0-ad01-w0-transfer-gr-01-policy-policy-l2-init left no settled response",
+ "guard_spent_dispatches": 0,
+ "guard_refusal": null,
+ "ledger": []
+}

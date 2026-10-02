@@ -35,14 +35,22 @@ def test_receipt_identity_bound_to_operation(migrated_db):
     _prepare(dsn, "inva-r", "inva-r-op2", "inva-r-a", "inva-r-att")
     store.advance_dispatch(dsn, _cmd({"operation_id": "inva-r-op1",
                                       "launcher_id": "L"}, "inva-r-ad"))
+    # op2 is dispatched too. A receipt is the record of a send, and a
+    # prepared operation has provably sent nothing, so 5577a89 refuses a
+    # receipt onto one before it ever reaches the identity binding. Only
+    # the second operation can be the target of a cross-operation replay.
+    store.advance_dispatch(dsn, _cmd({"operation_id": "inva-r-op2",
+                                      "launcher_id": "L"}, "inva-r-ad2"))
     first = store.admit_receipt(dsn, _cmd({"operation_id": "inva-r-op1",
                                            "receipt_identity": "inva-r-shared",
-                                           "content": {"out": 1}, "outcome": "success"},
+                                           "content": {"out": 1}, "outcome": "success",
+                                           "provenance": "L"},
                                           "inva-r-rc1"))
     assert first.code == ResultCode.APPLIED
     replay = store.admit_receipt(dsn, _cmd({"operation_id": "inva-r-op2",
                                             "receipt_identity": "inva-r-shared",
-                                            "content": {"out": 1}, "outcome": "success"},
+                                            "content": {"out": 1}, "outcome": "success",
+                                            "provenance": "L"},
                                            "inva-r-rc2"))
     assert replay.code == ResultCode.APPLIED
     assert replay.data.get("conflict") is True
@@ -62,12 +70,14 @@ def test_receipt_duplicate_same_operation_still_acknowledged(migrated_db):
     content = {"out": 1}
     first = store.admit_receipt(dsn, _cmd({"operation_id": "inva-d-op",
                                            "receipt_identity": "inva-d-rc",
-                                           "content": dict(content), "outcome": "success"},
+                                           "content": dict(content), "outcome": "success",
+                                           "provenance": "L"},
                                           "inva-d-rc1"))
     assert first.code == ResultCode.APPLIED
     dup = store.admit_receipt(dsn, _cmd({"operation_id": "inva-d-op",
                                          "receipt_identity": "inva-d-rc",
-                                         "content": dict(content), "outcome": "success"},
+                                         "content": dict(content), "outcome": "success",
+                                         "provenance": "L"},
                                         "inva-d-rc2"))
     assert dup.code == ResultCode.ALREADY_APPLIED
 

@@ -1,0 +1,142 @@
+{
+ "campaign_prompt_characters": 982,
+ "catalog": {
+  "frozen_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "frozen_present": true,
+  "model_count": 256,
+  "same_model_other_spellings": [
+   "kilo/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "nvidia/nemotron-3-ultra-550b-a55b:free"
+  ]
+ },
+ "findings": [
+  {
+   "evidence": "catalog.frozen_present is false while probes['short-prompt-budget-2048'].returned_model equals the frozen id",
+   "id": "frozen-model-absent-from-catalog",
+   "statement": "the frozen model id is not in the live catalog, and dispatching it anyway returns 200 naming that exact id, so the route is reachable and unpinnable at once"
+  },
+  {
+   "evidence": "compare the three campaign-prompt arms against the short-prompt arm",
+   "id": "output-budget-causes-the-502",
+   "statement": "the 502 tracks the requested output budget on this route, not the prompt. The same protocol prompt returns 200 at 16 and 256 tokens and 502s at the protocol's own 2048; a short prompt returns 200 at 2048"
+  },
+  {
+   "evidence": "probes[*].usage_keys against the adapter's field list",
+   "id": "cost-is-not-readable-on-this-route",
+   "statement": "the body carries usage.cost and cost_details, and the adapter reads charge_units, charge_scale and billed, none of which this route returns, so every attempt records billed and charge_units as unknown. gateway_http.py:356-360 documents that measurement and states usage.cost is deliberately not a channel, so this is a harness fact rather than a campaign defect"
+  }
+ ],
+ "frozen_character_cap": 512,
+ "frozen_max_output_tokens": 2048,
+ "frozen_route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "not_patched_here": "this lane may not edit a shipped module, so all three are reported and left to the route contract's owner",
+ "probes": {
+  "campaign-prompt-budget-16": {
+   "charge_fields_present": [
+    "cost"
+   ],
+   "content_characters": 72,
+   "finish_reason": "length",
+   "provider": "Nvidia",
+   "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "seconds": 6.65,
+   "status": 200,
+   "usage": {
+    "completion_tokens": 16,
+    "completion_tokens_details": {
+     "audio_tokens": 0,
+     "image_tokens": 0,
+     "reasoning_tokens": 18
+    },
+    "cost": 0,
+    "cost_details": {
+     "upstream_inference_completions_cost": 0,
+     "upstream_inference_cost": 0,
+     "upstream_inference_prompt_cost": 0
+    },
+    "is_byok": false,
+    "prompt_tokens": 370,
+    "prompt_tokens_details": {
+     "audio_tokens": 0,
+     "cache_write_tokens": 0,
+     "cached_tokens": 0,
+     "video_tokens": 0
+    },
+    "total_tokens": 386
+   },
+   "usage_keys": [
+    "completion_tokens",
+    "completion_tokens_details",
+    "cost",
+    "cost_details",
+    "is_byok",
+    "prompt_tokens",
+    "prompt_tokens_details",
+    "total_tokens"
+   ]
+  },
+  "campaign-prompt-budget-2048": {
+   "error": "TimeoutError: timed out",
+   "seconds": 182.06,
+   "status": null
+  },
+  "campaign-prompt-budget-256": {
+   "charge_fields_present": [
+    "cost"
+   ],
+   "content_characters": 1034,
+   "finish_reason": "length",
+   "provider": "Nvidia",
+   "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "seconds": 6.98,
+   "status": 200,
+   "usage": {
+    "completion_tokens": 256,
+    "completion_tokens_details": {
+     "audio_tokens": 0,
+     "image_tokens": 0,
+     "reasoning_tokens": 259
+    },
+    "cost": 0,
+    "cost_details": {
+     "upstream_inference_completions_cost": 0,
+     "upstream_inference_cost": 0,
+     "upstream_inference_prompt_cost": 0
+    },
+    "is_byok": false,
+    "prompt_tokens": 370,
+    "prompt_tokens_details": {
+     "audio_tokens": 0,
+     "cache_write_tokens": 0,
+     "cached_tokens": 0,
+     "video_tokens": 0
+    },
+    "total_tokens": 626
+   },
+   "usage_keys": [
+    "completion_tokens",
+    "completion_tokens_details",
+    "cost",
+    "cost_details",
+    "is_byok",
+    "prompt_tokens",
+    "prompt_tokens_details",
+    "total_tokens"
+   ]
+  },
+  "short-prompt-budget-2048": {
+   "error_message": "router: upstream response interrupted",
+   "error_type": "empty",
+   "seconds": 6.0,
+   "status": 502
+  }
+ },
+ "schema": "w1-e1-r3-route-probe-v1",
+ "written_at": "2026-09-30T06:10:58Z"
+}

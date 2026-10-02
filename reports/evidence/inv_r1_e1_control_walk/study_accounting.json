@@ -1,0 +1,136 @@
+{
+ "accounting": {
+  "measured_from": "durable operation identities plus receipt usage; recording doubles billed false; live billed from provider usage",
+  "total": {
+   "construction_calls": 13,
+   "model_calls": 40,
+   "use_records": 54,
+   "witness_queries": 692
+  },
+  "trajectories": [
+   {
+    "arm": "I",
+    "campaign_id": "ad01-w0-I-00",
+    "construction_calls": 3,
+    "model_calls": 6,
+    "world": 0
+   },
+   {
+    "arm": "R",
+    "campaign_id": "ad01-w0-R-00",
+    "construction_calls": 2,
+    "model_calls": 8,
+    "world": 0
+   },
+   {
+    "arm": "I",
+    "campaign_id": "ad01-w1-I-00",
+    "construction_calls": 2,
+    "model_calls": 5,
+    "world": 1
+   },
+   {
+    "arm": "R",
+    "campaign_id": "ad01-w1-R-00",
+    "construction_calls": 2,
+    "model_calls": 8,
+    "world": 1
+   },
+   {
+    "arm": "I",
+    "campaign_id": "ad01-w2-I-00",
+    "construction_calls": 2,
+    "model_calls": 5,
+    "world": 2
+   },
+   {
+    "arm": "R",
+    "campaign_id": "ad01-w2-R-00",
+    "construction_calls": 2,
+    "model_calls": 8,
+    "world": 2
+   }
+  ]
+ },
+ "freeze": {
+  "policy": {
+   "model": "inv01-study-double",
+   "packet_version": "ad01-packet-v1"
+  },
+  "policy_identities": {
+   "C": {
+    "artifact": {
+     "applicability": {
+      "families": [
+       "graph",
+       "software"
+      ]
+     },
+     "entry": "ENTRY",
+     "kind": "method-repertoire",
+     "members": [
+      "ctl-software-ddmin",
+      "ctl-software-greedy",
+      "ctl-graph-ddmin",
+      "ctl-graph-greedy"
+     ],
+     "origin": "authored-control"
+    },
+    "member_digests": {
+     "ctl-graph-ddmin": "5b53d4c3c897cc0c27e603bc30b71279a62fd53a8898827124e3e7265416b278",
+     "ctl-graph-greedy": "560e17fbfb513145232efd8269a4a0ca618cffcfddc75f5fa801a322b725ff1e",
+     "ctl-software-ddmin": "e4c10cafe8a97848212118cabec98f0fa92cf4b6292fd6349ee856614623dbf7",
+     "ctl-software-greedy": "6e03638cd7100befb3106ab642b49ddc562e64b2d0a4eda80616dcf038692f30"
+    },
+    "source_digest": "bbeb412d41fb6219860ac872b14cefa7ffbdc2efc5349b6b2bae36772ed2fb39"
+   },
+   "I": {
+    "artifact": {
+     "applicability": {
+      "families": []
+     },
+     "entry": "ENTRY",
+     "kind": "method-repertoire",
+     "members": [
+      "acquired-gr-b0bd83b7",
+      "acquired-sw-b0bd83b7"
+     ],
+     "origin": "model-acquired"
+    },
+    "member_digests": {
+     "acquired-gr-b0bd83b7": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+     "acquired-sw-b0bd83b7": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    },
+    "source_digest": "daca49c7eb992e176a1d0033e1003dba2a652d1059a7022c7a03fae3da2b13f5"
+   },
+   "R": {
+    "artifact": {
+     "applicability": {
+      "families": []
+     },
+     "entry": "ENTRY",
+     "kind": "method-repertoire",
+     "members": [
+      "acquired-gr-b0bd83b7",
+      "acquired-sw-b0bd83b7"
+     ],
+     "origin": "model-acquired"
+    },
+    "member_digests": {
+     "acquired-gr-b0bd83b7": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+     "acquired-sw-b0bd83b7": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    },
+    "source_digest": "daca49c7eb992e176a1d0033e1003dba2a652d1059a7022c7a03fae3da2b13f5"
+   }
+  },
+  "repertoires": {
+   "repertoire-C.json": "1ca09df5e58eb51979161f194624e0f6586e9fa401273d02f42a3b0c73f36bf3",
+   "repertoire-w0-I.json": "2ef9bae26cafbf28536cfc1c8b315ad3e18d2d82f22bda223f97b65934bfa1aa",
+   "repertoire-w0-R.json": "cc80dceef29f98cd90a9c0da665d251690b5b3ced004fd2cd75a8464f25615a0",
+   "repertoire-w1-I.json": "b779964d7c78fa8981130738529f7bf177668027014adb52e358e8943484903f",
+   "repertoire-w1-R.json": "9bf878063db5df9d2208bf4256dbf3fafb720efde653b4f54ed83db6f5052530",
+   "repertoire-w2-I.json": "89483bc102b73f1dea6443b8ff490d38cb90e5393bf27fc9375bc66314f608e6",
+   "repertoire-w2-R.json": "46c0069e508a20b8861acd34bf01c695664cf435e03d8408b9da154f2519f744"
+  }
+ }
+}

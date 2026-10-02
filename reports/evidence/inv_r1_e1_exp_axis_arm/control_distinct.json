@@ -1,0 +1,119 @@
+{
+ "distinct": false,
+ "gate": "control_distinct",
+ "raised": false,
+ "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) named no executed policy on at least one arm",
+ "verdict": {
+  "differing_budget": [
+   {
+    "queries": {
+     "acquired": 4,
+     "control": 0
+    },
+    "task_id": "exp-w0-within-sw-00"
+   },
+   {
+    "queries": {
+     "acquired": 4,
+     "control": 0
+    },
+    "task_id": "exp-w1-within-sw-00"
+   },
+   {
+    "queries": {
+     "acquired": 4,
+     "control": 0
+    },
+    "task_id": "exp-w2-within-sw-00"
+   }
+  ],
+  "distinct": false,
+  "one_arm_returned_no_candidate": [],
+  "paired_tasks": [
+   "exp-w0-transfer-gr-00",
+   "exp-w0-transfer-gr-01",
+   "exp-w0-transfer-sw-00",
+   "exp-w0-transfer-sw-01",
+   "exp-w0-within-gr-00",
+   "exp-w0-within-gr-01",
+   "exp-w0-within-sw-00",
+   "exp-w0-within-sw-01",
+   "exp-w1-transfer-gr-00",
+   "exp-w1-transfer-gr-01",
+   "exp-w1-transfer-sw-00",
+   "exp-w1-transfer-sw-01",
+   "exp-w1-within-gr-00",
+   "exp-w1-within-gr-01",
+   "exp-w1-within-sw-00",
+   "exp-w1-within-sw-01",
+   "exp-w2-transfer-gr-00",
+   "exp-w2-transfer-gr-01",
+   "exp-w2-transfer-sw-00",
+   "exp-w2-transfer-sw-01",
+   "exp-w2-within-gr-00",
+   "exp-w2-within-gr-01",
+   "exp-w2-within-sw-00",
+   "exp-w2-within-sw-01"
+  ],
+  "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) named no executed policy on at least one arm",
+  "same_candidate": [],
+  "same_executed_policy": [],
+  "same_source": [],
+  "same_strategy": [],
+  "unnamed_executed_policy": [
+   {
+    "executed": {
+     "acquired": [
+      "ctl-software-ddmin"
+     ],
+     "control": [
+      ""
+     ]
+    },
+    "fallback": {
+     "acquired": [],
+     "control": [
+      "policy raised: step-failed: {'worker': {'status': 'error', 'data': {}, 'error': \"ValueError: no member of family 'software' is keyed to public shape 'template:stale-read-2chain|ops:3' among ['template:stale-clear-core|ops:4', 'template:stale-clear-del-core|ops:6', 'template:stale-read-3chain|ops:5', 'template:stale-read-3chain|ops:8']\"}, 'timed_out': False, 'wall_ms': 43}"
+     ]
+    },
+    "task_id": "exp-w0-within-sw-00"
+   },
+   {
+    "executed": {
+     "acquired": [
+      "ctl-software-ddmin"
+     ],
+     "control": [
+      ""
+     ]
+    },
+    "fallback": {
+     "acquired": [],
+     "control": [
+      "policy raised: step-failed: {'worker': {'status': 'error', 'data': {}, 'error': \"ValueError: no member of family 'software' is keyed to public shape 'template:stale-read-2chain|ops:3' among ['template:stale-clear-core|ops:4', 'template:stale-clear-del-core|ops:6', 'template:stale-read-3chain|ops:5', 'template:stale-read-3chain|ops:8']\"}, 'timed_out': False, 'wall_ms': 57}"
+     ]
+    },
+    "task_id": "exp-w1-within-sw-00"
+   },
+   {
+    "executed": {
+     "acquired": [
+      "ctl-software-ddmin"
+     ],
+     "control": [
+      ""
+     ]
+    },
+    "fallback": {
+     "acquired": [],
+     "control": [
+      "policy raised: step-failed: {'worker': {'status': 'error', 'data': {}, 'error': \"ValueError: no member of family 'software' is keyed to public shape 'template:stale-read-2chain|ops:3' among ['template:stale-clear-core|ops:4', 'template:stale-clear-del-core|ops:6', 'template:stale-read-3chain|ops:5', 'template:stale-read-3chain|ops:8']\"}, 'timed_out': False, 'wall_ms': 39}"
+     ]
+    },
+    "task_id": "exp-w2-within-sw-00"
+   }
+  ],
+  "unpaired_tasks": [],
+  "version": "ad01-control-distinctness/1"
+ }
+}

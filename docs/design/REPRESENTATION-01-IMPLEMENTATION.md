@@ -1,6 +1,6 @@
 # Representation 01: acquire an abstraction and test its transfer
 
-2026-09-11. Stage 8.5, first buildable contract. Design selected; implementation and results pending. This refines [Representation and transfer](REPRESENTATION-AND-TRANSFER.md), uses the existing substrate, and is commissioned by [Cognitive batch 01](../../WORKER-COGNITIVE-BATCH-01.md). It does not depend on a favorable Agenda 01 result.
+2026-09-11. Stage 8.5, first buildable contract. Design selected; implementation and results pending. This refines [Representation and transfer](REPRESENTATION-AND-TRANSFER.md), uses the existing substrate, and is commissioned by [Cognitive batch 01](../HISTORY.md#worker-cognitive-batch-01). It does not depend on a favorable Agenda 01 result.
 
 ## 1. Architectural decision and precise scope
 

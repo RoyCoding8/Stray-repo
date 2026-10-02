@@ -1,0 +1,13 @@
+{
+ "problems": [],
+ "recomputed": {
+  "claimed_operations": 49,
+  "construction_calls": 3,
+  "model_calls": 13,
+  "use_records": 24,
+  "witness_acquisition": 169,
+  "witness_use": 112,
+  "worst_case": 100
+ },
+ "status": "pass"
+}

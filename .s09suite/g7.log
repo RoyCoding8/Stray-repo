@@ -1,0 +1,41 @@
+........F.....FFF...FF                                                   [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert False
+     +  where False = <built-in method startswith of str object at 0x731d349436f0>('token-length estimate')
+     +    where <built-in method startswith of str object at 0x731d349436f0> = 'provider receipt usage; not a billing measure'.startswith
+/home/ubuntu/AI/Agent-Society-v2/tests/test_dev01_compare.py:216: AssertionError: assert False
+E   AssertionError: assert False
+     +  where False = <built-in method startswith of str object at 0x731d349e3cb0>('postgresql://')
+     +    where <built-in method startswith of str object at 0x731d349e3cb0> = 'host=/var/run/postgresql user=ubuntu dbname=s09iso_5e9b0007_s09_durstate'.startswith
+/home/ubuntu/AI/Agent-Society-v2/tests/test_rpr01_db.py:23: AssertionError: assert False
+E   AssertionError: assert {'candidate':...-use-0'], ...} == {'candidate':...-use-0'], ...}
+      
+      Omitting 12 identical items, use -vv to show
+      Differing items:
+      {'query_trace': None} != {'query_trace': []}
+      Use -v to get more diff
+/home/ubuntu/AI/Agent-Society-v2/tests/test_bdr01_host_boundary.py:65: AssertionError: assert {'candidate':...-use-0'], ...} == {'candidate':...-use-0'], ...}
+E   AssertionError: assert {'candidate':...ay-use'], ...} == {'candidate':...ay-use'], ...}
+      
+      Omitting 12 identical items, use -vv to show
+      Differing items:
+      {'query_trace': None} != {'query_trace': [{'candidate_digest': '813ee2b6fdf94ab89a82357f21a9ddfa0d1a9f7ca0caa7b02329ab0aed57e02b', 'verdict': 'preserved', 'reason': 'ok-incumbent'}]}
+      Use -v to get more diff
+/home/ubuntu/AI/Agent-Society-v2/tests/test_bdr01_host_boundary.py:90: AssertionError: assert {'candidate':...ay-use'], ...} == {'candidate':...ay-use'], ...}
+E   assert 0 == 1
+     +  where 0 = len([])
+/home/ubuntu/AI/Agent-Society-v2/tests/test_bdr01_host_boundary.py:141: assert 0 == 1
+E   AssertionError: assert 'refused' == 'bdr01-pollution-canary'
+      
+      - bdr01-pollution-canary
+      + refused
+/home/ubuntu/AI/Agent-Society-v2/tests/test_bdr01_host_boundary.py:157: AssertionError: assert 'refused' == 'bdr01-pollution-canary'
+=========================== short test summary info ============================
+FAILED tests/test_dev01_compare.py::test_dev06_abc_affordances_and_accounting
+FAILED tests/test_rpr01_db.py::test_lane_database_is_real_postgresql_16 - Ass...
+FAILED tests/test_bdr01_host_boundary.py::test_acquired_execution_uses_broker_profile
+FAILED tests/test_bdr01_host_boundary.py::test_broker_query_count_survives_replay
+FAILED tests/test_bdr01_host_boundary.py::test_store_backed_use_attributes_sandbox_operations
+FAILED tests/test_bdr01_host_boundary.py::test_failed_member_falls_back_with_attribution
+6 failed, 16 passed in 70.60s (0:01:10)
+S09ISO: dropped 2 database(s) for this run

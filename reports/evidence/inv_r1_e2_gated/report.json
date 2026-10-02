@@ -1,0 +1,265 @@
+{
+  "database": null,
+  "dispatches": 0,
+  "experience": {
+    "irrelevant": [
+      {
+        "capability_id": "ad01-graph",
+        "detail": "ref o0",
+        "method": "seed-gr-ddmin",
+        "observation_id": "obs-ad01-w0-dev-gr-00-0",
+        "reason": "ok-incumbent",
+        "task_id": "ad01-w0-dev-gr-00",
+        "verdict": "preserved"
+      },
+      {
+        "capability_id": "ad01-graph",
+        "detail": "ref o0",
+        "method": "seed-gr-ddmin",
+        "observation_id": "obs-ad01-w0-dev-gr-01-0",
+        "reason": "ok-incumbent",
+        "task_id": "ad01-w0-dev-gr-01",
+        "verdict": "preserved"
+      },
+      {
+        "capability_id": "ad01-graph",
+        "detail": "ref o0",
+        "method": "seed-gr-ddmin",
+        "observation_id": "obs-ad01-w0-dev-gr-02-0",
+        "reason": "ok-preserved",
+        "task_id": "ad01-w0-dev-gr-02",
+        "verdict": "preserved"
+      }
+    ],
+    "note": "the `reason` field varies with the budget where the `verdict` field does not, and the prompt renders the verdict alone",
+    "relevant": [
+      {
+        "capability_id": "ad01-software",
+        "detail": "ref o0",
+        "method": "seed-sw-ddmin",
+        "observation_id": "obs-ad01-w0-dev-sw-00-0",
+        "reason": "ok-preserved",
+        "task_id": "ad01-w0-dev-sw-00",
+        "verdict": "preserved"
+      },
+      {
+        "capability_id": "ad01-software",
+        "detail": "ref o0",
+        "method": "seed-sw-ddmin",
+        "observation_id": "obs-ad01-w0-dev-sw-01-0",
+        "reason": "ok-preserved",
+        "task_id": "ad01-w0-dev-sw-01",
+        "verdict": "preserved"
+      },
+      {
+        "capability_id": "ad01-software",
+        "detail": "ref o0",
+        "method": "seed-sw-ddmin",
+        "observation_id": "obs-ad01-w0-dev-sw-02-0",
+        "reason": "ok-preserved",
+        "task_id": "ad01-w0-dev-sw-02",
+        "verdict": "preserved"
+      }
+    ]
+  },
+  "freeze": {
+    "body": {
+      "alpha": "descriptive-only",
+      "arms": [
+        "relevant",
+        "none",
+        "irrelevant"
+      ],
+      "cluster_rule": "(family, template)",
+      "cohort_world": 0,
+      "control_split": "transfer",
+      "estimator": "paired best-reachable vs incumbent",
+      "family": "software",
+      "filler_task_ids": [
+        "ad01-w0-dev-gr-00",
+        "ad01-w0-dev-gr-01",
+        "ad01-w0-dev-gr-02"
+      ],
+      "independent_of": "inv_r1_e2_scored",
+      "max_queries": 8,
+      "namespace": "inv_r1_e2_replica",
+      "source_split": "dev",
+      "source_task_ids": [
+        "ad01-w0-dev-sw-00",
+        "ad01-w0-dev-sw-01",
+        "ad01-w0-dev-sw-02"
+      ],
+      "target_split": "within",
+      "target_task_ids": [
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ]
+    },
+    "freeze_digest": "27ba14c9cf69bdeb864e4f1f32aad89ae35ef5e07e34ac05076b97a19f2395bb",
+    "intact": true,
+    "refusal": "",
+    "supersedes": "inv_r1_e2_replica"
+  },
+  "gates": {
+    "control_distinct_relevant_vs_irrelevant": {
+      "distinct": false,
+      "label": "relevant-vs-irrelevant",
+      "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) named no executed policy",
+      "verdict": {
+        "differing_budget": [],
+        "distinct": false,
+        "paired_tasks": [
+          "ad01-w0-within-sw-00",
+          "ad01-w0-within-sw-01",
+          "ad01-w0-within-sw-02"
+        ],
+        "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) named no executed policy",
+        "same_candidate": [],
+        "same_executed_policy": [],
+        "same_strategy": [],
+        "unnamed_executed_policy": [
+          "ad01-w0-within-sw-00",
+          "ad01-w0-within-sw-01",
+          "ad01-w0-within-sw-02"
+        ],
+        "unpaired_tasks": [],
+        "version": "ad01-control-distinctness/1"
+      }
+    },
+    "control_distinct_relevant_vs_none": {
+      "distinct": false,
+      "label": "relevant-vs-none",
+      "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) named no executed policy",
+      "verdict": {
+        "differing_budget": [],
+        "distinct": false,
+        "paired_tasks": [
+          "ad01-w0-within-sw-00",
+          "ad01-w0-within-sw-01",
+          "ad01-w0-within-sw-02"
+        ],
+        "refusal": "refused: control is not distinct from the acquired arm: 3 task(s) named no executed policy",
+        "same_candidate": [],
+        "same_executed_policy": [],
+        "same_strategy": [],
+        "unnamed_executed_policy": [
+          "ad01-w0-within-sw-00",
+          "ad01-w0-within-sw-01",
+          "ad01-w0-within-sw-02"
+        ],
+        "unpaired_tasks": [],
+        "version": "ad01-control-distinctness/1"
+      }
+    },
+    "experience_varies_irrelevant": {
+      "label": "irrelevant",
+      "refusal": "refused: the irrelevant arm's experience is a constant: 3 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+      "varies": false,
+      "verdict": {
+        "arm": "irrelevant",
+        "distinct_verdicts": 1,
+        "methods_named": [
+          "seed-gr-ddmin"
+        ],
+        "observations": 3,
+        "refusal": "refused: the irrelevant arm's experience is a constant: 3 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+        "varies": false,
+        "verdicts": [
+          "preserved"
+        ],
+        "version": "ad01-experience-variation/1"
+      }
+    },
+    "experience_varies_relevant": {
+      "label": "relevant",
+      "refusal": "refused: the relevant arm's experience is a constant: 3 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+      "varies": false,
+      "verdict": {
+        "arm": "relevant",
+        "distinct_verdicts": 1,
+        "methods_named": [
+          "seed-sw-ddmin"
+        ],
+        "observations": 3,
+        "refusal": "refused: the relevant arm's experience is a constant: 3 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+        "varies": false,
+        "verdicts": [
+          "preserved"
+        ],
+        "version": "ad01-experience-variation/1"
+      }
+    },
+    "menu_answers_nothing": {
+      "bound": [
+        "ddmin__ddmin_reduce",
+        "ddmin_reduce",
+        "graph_atoms",
+        "greedy__greedy_reduce",
+        "greedy_reduce",
+        "reduce_graph",
+        "reduce_software",
+        "software_atoms"
+      ],
+      "defaulting_priority": [
+        "ddmin__ddmin_reduce",
+        "ddmin_reduce",
+        "greedy__greedy_reduce",
+        "greedy_reduce"
+      ],
+      "defaulting_strategy": [],
+      "host_only": [
+        "oracle.query"
+      ],
+      "note": "a default for `priority` is the order inside one strategy, not the strategy, and the member may pass its own; a default for `method` is the answer",
+      "open": true,
+      "version": "ad01-menu-openness/1",
+      "wrappers_build": true
+    }
+  },
+  "gates_passed": [
+    "menu_answers_nothing"
+  ],
+  "gates_refused": [
+    "control_distinct_relevant_vs_irrelevant",
+    "control_distinct_relevant_vs_none",
+    "experience_varies_irrelevant",
+    "experience_varies_relevant"
+  ],
+  "namespace": "inv_r1_e2_gated",
+  "reachable_verdicts": {
+    "budgets_swept": [
+      1,
+      4,
+      8,
+      64
+    ],
+    "reasons": {
+      "ok-incumbent": 96,
+      "ok-preserved": 120
+    },
+    "task_budget_pairs": 216,
+    "verdict_is_constant": true,
+    "verdicts": {
+      "preserved": 216
+    }
+  },
+  "substitution": {
+    "alternate_prompt_chars": 1675,
+    "echo_excluded": false,
+    "echoer_writes": "preserved,preserved,preserved",
+    "experience_verdicts": [
+      "preserved"
+    ],
+    "ignorer_writes": "preserved,preserved,preserved",
+    "prompts_differ": true,
+    "reader_equals_echoer": true,
+    "reader_equals_ignorer": true,
+    "reader_writes": "preserved,preserved,preserved",
+    "scored_prompt_chars": 1663,
+    "verdict": "the observable cannot separate a reader from an echoer or from a policy that hardcodes the string, because the experience carries one verdict and the prompt renders that verdict alone",
+    "version": "ad01-e2-substitution/1"
+  },
+  "verdict": "refused: E2's experience is a constant before any dispatch, so a run would re-measure it and spend live dispatches to learn it a second time",
+  "version": "ad01-e2-gated/1"
+}

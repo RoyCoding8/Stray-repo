@@ -1,0 +1,65 @@
+{
+ "campaign_id": "w1-e1-boolean-r3",
+ "cells_retryable": [
+  "P1-qual-a1",
+  "P1-qual-a2",
+  "P1-audit-a1",
+  "P1-audit-a2",
+  "P2-qual-a1",
+  "P2-qual-a2",
+  "P2-audit-a1",
+  "P2-audit-a2"
+ ],
+ "closed_at": "2026-09-30T06:16:48Z",
+ "dispatched": 16,
+ "dispatches_spent": 16,
+ "guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": true,
+  "cost_blocked": null,
+  "dispatch_count": 16,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 16,
+  "version": "invl02-live-v1"
+ },
+ "opened_at": "2026-09-30T06:06:50Z",
+ "retried": [
+  {
+   "cell": "P1-qual-a1-retry1",
+   "outcome": "invalid-program"
+  },
+  {
+   "cell": "P1-qual-a2-retry1",
+   "outcome": "invalid-program"
+  },
+  {
+   "cell": "P1-audit-a1-retry1",
+   "outcome": "invalid-program"
+  },
+  {
+   "cell": "P1-audit-a2-retry1",
+   "outcome": "transport-loss"
+  }
+ ],
+ "skipped": [
+  {
+   "cell": "P2-qual-a1-retry1",
+   "why": "model-call ceiling 16 reached"
+  },
+  {
+   "cell": "P2-qual-a2-retry1",
+   "why": "model-call ceiling 16 reached"
+  },
+  {
+   "cell": "P2-audit-a1-retry1",
+   "why": "model-call ceiling 16 reached"
+  },
+  {
+   "cell": "P2-audit-a2-retry1",
+   "why": "model-call ceiling 16 reached"
+  }
+ ]
+}

@@ -1,0 +1,14 @@
+{
+ "policy": {
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "packet_version": "ad01-packet-v1"
+ },
+ "repertoires": {
+  "repertoire-w0-I.json": "6e3cdaa59041f5b90b406672cf1f18dde13b5554a71773e6c3af1d251797ee78",
+  "repertoire-w0-R.json": "33867e87d93507b2544f25b1bfa70c067d064e651641d318a94fb374f679dc37",
+  "repertoire-w1-I.json": "790170e8f6616cb8a5c2977626d0cfb9ad8c83491d2a279fcb42c985da213fba",
+  "repertoire-w1-R.json": "13726872fdbfa988ea855a08e6d110fa9106ff066c7fca0abfaa7e09be7c2f7d",
+  "repertoire-w2-I.json": "6bfa43791baba6fb03510139bb77ebb18e09dfcacf4356f3a621335184bb2130",
+  "repertoire-w2-R.json": "94f87de7b6d1729338fc34ddcb285e21158aa25b4f962ff7ee2155c2244b119b"
+ }
+}

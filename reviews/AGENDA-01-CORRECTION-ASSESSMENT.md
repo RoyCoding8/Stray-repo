@@ -52,6 +52,6 @@ Required acceptance: the scored runner loads a specified committed manifest and 
 
 Accept the substrate and treatment changes as useful prototype progress. Keep Agenda 01 **partially accepted**, with the v2 costs and grades preserved as descriptive evidence. The remaining three gaps materially affect its claimed durability and fixed-budget experiment, so they are not optional production polishing.
 
-Use the [three-gate completion prompt](../WORKER-AGENDA-01-THREE-GATES.md). First reproduce and repair these short gates; then preserve v1/v2, freeze once, and rerun the complete corrected panel. Interpret whatever result occurs. Do not re-audit the entire repository, invent new cognitive subsystems, require Q to win or expand the study to obtain a preferred answer.
+Use the [three-gate completion prompt](../docs/HISTORY.md#worker-agenda-01-three-gates). First reproduce and repair these short gates; then preserve v1/v2, freeze once, and rerun the complete corrected panel. Interpret whatever result occurs. Do not re-audit the entire repository, invent new cognitive subsystems, require Q to win or expand the study to obtain a preferred answer.
 
 This limits the worker's correction assignment. It does not block independent design of representation invention/transfer from the existing stage 8.5 draft. The design role should advance that architectural work while the worker owns the remaining agenda acceptance gates.

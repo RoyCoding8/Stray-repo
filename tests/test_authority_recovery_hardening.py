@@ -181,6 +181,15 @@ def test_uncertain_reservation_requires_never_sent_proof(migrated_db):
 
 
 def test_construction_calls_are_enforced_from_durable_operations(migrated_db):
+    """The ceiling refuses the second construction and only constructions.
+
+    The admitted calls declare `resource="construction_calls"`. They used to
+    carry nothing, and every model call was charged to this ceiling, so the
+    second call was refused for being a second model call rather than a
+    second construction. The development call below is the control: it is
+    admitted after the ceiling is spent, because it draws on no construction
+    resource.
+    """
     authority.authorize_study(
         migrated_db, "construction-ceiling", authorized=1000,
         ceilings={"construction_calls": 1})
@@ -191,14 +200,21 @@ def test_construction_calls_are_enforced_from_durable_operations(migrated_db):
     first = authority.admit_study_call(
         migrated_db, "construction-ceiling", kind="development",
         operation_id="construction-ceiling-construct-0",
-        effect=broker.MODEL_INFERENCE, payload=payload)
+        effect=broker.MODEL_INFERENCE, payload=payload,
+        resource="construction_calls")
     second = authority.admit_study_call(
         migrated_db, "construction-ceiling", kind="development",
         operation_id="construction-ceiling-construct-1",
+        effect=broker.MODEL_INFERENCE, payload=payload,
+        resource="construction_calls")
+    development = authority.admit_study_call(
+        migrated_db, "construction-ceiling", kind="development",
+        operation_id="construction-ceiling-develop-0",
         effect=broker.MODEL_INFERENCE, payload=payload)
 
     assert first.operation_id == "construction-ceiling-construct-0"
     assert second.reason == "insufficient-authority"
+    assert development.operation_id == "construction-ceiling-develop-0"
 
 
 def test_study_ceilings_and_replay_binding_are_transactional(migrated_db):

@@ -192,7 +192,7 @@ def test_guard_sees_nonzero_charge_carried_by_the_error_itself():
         GatewayErrorKind.PROTOCOL, "gateway response has no message content",
         False, "op-e",
         Usage(input_tokens=10, output_tokens=5, charge_units=5,
-              charge_scale=1000, provider_enforced_ceiling=False,
+              charge_scale=None, provider_enforced_ceiling=None,
               billed=True)))
     guard = s09_pilot.StudyGatewayGuard(delegate, pinned_model="free-model",
                                         ceiling=100, already_spent=2)

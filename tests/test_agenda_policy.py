@@ -56,12 +56,23 @@ def test_repair_scan_reconciles_stranded_dispatching_op(migrated_db):
     store.admit_commitment(dsn, _cmd({"investigation_id": "i1", "objective": "o"}))
     store.acquire_work(dsn, _cmd({"attempt_id": "w1", "investigation_id": "i1",
                                   "allocation_id": "a1"}))
+    # The operation names the attempt's allocation. An attempt-bound
+    # operation with no allocation of its own is refused at prepare, so the
+    # stranded `dispatching` state this scan reconciles would not exist.
     store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
+                                       "allocation_id": "a1",
                                        "operation": {"effect": "note"}}))
     assert store.advance_dispatch(dsn, _cmd({"operation_id": "op1"})).code == ResultCode.APPLIED
-    report = agenda.repair_scan(dsn, {})
-    assert "op1" in report.repaired
-    assert broker.read_operation(dsn, "op1")["reconcile_state"] == "unresolved"
+
+    agenda.repair_scan(dsn, {})
+
+    # The scan leaves the operation `unresolved`, holding its exposure rather
+    # than guessing. An `unresolved-liability` decision is deliberately not
+    # reported as a repair: nothing was recovered, and listing it as one
+    # would claim a settlement that did not happen.
+    reconciled = broker.read_operation(dsn, "op1")
+    assert reconciled["dispatch_state"] == "unresolved"
+    assert reconciled["reconcile_state"] == "unresolved"
 
 
 def test_wakeups_fire_on_completed_ops_and_due_deadlines(migrated_db):

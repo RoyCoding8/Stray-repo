@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import threading
 import time
 from typing import Any, Callable
@@ -24,7 +25,7 @@ from psycopg import errors as _pgerrors
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
-from . import db
+from . import attestation, db
 from .common import (
     SUPERVISION_SCOPE,
     Command,
@@ -91,7 +92,12 @@ class _DeadlineCursor:
         return getattr(self._cur, name)
 
 _OUTCOMES = {"success", "failure", "unknown"}
+# An outcome that decides an operation. The complement of `unknown`, named
+# once because the multi-receipt guard below has to ask "does this receipt
+# claim anything terminal" in three places and must not drift between them.
+_DECIDED_OUTCOMES = {"success", "failure"}
 _TERMINAL_ATTEMPT = {"completed", "failed", "cancelled"}
+_TERMINAL_UNKNOWN = "unresolved-terminal"
 CANONICAL_CHARGE_SCALE = 1000
 CEILING_COUNTERS = {
     "operations": "operations",
@@ -107,6 +113,84 @@ CEILING_COUNTERS = {
     "repair": "repair",
     "use": "use",
 }
+
+
+# Ceilings a study declares that this layer records but does not count.
+# A boundary is a trajectory-level decision and an oracle query is a child
+# call, so neither appears as a durable operation row. Accepting the
+# declaration keeps the sheet whole; refusing it made the study unstartable
+# with a valid grant, which is the worse failure.
+DECLARED_CEILINGS = frozenset({
+    "boundaries", "witness_queries", "dev_episodes", "lineages",
+    "deadline_s", "trajectories", "diagnostic_queries",
+})
+
+
+def is_ceiling_name(name: object) -> bool:
+    """Whether a study may declare this ceiling, with or without `max_`."""
+    text = str(name)
+    bare = text.removeprefix("max_")
+    return (text in CEILING_COUNTERS or bare in CEILING_COUNTERS
+            or text in DECLARED_CEILINGS or bare in DECLARED_CEILINGS)
+
+
+def is_ceiling_enforced(name: object) -> bool:
+    """Whether this layer actually counts and checks the ceiling `name`.
+
+    `is_ceiling_name` answers a different question, and answering only that one
+    is what N-32 named. A name in `DECLARED_CEILINGS` is a legal declaration
+    and is written to `study_authority.ceilings` as authoritative, but
+    `_ceiling_counter` returns None for it, so the enforcement loop skips it
+    and nothing ever checks it again. A live study declares two of them,
+    `max_boundaries` and `max_witness_queries`
+    (`scripts/inv01_study.py:1224`), and reads back a frozen ceiling this
+    layer never enforces.
+
+    Refusing the declaration is not available here. The comment above
+    `DECLARED_CEILINGS` records that refusing one "made the study unstartable
+    with a valid grant, which is the worse failure", and the live caller
+    proves it. So the gap is made answerable instead: a caller that wants to
+    know whether a bound is real asks this, and `trajectory.py`, which reads a
+    campaign `caps` dict rather than the stored `ceilings`, is exactly the kind
+    of caller that was reading two records for one quantity.
+    """
+    return _ceiling_counter(name) is not None
+
+
+def unenforced_ceilings() -> list[str]:
+    """Every ceiling name this layer accepts and will never check."""
+    return sorted(DECLARED_CEILINGS)
+
+
+def require_enforceable_ceilings(ceilings: dict[str, Any]) -> None:
+    """Refuse a cap sheet that names a ceiling this layer cannot enforce.
+
+    For a caller about to report a sheet as a set of enforced bounds. It is
+    not a substitute for the `authorize_study` decision, which is where a
+    declared-only ceiling should be refused outright if a study is going to be
+    unstartable without it. It is the assertion a downstream consumer makes
+    when it is about to treat a name as a bound it can rely on.
+    """
+    unbacked = [str(name) for name in dict(ceilings or {})
+                if not is_ceiling_enforced(name)]
+    if unbacked:
+        raise MissingEvidence(
+            "ceilings this layer does not count or enforce: %s"
+            % ", ".join(sorted(unbacked)))
+
+
+def _ceiling_counter(name: object) -> str | None:
+    """The counter a ceiling names, tolerating a study's `max_` prefix.
+
+    A cap sheet is written as `max_model_calls` and the counter is
+    `model_calls`. Enforcement has to read the same name admission accepts,
+    or a study that was authorized under one spelling fails at the first
+    operation under the other, which reads as a resource bug rather than a
+    naming one.
+    """
+    text = str(name)
+    return CEILING_COUNTERS.get(text) or CEILING_COUNTERS.get(
+        text.removeprefix("max_"))
 
 
 def _j(value: Any) -> Json:
@@ -300,6 +384,66 @@ def _require_nonnegative_int(value: Any, label: str) -> int:
     return int(value)
 
 
+# The character class an execution_version is built from, and the ceiling on
+# its length. Both are the store's own, because the property has to hold
+# wherever the value is written and not wherever a consumer happens to filter.
+# The class permits "/" because the values this repository actually passes
+# include `run/v1` and the rule's own docstring names it. Omitting it made
+# the rule contradict itself and broke production call sites, not just
+# tests. Traversal is refused by the segment checks below, not by a ban
+# on the separator: ".." is built from characters this class permits, so a
+# narrower class would be theatre.
+_EXEC_VERSION_CHARS = re.compile(r"\A[A-Za-z0-9._/:-]+\Z")
+_EXEC_VERSION_MAX = 128
+
+
+def _require_execution_version(value: Any) -> str:
+    """Refuse an execution_version that would not survive being used as a name.
+
+    The store wrote this column verbatim and left the safety to
+    `launcher_local.native_id`, whose `_sanitize` maps every character outside
+    `[A-Za-z0-9_.-]` to `_`. That is a filter in a consumer, and a consumer can
+    change. A caller that reaches this store cannot rely on it, so the rule
+    lives here, at the boundary that accepts the value.
+
+    The rule is deliberately the narrowest one that refuses every traversal,
+    because a stricter one breaks callers. The values this repository actually
+    passes are `exec-v1`, `exec-v2`, `exec-default`, `v1`, `run/v1`, a
+    `sha256:` digest and the empty string. `run/v1` carries a separator, so
+    "no separator at all" is not available, and `..` is built from a character
+    the class permits, so "no dots" is not available either. What is left is
+    the property that actually matters: the value must resolve to a single
+    path component under any reader that treats it as a name, which is exactly
+    the absence of a `.` or `..` segment and of a leading separator.
+    """
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise SettlementError("execution_version must be a string")
+    # No strip(). Trimming here would store a value the caller never sent,
+    # and this column is compared verbatim by callers that reason about which
+    # version actually ran. `' exec-v1 '` and `'  '` are therefore REFUSED
+    # rather than silently normalised to `'exec-v1'` and `''` - a boundary that
+    # accepts what it does not store is a boundary that lies.
+    text = value
+    if not text:
+        return ""
+    if len(text) > _EXEC_VERSION_MAX:
+        raise SettlementError(
+            f"execution_version must be at most {_EXEC_VERSION_MAX} characters")
+    if not _EXEC_VERSION_CHARS.match(text):
+        raise SettlementError(
+            f"execution_version {value!r} holds a character outside "
+            f"[A-Za-z0-9._/-]")
+    if text.startswith("/"):
+        raise SettlementError(f"execution_version {value!r} is an absolute path")
+    for segment in text.split("/"):
+        if segment in ("", ".", ".."):
+            raise SettlementError(
+                f"execution_version {value!r} has a path segment {segment!r}")
+    return text
+
+
 def _require_generation(value: Any, label: str = "dispatch generation") -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
         raise SettlementError(f"{label} must be a positive integer")
@@ -307,7 +451,40 @@ def _require_generation(value: Any, label: str = "dispatch generation") -> int:
 
 
 def _never_sent_proof(payload: dict[str, Any], subject: str,
-                      generation: int | None = None) -> dict[str, str | int]:
+                      generation: int | None = None,
+                      attested_by: str | None = None) -> dict[str, str | int]:
+    """Validate a caller-supplied never-sent proof, and refuse an unattested one.
+
+    Shape alone never bought safety here. A proof saying "forged" is exactly
+    as well-shaped as one saying "local-1:prove_never_sent", and consuming a
+    shape-valid proof returns the operation to ``prepared`` — the state a
+    second execution starts from. So the proof must also name something.
+
+    Two things are checked, and neither substitutes for the other.
+    ``_provenance_attested`` holds the proof to the launcher the operation was
+    actually admitted to; a provenance naming any other launcher was not
+    produced by the one that was given the work, and an operation admitted to no
+    launcher has nothing that could attest for it. Both refuse. A subject with no
+    operation at all passes ``None`` and keeps the shape check alone.
+
+    The store cannot ask a launcher directly, so it reaches one through
+    ``attestation``: a launcher registers its own capability check at
+    construction, and this function requires that the proof carry a capability
+    the admitted launcher's verifier accepts. A proof assembled from the
+    operation row reproduces the subject, the generation and the provenance, and
+    reproduces none of the capability, because the capability is an HMAC over a
+    secret that never leaves the launcher's memory. A sandbox that really ran and
+    one that never started still leave byte-identical store state; what separates
+    them now is a value the store can check against something the caller does not
+    have.
+
+    Two limits travel with this. A launcher that registers no verifier is held to
+    nothing, so a deployment using one gets attribution back rather than
+    evidence. And registration is per-process, so the guarantee binds the
+    launchers actually constructed in the process that consumes the proof.
+    Substituting code that declines to attest is a different threat from
+    supplying a payload, and this layer does not address it.
+    """
     proof = payload.get("never_sent_proof")
     valid = (
         isinstance(proof, dict)
@@ -325,19 +502,92 @@ def _never_sent_proof(payload: dict[str, Any], subject: str,
         )
     if generation is not None:
         valid = valid and supplied_generation == generation
+    if valid and not _provenance_attested(proof, attested_by):
+        valid = False
+    if valid and not _capability_attested(proof, subject, generation, attested_by):
+        valid = False
     if not valid:
         raise MissingEvidence(
-            "never-sent proof requires claim, subject, dispatch generation, and provenance")
+            "never-sent proof requires claim, subject, dispatch generation, and "
+            f"provenance from the operation's own launcher {attested_by!r}")
     canonical = {
         "claim": "never-sent",
         "subject": subject,
         "provenance": proof["provenance"].strip(),
     }
+    if isinstance(proof.get("capability"), str) and proof["capability"].strip():
+        canonical["capability"] = proof["capability"].strip()
     if supplied_generation is not None:
         canonical["dispatch_generation"] = supplied_generation
     elif generation is not None:
         canonical["dispatch_generation"] = generation
     return canonical
+
+
+def _capability_attested(proof: dict[str, Any], subject: str,
+                         generation: int | None, attested_by: str | None) -> bool:
+    """Whether this proof carries a capability the admitted launcher minted.
+
+    The provenance check above holds a proof to the name of the launcher the
+    operation was admitted to. That name is caller-written and, for the bundled
+    launcher, a public class constant, so satisfying it costs a caller nothing
+    it did not already have. This is the part that costs something: a capability
+    is an HMAC over the operation, its generation and a secret that never leaves
+    the launcher's memory, so a proof carrying a valid one could only have come
+    from asking that launcher whether the work was ever sent.
+
+    It is required, not merely preferred, for every launcher that can mint one.
+    An optional capability field would be a second spelling rule, and the
+    forgery would simply omit it.
+
+    Two cases stand outside it, and both are about the launcher rather than the
+    proof. A launcher that registered no verifier has no secret behind this id,
+    so there is nothing to hold a proof to; the provenance check stands alone and
+    the docstring above says so in terms. A subject with no operation behind it
+    (``attested_by`` of ``None``) had no launcher to be given the work.
+
+    The generation compared is the one the store derived from the operation row,
+    never the one the proof supplies, so a proof cannot move the check onto a
+    generation it likes.
+    """
+    if attested_by is None or not attested_by:
+        return True
+    if not attestation.attests(attested_by):
+        return True
+    if generation is None:
+        return False
+    return attestation.check(attested_by, subject, int(generation),
+                             proof.get("capability"))
+
+
+def _provenance_attested(proof: dict[str, Any], attested_by: str | None) -> bool:
+    """True when the proof's provenance is the admitted launcher's own name.
+
+    ``broker._structured_never_sent_proof`` writes ``<launcher id>:prove_never_sent``
+    for every launcher that exposes the method, so the launcher id is the one
+    part of a proof the store can hold the caller to.
+
+    ``attested_by`` of ``None`` means the subject has no operation behind it —
+    a reservation reserved without one, for instance. There is no launcher that
+    could have been given the work, so there is nothing to hold the proof to and
+    the shape check stands alone. An empty string is different: the operation
+    exists and was admitted to no launcher, so nothing can attest for it and
+    the proof is refused. Every real operation-bound proof passes its actual
+    ``launcher_id``.
+
+    What this does not do is decide whether a run started. The id it compares
+    against is caller-written, caller-readable, and public for the bundled
+    launcher, so a caller can satisfy it by reading the row rather than by
+    asking a launcher. It excludes proofs aimed at the wrong launcher, which
+    is a real narrowing over accepting any non-empty string and worth keeping.
+    It does not exclude a forgery aimed at the right one.
+    """
+    if attested_by is None:
+        return True
+    if not attested_by:
+        return False
+    provenance = str(proof.get("provenance", "")).strip()
+    return provenance == attested_by or provenance.startswith(f"{attested_by}:")
 
 
 def _take_reservation(cur, allocation_id: str, reservation_id: str, amount: int, operation_id: str) -> None:
@@ -355,6 +605,25 @@ def _take_reservation(cur, allocation_id: str, reservation_id: str, amount: int,
         " VALUES (%s, %s, %s, %s, 'reserved')",
         (reservation_id, allocation_id, operation_id, int(amount)),
     )
+
+
+def _reject_terminal_intent(body: Any) -> None:
+    if isinstance(body, dict) and "_terminal_disposition" in body:
+        raise ConflictPayload("operation body cannot set _terminal_disposition")
+
+
+def _terminal_disposition(operation: dict[str, Any]) -> dict[str, Any] | None:
+    stored = dict(operation.get("payload") or {})
+    disposition = stored.get("_terminal_disposition")
+    if isinstance(disposition, dict) and disposition.get("kind") == _TERMINAL_UNKNOWN:
+        return disposition
+    return None
+
+
+def _refuse_terminal_unknown(operation: dict[str, Any], transition: str) -> None:
+    if _terminal_disposition(operation) is not None:
+        raise MissingEvidence(
+            f"operation {operation['id']} is {_TERMINAL_UNKNOWN}; {transition} is not permitted")
 
 
 def _settle_amount(cur, reservation_id: str, outcome: str, actual: Any = None) -> tuple[bool, str, int]:
@@ -582,7 +851,29 @@ def subdivide_allocation(dsn: str, cmd: Command) -> CommandResult:
 def reserve(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
-        _take_reservation(cur, p["allocation_id"], p["reservation_id"], int(p["amount"]), p.get("operation_id", ""))
+        operation_id = str(p.get("operation_id") or "")
+        # Refused here rather than at settle. `settle_reservation` and
+        # `release_reservation` both require the operation to exist whenever
+        # the id is non-empty, and neither creates one, so a reservation
+        # naming an operation that does not exist can never be settled or
+        # released. Committing that row spends allocation authority on an
+        # exposure nothing can ever close.
+        #
+        # This guard is here and not in `_take_reservation` because the
+        # internal callers reserve *before* they insert the operation, in the
+        # same transaction: `_prepare_operation`, the study admission path,
+        # `team._insert_operation` and both agenda probe sites. A check in the
+        # shared helper would refuse all six. It is also not a foreign key:
+        # `reservations.operation_id` carries the empty-string sentinel for a
+        # reservation with no operation behind it, and agenda's
+        # `_agenda_charge_decision` deliberately names a charge that is never
+        # an operations row, so no constraint on this column can be satisfied
+        # by all of its writers.
+        if operation_id:
+            cur.execute("SELECT 1 FROM operations WHERE id = %s", (operation_id,))
+            if cur.fetchone() is None:
+                raise SettlementError(f"unknown operation {operation_id}")
+        _take_reservation(cur, p["allocation_id"], p["reservation_id"], int(p["amount"]), operation_id)
         return (ResultCode.APPLIED, f"reserved {p['amount']}",
                 {"reservation_id": p["reservation_id"], "amount": int(p["amount"])},
                 [("resources.reserved", {"reservation_id": p["reservation_id"]})], [])
@@ -591,6 +882,14 @@ def reserve(dsn: str, cmd: Command) -> CommandResult:
 
 def settle_reservation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
+        cur.execute("SELECT operation_id FROM reservations WHERE id = %s",
+                    (cmd.payload["reservation_id"],))
+        reservation = cur.fetchone()
+        if reservation is None:
+            raise SettlementError(f"unknown reservation {cmd.payload['reservation_id']}")
+        operation_id = str(reservation.get("operation_id") or "")
+        if operation_id:
+            _refuse_terminal_unknown(_get_operation(cur, operation_id), "settlement")
         settled, detail, consumed = _settle_amount(
             cur, cmd.payload["reservation_id"], cmd.payload.get("outcome", "success"),
             cmd.payload.get("actual_cost"))
@@ -617,18 +916,23 @@ def release_reservation(dsn: str, cmd: Command) -> CommandResult:
             operation_id = str(res.get("operation_id") or "")
             if operation_id:
                 cur.execute(
-                    "SELECT payload FROM operations WHERE id = %s", (operation_id,))
+                    "SELECT id, launcher_id, payload FROM operations WHERE id = %s",
+                    (operation_id,))
                 operation = cur.fetchone()
                 if operation is None:
                     raise MissingEvidence(
                         f"reservation {res['id']} has no operation for never-sent proof")
+                _refuse_terminal_unknown(operation, "release")
                 try:
                     generation = _require_generation(
                         dict(operation.get("payload") or {}).get("_dispatch_generation"),
                         "operation dispatch generation")
                 except SettlementError as exc:
                     raise MissingEvidence(str(exc)) from exc
-            proof = _never_sent_proof(cmd.payload, str(res["id"]), generation)
+                proof = _never_sent_proof(cmd.payload, str(operation_id), generation,
+                                          operation.get("launcher_id"))
+            else:
+                proof = _never_sent_proof(cmd.payload, str(res["id"]), generation)
         cur.execute(
             "UPDATE allocations SET reserved = reserved - %s WHERE id = %s",
             (int(res["amount"]), res["allocation_id"]),
@@ -997,18 +1301,46 @@ def _study_root_for_allocation(cur, allocation_id: str | None) -> str:
     if not allocation_id:
         return ""
     cur.execute(
-        "WITH RECURSIVE allocation_lineage (id) AS ("
-        " SELECT id FROM allocations WHERE id = %s"
-        " UNION SELECT a.id FROM allocations a"
-        " JOIN allocation_lineage line ON a.parent_id = line.id)"
-        " SELECT study_authority.study_root FROM study_authority"
-        " JOIN allocation_lineage ON allocation_lineage.id = study_authority.allocation_id"
-        " LIMIT 1", (allocation_id,))
-    row = cur.fetchone()
-    if row is None:
+        "WITH RECURSIVE allocation_lineage (id, parent_id, path) AS ("
+        " SELECT id, parent_id, ARRAY[id] FROM allocations WHERE id = %s"
+        # A study root is an ancestor, so the walk climbs `line.parent_id`.
+        # The path runs from the operation's own allocation upward, so the
+        # authority nearest the operation is the one at the *lowest* position
+        # in it. Carrying the path also cuts a revisit: `UNION` cannot, because
+        # a path differs on every pass, so the tuples never dedupe and a cycle
+        # runs to the statement timeout. The walk is still linear, because
+        # `parent_id` is a single column and every allocation has exactly one
+        # path to its root.
+        " UNION ALL SELECT a.id, a.parent_id, line.path || a.id FROM allocations a"
+        " JOIN allocation_lineage line ON line.parent_id = a.id"
+        " WHERE NOT a.id = ANY(line.path))"
+        " SELECT study_authority.study_root,"
+        " array_position(allocation_lineage.path, study_authority.allocation_id)"
+        " AS depth FROM study_authority"
+        " JOIN allocation_lineage ON allocation_lineage.id = study_authority.allocation_id",
+        (allocation_id,))
+    # A plain cursor yields tuples, and a tuple has no ``get``. Reading a
+    # fixed column pair keeps the one-cursor caller and the `dict_row` caller
+    # of this function agreeing, which is what keeps study_root off every
+    # persisted operation when one of them guesses wrong.
+    found = [(row["study_root"] if hasattr(row, "get") else row[0],
+              int(row["depth"]) if hasattr(row, "get") else int(row[1]))
+             for row in cur.fetchall()]
+    if not found:
         return ""
-    value = row.get("study_root") if hasattr(row, "get") else None
-    return str(value) if value else ""
+    nearest = min(depth for _, depth in found)
+    owners = {str(root) for root, depth in found if depth == nearest}
+    if len(owners) > 1:
+        # Two study roots on the one allocation. `study_authority` keys on
+        # `study_root` and constrains nothing on `allocation_id`, so this is
+        # reachable, and no ordering separates two roots on the same node.
+        # Binding either leaves the other's ceilings unchecked for every
+        # operation admitted below that allocation, so the walk refuses
+        # rather than picks the row it happened to read first.
+        raise ConflictPayload(
+            "allocation %s is claimed by studies %s; no study owns it"
+            % (allocation_id, sorted(owners)))
+    return owners.pop()
 
 
 def _bind_study_allocation(cur, allocation_id: str | None, stored: dict) -> None:
@@ -1051,11 +1383,103 @@ def _check_operation_replay(existing: dict[str, Any], *, digest: str,
             f"operation {existing['id']} replay changed immutable authority metadata")
 
 
+def _counters_spent_by(stored: dict) -> frozenset[str]:
+    """The counters one operation would move if it were admitted.
+
+    A ceiling is a bound on a resource, so it is checked against the
+    operations that actually draw on that resource. Counting every
+    ceiling against every operation makes a ceiling of zero a refusal of
+    all work: `max_model_calls: 0` is a statement that no model is
+    called, and a `domain-command` draws on no model, so it has to be
+    admitted. Refusing it there turned 42 admitted operations into 42
+    refusals, and on a summary line a refused study is
+    indistinguishable from one that made no model calls at all.
+    """
+    effect = (stored or {}).get("effect")
+    spent = {"operations"}
+    if effect == "model-inference":
+        # A ceiling is a bound on a named resource, so it is charged only to
+        # the operations that draw on it. `construction_calls` was charged to
+        # every model call, which made it a second spelling of `model_calls`:
+        # a phase that merely asks a model a question spent the construction
+        # ceiling, and a study that ran its development phase first had no
+        # authority left to construct anything. Charge and credit had to
+        # become one predicate, so both read `resource` here.
+        spent.add("model_calls")
+        if (stored or {}).get("resource") == "construction_calls":
+            spent.add("construction_calls")
+    elif effect == "sandbox-exec":
+        spent |= {"sandbox_calls", "execution_units"}
+    kind = (stored or {}).get("kind")
+    if isinstance(kind, str) and kind:
+        spent.add(kind)
+    return frozenset(spent)
+
+
+def _check_study_ceilings(cur, study_root: Any, stored: dict) -> None:
+    """Refuse a send the study's own frozen ceiling forbids.
+
+    `admit_study_operation` read this column, but its only caller is
+    `authority.admit_study_call` and no live dispatch reaches it. Every send
+    goes through `prepare_operation`, which bound the study root and then
+    never asked, so a study could authorize one send and dispatch any number.
+    The check lives where the operation is actually admitted.
+
+    It runs before the reservation is taken, so an over-ceiling send spends
+    no exposure.
+    """
+    if not study_root:
+        return
+    cur.execute("SELECT ceilings FROM study_authority WHERE study_root = %s",
+                (str(study_root),))
+    row = cur.fetchone()
+    if row is None:
+        return
+    ceilings = dict(row["ceilings"] or {})
+    if not ceilings:
+        return
+    used = _count_study_operations(cur, str(study_root), stored)
+    spent = _counters_spent_by(stored)
+    for name, raw_limit in ceilings.items():
+        if _ceiling_counter(name) not in spent:
+            continue
+        limit = _ceiling_value(raw_limit)
+        counter = _ceiling_counter(name)
+        if counter is None:
+            # A declared-only ceiling names a quantity this layer records and
+            # does not count, such as a wall deadline or a query budget. It is
+            # authorized deliberately, so refusing it here would break every
+            # study that declares one. It is not enforced, and saying so is
+            # better than raising on a name the study may legally declare.
+            continue
+        if limit is None:
+            raise SettlementError(f"unsupported study ceiling {name}")
+        if used.get(counter, 0) + 1 > limit:
+            raise InsufficientResources(
+                f"study {study_root} ceiling {name}={limit} reached at "
+                f"{used.get(counter, 0)}")
+
+
+def _count_study_operations(cur, study_root: str, stored: dict) -> dict:
+    """How many operations of each ceiling kind this study already has."""
+    cur.execute("SELECT allocation_id FROM study_authority WHERE study_root = %s",
+                (study_root,))
+    study = cur.fetchone()
+    if study is None:
+        return {}
+    return _study_operation_counts(cur, str(study["allocation_id"]))
+
+
 def _prepare_operation(cur, authority_version: int, *, operation_id: str,
                        attempt_id=None, allocation_id=None, reservation_id=None,
                        exposure: int = 0, operation=None,
                        execution_version: str = "") -> dict:
     body = operation or {}
+    _reject_terminal_intent(body)
+    # Checked before the reservation is taken, so a refused value spends no
+    # exposure, and before the replay read below, so the value is the same one
+    # a replay is compared against.
+    execution_version = _require_execution_version(execution_version)
     digest = payload_digest(body)
     cur.execute(
         "SELECT o.*, r.amount AS reservation_amount FROM operations o"
@@ -1078,6 +1502,7 @@ def _prepare_operation(cur, authority_version: int, *, operation_id: str,
         _take_reservation(cur, allocation_id, reservation_id, int(exposure), operation_id)
     stored = dict(body) if isinstance(body, dict) else {}
     _bind_study_allocation(cur, allocation_id, stored)
+    _check_study_ceilings(cur, stored.get("study_root"), stored)
     stored["_authority_version"] = int(authority_version)
     cur.execute(
         "INSERT INTO operations (id, attempt_id, allocation_id, reservation_id, payload_digest,"
@@ -1110,6 +1535,18 @@ def prepare_operation(dsn: str, cmd: Command) -> CommandResult:
     return transact(dsn, cmd, _fn)
 
 
+def _empty_study_counts() -> dict[str, int]:
+    """A zeroed counter for every name `CEILING_COUNTERS` can resolve to.
+
+    Building the shape from the table rather than from a hand-written literal
+    is what makes the two agree. A hand-written five-key dict is how
+    `calibration`, `development`, `repair` and `use` came to read zero: they
+    were in `CEILING_COUNTERS`, so a study could declare them, and the walker
+    never incremented them.
+    """
+    return {counter: 0 for counter in set(CEILING_COUNTERS.values())}
+
+
 def _study_operation_counts(cur, allocation_id: str) -> dict[str, int]:
     cur.execute(
         "WITH RECURSIVE study_allocs (id) AS ("
@@ -1119,25 +1556,34 @@ def _study_operation_counts(cur, allocation_id: str) -> dict[str, int]:
         " SELECT id FROM study_allocs", (allocation_id,))
     allocation_ids = [row["id"] for row in cur.fetchall()]
     if not allocation_ids:
-        return {"operations": 0, "model_calls": 0, "construction_calls": 0,
-                "sandbox_calls": 0, "execution_units": 0}
+        return _empty_study_counts()
     cur.execute(
         "SELECT o.id, o.allocation_id, o.payload, COALESCE(r.amount, 0) AS exposure"
         " FROM operations o LEFT JOIN reservations r ON r.id = o.reservation_id"
         " WHERE o.allocation_id = ANY(%s) ORDER BY o.id", (allocation_ids,))
     rows = [dict(row) for row in cur.fetchall()]
-    counts = {"operations": len(rows), "model_calls": 0,
-              "construction_calls": 0, "sandbox_calls": 0,
-              "execution_units": 0}
+    counts = _empty_study_counts()
+    counts["operations"] = len(rows)
     for row in rows:
-        effect = (row.get("payload") or {}).get("effect")
+        payload = row.get("payload") or {}
+        effect = payload.get("effect")
         if effect == "model-inference":
             counts["model_calls"] += 1
-            if "-construct-" in str(row.get("id") or ""):
+            if payload.get("resource") == "construction_calls":
                 counts["construction_calls"] += 1
         elif effect == "sandbox-exec":
             counts["sandbox_calls"] += 1
             counts["execution_units"] += int(row.get("exposure") or 0)
+        # The four study kinds, which are allocation-namespace counters rather
+        # than effect counters. A study operation is admitted under the child
+        # allocation `<parent>/<kind>/<operation>`, so the kind is one path
+        # segment below the study's own allocation. The LIKE fallback counted
+        # these by namespace and the walker could not, which is the
+        # disagreement N-31 named; counting them here reconciles the two by
+        # making one counter that reads both.
+        kind = payload.get("kind")
+        if kind in counts:
+            counts[kind] += 1
     return counts
 
 
@@ -1164,7 +1610,13 @@ def admit_study_operation(
         operation_id = str(p["operation_id"])
         child_id = str(p["allocation_id"])
         exposure = int(p["exposure"])
+        # The same boundary rule `_prepare_operation` applies, on the second
+        # site that writes the column. A check on one write site and not the
+        # other is half a check.
+        execution_version = _require_execution_version(
+            p.get("execution_version", ""))
         body = dict(p["body"])
+        _reject_terminal_intent(body)
         if (
                 body.get("allocation_id") != child_id
                 or body.get("study_root") != study_root
@@ -1189,7 +1641,7 @@ def admit_study_operation(
             _check_operation_replay(
                 existing, digest=digest, attempt_id=p.get("attempt_id"),
                 allocation_id=child_id, reservation_id=str(p["reservation_id"]),
-                exposure=exposure, execution_version=str(p.get("execution_version", "")),
+                exposure=exposure, execution_version=execution_version,
                 authority_version=int(control["authority_version"]))
             stored = dict(existing["payload"] or {})
             if existing["allocation_id"] != child_id \
@@ -1201,20 +1653,27 @@ def admit_study_operation(
                     {"operation_id": operation_id, "allocation_id": child_id,
                      "exposure": exposure, "budget_kind": stored["budget_kind"],
                      "study_root": study_root, "kind": kind}, [], [])
-        counts = _study_operation_counts(cur, parent_id)
+        # One counter for both paths. This used to read a five-entry `counts`
+        # dict and fall back to `WHERE allocation_id LIKE '<parent>/<counter>/%'`
+        # for any counter the dict did not carry, which is N-31's two sources
+        # of truth: the fallback counted one namespace, and the live path's
+        # `_count_study_operations` counted the whole subtree. They disagreed,
+        # and which one answered depended on which entry point ran. Now both
+        # read `_study_operation_counts`, the walker behind
+        # `_count_study_operations`, so there is one counter. The study row is
+        # already locked above, so the allocation is passed rather than
+        # re-read.
+        used_counts = _study_operation_counts(cur, parent_id)
         ceilings = dict(study.get("ceilings") or {})
+        spent = _counters_spent_by(body)
         for name, raw_limit in ceilings.items():
+            if _ceiling_counter(name) not in spent:
+                continue
             limit = _ceiling_value(raw_limit)
-            counter = CEILING_COUNTERS.get(str(name))
+            counter = _ceiling_counter(name)
             if limit is None or counter is None:
                 raise SettlementError(f"unsupported study ceiling {name}")
-            if counter in counts:
-                used = counts[counter]
-            else:
-                cur.execute(
-                    "SELECT COUNT(*) AS n FROM operations WHERE allocation_id LIKE %s",
-                    (f"{parent_id}/{counter}/%",))
-                used = int(cur.fetchone()["n"])
+            used = used_counts.get(counter, 0)
             if used + 1 > limit:
                 raise InsufficientResources(
                     f"study {study_root} ceiling {name}={limit} reached at {used}")
@@ -1241,7 +1700,7 @@ def admit_study_operation(
             "INSERT INTO operations (id, attempt_id, allocation_id, reservation_id, payload_digest,"
             " payload, dispatch_state, execution_version) VALUES (%s, %s, %s, %s, %s, %s, 'prepared', %s)",
             (operation_id, p.get("attempt_id"), child_id, reservation_id, digest,
-             _j(stored_body), str(p.get("execution_version", ""))),
+             _j(stored_body), execution_version),
         )
         return (ResultCode.APPLIED, f"study operation {operation_id} admitted",
                 {"operation_id": operation_id, "allocation_id": child_id,
@@ -1358,10 +1817,31 @@ def _validate_receipt(op: dict[str, Any], payload: dict[str, Any]) -> None:
     if response_operation is not None and response_operation != op["id"]:
         raise SettlementError(
             f"receipt operation identity {response_operation!r} does not match {op['id']!r}")
+    provenance = payload.get("provenance")
+    if not isinstance(provenance, str) or not provenance.strip():
+        # Every outcome, not only a failure. A `success` receipt is the one a
+        # reservation settles on, and it used to be the one free to name
+        # nobody: nothing distinguished a receipt from the launcher that ran
+        # the work from a receipt from a producer that never ran. N-302 is that
+        # gap, and requiring the field is the whole of the admission half.
+        raise SettlementError("receipt needs provenance")
     if outcome == "failure":
-        provenance = payload.get("provenance")
-        if not isinstance(provenance, str) or not provenance.strip():
-            raise SettlementError("failure receipt needs provenance")
+        # Two vocabularies, one rule. The first is a gateway's account of a
+        # response it did not get. The second is a local launcher's account of
+        # a process it ran, and it used to be unstateable: a LocalLauncher
+        # receipt carries none of the first set, so when a checked program
+        # genuinely failed, the one receipt that could have recorded it was
+        # refused and the operation was left `dispatching` with no receipt at
+        # all. The evidence requirement is unchanged - a failure is still
+        # never admitted on a claim alone - it is only asking the producer
+        # in vocabulary the producer can actually speak.
+        #
+        # `parse` is the launcher's account of how it reached a verdict and is
+        # set on every path through `_interpret`; `returncode` is present on
+        # every real execution; `spawn_error` is the one failure branch that
+        # calls `_base` directly and therefore has neither of the others.
+        data = content.get("data") if isinstance(content, dict) else None
+        data = data if isinstance(data, dict) else {}
         if not any(value not in (None, "") for value in (
                 content.get("response_operation_id"),
                 content.get("response_class"),
@@ -1369,7 +1849,10 @@ def _validate_receipt(op: dict[str, Any], payload: dict[str, Any]) -> None:
                 content.get("response_digest"),
                 content.get("error"),
                 content.get("text"),
-                content.get("response"))):
+                content.get("response"),
+                content.get("parse"),
+                data.get("returncode"),
+                data.get("spawn_error"))):
             raise SettlementError("failure receipt needs response evidence")
     effect = str((op.get("payload") or {}).get("effect", ""))
     if effect == "model-inference":
@@ -1463,18 +1946,58 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
             and op["dispatch_state"] == "unresolved"
             and op["reconcile_state"] == "unresolved"
             and not bool(op["settled"])
+            and _terminal_disposition(op) is None
         )
-        if prior and not resolves_unknown:
+        # A second receipt on one operation is an additional observation
+        # when it claims nothing terminal. `resolves_unknown` already
+        # admits a decided receipt replacing a lone unknown, and it is
+        # deliberately left exactly as it was: all seven conditions stay,
+        # so a `success` and a `failure` on one operation remain
+        # structurally impossible.
+        #
+        # This is narrower than it looks. coord02's step receipt carries
+        # `outcome="unknown"` and claims no resolution, and the launcher
+        # receipt that settled the operation has already run, so the
+        # settled short-circuit below would have admitted it untouched -
+        # the count guard was the only thing refusing it. No `resolves`
+        # field is needed for N-30, and none is added: a declared
+        # resolution target is the right design if several `unknown`s ever
+        # need to be told apart, and it wants a migration with a unique
+        # index so two receipts cannot claim one unknown. Until something
+        # needs it, the count stays as the sound rule for resolving.
+        additional_observation = (
+            outcome not in _DECIDED_OUTCOMES
+            and _terminal_disposition(op) is None
+        )
+        if prior and not (resolves_unknown or additional_observation):
             _mark_receipt_conflict(cur, op["id"], p["receipt_identity"], digest,
                                    content, outcome, provenance, actual_cost)
             return (ResultCode.APPLIED, "conflicting receipt preserved for reconciliation",
                     {"operation_id": op["id"], "conflict": True, "settled": bool(op["settled"])},
                     [("operation.receipt_conflict", {"operation_id": op["id"],
                                                      "receipt_identity": p["receipt_identity"]})], [])
+        # Without this the insert below would fall through to the state
+        # rewrite and DEMOTE a decided operation to `unresolved`, because
+        # an unknown sets `state = "unresolved"`. That is worse than the
+        # hang this change fixes: a receipt that reports nothing would be
+        # able to un-decide a settlement.
+        if (prior and outcome not in _DECIDED_OUTCOMES
+                and any(row["outcome"] in _DECIDED_OUTCOMES for row in prior)):
+            cur.execute(
+                "INSERT INTO receipts (receipt_identity, operation_id, content_digest,"
+                " content, outcome, provenance)"
+                " VALUES (%s, %s, %s, %s, %s, %s)",
+                (p["receipt_identity"], op["id"], digest, _j(content), outcome, provenance),
+            )
+            return (ResultCode.APPLIED,
+                    "additional observation recorded, operation already decided",
+                    {"operation_id": op["id"], "settled": bool(op["settled"])},
+                    [("operation.receipted", {"operation_id": op["id"]})], [])
         cur.execute(
-            "INSERT INTO receipts (receipt_identity, operation_id, content_digest, content, outcome)"
-            " VALUES (%s, %s, %s, %s, %s)",
-            (p["receipt_identity"], op["id"], digest, _j(content), outcome),
+            "INSERT INTO receipts (receipt_identity, operation_id, content_digest,"
+            " content, outcome, provenance)"
+            " VALUES (%s, %s, %s, %s, %s, %s)",
+            (p["receipt_identity"], op["id"], digest, _j(content), outcome, provenance),
         )
         stored = dict(op["payload"] or {})
         stored["_receipt_provenance"] = provenance
@@ -1542,6 +2065,7 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
 def request_cancellation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         op = _get_operation(cur, cmd.payload["operation_id"])
+        _refuse_terminal_unknown(op, "cancellation")
         cur.execute(
             "UPDATE operations SET cancel_state = 'requested', updated_at = now() WHERE id = %s", (op["id"],))
         return (ResultCode.APPLIED, "cancellation requested", {"operation_id": op["id"]},
@@ -1552,6 +2076,7 @@ def request_cancellation(dsn: str, cmd: Command) -> CommandResult:
 def confirm_cancellation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         op = _get_operation(cur, cmd.payload["operation_id"])
+        _refuse_terminal_unknown(op, "cancellation")
         cur.execute("SELECT outcome FROM receipts WHERE operation_id = %s", (op["id"],))
         outcomes = [row["outcome"] for row in cur.fetchall()]
         if op["reconcile_state"] == "conflict":
@@ -1567,7 +2092,8 @@ def confirm_cancellation(dsn: str, cmd: Command) -> CommandResult:
         generation = int(stored.get("_dispatch_generation", 0))
         proof = None
         if "never_sent_proof" in cmd.payload:
-            proof = _never_sent_proof(cmd.payload, str(op["id"]), generation)
+            proof = _never_sent_proof(cmd.payload, str(op["id"]), generation,
+                                      op.get("launcher_id"))
         if proof is None:
             if op["reservation_id"] is not None:
                 cur.execute(
@@ -1608,8 +2134,9 @@ def operation_receipts(dsn: str, operation_id: str) -> list[dict]:
     with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             _require_study_operation_binding(cur, operation_id)
-            cur.execute("SELECT receipt_identity, outcome, content FROM receipts WHERE operation_id = %s"
-                        " ORDER BY receipt_identity", (operation_id,))
+            cur.execute("SELECT receipt_identity, outcome, content, provenance FROM receipts"
+                        " WHERE operation_id = %s"
+                        " ORDER BY created_at, receipt_identity", (operation_id,))
             rows = [dict(r) for r in cur.fetchall()]
             conn.commit()
             return rows
@@ -1652,7 +2179,8 @@ def reset_dispatch(dsn: str, cmd: Command) -> CommandResult:
             raise StaleRevision(
                 f"operation {op['id']} is at dispatch generation"
                 f" {current_generation}, not {expected_generation}")
-        proof = _never_sent_proof(cmd.payload, str(op["id"]), current_generation)
+        proof = _never_sent_proof(cmd.payload, str(op["id"]), current_generation,
+                                  op.get("launcher_id"))
         generation = current_generation + 1
         stored["_dispatch_generation"] = generation
         stored["_never_sent_proof"] = proof
@@ -1675,16 +2203,37 @@ def reconcile_operation(dsn: str, cmd: Command) -> CommandResult:
             raise SettlementError(
                 f"operation {op['id']} is {op['dispatch_state']}, nothing dispatched to reconcile")
         resolution = p.get("resolution", "reconciled")
-        if resolution not in ("reconciled", "unresolved"):
+        if resolution not in ("reconciled", "unresolved", _TERMINAL_UNKNOWN):
             raise SettlementError(f"unknown resolution {resolution}")
+        stored = dict(op.get("payload") or {})
+        terminal = _terminal_disposition(op)
+        if terminal is not None:
+            if resolution == _TERMINAL_UNKNOWN:
+                if op["reconcile_state"] == "conflict":
+                    raise MissingEvidence(
+                        f"operation {op['id']} has a receipt conflict; retain conflict state")
+                return (ResultCode.ALREADY_APPLIED,
+                        f"operation {op['id']} already {resolution}",
+                        {"operation_id": op["id"], "resolution": resolution,
+                         "terminal_disposition": terminal}, [], [])
+            raise MissingEvidence(
+                f"operation {op['id']} is {_TERMINAL_UNKNOWN}; resolution is final")
         if op["reconcile_state"] == "conflict":
             raise MissingEvidence(
                 f"operation {op['id']} has a receipt conflict; retain conflict state")
         cur.execute(
-            "SELECT outcome FROM receipts WHERE operation_id = %s"
+            "SELECT receipt_identity, outcome, content FROM receipts WHERE operation_id = %s"
             " ORDER BY created_at, receipt_identity FOR UPDATE", (op["id"],))
-        receipts = [row["outcome"] for row in cur.fetchall()]
+        receipt_rows = [dict(row) for row in cur.fetchall()]
+        receipts = [row["outcome"] for row in receipt_rows]
         decided = [outcome for outcome in receipts if outcome in ("success", "failure")]
+        if resolution == _TERMINAL_UNKNOWN and (
+                len(receipt_rows) != 1 or receipts[0] != "unknown"):
+            raise MissingEvidence(
+                f"operation {op['id']} needs one unknown receipt for terminal uncertainty")
+        if resolution == _TERMINAL_UNKNOWN and not receipts:
+            raise MissingEvidence(
+                f"operation {op['id']} needs an unknown receipt for terminal uncertainty")
         if resolution == "unresolved" and decided:
             raise MissingEvidence(
                 f"operation {op['id']} has a decided receipt; unresolved state would hide it")
@@ -1692,6 +2241,53 @@ def reconcile_operation(dsn: str, cmd: Command) -> CommandResult:
             if resolution == "reconciled":
                 raise MissingEvidence(
                     f"operation {op['id']} has no decided receipt")
+            if resolution == _TERMINAL_UNKNOWN:
+                content = receipt_rows[0].get("content")
+                if not isinstance(content, dict) or content.get("response_received") is not False:
+                    raise MissingEvidence(
+                        f"operation {op['id']} terminal unknown requires response_received=false")
+                if op["dispatch_state"] != "unresolved" \
+                        or op["reconcile_state"] != "unresolved" or bool(op["settled"]):
+                    raise MissingEvidence(
+                        f"operation {op['id']} is not unsettled unresolved exposure")
+                reservation_id = op.get("reservation_id")
+                if not reservation_id:
+                    raise MissingEvidence(
+                        f"operation {op['id']} terminal unknown has no reservation")
+                cur.execute(
+                    "SELECT id, allocation_id, amount, state FROM reservations"
+                    " WHERE id = %s FOR UPDATE", (reservation_id,))
+                reservation = cur.fetchone()
+                if reservation is None or reservation["state"] != "uncertain":
+                    state = "missing" if reservation is None else reservation["state"]
+                    raise MissingEvidence(
+                        f"reservation {reservation_id} is {state}, not uncertain")
+                amount = int(reservation["amount"])
+                cur.execute(
+                    "SELECT reserved FROM allocations WHERE id = %s FOR UPDATE",
+                    (reservation["allocation_id"],))
+                allocation = cur.fetchone()
+                if allocation is None or int(allocation["reserved"]) < amount:
+                    raise MissingEvidence(
+                        f"allocation {reservation['allocation_id']} does not retain reservation {amount}")
+                disposition = {
+                    "kind": _TERMINAL_UNKNOWN,
+                    "receipt_identity": receipt_rows[0]["receipt_identity"],
+                    "response_class": str(content.get("response_class") or "unknown"),
+                    "response_received": False,
+                    "reservation_amount": amount,
+                }
+                stored["_terminal_disposition"] = disposition
+                cur.execute(
+                    "UPDATE operations SET payload = %s, updated_at = now() WHERE id = %s",
+                    (_j(stored), op["id"]))
+                return (ResultCode.APPLIED,
+                        f"operation {op['id']} recorded {resolution}",
+                        {"operation_id": op["id"], "resolution": resolution,
+                         "terminal_disposition": disposition},
+                        [("operation.unresolved_terminal", {
+                            "operation_id": op["id"],
+                            "terminal_disposition": disposition})], [])
         elif not receipts:
             if op["dispatch_state"] not in ("dispatching", "sent", "unresolved"):
                 raise MissingEvidence(
@@ -1703,14 +2299,14 @@ def reconcile_operation(dsn: str, cmd: Command) -> CommandResult:
                 if (op.get("cancel_state") or "none") != "none":
                     raise MissingEvidence(
                         f"operation {op['id']} has cancellation activity; explicit reconcile only")
-                stored = dict(op.get("payload") or {})
                 try:
                     generation = _require_generation(
                         stored.get("_dispatch_generation"),
                         "operation dispatch generation")
                 except SettlementError as exc:
                     raise MissingEvidence(str(exc)) from exc
-                proof = _never_sent_proof(p, str(op["id"]), generation)
+                proof = _never_sent_proof(p, str(op["id"]), generation,
+                                          op.get("launcher_id"))
                 reservation_id = op.get("reservation_id")
                 if reservation_id is not None:
                     cur.execute(
@@ -1813,23 +2409,26 @@ def restart_reconciliation(dsn: str) -> dict:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 "SELECT id, attempt_id, dispatch_state, launcher_id, execution_version, reconcile_state,"
-                " cancel_state, settled FROM operations"
+                " cancel_state, settled, payload FROM operations"
                 " WHERE dispatch_state IN ('dispatching', 'sent', 'unresolved')"
                 " OR (cancel_state = 'requested')"
                 " OR reconcile_state = 'conflict' ORDER BY id",
             )
-            operations = [dict(r) for r in cur.fetchall()]
+            operations = [dict(row) for row in cur.fetchall()
+                          if _terminal_disposition(dict(row)) is None
+                          or row["reconcile_state"] == "conflict"]
             cur.execute(
                 "SELECT id, investigation_id, investigation_revision, ownership_generation, lifecycle"
                 " FROM attempts WHERE lifecycle NOT IN ('completed', 'failed', 'cancelled') ORDER BY id",
             )
             attempts = [dict(r) for r in cur.fetchall()]
             cur.execute(
-                "SELECT o.id, o.execution_version FROM operations o"
+                "SELECT o.id, o.execution_version, o.payload FROM operations o"
                 " WHERE o.execution_version <> '' AND o.dispatch_state IN"
                 " ('dispatching', 'sent', 'unresolved') ORDER BY o.id",
             )
-            versions = [dict(r) for r in cur.fetchall()]
+            versions = [dict(row) for row in cur.fetchall()
+                        if _terminal_disposition(dict(row)) is None]
             conn.commit()
     return {"unfinished_operations": operations, "live_attempts": attempts, "execution_versions": versions}
 
@@ -1840,6 +2439,8 @@ def _bump_inflight_dispatch(cur) -> list[dict]:
                 " WHERE dispatch_state IN ('dispatching', 'sent', 'unresolved') ORDER BY id")
     fenced = []
     for op in cur.fetchall():
+        if _terminal_disposition(dict(op)) is not None:
+            continue
         stored = dict(op["payload"] or {})
         generation = int(stored.get("_dispatch_generation", 0)) + 1
         stored["_dispatch_generation"] = generation

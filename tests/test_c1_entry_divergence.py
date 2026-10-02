@@ -1,0 +1,136 @@
+from __future__ import annotations
+
+import hashlib
+import json
+
+import pytest
+
+from settlement import artifacts, capabilities
+from settlement.common import SettlementError
+
+ENTRY_A = b"ENTRY = 'A'\n"
+ENTRY_B = b"ENTRY = 'B'\n"
+
+
+def _manifest_entry(manifest: dict) -> str:
+    return capabilities.resolve_entry_path(manifest)
+
+
+def _package(entries: list[tuple[str, bytes]], named: str | None) -> tuple[dict, dict]:
+    files = {path: body for path, body in entries}
+    manifest = {
+        "files": [{"path": path, "digest": hashlib.sha256(body).hexdigest(),
+                   "size": len(body), "kind": "file"}
+                  for path, body in entries],
+    }
+    if named is not None:
+        manifest["entry"] = named
+    package = {"manifest": manifest, "scope": "", "files":
+               {path: body.hex() for path, body in files.items()}}
+    return package, manifest
+
+
+def test_resolver_honours_named_entry_over_first_python():
+    _package_body, manifest = _package(
+        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named="B.py")
+
+    assert _manifest_entry(manifest) == "B.py"
+
+
+def test_resolver_falls_back_to_first_python_only_when_unnamed():
+    _package_body, manifest = _package(
+        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named=None)
+
+    assert _manifest_entry(manifest) == "A.py"
+
+
+def test_resolver_refuses_entry_absent_from_files():
+    _package_body, manifest = _package([("A.py", ENTRY_A)], named="missing.py")
+
+    with pytest.raises(SettlementError, match="not in the manifest files"):
+        _manifest_entry(manifest)
+
+
+def test_resolver_refuses_manifest_with_no_executable_entry():
+    _package_body, manifest = _package([("README.txt", b"no code here")], named=None)
+
+    with pytest.raises(SettlementError, match="no executable entry"):
+        _manifest_entry(manifest)
+
+
+def test_extract_and_invoke_resolve_the_same_entry(tmp_path):
+    published, manifest = _package(
+        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named="B.py")
+    staged = artifacts.stage_package(
+        None, tmp_path / "staging", manifest=manifest,
+        files={"A.py": ENTRY_A, "B.py": ENTRY_B})
+    (tmp_path / "store").mkdir()
+    (tmp_path / "store" / staged["digest"]).write_bytes(
+        json.dumps(published, sort_keys=True, separators=(",", ":")).encode())
+
+    path, body, _args = capabilities._extract_entry(
+        tmp_path / "store", staged["digest"])
+
+    assert path == "B.py"
+    assert body == ENTRY_B
+
+
+def test_entry_bytes_selected_are_the_named_file_not_the_first_python():
+    _package_body, manifest = _package(
+        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named="B.py")
+    files = {"A.py": ENTRY_A, "B.py": ENTRY_B}
+
+    selected = files[_manifest_entry(manifest)]
+
+    assert selected == ENTRY_B
+    assert selected != ENTRY_A
+
+
+def test_invoke_method_stages_the_named_entry_not_the_first_python(tmp_path):
+    from settlement import experiment
+
+    published, manifest = _package(
+        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named="B.py")
+    staged = artifacts.stage_package(
+        None, tmp_path / "staging", manifest=manifest,
+        files={"A.py": ENTRY_A, "B.py": ENTRY_B})
+    root = tmp_path / "store"
+    root.mkdir()
+    (root / staged["digest"]).write_bytes(
+        json.dumps(published, sort_keys=True, separators=(",", ":")).encode())
+
+    class _Launcher:
+        def __init__(self):
+            self.staged: dict[str, bytes] = {}
+
+        def stage_input(self, _op, _ver, name, body):
+            self.staged[name] = body
+
+        def staged_python(self):
+            return "python"
+
+        def exec_dirs(self, _op, _ver):
+            return ("in", "out")
+
+        def read_output(self, *_a):
+            return b"fixed"
+
+    launcher = _Launcher()
+    monkeypatch_target = experiment
+    original_sandbox = monkeypatch_target._run_sandbox
+    original_broker = experiment.broker.read_operation
+    monkeypatch_target._run_sandbox = lambda *_a, **_k: (
+        "op", {"content": {"data": {"worker": {"status": "ok"}}}})
+    experiment.broker.read_operation = lambda *_a, **_k: {"dispatch_state": "observed"}
+    try:
+        _fixed, executed_source = monkeypatch_target._invoke_method(
+            "unused", launcher, root,
+            {"artifact_digest": staged["digest"]}, "b'pass'", "t", "a", "e")
+    finally:
+        monkeypatch_target._run_sandbox = original_sandbox
+        experiment.broker.read_operation = original_broker
+
+    assert launcher.staged["method.py"] == ENTRY_B
+    assert executed_source == ENTRY_B.decode()
+    assert executed_source != ENTRY_A.decode()
+

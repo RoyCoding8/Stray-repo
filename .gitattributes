@@ -1,0 +1,29 @@
+# Line endings are part of the measurement, not a checkout preference.
+#
+# A frozen world pins every task file by content hash. With no `eol` here,
+# `core.autocrlf=true` rewrites those files to CRLF on checkout, the hash of
+# what is on disk stops being the hash of what was frozen, and the freeze
+# verifier reports `manifest-hash-mismatch` on a checkout that is correct.
+# A digest that changes with the host's line-ending policy is a digest of the
+# checkout, not of the source.
+#
+# `text eol=lf` is the whole rule. `text` normalises to LF in the index, and
+# `eol=lf` materialises LF in the working tree on every host regardless of
+# that host's `core.autocrlf`. Without `text`, `eol=lf` alone is ignored.
+#
+# The rule is scoped to the content-hashed trees, not set as a repo-wide
+# `* text=auto`. The experiment and library code is not pinned by any
+# manifest, and a global rule would rewrite 3,200 unrelated files to buy
+# nothing.
+
+experiments/ad01/worlds/** text eol=lf
+experiments/ad01/worlds_exp/** text eol=lf
+experiments/ad01/worlds_panel/** text eol=lf
+experiments/agenda01/** text eol=lf
+experiments/coord02/corpus/** text eol=lf
+experiments/representation/experiment/** text eol=lf
+experiments/representation/fixtures/** text eol=lf
+experiments/representation/acquire/** text eol=lf
+**/manifest.json text eol=lf
+**/manifest.sha256 text eol=lf
+experiments/team01/** text eol=lf

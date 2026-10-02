@@ -17,7 +17,7 @@ from restore import run_restore
 
 from settlement import broker, capabilities, run, store
 from settlement.common import Command, CommandResult, ResultCode
-from settlement.gateway import FakeGatewayAdapter
+from settlement.gateway import FakeGatewayAdapter, ModelResponse, Usage
 from settlement.launcher_local import LocalLauncher
 
 
@@ -94,7 +94,7 @@ def test_stale_owner_refused_end_to_end(migrated_db, tmp_path):
     _sandbox(dsn, "r02a-att:n", env)
     launcher = LocalLauncher(tmp_path / "runs")
     first = store.advance_dispatch(
-        dsn, _cmd({"operation_id": "r02a-att:n", "launcher_id": "local-process",
+        dsn, _cmd({"operation_id": "r02a-att:n", "launcher_id": launcher.launcher_id,
                    "ownership_generation": env["generation"]}, "a1"))
     assert first.code == ResultCode.APPLIED
     fenced = store.restore_fence(dsn, _cmd({"reason": "test"}, "fence"))
@@ -106,14 +106,45 @@ def test_stale_owner_refused_end_to_end(migrated_db, tmp_path):
     assert list((tmp_path / "runs").glob("*.spawns")) == []
     assert store.resume_dispatch(dsn, _cmd({"reason": "test"}, "rel")).code == ResultCode.APPLIED
     stale = store.advance_dispatch(
-        dsn, _cmd({"operation_id": "r02a-att:n", "launcher_id": "local-process",
+        dsn, _cmd({"operation_id": "r02a-att:n", "launcher_id": launcher.launcher_id,
                    "ownership_generation": env["generation"]}, "a2"))
     assert stale.code == ResultCode.STALE_REVISION
-    readmit = broker.redispatch_after_reset(
+    readmit = broker.dispatch_operation(
         dsn, "r02a-att:n", launchers={"local-process": launcher},
-        expected_generation=env["generation"] + 1)
+        ownership_generation=env["generation"] + 1)
     assert readmit.dispatch_state == "observed" and readmit.sent_this_call
     assert len(list((tmp_path / "runs").glob("*.spawns"))) == 1
+
+
+def test_readmit_refused_when_the_profile_launcher_cannot_attest(migrated_db, tmp_path):
+    dsn = migrated_db
+    env = _seed(dsn, "r02a2")
+    _sandbox(dsn, "r02a2-att:n", env)
+    launcher = LocalLauncher(tmp_path / "runs")
+    assert store.advance_dispatch(
+        dsn, _cmd({"operation_id": "r02a2-att:n", "launcher_id": "some-other-launcher",
+                   "ownership_generation": env["generation"]}, "a1")).code == ResultCode.APPLIED
+    assert store.restore_fence(dsn, _cmd({"reason": "test"}, "fence")).code == ResultCode.APPLIED
+    retry = broker.dispatch_operation(
+        dsn, "r02a2-att:n", launchers={"local-process": launcher},
+        ownership_generation=env["generation"])
+    assert retry.next_decision == "refused-never-sent-proof"
+    assert retry.sent_this_call is False
+    assert list((tmp_path / "runs").glob("*.spawns")) == []
+    row = broker.read_operation(dsn, "r02a2-att:n")
+    assert row["dispatch_state"] == "dispatching"
+    generation = int(row["payload"]["_dispatch_generation"])
+    readmit = broker.redispatch_after_reset(
+        dsn, "r02a2-att:n", launchers={"local-process": launcher},
+        expected_generation=generation)
+    assert readmit.next_decision == "refused-never-sent-proof"
+    assert readmit.sent_this_call is False
+    assert list((tmp_path / "runs").glob("*.spawns")) == []
+    row = broker.read_operation(dsn, "r02a2-att:n")
+    assert row["dispatch_state"] == "dispatching"
+    assert int(row["payload"]["_dispatch_generation"]) == generation, \
+        "a refused redispatch must not consume a generation"
+    assert store.operation_receipts(dsn, "r02a2-att:n") == []
 
 
 def test_withdrawn_investigation_refuses_dispatch_both_paths(migrated_db):
@@ -319,9 +350,6 @@ def dbos_sys_dsn():
     dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
     if not dsn:
         pytest.skip("SETTLEMENT_TEST_DSN is not configured")
-    if "://" not in dsn:
-        pytest.skip("DBOS system-store tests need URL-form SETTLEMENT_TEST_DSN"
-                    " (DBOS database_url is SQLAlchemy-parsed)")
     target = _sibling_dsn(f"{_base_name()}_dbos")
     _make_database(target)
     broker.init_dbos(target)
@@ -444,7 +472,7 @@ def test_failed_invocation_terminates_at_retry_budget(migrated_db, tmp_path, mon
     assert len(list((tmp_path / "runs").glob("*.spawns"))) == 1
 
 
-def test_unbilled_usage_settles_measured_tokens(migrated_db):
+def test_unknown_usage_settles_full_reservation(migrated_db):
     dsn = migrated_db
     env = _seed(dsn, "r02o")
     op = "r02o-model"
@@ -458,8 +486,66 @@ def test_unbilled_usage_settles_measured_tokens(migrated_db):
                                        ownership_generation=env["generation"])
     assert status.dispatch_state == "observed" and status.sent_this_call
     receipt = store.operation_receipts(dsn, op)
-    assert receipt and store.allocation_status(
-        dsn, env["allocation"])["consumed"] == 0
+    assert receipt and receipt[0]["content"]["usage"]["billed"] is None
+    assert store.allocation_status(dsn, env["allocation"])["consumed"] == prepared.data["exposure"]
+
+
+def test_billed_usage_settles_measured_charge(migrated_db):
+    dsn = migrated_db
+    env = _seed(dsn, "r02o2")
+    op = "r02o2-model"
+    prepared = broker.ensure_operation(
+        dsn, operation_id=op, effect=broker.MODEL_INFERENCE,
+        payload={"model": "fake", "messages": [{"role": "user", "content": "hi"}],
+                 "max_output_tokens": 50, "deadline_ms": 10000},
+        allocation_id=env["allocation"], attempt_id=env["attempt"])
+    assert prepared.code == ResultCode.APPLIED
+    exposure = int(prepared.data["exposure"])
+    assert exposure > 5, "the reservation must be able to cover the measured charge"
+
+    class Billed(FakeGatewayAdapter):
+        def infer(self, request):
+            return ModelResponse(request.operation_id, "simulated", {"simulated": True},
+                                 Usage(input_tokens=3, output_tokens=2, charge_units=5,
+                                       charge_scale=1000, billed=True),
+                                 "stop")
+
+    status = broker.dispatch_operation(dsn, op, gateway=Billed(),
+                                       ownership_generation=env["generation"])
+    assert status.dispatch_state == "observed" and status.sent_this_call
+    usage = store.operation_receipts(dsn, op)[0]["content"]["usage"]
+    assert usage["billed"] is True and usage["charge_units"] == 5
+    assert store.allocation_status(dsn, env["allocation"])["consumed"] == 5
+
+
+def test_billed_charge_without_token_counts_refuses_settlement(migrated_db):
+    dsn = migrated_db
+    env = _seed(dsn, "r02o3")
+    op = "r02o3-model"
+    prepared = broker.ensure_operation(
+        dsn, operation_id=op, effect=broker.MODEL_INFERENCE,
+        payload={"model": "fake", "messages": [{"role": "user", "content": "hi"}],
+                 "max_output_tokens": 50, "deadline_ms": 10000},
+        allocation_id=env["allocation"], attempt_id=env["attempt"])
+    assert prepared.code == ResultCode.APPLIED
+    exposure = int(prepared.data["exposure"])
+
+    class Uncounted(FakeGatewayAdapter):
+        def infer(self, request):
+            return ModelResponse(request.operation_id, "simulated", {"simulated": True},
+                                 Usage(charge_units=3, billed=True), "stop")
+
+    status = broker.dispatch_operation(dsn, op, gateway=Uncounted(),
+                                       ownership_generation=env["generation"])
+    assert status.next_decision == "receipt-admission-refused"
+    assert broker.read_operation(dsn, op)["settled"] is False
+    allocation = store.allocation_status(dsn, env["allocation"])
+    assert allocation["consumed"] == 0
+    assert allocation["reserved"] == exposure
+    reasons = [e["payload"]["reason"] for e in store.read_events(dsn)["events"]
+               if e["kind"] == "operation.settlement_infeasible"
+               and e["payload"]["operation_id"] == op]
+    assert reasons == ["billed usage requires token counts"]
 
 
 def test_transact_bounded_under_contention(migrated_db):

@@ -1,0 +1,341 @@
+{
+  "ceiling": {
+    "best_input": 13,
+    "ceiling": 0.0026666666666666713,
+    "input_means": {
+      "0": 0.05973333333333333,
+      "1": 0.059199999999999996,
+      "2": 0.059422222222222223,
+      "3": 0.06022222222222222,
+      "4": 0.05946666666666667,
+      "5": 0.05968888888888889,
+      "6": 0.05955555555555555,
+      "7": 0.059333333333333335,
+      "8": 0.06026666666666667,
+      "9": 0.060399999999999995,
+      "10": 0.06,
+      "11": 0.05884444444444444,
+      "12": 0.06093333333333334,
+      "13": 0.061511111111111114,
+      "14": 0.0608,
+      "15": 0.06102222222222222
+    },
+    "interpretation": "Every input the instrument accepts, scored on one cohort. This is the ceiling on any revision of this decision, because choosing a better probe is the only lever the channel offers. If the ceiling is itself negligible then no probe, and no wider menu, could produce a descendant effect worth measuring, and the blocker is the substrate rather than the instrument's reach.",
+    "n_seeds": 1500,
+    "paired_se": 0.001245713638496345,
+    "split": "dev",
+    "worst_input": 11,
+    "z": 2.1406738950739124
+  },
+  "channel_version": "invl02-improve-v1",
+  "controls": [
+    {
+      "as_expected": true,
+      "delta": 0.25959595959595955,
+      "delta_vs_incumbent": 0.25959595959595955,
+      "evidence": [
+        0,
+        1,
+        2,
+        4,
+        8
+      ],
+      "incumbent_mean": 0.08888888888888889,
+      "learned_inputs": 5,
+      "mean": 0.34848484848484845,
+      "n_seeds": 24,
+      "reference": "incumbent",
+      "refused_inputs": 0,
+      "role": "known-effect",
+      "split": "qual"
+    },
+    {
+      "as_expected": true,
+      "delta": 0.0,
+      "delta_vs_incumbent": 0.0,
+      "evidence": [
+        3
+      ],
+      "incumbent_mean": 0.08888888888888889,
+      "learned_inputs": 1,
+      "mean": 0.08888888888888889,
+      "n_seeds": 24,
+      "reference": "incumbent",
+      "refused_inputs": 0,
+      "role": "no-op",
+      "split": "qual"
+    },
+    {
+      "as_expected": true,
+      "delta": 0.0,
+      "delta_vs_incumbent": -0.01597222222222222,
+      "evidence": [
+        16
+      ],
+      "incumbent_mean": 0.08888888888888889,
+      "learned_inputs": 0,
+      "mean": 0.07291666666666667,
+      "n_seeds": 24,
+      "reference": "descendant-that-learned-nothing",
+      "refused_inputs": 1,
+      "role": "disconnect",
+      "split": "qual"
+    }
+  ],
+  "decision_under_study": "diagnostic-evidence-selection",
+  "evaluator": "invl02-frozen-version-space-v1",
+  "experiment": "E4 one bounded executable learner revision",
+  "headroom": {
+    "best_beats_incumbent": false,
+    "best_mean": 0.06666666666666667,
+    "best_probe": 0,
+    "delta": 0.0,
+    "estimator": "paired best-reachable vs incumbent",
+    "half_cohort_comparison": false,
+    "incumbent_evidence": [
+      3
+    ],
+    "incumbent_mean": 0.06666666666666667,
+    "measurable": false,
+    "menu_mean": 0.03333333333333333,
+    "n": 3,
+    "paired_sd": 0.0,
+    "paired_se": 0.0,
+    "reachable_evidence": [
+      "3",
+      "11"
+    ],
+    "selection_biased": false,
+    "split": "dev",
+    "split_half": {
+      "score": {
+        "n": 1,
+        "seeds": [
+          1
+        ]
+      },
+      "select": {
+        "n": 2,
+        "seeds": [
+          0,
+          2
+        ]
+      }
+    },
+    "z": null
+  },
+  "inputs": {
+    "controls": {
+      "n_seeds": 24,
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "split": "qual"
+    },
+    "documented_headroom": {
+      "n_seeds": 3,
+      "resample_count": 3,
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "split": "dev"
+    },
+    "population": {
+      "n_seeds": 1500,
+      "split": "dev"
+    }
+  },
+  "noise_floor": {
+    "best_probe_agrees": true,
+    "half_a_best_probe": 0,
+    "half_a_spread": 0.03333333333333333,
+    "half_b_best_probe": 0,
+    "half_b_spread": 0.06666666666666667,
+    "resample_spread": 0.06666666666666667
+  },
+  "population": {
+    "alternative_evidence": [
+      11
+    ],
+    "difference": -0.0013777777777777764,
+    "incumbent_evidence": [
+      3
+    ],
+    "interpretation": "Both reachable descendants were scored on one large cohort. The paired difference is the entire headroom the channel can express, measured with a standard error small enough to trust. An effect that is present but unreachable at the documented cohort size would still separate here; a null that converges to zero as the cohort grows is the substrate answer, not the probe answer.",
+    "mean_alternative": 0.05884444444444444,
+    "mean_incumbent": 0.06022222222222222,
+    "n": 1500,
+    "paired_sd": 0.04777599996692383,
+    "paired_se": 0.001233571014802014,
+    "seeds_for_95pct_resolution": 4619.270158584816,
+    "split": "dev",
+    "z": -1.1169018737027534
+  },
+  "qualification": {
+    "checks": {
+      "disconnect": {
+        "observed_delta": 0.0,
+        "passed": true,
+        "present": true
+      },
+      "known-effect": {
+        "observed_delta": 0.25959595959595955,
+        "passed": true,
+        "present": true
+      },
+      "no-op": {
+        "observed_delta": 0.0,
+        "passed": true,
+        "present": true
+      }
+    },
+    "note": "qualification is a property of the machinery alone; it says nothing about any run outcome",
+    "qualification": "apparatus-qualified",
+    "qualified": true
+  },
+  "reachable_descendant_means": {
+    "0": 0.06666666666666667,
+    "1": 0.06666666666666667,
+    "2": 0.022222222222222223,
+    "3": 0.022222222222222223,
+    "4": 0.044444444444444446,
+    "5": 0.044444444444444446,
+    "6": 0.044444444444444446,
+    "7": 0.044444444444444446,
+    "8": 0.06666666666666667,
+    "9": 0.044444444444444446,
+    "10": 0.022222222222222223,
+    "11": 0.044444444444444446,
+    "12": 0.022222222222222223,
+    "13": 0.044444444444444446,
+    "14": 0.06666666666666667,
+    "15": 0.044444444444444446
+  },
+  "reachable_evidence": [
+    "3",
+    "11"
+  ],
+  "reproduce": {
+    "command": ".venv/bin/python reports/evidence/inv_r1_e4/make_evidence.py",
+    "database": "none; the channel is file-backed and offline",
+    "generator": "reports/evidence/inv_r1_e4/make_evidence.py",
+    "module": "experiments/ad01/improve_channel.py",
+    "note": "output is deterministic; re-running rewrites this file",
+    "python": ".venv/bin/python (needs dbos for the import chain)"
+  },
+  "scaling": [
+    {
+      "best_probe": 0,
+      "delta": 0.0,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.06666666666666667,
+      "measurable": false,
+      "n_seeds": 3,
+      "paired_sd": 0.0,
+      "paired_se": 0.0,
+      "z": null
+    },
+    {
+      "best_probe": 0,
+      "delta": 0.0,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.044444444444444446,
+      "measurable": false,
+      "n_seeds": 6,
+      "paired_sd": 0.0,
+      "paired_se": 0.0,
+      "z": null
+    },
+    {
+      "best_probe": 0,
+      "delta": 0.0,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.06666666666666667,
+      "measurable": false,
+      "n_seeds": 12,
+      "paired_sd": 0.0,
+      "paired_se": 0.0,
+      "z": null
+    },
+    {
+      "best_probe": 0,
+      "delta": 0.0,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.03888888888888889,
+      "measurable": false,
+      "n_seeds": 24,
+      "paired_sd": 0.0,
+      "paired_se": 0.0,
+      "z": null
+    },
+    {
+      "best_probe": 11,
+      "delta": 0.002777777777777778,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.061111111111111116,
+      "measurable": false,
+      "n_seeds": 48,
+      "paired_sd": 0.030301978096210318,
+      "paired_se": 0.006185365377725643,
+      "z": 0.4490887131390718
+    },
+    {
+      "best_probe": 11,
+      "delta": 0.0013888888888888892,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.0638888888888889,
+      "measurable": false,
+      "n_seeds": 96,
+      "paired_sd": 0.02542084058017101,
+      "paired_se": 0.0036691822879970737,
+      "z": 0.3785281787259071
+    },
+    {
+      "best_probe": 7,
+      "delta": -0.004861111111111111,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.06666666666666667,
+      "measurable": false,
+      "n_seeds": 192,
+      "paired_sd": 0.03501956023089713,
+      "paired_se": 0.00357416889926501,
+      "z": -1.3600675424462305
+    },
+    {
+      "best_probe": 7,
+      "delta": -0.0034722222222222225,
+      "estimator": "paired best-reachable vs incumbent",
+      "incumbent_mean": 0.06423611111111112,
+      "measurable": false,
+      "n_seeds": 384,
+      "paired_sd": 0.03384303591947557,
+      "paired_se": 0.0024424107372879246,
+      "z": -1.4216373066218215
+    }
+  ]
+}

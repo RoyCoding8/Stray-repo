@@ -1,0 +1,36 @@
+{
+ "charge_units": {
+  "measured": "unknown",
+  "source": "doubles-carry-no-priced-charge"
+ },
+ "construction": {
+  "measured": 3,
+  "source": "durable-model-inference-operations"
+ },
+ "dispatch_guard": {
+  "ceiling": 100,
+  "dispatch_count": 19,
+  "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refusal_reason": ""
+ },
+ "model_requests": {
+  "measured": 13,
+  "source": "episode-plus-construction-census"
+ },
+ "policy_execution": {
+  "measured": 12,
+  "source": "settled-boundaries"
+ },
+ "rejected_actions": {
+  "measured": 6,
+  "source": "episode-dispositions"
+ },
+ "repair": {
+  "measured": 1,
+  "source": "repair-attempt-operations"
+ },
+ "use": {
+  "measured": 24,
+  "source": "sealed-use-records"
+ }
+}

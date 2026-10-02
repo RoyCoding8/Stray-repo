@@ -1,0 +1,361 @@
+{
+ "candidate_view": {
+  "automatic_retry_count": 0,
+  "dispatch_count": 1,
+  "dispatches": [
+   {
+    "accepted_candidate_digest": null,
+    "arm": "P1",
+    "artifact_digest": null,
+    "attempt": 1,
+    "billed": "unknown",
+    "charge_units": "unknown",
+    "details": {
+     "raw_payload": {
+      "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Choose an unqueried four-bit input to probe, or commit an executable predictor built only from the public hypothesis class. At most 8 queries.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[1,0,1,0]},{\"x\":2,\"y\":[1,1,0,1]},{\"x\":7,\"y\":[1,1,0,1]},{\"x\":8,\"y\":[1,0,0,0]},{\"x\":9,\"y\":[1,1,1,1]},{\"x\":11,\"y\":[1,0,1,0]},{\"x\":14,\"y\":[1,1,0,0]},{\"x\":15,\"y\":[1,0,0,1]}],\"remaining\":0,\"split\":\"audit\",\"task_id\":\"rule-audit-0023\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+      "raw_response": ""
+     },
+     "route": {
+      "adapter": "durable-broker",
+      "endpoint": "http://localhost:4000/v1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "provider": "nvidia",
+      "route_error": "gateway response route refused: returned route metadata mismatch",
+      "tier": "free"
+     },
+     "stop_reason": "route-refused",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 369,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": false
+     }
+    },
+    "dispatch_evidence_digest": "3fe528d8c9275361b999837467c85adb97c8fc7ffe94838026889a475715a432",
+    "driver_digest": null,
+    "durable_receipt": {
+     "artifact_digest": null,
+     "conflict": false,
+     "conflict_count": 0,
+     "dispatch_evidence_digest": "3fe528d8c9275361b999837467c85adb97c8fc7ffe94838026889a475715a432",
+     "dispatch_state": "observed",
+     "exposure": 2294,
+     "initial_evidence_digest": "3fe528d8c9275361b999837467c85adb97c8fc7ffe94838026889a475715a432",
+     "input_digest": "6dd539673ccf45ae605020b697e045e707cf5d510c42ff4243a968d00db199d6",
+     "measurement_status": "unknown",
+     "operation_id": "invl02-output-P1-audit-0023-a1",
+     "outcome": "failure",
+     "receipt_conflicts": [],
+     "receipt_identity": "gw:invl02-output-P1-audit-0023-a1:observed-provider-failure",
+     "receipt_outcome": "failure",
+     "reconcile_state": "none",
+     "reservation_id": "res-invl02-output-P1-audit-0023-a1",
+     "result": null,
+     "result_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "settled": true,
+     "source_digest": null,
+     "unresolved_exposure": 0,
+     "unsettled": false,
+     "usable_result": false,
+     "usage": {
+      "billed": null,
+      "charge_scale": null,
+      "charge_units": null,
+      "input_tokens": 369,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": false
+     }
+    },
+    "durable_receipt_identity": "gw:invl02-output-P1-audit-0023-a1:observed-provider-failure",
+    "endpoint": "http://localhost:4000/v1",
+    "evidence_digest": "be77fcfe37cf56af9b955fc519c4a9525c7e4d0f1006cb67e5aad3dfb25314b1",
+    "initial_evidence_digest": "3fe528d8c9275361b999837467c85adb97c8fc7ffe94838026889a475715a432",
+    "input_digest": "6dd539673ccf45ae605020b697e045e707cf5d510c42ff4243a968d00db199d6",
+    "kind": "gateway-dispatch",
+    "operation_id": "invl02-output-P1-audit-0023-a1",
+    "operation_payload_digest": null,
+    "outcome": "unknown",
+    "package_digest": null,
+    "parent_digest": null,
+    "parse_outcome": "route-refused",
+    "prompt_digest": "6dd539673ccf45ae605020b697e045e707cf5d510c42ff4243a968d00db199d6",
+    "provider": "nvidia",
+    "raw_payload_digest": "b6c47fc5cbd5b31fdd2b1933f4ef59337d7e2b0cae5a32ed7c1f20084a253e74",
+    "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Choose an unqueried four-bit input to probe, or commit an executable predictor built only from the public hypothesis class. At most 8 queries.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[1,0,1,0]},{\"x\":2,\"y\":[1,1,0,1]},{\"x\":7,\"y\":[1,1,0,1]},{\"x\":8,\"y\":[1,0,0,0]},{\"x\":9,\"y\":[1,1,1,1]},{\"x\":11,\"y\":[1,0,1,0]},{\"x\":14,\"y\":[1,1,0,0]},{\"x\":15,\"y\":[1,0,0,1]}],\"remaining\":0,\"split\":\"audit\",\"task_id\":\"rule-audit-0023\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+    "raw_response": "",
+    "receipt_identity": "evidence:816176bec9c87bc142d28588b94d7cf90b7619126136b2699a87dd9396258955",
+    "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "requested_output_cap": 2048,
+    "response_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "result_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "round": 1,
+    "route_digest": "04d7aa528b90f6e0ecb08ad2fb08fc81d13c42bc981723b8e47414bea4c4bf4e",
+    "route_error": "gateway response route refused: returned route metadata mismatch",
+    "source_digest": null,
+    "stop_reason": "route-refused",
+    "task_id": "rule-audit-0023",
+    "tier": "free",
+    "usage": {
+     "billed": "unknown",
+     "charge_scale": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": 369,
+     "output_tokens": 2048,
+     "provider_enforced_ceiling": false
+    },
+    "version": "invl02-evidence-v2"
+   }
+  ],
+  "durable_receipts": [
+   {
+    "artifact_digest": null,
+    "conflict": false,
+    "conflict_count": 0,
+    "dispatch_evidence_digest": "3fe528d8c9275361b999837467c85adb97c8fc7ffe94838026889a475715a432",
+    "dispatch_state": "observed",
+    "exposure": 2294,
+    "initial_evidence_digest": "3fe528d8c9275361b999837467c85adb97c8fc7ffe94838026889a475715a432",
+    "input_digest": "6dd539673ccf45ae605020b697e045e707cf5d510c42ff4243a968d00db199d6",
+    "measurement_status": "unknown",
+    "operation_id": "invl02-output-P1-audit-0023-a1",
+    "outcome": "failure",
+    "receipt_conflicts": [],
+    "receipt_identity": "gw:invl02-output-P1-audit-0023-a1:observed-provider-failure",
+    "receipt_outcome": "failure",
+    "reconcile_state": "none",
+    "reservation_id": "res-invl02-output-P1-audit-0023-a1",
+    "result": null,
+    "result_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "settled": true,
+    "source_digest": null,
+    "unresolved_exposure": 0,
+    "unsettled": false,
+    "usable_result": false,
+    "usage": {
+     "billed": null,
+     "charge_scale": null,
+     "charge_units": null,
+     "input_tokens": 369,
+     "output_tokens": 2048,
+     "provider_enforced_ceiling": false
+    }
+   }
+  ],
+  "incumbent_control": [
+   {
+    "arm": "P0",
+    "executed": "incumbent",
+    "model_calls": 0,
+    "predictor": {
+     "specs": [
+      {
+       "const": 1,
+       "mask": 0,
+       "pair": null
+      },
+      {
+       "const": 0,
+       "mask": 2,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 0,
+       "mask": 1,
+       "pair": [
+        0,
+        2
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 13,
+       "pair": [
+        1,
+        3
+       ]
+      }
+     ],
+     "tables": [
+      65535,
+      26316,
+      2570,
+      38565
+     ]
+    },
+    "predictor_digest": "5857c99c0b21aa0a35d23aceae291bcc48873b5bf5c7ac8ffe995ca8d2479bb1",
+    "queries": 8,
+    "result_digest": "5857c99c0b21aa0a35d23aceae291bcc48873b5bf5c7ac8ffe995ca8d2479bb1",
+    "seed": 23,
+    "source_digest": "c0379601fe8d62a1ed941e8afa5157154447cb264a21f893d1c918be43ca9328",
+    "split": "audit",
+    "task_id": "rule-audit-0023"
+   },
+   {
+    "arm": "P0",
+    "executed": "incumbent",
+    "model_calls": 0,
+    "predictor": {
+     "specs": [
+      {
+       "const": 0,
+       "mask": 8,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 5,
+       "pair": [
+        1,
+        3
+       ]
+      },
+      {
+       "const": 0,
+       "mask": 9,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 15,
+       "pair": null
+      }
+     ],
+     "tables": [
+      21760,
+      27045,
+      65450,
+      38505
+     ]
+    },
+    "predictor_digest": "3d256ffd5eab6f51b87e646d7696f1668cd74556cc8bfb717bef7bfe96466b10",
+    "queries": 8,
+    "result_digest": "3d256ffd5eab6f51b87e646d7696f1668cd74556cc8bfb717bef7bfe96466b10",
+    "seed": 11,
+    "source_digest": "c0379601fe8d62a1ed941e8afa5157154447cb264a21f893d1c918be43ca9328",
+    "split": "qual",
+    "task_id": "rule-qual-0011"
+   }
+  ],
+  "physical_dispatch_count": 1,
+  "protocol": "invl02-output-shape-550b-r1-v1",
+  "replay_count": 0,
+  "route": {
+   "endpoint": "http://localhost:4000/v1",
+   "provider": "nvidia",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "tier": "free"
+  }
+ },
+ "freeze_digest": "ad3de342bad6f723db2e559942387d06506534fffbae2d5828e7758b70047509",
+ "protocol": {
+  "arms": [
+   "P0",
+   "P1",
+   "P2"
+  ],
+  "code_digests": {
+   "experiments/ad01/frontier.py": "3c074c479ae79eebb3e6ae00785db1db34a73a458fd8352b0ed233f293b4a854",
+   "experiments/ad01/live_construct.py": "9ed1871f0bec6c8151344e42a6eeff825913c85053ec57f095bbc37d1548dc92",
+   "experiments/ad01/offline_recompute.py": "a5dd86c664b8cae8fbdf4ca3fce339a7571bf36806331c4c64aa0659e1b52ca2",
+   "scripts/invl02_live.py": "1c88cb3671581442b323b5d86e4da61e68fa405a7c3138af634e19515f85914c",
+   "src/settlement/gateway_http.py": "ba0aabdee5dd055838c1b248da7ee96750ac8844679afe0ab6f14852c175cd90"
+  },
+  "freeze_digest": "ad3de342bad6f723db2e559942387d06506534fffbae2d5828e7758b70047509",
+  "history": {
+   "P1": {
+    "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "entries": []
+   },
+   "P2": {
+    "digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49"
+   }
+  },
+  "limits": {
+   "automatic_retries": 0,
+   "initial_dispatches": 4,
+   "max_dispatches": 8,
+   "max_output_tokens": 2048,
+   "max_response_characters": 512,
+   "repairs_per_task": 1
+  },
+  "order": [
+   "P0",
+   "P1",
+   "P2"
+  ],
+  "p0_incumbent": {
+   "kind": "fixed-incumbent",
+   "source": "{\"class_digest\":\"285113caf4ab\",\"entrypoint\":\"experiments.ad01.rule_learner.VersionSpaceLearner\",\"kind\":\"fixed-incumbent\",\"query_cap\":8,\"solver\":\"VersionSpaceLearner\"}",
+   "source_digest": "c0379601fe8d62a1ed941e8afa5157154447cb264a21f893d1c918be43ca9328",
+   "task_seals": {
+    "rule-audit-0023": {
+     "public_input_digest": "df71f3b77fe92369e26bb5b1a116ead853f7e6afe45a44545d2190b2bf5a9c60",
+     "seed": 23,
+     "split": "audit"
+    },
+    "rule-qual-0011": {
+     "public_input_digest": "cf582851f5981500a85135a72491a01a9a102a334d0288ef6f0c93360c22681c",
+     "seed": 11,
+     "split": "qual"
+    }
+   }
+  },
+  "prompt": {
+   "rendered_digests": {
+    "P1:audit:23:a1": "6dd539673ccf45ae605020b697e045e707cf5d510c42ff4243a968d00db199d6",
+    "P1:audit:23:a2": "0898165ece4cdb0bee3649760911e8e42f3221703dc38fbe70fad9bf987cb6b3",
+    "P1:qual:11:a1": "c65d624fc9f8d4d9badf68c56770b459d15f98279373cb8ac94dfb4b2ad35c84",
+    "P1:qual:11:a2": "7dd56a6cf4426210211b5cf75844f612c2b952c7677a97ce26a530740a8f2b14",
+    "P2:audit:23:a1": "f7583344cc000ab43380844864bc05073cb78dd26637bd495094c3df273e5d42",
+    "P2:audit:23:a2": "1b0ef77c886a8c5755da1ee88f467fbbdfbd8f712c917b082696f912bcf4d421",
+    "P2:qual:11:a1": "4b3cee00073b495efc573aa1d2ab826a449ab2669d64a993dda9186f74a3cf04",
+    "P2:qual:11:a2": "54692792da6e568994698e2d8aaad8404ef90c45c892d9a034a6b4db9a137590"
+   },
+   "template": "You are completing one finite Boolean-rule task. Public task input: {public_input}. Permitted history: {history}. Attempt {attempt} of 2. Reply with exactly one JSON object and nothing else, shaped {{\"specs\": [{{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]}} x4]}}. Do not include targets, private answers, explanations, or code fences. Keep the response under {max_response_characters} characters.",
+   "template_digest": "4298a08ae992c12c7f8686b48458d082603ea68f14fa8fd3033e81e455cc6ddc"
+  },
+  "protocol": "invl02-output-shape-550b-r1-v1",
+  "round": 1,
+  "route": {
+   "endpoint": "http://localhost:4000/v1",
+   "provider": "nvidia",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "tier": "free"
+  },
+  "run_id": "32ef91020a3141769bc73f7c28f81bcd",
+  "source_digests": {
+   "experiments/ad01/boolean_rule.py": "9d730dc25164e845e3c5e95f83b37b7272b87d73777fb62b2abdab0ece684c3e",
+   "experiments/ad01/live_construct.py": "9ed1871f0bec6c8151344e42a6eeff825913c85053ec57f095bbc37d1548dc92",
+   "experiments/ad01/rule_learner.py": "d4a45e7abd8e8d6044f2c50b448da82185a588e90a666c3bd1ae55f2462349c2"
+  },
+  "source_identity": "ad685e8d698966c72617a3b505f74f9ab6e9dda331146efa64bffaf5ebb0a202",
+  "stop_rule": "stop on the first route mismatch, missing evidence, or exhausted same-task repair budget; never change limits after an effect",
+  "study": "invl02-output-shape-550b-r1",
+  "study_root": "invl02-output-shape-550b-r1",
+  "tasks": {
+   "audit": 23,
+   "qual": 11
+  }
+ },
+ "protocol_id": "invl02-output-shape-550b-r1-v1",
+ "run_id": "32ef91020a3141769bc73f7c28f81bcd",
+ "schema": "invl02-output-run-v2",
+ "source_identity": "ad685e8d698966c72617a3b505f74f9ab6e9dda331146efa64bffaf5ebb0a202",
+ "status": "incomplete",
+ "study": "invl02-output-shape-550b-r1",
+ "study_root": "invl02-output-shape-550b-r1"
+}

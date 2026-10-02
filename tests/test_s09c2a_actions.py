@@ -1,15 +1,14 @@
 import json
-import subprocess
 from pathlib import Path
 
 import pytest
 
 from experiments.ad01 import agenda_policy, policy_step, trajectory
-from settlement import db
+from experiments.ad01.s09_run_isolation import disposable_db
 from settlement.gateway import GatewayStatus, ModelResponse, Usage
 
-
 ROOT = Path(__file__).resolve().parents[1]
+RUN_TOKEN = "c2aactions"
 CHARTER = {"objective": "reduce examples while preserving their witness", "freeze_id": "ad01"}
 CAPS = {"max_boundaries": 2, "diagnostic_queries": 16, "model_calls": 6}
 TASKS = ["ad01-w0-dev-sw-00", "ad01-w0-dev-sw-01"]
@@ -46,14 +45,8 @@ class Constructor:
 
 @pytest.fixture(scope="module")
 def store():
-    name = "s09_local_actions"
-    subprocess.run(["createdb", name], check=True, capture_output=True, timeout=30)
-    dsn = "dbname=" + name
-    try:
-        db.apply_migrations(dsn, ROOT / "migrations")
-        yield dsn
-    finally:
-        subprocess.run(["dropdb", name], check=True, capture_output=True, timeout=30)
+    with disposable_db(RUN_TOKEN, migrations_dir=ROOT / "migrations") as database:
+        yield database.dsn
 
 
 def run(store, seq, source, gateway, tasks=TASKS):
@@ -163,3 +156,27 @@ def test_feedback_constructs_and_freezes_policy_without_premature_promotion(stor
     assert all("executable" not in episode for episode in campaign["episodes"])
     with trajectory._read_conn(store) as conn:
         assert conn.execute("SELECT count(*) AS n FROM capability_releases").fetchone()["n"] == 0
+
+
+def test_the_store_is_one_this_run_created(store):
+    """A dropped store must never be a store somebody else still runs on.
+
+    A fixed database name is shared state: any other suite that creates the
+    same name destroys this run's rows, and the disposition failures then read
+    as product defects rather than as the collision they are. The name carries
+    a per-run token, so only this run's name is ever destroyed.
+    """
+    name = store.split("dbname=")[1].split()[0]
+
+    assert name.startswith("s09iso_c2aactions_"), name
+
+
+def test_the_store_survives_a_second_module_scope():
+    """Re-deriving the store must not reuse this module's database.
+
+    The collision that produced the original failures was two runs of this
+    file at once. Each run's fixture mints its own name, so a second fixture
+    can never observe or destroy the first one's database.
+    """
+    with disposable_db(RUN_TOKEN) as other:
+        assert other.name.startswith("s09iso_c2aactions_"), other.name

@@ -1,0 +1,22 @@
+{
+ "arms": {
+  "adapted": {
+   "agreement": "pass",
+   "evidence": 0.0,
+   "score": 1.0,
+   "scored": true,
+   "selected": "seed-gr-ddmin",
+   "verdict": "preserved"
+  },
+  "target_only": {
+   "agreement": "pass",
+   "evidence": 0.0,
+   "score": 1.0,
+   "scored": true,
+   "selected": "seed-gr-ddmin",
+   "verdict": "preserved"
+  }
+ },
+ "equal_length": true,
+ "equal_records": true
+}

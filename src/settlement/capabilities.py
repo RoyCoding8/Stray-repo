@@ -71,6 +71,24 @@ def pin_capability(dsn: str, attempt_id: str, version_id: str) -> dict:
     return {"attempt_id": attempt_id, "version_id": version_id}
 
 
+def resolve_entry_path(manifest: dict) -> str:
+    entries = [e for e in manifest.get("files", [])
+               if e.get("kind", "file") != "dir"]
+    if not entries:
+        raise SettlementError("capability artifact has no executable entry")
+    paths = [e["path"] for e in entries]
+    named = manifest.get("entry")
+    if named is None:
+        fallback = next((p for p in paths if p.endswith(".py")), None)
+        if fallback is None:
+            raise SettlementError("capability artifact has no executable entry")
+        return fallback
+    if named not in paths:
+        raise SettlementError(
+            f"capability artifact entry {named!r} is not in the manifest files")
+    return named
+
+
 def _extract_entry(artifacts_root: str | Path, digest: str) -> tuple[str, bytes, list[str]]:
     raw = (Path(artifacts_root) / digest).read_bytes()
     import hashlib
@@ -81,13 +99,9 @@ def _extract_entry(artifacts_root: str | Path, digest: str) -> tuple[str, bytes,
         package = json.loads(raw.decode())
         files = {rel: bytes.fromhex(hexed) for rel, hexed in package["files"].items()}
         manifest = package["manifest"]
-        entries = [e for e in manifest.get("files", []) if e.get("kind", "file") != "dir"]
-        if not entries:
-            raise SettlementError("capability artifact has no executable entry")
-        named = manifest.get("entry")
-        entry = next((e for e in entries if e["path"] == named),
-                     next(e for e in entries if e["path"].endswith(".py")))
-        return entry["path"], files[entry["path"]], list(manifest.get("verify_args", ["--selftest"]))
+        entry_path = resolve_entry_path(manifest)
+        return (entry_path, files[entry_path],
+                list(manifest.get("verify_args", ["--selftest"])))
     except SettlementError:
         raise
     except (ValueError, KeyError, StopIteration) as exc:

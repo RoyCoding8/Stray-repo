@@ -62,7 +62,18 @@ def test_acquired_execution_uses_broker_profile(tmp_path):
     replay = trajectory._run_member(
         dict(CANARY_MEMBER), task, dsn=DSN,
         allocation_id="ad01-campaign-ad01-broker", operation_id="ad01-broker-use-0")
-    assert replay == result
+    # Replay is idempotent for everything the receipt can answer, and
+    # honest about the one thing it cannot. The durable receipt carries the
+    # candidate and the query count; it does not carry the walk, and no
+    # amount of replaying reconstructs a walk this process never took.
+    # `f1d8ada` (2026-09-29) made that `None` rather than `[]` on purpose:
+    # an empty list reads downstream as "this method ran and asked
+    # nothing", and `control_distinctness` compares traces between arms, so
+    # a forged `[]` matches another arm's `[]` and reports two identical
+    # methods that never both ran. See the open-causes note for what an
+    # adversarial replay gains under each reading.
+    assert replay == {**result, "query_trace": None}
+    assert result["query_trace"] == []
     with db.connect(DSN) as conn:
         assert conn.execute("SELECT count(*) FROM receipts WHERE operation_id = %s",
                             (result["operation_id"],)).fetchone()[0] == 1
@@ -87,7 +98,14 @@ def test_broker_query_count_survives_replay():
               "operation_id": "ad01-query-replay-use"}
     first = trajectory._run_member(member, task, **kwargs)
     assert first["queries"] == 1
-    assert trajectory._run_member(member, task, **kwargs) == first
+    assert first["query_trace"] == [
+        {"candidate_digest": first["query_trace"][0]["candidate_digest"],
+         "verdict": "preserved", "reason": "ok-incumbent"}]
+    assert len(first["query_trace"]) == 1
+    # The replay's query count is read back from the receipt and must match;
+    # its trace is `None` because no query was graded in this process.
+    assert trajectory._run_member(member, task, **kwargs) == {
+        **first, "query_trace": None}
 
 
 def test_acquired_member_cannot_touch_host_modules():
@@ -124,6 +142,28 @@ def test_hung_member_hits_the_wall_clock_bound():
         trajectory._run_member(looping, task, timeout_ms=500)
 
 
+def _use_policy(method_id: str, max_queries: int = 16):
+    """A policy that admits the canary, in the shape `run_use` now requires.
+
+    `77001fc` (2026-09-26) deleted the first-family-match selection rule:
+    `run_use` took its method identity from an admitted `use_method` action
+    and refuses without one, because a digest stamped after execution is a
+    label rather than a governance record. Two tests in this file predate
+    that and still call `run_use` with no policy, so they were reading a
+    refusal record -- `requested` is the string `"refused"` -- rather than
+    exercising the use accounting or the fallback they are named for.
+    """
+    def _policy(view, state):
+        return {"action": {"kind": "use_method",
+                           "target": view["task_content"]["task_id"],
+                           "inputs": {"method_id": method_id,
+                                      "max_queries": max_queries},
+                           "evidence_refs": [],
+                           "requested_resources": {"queries": max_queries}},
+                "state": {"chosen": method_id}}
+    return _policy
+
+
 def test_store_backed_use_attributes_sandbox_operations():
     from experiments.ad01 import trajectory
     from experiments.coord02 import experience as E
@@ -137,7 +177,10 @@ def test_store_backed_use_attributes_sandbox_operations():
                                            {"agenda_authorized": 1000})
     records = trajectory.run_use(
         {**campaign, "members": [CANARY_MEMBER]}, 0, "I", ["ad01-w0-within-sw-00"], {},
-        dsn=DSN, allocation_id=authority["allocation_id"])
+        policy=_use_policy(CANARY_MEMBER["capability_id"]), dsn=DSN,
+        allocation_id=authority["allocation_id"])
+    assert records[0]["fallback_reason"] == ""
+    assert records[0]["executed"] == CANARY_MEMBER["capability_id"]
     assert len(records[0]["operation_ids"]) == 1
     union = trajectory.cost_union(campaign, records, dsn=DSN)
     assert union["use"]["sandbox_ops"] == union["total"]["sandbox_ops"] == 1
@@ -151,9 +194,10 @@ def test_failed_member_falls_back_with_attribution():
                   "members": [{**CANARY_MEMBER,
                                 "method_source": "import os\n" +
                                 CANARY_SOURCE}]}
-    [record] = trajectory.run_use(repertoire, 0, "I",
-                                  ["ad01-w0-within-sw-00"],
-                                  {"tokens": 0, "sandbox_ops": 0})
+    [record] = trajectory.run_use(
+        repertoire, 0, "I", ["ad01-w0-within-sw-00"],
+        {"tokens": 0, "sandbox_ops": 0},
+        policy=_use_policy(CANARY_MEMBER["capability_id"]))
     assert record["requested"] == CANARY_MEMBER["capability_id"]
     assert record["executed"] == "incumbent"
     assert "imports-forbidden" in record["fallback_reason"]

@@ -1,0 +1,2182 @@
+{
+ "allocation": {
+  "amount_scale": 1,
+  "authorized": 209216,
+  "consumed": 17212,
+  "created_at": "2026-09-29 04:21:39.580701+00:00",
+  "domain": "study",
+  "epoch": 0,
+  "id": "ad01-campaign-ad01-w2-R-00",
+  "max_occupancy": 8,
+  "occupancy": 6,
+  "owner_scope": "",
+  "parent_id": "s09iso-ctlarm44774aef-root",
+  "reserved": 0
+ },
+ "arm": "R",
+ "campaign_id": "ad01-w2-R-00",
+ "db": "s09iso_ctlarm44774aef_b8be2d7dd296",
+ "export_version": "inv01-export-v1",
+ "identities": {
+  "allocation": {
+   "amount_scale": 1,
+   "authorized": 209216,
+   "consumed": 17212,
+   "created_at": "2026-09-29 04:21:39.580701+00:00",
+   "domain": "study",
+   "epoch": 0,
+   "id": "ad01-campaign-ad01-w2-R-00",
+   "max_occupancy": 8,
+   "occupancy": 6,
+   "owner_scope": "",
+   "parent_id": "s09iso-ctlarm44774aef-root",
+   "reserved": 0
+  },
+  "caps": {
+   "agenda_authorized": 1673728,
+   "construction_tokens": 2048,
+   "diagnostic_queries": 96,
+   "max_boundaries": 6,
+   "model_calls": 60
+  },
+  "charter": {
+   "freeze_id": "ad01",
+   "objective": "smaller valid explanatory examples"
+  },
+  "effective": {
+   "caps": {
+    "agenda_authorized": 1673728,
+    "construction_tokens": 2048,
+    "diagnostic_queries": 96,
+    "max_boundaries": 6,
+    "model_calls": 60
+   },
+   "charter": {
+    "freeze_id": "ad01",
+    "objective": "smaller valid explanatory examples"
+   },
+   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+   "freeze_id": "ad01",
+   "model": "inv01-study-double",
+   "packet_version": "ad01-packet-v1",
+   "profile": "local-process",
+   "protocol": "broker-v1",
+   "reasoning_effort": "low"
+  },
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "freeze_id": "ad01",
+  "source": {
+   "export_version": "inv01-export-v1",
+   "git_sha": "6aa3d7ba70965e90831af166714fc2a995efbaff"
+  },
+  "versions": {
+   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+   "model": "inv01-study-double",
+   "packet_version": "ad01-packet-v1",
+   "profile": "local-process",
+   "protocol": "broker-v1"
+  }
+ },
+ "operations": [
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Write one python method that searches explanatory examples.\nFamily: software.\nTask (authoritative content, not a reference): {\"family\": \"software\", \"ops\": [{\"id\": \"o0\", \"key\": \"a\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v1\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"id\": \"o4\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v1\"}], \"seed\": 5301, \"task_id\": \"ad01-w2-dev-sw-00\", \"template\": \"stale-read-2chain\"}\nPublic operations: {\"ddmin__ddmin_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin__ddmin_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'ddmin' and you cannot choose another\"}, \"ddmin_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"graph_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the graph family\", \"signature\": \"graph_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}, \"greedy__greedy_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy__greedy_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'greedy' and you cannot choose another\"}, \"greedy_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"software_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the software family\", \"signature\": \"software_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}}\nCandidate shape: {\"family_value\": \"software\", \"legality\": \"candidate ops must be a legal deletion of the task ops holding the witness observation\", \"required_keys\": [\"family\", \"task_id\", \"ops\", \"witness\"]}\nShape example (the incumbent task itself, a valid candidate): {\"family\": \"software\", \"ops\": [{\"id\": \"o0\", \"key\": \"a\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v1\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"id\": \"o4\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v1\"}], \"seed\": 5301, \"task_id\": \"ad01-w2-dev-sw-00\", \"template\": \"stale-read-2chain\"}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps witness observation ?: it must stay a legal deletion holding that observation. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-deletion,invalid-candidate,invalid-task,observation-missing,ok-incumbent,ok-preserved,task-mismatch,witness-lost-agree,witness-value-changed.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"max_queries\": 16, \"model_calls\": 4}.\nPrior observations: [{\"detail\": null, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"unmeasured\"}, {\"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}]",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-validate-l1-init",
+   "launcher_id": "local-1",
+   "payload": {
+    "_admitted_launcher": "local-1",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "local-1",
+    "budget_kind": "hard-ceiling",
+    "effect": "sandbox-exec",
+    "payload": {
+     "argv": [
+      "/home/ubuntu/AI/Agent-Society-v2/.venv/bin/python",
+      "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/e4e5b1badce81c160bfcbdc2046a73bdb301671395dae44c3e13f12269cfef21/driver.py",
+      "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/e4e5b1badce81c160bfcbdc2046a73bdb301671395dae44c3e13f12269cfef21",
+      "ad01-430830872a00ad86b960465a91f962c4090b2ad3f8541afd4f343c77fb3a032b",
+      "/home/ubuntu/AI/Agent-Society-v2"
+     ],
+     "cpu_seconds": null,
+     "max_output_bytes": 1048576,
+     "memory_bytes": null,
+     "profile": "local-process",
+     "timeout_ms": 30000
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Write one python method that searches explanatory examples.\nFamily: graph.\nTask (authoritative content, not a reference): {\"edges\": [[0, 1], [1, 2], [2, 3], [3, 4], [0, 4], [2, 5]], \"family\": \"graph\", \"seed\": 5401, \"task_id\": \"ad01-w2-dev-gr-00\", \"template\": \"C5+tree\", \"vertices\": [0, 1, 2, 3, 4, 5]}\nPublic operations: {\"ddmin__ddmin_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin__ddmin_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'ddmin' and you cannot choose another\"}, \"ddmin_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"graph_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the graph family\", \"signature\": \"graph_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}, \"greedy__greedy_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy__greedy_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'greedy' and you cannot choose another\"}, \"greedy_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"software_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the software family\", \"signature\": \"software_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}}\nCandidate shape: {\"family_value\": \"graph\", \"legality\": \"candidate vertices/edges must form a legal subgraph of the task holding the witness\", \"required_keys\": [\"family\", \"task_id\", \"vertices\", \"edges\"]}\nShape example (the incumbent task itself, a valid candidate): {\"edges\": [[0, 1], [1, 2], [2, 3], [3, 4], [0, 4], [2, 5]], \"family\": \"graph\", \"seed\": 5401, \"task_id\": \"ad01-w2-dev-gr-00\", \"template\": \"C5+tree\", \"vertices\": [0, 1, 2, 3, 4, 5]}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps the witness: a non-bipartite subgraph of the task. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-subgraph,invalid-candidate,invalid-task,ok-incumbent,ok-preserved,task-mismatch,witness-lost-bipartite.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"max_queries\": 16, \"model_calls\": 3}.\nPrior observations: [{\"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"detail\": null, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"unmeasured\"}, {\"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}]",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-validate-l1-init",
+   "launcher_id": "local-1",
+   "payload": {
+    "_admitted_launcher": "local-1",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "local-1",
+    "budget_kind": "hard-ceiling",
+    "effect": "sandbox-exec",
+    "payload": {
+     "argv": [
+      "/home/ubuntu/AI/Agent-Society-v2/.venv/bin/python",
+      "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/b7e8ce995df2441913d83a0e3fd21baeea93c6ef1c8d763c7aa77bdfaae0a1a2/driver.py",
+      "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/b7e8ce995df2441913d83a0e3fd21baeea93c6ef1c8d763c7aa77bdfaae0a1a2",
+      "ad01-a457683f512a088b4df01b2df3d79f2a79fc3834d567788c82b8166b6d13868e",
+      "/home/ubuntu/AI/Agent-Society-v2"
+     ],
+     "cpu_seconds": null,
+     "max_output_bytes": 1048576,
+     "memory_bytes": null,
+     "profile": "local-process",
+     "timeout_ms": 30000
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-learner-0",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-sw-00\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-00-seed\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 6, \"dev_episodes\": 3, \"model_calls\": 60, \"queries\": 96}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-learner-1",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-gr-00\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-00-seed\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 5, \"dev_episodes\": 2, \"model_calls\": 58, \"queries\": 90}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-learner-2",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-sw-01\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-01-seed\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 4, \"dev_episodes\": 1, \"model_calls\": 56, \"queries\": 27}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-learner-3",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-gr-01\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"witness-lost-agree\", \"diagnostic_verdict\": \"not_preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-01\"}, \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-01\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 3, \"dev_episodes\": 0, \"model_calls\": 55, \"queries\": 26}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-learner-4",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-sw-02\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"witness-lost-agree\", \"diagnostic_verdict\": \"not_preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-01\"}, \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-01\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 2, \"dev_episodes\": 0, \"model_calls\": 54, \"queries\": 26}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-R-00-learner-5",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-gr-02\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"witness-lost-agree\", \"diagnostic_verdict\": \"not_preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-01\"}, \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-01\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-02-seed\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 1, \"dev_episodes\": 0, \"model_calls\": 53, \"queries\": 26}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "inv01-study-double",
+     "reasoning_effort": "low"
+    },
+    "retries": 0,
+    "study_root": "s09iso-ctlarm44774aef-root"
+   },
+   "provider_id": "inv01-study-double",
+   "settled": true
+  }
+ ],
+ "policy": null,
+ "policy_revisions": [],
+ "run_id": "d65e292bbff52467",
+ "transitions": [
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 2,
+    "witness_queries": 5
+   },
+   "costs_unknown": [],
+   "decision": {
+    "basis_references": [
+     "obs-ad01-w2-dev-sw-00-seed"
+    ],
+    "next_action": {
+     "diagnostic": "software",
+     "kind": "development",
+     "max_queries": 16,
+     "task_id": "ad01-w2-dev-sw-00"
+    },
+    "question": "develop ad01-w2-dev-sw-00",
+    "requested_resources": {
+     "diagnostic_queries": 1
+    }
+   },
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+     "prompt": "Write one python method that searches explanatory examples.\nFamily: software.\nTask (authoritative content, not a reference): {\"family\": \"software\", \"ops\": [{\"id\": \"o0\", \"key\": \"a\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v1\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"id\": \"o4\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v1\"}], \"seed\": 5301, \"task_id\": \"ad01-w2-dev-sw-00\", \"template\": \"stale-read-2chain\"}\nPublic operations: {\"ddmin__ddmin_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin__ddmin_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'ddmin' and you cannot choose another\"}, \"ddmin_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"graph_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the graph family\", \"signature\": \"graph_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}, \"greedy__greedy_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy__greedy_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'greedy' and you cannot choose another\"}, \"greedy_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"software_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the software family\", \"signature\": \"software_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}}\nCandidate shape: {\"family_value\": \"software\", \"legality\": \"candidate ops must be a legal deletion of the task ops holding the witness observation\", \"required_keys\": [\"family\", \"task_id\", \"ops\", \"witness\"]}\nShape example (the incumbent task itself, a valid candidate): {\"family\": \"software\", \"ops\": [{\"id\": \"o0\", \"key\": \"a\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"a\", \"op\": \"set\", \"value\": \"v3\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v2\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v1\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v4\"}, {\"id\": \"o4\", \"key\": \"c\", \"op\": \"get\"}, {\"key\": \"c\", \"op\": \"set\", \"value\": \"v1\"}], \"seed\": 5301, \"task_id\": \"ad01-w2-dev-sw-00\", \"template\": \"stale-read-2chain\"}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps witness observation ?: it must stay a legal deletion holding that observation. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-deletion,invalid-candidate,invalid-task,observation-missing,ok-incumbent,ok-preserved,task-mismatch,witness-lost-agree,witness-value-changed.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"max_queries\": 16, \"model_calls\": 4}.\nPrior observations: [{\"detail\": null, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"unmeasured\"}, {\"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}]",
+     "prompt_digest": "a4d428c6ed1819b5d01cb1f7d8495cbe754c75e8195bdc7eb1945587999b1b58",
+     "settled": true
+    },
+    {
+     "dispatch_state": "observed",
+     "effect": "sandbox-exec",
+     "model": "",
+     "operation_id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-validate-l1-init",
+     "prompt": "",
+     "prompt_digest": "",
+     "settled": true
+    },
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-learner-0",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-sw-00\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-00-seed\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 6, \"dev_episodes\": 3, \"model_calls\": 60, \"queries\": 96}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "94cd019472d3d5f237ba297f18cb73eb7a65b12d6cef2fbe443d05e403b2b494",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "candidate": {
+     "family": "software",
+     "fault": "stale-read",
+     "ops": [
+      {
+       "key": "b",
+       "op": "set",
+       "value": "v2"
+      },
+      {
+       "key": "b",
+       "op": "set",
+       "value": "v1"
+      },
+      {
+       "id": "o3",
+       "key": "b",
+       "op": "get"
+      }
+     ],
+     "seed": 5301,
+     "task_id": "ad01-w2-dev-sw-00",
+     "witness": {
+      "faulty": {
+       "type": "str",
+       "value": "v2"
+      },
+      "observation": "o3",
+      "ref": {
+       "type": "str",
+       "value": "v1"
+      }
+     }
+    },
+    "check": {
+     "initial_measure": 10,
+     "measure": 3,
+     "reason": "ok-preserved",
+     "verdict": "preserved"
+    },
+    "construction_calls": 1,
+    "disposition": "retained",
+    "executable": {
+     "authored": false,
+     "capability_id": "acquired-sw-b0bd83b7",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w2-R-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09iso-ctlarm44774aef-root"
+     },
+     "entry": "acquired_order",
+     "method_source": "def acquired_order(task, oracle, max_queries=16):\n    family = task.get(\"family\", \"software\")\n    if isinstance(max_queries, int) and max_queries >= 0:\n        budget = max_queries\n    else:\n        budget = 16\n    used = [0]\n    def ask(candidate):\n        used[0] = used[0] + 1\n        return oracle.query(candidate)\n    def shrink(build, count, order, bulk):\n        full = list(range(count))\n        if budget <= 0:\n            return build(full)\n        first = build(full)\n        if first is None:\n            return build(full)\n        report = ask(first)\n        if not isinstance(report, dict) or report.get(\"verdict\") != \"preserved\":\n            return build(full)\n        keep = full\n        if bulk is not None and used[0] < budget:\n            trial = [i for i in keep if i not in bulk]\n            if trial:\n                cand = build(trial)\n                if cand is not None:\n                    rep = ask(cand)\n                    if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                        keep = trial\n        changed = True\n        while changed and len(keep) > 1:\n            changed = False\n            for atom in [a for a in order if a in keep]:\n                if used[0] >= budget:\n                    return build(keep)\n                trial_keep = [a for a in keep if a != atom]\n                cand = build(trial_keep)\n                if cand is None:\n                    continue\n                rep = ask(cand)\n                if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                    keep = trial_keep\n                    changed = True\n        return build(keep)\n    if family == \"graph\":\n        vertices = list(task.get(\"vertices\", []))\n        edges = [list(e) for e in task.get(\"edges\", [])]\n        units = []\n        for v in vertices:\n            units.append((\"v\", v))\n        for i in range(len(edges)):\n            units.append((\"e\", i))\n        degree = {}\n        for v in vertices:\n            degree[v] = 0\n        for e in edges:\n            degree[e[0]] = degree.get(e[0], 0) + 1\n            degree[e[1]] = degree.get(e[1], 0) + 1\n        def build_graph(keep):\n            kept = set(keep)\n            gone = set()\n            dropped_edges = set()\n            for pos in range(len(units)):\n                if pos not in kept:\n                    if units[pos][0] == \"v\":\n                        gone.add(units[pos][1])\n                    else:\n                        dropped_edges.add(units[pos][1])\n            keep_v = [v for v in vertices if v not in gone]\n            if not keep_v:\n                return None\n            kept_v = set(keep_v)\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\n            return {\"family\": \"graph\", \"task_id\": task.get(\"task_id\"), \"vertices\": keep_v, \"edges\": keep_e, \"seed\": task.get(\"seed\")}\n        v_first = [i for i in range(len(units)) if units[i][0] == \"v\"]\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\n        e_rest = [i for i in range(len(units)) if units[i][0] != \"v\"]\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\n        return {\"candidate\": candidate, \"queries\": used[0]}\n    ops = list(task.get(\"ops\", []))\n    wid = task.get(\"witness\", {}).get(\"observation\")\n    wpos = -1\n    for i, entry in enumerate(ops):\n        if entry.get(\"id\") == wid:\n            wpos = i\n            break\n    hero = ops[wpos].get(\"key\") if wpos >= 0 else None\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\"op\") == \"set\" and o.get(\"key\") == hero and i < wpos]\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\n    def build_sw(keep):\n        kept = [ops[i] for i in sorted(keep)]\n        return {\"family\": \"software\", \"task_id\": task.get(\"task_id\"), \"fault\": task.get(\"fault\"), \"ops\": kept, \"witness\": task.get(\"witness\"), \"seed\": task.get(\"seed\")}\n    if wpos >= 0:\n        order = rest + chain + [wpos]\n        bulk = set(rest)\n    else:\n        order = list(range(len(ops)))\n        bulk = None\n    candidate = shrink(build_sw, len(ops), order, bulk)\n    return {\"candidate\": candidate, \"queries\": used[0]}\n",
+     "params": {
+      "max_queries": 16
+     },
+     "qualified_on": "ad01-w2-dev-sw-00",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    },
+    "final_size": 3,
+    "initial_size": 10,
+    "lineage": [
+     {
+      "authored": false,
+      "capability_id": "acquired-sw-b0bd83b7",
+      "construction": {
+       "calls_made": 1,
+       "campaign_id": "ad01-w2-R-00",
+       "init_failure": null,
+       "init_operation": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+       "lineage": 1,
+       "repair_operation": null,
+       "study_root": "s09iso-ctlarm44774aef-root"
+      },
+      "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+     }
+    ],
+    "queries": 5,
+    "task_id": "ad01-w2-dev-sw-00"
+   },
+   "index": 0,
+   "observation": {
+    "basis_references": [
+     "obs-ad01-w2-dev-sw-00-seed"
+    ],
+    "capability_id": "seed-sw-greedy",
+    "detail": {
+     "control_id": "c4-diagnostic",
+     "detail": {
+      "authored": true,
+      "control_id": "c4-diagnostic",
+      "diagnostic_reason": "ok-preserved",
+      "diagnostic_verdict": "preserved",
+      "nondiagnostic_reason": "observation-missing",
+      "nondiagnostic_verdict": "not_preserved",
+      "origin": "ad01-controls",
+      "task_id": "ad01-w2-dev-sw-00"
+     },
+     "task_id": "ad01-w2-dev-sw-00",
+     "verdict": "preserved-vs-not_preserved"
+    },
+    "grounded": true,
+    "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-00",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-sw-00",
+    "verdict": "preserved-vs-not_preserved"
+   },
+   "operations": [
+    "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+    "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-validate-l1-init",
+    "ad01-ad01-w2-R-00-learner-0"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "R",
+     "seq": 0,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": "ad01-w2-dev-sw-00",
+    "observations": [
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-sw-00-seed",
+      "task_id": "ad01-w2-dev-sw-00",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 6,
+     "dev_episodes": 3,
+     "model_calls": 60,
+     "queries": 96
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "7c8ea746057afd94193dbcbcb481e177cd6827f0a840fec93db7f356720440fe",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [
+     "obs-ad01-w2-dev-sw-00-seed"
+    ],
+    "inputs": {
+     "basis_references": [
+      "obs-ad01-w2-dev-sw-00-seed"
+     ],
+     "diagnostic": "software",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 16,
+     "model": "inv01-study-double",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "develop ad01-w2-dev-sw-00",
+     "task_id": "ad01-w2-dev-sw-00"
+    },
+    "instrument": "development",
+    "requested": {
+     "diagnostic_queries": 1
+    },
+    "target": "ad01-w2-dev-sw-00"
+   },
+   "raw_responses": [
+    {
+     "digest": "99819c48c39c18e70abcc441e60ad2d24b48730d2d919de8f840fdf6b084f778",
+     "operation_id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+     "simulated": true,
+     "text": "{\"entry\": \"def acquired_order(task, oracle, max_queries=16):\\n    family = task.get(\\\"family\\\", \\\"software\\\")\\n    if isinstance(max_queries, int) and max_queries >= 0:\\n        budget = max_queries\\n    else:\\n        budget = 16\\n    used = [0]\\n    def ask(candidate):\\n        used[0] = used[0] + 1\\n        return oracle.query(candidate)\\n    def shrink(build, count, order, bulk):\\n        full = list(range(count))\\n        if budget <= 0:\\n            return build(full)\\n        first = build(full)\\n        if first is None:\\n            return build(full)\\n        report = ask(first)\\n        if not isinstance(report, dict) or report.get(\\\"verdict\\\") != \\\"preserved\\\":\\n            return build(full)\\n        keep = full\\n        if bulk is not None and used[0] < budget:\\n            trial = [i for i in keep if i not in bulk]\\n            if trial:\\n                cand = build(trial)\\n                if cand is not None:\\n                    rep = ask(cand)\\n                    if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                        keep = trial\\n        changed = True\\n        while changed and len(keep) > 1:\\n            changed = False\\n            for atom in [a for a in order if a in keep]:\\n                if used[0] >= budget:\\n                    return build(keep)\\n                trial_keep = [a for a in keep if a != atom]\\n                cand = build(trial_keep)\\n                if cand is None:\\n                    continue\\n                rep = ask(cand)\\n                if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                    keep = trial_keep\\n                    changed = True\\n        return build(keep)\\n    if family == \\\"graph\\\":\\n        vertices = list(task.get(\\\"vertices\\\", []))\\n        edges = [list(e) for e in task.get(\\\"edges\\\", [])]\\n        units = []\\n        for v in vertices:\\n            units.append((\\\"v\\\", v))\\n        for i in range(len(edges)):\\n            units.append((\\\"e\\\", i))\\n        degree = {}\\n        for v in vertices:\\n            degree[v] = 0\\n        for e in edges:\\n            degree[e[0]] = degree.get(e[0], 0) + 1\\n            degree[e[1]] = degree.get(e[1], 0) + 1\\n        def build_graph(keep):\\n            kept = set(keep)\\n            gone = set()\\n            dropped_edges = set()\\n            for pos in range(len(units)):\\n                if pos not in kept:\\n                    if units[pos][0] == \\\"v\\\":\\n                        gone.add(units[pos][1])\\n                    else:\\n                        dropped_edges.add(units[pos][1])\\n            keep_v = [v for v in vertices if v not in gone]\\n            if not keep_v:\\n                return None\\n            kept_v = set(keep_v)\\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\\n            return {\\\"family\\\": \\\"graph\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"vertices\\\": keep_v, \\\"edges\\\": keep_e, \\\"seed\\\": task.get(\\\"seed\\\")}\\n        v_first = [i for i in range(len(units)) if units[i][0] == \\\"v\\\"]\\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\\n        e_rest = [i for i in range(len(units)) if units[i][0] != \\\"v\\\"]\\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\\n        return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n    ops = list(task.get(\\\"ops\\\", []))\\n    wid = task.get(\\\"witness\\\", {}).get(\\\"observation\\\")\\n    wpos = -1\\n    for i, entry in enumerate(ops):\\n        if entry.get(\\\"id\\\") == wid:\\n            wpos = i\\n            break\\n    hero = ops[wpos].get(\\\"key\\\") if wpos >= 0 else None\\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\\\"op\\\") == \\\"set\\\" and o.get(\\\"key\\\") == hero and i < wpos]\\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\\n    def build_sw(keep):\\n        kept = [ops[i] for i in sorted(keep)]\\n        return {\\\"family\\\": \\\"software\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"fault\\\": task.get(\\\"fault\\\"), \\\"ops\\\": kept, \\\"witness\\\": task.get(\\\"witness\\\"), \\\"seed\\\": task.get(\\\"seed\\\")}\\n    if wpos >= 0:\\n        order = rest + chain + [wpos]\\n        bulk = set(rest)\\n    else:\\n        order = list(range(len(ops)))\\n        bulk = None\\n    candidate = shrink(build_sw, len(ops), order, bulk)\\n    return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n\", \"notes\": \"diagnostic-aware two-phase reduction: surgical bulk drops of non-chain atoms, then greedy polish in witness-last order.\"}"
+    },
+    {
+     "digest": "4e9a250c5ef35ddc900dee880bd582e6c0ab10e5a9b5e4654456b177660bcf39",
+     "operation_id": "ad01-ad01-w2-R-00-learner-0",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-0",
+     "simulated": true,
+     "text": "{\"basis_references\": [\"obs-ad01-w2-dev-sw-00-seed\"], \"next_action\": {\"diagnostic\": \"software\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-sw-00\"}, \"question\": \"develop ad01-w2-dev-sw-00\", \"requested_resources\": {\"diagnostic_queries\": 1}}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "software"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+      "stop_reason": "stop",
+      "text": "{\"entry\": \"def acquired_order(task, oracle, max_queries=16):\\n    family = task.get(\\\"family\\\", \\\"software\\\")\\n    if isinstance(max_queries, int) and max_queries >= 0:\\n        budget = max_queries\\n    else:\\n        budget = 16\\n    used = [0]\\n    def ask(candidate):\\n        used[0] = used[0] + 1\\n        return oracle.query(candidate)\\n    def shrink(build, count, order, bulk):\\n        full = list(range(count))\\n        if budget <= 0:\\n            return build(full)\\n        first = build(full)\\n        if first is None:\\n            return build(full)\\n        report = ask(first)\\n        if not isinstance(report, dict) or report.get(\\\"verdict\\\") != \\\"preserved\\\":\\n            return build(full)\\n        keep = full\\n        if bulk is not None and used[0] < budget:\\n            trial = [i for i in keep if i not in bulk]\\n            if trial:\\n                cand = build(trial)\\n                if cand is not None:\\n                    rep = ask(cand)\\n                    if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                        keep = trial\\n        changed = True\\n        while changed and len(keep) > 1:\\n            changed = False\\n            for atom in [a for a in order if a in keep]:\\n                if used[0] >= budget:\\n                    return build(keep)\\n                trial_keep = [a for a in keep if a != atom]\\n                cand = build(trial_keep)\\n                if cand is None:\\n                    continue\\n                rep = ask(cand)\\n                if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                    keep = trial_keep\\n                    changed = True\\n        return build(keep)\\n    if family == \\\"graph\\\":\\n        vertices = list(task.get(\\\"vertices\\\", []))\\n        edges = [list(e) for e in task.get(\\\"edges\\\", [])]\\n        units = []\\n        for v in vertices:\\n            units.append((\\\"v\\\", v))\\n        for i in range(len(edges)):\\n            units.append((\\\"e\\\", i))\\n        degree = {}\\n        for v in vertices:\\n            degree[v] = 0\\n        for e in edges:\\n            degree[e[0]] = degree.get(e[0], 0) + 1\\n            degree[e[1]] = degree.get(e[1], 0) + 1\\n        def build_graph(keep):\\n            kept = set(keep)\\n            gone = set()\\n            dropped_edges = set()\\n            for pos in range(len(units)):\\n                if pos not in kept:\\n                    if units[pos][0] == \\\"v\\\":\\n                        gone.add(units[pos][1])\\n                    else:\\n                        dropped_edges.add(units[pos][1])\\n            keep_v = [v for v in vertices if v not in gone]\\n            if not keep_v:\\n                return None\\n            kept_v = set(keep_v)\\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\\n            return {\\\"family\\\": \\\"graph\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"vertices\\\": keep_v, \\\"edges\\\": keep_e, \\\"seed\\\": task.get(\\\"seed\\\")}\\n        v_first = [i for i in range(len(units)) if units[i][0] == \\\"v\\\"]\\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\\n        e_rest = [i for i in range(len(units)) if units[i][0] != \\\"v\\\"]\\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\\n        return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n    ops = list(task.get(\\\"ops\\\", []))\\n    wid = task.get(\\\"witness\\\", {}).get(\\\"observation\\\")\\n    wpos = -1\\n    for i, entry in enumerate(ops):\\n        if entry.get(\\\"id\\\") == wid:\\n            wpos = i\\n            break\\n    hero = ops[wpos].get(\\\"key\\\") if wpos >= 0 else None\\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\\\"op\\\") == \\\"set\\\" and o.get(\\\"key\\\") == hero and i < wpos]\\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\\n    def build_sw(keep):\\n        kept = [ops[i] for i in sorted(keep)]\\n        return {\\\"family\\\": \\\"software\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"fault\\\": task.get(\\\"fault\\\"), \\\"ops\\\": kept, \\\"witness\\\": task.get(\\\"witness\\\"), \\\"seed\\\": task.get(\\\"seed\\\")}\\n    if wpos >= 0:\\n        order = rest + chain + [wpos]\\n        bulk = set(rest)\\n    else:\\n        order = list(range(len(ops)))\\n        bulk = None\\n    candidate = shrink(build_sw, len(ops), order, bulk)\\n    return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n\", \"notes\": \"diagnostic-aware two-phase reduction: surgical bulk drops of non-chain atoms, then greedy polish in witness-last order.\"}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init"
+    },
+    {
+     "content": {
+      "_verdict": "success",
+      "argv": [
+       "/home/ubuntu/AI/Agent-Society-v2/.venv/bin/python",
+       "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/e4e5b1badce81c160bfcbdc2046a73bdb301671395dae44c3e13f12269cfef21/driver.py",
+       "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/e4e5b1badce81c160bfcbdc2046a73bdb301671395dae44c3e13f12269cfef21",
+       "ad01-430830872a00ad86b960465a91f962c4090b2ad3f8541afd4f343c77fb3a032b",
+       "/home/ubuntu/AI/Agent-Society-v2"
+      ],
+      "containment": false,
+      "data": {
+       "supervised": true,
+       "timed_out": false,
+       "wall_ms": 115,
+       "worker": {
+        "data": {
+         "candidate": {
+          "family": "software",
+          "fault": "stale-read",
+          "ops": [
+           {
+            "key": "b",
+            "op": "set",
+            "value": "v2"
+           },
+           {
+            "key": "b",
+            "op": "set",
+            "value": "v1"
+           },
+           {
+            "id": "o3",
+            "key": "b",
+            "op": "get"
+           }
+          ],
+          "seed": 5301,
+          "task_id": "ad01-w2-dev-sw-00",
+          "witness": {
+           "faulty": {
+            "type": "str",
+            "value": "v2"
+           },
+           "observation": "o3",
+           "ref": {
+            "type": "str",
+            "value": "v1"
+           }
+          }
+         },
+         "queries": 5
+        },
+        "error": "",
+        "status": "ok"
+       }
+      },
+      "parse": "typed-json",
+      "profile": "local-process",
+      "truncated": false
+     },
+     "operation_id": "ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-validate-l1-init",
+     "outcome": "success",
+     "receipt_identity": "local:ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-validate-l1-init_exec-default.result"
+    },
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "learner"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-learner-0",
+      "stop_reason": "stop",
+      "text": "{\"basis_references\": [\"obs-ad01-w2-dev-sw-00-seed\"], \"next_action\": {\"diagnostic\": \"software\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-sw-00\"}, \"question\": \"develop ad01-w2-dev-sw-00\", \"requested_resources\": {\"diagnostic_queries\": 1}}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-learner-0",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-0"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-construct-l1-init",
+    "gw:ad01-ad01-w2-R-00-learner-0",
+    "local:ad01-ad01-w2-R-00-b0-ad01-w2-dev-sw-00-validate-l1-init_exec-default.result"
+   ],
+   "retained_bytes": [
+    {
+     "bytes": 4228,
+     "capability_id": "acquired-sw-b0bd83b7",
+     "computed_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+     "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    }
+   ],
+   "spend": 6
+  },
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 2,
+    "witness_queries": 62
+   },
+   "costs_unknown": [],
+   "decision": {
+    "basis_references": [
+     "obs-ad01-w2-dev-gr-00-seed"
+    ],
+    "next_action": {
+     "diagnostic": "graph",
+     "kind": "development",
+     "max_queries": 16,
+     "task_id": "ad01-w2-dev-gr-00"
+    },
+    "question": "develop ad01-w2-dev-gr-00",
+    "requested_resources": {
+     "diagnostic_queries": 1
+    }
+   },
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+     "prompt": "Write one python method that searches explanatory examples.\nFamily: graph.\nTask (authoritative content, not a reference): {\"edges\": [[0, 1], [1, 2], [2, 3], [3, 4], [0, 4], [2, 5]], \"family\": \"graph\", \"seed\": 5401, \"task_id\": \"ad01-w2-dev-gr-00\", \"template\": \"C5+tree\", \"vertices\": [0, 1, 2, 3, 4, 5]}\nPublic operations: {\"ddmin__ddmin_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin__ddmin_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'ddmin' and you cannot choose another\"}, \"ddmin_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"ddmin_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"graph_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the graph family\", \"signature\": \"graph_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}, \"greedy__greedy_reduce\": {\"origin\": \"authored-composed\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy__greedy_reduce(task, oracle, *, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError the strategy is fixed to 'greedy' and you cannot choose another\"}, \"greedy_reduce\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with kept, queries, accepted, status, candidate\", \"signature\": \"greedy_reduce(task, oracle, *, family, method, priority=None, max_queries=16) everything after * is a keyword argument; passing one positionally raises TypeError 'method' has no value of its own: omit it and this entry runs the strategy it is named for, and passing any other name raises ValueError\"}, \"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, max_queries=16, **kwargs) one of \\\"ddmin\\\" or \\\"greedy\\\"; you must name one everything after * is a keyword argument; passing one positionally raises TypeError **kwargs forwards a keyword the callee declares, so 'method' must be passed by name and the wrapper supplies no value for it\"}, \"software_atoms\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"tuple (build, priority) for the software family\", \"signature\": \"software_atoms(task, oracle, *, max_queries=16, **kwargs) everything after * is a keyword argument; passing one positionally raises TypeError\"}}\nCandidate shape: {\"family_value\": \"graph\", \"legality\": \"candidate vertices/edges must form a legal subgraph of the task holding the witness\", \"required_keys\": [\"family\", \"task_id\", \"vertices\", \"edges\"]}\nShape example (the incumbent task itself, a valid candidate): {\"edges\": [[0, 1], [1, 2], [2, 3], [3, 4], [0, 4], [2, 5]], \"family\": \"graph\", \"seed\": 5401, \"task_id\": \"ad01-w2-dev-gr-00\", \"template\": \"C5+tree\", \"vertices\": [0, 1, 2, 3, 4, 5]}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps the witness: a non-bipartite subgraph of the task. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-subgraph,invalid-candidate,invalid-task,ok-incumbent,ok-preserved,task-mismatch,witness-lost-bipartite.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"max_queries\": 16, \"model_calls\": 3}.\nPrior observations: [{\"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"detail\": null, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"unmeasured\"}, {\"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}]",
+     "prompt_digest": "2730974becec26c49069ff1b94a1cf6ede6805112e9362280e026db8908c7dde",
+     "settled": true
+    },
+    {
+     "dispatch_state": "observed",
+     "effect": "sandbox-exec",
+     "model": "",
+     "operation_id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-validate-l1-init",
+     "prompt": "",
+     "prompt_digest": "",
+     "settled": true
+    },
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-learner-1",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-gr-00\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-00-seed\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 5, \"dev_episodes\": 2, \"model_calls\": 58, \"queries\": 90}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "2365a0658f78d73b59ef6f04a29c352fe5bbb61c6d99829bfe90ea6405ae1794",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "candidate": {
+     "edges": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       2
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       0,
+       4
+      ]
+     ],
+     "family": "graph",
+     "seed": 5401,
+     "task_id": "ad01-w2-dev-gr-00",
+     "vertices": [
+      0,
+      1,
+      2,
+      3,
+      4
+     ]
+    },
+    "check": {
+     "initial_measure": 12,
+     "measure": 10,
+     "reason": "ok-preserved",
+     "verdict": "preserved"
+    },
+    "construction_calls": 1,
+    "disposition": "retained",
+    "executable": {
+     "authored": false,
+     "capability_id": "acquired-gr-b0bd83b7",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w2-R-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "s09iso-ctlarm44774aef-root"
+     },
+     "entry": "acquired_order",
+     "method_source": "def acquired_order(task, oracle, max_queries=16):\n    family = task.get(\"family\", \"software\")\n    if isinstance(max_queries, int) and max_queries >= 0:\n        budget = max_queries\n    else:\n        budget = 16\n    used = [0]\n    def ask(candidate):\n        used[0] = used[0] + 1\n        return oracle.query(candidate)\n    def shrink(build, count, order, bulk):\n        full = list(range(count))\n        if budget <= 0:\n            return build(full)\n        first = build(full)\n        if first is None:\n            return build(full)\n        report = ask(first)\n        if not isinstance(report, dict) or report.get(\"verdict\") != \"preserved\":\n            return build(full)\n        keep = full\n        if bulk is not None and used[0] < budget:\n            trial = [i for i in keep if i not in bulk]\n            if trial:\n                cand = build(trial)\n                if cand is not None:\n                    rep = ask(cand)\n                    if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                        keep = trial\n        changed = True\n        while changed and len(keep) > 1:\n            changed = False\n            for atom in [a for a in order if a in keep]:\n                if used[0] >= budget:\n                    return build(keep)\n                trial_keep = [a for a in keep if a != atom]\n                cand = build(trial_keep)\n                if cand is None:\n                    continue\n                rep = ask(cand)\n                if isinstance(rep, dict) and rep.get(\"verdict\") == \"preserved\":\n                    keep = trial_keep\n                    changed = True\n        return build(keep)\n    if family == \"graph\":\n        vertices = list(task.get(\"vertices\", []))\n        edges = [list(e) for e in task.get(\"edges\", [])]\n        units = []\n        for v in vertices:\n            units.append((\"v\", v))\n        for i in range(len(edges)):\n            units.append((\"e\", i))\n        degree = {}\n        for v in vertices:\n            degree[v] = 0\n        for e in edges:\n            degree[e[0]] = degree.get(e[0], 0) + 1\n            degree[e[1]] = degree.get(e[1], 0) + 1\n        def build_graph(keep):\n            kept = set(keep)\n            gone = set()\n            dropped_edges = set()\n            for pos in range(len(units)):\n                if pos not in kept:\n                    if units[pos][0] == \"v\":\n                        gone.add(units[pos][1])\n                    else:\n                        dropped_edges.add(units[pos][1])\n            keep_v = [v for v in vertices if v not in gone]\n            if not keep_v:\n                return None\n            kept_v = set(keep_v)\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\n            return {\"family\": \"graph\", \"task_id\": task.get(\"task_id\"), \"vertices\": keep_v, \"edges\": keep_e, \"seed\": task.get(\"seed\")}\n        v_first = [i for i in range(len(units)) if units[i][0] == \"v\"]\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\n        e_rest = [i for i in range(len(units)) if units[i][0] != \"v\"]\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\n        return {\"candidate\": candidate, \"queries\": used[0]}\n    ops = list(task.get(\"ops\", []))\n    wid = task.get(\"witness\", {}).get(\"observation\")\n    wpos = -1\n    for i, entry in enumerate(ops):\n        if entry.get(\"id\") == wid:\n            wpos = i\n            break\n    hero = ops[wpos].get(\"key\") if wpos >= 0 else None\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\"op\") == \"set\" and o.get(\"key\") == hero and i < wpos]\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\n    def build_sw(keep):\n        kept = [ops[i] for i in sorted(keep)]\n        return {\"family\": \"software\", \"task_id\": task.get(\"task_id\"), \"fault\": task.get(\"fault\"), \"ops\": kept, \"witness\": task.get(\"witness\"), \"seed\": task.get(\"seed\")}\n    if wpos >= 0:\n        order = rest + chain + [wpos]\n        bulk = set(rest)\n    else:\n        order = list(range(len(ops)))\n        bulk = None\n    candidate = shrink(build_sw, len(ops), order, bulk)\n    return {\"candidate\": candidate, \"queries\": used[0]}\n",
+     "params": {
+      "max_queries": 16
+     },
+     "qualified_on": "ad01-w2-dev-gr-00",
+     "scope": {
+      "family": "graph"
+     },
+     "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    },
+    "final_size": 10,
+    "initial_size": 12,
+    "lineage": [
+     {
+      "authored": false,
+      "capability_id": "acquired-gr-b0bd83b7",
+      "construction": {
+       "calls_made": 1,
+       "campaign_id": "ad01-w2-R-00",
+       "init_failure": null,
+       "init_operation": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+       "lineage": 1,
+       "repair_operation": null,
+       "study_root": "s09iso-ctlarm44774aef-root"
+      },
+      "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+     }
+    ],
+    "queries": 62,
+    "task_id": "ad01-w2-dev-gr-00"
+   },
+   "index": 1,
+   "observation": {
+    "basis_references": [
+     "obs-ad01-w2-dev-gr-00-seed"
+    ],
+    "capability_id": "seed-gr-greedy",
+    "detail": {
+     "control_id": "c3-novel-unproductive",
+     "detail": {
+      "authored": true,
+      "budget": 89,
+      "control_id": "c3-novel-unproductive",
+      "novel_final": 10,
+      "novel_verdict": "preserved",
+      "origin": "ad01-controls",
+      "queries": 46,
+      "seed_final": 10,
+      "seed_verdict": "preserved",
+      "task_id": "ad01-w2-dev-gr-00",
+      "winner": "tie"
+     },
+     "queries": 46,
+     "task_id": "ad01-w2-dev-gr-00",
+     "verdict": "tie seed=10 novel=10"
+    },
+    "grounded": true,
+    "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-00",
+    "queries": 46,
+    "task_id": "ad01-w2-dev-gr-00",
+    "verdict": "tie seed=10 novel=10"
+   },
+   "operations": [
+    "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+    "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-validate-l1-init",
+    "ad01-ad01-w2-R-00-learner-1"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "R",
+     "seq": 1,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": "ad01-w2-dev-gr-00",
+    "observations": [
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "ok-preserved",
+        "diagnostic_verdict": "preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-00"
+       },
+       "task_id": "ad01-w2-dev-sw-00",
+       "verdict": "preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-00",
+      "task_id": "ad01-w2-dev-sw-00",
+      "verdict": "preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-gr-00-seed",
+      "task_id": "ad01-w2-dev-gr-00",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 5,
+     "dev_episodes": 2,
+     "model_calls": 58,
+     "queries": 90
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [
+     {
+      "capability_id": "acquired-sw-b0bd83b7",
+      "family": "software",
+      "qualified_on": "ad01-w2-dev-sw-00"
+     }
+    ],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "fe3f49cd7abde3968daffe345cddb5daea75ef81ec87f0641bf519b228554202",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [
+     "obs-ad01-w2-dev-gr-00-seed"
+    ],
+    "inputs": {
+     "basis_references": [
+      "obs-ad01-w2-dev-gr-00-seed"
+     ],
+     "diagnostic": "graph",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 16,
+     "model": "inv01-study-double",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "develop ad01-w2-dev-gr-00",
+     "task_id": "ad01-w2-dev-gr-00"
+    },
+    "instrument": "development",
+    "requested": {
+     "diagnostic_queries": 1
+    },
+    "target": "ad01-w2-dev-gr-00"
+   },
+   "raw_responses": [
+    {
+     "digest": "99819c48c39c18e70abcc441e60ad2d24b48730d2d919de8f840fdf6b084f778",
+     "operation_id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+     "simulated": true,
+     "text": "{\"entry\": \"def acquired_order(task, oracle, max_queries=16):\\n    family = task.get(\\\"family\\\", \\\"software\\\")\\n    if isinstance(max_queries, int) and max_queries >= 0:\\n        budget = max_queries\\n    else:\\n        budget = 16\\n    used = [0]\\n    def ask(candidate):\\n        used[0] = used[0] + 1\\n        return oracle.query(candidate)\\n    def shrink(build, count, order, bulk):\\n        full = list(range(count))\\n        if budget <= 0:\\n            return build(full)\\n        first = build(full)\\n        if first is None:\\n            return build(full)\\n        report = ask(first)\\n        if not isinstance(report, dict) or report.get(\\\"verdict\\\") != \\\"preserved\\\":\\n            return build(full)\\n        keep = full\\n        if bulk is not None and used[0] < budget:\\n            trial = [i for i in keep if i not in bulk]\\n            if trial:\\n                cand = build(trial)\\n                if cand is not None:\\n                    rep = ask(cand)\\n                    if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                        keep = trial\\n        changed = True\\n        while changed and len(keep) > 1:\\n            changed = False\\n            for atom in [a for a in order if a in keep]:\\n                if used[0] >= budget:\\n                    return build(keep)\\n                trial_keep = [a for a in keep if a != atom]\\n                cand = build(trial_keep)\\n                if cand is None:\\n                    continue\\n                rep = ask(cand)\\n                if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                    keep = trial_keep\\n                    changed = True\\n        return build(keep)\\n    if family == \\\"graph\\\":\\n        vertices = list(task.get(\\\"vertices\\\", []))\\n        edges = [list(e) for e in task.get(\\\"edges\\\", [])]\\n        units = []\\n        for v in vertices:\\n            units.append((\\\"v\\\", v))\\n        for i in range(len(edges)):\\n            units.append((\\\"e\\\", i))\\n        degree = {}\\n        for v in vertices:\\n            degree[v] = 0\\n        for e in edges:\\n            degree[e[0]] = degree.get(e[0], 0) + 1\\n            degree[e[1]] = degree.get(e[1], 0) + 1\\n        def build_graph(keep):\\n            kept = set(keep)\\n            gone = set()\\n            dropped_edges = set()\\n            for pos in range(len(units)):\\n                if pos not in kept:\\n                    if units[pos][0] == \\\"v\\\":\\n                        gone.add(units[pos][1])\\n                    else:\\n                        dropped_edges.add(units[pos][1])\\n            keep_v = [v for v in vertices if v not in gone]\\n            if not keep_v:\\n                return None\\n            kept_v = set(keep_v)\\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\\n            return {\\\"family\\\": \\\"graph\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"vertices\\\": keep_v, \\\"edges\\\": keep_e, \\\"seed\\\": task.get(\\\"seed\\\")}\\n        v_first = [i for i in range(len(units)) if units[i][0] == \\\"v\\\"]\\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\\n        e_rest = [i for i in range(len(units)) if units[i][0] != \\\"v\\\"]\\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\\n        return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n    ops = list(task.get(\\\"ops\\\", []))\\n    wid = task.get(\\\"witness\\\", {}).get(\\\"observation\\\")\\n    wpos = -1\\n    for i, entry in enumerate(ops):\\n        if entry.get(\\\"id\\\") == wid:\\n            wpos = i\\n            break\\n    hero = ops[wpos].get(\\\"key\\\") if wpos >= 0 else None\\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\\\"op\\\") == \\\"set\\\" and o.get(\\\"key\\\") == hero and i < wpos]\\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\\n    def build_sw(keep):\\n        kept = [ops[i] for i in sorted(keep)]\\n        return {\\\"family\\\": \\\"software\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"fault\\\": task.get(\\\"fault\\\"), \\\"ops\\\": kept, \\\"witness\\\": task.get(\\\"witness\\\"), \\\"seed\\\": task.get(\\\"seed\\\")}\\n    if wpos >= 0:\\n        order = rest + chain + [wpos]\\n        bulk = set(rest)\\n    else:\\n        order = list(range(len(ops)))\\n        bulk = None\\n    candidate = shrink(build_sw, len(ops), order, bulk)\\n    return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n\", \"notes\": \"diagnostic-aware two-phase reduction: surgical bulk drops of non-chain atoms, then greedy polish in witness-last order.\"}"
+    },
+    {
+     "digest": "0afe4530d3994026dee1e6d46ce88da2813e3406356fe870b65744017ac937a7",
+     "operation_id": "ad01-ad01-w2-R-00-learner-1",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-1",
+     "simulated": true,
+     "text": "{\"basis_references\": [\"obs-ad01-w2-dev-gr-00-seed\"], \"next_action\": {\"diagnostic\": \"graph\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-gr-00\"}, \"question\": \"develop ad01-w2-dev-gr-00\", \"requested_resources\": {\"diagnostic_queries\": 1}}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "graph"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+      "stop_reason": "stop",
+      "text": "{\"entry\": \"def acquired_order(task, oracle, max_queries=16):\\n    family = task.get(\\\"family\\\", \\\"software\\\")\\n    if isinstance(max_queries, int) and max_queries >= 0:\\n        budget = max_queries\\n    else:\\n        budget = 16\\n    used = [0]\\n    def ask(candidate):\\n        used[0] = used[0] + 1\\n        return oracle.query(candidate)\\n    def shrink(build, count, order, bulk):\\n        full = list(range(count))\\n        if budget <= 0:\\n            return build(full)\\n        first = build(full)\\n        if first is None:\\n            return build(full)\\n        report = ask(first)\\n        if not isinstance(report, dict) or report.get(\\\"verdict\\\") != \\\"preserved\\\":\\n            return build(full)\\n        keep = full\\n        if bulk is not None and used[0] < budget:\\n            trial = [i for i in keep if i not in bulk]\\n            if trial:\\n                cand = build(trial)\\n                if cand is not None:\\n                    rep = ask(cand)\\n                    if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                        keep = trial\\n        changed = True\\n        while changed and len(keep) > 1:\\n            changed = False\\n            for atom in [a for a in order if a in keep]:\\n                if used[0] >= budget:\\n                    return build(keep)\\n                trial_keep = [a for a in keep if a != atom]\\n                cand = build(trial_keep)\\n                if cand is None:\\n                    continue\\n                rep = ask(cand)\\n                if isinstance(rep, dict) and rep.get(\\\"verdict\\\") == \\\"preserved\\\":\\n                    keep = trial_keep\\n                    changed = True\\n        return build(keep)\\n    if family == \\\"graph\\\":\\n        vertices = list(task.get(\\\"vertices\\\", []))\\n        edges = [list(e) for e in task.get(\\\"edges\\\", [])]\\n        units = []\\n        for v in vertices:\\n            units.append((\\\"v\\\", v))\\n        for i in range(len(edges)):\\n            units.append((\\\"e\\\", i))\\n        degree = {}\\n        for v in vertices:\\n            degree[v] = 0\\n        for e in edges:\\n            degree[e[0]] = degree.get(e[0], 0) + 1\\n            degree[e[1]] = degree.get(e[1], 0) + 1\\n        def build_graph(keep):\\n            kept = set(keep)\\n            gone = set()\\n            dropped_edges = set()\\n            for pos in range(len(units)):\\n                if pos not in kept:\\n                    if units[pos][0] == \\\"v\\\":\\n                        gone.add(units[pos][1])\\n                    else:\\n                        dropped_edges.add(units[pos][1])\\n            keep_v = [v for v in vertices if v not in gone]\\n            if not keep_v:\\n                return None\\n            kept_v = set(keep_v)\\n            keep_e = [e for i, e in enumerate(edges) if i not in dropped_edges and e[0] in kept_v and e[1] in kept_v]\\n            return {\\\"family\\\": \\\"graph\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"vertices\\\": keep_v, \\\"edges\\\": keep_e, \\\"seed\\\": task.get(\\\"seed\\\")}\\n        v_first = [i for i in range(len(units)) if units[i][0] == \\\"v\\\"]\\n        v_first = sorted(v_first, key=lambda i: (degree.get(units[i][1], 0), i))\\n        e_rest = [i for i in range(len(units)) if units[i][0] != \\\"v\\\"]\\n        candidate = shrink(build_graph, len(units), v_first + e_rest, None)\\n        return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n    ops = list(task.get(\\\"ops\\\", []))\\n    wid = task.get(\\\"witness\\\", {}).get(\\\"observation\\\")\\n    wpos = -1\\n    for i, entry in enumerate(ops):\\n        if entry.get(\\\"id\\\") == wid:\\n            wpos = i\\n            break\\n    hero = ops[wpos].get(\\\"key\\\") if wpos >= 0 else None\\n    chain = [i for i, o in enumerate(ops) if wpos >= 0 and o.get(\\\"op\\\") == \\\"set\\\" and o.get(\\\"key\\\") == hero and i < wpos]\\n    rest = [i for i in range(len(ops)) if i != wpos and i not in chain]\\n    def build_sw(keep):\\n        kept = [ops[i] for i in sorted(keep)]\\n        return {\\\"family\\\": \\\"software\\\", \\\"task_id\\\": task.get(\\\"task_id\\\"), \\\"fault\\\": task.get(\\\"fault\\\"), \\\"ops\\\": kept, \\\"witness\\\": task.get(\\\"witness\\\"), \\\"seed\\\": task.get(\\\"seed\\\")}\\n    if wpos >= 0:\\n        order = rest + chain + [wpos]\\n        bulk = set(rest)\\n    else:\\n        order = list(range(len(ops)))\\n        bulk = None\\n    candidate = shrink(build_sw, len(ops), order, bulk)\\n    return {\\\"candidate\\\": candidate, \\\"queries\\\": used[0]}\\n\", \"notes\": \"diagnostic-aware two-phase reduction: surgical bulk drops of non-chain atoms, then greedy polish in witness-last order.\"}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init"
+    },
+    {
+     "content": {
+      "_verdict": "success",
+      "argv": [
+       "/home/ubuntu/AI/Agent-Society-v2/.venv/bin/python",
+       "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/b7e8ce995df2441913d83a0e3fd21baeea93c6ef1c8d763c7aa77bdfaae0a1a2/driver.py",
+       "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/b7e8ce995df2441913d83a0e3fd21baeea93c6ef1c8d763c7aa77bdfaae0a1a2",
+       "ad01-a457683f512a088b4df01b2df3d79f2a79fc3834d567788c82b8166b6d13868e",
+       "/home/ubuntu/AI/Agent-Society-v2"
+      ],
+      "containment": false,
+      "data": {
+       "supervised": true,
+       "timed_out": false,
+       "wall_ms": 75,
+       "worker": {
+        "data": {
+         "candidate": {
+          "edges": [
+           [
+            0,
+            1
+           ],
+           [
+            1,
+            2
+           ],
+           [
+            2,
+            3
+           ],
+           [
+            3,
+            4
+           ],
+           [
+            0,
+            4
+           ]
+          ],
+          "family": "graph",
+          "seed": 5401,
+          "task_id": "ad01-w2-dev-gr-00",
+          "vertices": [
+           0,
+           1,
+           2,
+           3,
+           4
+          ]
+         },
+         "queries": 16
+        },
+        "error": "",
+        "status": "ok"
+       }
+      },
+      "parse": "typed-json",
+      "profile": "local-process",
+      "truncated": false
+     },
+     "operation_id": "ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-validate-l1-init",
+     "outcome": "success",
+     "receipt_identity": "local:ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-validate-l1-init_exec-default.result"
+    },
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "learner"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-learner-1",
+      "stop_reason": "stop",
+      "text": "{\"basis_references\": [\"obs-ad01-w2-dev-gr-00-seed\"], \"next_action\": {\"diagnostic\": \"graph\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-gr-00\"}, \"question\": \"develop ad01-w2-dev-gr-00\", \"requested_resources\": {\"diagnostic_queries\": 1}}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-learner-1",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-1"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-construct-l1-init",
+    "gw:ad01-ad01-w2-R-00-learner-1",
+    "local:ad01-ad01-w2-R-00-b1-ad01-w2-dev-gr-00-validate-l1-init_exec-default.result"
+   ],
+   "retained_bytes": [
+    {
+     "bytes": 4228,
+     "capability_id": "acquired-gr-b0bd83b7",
+     "computed_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+     "source_digest": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c"
+    }
+   ],
+   "spend": 63
+  },
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 1,
+    "witness_queries": 0
+   },
+   "costs_unknown": [],
+   "decision": {
+    "basis_references": [
+     "obs-ad01-w2-dev-sw-01-seed"
+    ],
+    "next_action": {
+     "diagnostic": "software",
+     "kind": "development",
+     "max_queries": 16,
+     "task_id": "ad01-w2-dev-sw-01"
+    },
+    "question": "develop ad01-w2-dev-sw-01",
+    "requested_resources": {
+     "diagnostic_queries": 1
+    }
+   },
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-learner-2",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-sw-01\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-01-seed\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 4, \"dev_episodes\": 1, \"model_calls\": 56, \"queries\": 27}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "e6ee03a5a4008423c2cc63e4253f06dfbae98641e74ab1ae88756f7fcef796b9",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "construction_calls": 0,
+    "disposition": "rejected",
+    "initial_size": 12,
+    "lineage": [
+     {
+      "authored": false,
+      "capability_id": "acquired-pending"
+     }
+    ],
+    "queries": 0,
+    "reason": "construction failed: lineage cap reached (2/trajectory)",
+    "task_id": "ad01-w2-dev-sw-01"
+   },
+   "index": 2,
+   "observation": {
+    "basis_references": [
+     "obs-ad01-w2-dev-sw-01-seed"
+    ],
+    "capability_id": "seed-sw-greedy",
+    "detail": {
+     "control_id": "c4-diagnostic",
+     "detail": {
+      "authored": true,
+      "control_id": "c4-diagnostic",
+      "diagnostic_reason": "witness-lost-agree",
+      "diagnostic_verdict": "not_preserved",
+      "nondiagnostic_reason": "observation-missing",
+      "nondiagnostic_verdict": "not_preserved",
+      "origin": "ad01-controls",
+      "task_id": "ad01-w2-dev-sw-01"
+     },
+     "task_id": "ad01-w2-dev-sw-01",
+     "verdict": "not_preserved-vs-not_preserved"
+    },
+    "grounded": true,
+    "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-01",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-sw-01",
+    "verdict": "not_preserved-vs-not_preserved"
+   },
+   "operations": [
+    "ad01-ad01-w2-R-00-learner-2"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "R",
+     "seq": 2,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": "ad01-w2-dev-sw-01",
+    "observations": [
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "ok-preserved",
+        "diagnostic_verdict": "preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-00"
+       },
+       "task_id": "ad01-w2-dev-sw-00",
+       "verdict": "preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-00",
+      "task_id": "ad01-w2-dev-sw-00",
+      "verdict": "preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 89,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 10,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 46,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-00",
+        "winner": "tie"
+       },
+       "queries": 46,
+       "task_id": "ad01-w2-dev-gr-00",
+       "verdict": "tie seed=10 novel=10"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-00",
+      "task_id": "ad01-w2-dev-gr-00",
+      "verdict": "tie seed=10 novel=10"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-sw-01-seed",
+      "task_id": "ad01-w2-dev-sw-01",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 4,
+     "dev_episodes": 1,
+     "model_calls": 56,
+     "queries": 27
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [
+     {
+      "capability_id": "acquired-sw-b0bd83b7",
+      "family": "software",
+      "qualified_on": "ad01-w2-dev-sw-00"
+     },
+     {
+      "capability_id": "acquired-gr-b0bd83b7",
+      "family": "graph",
+      "qualified_on": "ad01-w2-dev-gr-00"
+     }
+    ],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "80d7210e5cebc4f9780b98a723ef8e3f76132fe0f69eb28f9263db71deba3647",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [
+     "obs-ad01-w2-dev-sw-01-seed"
+    ],
+    "inputs": {
+     "basis_references": [
+      "obs-ad01-w2-dev-sw-01-seed"
+     ],
+     "diagnostic": "software",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 16,
+     "model": "inv01-study-double",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "develop ad01-w2-dev-sw-01",
+     "task_id": "ad01-w2-dev-sw-01"
+    },
+    "instrument": "development",
+    "requested": {
+     "diagnostic_queries": 1
+    },
+    "target": "ad01-w2-dev-sw-01"
+   },
+   "raw_responses": [
+    {
+     "digest": "1b6f23987e8649132c0af549fa3fade4c32b419b6796142a7b0acfd928d33cf6",
+     "operation_id": "ad01-ad01-w2-R-00-learner-2",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-2",
+     "simulated": true,
+     "text": "{\"basis_references\": [\"obs-ad01-w2-dev-sw-01-seed\"], \"next_action\": {\"diagnostic\": \"software\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-sw-01\"}, \"question\": \"develop ad01-w2-dev-sw-01\", \"requested_resources\": {\"diagnostic_queries\": 1}}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "learner"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-learner-2",
+      "stop_reason": "stop",
+      "text": "{\"basis_references\": [\"obs-ad01-w2-dev-sw-01-seed\"], \"next_action\": {\"diagnostic\": \"software\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-sw-01\"}, \"question\": \"develop ad01-w2-dev-sw-01\", \"requested_resources\": {\"diagnostic_queries\": 1}}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-learner-2",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-2"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-R-00-learner-2"
+   ],
+   "retained_bytes": [],
+   "spend": 1
+  },
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 1,
+    "witness_queries": 0
+   },
+   "costs_unknown": [],
+   "decision": null,
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-learner-3",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-gr-01\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"witness-lost-agree\", \"diagnostic_verdict\": \"not_preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-01\"}, \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-01\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 3, \"dev_episodes\": 0, \"model_calls\": 55, \"queries\": 26}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "4f115f2f19b10a046173b94118bed70c646cf2cc44bb77c3c11252cad0aefdd6",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "disposition": "no-candidate",
+    "fallback": "incumbent",
+    "fallback_reason": "development episode cap reached (3/trajectory)",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-gr-01"
+   },
+   "index": 3,
+   "observation": {
+    "capability_id": "seed-gr-greedy",
+    "observation_id": "obs-ad01-w2-dev-gr-01-seed",
+    "task_id": "ad01-w2-dev-gr-01",
+    "verdict": "unmeasured"
+   },
+   "operations": [
+    "ad01-ad01-w2-R-00-learner-3"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "R",
+     "seq": 3,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": "ad01-w2-dev-gr-01",
+    "observations": [
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "ok-preserved",
+        "diagnostic_verdict": "preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-00"
+       },
+       "task_id": "ad01-w2-dev-sw-00",
+       "verdict": "preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-00",
+      "task_id": "ad01-w2-dev-sw-00",
+      "verdict": "preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 89,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 10,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 46,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-00",
+        "winner": "tie"
+       },
+       "queries": 46,
+       "task_id": "ad01-w2-dev-gr-00",
+       "verdict": "tie seed=10 novel=10"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-00",
+      "task_id": "ad01-w2-dev-gr-00",
+      "verdict": "tie seed=10 novel=10"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "witness-lost-agree",
+        "diagnostic_verdict": "not_preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-01"
+       },
+       "task_id": "ad01-w2-dev-sw-01",
+       "verdict": "not_preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-01",
+      "task_id": "ad01-w2-dev-sw-01",
+      "verdict": "not_preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-gr-01-seed",
+      "task_id": "ad01-w2-dev-gr-01",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 3,
+     "dev_episodes": 0,
+     "model_calls": 55,
+     "queries": 26
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [
+     {
+      "capability_id": "acquired-sw-b0bd83b7",
+      "family": "software",
+      "qualified_on": "ad01-w2-dev-sw-00"
+     },
+     {
+      "capability_id": "acquired-gr-b0bd83b7",
+      "family": "graph",
+      "qualified_on": "ad01-w2-dev-gr-00"
+     }
+    ],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "65923d562ae32b8cb1d34e5b40c32e27ea07d9276852c2cc3a901effe545de91",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [],
+    "inputs": {
+     "basis_references": [],
+     "diagnostic": "",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 0,
+     "model": "inv01-study-double",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "development episode cap reached (3/trajectory)",
+     "task_id": "ad01-w2-dev-gr-01"
+    },
+    "instrument": "diagnostic",
+    "requested": {},
+    "target": "ad01-w2-dev-gr-01"
+   },
+   "raw_responses": [
+    {
+     "digest": "27484f8c76b2239c6af83a1ae9c939280df0ed432979d220ab16e67b314491fc",
+     "operation_id": "ad01-ad01-w2-R-00-learner-3",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-3",
+     "simulated": true,
+     "text": "{\"basis_references\": [\"obs-ad01-w2-dev-gr-01-seed\"], \"next_action\": {\"diagnostic\": \"graph\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-gr-01\"}, \"question\": \"develop ad01-w2-dev-gr-01\", \"requested_resources\": {\"diagnostic_queries\": 1}}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "learner"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-learner-3",
+      "stop_reason": "stop",
+      "text": "{\"basis_references\": [\"obs-ad01-w2-dev-gr-01-seed\"], \"next_action\": {\"diagnostic\": \"graph\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-gr-01\"}, \"question\": \"develop ad01-w2-dev-gr-01\", \"requested_resources\": {\"diagnostic_queries\": 1}}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-learner-3",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-3"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-R-00-learner-3"
+   ],
+   "retained_bytes": [],
+   "spend": 0
+  },
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 1,
+    "witness_queries": 0
+   },
+   "costs_unknown": [],
+   "decision": null,
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-learner-4",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-sw-02\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"witness-lost-agree\", \"diagnostic_verdict\": \"not_preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-01\"}, \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-01\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 2, \"dev_episodes\": 0, \"model_calls\": 54, \"queries\": 26}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "7ec94c9e7f82b5bcf70234951fe8c1a8c0b875933eb720d21d7f72686b459424",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "disposition": "no-candidate",
+    "fallback": "incumbent",
+    "fallback_reason": "development episode cap reached (3/trajectory)",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-sw-02"
+   },
+   "index": 4,
+   "observation": {
+    "capability_id": "seed-sw-greedy",
+    "observation_id": "obs-ad01-w2-dev-sw-02-seed",
+    "task_id": "ad01-w2-dev-sw-02",
+    "verdict": "unmeasured"
+   },
+   "operations": [
+    "ad01-ad01-w2-R-00-learner-4"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "R",
+     "seq": 4,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": "ad01-w2-dev-sw-02",
+    "observations": [
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "ok-preserved",
+        "diagnostic_verdict": "preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-00"
+       },
+       "task_id": "ad01-w2-dev-sw-00",
+       "verdict": "preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-00",
+      "task_id": "ad01-w2-dev-sw-00",
+      "verdict": "preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 89,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 10,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 46,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-00",
+        "winner": "tie"
+       },
+       "queries": 46,
+       "task_id": "ad01-w2-dev-gr-00",
+       "verdict": "tie seed=10 novel=10"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-00",
+      "task_id": "ad01-w2-dev-gr-00",
+      "verdict": "tie seed=10 novel=10"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "witness-lost-agree",
+        "diagnostic_verdict": "not_preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-01"
+       },
+       "task_id": "ad01-w2-dev-sw-01",
+       "verdict": "not_preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-01",
+      "task_id": "ad01-w2-dev-sw-01",
+      "verdict": "not_preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-gr-01-seed",
+      "task_id": "ad01-w2-dev-gr-01",
+      "verdict": "unmeasured"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-sw-02-seed",
+      "task_id": "ad01-w2-dev-sw-02",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 2,
+     "dev_episodes": 0,
+     "model_calls": 54,
+     "queries": 26
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [
+     {
+      "capability_id": "acquired-sw-b0bd83b7",
+      "family": "software",
+      "qualified_on": "ad01-w2-dev-sw-00"
+     },
+     {
+      "capability_id": "acquired-gr-b0bd83b7",
+      "family": "graph",
+      "qualified_on": "ad01-w2-dev-gr-00"
+     }
+    ],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "ae3ccb35dfe436c510a107f06a5dbfabc32160f934326c8f060e4034ac7c0b8f",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [],
+    "inputs": {
+     "basis_references": [],
+     "diagnostic": "",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 0,
+     "model": "inv01-study-double",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "development episode cap reached (3/trajectory)",
+     "task_id": "ad01-w2-dev-sw-02"
+    },
+    "instrument": "diagnostic",
+    "requested": {},
+    "target": "ad01-w2-dev-sw-02"
+   },
+   "raw_responses": [
+    {
+     "digest": "65ab2f5de3d4e7a130801245a6096fa13559b995127a8f51adb2d4d1a5cf6468",
+     "operation_id": "ad01-ad01-w2-R-00-learner-4",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-4",
+     "simulated": true,
+     "text": "{\"basis_references\": [\"obs-ad01-w2-dev-sw-02-seed\"], \"next_action\": {\"diagnostic\": \"software\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-sw-02\"}, \"question\": \"develop ad01-w2-dev-sw-02\", \"requested_resources\": {\"diagnostic_queries\": 1}}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "learner"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-learner-4",
+      "stop_reason": "stop",
+      "text": "{\"basis_references\": [\"obs-ad01-w2-dev-sw-02-seed\"], \"next_action\": {\"diagnostic\": \"software\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-sw-02\"}, \"question\": \"develop ad01-w2-dev-sw-02\", \"requested_resources\": {\"diagnostic_queries\": 1}}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-learner-4",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-4"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-R-00-learner-4"
+   ],
+   "retained_bytes": [],
+   "spend": 0
+  },
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 1,
+    "witness_queries": 0
+   },
+   "costs_unknown": [],
+   "decision": null,
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "inv01-study-double",
+     "operation_id": "ad01-ad01-w2-R-00-learner-5",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": \"ad01-w2-dev-gr-02\", \"observations\": [{\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-00\"}, \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-00\", \"task_id\": \"ad01-w2-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 89, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 46, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"tie\"}, \"queries\": 46, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"witness-lost-agree\", \"diagnostic_verdict\": \"not_preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-01\"}, \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-01\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"not_preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-02-seed\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 1, \"dev_episodes\": 0, \"model_calls\": 53, \"queries\": 26}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-b0bd83b7\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-00\"}, {\"capability_id\": \"acquired-gr-b0bd83b7\", \"family\": \"graph\", \"qualified_on\": \"ad01-w2-dev-gr-00\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "1473779f7f77d9aa25dabe8dbecbf69fde6f68b2e5f2a3cea81710d67631cf1a",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "disposition": "no-candidate",
+    "fallback": "incumbent",
+    "fallback_reason": "development episode cap reached (3/trajectory)",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-gr-02"
+   },
+   "index": 5,
+   "observation": {
+    "capability_id": "seed-gr-greedy",
+    "observation_id": "obs-ad01-w2-dev-gr-02-seed",
+    "task_id": "ad01-w2-dev-gr-02",
+    "verdict": "unmeasured"
+   },
+   "operations": [
+    "ad01-ad01-w2-R-00-learner-5"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "R",
+     "seq": 5,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": "ad01-w2-dev-gr-02",
+    "observations": [
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "ok-preserved",
+        "diagnostic_verdict": "preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-00"
+       },
+       "task_id": "ad01-w2-dev-sw-00",
+       "verdict": "preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-00",
+      "task_id": "ad01-w2-dev-sw-00",
+      "verdict": "preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 89,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 10,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 46,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-00",
+        "winner": "tie"
+       },
+       "queries": 46,
+       "task_id": "ad01-w2-dev-gr-00",
+       "verdict": "tie seed=10 novel=10"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-00",
+      "task_id": "ad01-w2-dev-gr-00",
+      "verdict": "tie seed=10 novel=10"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "witness-lost-agree",
+        "diagnostic_verdict": "not_preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-01"
+       },
+       "task_id": "ad01-w2-dev-sw-01",
+       "verdict": "not_preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-01",
+      "task_id": "ad01-w2-dev-sw-01",
+      "verdict": "not_preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-gr-01-seed",
+      "task_id": "ad01-w2-dev-gr-01",
+      "verdict": "unmeasured"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-sw-02-seed",
+      "task_id": "ad01-w2-dev-sw-02",
+      "verdict": "unmeasured"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-gr-02-seed",
+      "task_id": "ad01-w2-dev-gr-02",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 1,
+     "dev_episodes": 0,
+     "model_calls": 53,
+     "queries": 26
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [
+     {
+      "capability_id": "acquired-sw-b0bd83b7",
+      "family": "software",
+      "qualified_on": "ad01-w2-dev-sw-00"
+     },
+     {
+      "capability_id": "acquired-gr-b0bd83b7",
+      "family": "graph",
+      "qualified_on": "ad01-w2-dev-gr-00"
+     }
+    ],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "60455ea2a7db05e36d5faf337d5a79d8fb4e547c57fffe5f9f26ac5b3fa79c39",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [],
+    "inputs": {
+     "basis_references": [],
+     "diagnostic": "",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 0,
+     "model": "inv01-study-double",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "development episode cap reached (3/trajectory)",
+     "task_id": "ad01-w2-dev-gr-02"
+    },
+    "instrument": "diagnostic",
+    "requested": {},
+    "target": "ad01-w2-dev-gr-02"
+   },
+   "raw_responses": [
+    {
+     "digest": "ee15b9071ad1129e4ad56c20dfea5a1e8882adbfa06d7f0c63fbb59a91a6b4bd",
+     "operation_id": "ad01-ad01-w2-R-00-learner-5",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-5",
+     "simulated": true,
+     "text": "{\"basis_references\": [\"obs-ad01-w2-dev-gr-02-seed\"], \"next_action\": {\"diagnostic\": \"graph\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-gr-02\"}, \"question\": \"develop ad01-w2-dev-gr-02\", \"requested_resources\": {\"diagnostic_queries\": 1}}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "simulated": true,
+       "stream": "learner"
+      },
+      "operation_id": "ad01-ad01-w2-R-00-learner-5",
+      "stop_reason": "stop",
+      "text": "{\"basis_references\": [\"obs-ad01-w2-dev-gr-02-seed\"], \"next_action\": {\"diagnostic\": \"graph\", \"kind\": \"development\", \"max_queries\": 16, \"task_id\": \"ad01-w2-dev-gr-02\"}, \"question\": \"develop ad01-w2-dev-gr-02\", \"requested_resources\": {\"diagnostic_queries\": 1}}",
+      "usage": {
+       "billed": false,
+       "charge_scale": null,
+       "charge_units": 0,
+       "input_tokens": 11,
+       "model_calls": 1,
+       "output_tokens": 7,
+       "provider_enforced_ceiling": false
+      }
+     },
+     "operation_id": "ad01-ad01-w2-R-00-learner-5",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-5"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-R-00-learner-5"
+   ],
+   "retained_bytes": [],
+   "spend": 0
+  }
+ ],
+ "unknown_exposure": [],
+ "use_records": [],
+ "world": 2
+}

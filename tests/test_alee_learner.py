@@ -5,6 +5,11 @@ learner output refuses without work; the CLI configures learner and
 constructor from flags with recording doubles at the same seams; the
 use subcommand loads frozen bytes in a fresh process. DB ec02test_ad01c
 only for the brokered parts, never ec02test_live.
+
+The use invocation passes `--policy-source`. Since a60798d the use phase
+takes its method from a policy or refuses, and `ad01-traj use` holds no
+policy of its own, so without the flag every record reads `refused` and
+the sandbox-ops accounting this file checks is never charged.
 """
 
 from __future__ import annotations
@@ -212,11 +217,22 @@ def test_cli_run_doubled_and_use_fresh_process(tmp_path):
     authority = trajectory.ensure_campaign(DSN, "alee", 0, "I", CHARTER,
                                            {"agenda_authorized": 1000})
     accounting_path = tmp_path / "accounting.json"
+    policy_path = tmp_path / "policy.py"
+    policy_path.write_text(
+        "def STEP(view, state):\n"
+        "    return {'action': {'kind': 'use_method',\n"
+        "                      'target': view['task_content']['task_id'],\n"
+        "                      'inputs': {'method_id': 'acquired-sw-alee01',\n"
+        "                                 'max_queries': 16},\n"
+        "                      'evidence_refs': [],\n"
+        "                      'requested_resources': {'queries': 16}},\n"
+        "            'state': {'chosen': 'acquired-sw-alee01'}}\n")
     proc = subprocess.run(
         [sys.executable, "-m", "experiments.ad01.cli", "use",
          "--repertoire", str(frozen), "--world", "0", "--arm", "I",
          "--tasks", "ad01-w0-within-sw-00", "--dsn", DSN,
          "--allocation-id", authority["allocation_id"],
+         "--policy-source", str(policy_path),
          "--accounting-out", str(accounting_path)],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300)
     assert proc.returncode == 0, proc.stderr

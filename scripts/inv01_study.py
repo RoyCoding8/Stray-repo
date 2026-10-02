@@ -22,6 +22,56 @@ MODEL = "inv01-study-double"
 CALIBRATION_WORLD = 0
 COMPARISON_WORLDS = [1, 2]
 
+DISPOSIBLE_PREFIXES = ("s09iso_", "inv_r1_", "inv_c3_")
+
+# The authored control arm's own name, and the witness budget both arms run
+# at. `_v1_use_arms` is what the ceilings and the use loop read; clearing
+# CONTROL_ARM returns the study to its pre-control shape without deleting
+# any of it, which is the point of a switch over a deletion.
+CONTROL_ARM = "C"
+CONTROL_BUDGET = 4
+
+# The two orderings the use loop walks before any control exists. The
+# ceiling has to count them: sizing the use half on one ordering is what
+# left the third run's control arm with nothing to spend.
+ACQUIRED_ARMS = ("I", "R")
+
+
+def _v1_use_arms() -> int:
+    """How many arms the use phase runs in total.
+
+    The two acquired orderings, plus the control when there is one. This is
+    the number the ceiling is sized on and the number the authority is
+    widened by, and both had to learn the same lesson: the control arm is
+    the third, not the second.
+    """
+    return len(ACQUIRED_ARMS) + (1 if CONTROL_ARM else 0)
+
+
+def _disposable_store(dsn: str) -> bool:
+    """Accept a store a test could have created and no operator named.
+
+    The guard used to be a single substring, so it admitted exactly the names
+    a caller could not derive. The run token that `s09_run_isolation` mints is
+    matched by `TOKEN_RE`, which admits no underscore, so a name carrying both
+    `inv_r1_` and the library's own `s09iso_` prefix is unreachable and the
+    study could only run against whatever a human had left behind. Both
+    callers now admit the disposable library's names alongside the ones they
+    used to, and the study still refuses every store it cannot attribute to a
+    test.
+    """
+    from urllib.parse import urlparse
+
+    parsed = urlparse(dsn)
+    if parsed.scheme:
+        name = (parsed.path or "/").lstrip("/")
+    else:
+        name = ""
+        for field in dsn.split():
+            if field.startswith("dbname="):
+                name = field[7:].strip("'\"")
+    return any(name.startswith(prefix) for prefix in DISPOSIBLE_PREFIXES)
+
 
 def _family(task_id: str) -> str:
     return "graph" if "-gr-" in task_id else "software"
@@ -274,14 +324,95 @@ def _run_trajectory(dsn: str, world: int, arm: str, tasks: list,
     return campaign
 
 
+def _v1_write_use_policy(repertoire_path: Path, task: dict) -> str:
+    """Materialise the use-phase policy for a repertoire, or nothing.
+
+    The use CLI compiles its policy as a STEP callable and refuses a phase
+    without one. The repertoire holds `ENTRY` methods, which are not that, so
+    the selector is built from the repertoire's own capability ids. A study
+    that acquired a real use policy will pass it in instead; this is the
+    path that makes the phase runnable at all, and the record says which it
+    was.
+    """
+    from experiments.ad01 import trajectory
+    repertoire = trajectory.load_repertoire(repertoire_path)
+    eligible = [{"capability_id": m.get("capability_id"),
+                 "family": (m.get("scope") or {}).get("family")}
+                for m in (repertoire.get("members") or [])
+                if m.get("capability_id")]
+    source = _v1_use_policy_fallback(eligible)
+    if not source:
+        return ""
+    out = repertoire_path.with_name(repertoire_path.stem + "-use-policy.py")
+    out.write_text(source, encoding="utf-8")
+    return str(out)
+
+
+def _v1_control_arm(repertoires_dir: Path) -> dict:
+    """Write the authored control arm's repertoire and its selector.
+
+    One repertoire, not one per world. The control is authored rather than
+    acquired, so it is not scoped to a campaign and has nothing that would
+    make it world-specific; a world-scoped control would be four copies of
+    the same bytes and would make the freeze's repertoire digests say
+    something false about how many artifacts the study ran.
+
+    The selector is measured here, in the host, at study-build time. That
+    costs no dispatch and is not charged to the arm's budget, which is why
+    the arm's own executions are the only ones its admission gate sees.
+    """
+    from experiments.ad01 import control_arm
+    repertoire = control_arm.control_repertoire(
+        "ad01-%s" % control_arm.ID_PREFIX.rstrip("-"))
+    tables = control_arm.measured_tables(repertoire)
+    source = control_arm.selector_source(
+        repertoire, features=tables["shape"], coarse=tables["template"])
+    if not source:
+        raise RuntimeError("control arm built no selector source")
+    path = repertoires_dir / ("repertoire-%s.json" % CONTROL_ARM)
+    path.write_text(json.dumps(repertoire, sort_keys=True, indent=1) + "\n",
+                    encoding="utf-8")
+    selector = repertoires_dir / ("control-%s-use-policy.py" % CONTROL_ARM)
+    selector.write_text(source, encoding="utf-8")
+    return {"repertoire": path, "policy": selector,
+            "repertoire_doc": repertoire, "source": source,
+            "tables": tables}
+
+
 def _fresh_use(repertoire_path: Path, world: int, arm: str,
-               tasks: list, dsn: str, allocation_id: str) -> list:
+               tasks: list, dsn: str, allocation_id: str,
+               policy_path: str | Path | None = None,
+               timeout_s: int = 600) -> list:
+    command = [sys.executable, "-m", "experiments.ad01.cli", "use",
+               "--repertoire", str(repertoire_path), "--world", str(world),
+               "--arm", arm, "--tasks", ",".join(tasks),
+               "--dsn", dsn, "--allocation-id", allocation_id]
+    # A control arm runs through its own entry point rather than the CLI's
+    # `use` branch, because that branch refuses an `--arm` outside
+    # ("I", "R") at cli.py:238 and the control is neither ordering of a
+    # trajectory. Widening the CLI's vocabulary would have said the control
+    # is a third rotation of the same campaign, which it is not. The
+    # process boundary is kept either way: it is what makes the child's
+    # member bytes the bytes that run, and what turns a raising policy into
+    # a refusal record instead of an exception out of the study.
+    if policy_path:
+        command = [sys.executable, "-m", "experiments.ad01.control_use",
+                   "--repertoire", str(repertoire_path),
+                   "--world", str(world), "--arm", arm,
+                   "--tasks", ",".join(tasks), "--dsn", dsn,
+                   "--allocation-id", allocation_id,
+                   "--policy-source", str(policy_path)]
+    else:
+        # The acquired arm's path is unchanged: the fallback refuses the
+        # two-members-per-family case, which is the acquired arm's own
+        # precondition and not the control's.
+        policy = _v1_write_use_policy(
+            repertoire_path, {"task_id": tasks[0] if tasks else ""})
+        if policy:
+            command += ["--policy-source", policy]
     proc = subprocess.run(
-        [sys.executable, "-m", "experiments.ad01.cli", "use",
-         "--repertoire", str(repertoire_path), "--world", str(world),
-         "--arm", arm, "--tasks", ",".join(tasks),
-         "--dsn", dsn, "--allocation-id", allocation_id],
-        cwd=str(ROOT), capture_output=True, text=True, timeout=600)
+        command,
+        cwd=str(ROOT), capture_output=True, text=True, timeout=timeout_s)
     if proc.returncode != 0:
         raise RuntimeError("fresh-process use failed: %s" % (
             proc.stderr[-2000:],))
@@ -291,7 +422,7 @@ def _fresh_use(repertoire_path: Path, world: int, arm: str,
 def run_study(dsn: str, out: Path, agenda_authorized: int,
               deadline_s: int = 3600) -> int:
     from experiments.ad01 import records, trajectory
-    if "inv_c3_" not in dsn:
+    if not _disposable_store(dsn):
         print("study refuses non-disposable dsn", file=sys.stderr)
         return 2
     out.mkdir(parents=True, exist_ok=True)
@@ -521,17 +652,118 @@ def _v1_panel() -> dict:
             "comparison_worlds": list(COMPARISON_WORLDS)}
 
 
+def _v1_ceilings(arms: int = 1) -> dict:
+    """The study's resource ceilings, derived from the work it admits.
+
+    These were three separate literals in three places. They sized the
+    acquired arm's use phase and the acquisition loop together, and a
+    control arm's use phase did not fit inside what was left.
+
+    A ceiling has to cover every phase the study admits, so this sums two
+    measured halves and then adds headroom. `_v1_acquisition_budget` is
+    what the campaign loop asks `_v1_admit` for; `_v1_use_budget` is what
+    every use arm asks for. Both are read from the same `need` dicts the
+    loop passes, so a ceiling cannot drift from what is actually
+    requested.
+
+    The headroom is not slack for its own sake. Sized at exactly the sum,
+    the ceiling was 6660 against 6660 and the run consumed it all on the
+    first two phases, so the control's last world fell back on all six
+    tasks with `ceiling max_execution_units=6660 reached at 6660`. A
+    budget with no headroom is not a bound on the work, it is a race
+    between three phases for the last unit, and the phase that loses is
+    whichever the loop reaches last. One extra acquisition campaign's worth
+    is enough to cover a single task overspending on any phase.
+
+    Two sizing mistakes came before this one and neither arithmetic caught
+    in advance: the first covered only the use phase and refused the
+    second campaign, the second covered two arms when the loop walks three.
+    Both are now covered by tests, and the third by this margin.
+
+    `max_model_calls` and `max_construction_calls` are the aggregate caps
+    the end-of-run totals check compares against, and a control arm adds no
+    model call and no construction call, so those are unchanged.
+    """
+    acquisition = _v1_acquisition_budget()
+    use = _v1_use_budget(arms)
+    margin = acquisition["execution_units"]
+    return {
+        "max_model_calls": 360,
+        "max_construction_calls": 24,
+        "max_boundaries": 36,
+        "max_witness_queries": acquisition["witness_queries"]
+        + use["witness_queries"] + margin,
+        "max_execution_units": acquisition["execution_units"]
+        + use["execution_units"] + margin,
+    }
+
+
+def _v1_acquisition_budget(max_trajectories: int = 0) -> dict:
+    """What the campaign loop asks for, summed over the campaigns it runs.
+
+    Read from `_v1_specs` and the same per-trajectory `need` the loop
+    passes, so this is the number admission will actually see rather than
+    a restatement of it.
+    """
+    tasks = 6
+    per = {"witness_queries": 96, "execution_units": 111}
+    campaigns = len(_v1_specs(max_trajectories))
+    return {"campaigns": campaigns, "tasks_per_campaign": tasks,
+            "witness_queries": per["witness_queries"] * campaigns,
+            "execution_units": per["execution_units"] * campaigns}
+
+
+def _v1_use_budget(arms: int = 1) -> dict:
+    """What every use arm asks for, summed over arms and worlds.
+
+    The acquired side is not one arm. The use loop walks both orderings,
+    `for world in _v1_use_worlds() for a in ("I", "R")`, so the study
+    admits six use combinations before the control exists. Sizing the use
+    half on one of them left the control nothing: the derived ceiling came
+    to exactly 4662, which is 666 acquisition plus 3996 acquired use, and
+    the third real run spent all of it on the acquired arm. Every one of
+    the control's eighteen records then fell back to `incumbent` with
+    `study ceiling max_execution_units=4662 reached`, and
+    `control_distinct` read that as `distinct: True` — a false pass, since
+    both arms named `incumbent` and an empty executed id is not a
+    distinction.
+
+    So the use half counts the arms the loop actually walks: two acquired
+    orderings, plus the control. The per-task witness budget is the larger
+    of the two arms', so both fit rather than only the cheaper one.
+    """
+    from experiments.ad01 import control_arm
+    per_arm = control_arm.arm_budget(
+        _v1_use_worlds(), per_task_queries=max(16, CONTROL_BUDGET))
+    return {"arms": int(arms),
+            "acquired_orderings": ACQUIRED_ARMS,
+            "witness_queries": per_arm["witness_queries"] * int(arms),
+            "execution_units": per_arm["execution_units"] * int(arms),
+            "tasks_per_arm": per_arm["tasks"]}
+
+
 def _v1_sheet(effective: dict) -> dict:
     sheet = build_cap_sheet()
     per = dict(sheet["per_trajectory"])
     study = dict(sheet["study"])
-    study["max_witness_queries"] = 960
-    study["max_execution_units"] = 5328
+    ceilings = _v1_ceilings(_v1_use_arms())
+    study["max_witness_queries"] = ceilings["max_witness_queries"]
+    study["max_execution_units"] = ceilings["max_execution_units"]
     study["deadline_s"] = int(effective["deadline_s"])
     derivation = dict(sheet["derivation"])
     derivation["effective_config"] = dict(effective)
-    derivation["study_witness_queries"] = "6 trajectories times 96 diagnostic plus 24 use times 16"
-    derivation["study_execution_units"] = "48 sandbox exposures times (30s plus 80 settle plus 1)"
+    acquisition = _v1_acquisition_budget()
+    use = _v1_use_budget(_v1_use_arms())
+    derivation["study_witness_queries"] = (
+        "acquisition %d campaigns times 96 plus use %d tasks per arm times"
+        " %d arms times %d witness queries, both derived from the need"
+        " dicts the loops admit against"
+        % (acquisition["campaigns"], use["tasks_per_arm"], use["arms"],
+           max(16, CONTROL_BUDGET)))
+    derivation["study_execution_units"] = (
+        "acquisition %d campaigns times 111 plus use %d tasks per arm times"
+        " %d arms times 111 sandbox units"
+        % (acquisition["campaigns"], use["tasks_per_arm"], use["arms"]))
     derivation["wall_deadline"] = "persisted wall_deadline_at enforced before each effect with remaining propagated"
     return {"per_trajectory": per, "study": study,
             "derivation": derivation,
@@ -666,8 +898,11 @@ def _v1_admit(dsn: str, row: dict, need: dict,
     if _v1_remaining_ms(row) <= 0:
         return {"ok": False, "reason": "study deadline exceeded"}
     counts = _v1_counts(dsn, row["study_root"])
-    limits = {"model_calls": 360, "construction_calls": 24,
-              "witness_queries": 960, "execution_units": 5328}
+    ceilings = _v1_ceilings(_v1_use_arms())
+    limits = {"model_calls": ceilings["max_model_calls"],
+              "construction_calls": ceilings["max_construction_calls"],
+              "witness_queries": ceilings["max_witness_queries"],
+              "execution_units": ceilings["max_execution_units"]}
     consumed = {"model_calls": max(counts["model_calls"], int(
                     row.get("consumed_model_calls", 0) or 0)),
                 "construction_calls": max(counts["construction_calls"], int(
@@ -754,7 +989,71 @@ class _GuardGateway:
         return self._inner.infer(request)
 
 
-def _v1_select_provider(provider: str, model: str, learner_scripts: list):
+ROUTE_ENV = "SETTLEMENT_EXPECTED_ROUTE"
+
+
+def _v1_expected_route(endpoint: str, requested_model: str,
+                       resolved_model: str, provider: str, tier: str) -> dict:
+    """The route this study is authorized to spend on, as a contract.
+
+    `HttpGatewayAdapter` refuses every dispatch when no expected route is
+    pinned and the mode is not paid, which is the correct default: nothing
+    has established the route is free. The study therefore has to state it,
+    and a caller that cannot supply every field gets a refusal rather than
+    an adapter that will fail on the first operation.
+    """
+    from settlement.gateway import RouteContract
+    return RouteContract(
+        endpoint=endpoint, requested_model=requested_model,
+        resolved_model=resolved_model, provider=provider, tier=tier
+    ).as_dict()
+
+
+def _v1_route_from_env(model: str) -> dict:
+    """Read the pinned route, or refuse.
+
+    A route is a fact about the provider, not something the study can infer
+    from the endpoint it was handed: the same URL fronts paid and free
+    routes. So the caller states it, this function checks it, and a study
+    that cannot name its route never dispatches.
+    """
+    raw = os.environ.get(ROUTE_ENV, "").strip()
+    if not raw:
+        raise ValueError(
+            "live study needs %s: the endpoint alone does not establish that "
+            "the route is free" % ROUTE_ENV)
+    import json as _json
+    try:
+        route = _json.loads(raw)
+    except ValueError as exc:
+        raise ValueError("%s is not JSON: %s" % (ROUTE_ENV, exc))
+    from settlement.gateway import RouteContract
+    try:
+        contract = RouteContract.from_mapping(route)
+    except ValueError as exc:
+        raise ValueError("%s: %s" % (ROUTE_ENV, exc))
+    # The requested model is what the study asked for and must match. The
+    # resolved model is what the provider reports back, and it legitimately
+    # differs: the router serves `openrouter/nvidia/nemotron-...` and returns
+    # `nvidia/nemotron-...`. Requiring both to equal the study's model refuses
+    # every real route, which is what happened here. What must hold is that
+    # the resolved field is a real string, because an empty one would make the
+    # adapter's response comparison vacuous.
+    if contract.requested_model != model:
+        raise ValueError(
+            "%s pins requested=%r, the study was given %r"
+            % (ROUTE_ENV, contract.requested_model, model))
+    if not contract.resolved_model.strip():
+        raise ValueError("%s pins an empty resolved model" % ROUTE_ENV)
+    if contract.tier.lower() != "free":
+        raise ValueError(
+            "%s pins tier %r and this study is authorized on the free route "
+            "only" % (ROUTE_ENV, contract.tier))
+    return contract.as_dict()
+
+
+def _v1_select_provider(provider: str, model: str, learner_scripts: list,
+                        *, route: dict | None = None):
     if provider == "live":
         from settlement.config import Settings
         from settlement.gateway_http import HttpGatewayAdapter
@@ -767,17 +1066,41 @@ def _v1_select_provider(provider: str, model: str, learner_scripts: list):
                 settings.gateway.api_key_env,))
         if not model or model == MODEL:
             raise ValueError("live provider needs an explicit --model")
-        return HttpGatewayAdapter.from_settings(settings, api="responses")
+        # A study that dispatches with no route pinned is refused by the
+        # adapter on every operation, so the run spent nothing and exited 0
+        # looking like a study. Refuse here, where the reason is visible.
+        if route is None:
+            raise ValueError(
+                "live study needs a pinned route; an unpinned adapter "
+                "refuses every dispatch as an unproven free route")
+        # `chat`, not `responses`: a frozen route is refused pre-send on the
+        # responses surface, which publishes no provider field, and this
+        # adapter pins one. Refusing would kill every live dispatch here.
+        return HttpGatewayAdapter.from_settings(
+            settings, api="chat", expected_route=route)
     from experiments import doubles as D
     return D.InvCQualificationDouble(learner_scripts=list(learner_scripts))
 
 
-def _v1_ensure_campaign_alloc(dsn: str, study_root: str, cid: str,
-                              authorized: int) -> str:
+def _v1_ensure_alloc(dsn: str, study_root: str, child: str,
+                     authorized: int) -> str:
+    """One subdivision of the study's authority, by child name.
+
+    The campaigns and the control arm are all children of the study's own
+    allocation, and `free_of` counts a parent's children against the
+    parent's balance. So the control cannot spend the study's remainder
+    once six campaigns have been carved out of it: the second run refused
+    it with `insufficient-authority` after the acquired arm's use phase had
+    already run. It gets a subdivision of its own instead, and the study
+    is authorized wide enough to hold one per arm it runs.
+
+    `authorized` is the sheet's unit allowance, the same number a campaign
+    subdivision takes, so the control is not a cheaper arm than the thing
+    it is the control for.
+    """
     from settlement import authority, store
     from settlement.common import Command, ResultCode
     handle = authority.bind_study(dsn, study_root)
-    child = "ad01-campaign-%s" % cid
     from settlement import db
     from psycopg.rows import dict_row
     with db.read_connect(dsn) as conn:
@@ -798,17 +1121,196 @@ def _v1_ensure_campaign_alloc(dsn: str, study_root: str, cid: str,
     return child
 
 
+def _v1_ensure_campaign_alloc(dsn: str, study_root: str, cid: str,
+                              authorized: int) -> str:
+    return _v1_ensure_alloc(dsn, study_root, "ad01-campaign-%s" % cid,
+                            authorized)
+
+
+def _v1_use_policy_prompt(eligible: list, task: dict) -> str:
+    """The prompt for the artifact the use phase actually runs.
+
+    The use phase is handed a STEP policy that chooses a `capability_id` out
+    of `eligible_methods`. That is not the method itself: the methods are
+    `ENTRY` functions the constructor acquired, and asking the model for one
+    here would be asking for a second, different artifact under the first
+    one's name. The job is selection, so the prompt says so.
+    """
+    import json as _json
+    return "\n".join([
+        "Choose which already-built capability answers this task.",
+        "Interface: exactly one module-level function STEP(view, state).",
+        "The view holds task_content, observations, open_questions,",
+        "last_result, eligible_methods, remaining and contract_versions.",
+        "Return exactly {\"action\": <action>, \"state\": <object>}.",
+        "Admit kind 'use_method' with inputs {\"method_id\": <one id>,",
+        "\"max_queries\": <non-negative int>}, target the task id,",
+        "evidence_refs a list of strings, and requested_resources a dict of",
+        "non-negative integers.",
+        "Eligible capabilities: %s." % _json.dumps(list(eligible),
+                                                  sort_keys=True),
+        "Choose only from that list. A capability outside it is refused.",
+        "The word import anywhere in the entry source fails validation,",
+        "so use no imports, no dunder access, no IO.",
+        "Reply with exactly one JSON object and nothing else, shaped",
+        '{"entry": "<complete python source>", "notes": "<sentence>"}.',
+        "Task: %s" % _json.dumps({k: task.get(k) for k in
+                                  ("task_id", "family")}, sort_keys=True),
+    ])
+
+
+def _v1_use_policy_fallback(eligible: list) -> str:
+    """A selector for the case where no model policy is available.
+
+    The choice is a lookup of the task's own family against the families the
+    repertoire's members declare, and the table it looks in is written into
+    the source below, so the artifact says which member answers which family
+    and not merely that the first one did. A task whose family no member
+    declares, and a family two members both claim, are both refusals: the
+    step ABI turns a raising policy into a refusal record, which is what an
+    unanswered task should leave behind. Picking the nearest member instead
+    is the substitution this must not do.
+
+    A repertoire that declares no scope at all is a different thing, and one
+    with a single member answers for itself; two unscoped members are still
+    a choice this cannot make.
+    """
+    import json as _json
+    by_family: dict = {}
+    unscoped: list = []
+    for entry in eligible:
+        if isinstance(entry, dict):
+            capability_id = str(entry.get("capability_id") or "")
+            family = entry.get("family")
+        else:
+            capability_id = str(entry or "")
+            family = None
+        if not capability_id:
+            continue
+        if isinstance(family, str) and family:
+            by_family.setdefault(family, []).append(capability_id)
+        else:
+            unscoped.append(capability_id)
+    if not by_family and len(unscoped) != 1:
+        return ""
+    return "\n".join([
+        "def STEP(view, state):",
+        "    by_family = %s" % _json.dumps(
+            {f: ids for f, ids in sorted(by_family.items())},
+            sort_keys=True),
+        "    unscoped = %s" % _json.dumps(sorted(unscoped)),
+        "    eligible = list(view.get('eligible_methods') or [])",
+        "    family = (view.get('task_content') or {}).get('family')",
+        "    if by_family:",
+        "        named = by_family.get(family, [])",
+        "        if len(named) != 1:",
+        "            raise ValueError(",
+        "                'no single repertoire member is scoped to %r'"
+        " ' among %s' % (family, sorted(by_family)))",
+        "        picked = named[0]",
+        "        why = ['family=%s' % (family,),",
+        "               'scope[%s]=%s' % (picked, family)]",
+        "        for other in sorted(by_family):",
+        "            if other != family:",
+        "                why.append(",
+        "                    'not-scoped-to-task[%s]=%s'"
+        " % (by_family[other][0], other))",
+        "    else:",
+        "        picked = unscoped[0]",
+        "        why = ['family=%s' % (family,),",
+        "               'scope[%s]=unscoped' % (picked,)]",
+        "    if picked not in eligible:",
+        "        raise ValueError(",
+        "            'selected %r is not among the eligible methods'"
+        " % (picked,))",
+        "    return {'action': {'kind': 'use_method',",
+        "                     'target': view['task_content']['task_id'],",
+        "                     'inputs': {'method_id': picked,",
+        "                                'max_queries': 4},",
+        "                     'evidence_refs': why,",
+        "                     'requested_resources': {'queries': 4}},",
+        "            'state': {'picked': picked, 'why': why}}\n"])
+
+
+def _v1_use_worlds() -> list:
+    """The worlds the use phase runs over, which the study also acquires in.
+
+    A policy can only be used where it was acquired, so this set is a subset
+    of the worlds the campaign loop runs. The first completed run acquired in
+    the calibration world alone and used only the comparison worlds, which
+    made every use find an empty repertoire.
+    """
+    return sorted(set(COMPARISON_WORLDS) | {CALIBRATION_WORLD})
+
+
+def _v1_specs(max_trajectories: int) -> list:
+    """Which world/arm campaigns this study runs.
+
+    The study's unit authority is sized from this list and the loop walks it,
+    so the two cannot disagree. They did once: the authority was bound from a
+    single campaign's allowance while the loop ran six, so every campaign
+    after the first inherited a free balance of zero.
+    """
+    if not max_trajectories or int(max_trajectories) >= 6:
+        return [(CALIBRATION_WORLD, "I"), (CALIBRATION_WORLD, "R")] + [
+            (w, arm) for w in COMPARISON_WORLDS for arm in ("I", "R")]
+    return [(CALIBRATION_WORLD, "I")][:int(max_trajectories)]
+
+
+def _v1_campaign_count(max_trajectories: int) -> int:
+    return max(len(_v1_specs(max_trajectories)), 1)
+
+
+def _v1_study_units(campaigns: int = 1) -> int:
+    """The unit authority this study binds, from the cap sheet.
+
+    Each campaign takes a subdivision of the whole sheet allowance, so a
+    study running N campaigns needs N of them. The cap sheet's 64 sends is
+    the campaign's own total, not the study's, and giving the study exactly
+    one of them left every campaign after the first with a free balance of
+    zero and refused arm R for insufficient authority. The study's authority
+    is therefore one allowance per campaign it will run, which is derived
+    from the same sheet rather than typed in.
+
+    A control arm takes a subdivision too, and `free_of` counts every
+    child against the parent, so the study needs one more allowance per
+    control arm. Without it the control's use phase is refused for
+    insufficient authority after the campaigns have been carved out, which
+    is what the second run did.
+    """
+    from experiments.ad01 import s09_cap_sheet
+    sheet = s09_cap_sheet.load()
+    children = max(int(campaigns), 1) + (_v1_use_arms() - 1)
+    return int(sheet.unit_allowance.units) * children
+
+
+def _v1_campaign_units() -> int:
+    """Reservation units one campaign subdivision may hold.
+
+    This was the literal 100000, which no cap sheet or runner constant
+    derives. It had to exceed whatever the parent was authorized with, so a
+    campaign that provisioned the sheet's real allowance was refused by its
+    own child. The value is now the sheet's unit allowance, and a study that
+    authorized less than one campaign's worth fails at the study, where the
+    reason is visible.
+    """
+    from experiments.ad01 import s09_cap_sheet
+    return int(s09_cap_sheet.load().unit_allowance.units)
+
+
 def _v1_run_one(dsn: str, world: int, arm: str, tasks: list,
                 study_root: str, gateway, model: str,
-                max_boundaries: int, study_authorized: int) -> dict:
+                max_boundaries: int, study_authorized: int,
+                study_units: int | None = None) -> dict:
     from experiments.ad01 import learner, trajectory
     cid = trajectory.campaign_id(world, arm, 0)
-    _v1_ensure_campaign_alloc(dsn, study_root, cid, 100000)
+    _v1_ensure_campaign_alloc(dsn, study_root, cid, _v1_campaign_units())
     seed = trajectory.ensure_campaign(
         dsn, cid, world, arm, dict(CHARTER),
         {"max_boundaries": int(max_boundaries), "diagnostic_queries": 96,
          "model_calls": 60, "construction_tokens": 2048,
-         "agenda_authorized": int(study_authorized)}, tasks=list(tasks),
+         "agenda_authorized": (study_units if study_units is not None
+                               else _v1_study_units(1))}, tasks=list(tasks),
         study_root=study_root)
     propose = learner.propose_from_model(
         dsn, cid=cid, gateway=gateway, model=model,
@@ -818,7 +1320,8 @@ def _v1_run_one(dsn: str, world: int, arm: str, tasks: list,
         world, arm, dict(CHARTER),
         {"max_boundaries": int(max_boundaries), "diagnostic_queries": 96,
          "model_calls": 60, "construction_tokens": 2048,
-         "agenda_authorized": int(study_authorized)}, tasks=list(tasks),
+         "agenda_authorized": (study_units if study_units is not None
+                               else _v1_study_units(1))}, tasks=list(tasks),
         propose=propose, campaign_seq=0, dsn=dsn,
         gateway=gateway, model=model, constructor="model",
         study_root=study_root)
@@ -829,7 +1332,7 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
                  deadline_s: int, prepare_disposable: bool,
                  max_trajectories: int, max_boundaries: int) -> int:
     from settlement import db
-    if "inv_r1_" not in dsn:
+    if not _disposable_store(dsn):
         print("study refuses non-disposable dsn", file=sys.stderr)
         return 2
     if provider not in ("recording", "live"):
@@ -859,6 +1362,11 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
             print("live provider needs %s" % settings.gateway.api_key_env,
                   file=sys.stderr)
             return 2
+        try:
+            _v1_route_from_env(model)
+        except ValueError as exc:
+            print("study refused: %s" % exc, file=sys.stderr)
+            return 2
     out.mkdir(parents=True, exist_ok=True)
     if prepare_disposable:
         print("refusing to clear database on the study path;"
@@ -879,11 +1387,15 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
         return 2
     (out / "cap_sheet.json").write_text(json.dumps(
         sheet, sort_keys=True, indent=1) + "\n")
-    ceilings = {"max_model_calls": 360, "max_construction_calls": 24,
-                "max_boundaries": 36, "max_witness_queries": 960,
-                "max_execution_units": 5328}
+    ceilings = _v1_ceilings(_v1_use_arms())
     try:
-        row = _v1_ensure_run(dsn, study_root, int(authorized),
+        # `--agenda-authorized` is a count for the agenda, and it was being
+        # passed to `authorize_study` as allocation units, so a study
+        # authorized 2 units and every campaign subdivision needed 100000.
+        # The study's unit authority is the cap sheet's allowance, which is
+        # derived from the real request bounds rather than typed in.
+        row = _v1_ensure_run(dsn, study_root,
+                             _v1_study_units(_v1_campaign_count(max_trajectories)),
                              int(deadline_s), effective, panel, ceilings)
     except ValueError as exc:
         print("study refused: %s" % exc, file=sys.stderr)
@@ -898,12 +1410,8 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
     if not gate["ok"] and "deadline" not in gate["reason"] and \
             "insufficient-authority" not in gate["reason"]:
         pass
-    full = not max_trajectories or int(max_trajectories) >= 6
-    if full:
-        specs = [(CALIBRATION_WORLD, "I"), (CALIBRATION_WORLD, "R")] + [
-            (w, arm) for w in COMPARISON_WORLDS for arm in ("I", "R")]
-    else:
-        specs = [(CALIBRATION_WORLD, "I")][:int(max_trajectories)]
+    specs = _v1_specs(max_trajectories)
+    full = len(specs) > 2
     exports_dir = out / "exports"
     exports_dir.mkdir(parents=True, exist_ok=True)
     repertoires_dir = out / "repertoires"
@@ -922,7 +1430,10 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
             return 2
         scripts = _scripts_for(tasks)
         try:
-            inner = _v1_select_provider(provider, model, scripts)
+            inner = _v1_select_provider(
+                provider, model, scripts,
+                route=_v1_route_from_env(model)
+                if provider == "live" else None)
         except ValueError as exc:
             print("study refused: %s" % exc, file=sys.stderr)
             return 2
@@ -930,7 +1441,9 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
         from experiments.ad01 import records, trajectory
         campaign = _v1_run_one(dsn, world, arm, tasks, study_root,
                                gateway, model, max_boundaries,
-                               int(authorized))
+                               int(authorized),
+                               study_units=_v1_study_units(
+                                   _v1_campaign_count(max_trajectories)))
         _v1_update_counts(dsn, study_root)
         from settlement import db as _db
         with _db.connect(dsn) as _conn:
@@ -969,16 +1482,24 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
             entry["world"], entry["arm"]))
         raw = path.read_bytes()
         freeze[path.name] = hashlib.sha256(raw).hexdigest()
-    (out / "freeze.json").write_text(json.dumps(
-        {"repertoires": freeze,
-         "policy": {"model": model,
-                    "packet_version": sheet["derivation"][
-                        "packet_version"]}},
-        sort_keys=True, indent=1) + "\n")
     use_records: list = []
+    policy_identities: dict = {}
+    control = None
+    if CONTROL_ARM:
+        from experiments.ad01 import control_arm
+        control = _v1_control_arm(repertoires_dir)
+        raw = control["repertoire"].read_bytes()
+        freeze[control["repertoire"].name] = hashlib.sha256(raw).hexdigest()
+        policy_identities.update(control_arm.policy_identities(
+            CONTROL_ARM, control["repertoire_doc"]))
     if full:
-        from experiments.ad01 import records, trajectory
-        for world, arm in [(w, a) for w in COMPARISON_WORLDS
+        from experiments.ad01 import control_arm, records, trajectory
+        # Acquisition and use must cover the same worlds. The first
+        # completed run acquired in the calibration world and used only the
+        # comparison worlds, so every repertoire it went to use was empty and
+        # all twenty-four use records refused. A policy can only be used
+        # where it was acquired.
+        for world, arm in [(w, a) for w in _v1_use_worlds()
                            for a in ("I", "R")]:
             repertoire_path = repertoires_dir / (
                 "repertoire-w%d-%s.json" % (world, arm))
@@ -1000,10 +1521,72 @@ def run_study_v1(dsn: str, out: Path, authorized: int, *,
                 repertoire_path, world, arm, tasks, dsn, child)
             use_records.extend(records_batch)
             _v1_update_counts(dsn, study_root)
+        # The control arm runs over the same worlds, on the same task ids,
+        # at the same witness budget. It has no campaign, so its own child
+        # allocation is named for the arm rather than for a campaign, and
+        # the operation ids it writes are namespaced to it so
+        # `records.verify_study`'s duplicate checks cannot see the two arms
+        # as one campaign.
+        if control is not None:
+            child = _v1_ensure_alloc(
+                dsn, study_root, "ad01-control-%s" % CONTROL_ARM,
+                _v1_campaign_units())
+            for world in _v1_use_worlds():
+                tasks = control_arm.control_tasks(world)
+                fresh = _v1_load_run(dsn, study_root)
+                gate = _v1_admit(
+                    dsn, fresh,
+                    {"model_calls": 0, "construction_calls": 0,
+                     "boundaries": 0,
+                     "witness_queries": len(tasks) * CONTROL_BUDGET,
+                     "execution_units": len(tasks) * 111},
+                    allocation_id=child)
+                if not gate["ok"]:
+                    print("study refuses control use w%d: %s" % (
+                        world, gate["reason"]), file=sys.stderr)
+                    return 2
+                control_records = _fresh_use(
+                    control["repertoire"], world, CONTROL_ARM, tasks, dsn,
+                    child, policy_path=control["policy"])
+                for record in control_records:
+                    record["study_arm"] = CONTROL_ARM
+                use_records.extend(control_records)
+                _v1_update_counts(dsn, study_root)
         (out / "use_records.json").write_text(json.dumps(
             use_records, sort_keys=True, indent=1, default=str) + "\n")
     else:
         (out / "use_records.json").write_text("[]\n")
+        if control is not None:
+            policy_identities = {}
+    if full:
+        # The acquired arm's identity is keyed to the bytes its records
+        # actually executed, not to a digest of the repertoire file.
+        # `_comparability_leg` holds every arm to
+        # sha256(record["executed_source"]), so a bound digest that did
+        # not come from the executed source would fail the leg for the
+        # one arm the study spent its dispatches on.
+        from experiments.ad01 import control_arm as _arm
+        for name in sorted({str(r.get("arm") or "") for r in use_records}
+                           - {CONTROL_ARM, ""}):
+            digests = {}
+            for record in use_records:
+                if str(record.get("arm")) != name:
+                    continue
+                source = record.get("executed_source")
+                if isinstance(source, str) and source \
+                        and source != "incumbent":
+                    digests[record.get("executed")] = hashlib.sha256(
+                        source.encode("utf-8")).hexdigest()
+            if digests:
+                policy_identities.update(_arm.acquisition_identity(
+                    name, sorted(digests), digests))
+    (out / "freeze.json").write_text(json.dumps(
+        {"repertoires": freeze,
+         "policy_identities": policy_identities,
+         "policy": {"model": model,
+                    "packet_version": sheet["derivation"][
+                        "packet_version"]}},
+        sort_keys=True, indent=1, default=str) + "\n")
     totals = {"model_calls": 0, "construction_calls": 0,
               "witness_queries": 0}
     if full:

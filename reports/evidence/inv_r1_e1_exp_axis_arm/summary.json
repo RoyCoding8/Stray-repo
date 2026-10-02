@@ -1,0 +1,155 @@
+{
+ "control_distinct": false,
+ "control_distinct_refusal": "refused: control is not distinct from the acquired arm: 3 task(s) named no executed policy on at least one arm",
+ "control_records": 24,
+ "cost": {
+  "dispatch_allowance": "UNMEASURED",
+  "internal_held_units": "UNMEASURED",
+  "provider_billing": "NOT_REPORTED",
+  "reservation_allowance": "REPORTED"
+ },
+ "cost_detail": {
+  "dispatch_allowance": {
+   "reason": "study not bound: no authority for study 's09iso-expaxis64c03bb7-root' in this store; refusing to seed",
+   "status": "UNMEASURED"
+  },
+  "internal_held_units": {
+   "reason": "study not bound: no authority for study 's09iso-expaxis64c03bb7-root' in this store; refusing to seed",
+   "status": "UNMEASURED"
+  },
+  "provider_billing": {
+   "note": "a spend that cannot be read is UNMEASURED, never zero",
+   "reason": "recording doubles bill false; the run made no provider call to bill",
+   "status": "NOT_REPORTED"
+  },
+  "reservation_allowance": {
+   "campaign_units": 209216,
+   "campaigns": 6,
+   "source": "s09_cap_sheet unit allowance times the campaign count plus one per control arm",
+   "status": "REPORTED",
+   "study_units_authorized": 1673728
+  }
+ },
+ "executed_policy_ids": {
+  "arm_a": [
+   "ctl-graph-greedy",
+   "ctl-software-greedy",
+   "refused"
+  ],
+  "arm_b": [
+   "ctl-graph-ddmin",
+   "ctl-software-ddmin"
+  ]
+ },
+ "experience_on_use_split": {
+  "graded": 21,
+  "non_checker_verdicts": [
+   "refused"
+  ],
+  "note": "a constant on the use split because the selector resolved the axis away before scoring, not because the panel lacks the variety; the development split carries both reasons at the same budget",
+  "observations": 24,
+  "outcomes": [
+   "preserved/ok-preserved"
+  ],
+  "refused_records": 3,
+  "varies": false
+ },
+ "experience_outcomes": [
+  "preserved/ok-incumbent",
+  "preserved/ok-preserved"
+ ],
+ "experience_refusal": "",
+ "experience_split": "development",
+ "experience_varies": true,
+ "freeze_id": "ad01-exp-axis",
+ "namespace": "inv_r1_e1_exp_axis_arm",
+ "paired_tasks": 24,
+ "pinned_records": 24,
+ "skipped_tasks": [
+  {
+   "family": "software",
+   "kind": "within",
+   "reason": "the two strategies return the same candidate size, so the selector has no measured basis to pick and refuses by its own rule",
+   "removable_atoms": 3,
+   "task_id": "exp-w0-within-sw-02"
+  },
+  {
+   "family": "graph",
+   "kind": "within",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 6,
+   "task_id": "exp-w0-within-gr-02"
+  },
+  {
+   "family": "software",
+   "kind": "transfer",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 5,
+   "task_id": "exp-w0-transfer-sw-02"
+  },
+  {
+   "family": "graph",
+   "kind": "transfer",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 2,
+   "task_id": "exp-w0-transfer-gr-02"
+  },
+  {
+   "family": "software",
+   "kind": "within",
+   "reason": "the two strategies return the same candidate size, so the selector has no measured basis to pick and refuses by its own rule",
+   "removable_atoms": 3,
+   "task_id": "exp-w1-within-sw-02"
+  },
+  {
+   "family": "graph",
+   "kind": "within",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 6,
+   "task_id": "exp-w1-within-gr-02"
+  },
+  {
+   "family": "software",
+   "kind": "transfer",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 5,
+   "task_id": "exp-w1-transfer-sw-02"
+  },
+  {
+   "family": "graph",
+   "kind": "transfer",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 2,
+   "task_id": "exp-w1-transfer-gr-02"
+  },
+  {
+   "family": "software",
+   "kind": "within",
+   "reason": "the two strategies return the same candidate size, so the selector has no measured basis to pick and refuses by its own rule",
+   "removable_atoms": 3,
+   "task_id": "exp-w2-within-sw-02"
+  },
+  {
+   "family": "graph",
+   "kind": "within",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 6,
+   "task_id": "exp-w2-within-gr-02"
+  },
+  {
+   "family": "software",
+   "kind": "transfer",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 5,
+   "task_id": "exp-w2-transfer-sw-02"
+  },
+  {
+   "family": "graph",
+   "kind": "transfer",
+   "reason": "not drawn by this run's task list",
+   "removable_atoms": 2,
+   "task_id": "exp-w2-transfer-gr-02"
+  }
+ ],
+ "utility": "CONTROL_WINS"
+}

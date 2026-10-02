@@ -1,0 +1,151 @@
+{
+ "attempts": [
+  {
+   "arm": "P1",
+   "attempt": 1,
+   "candidate_digest": null,
+   "dispatch": {
+    "accepted_candidate_digest": null,
+    "arm": "P1",
+    "artifact_digest": null,
+    "attempt": 1,
+    "billed": "unknown",
+    "charge_units": "unknown",
+    "details": {
+     "raw_payload": {
+      "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+      "raw_response": "We are given a task: we have a hypothesis class: affine over four inputs, optionally XORed with one pairwise input product. There are 4 inputs, 4 outputs. The hypothesis class: each output is an affine function of the four input bits, possibly XORed with one pairwise product (i.e., AND of two input bits). The class size is 224. We have observed 8 input-output pairs (x from 0 to 15, but only 8 given). We need to commit one executable predictor (a set of 4 rules, one per output) that is built only from the public hypothesis class. The query budget is spent, no further probes. We must output a JSON object with \"specs\": list of 4 objects, each with \"const\" (0 or 1), \"mask\" (0..15), and \"pair\": null or [i,j] (indices of the pairwise product). The mask represents the linear part: affine function: output = const XOR (sum over bits where mask has 1 of input_i) XOR (pairwise product if pair not null). The mask is a 4-bit number (0..15) indicating which input bits are included in the linear sum. The pairwise product is an AND of two distinct input bits (indices 0..3). The hypothesis class: each output is of the form: c + sum_{i in S} x_i + x_j * x_k (mod 2), where S subset of {0,1,2,3}, and (j,k) is an unordered pair from {0,1,2,3} or none. So each output rule is defined by (const, mask, pair). We need to find such rules that fit the observed data? But the instruction: \"Commit one executable predictor built only from the public hypothesis class.\" We have observed data, but we are not told to fit it perfectly? Usually in these tasks, we need to output a predictor that is consistent with the observed data, or at least a valid hypothesis from the class. Since we have no more queries, we must choose a hypothesis from the class. The observed data is given, so we should pick a hypothesis that matches the observed data? The task is from a \"boolean-rule\" benchmark. Typically, we are given some training examples and we must output a hypothesis from the class that fits them. But here we have 8 examples, and the class size is 224. We need to find a hypothesis (4 rules) that matches all 8 examples. Since we have 4 outputs, each output can be independently chosen from the class of affine + one pairwise product. The class size 224 = 4 outputs? Actually class_size: 224. For 4 outputs, the total number of hypotheses is 224? Or per output? The description: \"affine over four inputs, optionally XORed with one pairwise input product\". That is per output? But class_size: 224. If each output has 224 possibilities, then total would be 224^4, but they say class_size: 224. So maybe the hypothesis class is for the whole 4-output function? But \"affine over four inputs, optionally XORed with one pairwise input product\" might describe each output? Let's parse: \"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4}. So the hypothesis class has size 224. That means there are 224 possible functions from 4 bits to 4 bits that are of that form? But \"affine over four inputs, optionally XORed with one pairwise input product\" could be interpreted as: each output is an affine function of the inputs plus optionally one pairwise product. But if each output is independent, the number of such functions per output is: number of affine functions on 4 bits: 2^4 * 2 = 32? Actually affine functions: f(x) = c + sum a_i x_i. There are 2^4 choices for a_i (16) and 2 for c, so 32. Plus optionally XOR with one pairwise product: there are C(4,2)=6 pairwise products. So for each output, we have 32 * (1+6) = 32*7 = 224. That matches class_size: 224. So the hypothesis class is per output! But the class_size is given as 224, and n_outputs=4. That suggests the hypothesis class for the whole predictor is the product of 4 independent copies of that class? But then the total size would be 224^4, not 224. However, the field \"class_size\": 224 might refer to the size of the hypothesis class for a single output? But the object describes the whole task. In the boolean-rule tasks, typically the hypothesis class is for the entire function (all outputs). But here the form says \"affine over four inputs, optionally XORed with one pairwise input product\". That could be the form of each output. And class_size 224 might be the number of possible functions for a single output. But then the predictor is a combination of 4 such functions, so the total number of predictors is 224^4. However, the instruction: \"Commit one executable predictor built only from the public hypothesis class.\" The predictor is a set of 4 rules. The output format: {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. So we need to output 4 such specs. So we need to choose one rule per output from the class of 224. The observed data gives 8 input-output pairs. We need to find a set of 4 rules that match the observed data. Since we have 8 examples, we can try to solve for each output independently. For each output bit (0 to 3), we have 8 examples of (x, y_bit). We need to find a rule (const, mask, pair) that fits these 8 examples. Since the class size per output is 224, we can brute-force conceptually. But we have to do it manually? We are the AI, we can compute. Let's list the observed data:\n\nObserved:\nx=1 (binary 0001) -> y=[0,0,1,0]\nx=4 (0100) -> y=[0,0,0,0]\nx=7 (0111) -> y=[0,1,1,0]\nx=8 (1000) -> y=[1,1,1,0]\nx=11 (1011) -> y=[0,1,1,0]\nx=13 (1101) -> y=[0,1,1,0]\nx=14 (1110) -> y=[1,1,1,0]\nx=15 (1111) -> y=[0,0,1,1]\n\nWe have 4 outputs: let's index them 0,1,2,3. For each output, we have 8 (x, y) pairs.\n\nWe need to find for each output a function f(x) = const XOR (sum_{i in mask} x_i) XOR (x_j * x_k if pair != null). All mod 2.\n\nWe can try to solve for each output separately.\n\nLet's denote input bits as x0, x1, x2, x3 (where x0 is LSB? Usually x is integer 0..15, so x=1 means binary 0001, so bit0=1, bit1=0, bit2=0, bit3=0. So x0 is least significant bit. We'll use that convention: x = x0 + 2*x1 + 4*x2 + 8*x3.\n\nWe have 8 data points. For each output, we can try to see if there is a simple affine function (without pairwise product) that fits. If not, we need a pairwise product.\n\nLet's write the data in a table:\n\nx | x3 x2 x1 x0 | y0 y1 y2 y3\n1: 0 0 0 1 -> 0 0 1 0\n4: 0 1 0 0 -> 0 0 0 0\n7: 0 1 1 1 -> 0 1 1 0\n8: 1 0 0 0 -> 1 1 1 0\n11: 1 0 1 1 -> 0 1 1 0\n13: 1 1 0 1 -> 0 1 1 0\n14: 1 1 1 0 -> 1 1 1 0\n15: 1 1 1 1 -> 0 0 1 1\n\nWe need to find for each output column a function.\n\nLet's start with output 0 (y0):\nData:\nx=1: y0=0\nx=4: y0=0\nx=7: y0=0\nx=8: y0=1\nx"
+     },
+     "route": {
+      "adapter": "http",
+      "contract": "settlement-gateway/http-chat-completions-v1",
+      "endpoint": "http://localhost:4000/v1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "provider": "Nvidia",
+      "request_endpoint": "http://localhost:4000/v1",
+      "response_received": true,
+      "returned_endpoint": null,
+      "tier": "free"
+     },
+     "stop_reason": "length",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 370,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    "dispatch_evidence_digest": null,
+    "driver_digest": null,
+    "endpoint": "http://localhost:4000/v1",
+    "evidence_digest": "e8d29864733cc3d3d6bf0aa1c4ae32455e5ab94af39769c609437bd2c9107925",
+    "input_digest": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+    "kind": "gateway-dispatch",
+    "operation_id": "invl02-output-3d4e884ed121-P1-qual-0011-a1",
+    "operation_payload_digest": null,
+    "outcome": "success",
+    "package_digest": null,
+    "parent_digest": null,
+    "parse_outcome": "pending",
+    "prompt_digest": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+    "provider": "Nvidia",
+    "raw_payload_digest": "39a707a311e7a36cc8382a955c183582dbc962ac6978eb2a7c0fb09fc803e4cb",
+    "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+    "raw_response": "We are given a task: we have a hypothesis class: affine over four inputs, optionally XORed with one pairwise input product. There are 4 inputs, 4 outputs. The hypothesis class: each output is an affine function of the four input bits, possibly XORed with one pairwise product (i.e., AND of two input bits). The class size is 224. We have observed 8 input-output pairs (x from 0 to 15, but only 8 given). We need to commit one executable predictor (a set of 4 rules, one per output) that is built only from the public hypothesis class. The query budget is spent, no further probes. We must output a JSON object with \"specs\": list of 4 objects, each with \"const\" (0 or 1), \"mask\" (0..15), and \"pair\": null or [i,j] (indices of the pairwise product). The mask represents the linear part: affine function: output = const XOR (sum over bits where mask has 1 of input_i) XOR (pairwise product if pair not null). The mask is a 4-bit number (0..15) indicating which input bits are included in the linear sum. The pairwise product is an AND of two distinct input bits (indices 0..3). The hypothesis class: each output is of the form: c + sum_{i in S} x_i + x_j * x_k (mod 2), where S subset of {0,1,2,3}, and (j,k) is an unordered pair from {0,1,2,3} or none. So each output rule is defined by (const, mask, pair). We need to find such rules that fit the observed data? But the instruction: \"Commit one executable predictor built only from the public hypothesis class.\" We have observed data, but we are not told to fit it perfectly? Usually in these tasks, we need to output a predictor that is consistent with the observed data, or at least a valid hypothesis from the class. Since we have no more queries, we must choose a hypothesis from the class. The observed data is given, so we should pick a hypothesis that matches the observed data? The task is from a \"boolean-rule\" benchmark. Typically, we are given some training examples and we must output a hypothesis from the class that fits them. But here we have 8 examples, and the class size is 224. We need to find a hypothesis (4 rules) that matches all 8 examples. Since we have 4 outputs, each output can be independently chosen from the class of affine + one pairwise product. The class size 224 = 4 outputs? Actually class_size: 224. For 4 outputs, the total number of hypotheses is 224? Or per output? The description: \"affine over four inputs, optionally XORed with one pairwise input product\". That is per output? But class_size: 224. If each output has 224 possibilities, then total would be 224^4, but they say class_size: 224. So maybe the hypothesis class is for the whole 4-output function? But \"affine over four inputs, optionally XORed with one pairwise input product\" might describe each output? Let's parse: \"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4}. So the hypothesis class has size 224. That means there are 224 possible functions from 4 bits to 4 bits that are of that form? But \"affine over four inputs, optionally XORed with one pairwise input product\" could be interpreted as: each output is an affine function of the inputs plus optionally one pairwise product. But if each output is independent, the number of such functions per output is: number of affine functions on 4 bits: 2^4 * 2 = 32? Actually affine functions: f(x) = c + sum a_i x_i. There are 2^4 choices for a_i (16) and 2 for c, so 32. Plus optionally XOR with one pairwise product: there are C(4,2)=6 pairwise products. So for each output, we have 32 * (1+6) = 32*7 = 224. That matches class_size: 224. So the hypothesis class is per output! But the class_size is given as 224, and n_outputs=4. That suggests the hypothesis class for the whole predictor is the product of 4 independent copies of that class? But then the total size would be 224^4, not 224. However, the field \"class_size\": 224 might refer to the size of the hypothesis class for a single output? But the object describes the whole task. In the boolean-rule tasks, typically the hypothesis class is for the entire function (all outputs). But here the form says \"affine over four inputs, optionally XORed with one pairwise input product\". That could be the form of each output. And class_size 224 might be the number of possible functions for a single output. But then the predictor is a combination of 4 such functions, so the total number of predictors is 224^4. However, the instruction: \"Commit one executable predictor built only from the public hypothesis class.\" The predictor is a set of 4 rules. The output format: {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. So we need to output 4 such specs. So we need to choose one rule per output from the class of 224. The observed data gives 8 input-output pairs. We need to find a set of 4 rules that match the observed data. Since we have 8 examples, we can try to solve for each output independently. For each output bit (0 to 3), we have 8 examples of (x, y_bit). We need to find a rule (const, mask, pair) that fits these 8 examples. Since the class size per output is 224, we can brute-force conceptually. But we have to do it manually? We are the AI, we can compute. Let's list the observed data:\n\nObserved:\nx=1 (binary 0001) -> y=[0,0,1,0]\nx=4 (0100) -> y=[0,0,0,0]\nx=7 (0111) -> y=[0,1,1,0]\nx=8 (1000) -> y=[1,1,1,0]\nx=11 (1011) -> y=[0,1,1,0]\nx=13 (1101) -> y=[0,1,1,0]\nx=14 (1110) -> y=[1,1,1,0]\nx=15 (1111) -> y=[0,0,1,1]\n\nWe have 4 outputs: let's index them 0,1,2,3. For each output, we have 8 (x, y) pairs.\n\nWe need to find for each output a function f(x) = const XOR (sum_{i in mask} x_i) XOR (x_j * x_k if pair != null). All mod 2.\n\nWe can try to solve for each output separately.\n\nLet's denote input bits as x0, x1, x2, x3 (where x0 is LSB? Usually x is integer 0..15, so x=1 means binary 0001, so bit0=1, bit1=0, bit2=0, bit3=0. So x0 is least significant bit. We'll use that convention: x = x0 + 2*x1 + 4*x2 + 8*x3.\n\nWe have 8 data points. For each output, we can try to see if there is a simple affine function (without pairwise product) that fits. If not, we need a pairwise product.\n\nLet's write the data in a table:\n\nx | x3 x2 x1 x0 | y0 y1 y2 y3\n1: 0 0 0 1 -> 0 0 1 0\n4: 0 1 0 0 -> 0 0 0 0\n7: 0 1 1 1 -> 0 1 1 0\n8: 1 0 0 0 -> 1 1 1 0\n11: 1 0 1 1 -> 0 1 1 0\n13: 1 1 0 1 -> 0 1 1 0\n14: 1 1 1 0 -> 1 1 1 0\n15: 1 1 1 1 -> 0 0 1 1\n\nWe need to find for each output column a function.\n\nLet's start with output 0 (y0):\nData:\nx=1: y0=0\nx=4: y0=0\nx=7: y0=0\nx=8: y0=1\nx",
+    "receipt_identity": "evidence:3ae8e10ec8490eb0ce48e308ba8bed3e75c24403bd3f13ee32679a392dd6b208",
+    "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "requested_output_cap": 2048,
+    "response_digest": "a13a1758d59af548bb07d7e82c0d8a03a71bf421a0cba7d858442d5f4c955840",
+    "result_digest": "a13a1758d59af548bb07d7e82c0d8a03a71bf421a0cba7d858442d5f4c955840",
+    "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "round": 4,
+    "route_digest": "10ebeff23417465d44249c4d042049578a8920c45704f826ea77974a5dd5f1d3",
+    "route_error": null,
+    "source_digest": null,
+    "stop_reason": "length",
+    "task_id": "rule-qual-194dba80c87f",
+    "tier": "free",
+    "usage": {
+     "billed": "unknown",
+     "charge_scale": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": 370,
+     "output_tokens": 2048,
+     "provider_enforced_ceiling": "unknown"
+    },
+    "version": "invl02-evidence-v2"
+   },
+   "operation_id": "invl02-output-3d4e884ed121-P1-qual-0011-a1",
+   "outcome": "invalid-program",
+   "raw_response": "We are given a task: we have a hypothesis class: affine over four inputs, optionally XORed with one pairwise input product. There are 4 inputs, 4 outputs. The hypothesis class: each output is an affine function of the four input bits, possibly XORed with one pairwise product (i.e., AND of two input bits). The class size is 224. We have observed 8 input-output pairs (x from 0 to 15, but only 8 given). We need to commit one executable predictor (a set of 4 rules, one per output) that is built only from the public hypothesis class. The query budget is spent, no further probes. We must output a JSON object with \"specs\": list of 4 objects, each with \"const\" (0 or 1), \"mask\" (0..15), and \"pair\": null or [i,j] (indices of the pairwise product). The mask represents the linear part: affine function: output = const XOR (sum over bits where mask has 1 of input_i) XOR (pairwise product if pair not null). The mask is a 4-bit number (0..15) indicating which input bits are included in the linear sum. The pairwise product is an AND of two distinct input bits (indices 0..3). The hypothesis class: each output is of the form: c + sum_{i in S} x_i + x_j * x_k (mod 2), where S subset of {0,1,2,3}, and (j,k) is an unordered pair from {0,1,2,3} or none. So each output rule is defined by (const, mask, pair). We need to find such rules that fit the observed data? But the instruction: \"Commit one executable predictor built only from the public hypothesis class.\" We have observed data, but we are not told to fit it perfectly? Usually in these tasks, we need to output a predictor that is consistent with the observed data, or at least a valid hypothesis from the class. Since we have no more queries, we must choose a hypothesis from the class. The observed data is given, so we should pick a hypothesis that matches the observed data? The task is from a \"boolean-rule\" benchmark. Typically, we are given some training examples and we must output a hypothesis from the class that fits them. But here we have 8 examples, and the class size is 224. We need to find a hypothesis (4 rules) that matches all 8 examples. Since we have 4 outputs, each output can be independently chosen from the class of affine + one pairwise product. The class size 224 = 4 outputs? Actually class_size: 224. For 4 outputs, the total number of hypotheses is 224? Or per output? The description: \"affine over four inputs, optionally XORed with one pairwise input product\". That is per output? But class_size: 224. If each output has 224 possibilities, then total would be 224^4, but they say class_size: 224. So maybe the hypothesis class is for the whole 4-output function? But \"affine over four inputs, optionally XORed with one pairwise input product\" might describe each output? Let's parse: \"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4}. So the hypothesis class has size 224. That means there are 224 possible functions from 4 bits to 4 bits that are of that form? But \"affine over four inputs, optionally XORed with one pairwise input product\" could be interpreted as: each output is an affine function of the inputs plus optionally one pairwise product. But if each output is independent, the number of such functions per output is: number of affine functions on 4 bits: 2^4 * 2 = 32? Actually affine functions: f(x) = c + sum a_i x_i. There are 2^4 choices for a_i (16) and 2 for c, so 32. Plus optionally XOR with one pairwise product: there are C(4,2)=6 pairwise products. So for each output, we have 32 * (1+6) = 32*7 = 224. That matches class_size: 224. So the hypothesis class is per output! But the class_size is given as 224, and n_outputs=4. That suggests the hypothesis class for the whole predictor is the product of 4 independent copies of that class? But then the total size would be 224^4, not 224. However, the field \"class_size\": 224 might refer to the size of the hypothesis class for a single output? But the object describes the whole task. In the boolean-rule tasks, typically the hypothesis class is for the entire function (all outputs). But here the form says \"affine over four inputs, optionally XORed with one pairwise input product\". That could be the form of each output. And class_size 224 might be the number of possible functions for a single output. But then the predictor is a combination of 4 such functions, so the total number of predictors is 224^4. However, the instruction: \"Commit one executable predictor built only from the public hypothesis class.\" The predictor is a set of 4 rules. The output format: {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. So we need to output 4 such specs. So we need to choose one rule per output from the class of 224. The observed data gives 8 input-output pairs. We need to find a set of 4 rules that match the observed data. Since we have 8 examples, we can try to solve for each output independently. For each output bit (0 to 3), we have 8 examples of (x, y_bit). We need to find a rule (const, mask, pair) that fits these 8 examples. Since the class size per output is 224, we can brute-force conceptually. But we have to do it manually? We are the AI, we can compute. Let's list the observed data:\n\nObserved:\nx=1 (binary 0001) -> y=[0,0,1,0]\nx=4 (0100) -> y=[0,0,0,0]\nx=7 (0111) -> y=[0,1,1,0]\nx=8 (1000) -> y=[1,1,1,0]\nx=11 (1011) -> y=[0,1,1,0]\nx=13 (1101) -> y=[0,1,1,0]\nx=14 (1110) -> y=[1,1,1,0]\nx=15 (1111) -> y=[0,0,1,1]\n\nWe have 4 outputs: let's index them 0,1,2,3. For each output, we have 8 (x, y) pairs.\n\nWe need to find for each output a function f(x) = const XOR (sum_{i in mask} x_i) XOR (x_j * x_k if pair != null). All mod 2.\n\nWe can try to solve for each output separately.\n\nLet's denote input bits as x0, x1, x2, x3 (where x0 is LSB? Usually x is integer 0..15, so x=1 means binary 0001, so bit0=1, bit1=0, bit2=0, bit3=0. So x0 is least significant bit. We'll use that convention: x = x0 + 2*x1 + 4*x2 + 8*x3.\n\nWe have 8 data points. For each output, we can try to see if there is a simple affine function (without pairwise product) that fits. If not, we need a pairwise product.\n\nLet's write the data in a table:\n\nx | x3 x2 x1 x0 | y0 y1 y2 y3\n1: 0 0 0 1 -> 0 0 1 0\n4: 0 1 0 0 -> 0 0 0 0\n7: 0 1 1 1 -> 0 1 1 0\n8: 1 0 0 0 -> 1 1 1 0\n11: 1 0 1 1 -> 0 1 1 0\n13: 1 1 0 1 -> 0 1 1 0\n14: 1 1 1 0 -> 1 1 1 0\n15: 1 1 1 1 -> 0 0 1 1\n\nWe need to find for each output column a function.\n\nLet's start with output 0 (y0):\nData:\nx=1: y0=0\nx=4: y0=0\nx=7: y0=0\nx=8: y0=1\nx",
+   "reason": "response of 6590 characters exceeds the frozen limit of 512",
+   "score": null
+  }
+ ],
+ "campaign_id": "w1-e1-boolean-r2",
+ "campaign_version": "w1-e1-boolean-campaign-v2",
+ "guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 4,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 4,
+  "version": "invl02-live-v1"
+ },
+ "lineage": "L04-P1",
+ "offline_verified": true,
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "queries_spent": 8,
+ "reference_scores": {
+  "oracle_overall": 1.0,
+  "zero_predictor_overall": 0.0625
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "schema": "invl02-live-preflight-run-v1",
+ "score_floor": 1.0,
+ "seed": 11,
+ "split": "qual",
+ "study_root": "w1-e1-boolean-r2",
+ "task_id": "rule-qual-194dba80c87f",
+ "treatment": "P1",
+ "treatment_meaning": "interface-only acquisition: the frozen public view and nothing else",
+ "verdict": {
+  "arm": "P1",
+  "attempt": 1,
+  "endpoint": "http://localhost:4000/v1",
+  "operation_id": "invl02-output-3d4e884ed121-P1-qual-0011-a1",
+  "outcome": "invalid-program",
+  "prompt_digest": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+  "provider": "Nvidia",
+  "reason": "response of 6590 characters exceeds the frozen limit of 512",
+  "recomputable": true,
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "response_digest": "a13a1758d59af548bb07d7e82c0d8a03a71bf421a0cba7d858442d5f4c955840",
+  "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "route_error": null,
+  "stop_reason": "length",
+  "tier": "free",
+  "usage": {
+   "billed": "unknown",
+   "charge_scale": "unknown",
+   "charge_units": "unknown",
+   "input_tokens": 370,
+   "output_tokens": 2048,
+   "provider_enforced_ceiling": "unknown"
+  }
+ },
+ "version": "invl02-live-preflight-v1",
+ "written_at": "2026-09-30T04:31:20Z"
+}

@@ -1,0 +1,158 @@
+{
+  "baseline": {
+    "ordering": {
+      "echoer_score": 1.0,
+      "gap": 1.0,
+      "reader_above_echoer": true,
+      "reader_score": 2.0
+    },
+    "scores": {
+      "blind": {
+        "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_moved": false,
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true
+      },
+      "echoer": {
+        "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_moved": false,
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true
+      },
+      "plan-only-reader": {
+        "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_moved": false,
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true
+      },
+      "reader": {
+        "candidate_digest_alternate": "c9a70ed2eee256cc3f125d31555a5f30f9225852e9eda73d6d1420509562b149",
+        "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+        "candidate_moved": true,
+        "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts differed from the one under the arm's own verdicts",
+        "evidence": 1.0,
+        "score": 2.0,
+        "scored": true
+      }
+    }
+  },
+  "leg": "candidate_varies_with_evidence",
+  "mutations": [
+    {
+      "description": "the observable the correction replaced: compare the two runs' action inputs instead of the candidates the world produced. The whole leg body is replaced, not just its first statement, so the reverted leg is the old leg rather than a hybrid of the two",
+      "landed": true,
+      "matches_found": 1,
+      "max_score": 2,
+      "mutation": "leg-reverted-to-action-inputs",
+      "ordering": {
+        "echoer_score": 2.0,
+        "gap": -1.0,
+        "reader_above_echoer": false,
+        "reader_score": 1.0
+      },
+      "scores": {
+        "blind": {
+          "candidate_digest_alternate": "",
+          "candidate_digest_scored": "",
+          "candidate_moved": false,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+          "evidence": 0.0,
+          "score": 1.0,
+          "scored": true
+        },
+        "echoer": {
+          "candidate_digest_alternate": "",
+          "candidate_digest_scored": "",
+          "candidate_moved": false,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts differed from the one under the arm's own verdicts",
+          "evidence": 1.0,
+          "score": 2.0,
+          "scored": true
+        },
+        "plan-only-reader": {
+          "candidate_digest_alternate": "",
+          "candidate_digest_scored": "",
+          "candidate_moved": false,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts differed from the one under the arm's own verdicts",
+          "evidence": 1.0,
+          "score": 2.0,
+          "scored": true
+        },
+        "reader": {
+          "candidate_digest_alternate": "",
+          "candidate_digest_scored": "",
+          "candidate_moved": false,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+          "evidence": 0.0,
+          "score": 1.0,
+          "scored": true
+        }
+      },
+      "scores_within_max": true
+    },
+    {
+      "description": "the leg reports the candidate as never moving, so a scorer that cannot detect a read would look exactly like this one",
+      "landed": true,
+      "matches_found": 1,
+      "max_score": 2,
+      "mutation": "candidate-comparison-disabled",
+      "ordering": {
+        "echoer_score": 1.0,
+        "gap": 0.0,
+        "reader_above_echoer": false,
+        "reader_score": 1.0
+      },
+      "scores": {
+        "blind": {
+          "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+          "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+          "candidate_moved": false,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+          "evidence": 0.0,
+          "score": 1.0,
+          "scored": true
+        },
+        "echoer": {
+          "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+          "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+          "candidate_moved": false,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+          "evidence": 0.0,
+          "score": 1.0,
+          "scored": true
+        },
+        "plan-only-reader": {
+          "candidate_digest_alternate": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+          "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+          "candidate_moved": false,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+          "evidence": 0.0,
+          "score": 1.0,
+          "scored": true
+        },
+        "reader": {
+          "candidate_digest_alternate": "c9a70ed2eee256cc3f125d31555a5f30f9225852e9eda73d6d1420509562b149",
+          "candidate_digest_scored": "d46f8dbc9d8266f8e0aae959a082d8a79779d6a551d0101e3bc7f8107e3ec81f",
+          "candidate_moved": true,
+          "detail": "the checker graded the candidate the world produced as preserved, and the candidate the world produced under flipped verdicts matched the one under the arm's own verdicts",
+          "evidence": 0.0,
+          "score": 1.0,
+          "scored": true
+        }
+      },
+      "scores_within_max": true
+    }
+  ],
+  "observable": "the candidate the world produced, compared across the arm's own verdicts and the flipped ones",
+  "schema": "e2-replica-r2-instrument-v1",
+  "target_task_id": "ad01-w0-within-sw-00"
+}

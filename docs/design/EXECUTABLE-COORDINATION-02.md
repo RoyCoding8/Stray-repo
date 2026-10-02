@@ -1,6 +1,6 @@
 # Executable coordination: learned procedures for organizing and checking work
 
-Selected design and experiment, 2026-09-12, based on worker `5864740` and assessment `81d0d44`. This is COORDINATION-02, a new study with new freezes. It does not change the treatment or verdict of Team 01. Implementation is assigned by [the combined worker prompt](../../WORKER-EXECUTABLE-COORDINATION-02.md).
+Selected design and experiment, 2026-09-12, based on worker `5864740` and assessment `81d0d44`. This is COORDINATION-02, a new study with new freezes. It does not change the treatment or verdict of Team 01. Implementation is assigned by [the combined worker prompt](../HISTORY.md#worker-executable-coordination-02).
 
 ## 1. The architectural decision
 

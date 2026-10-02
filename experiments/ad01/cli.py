@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -24,6 +25,23 @@ def _tasks(value: str | None) -> list | None:
     if not value:
         return None
     return [t.strip() for t in value.split(",") if t.strip()]
+
+
+def _use_policy(args):
+    """Compile the policy the use phase must be governed by, or None.
+
+    A callable, not source text. `run_use` calls its policy, so a string
+    raises at the call and is recorded as a policy that failed rather than
+    one that governed, which is indistinguishable from a broken policy.
+    Absent a policy the phase refuses, which is deliberate: a use record with
+    no policy behind it is not a measurement of anything.
+    """
+    from experiments.ad01 import policy_step
+    path = getattr(args, "policy_source", "") or ""
+    if not path:
+        return None
+    source = Path(path).read_text(encoding="utf-8")
+    return policy_step.compile_step(source, origin="<cli-policy>")
 
 
 def _refuse(exc: BaseException) -> int:
@@ -138,6 +156,7 @@ def main(argv: list | None = None) -> int:
     use.add_argument("--world", type=int, required=True)
     use.add_argument("--arm", required=True)
     use.add_argument("--tasks", default="")
+    use.add_argument("--policy-source", default="")
     export = sub.add_parser("export")
     export.add_argument("--dsn", required=True)
     export.add_argument("--campaign", required=True)
@@ -231,7 +250,8 @@ def main(argv: list | None = None) -> int:
             records = trajectory.run_use(
                 repertoire, args.world, args.arm,
                 _tasks(args.tasks) or [],
-                {}, dsn=args.dsn, allocation_id=args.allocation_id,
+                {}, policy=_use_policy(args), dsn=args.dsn,
+                allocation_id=args.allocation_id,
                 release_id=args.release)
         except Exception as exc:
             return _refuse(exc)

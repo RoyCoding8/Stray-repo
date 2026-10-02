@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
+from test_s09_migrate_callers import admit
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-DB = "s09_m1_state"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
+from experiments.ad01.s09_run_isolation import create_disposable_db, \
+    disposable_db, drop_disposable_db
+
+RUN_TOKEN = "m1state"
 MIGRATIONS = ROOT / "migrations"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
@@ -24,23 +27,29 @@ TASK = "ad01-w0-dev-sw-00"
 
 @pytest.fixture(scope="module")
 def store():
-    assert "live" not in DSN
-    assert DB.startswith("s09_m1_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    database = create_disposable_db(RUN_TOKEN, migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                        "-U", "ubuntu", DB],
-                       capture_output=True, text=True, timeout=60)
+        drop_disposable_db(database)
+
+
+def _pinned_trajectory():
+    """`trajectory` pinned to the un-namespaced campaign id form.
+
+    `NAMESPACE_TOKEN` is process-global and nothing ever clears it, so any
+    earlier campaign test that calls `scripts.s09_pilot.run_study` leaves its
+    own token behind for the rest of the pytest session. Unpinned, `campaign_id`
+    then mints `ad01-w0-I-51-pe`, which `resume_campaign` refuses as malformed.
+    The empty token is the only form it accepts.
+    """
+    from experiments.ad01 import trajectory
+    trajectory.set_namespace_token("")
+    return trajectory
 
 
 def test_0017_creates_policy_and_exposure_tables(store):
-    from experiments.ad01 import trajectory
+    trajectory = _pinned_trajectory()
     with trajectory._read_conn(store) as conn:
         names = conn.execute(
             "SELECT name FROM schema_migrations WHERE name = %s",
@@ -69,7 +78,8 @@ def test_0017_creates_policy_and_exposure_tables(store):
 
 
 def test_public_use_resolves_repertoire_scoped_selection(store):
-    from experiments.ad01 import selection, trajectory
+    from experiments.ad01 import selection
+    trajectory = _pinned_trajectory()
     assert trajectory._select_member is selection.select_member
     members = [{"capability_id": name, "scope": {"family": "software"}}
                for name in ("old", "revision")]
@@ -89,7 +99,7 @@ def test_public_use_resolves_repertoire_scoped_selection(store):
     repertoire = {"campaign_id": cid, "members": members}
     [resolved] = trajectory.run_use(
         repertoire, 0, "I", [TASK], {}, dsn=store,
-        allocation_id=allocation)
+        allocation_id=allocation, policy=admit("old"))
     assert resolved["requested"] == "old"
     assert resolved["selected"] == "old"
     assert resolved["executed"] == "incumbent"
@@ -97,19 +107,26 @@ def test_public_use_resolves_repertoire_scoped_selection(store):
     [empty] = trajectory.run_use(
         {"campaign_id": cid, "members": [], "queries": 0},
         0, "I", [TASK], {}, dsn=store,
-        allocation_id=allocation)
-    assert empty["selected"] == "incumbent"
-    assert empty["executed"] == "incumbent"
+        allocation_id=allocation, policy=admit("old"))
+    assert empty["status"] == "refused"
+    assert empty["selected"] == "refused"
+    assert empty["executed"] == "refused"
+    assert empty["output"] == {}
+    assert "absent from the repertoire" in empty["fallback_reason"]
     [refused] = trajectory.run_use(
         repertoire, 0, "I", [TASK], {}, dsn=store,
-        allocation_id=allocation, release_id="s09-m1-never-bound")
-    assert refused["selected"] == "incumbent"
-    assert refused["executed"] == "incumbent"
+        allocation_id=allocation, policy=admit("old"),
+        release_id="s09-m1-never-bound")
+    assert refused["status"] == "refused"
+    assert refused["selected"] == "refused"
+    assert refused["executed"] == "refused"
+    assert refused["output"] == {}
     assert "s09-m1-never-bound" in refused["fallback_reason"]
 
 
 def test_consolidated_path_carries_protected_target_fence(store):
-    from experiments.ad01 import trajectory, worlds
+    from experiments.ad01 import worlds
+    trajectory = _pinned_trajectory()
     target = next(p.stem for p in sorted(
         worlds.FROZEN_DIR.rglob("*.json")) if "w0-transfer-sw" in p.stem)
     proposal = {"unknown": "Does this preserve the witness?",
@@ -146,7 +163,7 @@ def test_consolidated_path_carries_protected_target_fence(store):
 
 
 def test_legacy_pending_drains_without_relabel(store):
-    from experiments.ad01 import trajectory
+    trajectory = _pinned_trajectory()
     cid = trajectory.campaign_id(0, "I", 51)
     trajectory.authorize_campaign(store, cid, authorized=1000)
     first = trajectory.run_campaign(
@@ -170,3 +187,46 @@ def test_legacy_pending_drains_without_relabel(store):
             (cid,)).fetchall()
     assert [(r["seq"], r["provenance"], r["status"]) for r in rows] == [
         (0, "s09-m1", "incorporated"), (1, "legacy-drain", "incorporated")]
+
+
+def test_a_foreign_namespace_token_cannot_derail_this_file():
+    """The reason this file pins its namespace, asserted on its own.
+
+    `NAMESPACE_TOKEN` is process-global and nothing clears it, so the whole
+    suite runs in a process whose token depends on which file imported first.
+    A foreign token has to leave this file's campaign id resumable.
+    """
+    from experiments.ad01 import trajectory
+    trajectory.set_namespace_token("a-token-another-test-left-behind")
+    try:
+        cid = _pinned_trajectory().campaign_id(0, "I", 51)
+        assert cid == "ad01-w0-I-51", (
+            "a foreign namespace token leaked into this file's campaign id")
+        parts = cid.split("-")
+        assert len(parts) == 4 and parts[0] == "ad01" and parts[2] in ("I", "R")
+    finally:
+        trajectory.set_namespace_token("")
+
+
+def test_the_store_is_one_this_run_created(store):
+    """A dropped store must never be a store somebody else still runs on.
+
+    A fixed database name is shared state: any other suite that creates the
+    same name destroys this run's rows, and the failures read as product
+    defects rather than as the collision they are. The name carries a
+    per-run token, so only this run's name is ever destroyed.
+    """
+    name = store.split("dbname=")[1].split()[0]
+
+    assert name.startswith("s09iso_m1state_"), name
+
+
+def test_the_store_survives_a_second_module_scope():
+    """Re-deriving the store must not reuse this module's database.
+
+    The collision that produced the original failures was two runs of this
+    file at once. Each run's fixture mints its own name, so a second fixture
+    can never observe or destroy the first one's database.
+    """
+    with disposable_db(RUN_TOKEN) as other:
+        assert other.name.startswith("s09iso_m1state_"), other.name

@@ -1,0 +1,566 @@
+[
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w1-I-60",
+  "comparison_status": "complete",
+  "construction_calls": 1,
+  "coverage_status": "covered",
+  "dispositions": [
+   "retained"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P0-w1-software",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-init",
+   "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-validate-l1-init",
+   "ad01-ad01-w1-I-60-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 15,
+    "task_id": "ad01-w1-dev-sw-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 16,
+  "world": 1
+ },
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w1-I-61",
+  "comparison_status": "complete",
+  "construction_calls": 1,
+  "coverage_status": "covered",
+  "dispositions": [
+   "no-candidate"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P0-w1-graph",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init",
+   "ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-validate-l1-init",
+   "ad01-ad01-w1-I-61-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w1-dev-gr-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 16,
+  "world": 1
+ },
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w2-I-62",
+  "comparison_status": "complete",
+  "construction_calls": 1,
+  "coverage_status": "covered",
+  "dispositions": [
+   "retained"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P0-w2-software",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init",
+   "ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-validate-l1-init",
+   "ad01-ad01-w2-I-62-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 15,
+    "task_id": "ad01-w2-dev-sw-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 15,
+  "world": 2
+ },
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w2-I-63",
+  "comparison_status": "complete",
+  "construction_calls": 1,
+  "coverage_status": "covered",
+  "dispositions": [
+   "no-candidate"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P0-w2-graph",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init",
+   "ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-validate-l1-init",
+   "ad01-ad01-w2-I-63-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w2-dev-gr-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 16,
+  "world": 2
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "bound",
+  "bound_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "campaign_id": "ad01-w1-I-64",
+  "comparison_status": "complete",
+  "construction_calls": 0,
+  "coverage_status": "covered",
+  "dispositions": [
+   "retained"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P1-w1-software",
+  "executed_policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "executed_policy_digests": [
+   "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706"
+  ],
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 0,
+  "operations": [
+   "ad01-ad01-w1-I-64-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 4,
+    "task_id": "ad01-w1-dev-sw-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "policy_steps": 1,
+  "release_id": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "status": "complete",
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 5,
+  "world": 1
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "bound",
+  "bound_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "campaign_id": "ad01-w1-I-65",
+  "comparison_status": "not-covered-by-revised-policy",
+  "construction_calls": 1,
+  "coverage_status": "not-covered-by-revised-policy",
+  "dispositions": [
+   "no-candidate"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P1-w1-graph",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "fallback_reason": "arm-domain-uncovered: candidate scope software does not cover graph",
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w1-I-65-b0-ad01-w1-dev-gr-00-construct-l1-init",
+   "ad01-ad01-w1-I-65-b0-ad01-w1-dev-gr-00-validate-l1-init",
+   "ad01-ad01-w1-I-65-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w1-dev-gr-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "policy_steps": 1,
+  "release_id": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "release_resolution": {
+   "bound_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+   "campaign_id": "ad01-w1-I-65",
+   "construction_calls": 0,
+   "dispositions": [],
+   "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+   "executed_policy_digests": [
+    "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+   ],
+   "model_calls": 0,
+   "operations": [
+    "ad01-ad01-w1-I-65-b0-ad01-w1-dev-gr-00-construct-l1-init",
+    "ad01-ad01-w1-I-65-b0-ad01-w1-dev-gr-00-validate-l1-init",
+    "ad01-ad01-w1-I-65-policy-s0-k0"
+   ],
+   "policy_actions": [],
+   "policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+   "policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+   "policy_steps": 0,
+   "release_id": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+   "status": "unavailable",
+   "task_id": "ad01-w1-dev-gr-00",
+   "witness_queries": 0
+  },
+  "requested_policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "status": "complete",
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 16,
+  "world": 1
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "bound",
+  "bound_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "campaign_id": "ad01-w2-I-66",
+  "comparison_status": "complete",
+  "construction_calls": 0,
+  "coverage_status": "covered",
+  "dispositions": [
+   "retained"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P1-w2-software",
+  "executed_policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "executed_policy_digests": [
+   "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706"
+  ],
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 0,
+  "operations": [
+   "ad01-ad01-w2-I-66-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 4,
+    "task_id": "ad01-w2-dev-sw-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "policy_steps": 1,
+  "release_id": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "status": "complete",
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 5,
+  "world": 2
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "bound",
+  "bound_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "campaign_id": "ad01-w2-I-67",
+  "comparison_status": "not-covered-by-revised-policy",
+  "construction_calls": 1,
+  "coverage_status": "not-covered-by-revised-policy",
+  "dispositions": [
+   "no-candidate"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P1-w2-graph",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "fallback_reason": "arm-domain-uncovered: candidate scope software does not cover graph",
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w2-I-67-b0-ad01-w2-dev-gr-00-construct-l1-init",
+   "ad01-ad01-w2-I-67-b0-ad01-w2-dev-gr-00-validate-l1-init",
+   "ad01-ad01-w2-I-67-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w2-dev-gr-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+  "policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "policy_steps": 1,
+  "release_id": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "release_resolution": {
+   "bound_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+   "campaign_id": "ad01-w2-I-67",
+   "construction_calls": 0,
+   "dispositions": [],
+   "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+   "executed_policy_digests": [
+    "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+   ],
+   "model_calls": 0,
+   "operations": [
+    "ad01-ad01-w2-I-67-b0-ad01-w2-dev-gr-00-construct-l1-init",
+    "ad01-ad01-w2-I-67-b0-ad01-w2-dev-gr-00-validate-l1-init",
+    "ad01-ad01-w2-I-67-policy-s0-k0"
+   ],
+   "policy_actions": [],
+   "policy_digest": "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706",
+   "policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+   "policy_steps": 0,
+   "release_id": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+   "status": "unavailable",
+   "task_id": "ad01-w2-dev-gr-00",
+   "witness_queries": 0
+  },
+  "requested_policy_release": "ad01-ad01-w0-I-54-policy-b71a7f8f39ad",
+  "status": "complete",
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 16,
+  "world": 2
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w1-software",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P2-w1-software",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 0,
+  "world": 1
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w1-graph",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P2-w1-graph",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 0,
+  "world": 1
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w2-software",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P2-w2-software",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 0,
+  "world": 2
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w2-graph",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P2-w2-graph",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "9ef2b685e27d595ffeb40e97b741cc8ff9e5d9da78ed6cc2b061147dba9e2b68",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 0,
+  "world": 2
+ }
+]

@@ -1,0 +1,21 @@
+{
+ "origin_earned": "model-acquired",
+ "earned": true,
+ "reason": "live provider response",
+ "operation_id": "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+ "receipt_identity": "gw:ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+ "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+ "route": {
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider": "nvidia",
+  "tier": "free"
+ },
+ "simulated": null,
+ "executed_source": "def STEP(view, state):\n    # Initialize state if not present\n    if state is None:\n        state = {\n            \"diagnosed\": [],\n            \"method_used\": None,\n            \"steps\": 0\n        }\n    \n    # Increment step counter\n    state[\"steps\"] = state.get(\"steps\", 0) + 1\n    \n    # Safety stop after too many steps\n    if state[\"steps\"] > 20:\n        return {\"action\": {\"kind\": \"stop\", \"target\": \"\", \"inputs\": {}, \"evidence_refs\": [], \"requested_resources\": {}}, \"state\": state}\n    \n    # Get open questions\n    open_questions = view.get(\"open_questions\", [])\n    \n    # If there are open questions not yet diagnosed, diagnose the first one\n    for i, q in enumerate(open_questions):\n        if i not in state[\"diagnosed\"]:\n            state[\"diagnosed\"].append(i)\n            return {\n                \"action\": {\n                    \"kind\": \"diagnose\",\n                    \"target\": q,\n                    \"inputs\": {},\n                    \"evidence_refs\": [],\n                    \"requested_resources\": {}\n                },\n                \"state\": state\n            }\n    \n    # If all questions diagnosed, check eligible methods\n    eligible_methods = view.get(\"eligible_methods\", [])\n    if eligible_methods and state[\"method_used\"] is None:\n        # Use the first eligible method\n        method_name = eligible_methods[0]\n        state[\"method_used\"] = method_name\n        return {\n            \"action\": {\n                \"kind\": \"use_method\",\n                \"target\": method_name,\n                \"inputs\": {},\n                \"evidence_refs\": [],\n                \"requested_resources\": {}\n            },\n            \"state\": state\n        }\n    \n    # If a method was used and we have a last_result, propose revision\n    last_result = view.get(\"last_result\")\n    if last_result and state[\"method_used\"] is not None:\n        return {\n            \"action\": {\n                \"kind\": \"propose_revision\",\n                \"target\": \"solution\",\n                \"inputs\": {\"content\": str(last_result)},\n                \"evidence_refs\": [],\n                \"requested_resources\": {}\n            },\n            \"state\": state\n        }\n    \n    # If no eligible methods, try to construct one based on task content\n    if not eligible_methods and state.get(\"constructed\", False) is False:\n        state[\"constructed\"] = True\n        return {\n            \"action\": {\n                \"kind\": \"construct_method\",\n                \"target\": \"investigation_method\",\n                \"inputs\": {\"description\": \"Method to investigate software issue\"},\n                \"evidence_refs\": [],\n                \"requested_resources\": {}\n            },\n            \"state\": state\n        }\n    \n    # Default: stop\n    return {\n        \"action\": {\n            \"kind\": \"stop\",\n            \"target\": \"\",\n            \"inputs\": {},\n            \"evidence_refs\": [],\n            \"requested_resources\": {}\n        },\n        \"state\": state\n    }",
+ "executed_sha256": "e910a154eba95305059e5dacc0cdc4e1853bc7654012e1f4cef78a686dcc0bdf",
+ "double_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+ "byte_identical_to_double": false,
+ "executed_source_digest_claim": "e910a154eba95305059e5dacc0cdc4e1853bc7654012e1f4cef78a686dcc0bdf",
+ "prompt_digest": "19ab090fc9d0694127ecd934f55301f07d2b92ee6ca461b0f95c19c7a9469894",
+ "guard_spent_dispatches": 1
+}

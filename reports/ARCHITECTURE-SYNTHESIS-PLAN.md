@@ -21,7 +21,7 @@ Standing constraints: general autonomous discovery across domains; fixed model w
 
 - [Research review](../docs/design/RSI-RESEARCH-2026-09-22.md): seven primary sources, read extent and limitations disclosed.
 - [Architecture](../docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md): selected alternative, formal state/transitions, common action semantics, agenda, memory, replay, inheritance, technology decisions and E0–E3 studies.
-- [Worker assignment](../WORKER-INVESTIGATION-LEARNING-02.md): fresh-chat M0–M6 sequence, isolation/merge discipline, independent checks, Jev use, authority reconciliation and bounded stopping rules.
+- [Worker assignment](../docs/HISTORY.md#worker-investigation-learning-02): fresh-chat M0–M6 sequence, isolation/merge discipline, independent checks, Jev use, authority reconciliation and bounded stopping rules.
 - [Roadmap](../docs/design/REFINEMENT-ROADMAP.md): Stage 9A–9D design complete, 9E implementation/qualification open, Stage 10 integration still ahead. Historical assessments are labeled rather than rewritten as new evidence.
 
 ## Jev review dispositions

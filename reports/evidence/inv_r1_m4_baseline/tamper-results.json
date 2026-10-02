@@ -1,0 +1,102 @@
+{
+ "all_fired": true,
+ "baseline": "tests/test_m4_offline_recompute.py::demo_bundle",
+ "baseline_deterministic": true,
+ "baseline_status": "pass",
+ "examples": [
+  {
+   "baseline_status": "pass",
+   "example": "doubled-receipt-inserted-into-live-lineage",
+   "expected_problem": "duplicate-receipt-identity",
+   "expected_problem_fired": true,
+   "mutated_status": "fail",
+   "observed_problems": [
+    "dispatch-operation-receipt-bijection",
+    "dispatch-operation-set-mismatch",
+    "duplicate-receipt-identity evidence:14441161d349d0f8722f3fe10e69bc9c1506b26374df8ee690ae327e759f962f-doubled",
+    "multiple-terminal-receipts op-use-a-P0-u-sw-0",
+    "receipt-lineage-mismatch op-use-a-P0-u-sw-0"
+   ],
+   "result": "pass"
+  },
+  {
+   "baseline_status": "pass",
+   "example": "foreign-study-identity",
+   "expected_problem": "foreign-study-identity",
+   "expected_problem_fired": true,
+   "mutated_status": "fail",
+   "observed_problems": [
+    "foreign-study-identity a-study-that-never-ran"
+   ],
+   "result": "pass"
+  },
+  {
+   "baseline_status": "pass",
+   "example": "source-substitution",
+   "expected_problem": "source-shared-between-arms",
+   "expected_problem_fired": true,
+   "mutated_status": "fail",
+   "observed_problems": [
+    "candidate-task-binding-mismatch P1-u-gr-0",
+    "candidate-task-binding-mismatch P1-u-sw-0",
+    "candidate-task-binding-mismatch P1-x-sw-0",
+    "executed-source-not-frozen a-P1-u-gr-0",
+    "executed-source-not-frozen a-P1-u-sw-0",
+    "executed-source-not-frozen t-P1-x-sw-0",
+    "source-shared-between-arms 9a7e7eb4d03a ['P1', 'P2']"
+   ],
+   "result": "pass"
+  },
+  {
+   "baseline_status": "pass",
+   "example": "disconnected-policy",
+   "expected_problem": "policy-digest-frozen-mismatch",
+   "expected_problem_fired": true,
+   "mutated_status": "fail",
+   "observed_problems": [
+    "policy-digest-frozen-mismatch a-0"
+   ],
+   "result": "pass"
+  },
+  {
+   "baseline_status": "pass",
+   "example": "hidden-answer-contamination",
+   "expected_problem": "hidden-answer-contamination",
+   "expected_problem_fired": true,
+   "mutated_status": "fail",
+   "observed_problems": [
+    "hidden-answer-contamination method P1 task_answers",
+    "hidden-answer-contamination policy P1 task_answers"
+   ],
+   "result": "pass"
+  },
+  {
+   "baseline_status": "pass",
+   "example": "absent-usage-treated-as-zero",
+   "expected_problem": "billed-unknown-scored-as-zero",
+   "expected_problem_fired": true,
+   "mutated_status": "fail",
+   "observed_problems": [
+    "billed-unknown-scored-as-zero"
+   ],
+   "result": "pass"
+  },
+  {
+   "baseline_status": "pass",
+   "example": "resumed-count-rollback",
+   "expected_problem": "resume-count-rollback",
+   "expected_problem_fired": true,
+   "mutated_status": "fail",
+   "observed_problems": [
+    "resume-count-rollback carried=0 dispatched=13"
+   ],
+   "result": "pass"
+  }
+ ],
+ "exposure_added": 0,
+ "live_dispatches": 0,
+ "required_examples": 7,
+ "schema": "inv-r1-m4-tamper-v1",
+ "source_tip": "4a931a99a64557a19f7588d2cf0ca7572baed4fa",
+ "verifier": "experiments.ad01.offline_recompute.verify_bundle -> _verify_m4_bundle"
+}

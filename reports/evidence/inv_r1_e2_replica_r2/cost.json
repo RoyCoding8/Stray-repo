@@ -1,0 +1,197 @@
+{
+  "cap_sheet_allowance": {
+    "construction_dispatches": 18,
+    "physical_sends_ceiling": 19,
+    "retry_allowance": 1,
+    "route_probe_dispatches": 1
+  },
+  "cap_sheet_unit_allowance": {
+    "note": "estimated-budget reservation units derived by settlement.broker.exposure_schedule, not a price and not a dispatch count",
+    "per_request_units": 2474,
+    "probe_units": 16,
+    "requests": 19,
+    "unit_kind": "estimated-budget",
+    "units": 47006
+  },
+  "dispatch_allowance": {
+    "construction_sends": 12,
+    "currency": "dispatch allowance",
+    "dispatch_states": {
+      "observed": 10,
+      "unresolved": 3
+    },
+    "operations_in_store": 13,
+    "per_operation": {
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-irrelevant": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-irrelevant",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-none": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-none",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-relevant": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-relevant",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-irrelevant": {
+        "dispatch_state": "unresolved",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-irrelevant:lost-response",
+        "settled": false
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-irrelevant-c1": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-irrelevant-c1",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-none": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-none",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-relevant": {
+        "dispatch_state": "unresolved",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-relevant:lost-response",
+        "settled": false
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-relevant-c1": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-relevant-c1",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-irrelevant": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-irrelevant",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-none": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-none",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-relevant": {
+        "dispatch_state": "unresolved",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-relevant:lost-response",
+        "settled": false
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-relevant-c1": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-relevant-c1",
+        "settled": true
+      },
+      "s09iso-invr1e2replicar2-w0-probe": {
+        "dispatch_state": "observed",
+        "receipt": "gw:s09iso-invr1e2replicar2-w0-probe",
+        "settled": true
+      }
+    },
+    "physical_sends": 13,
+    "route_probes": 1,
+    "settled": {
+      "False": 3,
+      "True": 10
+    }
+  },
+  "held_units": {
+    "allocation_id": "s09iso-invr1e2replicar2-alloc",
+    "authorized": 1000000,
+    "consumed": 22144,
+    "currency": "held units",
+    "max_occupancy": 8,
+    "note": "held is not spent: units the study may still draw against",
+    "occupancy": 0,
+    "reserved": 7422,
+    "study_authorized": 1000000,
+    "unconsumed_units": 977856
+  },
+  "internal_reservation": {
+    "allowed_units": 47006,
+    "currency": "internal reservation",
+    "headroom_units": 17440,
+    "note": "recomputed with settlement.broker.exposure_schedule, the same function that charged the run; a reservation estimate, not a price and not a dispatch count",
+    "operations_not_priced": [],
+    "per_operation": {
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-irrelevant": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-none": {
+        "kind": "estimated-budget",
+        "units": 2428
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-00-relevant": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-irrelevant": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-irrelevant-c1": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-none": {
+        "kind": "estimated-budget",
+        "units": 2428
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-relevant": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-relevant-c1": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-irrelevant": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-none": {
+        "kind": "estimated-budget",
+        "units": 2428
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-relevant": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-relevant-c1": {
+        "kind": "estimated-budget",
+        "units": 2474
+      },
+      "s09iso-invr1e2replicar2-w0-probe": {
+        "kind": "estimated-budget",
+        "units": 16
+      }
+    },
+    "unit_kind": "estimated-budget",
+    "units_total": 29566
+  },
+  "provider_billing": {
+    "classification": {
+      "NOT_REPORTED": 0,
+      "REPORTED": 10,
+      "UNCERTAIN": 3,
+      "UNMEASURED": 0
+    },
+    "currency": "provider billing",
+    "note": "a lost response is UNCERTAIN, not zero: a request was sent and nothing came back to bill against",
+    "receipts": 13,
+    "reported_usage_totals": {
+      "input_tokens": 3887,
+      "model_calls": 10,
+      "output_tokens": 7459
+    },
+    "uncertain_operations": [
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-relevant",
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-01-irrelevant",
+      "s09iso-invr1e2replicar2-w0-construct-ad01-w0-within-sw-02-relevant"
+    ],
+    "unit": "gateway-reported token usage; the gateway reports no price",
+    "unmeasured_detail": []
+  },
+  "schema": "e2-replica-r2-cost-v1"
+}

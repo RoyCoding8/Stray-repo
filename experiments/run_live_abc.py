@@ -132,8 +132,8 @@ def _parse_ids(value: str | None) -> list[str] | None:
 
 
 def _demo_double():
-    from doubles import ScriptedDouble
-    from fault_tasks import DEV_IDS, PANEL_IDS, TASKS, TRANSFER_IDS
+    from experiments.doubles import ScriptedDouble
+    from experiments.fault_tasks import DEV_IDS, PANEL_IDS, TASKS, TRANSFER_IDS
 
     fixes = {t["id"]: t["fixed"] for t in TASKS}
     broken = {t["id"]: t["broken"] for t in TASKS}
@@ -310,13 +310,13 @@ def main() -> int:
         print(f"grant cap: {grant_units} units; gateway: {url}", file=sys.stderr)
         print(f"discovery: {status}; auth: {auth}", file=sys.stderr)
         model, simulated = args.model, False
-        from fault_tasks import DEV_IDS, PANEL_IDS, TRANSFER_IDS
+        from experiments.fault_tasks import DEV_IDS, PANEL_IDS, TRANSFER_IDS
 
         dev_ids, panel_ids, transfer_ids = DEV_IDS, PANEL_IDS, TRANSFER_IDS
     dev_ids = _parse_ids(args.dev) or dev_ids
     panel_ids = _parse_ids(args.panel) or panel_ids
     transfer_ids = _parse_ids(args.transfer) or transfer_ids
-    from fault_tasks import BY_ID as _BY_ID
+    from experiments.fault_tasks import BY_ID as _BY_ID
 
     _unknown = [i for i in (dev_ids + panel_ids + transfer_ids)
                 if i not in _BY_ID]
@@ -351,7 +351,7 @@ def main() -> int:
         except SettlementError as exc:
             if "already exists" not in str(exc):
                 raise
-        from fault_tasks import BY_ID
+        from experiments.fault_tasks import BY_ID
 
         tasks = [BY_ID[i] for i in (dev_ids + panel_ids + transfer_ids)]
         report = experiment.run_abcs(

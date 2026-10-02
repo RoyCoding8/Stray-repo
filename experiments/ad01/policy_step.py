@@ -3,9 +3,16 @@
 M0 scaffold pins the version plus field shapes before any executor
 exists. M2 adds bounded child execution. Lanes import the version
 constant instead of restating the name.
+
+This module also carries the STEP half of the translation onto
+`policy_action`, the one action contract every representation shares.
+A STEP policy and a contract policy must produce the same action type,
+or they cannot be compared; see `STEP_KIND_TO_CONTRACT`.
 """
 
 from __future__ import annotations
+
+from . import policy_action
 
 POLICY_STEP_VERSION = "ad01-policy-step-v1"
 
@@ -36,7 +43,94 @@ ACTION_REQUIRED = (
     "requested_resources",
 )
 
+# One meaning held constant across representations. The contract wins on
+# names and on count: a STEP kind that would need a seventh contract kind
+# is a mis-mapping, not a reason to widen the contract.
+#
+# `propose_revision` and `check` are both the vocabulary's gate: the point
+# at which the policy judges the current trajectory against a stated
+# criterion and the judgement decides whether the run continues. The
+# contract keeps the gate and drops whether what is judged is a task
+# result or the policy itself, which is the abstraction the six kinds
+# exist to draw.
+#
+# The forward map is a bijection. That is load-bearing, not incidental:
+# it is why the reverse map is total, and it is asserted against both
+# vocabularies rather than left to this comment.
+STEP_KIND_TO_CONTRACT = {
+    "diagnose": policy_action.PROBE,
+    "construct_method": policy_action.CONSTRUCT,
+    "use_method": policy_action.USE,
+    "request_model": policy_action.OBSERVE,
+    "propose_revision": policy_action.CHECK,
+    "stop": policy_action.STOP,
+}
+
+CONTRACT_KIND_TO_STEP = {contract_kind: step_kind
+                         for step_kind, contract_kind
+                         in STEP_KIND_TO_CONTRACT.items()}
+
 STATE_LIMIT_BYTES = 4096
+
+
+def _contract_fields(action: dict) -> dict:
+    return {"kind": action["kind"], "target": action["target"],
+            "inputs": dict(action["inputs"]),
+            "evidence_refs": list(action["evidence_refs"]),
+            "requested_resources": dict(action["requested_resources"])}
+
+
+def as_contract_action(action: dict) -> dict:
+    """A STEP action restated in the shared contract's vocabulary.
+
+    The STEP ABI admits extra fields, so a field the contract does not
+    name would otherwise be dropped here and the action would pass as
+    translated while carrying less than the policy asked for. Refused at
+    this boundary instead, using the contract's exception so a caller
+    translating in either direction catches one type.
+    """
+    validate_action(action)
+    kind = action["kind"]
+    if kind not in STEP_KIND_TO_CONTRACT:
+        raise policy_action.ActionRefused(
+            "STEP kind %r has no shared-contract equivalent" % (kind,))
+    extra = sorted(set(action) - set(ACTION_REQUIRED))
+    if extra:
+        raise policy_action.ActionRefused(
+            "unknown action fields %s" % extra)
+    contract = _contract_fields(action)
+    contract["kind"] = STEP_KIND_TO_CONTRACT[kind]
+    return contract
+
+
+def as_step_action(shared: dict) -> dict:
+    """A shared-contract action restated in the STEP vocabulary.
+
+    Reverse translation of a bijection. A contract action reaches here
+    already carrying a kind the STEP ABI validates, so the STEP rules
+    are re-run rather than assumed.
+    """
+    contract = policy_action.parse_action(shared)
+    translated = contract.as_dict()
+    translated["kind"] = CONTRACT_KIND_TO_STEP[contract.kind]
+    return validate_action(translated)
+
+
+def vocabulary_coverage() -> dict:
+    """Whether either vocabulary has outgrown the table.
+
+    Both empty is the only correct answer for a shared contract: a
+    contract arm's action that no STEP action can express, or a STEP
+    arm's action with nowhere to go, is a comparability gap that reads
+    as agreement until a study depends on it.
+    """
+    return {
+        "step_unmapped": sorted(set(ACTION_KINDS) - set(STEP_KIND_TO_CONTRACT)),
+        "contract_unmapped": sorted(
+            set(policy_action.ACTION_KINDS) - set(CONTRACT_KIND_TO_STEP)),
+        "step_kinds": sorted(STEP_KIND_TO_CONTRACT),
+        "contract_kinds": sorted(CONTRACT_KIND_TO_STEP),
+    }
 
 
 def validate_view(view: dict) -> dict:
@@ -82,6 +176,20 @@ def validate_action(action: dict) -> dict:
 
 
 STEP_ENTRY = "STEP"
+
+
+def compile_step(source: str, *, origin: str = "<policy>") -> object:
+    """Compile policy source into the callable the step ABI expects.
+
+    `run_use` calls its policy, so handing it source text records a policy
+    that raised rather than one that governed, and the two are
+    indistinguishable in the evidence. Every caller that holds source must
+    come through here, or the failure looks like a broken policy.
+    """
+    namespace: dict = {}
+    exec(compile(source, origin, "exec"), namespace)
+    step = namespace.get(STEP_ENTRY)
+    return step if callable(step) else None
 
 POLICY_ORIGINS = (
     "authored-control",

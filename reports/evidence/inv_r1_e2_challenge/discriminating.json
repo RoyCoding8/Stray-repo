@@ -1,0 +1,14 @@
+[
+ {
+  "charter": "charter-names-graph",
+  "diagnostic": "graph",
+  "experience": "graph (fixed)",
+  "target": "software"
+ },
+ {
+  "charter": "charter-names-software",
+  "diagnostic": "graph",
+  "experience": "graph (fixed)",
+  "target": "software"
+ }
+]

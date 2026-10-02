@@ -51,7 +51,9 @@ def _forged_acquired_package(store):
         max_output_tokens=8,
         deadline_ms=1000,
         operation_id="op-forged-adoption")
-    guard.infer(request)
+    guard.infer(request, evidence={
+        "arm": "test", "task": "rule-dev-0004", "attempt": 1,
+        "raw_prompt": "construct"})
     dispatch = guard.provenance(request.operation_id)
     package = live.parse_and_build_live_package(
         store.active_package,
@@ -96,6 +98,26 @@ def test_store_adoption_accepts_durable_acquisition_evidence(tmp_path):
     assert bound["op_source"] == base["op_source"]
     assert bound["op_digest"] == base["op_digest"]
     assert store.treatment_arms["acquired"] == [package]
+
+
+def test_finalization_replay_is_idempotent_and_conflicts_refuse(tmp_path):
+    store = _store(tmp_path)
+    store.bind_active(channel.make_control("low"))
+    package, guard, operation_id = _forged_acquired_package(store)
+    arguments = {
+        "parse_outcome": "accepted",
+        "accepted_candidate_digest": package["package_digest"],
+        "parsed_source_digest": package["imp_digest"],
+        "package_digest": package["package_digest"],
+        "parent_digest": package["parent_digest"],
+        "round_no": 1,
+    }
+    first = guard.finalize_evidence(operation_id, **arguments)
+
+    assert guard.finalize_evidence(operation_id, **arguments) == first
+    with pytest.raises(live.LiveRefused, match="finalization"):
+        guard.finalize_evidence(
+            operation_id, **{**arguments, "parse_outcome": "parse-failed"})
 
 
 def test_store_adoption_refuses_operational_source_mutation(tmp_path):

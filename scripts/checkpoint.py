@@ -132,7 +132,7 @@ def _artifact_manifest(root: Path) -> list[dict]:
     for path in sorted(root.rglob("*")):
         if path.is_symlink() or not path.is_file():
             continue
-        rel = str(path.relative_to(root))
+        rel = path.relative_to(root).as_posix()
         entries.append({"path": rel, "size": path.stat().st_size,
                         "sha256": _sha256(path)})
     return entries

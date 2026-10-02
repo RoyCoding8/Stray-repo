@@ -1,185 +1,50 @@
-# Settlement: philosophy to final implementation
+# Philosophy to final implementation
 
-Updated 2026-09-23. This is the maintained project map and design task list. The product is infrastructure for a persistent, general, autonomous society; early experiments determine the behavior that infrastructure must support.
+This is the mental model, not another task diary. The [project ledger](../../reports/PROJECT-LEDGER.md) gives current evidence; the [worker prompt](../../WORKER-PROMPT.md) gives the next complete assignment.
 
-For the current verified snapshot and next decision, start with the [project ledger](../../reports/PROJECT-LEDGER.md). This roadmap preserves the longer sequence and historical study boundaries.
+General autonomous discovery remains the goal. Memory, background development, teams and executable skills are candidate mechanisms. Their value is what they enable the system to learn and do; more machinery alone is not progress.
 
-**We are at stage 9: mechanism parts exist; the connected learning comparison remains open.** Investigation Learning 02 delivered deterministic components and archived E0 and E12 evidence. The [acquisition review](../../reviews/INVESTIGATION-LEARNING-02-ACQUISITION-ASSESSMENT.md) supersedes the E0 `bound` label. E0 proves live model bytes reached retention only. It does not prove model acquisition, binding, inheritance, or utility. E12 has P0 available and P1/P2 unavailable on truncated output. Final integrity fixes merged at `9e6c922`; a later preflight reported refusal before inference, but [route assessment](../../reviews/INVESTIGATION-LEARNING-02-ROUTE-ASSESSMENT.md) found that its recorded model IDs differ from the frozen source at that commit. E3 is unavailable because no genuinely eligible model revision exists. The separate P1/P2 output-shaping study has not run. The [selected synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) still governs. Stage 8 remains closed at bounded scope; general learning advantage is unproven.
+| Stage | Question or deliverable | Status |
+|---|---|---|
+| 1. Philosophy | Purpose, generality, growth and relationship to the human | Baseline selected; revisable |
+| 2. Intuitive picture | How investigation, remembering and self-development fit together | Baseline selected |
+| 3. Precise/formal description | Entities, transitions, obligations, limits and claims | Baseline specified; no proof of intelligence |
+| 4. Abstract architecture | Ownership of execution, development and agenda | Baseline selected |
+| 5. Representation and technology | Executable packages, state and supporting stack | Provisional choices; revise from evidence |
+| 6. Practical specification | Builder protocols and acceptance conditions | Foundation specified |
+| 7. Foundation prototype | Durable bounded execution, evidence, trials and continuity | Built; deployment validation remains partial |
+| 8. Cognitive-policy refinement | Acquired competence, memory, agenda, representations and teams | Closed at bounded mechanism scope; broader learning questions remain open |
+| 9. Architecture consolidation | Compare executable operational and improvement behavior; keep, replace or remove mechanisms | **Active.** All four experiments now have answers and **all four are negative**, though not for the same reason: E1 measured nothing to compare, E2 measured a null the panel cannot express, E3 recomputed its tables and does not show autonomous selection, and E4 ran six live dispatches and admitted no revision. The comparison is not the blocker. |
+| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | Not complete |
+| 11. Operational qualification | Supported deployment, containment, recovery and controls | Partial groundwork; not qualified |
+| 12. Final implementation/release | Supported infrastructure product with migrations, installation, lifecycle UI and evidence | Not started as a release milestone |
 
-**Next engineering step:** reconcile the recorded route with the loaded source and sanitized `/models` result using a fresh read-only preflight. The prior output-shape study directory cannot be retried. If the frozen route is truly unavailable, record that limit; if source drift or alias validation caused the refusal, correct it and freeze a new prospective study. Run E3 only if a genuinely eligible model revision has model-response provenance, exact-digest binding, a durable post-restart child citation of the same executable digest, and a usable result. Retained-only, digest-mismatched, and authored/control-derived bytes are ineligible. The [research note](RSI-RESEARCH-2026-09-22.md) distinguishes Dream-RSI, the genuine-RSI survey and related work from our own hypotheses. Preserve the [accepted generality direction](ARCHITECTURAL-DIRECTION-2026-09-17.md).
+Stages are not a waterfall: an experiment may force a revision to the formal model or technology. Retain sound prototype code rather than rewrite it merely because a later stage is called final.
 
-Current transition checklist:
+## The current decision
 
-- [x] Philosophy, formalization, architecture selection and stage 8 closeout accepted at their stated scope.
-- [x] Stage 9 initial consolidation and later completion delivery received through `7e87d739`; evidence limits retained.
-- [x] 9A: inspect the current ownership, execution, revision, assessment and continuation paths.
-- [x] 9B: compare architecture alternatives and select persistent investigations with inheritable improvement behavior.
-- [x] 9C: formalize action semantics, state, memory, agenda, replay support, inheritance and authority boundaries.
-- [x] 9D: specify prospective experiments, competent controls, failure classifications and a self-contained worker contract.
-- [x] 9E: deliver deterministic investigation, execution and rule-discovery components; qualify them at their tested scope.
-- [x] 9E: freeze and attempt E0 on the authorized free route; preserve the archived retention-only evidence and correct the disposition claim without substituting a learning verdict.
-- [x] 9E: connect the live frontier and improvement path, repair P1/P2 history and P0 comparison, and use full offline verification before E1/E2. Closed at 3821001 with independent MERGE.
-- [ ] 9E: obtain a valid prospective comparison after route recovery, or establish route-specific unavailability. Final integrity fixes merged at `9e6c922`; the recorded preflight route differs from committed source and needs reconciliation. No model dispatch occurred in the reported preflight. The output-shape study remains unrun.
-- [ ] Stage 10: integrate the validated mechanisms into a coherent general system.
+Stage 9 should tell us which learned executable behaviors are acquired, causally used, reusable and worth their resources. Test relevant experience, autonomous investigation choices and a revision that improves the acquisition process itself. Use multiple task structures so a fixed reducer or Boolean benchmark does not become the architecture.
 
-9A–9E are the current consolidation work packages, not a renumbering of the historical C0–C6 worker assignment. They revisit design where the source and evidence warrant it. A valid negative can close a study; an unresolved apparatus defect stays open. Stage 10 and later operational qualification remain ahead.
+**The comparison is done and all four answers are negative.** E1 constructed nothing across three campaigns, and its largest cause is the route's 2048-token output budget rather than the route being down. E2's primary statistic was a constant, so every recorded result was void; re-run on the repaired metric the experience contrast is null, and a reachability census shows the panel cannot express a positive delta at all, so the null does not say experience does not help. E3 recomputed its tables from source, the ratio is an identity of its own denominators, and both controls are pre-committed schedules, so it does not show autonomous selection. E4 ran six live dispatches, admitted no revision, and the headroom above its boundary turned out to be a blind-sequence artifact rather than a narrow interface. A stage that read these as "comparison incomplete" would be misreading its own evidence. They are answers, and all four are no.
 
-## The mental model
+**§W2 is complete** (`cab9424`). Retention is unmeasurable here -- the repertoire is four
+authored seeds and no acquired method can be nameable on any target -- and adaptation found a
+**domain effect that is not an experience effect**: every arm loses 0.2692 moving to the
+held-out domain while the experience contrast is 0.0 on both sides. The panels measured there
+are open, so that null was measured where a positive result was expressible, which the
+experience contrast's own panel was not.
 
-Purpose -> intuitive behavior -> precise semantics -> architecture -> representation and technology -> buildable specification -> prototype -> behavioral experiments -> revised design -> complete system -> operational qualification -> final implementation.
+What the negatives name is narrower and more useful than the positives would have been.
 
-This sequence has feedback. We revisit an earlier decision when evidence challenges it; we do not restart the whole project after each defect. Design levels R0-R7 describe precision. Build slices S0-S7 describe executable milestones. They are different axes, not competing roadmaps.
+- **E1's binding constraint is model budget behaviour against the protocol, not the harness.** r1's zero belonged to the harness and was repaired (`3721cd6`). r2's zero belongs to the model: six answered dispatches all ran to the frozen 2048-token ceiling, stopped on `length`, and never emitted the requested 512-character object. The binding constraint is the protocol asking for a small artifact while granting the budget to reason past it. More dispatches of the same shape measure the same thing again. Acquisition exists for exactly one cell, and that width was verified by a census over the parsed source rather than assumed from a naming convention.
+- **E4's blocker is the two-element selector, and the headroom read against it is a blind-sequence artifact.** The six refusals were correct and are not a substrate failure: `improve_channel.classify_revision` (`:387`) refuses a revision whose choices equal `_incumbent_choices` or `_reducer_argmax`, and every reply named input 0. Within the frozen decision the choice genuinely does not matter, and the reachable range there is `0.00622`. What stood against that is withdrawn: `0.5017` was a **blind** query sequence, built by `learner_revision.py:966-977` calling `choose_query` and never `learner.observe`, and `choose_query` reads only the keys of `queried`, so the zero vector is inert. An informed sequence reaches 0.8500 on the same cohort at z=+11.38, and +0.2675 at z=+8.38 across splits sharing zero truth tables. **A binary switch is not the argument for widening; a measurement that never calls `observe` is not the argument for anything.** The open question is whether a *descendant* may gather its own evidence, which needs its own freeze.
 
-“Done” means the stated deliverable exists at its stated scope. A selected design is revisable. A built mechanism is not necessarily empirically useful. A simulated test is not a live experiment.
+Two consequences follow for stage 10, and both argue for less machinery rather than more. The acquisition surface is one prompt wide, so the nine-cell representation comparison the design asks for was never run and cannot be run by adding dispatches to the cell that exists. The revision menu has two entries, so the learner cannot yet be shown improving anything.
 
-## Overall stages
+A null result can justify simplification; a green harness cannot establish learned advantage. Progress to stage 10 when those two boundaries are answered, not when another campaign finishes on the current ones.
 
-### Standing generality checkpoint — user direction, 2026-09-13
+The [transfer assessment](../../reviews/STAGE-09-TRANSFER-ASSESSMENT.md) records the material gaps. It predates the E1 r2 run and the E2 instrument repair, so the [project ledger](../../reports/PROJECT-LEDGER.md) is the authority for current status.
 
-The destination is a general autonomous system that identifies worthwhile work, acquires executable capabilities, manages experience/context/resources, and improves how it learns. SWE, mathematics and scientific exploration are possible domains, not a restriction to a coding-agent product. The user explicitly asked that this direction survive long tasks, context changes and worker handoffs.
+## Design references
 
-Keep architectural support, implemented behavior and demonstrated generality separate. A generic interface is not evidence of broad competence. Human-designed curricula, fixed panels and reviewer-selected improvements do not demonstrate that the system can discover its own capability gaps. Do not let the intelligence needed to select and improve the system remain permanently in the human/design coordinator while calling the result autonomous learning.
-
-Before selecting each substantial new batch, answer briefly in its existing design or assignment:
-
-1. Which part of the original autonomy/generality goal does this batch test, and what new observation will it produce?
-2. Which choices does the system make itself, and which are still supplied by us?
-3. Which restrictions are temporary experimental controls rather than intended permanent architectural limits?
-4. What is the stopping condition, and how does this batch enable autonomous development or transfer beyond the current task family?
-
-Prioritize execution, authority and evidence defects that invalidate those observations. Ledger minor or unrelated issues; do not require endless SWE coordination optimization before testing broader autonomy. Negative results can close a study and inform the next design choice. Test counts and increasingly elaborate infrastructure are not substitutes for that progress.
-
-The original checkpoint led from Coordination 02 to the bounded autonomous-development studies. Its continuing rule is: broad objective and finite resources -> system-selected capability gap/investigation -> construction -> independent evaluation -> retention or rejection -> later use. Include meaningfully different task types so success cannot depend only on SWE-specific scaffolding. The next experiment now comes from the September 22 synthesis; historical study instructions below are not a new assignment or authority to rerun them.
-
-### Stage status
-
-| Stage | Purpose and existing mapping | Status | Evidence or next completion condition |
-|---|---|---|---|
-| 1. Philosophy | Purpose, generality, growth, human relationship; R0 | **Done: baseline selected** | [Conceptual architecture](REFINED-ARCHITECTURE.md), sections 1-2. Broad competence and useful discovery remain aims. |
-| 2. Intuitive picture | The society working, exploring, remembering and changing; R1 | **Done: baseline selected** | Conceptual parts and end-to-end narratives in the architecture. |
-| 3. Precise and formal description | Meanings, entities, transitions, obligations and limits; R2-R3 | **Done: baseline selected** | [Glossary](GLOSSARY.md) and architecture sections 3-4. Conditional arguments exist; no machine-checked proof or proof of intelligence is claimed. |
-| 4. Abstract architecture | Connect execution, development and agenda; R4 | **Done: baseline selected** | Architecture section 5. Responsibilities do not prescribe permanent agents or services. |
-| 5. Representation and technology | State, executable packages, interfaces and supporting tools; R5-R6 | **Done: provisional choices** | [Representation design](REPRESENTATION-DESIGN.md) and [technology decisions](TECHNOLOGY-DECISIONS.md). Experiment-driven revision remains possible. |
-| 6. Practical specification | Builder protocols, requirements and acceptance conditions; R7 | **Done: baseline specified** | [Practical specification](PRACTICAL-SPECIFICATION.md). Later cognitive mechanisms still need policy-level refinement. |
-| 7. Foundation prototype | S0-S3: bounded execution, persistence, evidence, continuity, candidate/trial/release machinery | **Built; validation partial** | Worker report at `be1730d`: R03 fixes merged, 456 tests passed; its verification section identifies tested code `42caa1e`. The design role has not independently rerun that suite. Live gates and empirical learning remain open. |
-| 8. Learning and cognitive policy refinement | Specify and test acquired competence, memory, background development, agenda and teams | **Closed at bounded scope; broader learning questions open** | Accepted helper and acquire/check/retain/use mechanism closeout stays closed. Original investigation live evidence remains no-retention. The incremental studies below retain their individual evidence limits; stage 9 now addresses executable policy consolidation. No general learning advantage is demonstrated. |
-| 9. Evidence-driven architecture consolidation | Confirm, narrow, replace or remove mechanisms; revisit R2-R7 | **Active: R1 R2 R3 closed; E12 incomplete; E0 retention-only; E3 unavailable** | [Selected design](ARCHITECTURE-SYNTHESIS-2026-09-22.md) preserves the runtime, replaces fixed campaign ownership and restricted learning assessment, and defines matched old/new improver evaluation. [Worker contract](../../WORKER-INVESTIGATION-LEARNING-02.md) supplies the implementation/verification sequence. R123 lane merged at 3821001 with independent MERGE and 104 passed. [Independent review](../../reviews/INVESTIGATION-LEARNING-02-ACQUISITION-ASSESSMENT.md) finds E0 model bytes retained but not model acquisition, binding, inheritance, or utility; a fixed-menu strategy was labeled acquired. E12 has P0 available with P1/P2 unavailable on truncated JSON. E3 requires model-response provenance, exact-digest binding, a durable post-restart child citation, and a usable result. Learning advantage remains unproven. |
-| 10. Complete system prototype | S4-S6: representations/transfer, autonomous agenda/teams, learner revision/consolidation | **Not completed** | Each slice needs its own end-to-end demonstration. Scaffolding does not complete it. Stage 8 can deliver portions incrementally. |
-| 11. Operational qualification | S7: real profiles, recovery, controls and supported deployment | **Partial groundwork; qualification not done** | Verify real components and the declared failure model for the chosen deployment. Explicit stack revisions can replace earlier targets. |
-| 12. Final implementation and release | Consolidate the validated architecture into a supported infrastructure product | **Not started as a release milestone** | Complete chosen scope, migrations, installation, documentation, lifecycle UI and release evidence. Retain sound prototype code; “final” does not mean replacing everything or ending research. |
-
-## Historical Stage 8 study ledger
-
-The rows below preserve intermediate study assessments and their evidence boundaries. They are not the current task list; the current state and next assignment are at the top of this document. Later Stage 8 closeout and Stage 9 work supersede earlier operational instructions without retroactively changing study outcomes.
-
-| Order | Design part | Current state | Required result |
-|---|---|---|---|
-| 8.1 | Acquired competence and development episodes | **Selected for the first experiment** | [Learning model](LEARNING-MODEL.md): method/representation/policy distinctions, transitions, evidence and failure cases. |
-| 8.2 | First complete development episode | **Live rejection/fallback exercised; baseline solver path corrected; competence gain open** | Historical four-episode campaign remains confounded, with zero releases. New clean-source live baseline solves a visible regression task with reconciled internal cost. It does not retroactively validate the historical comparison or exercise learned-method transfer. |
-| 8.3 | Memory and decision context | **Integrated prototype; validation remains scoped** | Experience, opposition, packet delivery/binding and stale-state contracts have deterministic evidence in the refreshed [compatibility mapping](../../reviews/COGNITIVE-DESIGN-COMPATIBILITY.md). The whole runtime suite is worker-reported 590 green. Universal context sufficiency and live semantic benefit are unproven. |
-| 8.4 | Background development and autonomous agenda | **Scoped prototype experiment accepted; operational limitation retained** | Worker `324174f`: v3 stored traces and source freeze independently checked, grades 288–288, 16-unit Q saving in family 1. Same-DB resume path inspected; real-PG tests remain worker-reported. Claimed/partially receipted mid-send recovery is not qualified. |
-| 8.5 | Representation invention and transfer | **Connected prototype; live unsuccessful acquisition observed** | Worker `6942fa2` publishes live3: 48 held-out records and 12 controls; means/clauses independently recompute. C produced no usable source candidate and therefore no transfer core. The scoped no-acquisition/fallback result is accepted; successful acquired C transfer and useful learning remain unproven. |
-| 8.6 | Temporary teams and collective reasoning | **Advisory pilot accepted; executable coordination integration incomplete** | Worker `bdf12d5`: broker child dispatch added; multi-child/rework identity, public accounting/state and eligible acquisition steps remain open. [Assessment](../../reviews/EC02-AD01-BDF12D5-REVIEW.md). Preserve earlier S/P/T results separately. |
-| 8.7 | Learner revision and consolidation | **First semantic and study draft complete; working mechanism pending** | [Learner revision](LEARNER-REVISION.md): whole trajectories, bounded self-revision, consolidation, evaluator corrections/epochs and rollback. S6/E7 implementation and empirical qualification remain pending. |
-
-Historical continuation at `bdf12d5`: **AD01 environment and callback routing implemented; autonomous trajectory incomplete.** At that revision, 32 focused local tests passed; all 19 C3 JSONs reproduced and 72 use records checked clean, but all 15 retained entries were authored seeds. That driver had no DB-backed acquisition or separate use process. Later investigation and Stage 9 deliveries superseded this work state; they did not transform these authored results into live learning evidence.
-
-The order expresses dependencies, not a demand to finish each part globally. Agenda 01 tested scheduling without waiting for a learned-method release; Representation 01 tested narrow mathematical transfer without waiting for autonomous scheduling. Coordination 02 follows the scoped Team 01 findings. Learner revision remains deferred until an observed development bottleneck identifies a useful intervention. The [checkpoint](COGNITIVE-DESIGN-CHECKPOINT.md) records this progression; it does not authorize building every cognitive draft at once.
-
-## Historical synthesis and closure tasks
-
-- [x] Recompute the 48-cell evaluation and 24-cell transfer results from committed records.
-- [x] Check refusal usage sensitivity: the non-promising decisions survive correction.
-- [x] Classify prompt advice separately from executable retained coordination.
-- [x] Begin scoped architecture consolidation; preserve working substrate without a stack rewrite.
-- [ ] Worker publishes missing executed modules and corrected derived accounting/reporting.
-- [x] Refine executable memory into a specific decision-program interface, with binding, diagnostics, ownership, selective rework and bounded failure.
-- [x] Select an informative four-arm study, transfer and intervention panel, primary-source precedents and decision rules for the next architecture turn.
-- [x] Prepare one combined worker assignment with explicit contract-first parallel workflow and independent integrated verification.
-- [ ] Worker completes Coordination 02 mechanics, actual model acquisition or honest none, frozen live comparison, diagnostics and replayable delivery.
-- [ ] Interpret execution, acquisition, conditional behavior, benefit and transfer separately; choose the next measured bottleneck.
-
-## Cognitive Batch 02 completion task list (historical progression)
-
-- [x] Fetch `6942fa2`, inspect model-to-artifact and template paths, and execute bounded reproductions.
-- [x] Independently recompute representation live3 decision arithmetic and retain its scoped unsuccessful result.
-- [x] Check published Team evidence availability and record CB2-01–03, without expanding to small defects.
-- [x] Worker demonstrates actual live S/P/T repair on one task at `44de83e`, including wrong-response and disconnected-output controls; the design role accepts this scoped gate.
-- [x] Worker constructs/validates a live template or freezes `none`; publishes corrected frozen panels and complete replayable evidence.
-- [ ] Interpret the corrected result before selecting stage 8.7's first learner intervention.
-
-## Cognitive Batch 02 original task list
-
-- [x] Fetch `cb8a62a` into a separate design worktree and inspect the acquisition -> retained evaluation/use source connection.
-- [x] Accept the scoped implementation milestone without reopening minor review items or claiming live benefit.
-- [x] Refine how temporary organization becomes persistent executable coordination, with applicability and opposing evidence.
-- [x] Check primary research for precedents, strong baselines and verification limitations.
-- [x] Select Team 01 semantics, finite workload, comparison/retention rules, reuse map and acceptance conditions.
-- [x] Prepare independent runtime, workload, integrated-experiment and representation-live worker lanes.
-- [ ] Worker resolves shared interfaces and executable budget reservations, then builds the connected path.
-- [ ] Worker completes LIVE-01–07: outstanding live representation, live team development and template acquisition, frozen evaluation/transfer, fresh-process continuity and reconciled live costs. Verified external blockers remain open obligations; complete live negatives are valid results.
-- [ ] Interpret team benefit, retained-coordination benefit and representation benefit separately.
-- [ ] Choose the first learner revision from observed bottlenecks; perform stage 9 synthesis when these results exist.
-
-## Historical cognitive packet checklist
-
-- [x] Inspect the selected design and worker implementation at `be1730d`.
-- [x] Restore a current roadmap from philosophy through final implementation.
-- [x] Specify acquired competence and the first bounded development episode.
-- [x] State alternatives, failure cases and limits on learning claims.
-- [x] Write the bounded worker prompt and update the design entry points.
-- [x] Worker maps DEV requirements onto code and records implementation choices.
-- [x] Worker delivers and reports deterministic Development-01 implementation and suite evidence.
-- [x] Inspect `e1b95a6` and independently reproduce four bounded integration gaps with explicit doubles.
-- [x] Select the memory/context architecture and its first ten implementation requirements.
-- [x] Freeze and run an eight-request live context pilot with `claude-opus-4-6-thinking`; preserve exact packets, responses and limits.
-- [x] Prepare the Development-02 handoff combining the four seams with context materialization.
-- [x] Worker assesses D02 findings and delivers the deterministic Development-02 slice at `a1d2525`, reporting 509 tests passed.
-- [x] Independently inspect the delivered seams and reproduce five limitations with explicit doubles.
-- [x] Freeze and run two live production-shaped prompt checks; preserve the formatting and wrong-product failures without executing generated code.
-- [x] Accept useful prototype mechanisms and define a bounded live-completion assignment with explicit context restrictions.
-- [ ] Complete or explicitly qualify CTX-01 through CTX-10; deterministic implementation does not imply full contract closure.
-- [x] Worker executes four live episodes with explicit local uncontained profile; containment remains unqualified.
-- [x] Assess the finite-panel summaries without requiring a positive outcome; accept integration and classify learning attribution as confounded.
-- [x] Preserve interpretable live baseline solver-to-grader evidence and reconcile internal settlement; external provider billing remains explicitly unknown.
-- [ ] Exercise live acquired-method use if a candidate earns release; zero releases is an allowed outcome, not proof of that path.
-- [x] Refine stage 8.4 agenda policy using the observed distinction between successful task repair and reusable competence.
-- [x] Draft the agenda trajectory protocol and minimal option/continuation semantics.
-- [x] Assign whole-repository engineering review/repair with ranked priorities and exhaustive technique/coverage guidance.
-- [x] Worker delivers engineering coverage/repair and closure. Final suite worker-reported 590 green; the new smoke's 8,455-unit internal total independently reconciles. Residual current-ledger cleanup is carried into the next integration task; see the [closure assessment](../../reviews/ENGINEERING-CLOSURE-ASSESSMENT.md).
-- [x] Consult primary research and record mechanisms, limits and design implications.
-- [x] Refine representation/transfer, team and learner-revision semantics with rejecting study designs.
-- [x] Connect the cognitive mechanisms and record exactly which further choices depend on implementation evidence.
-- [x] Receive relevant worker evidence and resolve the dependencies needed for the next concrete implementation handoff: refreshed compatibility rows 1–6 and the new live smoke bundle. Learned competence and deployment qualification remain open.
-- [x] Reconcile agenda records with audited interfaces and write its bounded implementation contract and attachable worker assignment.
-- [x] Worker delivers agenda components, a frozen authored panel and 128 recorded trajectories at `29496a0`; delivery is not full contract acceptance.
-- [x] Independently assess the result: 27 policy tests pass, original ties reproduce, and focused probes expose checker/qualification gaps. Record six bounded findings and the correction assignment.
-- [x] Complete the scoped AGR1/AGR2 prototype correction sequence through `324174f`; real-PG execution is worker-reported and the v3 trace/source acceptance is independently checked. Broader operational recovery remains qualified.
-- [x] Inspect the correction at `051811f`; independently run 28 policy tests and reproduce three remaining acceptance failures with scoped probes. Retain substrate/treatment progress.
-- [x] Worker delivers AGR2-01 through AGR2-03 with v3 evidence; accept the scoped experiment and retain the disclosed mid-send recovery limitation.
-- [x] Design role refines representation invention and transfer into a bounded contract, independently of the agenda correction timeline: Representation 01, with explicit package boundary, finite tasks/budgets and separate acquisition/transfer/benefit verdicts.
-- [x] Prepare one combined worker assignment with shared-contract ownership and independent agenda/instrument/execution/acquisition lanes.
-- [x] Worker delivers source instruments, representation execution/profile and authored-fixture evidence at `324174f`; this is partial RPR-01–08 completion.
-- [x] Worker delivers configured acquisition dispatch/staging, the specified held-out fixture panel and full decision rule at `646e154`. The unconditional preflight blocker is removed; this does not yet complete the joined experiment.
-- [x] Connected campaign-selected A/B/C artifacts and behavior to the frozen held-out comparison and fresh-process disposition/use at `9b96f8b` (retention freeze, retained-mode evaluation, phase-naming entry; independent behavioral + disconnect acceptance). Live campaign remains externally unverified.
-- [ ] Execute the bounded actual campaign when a valid gateway/grant/profile exists; preserve an external-blocker status separately from implementation completion.
-- [ ] Interpret unchanged-core transfer, adapter contribution, acquisition-inclusive costs and complete source outcomes; a passing runner does not complete this obligation.
-- [x] Validate agenda treatment sensitivity, freeze and run v3, and retain its limited equal-grade/lower-exploration result. This does not establish a general scheduler advantage.
-
-## Acceptance from here
-
-1. **Blocks the intended experiment:** the path cannot run, evidence is untrustworthy, or a confound defeats the comparison. Address before drawing its conclusion.
-2. **Prototype limitation:** controlled conditions or an explicit workaround permit an honest bounded experiment. Record the condition and proceed within it.
-3. **Production hardening:** robustness or scale work outside the experiment's conditions. Distinguish it from evidence needed to interpret that experiment. Externally blocked deployment qualifications remain explicitly open. Each batch owns its affected paths and experiment, not another whole-repository audit.
-
-Classification depends on use. Absent containment can permit trusted scripted fixtures in an explicitly disposable test environment; it does not qualify arbitrary generated code on an exposed host. Missing paid access blocks a live claim, not implementation or deterministic verification.
-
-A negative or inconclusive result can complete an experiment while leaving the architectural hypothesis unsupported; audit coverage does not establish learning benefit or final operational qualification. The September 22 design explicitly revisits semantics where implementation evidence warrants it, without reopening every earlier decision.
-
-## Evidence and maintenance
-
-Current interpretation and source limits are in the [September 22 synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) and its [worklist](../../reports/ARCHITECTURE-SYNTHESIS-PLAN.md). Historical engineering evidence includes the [closure assessment](../../reviews/ENGINEERING-CLOSURE-ASSESSMENT.md), [worker verification](../../reports/VERIFICATION.md), [live smoke bundle](../../reports/evidence/eng-close2/PROVENANCE.md) and [compatibility mapping](../../reviews/COGNITIVE-DESIGN-COMPATIBILITY.md). At that earlier closure, the design role checked stored-source equality/digest and settlement arithmetic; it did not rerun the worker's 590-test suite or live call. These records do not qualify later versions, providers or deployment profiles.
-
-E1-E8 in the conceptual architecture track empirical claims. The first A/B/C comparison does not discharge all eight or establish scientific novelty or knowledge absent from model training.
-
-After every handoff, update the current-stage sentence, affected rows, checkboxes and evidence links. Record the source revision and distinguish reported results from independently reproduced results. Preserve attributable historical reports. A passing harness never completes a pending empirical obligation.
+The [design index](README.md) links philosophy, formal contracts, mechanisms and stack choices. Historical stage-8 tables and superseded stage-9 assignments remain recoverable through [Git history](../HISTORY.md).

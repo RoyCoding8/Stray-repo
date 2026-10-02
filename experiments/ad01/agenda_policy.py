@@ -37,6 +37,487 @@ def select_tasks(world: int, arm: str, tasks: list | None) -> list:
     return _trajectory._default_tasks(world, arm)
 
 
+PORTFOLIO_POLICY_VERSION = "ad01-policy-portfolio-agenda-v1"
+FIXED_POLICY_VERSION = "ad01-policy-portfolio-fixed-v1"
+
+# What one unit of an E3 allocation is, stated because this repo has four
+# budget currencies that never mix and an unmeasured cost is not zero.
+#
+# The E3 envelope is spent in *allocation units*: `Candidate.cost()` is
+# `1 + diagnose_queries + max_queries`, a count of query allowance
+# requested from the local instrument substrate. It is not a dispatch
+# allowance, not an internal reservation, and not provider billing. Those
+# are three other currencies and this study spends none of them:
+# `selection.py` contains no gateway import, and both arms' diagnostics and
+# reductions run through `trajectory.run_diagnostic` and
+# `trajectory.dev_episode`, which are local and consult no provider.
+#
+# So the honest statement is that provider billing here is *not zero and
+# not measured* -- it is absent by construction, and no E3 number in this
+# module should be read as a cost figure in any other currency. `cost` is
+# derived from the request rather than the outcome, so a failed operation
+# still charges, which is what lets the envelope bind.
+ALLOCATION_UNIT = "query-allowance count from Candidate.cost()"
+
+
+class PortfolioPolicy:
+    """Base for policies that read a portfolio and name the next candidate.
+
+    A policy is handed the agenda state and returns a proposal or None.
+    It never touches the store, never charges anything, and never learns
+    the outcome of its own choice except through the state the run feeds
+    back on the next turn.
+    """
+
+    version_id = PORTFOLIO_POLICY_VERSION
+
+    def version(self) -> str:
+        return self.version_id
+
+    def stop_reason(self) -> str:
+        return "policy declined"
+
+    def propose(self, agenda) -> dict | None:
+        raise NotImplementedError
+
+    def observe(self, agenda, candidate, episode) -> None:
+        """Read back the episode the run just executed. Default: ignore."""
+        return None
+
+    @staticmethod
+    def _proposal(candidate, rationale) -> dict:
+        return {"candidate": candidate, "rationale": rationale}
+
+
+class AgendaPolicy(PortfolioPolicy):
+    """Decide from run-time evidence: probe every capability, then deepen.
+
+    The policy observes two things and nothing else: whether a candidate's
+    development episode was retained, and how much the envelope is left.
+    It never sees a held-out score. It tries every capability in a line
+    once at the floor depth before retiring that line, because on this
+    substrate a capability that fails at the floor can still retain with
+    more room and one that holds at the floor can stop holding with more.
+    """
+
+    version_id = PORTFOLIO_POLICY_VERSION
+
+    def __init__(self, *, families=("software", "graph"),
+                 floor_queries=2):
+        from . import selection
+        self.families = tuple(families)
+        self.floor_queries = int(floor_queries)
+        self._untried = {family: list(selection.METHODS)
+                         for family in self.families}
+        self._live = {}
+        self._stop = "portfolio exhausted"
+
+    def stop_reason(self) -> str:
+        return self._stop
+
+    def _next_probe(self, agenda):
+        """The next untried (family, capability) at the floor depth.
+
+        A line is retired only once every capability in it has been tried
+        and none retained, because on this substrate a capability that
+        fails at the floor can still retain with more room and one that
+        holds at the floor can stop holding with more. A line that retains
+        is not probed again: it is deepened, which is the better use of
+        the next unit.
+        """
+        for family in self.families:
+            if family in self._live:
+                continue
+            methods = self._untried.get(family)
+            if not methods:
+                continue
+            row = agenda.untried(family, methods[0], self.floor_queries) \
+                or agenda.cheapest(family, methods[0], self.floor_queries)
+            if row is not None:
+                return family, methods[0], row
+            methods.pop(0)
+        return None
+
+    def propose(self, agenda) -> dict | None:
+        if self.floor_queries not in agenda.depths:
+            raise ValueError(
+                "floor_queries %d is not on the portfolio's depth ladder %r"
+                % (self.floor_queries, agenda.depths))
+        probe = self._next_probe(agenda)
+        if probe is not None:
+            family, method, row = probe
+            if not agenda.afford(row):
+                self._stop = "budget exhausted"
+                return None
+            return self._proposal(
+                row, "untried capability %s in the %s line"
+                     % (method, family))
+        for family in sorted(self._live):
+            state = self._live[family]
+            depths = [d for d in agenda.depths if d > state["queries"]]
+            if not depths:
+                del self._live[family]
+                continue
+            deeper = agenda.cheapest(family, state["method"], depths[0])
+            if not agenda.afford(deeper):
+                self._stop = "budget exhausted"
+                return None
+            return self._proposal(
+                deeper, "%s/%s is retained at %d queries, so deepen while "
+                        "the envelope allows"
+                        % (family, state["method"], state["queries"]))
+        return None
+
+    def observe(self, agenda, candidate, episode) -> None:
+        family = candidate.family
+        method = candidate.capability_id.rsplit("-", 1)[-1]
+        if episode.get("disposition") != "retained":
+            self._live.pop(family, None)
+            methods = self._untried.get(family)
+            if methods and method in methods:
+                methods.remove(method)
+            return
+        state = self._live.setdefault(
+            family, {"method": method, "queries": 0})
+        state["method"] = method
+        state["queries"] = candidate.max_queries
+
+
+class FixedPolicy(PortfolioPolicy):
+    """A pre-committed allocation: one capability and depth per family.
+
+    `rule` may name a different constant pair per budget, which is what
+    `fitted_fixed_rule` supplies. A rule fitted on development retention
+    alone stays a control: it is chosen before the run from a signal the
+    agenda never reads, so it is blind in the sense that matters, and it is
+    not a strawman, because it is the best its own search space can do on
+    that signal.
+
+    `DEFAULT_RULE` is retained because committed evidence and
+    `test_s09_e3_selection` were produced under it, and it is no longer
+    claimed to be the strongest rule its search space contains. It was not
+    at this tip, at any budget: an exhaustive search over both
+    capabilities and depths 1-7 finds a higher-scoring pair at budgets 20,
+    30 and 60 and none at 40. `fitted_fixed_rule` is the honest control and
+    this constant is the historical one; `tests/test_s09_e3_fitted_control.py`
+    measures the distance rather than leaving it in a docstring.
+
+    The control observes nothing at run time. That is the property under
+    test, not a handicap, and it is demonstrated rather than asserted in
+    `test_the_control_cannot_observe_run_time_state`.
+    """
+
+    version_id = FIXED_POLICY_VERSION
+
+    DEFAULT_RULE = {"software": ("ddmin", 5), "graph": ("ddmin", 1)}
+
+    def __init__(self, rule=None, *, budget=None):
+        from . import selection
+        if rule is None and budget is not None:
+            rule = fitted_fixed_rule(budget)["rule"]
+        self.rule = dict(rule or self.DEFAULT_RULE)
+        for family in selection.FAMILIES:
+            method, queries = self.rule[family]
+            if method not in selection.METHODS:
+                raise ValueError("unknown method %r" % (method,))
+            if not isinstance(queries, int) or queries < 1:
+                raise ValueError("max_queries must be a positive integer")
+        self._step = 0
+        self._stop = "pre-committed schedule complete"
+
+    def version(self) -> str:
+        return "%s:%s" % (self.version_id,
+                          ";".join("%s=%s/%d" % (family, *self.rule[family])
+                                   for family in sorted(self.rule)))
+
+    def stop_reason(self) -> str:
+        return self._stop
+
+    def plan(self) -> list:
+        """The schedule this control commits to, in order.
+
+        Each family's capability is deepened one query at a time up to its
+        committed depth, and the families are interleaved so a control
+        under a tight envelope still qualifies both of them rather than
+        spending everything on whichever sorts first.
+        """
+        steps = []
+        depth = max(depth for _method, depth in self.rule.values())
+        for step in range(1, depth + 1):
+            for family in sorted(self.rule):
+                method, committed = self.rule[family]
+                if step <= committed:
+                    steps.append((family, method, step, committed))
+        return steps
+
+    def propose(self, agenda) -> dict | None:
+        plan = self.plan()
+        if self._step >= len(plan):
+            return None
+        family, method, step, depth = plan[self._step]
+        row = agenda.cheapest(family, method, step)
+        if row is None:
+            self._stop = "portfolio does not offer %s/%s at depth %d" % (
+                family, method, step)
+            return None
+        if not agenda.afford(row):
+            self._stop = "budget exhausted"
+            return None
+        self._step += 1
+        return self._proposal(
+            row, "pre-committed %s/%s step %d of %d" % (family, method,
+                                                        step, depth))
+
+
+def agenda_policy(**kwargs) -> AgendaPolicy:
+    return AgendaPolicy(**kwargs)
+
+
+def fixed_policy(rule=None, *, budget=None) -> FixedPolicy:
+    """The control arm. `budget` selects the fitted rule for that envelope.
+
+    With neither argument the historical `DEFAULT_RULE` is used, which is
+    what the committed evidence was produced under. With `budget` the rule
+    is the development-fitted one for that envelope.
+    """
+    return FixedPolicy(rule, budget=budget)
+
+
+FITTED_DEPTHS = (1, 2, 3, 4, 5, 6, 7)
+FITTED_OBJECTIVE = "retained_behaviors"
+FITTED_RULE_VERSION = "ad01-policy-portfolio-fixed-fitted-v1"
+_FITTED_CACHE: dict = {}
+
+
+def fitted_fixed_rule(budget: int, *, worlds=None,
+                      objective: str = FITTED_OBJECTIVE) -> dict:
+    """The best pre-committed rule for `budget`, fitted on development yield.
+
+    The search space is every (capability, depth) pair over both families,
+    the same ladder the agenda walks, and the objective is
+    `retained_behaviors`: development episodes the checker returned
+    preserved for. It is deliberately *not* `held_out_reduction`. Fitting
+    on the reported metric would make the control an oracle for the metric
+    the comparison reads, and the comparison would then measure a held-out
+    score against itself -- the circularity C15 records, one level up.
+
+    The distinction is the whole point of this function, and it is
+    measurable rather than asserted. At budget 60 the development-fitted
+    rule reaches 0.187032 mean held-out reduction where an exhaustive
+    held-out search reaches 0.414277, so the fit is nowhere near the
+    oracle and is not secretly one. A development signal that could not
+    see held-out quality would not produce that gap.
+
+    The rule is a function of `budget` and the world list only. Both are
+    fixed before the run -- the envelope is a property of the study, the
+    worlds are the qualified set -- so the control's allocation cannot
+    depend on anything the agenda chose. `blindness` reports that
+    dependency explicitly so a test can assert on it rather than trust it.
+
+    `budget` is an allocation-unit count, not a dispatch count. See
+    `ALLOCATION_UNIT`.
+    """
+    from . import selection
+    worlds = tuple(worlds or selection.WORLDS)
+    key = (int(budget), worlds, objective)
+    cached = _FITTED_CACHE.get(key)
+    if cached is not None:
+        return _copy_fitted(cached)
+    best = None
+    for sw_method in selection.METHODS:
+        for gr_method in selection.METHODS:
+            for sw_depth in FITTED_DEPTHS:
+                for gr_depth in FITTED_DEPTHS:
+                    rule = {"software": (sw_method, sw_depth),
+                            "graph": (gr_method, gr_depth)}
+                    score = 0
+                    for world in worlds:
+                        run = selection.run_investigations(
+                            None, FixedPolicy(rule),
+                            selection.Allocation(authorized=budget),
+                            world=world)
+                        score += getattr(run.yield_, objective)
+                    if best is None or score > best[0]:
+                        best = (score, rule)
+    payload = {
+        "rule": best[1],
+        "budget": int(budget),
+        "objective": objective,
+        "objective_reads_held_out": objective == "held_out_reduction",
+        "worlds": list(worlds),
+        "depths": list(FITTED_DEPTHS),
+        "fitted_retained": best[0],
+        "version": FITTED_RULE_VERSION,
+        "inputs_are_fixed_before_the_run": ["budget", "worlds", "depths",
+                                             "methods", "objective"],
+        "blindness": (
+            "the rule is a function of the envelope, the qualified world "
+            "list and the search grid. It never reads an agenda, a "
+            "candidate ranking, a diagnostic observation or a held-out "
+            "score, so no decision the treatment made can reach it."),
+    }
+    _FITTED_CACHE[key] = payload
+    return _copy_fitted(payload)
+
+
+def _copy_fitted(payload: dict) -> dict:
+    """A copy deep enough that a caller cannot edit the cached rule.
+
+    `rule` maps a family to a tuple, so a shallow `dict(payload)` would hand
+    out the cached dict itself and let one caller rewrite the arm every
+    later caller receives. A control whose constants a test or a run could
+    mutate in place is not pre-committed, which is the property this whole
+    module exists to establish.
+    """
+    out = dict(payload)
+    out["rule"] = {family: tuple(value)
+                   for family, value in payload["rule"].items()}
+    out["worlds"] = list(payload["worlds"])
+    out["depths"] = list(payload["depths"])
+    out["inputs_are_fixed_before_the_run"] = list(
+        payload["inputs_are_fixed_before_the_run"])
+    return out
+
+
+def constant_rule_search(budget: int, *, worlds=None,
+                         depths: tuple = FITTED_DEPTHS,
+                         objective: str = "held_out_reduction") -> dict:
+    """Every constant rule in the space, scored at one budget. The yardstick.
+
+    `fitted_fixed_rule` picks the best rule on `retained_behaviors`, a
+    signal a control is allowed to see. This walks the identical space on
+    `held_out_reduction`, the signal the study *reports*, and keeps all
+    196 scores rather than only the winner.
+
+    The distinction matters because the two answers disagree. A control
+    can be optimal on the objective it was fitted to and still be beaten
+    on the reported one, and when that happens the arm that "lost" did not
+    lose to the best available rule -- it lost to a worse one. Reporting
+    a comparison without the best score in the space makes every
+    advantage an advantage over an opponent of unstated strength.
+
+    It is an oracle by construction and says so: it reads the reported
+    metric to rank rules, which no run-time control may do. It exists to
+    qualify other controls, never to be an arm. The
+    `reads_the_reported_metric` flag is the machine-readable version of
+    that, so a caller wiring this into a ladder cannot do so by accident.
+    """
+    from . import selection
+    worlds = tuple(worlds or selection.WORLDS)
+    scores = _score_constant_rules(budget, worlds, depths, objective)
+    best_score, best_rule = max(
+        scores, key=lambda pair: (pair[0], _rule_key(pair[1])))
+    return {
+        "budget": int(budget),
+        "objective": objective,
+        "worlds": list(worlds),
+        "depths": list(depths),
+        "searched": len(scores),
+        "best_score": best_score,
+        "best_rule": {family: tuple(value)
+                      for family, value in best_rule.items()},
+        "reads_the_reported_metric": objective == "held_out_reduction",
+        "use": "qualify a control; never an arm in a reported ladder",
+    }
+
+
+def _score_constant_rules(budget: int, worlds: tuple, depths: tuple,
+                          objective: str) -> list:
+    """[(score, rule)] over the whole constant space, in a stable order."""
+    from . import selection
+    scores = []
+    for sw_method in selection.METHODS:
+        for gr_method in selection.METHODS:
+            for sw_depth in depths:
+                for gr_depth in depths:
+                    rule = {"software": (sw_method, sw_depth),
+                            "graph": (gr_method, gr_depth)}
+                    scores.append((sum(
+                        selection.run_investigations(
+                            None, FixedPolicy(rule),
+                            selection.Allocation(authorized=budget),
+                            world=world).yield_.as_dict()[objective]
+                        for world in worlds), rule))
+    return scores
+
+
+def _rule_key(rule: dict) -> str:
+    """A hashable, order-stable identity for a rule.
+
+    Comparing rules by dict equality would be enough inside this module,
+    but the counts here are reported and then re-derived by a reader, so
+    the identity has to survive being written down and read back.
+    """
+    import json
+    return json.dumps([rule["software"], rule["graph"]], sort_keys=True)
+
+
+def control_competence(budget: int, *, worlds=None,
+                       depths: tuple = FITTED_DEPTHS) -> dict:
+    """How strong each fixed arm actually is at `budget`, against the space.
+
+    This is the measurement `TASKS.md` C18 was opened for. It answers one
+    question per control -- "how many of the 196 constant rules beat
+    this one, here" -- and it answers it for every budget in the ladder,
+    not for the single budget a module constant happened to name.
+
+    The per-budget counts are the sharp form of the claim. "The default is
+    not optimal at 20 and 30" is a claim about two budgets a reader has to
+    re-derive; "96 and 94 of 196 rules beat it" is a number that either
+    still holds or has visibly moved, and it moves if the substrate
+    changes underneath the claim.
+
+    Both fixed arms are scored from one pass over the space. The search
+    runs 196 rules over three worlds and dominates everything else here,
+    so scoring the arms separately would double the cost to re-derive two
+    numbers the search already has.
+    """
+    from . import selection
+    worlds = tuple(worlds or selection.WORLDS)
+    scores = _score_constant_rules(budget, worlds, depths,
+                                   "held_out_reduction")
+    by_rule = {_rule_key(rule): score for score, rule in scores}
+    best = max(by_rule.values())
+    best_key = next(key for key, value in by_rule.items() if value == best)
+    best_rule = next(rule for _score, rule in scores
+                     if _rule_key(rule) == best_key)
+    rows = []
+    for name, rule in (("control", FixedPolicy.DEFAULT_RULE),
+                       ("fitted_control", fitted_fixed_rule(budget)["rule"])):
+        key = _rule_key(rule)
+        score = by_rule[key]
+        beaten = sum(1 for other, value in by_rule.items()
+                     if other != key and value > score)
+        rows.append({
+            "arm": name,
+            "rule": {family: tuple(value)
+                     for family, value in rule.items()},
+            "held_out_reduction": score,
+            "rules_beating_it": beaten,
+            "optimal_here": beaten == 0,
+            "gap_to_best": best - score,
+        })
+    return {
+        "budget": int(budget),
+        "searched": len(scores),
+        "best_rule": {family: tuple(value)
+                      for family, value in best_rule.items()},
+        "best_held_out_reduction": best,
+        "arms": rows,
+    }
+
+
+def fitted_control(budget: int, **kwargs) -> FixedPolicy:
+    """The fitted control for one envelope, as a policy instance.
+
+    The fit is memoized because it is a pure function of its arguments and
+    the crossover builds one policy per (budget, arm); re-running a
+    196-combination search per cell bought nothing and made the ladder slow
+    enough to discourage adding the arm at all.
+    """
+    return FixedPolicy(fitted_fixed_rule(budget, **kwargs)["rule"])
+
+
 def scaffolding_proposer(task_id: str, seed_obs: dict):
     def _propose(seen: dict, asked: dict) -> dict:
         from . import trajectory as _trajectory

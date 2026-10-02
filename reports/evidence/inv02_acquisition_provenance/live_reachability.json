@@ -1,0 +1,34 @@
+{
+ "measured_at_commit": "9d4ef626398ab39e4078b66386c26b4100305609",
+ "question": "Is a real acquisition possible from this shell, now that C16 made live sends complete?",
+ "router_reachable": {
+  "GET /health": {
+   "body": "{\"status\": \"ok\"}",
+   "status": 200
+  },
+  "GET /v1/models": {
+   "body": "{\"error\": {\"message\": \"invalid api key\"}}",
+   "status": 401
+  },
+  "reading": "The router process is up and is enforcing auth. It is not reachable as a configured gateway endpoint from this shell."
+ },
+ "the_precise_wall": [
+  "1. SETTLEMENT_GATEWAY_ENDPOINT is unset, so Settings.from_env() yields gateway.endpoint == '' and the adapter refuses every operation with 'gateway endpoint is not configured'.",
+  "2. SETTLEMENT_GATEWAY_KEY is unset, so even a correct endpoint has no credential.",
+  "3. SETTLEMENT_EXPECTED_ROUTE is unset. scripts/inv01_study.py _v1_route_from_env refuses a live study without it before it will build an adapter, because an unpinned route is refused per-operation by HttpGatewayAdapter and a run that spends nothing and exits 0 looks like a study that ran."
+ ],
+ "verdict": "A real acquisition is possible in this codebase and is not reachable from this shell. The acquisition seam is live-capable and now refuses to call a fixture an acquisition, so the honest record is fixture-stand-in until a shell with the endpoint, the key and a pinned free route runs the construction path.",
+ "what_an_adapter_built_here_actually_does": {
+  "HttpGatewayAdapter.from_settings(Settings.from_env(), api='responses')": "succeeds, so construction of the object is not the blocker",
+  "adapter.endpoint": "",
+  "adapter.expected_route": null,
+  "check_auth()": "same refusal",
+  "check_discovery()": "GatewayError(kind=transport, message='gateway endpoint is not configured')",
+  "conclusion": "The refusal is pre-transport. No request left this shell, so nothing was billed and no unknown spend was incurred.",
+  "infer(request)": "same refusal, raised before any socket is opened"
+ },
+ "what_is_no_longer_the_wall": [
+  "The 2026-09-24 refusal in the invl02_live database was route_error='response_metadata' at HTTP 200 with 369 input and 2048 output tokens spent. That is a post-send metadata mismatch, and 4133de1 fixed the case-folding that caused it, so the blocker that justified a recording double is gone. The provider answered 200 and the bytes arrived. What failed was the comparison of the returned route against the frozen one.",
+  "That is why the double can be retired on the strength of the code: the live path reaches the provider. It is not retired here, because this shell has no credential to reach it with."
+ ]
+}

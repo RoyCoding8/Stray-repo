@@ -1,0 +1,4 @@
+=== group 8  token=5e9b0008  files=1 ===
+  tests/test_rpr13_endtoend.py::test_acquired_end_to_end
+rc=0
+summary: 1 passed in 132.69s (0:02:12)

@@ -31,6 +31,7 @@ class GatewayRouteError(str, Enum):
     ENDPOINT = "endpoint"
     REQUESTED_MODEL = "requested_model"
     RESPONSE_METADATA = "response_metadata"
+    REASONING_EFFORT = "reasoning_effort"
 
 
 @dataclass(frozen=True)
@@ -84,7 +85,7 @@ class Usage:
     output_tokens: int | None = None
     charge_units: int | None = None
     charge_scale: int | None = None
-    provider_enforced_ceiling: bool = False
+    provider_enforced_ceiling: bool | None = False
     billed: bool | None = None
 
 

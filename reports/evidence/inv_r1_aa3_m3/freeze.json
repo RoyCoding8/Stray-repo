@@ -1,0 +1,64 @@
+{
+ "adapter": "http-responses",
+ "arms": [
+  "dev-exp",
+  "public-interface",
+  "authored-control"
+ ],
+ "control_strategy": "ddmin",
+ "development": {
+  "graph": [
+   "ad01-w0-dev-gr-00",
+   "ad01-w0-dev-gr-01"
+  ],
+  "software": [
+   "ad01-w0-dev-sw-00",
+   "ad01-w0-dev-sw-01"
+  ]
+ },
+ "frozen_at": "2026-09-28T18:46:08.655281+00:00",
+ "max_queries": 16,
+ "menu_open": true,
+ "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+ "panel": [
+  [
+   "w1",
+   1,
+   "ad01-w1-within-gr-00",
+   "graph"
+  ],
+  [
+   "w1",
+   1,
+   "ad01-w1-within-sw-00",
+   "software"
+  ],
+  [
+   "w2",
+   2,
+   "ad01-w2-within-gr-00",
+   "graph"
+  ],
+  [
+   "w2",
+   2,
+   "ad01-w2-within-sw-00",
+   "software"
+  ]
+ ],
+ "reasoning_effort": "high",
+ "request_bounds": {
+  "deadline_ms": 300000,
+  "max_output_tokens": 2048
+ },
+ "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "store": "s09iso_m3final_37cf4979f732",
+ "study_root": "s09iso-m3final-root"
+}

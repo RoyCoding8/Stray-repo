@@ -17,6 +17,7 @@ them. Deterministic, no network, no database.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import random
 
 N_INPUTS = 4
@@ -121,14 +122,43 @@ def _check_split(split: str) -> None:
         raise RuleRefused("unknown-split")
 
 
+# Bound from frozen world state rather than hardcoded here, so the two
+# instruments cannot drift apart and the key has one home. Read at call
+# time so a caller that swaps it (the tests do) sees the swap.
+from experiments.ad01 import worlds as _worlds  # noqa: E402
+_ID_KEY = _worlds.TASK_ID_KEY
+
+
+def key_id(key: str) -> str:
+    """A task id suffix a policy holding only the view cannot invert.
+
+    N-01 made this a plain sha256 of `(instrument, split, seed)`, which
+    stopped the id naming the seed but not a policy recovering it: the
+    digest is unsalted over a 0..9999 seed space, so enumerating the
+    space reproduces any id. Measured in `make_task("dev", 4)`: the id
+    comes back at seed 4 after a thousand hashes.
+
+    The HMAC key is frozen world state (`worlds.TASK_ID_KEY`) rather than
+    a per-campaign secret, because `offline_recompute` re-derives ids in
+    another process to verify frozen evidence. It lives in the repository
+    and is therefore not a secret from an adversary who reads the source;
+    what it prevents is a policy that holds the view alone from inverting
+    the id.
+    """
+    return hmac.new(_ID_KEY, key.encode(), hashlib.sha256).hexdigest()[:12]
+
+
 def make_task(split: str, seed: int) -> dict:
     _check_split(split)
     if not isinstance(seed, int) or seed < 0:
         raise RuleRefused("illegal-seed")
-    key = ("%s/%s/%d" % (INSTRUMENT_ID, split, seed)).encode()
-    rng = random.Random(int(hashlib.sha256(key).hexdigest(), 16))
+    key = "%s/%s/%d" % (INSTRUMENT_ID, split, seed)
+    rng = random.Random(int(hashlib.sha256(key.encode()).hexdigest(), 16))
     tables = tuple(rng.sample(CLASS_TABLES, N_OUTPUTS))
-    return {"task_id": "rule-%s-%04d" % (split, seed), "split": split,
+    # `rule-dev-0004` names the seed, and the seed is the recipe. A policy
+    # reading the public id regenerates the hidden tables and scores full
+    # marks unqueried. The seed stays on the task for the grader alone.
+    return {"task_id": "rule-%s-%s" % (split, key_id(key)), "split": split,
             "seed": seed, "tables": tables,
             "instrument": INSTRUMENT_ID}
 
@@ -216,6 +246,29 @@ class RuleSession:
             "Choose an unqueried four-bit input to probe, or commit an "
             "executable predictor built only from the public hypothesis "
             "class. At most %d queries." % MAX_QUERIES)
+        return view
+
+    def output_model_input(self) -> dict:
+        """The same public fields, with an instruction that matches the reply.
+
+        `model_input` tells the reader it may probe *or* commit. The output
+        study embeds this view in a prompt whose only legal reply is the
+        commit, so the probe half is an instruction the reader can follow
+        and cannot: by the time the prompt is rendered the session has spent
+        all eight queries and `remaining` is 0. Asked to choose between
+        probe and commit with nothing left to probe, the model narrated its
+        reasoning instead of emitting the JSON, and every one of the eight
+        dispatches was rejected `too-long` against a 512-character cap.
+
+        The fields stay identical so the prompt still describes the same
+        task, and so the frozen digest check still has a single shape to
+        compare. Only the instruction changes.
+        """
+        view = self.public_view()
+        view["instruction"] = (
+            "Commit one executable predictor built only from the public "
+            "hypothesis class. The query budget is spent; no further probes "
+            "are available.")
         return view
 
     def child_view(self) -> dict:

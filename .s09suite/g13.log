@@ -1,0 +1,8 @@
+..........................F...                                           [100%]
+=================================== FAILURES ===================================
+E   assert False is True
+/home/ubuntu/AI/Agent-Society-v2/tests/test_m1_shared_executor.py:542: assert False is True
+=========================== short test summary info ============================
+FAILED tests/test_m1_shared_executor.py::test_default_method_fallback_reports_selected_identity
+1 failed, 29 passed in 17.84s
+S09ISO: dropped 1 database(s) for this run

@@ -1,0 +1,1215 @@
+{
+  "dispatches": 0,
+  "gap_claim": {
+    "names_arms_never_differ": false,
+    "names_transfer_unscored": true,
+    "quoted_from": "reports/STAGE-09-MILESTONE-GAPS.md"
+  },
+  "instrument": {
+    "echo_confound": {
+      "cells": {
+        "none-echoes": {
+          "evidence": 0.0,
+          "evidence_total": 1,
+          "quality": 1.0,
+          "score": 1.0
+        },
+        "none-ignores": {
+          "evidence": 0.0,
+          "evidence_total": 0,
+          "quality": 1.0,
+          "score": 1.0
+        },
+        "none-reader": {
+          "evidence": 0.0,
+          "evidence_total": 2,
+          "quality": 1.0,
+          "score": 1.0
+        },
+        "relevant-echoes": {
+          "evidence": 1.0,
+          "evidence_total": 1,
+          "quality": 1.0,
+          "score": 2.0
+        },
+        "relevant-ignores": {
+          "evidence": 0.0,
+          "evidence_total": 0,
+          "quality": 1.0,
+          "score": 1.0
+        },
+        "relevant-reader": {
+          "evidence": 1.0,
+          "evidence_total": 2,
+          "quality": 1.0,
+          "score": 2.0
+        }
+      },
+      "echo_agrees_with_ignorer_on_method": true,
+      "echo_beats_ignorer_under_relevant": true,
+      "echo_equals_ignorer_under_none": true,
+      "echo_matches_reader_under_relevant": true,
+      "verdict": "the evidence leg is earned by copying a verdict into an input key and is unavailable to an empty arm, so an evidence-leg difference between an arm with observations and one without measures echo, not learning"
+    },
+    "record_shown_to_model": {
+      "carries_measure": false,
+      "carries_method_id": false,
+      "record": {
+        "capability_id": "ad01-software",
+        "detail": "ref o0",
+        "observation_id": "obs-ad01-w0-dev-sw-00-0",
+        "task_id": "ad01-w0-dev-sw-00",
+        "verdict": "preserved"
+      },
+      "rendered_prompt_line": "Prior observations: [{\"task_id\":\"ad01-w0-dev-sw-00\",\"verdict\":\"preserved\"}]",
+      "source_task_id": "ad01-w0-dev-sw-00"
+    },
+    "score_separates_methods": {
+      "eligible_methods": [
+        "seed-sw-ddmin",
+        "seed-sw-greedy"
+      ],
+      "note": "the two authored policies differ by the method they name and by nothing else; a tie between them is a tie between a better and a worse reduction",
+      "reductions_differ": true,
+      "rows": [
+        {
+          "agreement": "pass",
+          "candidate_measure": 3,
+          "evidence": 0.0,
+          "initial_measure": 10,
+          "method_id": "seed-sw-ddmin",
+          "normalized_reduction": 0.7,
+          "quality": 1.0,
+          "score": 1.0,
+          "scored": true,
+          "verdict": "preserved"
+        },
+        {
+          "agreement": "pass",
+          "candidate_measure": 5,
+          "evidence": 0.0,
+          "initial_measure": 10,
+          "method_id": "seed-sw-greedy",
+          "normalized_reduction": 0.5,
+          "quality": 1.0,
+          "score": 1.0,
+          "scored": true,
+          "verdict": "preserved"
+        }
+      ],
+      "scores_identical": true,
+      "target_task_id": "ad01-w0-within-sw-00"
+    },
+    "verdict_census": {
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "pairs": 108,
+      "rows": [
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 12,
+          "method": "ddmin",
+          "task_id": "ad01-w0-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w0-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w0-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 14,
+          "method": "greedy",
+          "task_id": "ad01-w0-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 15,
+          "method": "ddmin",
+          "task_id": "ad01-w0-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w0-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w0-dev-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w0-dev-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 16,
+          "measure": 8,
+          "method": "ddmin",
+          "task_id": "ad01-w0-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 16,
+          "measure": 9,
+          "method": "greedy",
+          "task_id": "ad01-w0-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w0-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "greedy",
+          "task_id": "ad01-w0-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 20,
+          "measure": 20,
+          "method": "ddmin",
+          "task_id": "ad01-w0-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 20,
+          "measure": 18,
+          "method": "greedy",
+          "task_id": "ad01-w0-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 17,
+          "measure": 13,
+          "method": "ddmin",
+          "task_id": "ad01-w0-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 17,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w0-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 21,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w0-transfer-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 21,
+          "measure": 12,
+          "method": "greedy",
+          "task_id": "ad01-w0-transfer-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w0-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w0-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 7,
+          "method": "ddmin",
+          "task_id": "ad01-w0-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 9,
+          "method": "greedy",
+          "task_id": "ad01-w0-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 9,
+          "measure": 4,
+          "method": "ddmin",
+          "task_id": "ad01-w0-transfer-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 9,
+          "measure": 4,
+          "method": "greedy",
+          "task_id": "ad01-w0-transfer-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 12,
+          "method": "ddmin",
+          "task_id": "ad01-w0-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w0-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w0-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 14,
+          "method": "greedy",
+          "task_id": "ad01-w0-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 15,
+          "method": "ddmin",
+          "task_id": "ad01-w0-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w0-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w0-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "greedy",
+          "task_id": "ad01-w0-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w0-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w0-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w0-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 6,
+          "method": "greedy",
+          "task_id": "ad01-w0-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 12,
+          "method": "ddmin",
+          "task_id": "ad01-w1-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w1-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w1-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 14,
+          "method": "greedy",
+          "task_id": "ad01-w1-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 15,
+          "method": "ddmin",
+          "task_id": "ad01-w1-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w1-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w1-dev-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w1-dev-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "ddmin",
+          "task_id": "ad01-w1-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "greedy",
+          "task_id": "ad01-w1-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 7,
+          "measure": 4,
+          "method": "ddmin",
+          "task_id": "ad01-w1-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 7,
+          "measure": 3,
+          "method": "greedy",
+          "task_id": "ad01-w1-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 20,
+          "measure": 20,
+          "method": "ddmin",
+          "task_id": "ad01-w1-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 20,
+          "measure": 18,
+          "method": "greedy",
+          "task_id": "ad01-w1-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 17,
+          "measure": 13,
+          "method": "ddmin",
+          "task_id": "ad01-w1-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 17,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w1-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 21,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w1-transfer-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 21,
+          "measure": 12,
+          "method": "greedy",
+          "task_id": "ad01-w1-transfer-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 6,
+          "method": "ddmin",
+          "task_id": "ad01-w1-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 6,
+          "method": "greedy",
+          "task_id": "ad01-w1-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 7,
+          "method": "ddmin",
+          "task_id": "ad01-w1-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 14,
+          "measure": 9,
+          "method": "greedy",
+          "task_id": "ad01-w1-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 12,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w1-transfer-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 12,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w1-transfer-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 12,
+          "method": "ddmin",
+          "task_id": "ad01-w1-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w1-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w1-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 14,
+          "method": "greedy",
+          "task_id": "ad01-w1-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 15,
+          "method": "ddmin",
+          "task_id": "ad01-w1-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w1-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 8,
+          "measure": 4,
+          "method": "ddmin",
+          "task_id": "ad01-w1-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 8,
+          "measure": 3,
+          "method": "greedy",
+          "task_id": "ad01-w1-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 6,
+          "method": "ddmin",
+          "task_id": "ad01-w1-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 8,
+          "method": "greedy",
+          "task_id": "ad01-w1-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 6,
+          "method": "ddmin",
+          "task_id": "ad01-w1-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 6,
+          "method": "greedy",
+          "task_id": "ad01-w1-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 12,
+          "method": "ddmin",
+          "task_id": "ad01-w2-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w2-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w2-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 14,
+          "method": "greedy",
+          "task_id": "ad01-w2-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 15,
+          "method": "ddmin",
+          "task_id": "ad01-w2-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w2-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "ddmin",
+          "task_id": "ad01-w2-dev-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "greedy",
+          "task_id": "ad01-w2-dev-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 12,
+          "measure": 6,
+          "method": "ddmin",
+          "task_id": "ad01-w2-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 12,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w2-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 12,
+          "measure": 6,
+          "method": "ddmin",
+          "task_id": "ad01-w2-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 12,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w2-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 20,
+          "measure": 20,
+          "method": "ddmin",
+          "task_id": "ad01-w2-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 20,
+          "measure": 18,
+          "method": "greedy",
+          "task_id": "ad01-w2-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 17,
+          "measure": 13,
+          "method": "ddmin",
+          "task_id": "ad01-w2-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 17,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w2-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 21,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w2-transfer-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 21,
+          "measure": 12,
+          "method": "greedy",
+          "task_id": "ad01-w2-transfer-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w2-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "greedy",
+          "task_id": "ad01-w2-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 6,
+          "method": "ddmin",
+          "task_id": "ad01-w2-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w2-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w2-transfer-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w2-transfer-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 12,
+          "method": "ddmin",
+          "task_id": "ad01-w2-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 12,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w2-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 16,
+          "method": "ddmin",
+          "task_id": "ad01-w2-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 16,
+          "measure": 14,
+          "method": "greedy",
+          "task_id": "ad01-w2-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 15,
+          "method": "ddmin",
+          "task_id": "ad01-w2-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "graph",
+          "initial_measure": 19,
+          "measure": 10,
+          "method": "greedy",
+          "task_id": "ad01-w2-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w2-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 13,
+          "measure": 7,
+          "method": "greedy",
+          "task_id": "ad01-w2-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 3,
+          "method": "ddmin",
+          "task_id": "ad01-w2-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 10,
+          "measure": 5,
+          "method": "greedy",
+          "task_id": "ad01-w2-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 6,
+          "method": "ddmin",
+          "task_id": "ad01-w2-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "family": "software",
+          "initial_measure": 11,
+          "measure": 6,
+          "method": "greedy",
+          "task_id": "ad01-w2-within-sw-02",
+          "verdict": "preserved"
+        }
+      ],
+      "tasks": 54,
+      "verdicts": {
+        "preserved": 108
+      }
+    }
+  },
+  "method": "offline. no gateway, no dispatch, no store",
+  "namespace": "inv_r1_e2_offline",
+  "replica": {
+    "arms_selected_one_method": true,
+    "distinct_selected": [
+      "seed-sw-ddmin"
+    ],
+    "mean_evidence_by_arm": {
+      "irrelevant": 1.0,
+      "none": 0.0,
+      "relevant": 1.0
+    },
+    "mean_score_by_arm": {
+      "irrelevant": 2.0,
+      "none": 1.0,
+      "relevant": 2.0
+    },
+    "one_selected_method_but_scores_differ": true,
+    "paired_delta": {
+      "irrelevant-minus-none": 1.0,
+      "relevant-minus-none": 1.0
+    },
+    "rows": [
+      {
+        "arm": "irrelevant",
+        "evidence": 1.0,
+        "score": 2.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-00"
+      },
+      {
+        "arm": "irrelevant",
+        "evidence": 1.0,
+        "score": 2.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-01"
+      },
+      {
+        "arm": "irrelevant",
+        "evidence": 1.0,
+        "score": 2.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-02"
+      },
+      {
+        "arm": "none",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-00"
+      },
+      {
+        "arm": "none",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-01"
+      },
+      {
+        "arm": "none",
+        "evidence": 0.0,
+        "score": 1.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-02"
+      },
+      {
+        "arm": "relevant",
+        "evidence": 1.0,
+        "score": 2.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-00"
+      },
+      {
+        "arm": "relevant",
+        "evidence": 1.0,
+        "score": 2.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-01"
+      },
+      {
+        "arm": "relevant",
+        "evidence": 1.0,
+        "score": 2.0,
+        "scored": true,
+        "selected": "seed-sw-ddmin",
+        "task_id": "ad01-w0-within-sw-02"
+      }
+    ],
+    "scored": true,
+    "scores_differ": true
+  },
+  "route": {
+    "casing_mismatch": true,
+    "consequence": "HTTP 200 and the tokens are spent, then the response is refused as RESPONSE_METADATA. Every live send on this route fails after the cost.",
+    "dispatches_spent_by_this_lane": 0,
+    "expected_provider": "nvidia",
+    "normalized_comparisons": [
+      "if resolved_namespace != expected[\"provider\"].lower():",
+      "if provider.lower() != expected[\"provider\"].lower():"
+    ],
+    "note": "repairing it changes what every prior run's validity means, so it is reported and not fixed here",
+    "observed_provider_in_cap_sheet": "Nvidia",
+    "unnormalized_comparison": [
+      "or route[\"provider\"] != expected.get(\"provider\")"
+    ],
+    "unnormalized_line_number": 697
+  },
+  "schema": "inv-r1-e2-offline/1",
+  "scored_named_files": {
+    "distinct": [
+      "",
+      "seed-gr-ddmin",
+      "seed-sw-ddmin"
+    ],
+    "rows": [
+      {
+        "agreement": "pass",
+        "file": "reports/evidence/inv_r1_e2_scored/readings.json",
+        "path": "irrelevant",
+        "scored": true,
+        "selected": "seed-sw-ddmin"
+      },
+      {
+        "agreement": "pass",
+        "file": "reports/evidence/inv_r1_e2_scored/readings.json",
+        "path": "none",
+        "scored": true,
+        "selected": "seed-sw-ddmin"
+      },
+      {
+        "agreement": "pass",
+        "file": "reports/evidence/inv_r1_e2_scored/readings.json",
+        "path": "relevant",
+        "scored": true,
+        "selected": "seed-sw-ddmin"
+      },
+      {
+        "agreement": "pass",
+        "file": "reports/evidence/inv_r1_e2_scored/remaining-contrasts.json",
+        "path": "substitution/flipped",
+        "scored": true,
+        "selected": "seed-sw-ddmin"
+      },
+      {
+        "agreement": "pass",
+        "file": "reports/evidence/inv_r1_e2_scored/remaining-contrasts.json",
+        "path": "substitution/original",
+        "scored": true,
+        "selected": "seed-sw-ddmin"
+      },
+      {
+        "agreement": "absent",
+        "file": "reports/evidence/inv_r1_e2_scored/remaining-contrasts.json",
+        "path": "transfer/arms/adapted",
+        "scored": false,
+        "selected": ""
+      },
+      {
+        "agreement": "absent",
+        "file": "reports/evidence/inv_r1_e2_scored/remaining-contrasts.json",
+        "path": "transfer/arms/target_only",
+        "scored": false,
+        "selected": ""
+      },
+      {
+        "agreement": "pass",
+        "file": "reports/evidence/inv_r1_e2_scored/transfer.json",
+        "path": "arms/adapted",
+        "scored": true,
+        "selected": "seed-gr-ddmin"
+      },
+      {
+        "agreement": "pass",
+        "file": "reports/evidence/inv_r1_e2_scored/transfer.json",
+        "path": "arms/target_only",
+        "scored": true,
+        "selected": "seed-gr-ddmin"
+      }
+    ]
+  },
+  "store_accounting": {
+    "dispatches": 0,
+    "exposure_units": 0,
+    "note": "nothing was sent, so nothing was reserved, settled or billed. the free route costs nothing per call and was not called."
+  },
+  "transfer": {
+    "in_remaining_contrasts": {
+      "any_scored": false,
+      "arms": {
+        "adapted": {
+          "agreement": "absent",
+          "scored": false,
+          "selected": ""
+        },
+        "target_only": {
+          "agreement": "absent",
+          "scored": false,
+          "selected": ""
+        }
+      },
+      "last_commit": "2d48dea 2026-09-27 E2: substitution shows the policy does not read its evidence; retention crossover unchanged"
+    },
+    "in_transfer_json": {
+      "any_scored": true,
+      "arms": {
+        "adapted": {
+          "agreement": "pass",
+          "scored": true,
+          "selected": "seed-gr-ddmin"
+        },
+        "target_only": {
+          "agreement": "pass",
+          "scored": true,
+          "selected": "seed-gr-ddmin"
+        }
+      },
+      "last_commit": "169c341 2026-09-27 E2 transfer re-run: a tie, and it overturns my earlier negative"
+    }
+  },
+  "verdict": {
+    "arms_differed_in_replica": true,
+    "blocking_defect": "the scored observable ties the two eligible methods and every authored verdict in the frozen world is the same word, so a policy that learned to choose the better method scores the same as one that chose the worse one",
+    "gap_claim_partly_stale": true,
+    "gap_claim_verified": true,
+    "instrument_can_separate_a_better_policy": false,
+    "recommendation": "repair the route verification, then re-freeze an experience that names the method and the reduction each record earned, and re-score on a measure that separates normalized reduction before spending further dispatches on E2"
+  }
+}

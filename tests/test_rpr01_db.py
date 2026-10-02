@@ -13,10 +13,8 @@ from settlement.common import payload_digest
 
 
 def _lane_dsn(dsn: str) -> str:
-    from urllib.parse import urlsplit, urlunsplit
-    parts = urlsplit(dsn)
-    return urlunsplit((parts.scheme, parts.netloc, "/settlement_cb01src",
-                       parts.query, ""))
+    from conftest_isolation import dsn_with_dbname
+    return dsn_with_dbname(dsn, "settlement_cb01src")
 
 
 def test_lane_database_is_real_postgresql_16(dsn):

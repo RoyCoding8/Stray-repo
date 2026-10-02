@@ -70,7 +70,7 @@ The use-only benefit calculation reproduces `no-benefit`. That describes these a
 - [x] Accept the real child-dispatch and callback-routing progress at their actual scope.
 - [x] Reproduce C3 artifacts and inspect all retained members.
 - [x] Probe host execution, child identities, protected-target admission and continuing integration gaps.
-- [ ] Worker completes the existing behavioral assignment using the [integration handoff](../WORKER-EC02-AD01-INTEGRATION-FINISH.md).
+- [ ] Worker completes the existing behavioral assignment using the [integration handoff](../docs/HISTORY.md#worker-ec02-ad01-integration-finish).
 - [ ] Run the authorized live remainder after the connected deterministic path is ready; then assess actual initiative, acquisition, benefit and transfer separately.
 
 The design remains at stage 8. No additional architecture or experiment is commissioned here. The useful next step is one coordinator owning complete integration and semantic acceptance, including the work currently left between lanes.

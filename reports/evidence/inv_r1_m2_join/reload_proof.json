@@ -1,0 +1,191 @@
+{
+ "cases": 3,
+ "checks": [
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 13,
+   "field": "initial_measure",
+   "reloaded": 13,
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 3,
+   "field": "final_measure",
+   "reloaded": 3,
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 0.7692307692307693,
+   "field": "normalized_reduction",
+   "reloaded": 0.7692307692307693,
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": "preserved",
+   "field": "verdict",
+   "reloaded": "preserved",
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 4,
+   "field": "queries",
+   "reloaded": 4,
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "field": "source_digest",
+   "reloaded": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": true,
+   "field": "effect_equals_committed_output",
+   "reloaded": true,
+   "task_id": "ad01-w2-within-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 10,
+   "field": "initial_measure",
+   "reloaded": 10,
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 3,
+   "field": "final_measure",
+   "reloaded": 3,
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 0.7,
+   "field": "normalized_reduction",
+   "reloaded": 0.7,
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": "preserved",
+   "field": "verdict",
+   "reloaded": "preserved",
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 4,
+   "field": "queries",
+   "reloaded": 4,
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "field": "source_digest",
+   "reloaded": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": true,
+   "field": "effect_equals_committed_output",
+   "reloaded": true,
+   "task_id": "ad01-w2-within-sw-01"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 10,
+   "field": "initial_measure",
+   "reloaded": 10,
+   "task_id": "ad01-w2-transfer-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 7,
+   "field": "final_measure",
+   "reloaded": 7,
+   "task_id": "ad01-w2-transfer-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 0.3,
+   "field": "normalized_reduction",
+   "reloaded": 0.3,
+   "task_id": "ad01-w2-transfer-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": "preserved",
+   "field": "verdict",
+   "reloaded": "preserved",
+   "task_id": "ad01-w2-transfer-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": 4,
+   "field": "queries",
+   "reloaded": 4,
+   "task_id": "ad01-w2-transfer-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "field": "source_digest",
+   "reloaded": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "task_id": "ad01-w2-transfer-sw-00"
+  },
+  {
+   "agrees": true,
+   "capability_id": "acquired-sw-5b65c917",
+   "committed": true,
+   "field": "effect_equals_committed_output",
+   "reloaded": true,
+   "task_id": "ad01-w2-transfer-sw-00"
+  }
+ ],
+ "checks_failed": 0,
+ "checks_total": 21,
+ "fresh_process": {
+  "environment_scrubbed": true,
+  "inherits_no_gateway_or_study_variables": true,
+  "interpreter": "subprocess, separate from the writer",
+  "reads_only_committed_bytes": true
+ },
+ "no_dispatch": {
+  "authority_admit_study_call_called": false,
+  "broker_dispatch_operation_called": false,
+  "database_opened": false,
+  "dsn_passed": false,
+  "gateway_contacted": false
+ },
+ "proof_version": "inv01-m2-reload-v1",
+ "requirement": "WORKER-STAGE-09-CONNECTED-STUDY.md:51 fresh-process retention/reload; :53 method-to-receipt join",
+ "verdict": "reproduced"
+}

@@ -396,8 +396,7 @@ def _invoke_method(dsn: str, launcher: Any, artifacts_root: Path,
     package = json.loads(raw.decode())
     files = {rel: bytes.fromhex(h) for rel, h in package["files"].items()}
     manifest = package["manifest"]
-    entry = next(e["path"] for e in manifest["files"]
-                 if e.get("kind", "file") != "dir" and e["path"].endswith(".py"))
+    entry = capabilities.resolve_entry_path(manifest)
     operation_id = f"invoke-{tag}"
     method_bytes = files[entry]
     launcher.stage_input(operation_id, execution_version, "method.py",

@@ -1,0 +1,142 @@
+{
+  "version": "ad01-control-distinct-mechanism/1",
+  "question": "why do the control arm and the acquired arm return a byte-identical candidate on 12 of 18 tasks",
+  "verdict": "(b), and stronger than degenerate: the acquired arm never acquired anything",
+  "run_performed": false,
+  "why_no_run": "the gate cannot open on this panel against this acquired arm, and no legal change to the panel makes it open. The measured reason is below. A run would spend 105 dispatches to re-measure a tie whose mechanism is already known and whose cause is upstream of the arm.",
+  "gate_output": {
+    "before": {
+      "source": "reports/evidence/inv_r1_e1_control_arm_result/control_distinct.json",
+      "paired_tasks": 18,
+      "same_strategy": 0,
+      "same_executed_policy": 0,
+      "same_candidate": 12,
+      "unnamed_executed_policy": 0,
+      "differing_budget": 0,
+      "distinct": false,
+      "refusal": "refused: control is not distinct from the acquired arm: 12 task(s) returned a byte-identical candidate on both arms"
+    },
+    "after": {
+      "paired_tasks": 18,
+      "same_strategy": 0,
+      "same_executed_policy": 0,
+      "same_source": 0,
+      "same_candidate": 12,
+      "unnamed_executed_policy": 0,
+      "one_arm_returned_no_candidate": 0,
+      "differing_budget": 0,
+      "distinct": false,
+      "refusal": "refused: control is not distinct from the acquired arm: 12 task(s) returned a byte-identical candidate on both arms"
+    },
+    "note": "byte-identical on every leg the recorded run exercises. The two new legs are absent there because the run has neither a shared source nor an absent candidate."
+  },
+  "mechanism": {
+    "summary": "the 12 agreements are two different causes and the run's evidence does not distinguish them; the query trace does",
+    "same_walk": {
+      "count": 9,
+      "tasks": [
+        "ad01-w0-transfer-gr-00", "ad01-w0-within-gr-00", "ad01-w0-within-gr-01",
+        "ad01-w1-transfer-gr-00", "ad01-w1-within-gr-00", "ad01-w1-within-gr-01",
+        "ad01-w2-transfer-gr-00", "ad01-w2-within-gr-00", "ad01-w2-within-gr-01"
+      ],
+      "cause": "the acquired body and the control's greedy issued the same four queries in the same order and got the same answers",
+      "why": "on graph the acquired body is reducers.greedy_reduce under a different atomisation, so the candidates are byte-identical on 9 of 9"
+    },
+    "same_answer": {
+      "count": 3,
+      "tasks": [
+        "ad01-w0-transfer-sw-00", "ad01-w0-within-sw-00", "ad01-w2-within-sw-00"
+      ],
+      "cause": "the two arms issued different queries, got different answers, and still finished on the same program",
+      "why": "the preserved minimum on this panel is unique, so any two correct reducers must return the same bytes"
+    },
+    "differ": {
+      "count": 6,
+      "note": "all software, and all six are tasks where one or both arms stopped on budget rather than on irreducibility"
+    }
+  },
+  "measurements": {
+    "acquired_source_is_repo_constant": {
+      "executed_source_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+      "matches": "experiments/doubles.py::ACQUIRED_ORDER_SOURCE",
+      "byte_identical": true,
+      "gateway": "recording-double",
+      "model": "inv01-study-double",
+      "same_bytes_in_all_three_worlds": true,
+      "member_origin_field": null,
+      "freeze_label": "model-acquired",
+      "label_is_evidenced": false
+    },
+    "acquired_equals_control_greedy_on_graph": "9/9",
+    "acquired_names_a_strategy_token": false,
+    "unique_preserved_minimum_under_40_random_orders": "1 distinct minimum on 18/18 tasks",
+    "ddmin_vs_greedy_distinct_at_budget_4": "18/18",
+    "arms_reaching_the_forced_minimum": {"acquired": "15/18", "control": "14/18"},
+    "by_family": {
+      "graph": {"agree": "9/9", "acquired_at_minimum": "9/9", "control_at_minimum": "9/9"},
+      "software": {"agree": "3/9", "acquired_at_minimum": "6/9", "control_at_minimum": "5/9"}
+    }
+  },
+  "the_three_candidates": {
+    "a_tasks_too_easy": {
+      "true": false,
+      "evidence": "ddmin and greedy return different candidates on 18 of 18 tasks at the run's own budget of 4. The panel discriminates between two strategies. Tuning it further would be tuning toward a passing gate, which is the constant panel inverted."
+    },
+    "b_acquired_arm_degenerate": {
+      "true": true,
+      "evidence": "the acquired arm is a one-atom-at-a-time greedy shrink with a bulk step over non-chain atoms, names no strategy token anywhere, and its bytes are a hand-authored repo constant replayed by a recording double rather than anything a model produced. On graph, where the bulk step does not apply, it is exactly reducers.greedy_reduce."
+    },
+    "c_gate_measures_the_wrong_thing": {
+      "true": "partly, and only for the 3 software agreements",
+      "evidence": "candidate distinctness is unachievable by any two correct reducers when the preserved minimum is unique, which it is on 18 of 18. The leg cannot tell forced convergence from degeneracy. It also cannot see the query walk, because the record carries no trace.",
+      "what_the_gate_should_compare": "the query trace, not the returned bytes. A trace distinguishes the 9 degenerate agreements from the 3 forced ones, and the record does not carry one, so that comparison needs a record change rather than a gate change."
+    }
+  },
+  "gate_changes_made": {
+    "rationale": "only changes that make the gate refuse more were made. The measured 12 agreements are not a gate defect, so nothing was relaxed to accommodate them.",
+    "legs_added": [
+      {
+        "name": "same_source",
+        "why": "two ids over one byte-identical executed_source, the C15 shape. The strategy leg is silent when the body names no strategy and the candidate leg is silent when the candidates differ, so this reported distinct.",
+        "measured_before": "distinct: True",
+        "measured_after": "refused: 1 task(s) ran one byte-identical source on both arms"
+      },
+      {
+        "name": "one_arm_returned_no_candidate",
+        "why": "_candidate_of answers {} for a record with no output, so an arm that returned nothing digested as the empty candidate and the other arm's bytes read as different from it",
+        "measured_before": "distinct: True",
+        "measured_after": "refused: 1 task(s) returned a candidate on one arm only"
+      }
+    ],
+    "mutation_proving_the_gate_still_refuses": {
+      "construction": "one arm against a byte-for-byte copy of itself, the strongest non-distinct pair a record can express",
+      "result": "every leg fires: same_executed_policy, same_source, same_candidate, same_strategy",
+      "test": "tests/test_ad01_control_distinct_absence.py::test_an_identical_arm_is_still_refused_on_every_leg"
+    },
+    "refusal_is_not_vacuous": {
+      "test": "tests/test_ad01_control_distinct_absence.py::test_genuinely_distinct_arms_still_pass",
+      "result": "different ids, byte-different sources, different candidates still report distinct, so the new legs do not make the gate refuse everything"
+    },
+    "existing_tests": "40 pass across tests/test_ad01_control_distinctness.py, tests/test_inv_r1_authored_control.py and tests/test_inv01_control_arm_in_study.py"
+  },
+  "conflict_reported_not_edited": {
+    "path": "experiments/doubles.py",
+    "issue": "ACQUIRED_ORDER_SOURCE is served as the construction response for the acquired arm, so every run built on this double measures a hand-authored constant against the authored control. trajectory.py:863 and trajectory.py:980 write origin='model-acquired' unconditionally, and policy_step.verify_policy_record checks only that the label is a known string, never that a model produced the bytes.",
+    "why_not_edited": "outside this lane's owned paths, and shared with the C3 qualification and replay tests that assert the constant",
+    "suggested_fix_for_the_owning_lane": "make the origin label conditional on evidence that a model produced the bytes, and have the freeze refuse a member whose origin is asserted rather than evidenced"
+  },
+  "cost": {
+    "note": "no run was performed, so there is no spend to report. The prior run's cost is unchanged and remains in reports/evidence/inv_r1_e1_control_arm_result/cost.json",
+    "prior_run": {
+      "dispatch_allowance": {"operations": 105, "settled": 105, "unsettled": 0, "uncertain": 0, "status": "REPORTED"},
+      "reservation_allowance": {"study_units_authorized": 1673728, "campaign_units": 209216, "campaigns": 6},
+      "provider_billing": {"status": "NOT_REPORTED", "reason": "recording doubles bill false; the run made no provider call to bill"},
+      "internal_held_units": {"free_units": 209216, "status": "REPORTED"}
+    },
+    "this_lane": {
+      "dispatch_allowance": {"operations": 0, "status": "REPORTED", "uncertain": 0},
+      "provider_billing": {"status": "NOT_REPORTED", "reason": "no provider call was made"},
+      "internal_held_units": {"status": "REPORTED", "free_units": "unchanged, no store was opened"}
+    }
+  }
+}

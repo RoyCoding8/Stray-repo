@@ -2,7 +2,7 @@
 
 Status: selected next design, subject to explicit experimental reversal conditions. Design owner: Codex. Source baseline: `7e87d739344d30e3304bd6d96d38c955abcc4bce`. This packet completes the present design pass; it does not claim that the target architecture is implemented or empirically superior.
 
-Read [research and its limits](RSI-RESEARCH-2026-09-22.md), then the [worker assignment](../../WORKER-INVESTIGATION-LEARNING-02.md). Historical experiments retain their original contracts and evidence.
+Read [research and its limits](RSI-RESEARCH-2026-09-22.md), then the [worker assignment](../HISTORY.md#worker-investigation-learning-02). Historical experiments retain their original contracts and evidence.
 
 ## 1. Purpose and the architectural decision
 

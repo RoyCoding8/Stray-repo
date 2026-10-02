@@ -1,0 +1,151 @@
+{
+ "attempts": [
+  {
+   "arm": "P2",
+   "attempt": 1,
+   "candidate_digest": null,
+   "dispatch": {
+    "accepted_candidate_digest": null,
+    "arm": "P2",
+    "artifact_digest": null,
+    "attempt": 1,
+    "billed": "unknown",
+    "charge_units": "unknown",
+    "details": {
+     "raw_payload": {
+      "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: [{\"predictor_digest\":\"97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f\",\"queries\":8,\"score_overall\":1.0,\"seed\":3,\"split\":\"dev\",\"task_id\":\"rule-dev-2316866b700a\"},{\"predictor_digest\":\"7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515\",\"queries\":8,\"score_overall\":0.75,\"seed\":7,\"split\":\"dev\",\"task_id\":\"rule-dev-398b02c4f7e9\"}]. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+      "raw_response": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits) and 4 outputs. The predictor is a Boolean function from 4 bits to 4 bits. The class: each output is an affine function of the 4 inputs, optionally XORed with one pairwise product (i.e., AND of two inputs). So each output can be expressed as: c0 + c1*x1 + c2*x2 + c3*x3 + c4*x4 + d*(xi * xj) where d is 0 or 1, and if d=1, we have exactly one pairwise product term (i,j). The affine part is linear over GF(2) plus constant. So each output is a Boolean function of degree at most 2, with at most one quadratic term (and that quadratic term is a single AND of two variables). The class size is 224, which matches: For each output, number of affine functions on 4 variables: 2^(4+1)=32. For each affine function, we can optionally add one of the 6 possible pairwise products (x1x2, x1x3, x1x4, x2x3, x2x4, x3x4) or none. So 32 * 7 = 224 per output. But the class size is 224 total? Wait: \"class_size\":224. That might be the total number of functions in the hypothesis class for the entire 4-output function? Or per output? Usually class_size is the number of hypotheses in the class. Since there are 4 outputs, if each output is chosen independently from a set of 224, then total would be 224^4, huge. But they say class_size:224. So likely the hypothesis class is a set of 224 functions from 4 bits to 4 bits. That means the 4 outputs are not independent; they are jointly defined by a single hypothesis from a class of size 224. The description: \"affine over four inputs, optionally XORed with one pairwise input product\". That might mean the entire 4-output function is an affine transformation (4x4 matrix plus constant) optionally XORed with a single pairwise product (which is a 4-bit vector? Or each output gets the same pairwise product? Or the pairwise product is a scalar that is XORed to each output? Let's interpret.\n\nWe have 4 inputs, 4 outputs. \"affine over four inputs\" suggests an affine map from GF(2)^4 to GF(2)^4: y = A x + b, where A is 4x4 matrix, b is 4-bit vector. That's 4*4 + 4 = 20 bits, so 2^20 = 1,048,576 possibilities. But class size is 224, much smaller. \"optionally XORed with one pairwise input product\" suggests we take an affine function and then optionally add (XOR) a term that is a pairwise product of two inputs, but that pairwise product is a single bit (since product of two bits). But XORing a single bit to a 4-bit output? That would mean we XOR the same bit to all 4 outputs? Or we have a 4-bit mask for the pairwise product? The description: \"optionally XORed with one pairwise input product\". Could be: each output is affine plus optionally the same pairwise product (i.e., a single quadratic term that is added to all outputs? But then the quadratic term is a scalar, so it would be added to each output? That would be 4 bits all getting the same quadratic term. That would give: y = A x + b + (xi * xj) * v, where v is a 4-bit vector? But then v could be any 4-bit vector, increasing possibilities.\n\nLet's compute class size: If we have an affine map (20 bits) plus optionally a pairwise product: there are 6 possible pairs. For each pair, we can choose to add it to the output? But how? If we add the same scalar to all outputs, that's just adding a constant vector? Actually, if we add (xi*xj) to each output, that's equivalent to adding (xi*xj) * (1,1,1,1). But we could also add it to a subset of outputs. The phrase \"optionally XORed with one pairwise input product\" might mean: the function is of the form f(x) = L(x) + c + (xi * xj) * m, where L is linear (4x4 matrix), c is constant 4-bit, m is a 4-bit mask (which outputs get the product). But then the number of parameters: L: 16 bits, c: 4 bits, choice of pair: 6+1=7 (including none), mask m: 16 possibilities (but if pair is none, mask irrelevant). That would be 2^20 * 7 * 16? Too large.\n\nMaybe the hypothesis class is: each output is an affine function of the inputs, and all outputs share the same optional pairwise product term? But then each output has its own affine coefficients, but the quadratic term is either present or not, and if present, it's the same pair for all outputs? And the quadratic term is added (XORed) to each output? That would be: for each output k: y_k = a_k0 + sum_i a_ki x_i + d * (x_p * x_q), where d is 0 or 1, and (p,q) is one of 6 pairs, same for all outputs. Then number of hypotheses: For each output, affine: 32 possibilities. 4 outputs: 32^4 = 1,048,576. Times 7 for the quadratic option? That's huge.\n\nBut class_size is 224. 224 = 32 * 7. That is exactly the number of functions for a single output: 32 affine functions times 7 choices (6 pairs + none). So maybe the hypothesis class is for a single Boolean function? But the task has 4 outputs. The observed data: each x is a number 0-15 (4 bits), y is a list of 4 bits. So the target is a function from 4 bits to 4 bits. The hypothesis class might be a set of 224 such vector functions. How can a vector function be described by 224 possibilities? Perhaps the 4 outputs are not independent; they are all the same function? But observed y vectors differ across outputs: e.g., x=1 -> y=[0,0,1,0]; x=4 -> [0,0,0,0]; etc. So outputs are different.\n\nWait: \"affine over four inputs, optionally XORed with one pairwise input product\" could describe the form of each output bit, but the hypothesis class might be the set of all 4-output functions where each output bit is of that form, but with the constraint that the pairwise product (if used) is the same across all outputs? That would give: For each output, choose an affine function (32 choices). For the quadratic term: choose a pair (6 choices) or none (1), and then for each output, choose whether to include that quadratic term (2^4=16). But if we include the quadratic term, it's the same pair for all outputs. That would be: 32^4 * (1 + 6*15) = 32^4 * 91, huge.\n\nMaybe the hypothesis class is: the function is an affine map from GF(2)^4 to GF(2)^4, and then we optionally add a rank-1 quadratic term? For example, y = A x + b + (x_i x_j) * v, where v is a fixed 4-bit vector. That would be: A (16 bits), b (4 bits), choice of pair (6+1), v (4 bits) but if pair none, v irrelevant. That's 2^20 * 7 * 16 = huge.\n\nAlternatively, maybe the class size 224 refers to the number of possible functions for each output, and the predictor must specify a function for each output independently? But the instruction says: \"Commit one executable predictor built only from the public hypothesis class.\" The predictor spec format: {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. That is an array of 4 objects, each for one output. Each object has: const (0/1), mask (0..15), pair (null or [i,j]). This matches exactly the description: each output is an affine function (const + linear combination of inputs given by mask) optionally XORed with one pairwise product (pair). The mask is 4 bits? Since mask is 0..15, it's a 4-bit mask indicating which input variables are included in the linear part. The constant is the affine constant. The pair is either null or a pair of indices (i,j) from 0..3? Probably indices 0-3 for the four inputs. So each output is: y_k = const_k XOR (sum_{i in mask_k} x_i) XOR (x"
+     },
+     "route": {
+      "adapter": "http",
+      "contract": "settlement-gateway/http-chat-completions-v1",
+      "endpoint": "http://localhost:4000/v1",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "provider": "Nvidia",
+      "request_endpoint": "http://localhost:4000/v1",
+      "response_received": true,
+      "returned_endpoint": null,
+      "tier": "free"
+     },
+     "stop_reason": "length",
+     "usage": {
+      "billed": "unknown",
+      "charge_scale": "unknown",
+      "charge_units": "unknown",
+      "input_tokens": 578,
+      "output_tokens": 2048,
+      "provider_enforced_ceiling": "unknown"
+     }
+    },
+    "dispatch_evidence_digest": null,
+    "driver_digest": null,
+    "endpoint": "http://localhost:4000/v1",
+    "evidence_digest": "31e7eb7d7f15f60af4855e6589493bc13a4fde2a4ea0d00ff2175df61baef714",
+    "input_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+    "kind": "gateway-dispatch",
+    "operation_id": "invl02-output-296693cd08b8-P2-qual-0011-a1",
+    "operation_payload_digest": null,
+    "outcome": "success",
+    "package_digest": null,
+    "parent_digest": null,
+    "parse_outcome": "pending",
+    "prompt_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+    "provider": "Nvidia",
+    "raw_payload_digest": "46d2a05bc059e96e76191c64237812af6f991de8c8e89be499f55a1364ca6d76",
+    "raw_prompt": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: [{\"predictor_digest\":\"97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f\",\"queries\":8,\"score_overall\":1.0,\"seed\":3,\"split\":\"dev\",\"task_id\":\"rule-dev-2316866b700a\"},{\"predictor_digest\":\"7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515\",\"queries\":8,\"score_overall\":0.75,\"seed\":7,\"split\":\"dev\",\"task_id\":\"rule-dev-398b02c4f7e9\"}]. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+    "raw_response": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits) and 4 outputs. The predictor is a Boolean function from 4 bits to 4 bits. The class: each output is an affine function of the 4 inputs, optionally XORed with one pairwise product (i.e., AND of two inputs). So each output can be expressed as: c0 + c1*x1 + c2*x2 + c3*x3 + c4*x4 + d*(xi * xj) where d is 0 or 1, and if d=1, we have exactly one pairwise product term (i,j). The affine part is linear over GF(2) plus constant. So each output is a Boolean function of degree at most 2, with at most one quadratic term (and that quadratic term is a single AND of two variables). The class size is 224, which matches: For each output, number of affine functions on 4 variables: 2^(4+1)=32. For each affine function, we can optionally add one of the 6 possible pairwise products (x1x2, x1x3, x1x4, x2x3, x2x4, x3x4) or none. So 32 * 7 = 224 per output. But the class size is 224 total? Wait: \"class_size\":224. That might be the total number of functions in the hypothesis class for the entire 4-output function? Or per output? Usually class_size is the number of hypotheses in the class. Since there are 4 outputs, if each output is chosen independently from a set of 224, then total would be 224^4, huge. But they say class_size:224. So likely the hypothesis class is a set of 224 functions from 4 bits to 4 bits. That means the 4 outputs are not independent; they are jointly defined by a single hypothesis from a class of size 224. The description: \"affine over four inputs, optionally XORed with one pairwise input product\". That might mean the entire 4-output function is an affine transformation (4x4 matrix plus constant) optionally XORed with a single pairwise product (which is a 4-bit vector? Or each output gets the same pairwise product? Or the pairwise product is a scalar that is XORed to each output? Let's interpret.\n\nWe have 4 inputs, 4 outputs. \"affine over four inputs\" suggests an affine map from GF(2)^4 to GF(2)^4: y = A x + b, where A is 4x4 matrix, b is 4-bit vector. That's 4*4 + 4 = 20 bits, so 2^20 = 1,048,576 possibilities. But class size is 224, much smaller. \"optionally XORed with one pairwise input product\" suggests we take an affine function and then optionally add (XOR) a term that is a pairwise product of two inputs, but that pairwise product is a single bit (since product of two bits). But XORing a single bit to a 4-bit output? That would mean we XOR the same bit to all 4 outputs? Or we have a 4-bit mask for the pairwise product? The description: \"optionally XORed with one pairwise input product\". Could be: each output is affine plus optionally the same pairwise product (i.e., a single quadratic term that is added to all outputs? But then the quadratic term is a scalar, so it would be added to each output? That would be 4 bits all getting the same quadratic term. That would give: y = A x + b + (xi * xj) * v, where v is a 4-bit vector? But then v could be any 4-bit vector, increasing possibilities.\n\nLet's compute class size: If we have an affine map (20 bits) plus optionally a pairwise product: there are 6 possible pairs. For each pair, we can choose to add it to the output? But how? If we add the same scalar to all outputs, that's just adding a constant vector? Actually, if we add (xi*xj) to each output, that's equivalent to adding (xi*xj) * (1,1,1,1). But we could also add it to a subset of outputs. The phrase \"optionally XORed with one pairwise input product\" might mean: the function is of the form f(x) = L(x) + c + (xi * xj) * m, where L is linear (4x4 matrix), c is constant 4-bit, m is a 4-bit mask (which outputs get the product). But then the number of parameters: L: 16 bits, c: 4 bits, choice of pair: 6+1=7 (including none), mask m: 16 possibilities (but if pair is none, mask irrelevant). That would be 2^20 * 7 * 16? Too large.\n\nMaybe the hypothesis class is: each output is an affine function of the inputs, and all outputs share the same optional pairwise product term? But then each output has its own affine coefficients, but the quadratic term is either present or not, and if present, it's the same pair for all outputs? And the quadratic term is added (XORed) to each output? That would be: for each output k: y_k = a_k0 + sum_i a_ki x_i + d * (x_p * x_q), where d is 0 or 1, and (p,q) is one of 6 pairs, same for all outputs. Then number of hypotheses: For each output, affine: 32 possibilities. 4 outputs: 32^4 = 1,048,576. Times 7 for the quadratic option? That's huge.\n\nBut class_size is 224. 224 = 32 * 7. That is exactly the number of functions for a single output: 32 affine functions times 7 choices (6 pairs + none). So maybe the hypothesis class is for a single Boolean function? But the task has 4 outputs. The observed data: each x is a number 0-15 (4 bits), y is a list of 4 bits. So the target is a function from 4 bits to 4 bits. The hypothesis class might be a set of 224 such vector functions. How can a vector function be described by 224 possibilities? Perhaps the 4 outputs are not independent; they are all the same function? But observed y vectors differ across outputs: e.g., x=1 -> y=[0,0,1,0]; x=4 -> [0,0,0,0]; etc. So outputs are different.\n\nWait: \"affine over four inputs, optionally XORed with one pairwise input product\" could describe the form of each output bit, but the hypothesis class might be the set of all 4-output functions where each output bit is of that form, but with the constraint that the pairwise product (if used) is the same across all outputs? That would give: For each output, choose an affine function (32 choices). For the quadratic term: choose a pair (6 choices) or none (1), and then for each output, choose whether to include that quadratic term (2^4=16). But if we include the quadratic term, it's the same pair for all outputs. That would be: 32^4 * (1 + 6*15) = 32^4 * 91, huge.\n\nMaybe the hypothesis class is: the function is an affine map from GF(2)^4 to GF(2)^4, and then we optionally add a rank-1 quadratic term? For example, y = A x + b + (x_i x_j) * v, where v is a fixed 4-bit vector. That would be: A (16 bits), b (4 bits), choice of pair (6+1), v (4 bits) but if pair none, v irrelevant. That's 2^20 * 7 * 16 = huge.\n\nAlternatively, maybe the class size 224 refers to the number of possible functions for each output, and the predictor must specify a function for each output independently? But the instruction says: \"Commit one executable predictor built only from the public hypothesis class.\" The predictor spec format: {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. That is an array of 4 objects, each for one output. Each object has: const (0/1), mask (0..15), pair (null or [i,j]). This matches exactly the description: each output is an affine function (const + linear combination of inputs given by mask) optionally XORed with one pairwise product (pair). The mask is 4 bits? Since mask is 0..15, it's a 4-bit mask indicating which input variables are included in the linear part. The constant is the affine constant. The pair is either null or a pair of indices (i,j) from 0..3? Probably indices 0-3 for the four inputs. So each output is: y_k = const_k XOR (sum_{i in mask_k} x_i) XOR (x",
+    "receipt_identity": "evidence:3c4da011c0de561966440b89f2c968cce9be028fe17216f01a45af56d7447dc1",
+    "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "requested_output_cap": 2048,
+    "response_digest": "7d824780539eb57b898da4aa2f6d87a621a8100feabb4d77b6457259606299cd",
+    "result_digest": "7d824780539eb57b898da4aa2f6d87a621a8100feabb4d77b6457259606299cd",
+    "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "round": 4,
+    "route_digest": "10ebeff23417465d44249c4d042049578a8920c45704f826ea77974a5dd5f1d3",
+    "route_error": null,
+    "source_digest": null,
+    "stop_reason": "length",
+    "task_id": "rule-qual-194dba80c87f",
+    "tier": "free",
+    "usage": {
+     "billed": "unknown",
+     "charge_scale": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": 578,
+     "output_tokens": 2048,
+     "provider_enforced_ceiling": "unknown"
+    },
+    "version": "invl02-evidence-v2"
+   },
+   "operation_id": "invl02-output-296693cd08b8-P2-qual-0011-a1",
+   "outcome": "invalid-program",
+   "raw_response": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits) and 4 outputs. The predictor is a Boolean function from 4 bits to 4 bits. The class: each output is an affine function of the 4 inputs, optionally XORed with one pairwise product (i.e., AND of two inputs). So each output can be expressed as: c0 + c1*x1 + c2*x2 + c3*x3 + c4*x4 + d*(xi * xj) where d is 0 or 1, and if d=1, we have exactly one pairwise product term (i,j). The affine part is linear over GF(2) plus constant. So each output is a Boolean function of degree at most 2, with at most one quadratic term (and that quadratic term is a single AND of two variables). The class size is 224, which matches: For each output, number of affine functions on 4 variables: 2^(4+1)=32. For each affine function, we can optionally add one of the 6 possible pairwise products (x1x2, x1x3, x1x4, x2x3, x2x4, x3x4) or none. So 32 * 7 = 224 per output. But the class size is 224 total? Wait: \"class_size\":224. That might be the total number of functions in the hypothesis class for the entire 4-output function? Or per output? Usually class_size is the number of hypotheses in the class. Since there are 4 outputs, if each output is chosen independently from a set of 224, then total would be 224^4, huge. But they say class_size:224. So likely the hypothesis class is a set of 224 functions from 4 bits to 4 bits. That means the 4 outputs are not independent; they are jointly defined by a single hypothesis from a class of size 224. The description: \"affine over four inputs, optionally XORed with one pairwise input product\". That might mean the entire 4-output function is an affine transformation (4x4 matrix plus constant) optionally XORed with a single pairwise product (which is a 4-bit vector? Or each output gets the same pairwise product? Or the pairwise product is a scalar that is XORed to each output? Let's interpret.\n\nWe have 4 inputs, 4 outputs. \"affine over four inputs\" suggests an affine map from GF(2)^4 to GF(2)^4: y = A x + b, where A is 4x4 matrix, b is 4-bit vector. That's 4*4 + 4 = 20 bits, so 2^20 = 1,048,576 possibilities. But class size is 224, much smaller. \"optionally XORed with one pairwise input product\" suggests we take an affine function and then optionally add (XOR) a term that is a pairwise product of two inputs, but that pairwise product is a single bit (since product of two bits). But XORing a single bit to a 4-bit output? That would mean we XOR the same bit to all 4 outputs? Or we have a 4-bit mask for the pairwise product? The description: \"optionally XORed with one pairwise input product\". Could be: each output is affine plus optionally the same pairwise product (i.e., a single quadratic term that is added to all outputs? But then the quadratic term is a scalar, so it would be added to each output? That would be 4 bits all getting the same quadratic term. That would give: y = A x + b + (xi * xj) * v, where v is a 4-bit vector? But then v could be any 4-bit vector, increasing possibilities.\n\nLet's compute class size: If we have an affine map (20 bits) plus optionally a pairwise product: there are 6 possible pairs. For each pair, we can choose to add it to the output? But how? If we add the same scalar to all outputs, that's just adding a constant vector? Actually, if we add (xi*xj) to each output, that's equivalent to adding (xi*xj) * (1,1,1,1). But we could also add it to a subset of outputs. The phrase \"optionally XORed with one pairwise input product\" might mean: the function is of the form f(x) = L(x) + c + (xi * xj) * m, where L is linear (4x4 matrix), c is constant 4-bit, m is a 4-bit mask (which outputs get the product). But then the number of parameters: L: 16 bits, c: 4 bits, choice of pair: 6+1=7 (including none), mask m: 16 possibilities (but if pair is none, mask irrelevant). That would be 2^20 * 7 * 16? Too large.\n\nMaybe the hypothesis class is: each output is an affine function of the inputs, and all outputs share the same optional pairwise product term? But then each output has its own affine coefficients, but the quadratic term is either present or not, and if present, it's the same pair for all outputs? And the quadratic term is added (XORed) to each output? That would be: for each output k: y_k = a_k0 + sum_i a_ki x_i + d * (x_p * x_q), where d is 0 or 1, and (p,q) is one of 6 pairs, same for all outputs. Then number of hypotheses: For each output, affine: 32 possibilities. 4 outputs: 32^4 = 1,048,576. Times 7 for the quadratic option? That's huge.\n\nBut class_size is 224. 224 = 32 * 7. That is exactly the number of functions for a single output: 32 affine functions times 7 choices (6 pairs + none). So maybe the hypothesis class is for a single Boolean function? But the task has 4 outputs. The observed data: each x is a number 0-15 (4 bits), y is a list of 4 bits. So the target is a function from 4 bits to 4 bits. The hypothesis class might be a set of 224 such vector functions. How can a vector function be described by 224 possibilities? Perhaps the 4 outputs are not independent; they are all the same function? But observed y vectors differ across outputs: e.g., x=1 -> y=[0,0,1,0]; x=4 -> [0,0,0,0]; etc. So outputs are different.\n\nWait: \"affine over four inputs, optionally XORed with one pairwise input product\" could describe the form of each output bit, but the hypothesis class might be the set of all 4-output functions where each output bit is of that form, but with the constraint that the pairwise product (if used) is the same across all outputs? That would give: For each output, choose an affine function (32 choices). For the quadratic term: choose a pair (6 choices) or none (1), and then for each output, choose whether to include that quadratic term (2^4=16). But if we include the quadratic term, it's the same pair for all outputs. That would be: 32^4 * (1 + 6*15) = 32^4 * 91, huge.\n\nMaybe the hypothesis class is: the function is an affine map from GF(2)^4 to GF(2)^4, and then we optionally add a rank-1 quadratic term? For example, y = A x + b + (x_i x_j) * v, where v is a fixed 4-bit vector. That would be: A (16 bits), b (4 bits), choice of pair (6+1), v (4 bits) but if pair none, v irrelevant. That's 2^20 * 7 * 16 = huge.\n\nAlternatively, maybe the class size 224 refers to the number of possible functions for each output, and the predictor must specify a function for each output independently? But the instruction says: \"Commit one executable predictor built only from the public hypothesis class.\" The predictor spec format: {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. That is an array of 4 objects, each for one output. Each object has: const (0/1), mask (0..15), pair (null or [i,j]). This matches exactly the description: each output is an affine function (const + linear combination of inputs given by mask) optionally XORed with one pairwise product (pair). The mask is 4 bits? Since mask is 0..15, it's a 4-bit mask indicating which input variables are included in the linear part. The constant is the affine constant. The pair is either null or a pair of indices (i,j) from 0..3? Probably indices 0-3 for the four inputs. So each output is: y_k = const_k XOR (sum_{i in mask_k} x_i) XOR (x",
+   "reason": "response of 7314 characters exceeds the frozen limit of 512",
+   "score": null
+  }
+ ],
+ "campaign_id": "w1-e1-boolean-r2",
+ "campaign_version": "w1-e1-boolean-campaign-v2",
+ "guard_status": {
+  "ceiling": 16,
+  "ceiling_reached": false,
+  "cost_blocked": null,
+  "dispatch_count": 6,
+  "pinned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refunded_dispatch_count": 0,
+  "refusal_kind": "",
+  "refusal_reason": "",
+  "spent_dispatch_count": 6,
+  "version": "invl02-live-v1"
+ },
+ "lineage": "L02-P2",
+ "offline_verified": true,
+ "protocol": "invl02-output-shape-550b-r4-v1",
+ "queries_spent": 8,
+ "reference_scores": {
+  "oracle_overall": 1.0,
+  "zero_predictor_overall": 0.0625
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "schema": "invl02-live-preflight-run-v1",
+ "score_floor": 1.0,
+ "seed": 11,
+ "split": "qual",
+ "study_root": "w1-e1-boolean-r2",
+ "task_id": "rule-qual-194dba80c87f",
+ "treatment": "P2",
+ "treatment_meaning": "prior-task summary: two dev-split predictor digests and their scores, no program text",
+ "verdict": {
+  "arm": "P2",
+  "attempt": 1,
+  "endpoint": "http://localhost:4000/v1",
+  "operation_id": "invl02-output-296693cd08b8-P2-qual-0011-a1",
+  "outcome": "invalid-program",
+  "prompt_digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2",
+  "provider": "Nvidia",
+  "reason": "response of 7314 characters exceeds the frozen limit of 512",
+  "recomputable": true,
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "response_digest": "7d824780539eb57b898da4aa2f6d87a621a8100feabb4d77b6457259606299cd",
+  "returned_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "route_error": null,
+  "stop_reason": "length",
+  "tier": "free",
+  "usage": {
+   "billed": "unknown",
+   "charge_scale": "unknown",
+   "charge_units": "unknown",
+   "input_tokens": 578,
+   "output_tokens": 2048,
+   "provider_enforced_ceiling": "unknown"
+  }
+ },
+ "version": "invl02-live-preflight-v1",
+ "written_at": "2026-09-30T04:36:11Z"
+}

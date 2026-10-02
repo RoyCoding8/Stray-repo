@@ -1,0 +1,61 @@
+{
+  "family": "software",
+  "fault": "stale-read",
+  "ops": [
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "id": "o0",
+      "key": "c",
+      "op": "get"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v4"
+    }
+  ],
+  "seed": 7503,
+  "slack": 4,
+  "task_id": "exp-w2-transfer-sw-02",
+  "template": "stale-read-3chain",
+  "witness": {
+    "faulty": {
+      "type": "str",
+      "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+      "type": "str",
+      "value": "v2"
+    }
+  }
+}

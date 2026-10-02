@@ -1,0 +1,49 @@
+#!/bin/sh
+# Requires the caller to name every path in the commit message. Git records no
+# identity for a staged path, so a message is the only statement of intent the
+# committer makes per commit. This runs as prepare-commit-msg, not pre-commit,
+# because pre-commit fires while COMMIT_EDITMSG still holds the previous
+# message; here git passes the assembled message in as $1.
+set -eu
+# git diff --name-only quotes a path holding a space, and the Scope grammar is
+# space-separated, so a path with a space is not nameable. A staged one now
+# demands Scope: ALL; an unnameable one is reported rather than waved through.
+set -f
+
+msg=$1
+[ -f "$msg" ] || exit 0
+case ${2-} in
+merge | squash | commit) exit 0 ;;
+esac
+
+staged=$(git diff --cached --name-only)
+[ -n "$staged" ] || exit 0
+
+if grep -qxF 'Scope: ALL' "$msg"; then
+    exit 0
+fi
+
+wanted=$(sed -n 's/^Scope: //p' "$msg")
+if [ -z "$wanted" ]; then
+    printf 'prepare-commit-msg: this repo requires a Scope trailer naming every path.\n' >&2
+    printf '  Scope: path/to/a path/to/b\n' >&2
+    printf '  Scope: ALL   (escape hatch, see docs/COMMIT-SCOPE.md)\n' >&2
+    exit 1
+fi
+
+for p in $wanted; do
+    printf '%s\n' "$staged" | grep -qxF -- "$p" || {
+        printf 'prepare-commit-msg: Scope names "%s", which is not staged.\n' "$p" >&2
+        exit 1
+    }
+done
+
+for p in $staged; do
+    printf '%s\n' $wanted | grep -qxF -- "$p" || {
+        printf 'prepare-commit-msg: "%s" is staged but absent from Scope.\n' "$p" >&2
+        printf '  Unstage it, name it, or state the real intent and accept the wrong message.\n' >&2
+        exit 1
+    }
+done
+
+exit 0

@@ -1,9 +1,9 @@
 """INV-B1 gate: executable contracts, agreed rendering, admitted C3 path.
 
-Real Postgres (`inv_b1_contracts` via INV_B1_DSN, never live) in every
-brokered test. Recording doubles sit at the gateway seam only: every
-learner and construction call travels through broker ensure, dispatch,
-settled receipts and measured costs.
+Real Postgres via explicit INV_B1_DSN, never live, in every brokered test.
+Recording doubles sit at the gateway seam only: every learner and
+construction call travels through broker ensure, dispatch, settled receipts
+and measured costs.
 """
 
 from __future__ import annotations
@@ -20,9 +20,9 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-DSN = os.environ.get(
-    "INV_B1_DSN",
-    "dbname=inv_b1_contracts host=/var/run/postgresql user=ubuntu")
+DSN = os.environ.get("INV_B1_DSN", "")
+pytestmark = pytest.mark.skipif(
+    not DSN, reason="INV_B1_DSN is not configured")
 MIGRATIONS = ROOT / "migrations"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
@@ -320,6 +320,7 @@ def test_c3_trajectory_admits_every_model_call(tmp_path):
     assert "no-candidate" in entry["dispositions"]
     cid = trajectory.campaign_id(0, "I", 0)
     learner = _learner_ops(cid)
+    assert learner, cid
     assert len(entry["dispatched"]) == 3
     for row in learner:
         assert _success_receipts(row["id"]), row["id"]

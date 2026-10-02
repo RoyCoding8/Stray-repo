@@ -67,6 +67,6 @@ Commit the actual full-panel driver and a genuine resume entry. Reconstruct or d
 
 ## Next step and stopping rule
 
-Issue one [bounded worker correction](../WORKER-AGENDA-01-CORRECTION.md). The worker should independently confirm or rebut each finding with integrated evidence before repairing it. Retain the useful option/policy/apparatus pieces, preserve the original panel, and avoid a broader engineering audit.
+Issue one [bounded worker correction](../docs/HISTORY.md#worker-agenda-01-correction). The worker should independently confirm or rebut each finding with integrated evidence before repairing it. Retain the useful option/policy/apparatus pieces, preserve the original panel, and avoid a broader engineering audit.
 
 After the six contract areas have evidence, run one properly frozen, interpretable comparison and report its outcome. Positive, negative and tie outcomes are all permissible. Fixing these gaps does not advance representations, teams or learner revision; stage 8.4 remains partially implemented until this correction is assessed.

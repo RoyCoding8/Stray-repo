@@ -6,24 +6,43 @@ import pytest
 from fastapi.testclient import TestClient
 
 from settlement import api, store
-from settlement.common import Command
+from settlement.common import Command, ResultCode
 
 
 def _cmd(payload: dict, **kw) -> Command:
     return Command(request_id=f"req_{uuid.uuid4().hex[:12]}", payload=payload, **kw)
 
 
+def _applied(result) -> None:
+    """Fail the setup step that produced ``result`` if the store refused it.
+
+    Without this the fixture returned an operation the commands act on and a
+    refusal was indistinguishable from a command that could not find its
+    target: `prepare_operation` was called without the `allocation_id`
+    `acquire_work` had bound to the attempt, the store refused with
+    `attempt w1 requires its bound allocation`, the fixture discarded the
+    result, and `/commands/cancel` then answered `unknown operation op1`.
+    """
+    assert result.code == ResultCode.APPLIED, f"{result.code}: {result.detail}"
+
+
+def _seeded_client(dsn: str, gateway=None) -> TestClient:
+    """The one setup both cancel tests need, with every setup step checked."""
+    _applied(store.seed_allocation(
+        dsn, _cmd({"allocation_id": "a1", "domain": "cpu", "authorized": 100})))
+    _applied(store.admit_commitment(dsn, _cmd({"investigation_id": "i1", "objective": "o"})))
+    _applied(store.acquire_work(dsn, _cmd({"attempt_id": "w1", "investigation_id": "i1",
+                                           "allocation_id": "a1"})))
+    _applied(store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
+                                                "allocation_id": "a1",
+                                                "operation": {"effect": "note"}})))
+    app = api.create_app(dsn, gateway=gateway, token="test-token")
+    return TestClient(app, headers={"x-operator-token": "test-token"})
+
+
 @pytest.fixture()
 def client(migrated_db):
-    dsn = migrated_db
-    store.seed_allocation(dsn, _cmd({"allocation_id": "a1", "domain": "cpu", "authorized": 100}))
-    store.admit_commitment(dsn, _cmd({"investigation_id": "i1", "objective": "o"}))
-    store.acquire_work(dsn, _cmd({"attempt_id": "w1", "investigation_id": "i1",
-                                  "allocation_id": "a1"}))
-    store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
-                                       "operation": {"effect": "note"}}))
-    app = api.create_app(dsn, gateway=None, token="test-token")
-    return TestClient(app, headers={"x-operator-token": "test-token"})
+    return _seeded_client(migrated_db)
 
 
 def test_command_idempotency_same_id_twice(client):
@@ -74,13 +93,6 @@ def test_inspect_unknown_operation_is_refused(client):
 
 
 def test_cancel_forwards_to_gateway(migrated_db):
-    dsn = migrated_db
-    store.seed_allocation(dsn, _cmd({"allocation_id": "a1", "domain": "cpu", "authorized": 100}))
-    store.admit_commitment(dsn, _cmd({"investigation_id": "i1", "objective": "o"}))
-    store.acquire_work(dsn, _cmd({"attempt_id": "w1", "investigation_id": "i1",
-                                  "allocation_id": "a1"}))
-    store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
-                                       "operation": {"effect": "note"}}))
     calls: list[str] = []
 
     class RecordingGateway:
@@ -88,8 +100,7 @@ def test_cancel_forwards_to_gateway(migrated_db):
             calls.append(operation_id)
             return True
 
-    app = api.create_app(dsn, gateway=RecordingGateway(), token="test-token")
-    client = TestClient(app, headers={"x-operator-token": "test-token"})
+    client = _seeded_client(migrated_db, gateway=RecordingGateway())
     body = client.post("/commands/cancel", data={"operation_id": "op1"}).text
     assert "accepted" in body
     assert calls == ["op1"]

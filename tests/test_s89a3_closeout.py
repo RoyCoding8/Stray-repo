@@ -12,20 +12,29 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
+import os
+import re
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 import pytest
+
+from test_s09_migrate_callers import admit
+
+from experiments.ad01.s09_run_isolation import DB_PREFIX, \
+    create_disposable_db, disposable_db, drop_disposable_db
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-DB = "s89_a3_closeout"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
 MIGRATIONS = ROOT / "migrations"
+LOCAL_HOST = "/var/run/postgresql"
+LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
+
+RUN_TOKEN = "s89a3%s" % uuid.uuid4().hex[:10]
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -50,26 +59,55 @@ FAILING_MEMBER_SOURCE = (
 )
 
 
-def _scrub_runs():
-    shutil.rmtree(ROOT / ".ad01-runs", ignore_errors=True)
+def _dbname(dsn: str) -> str:
+    return dict(field.split("=", 1) for field in dsn.split()
+                if "=" in field).get("dbname", "").strip("'\"")
+
+
+def _admin_dsn() -> str:
+    """The DSN names the instance to create on, never a store to empty."""
+    return os.environ.get("SETTLEMENT_TEST_DSN") or LOCAL_DSN
 
 
 @pytest.fixture(scope="module")
 def store():
-    assert "live" not in DSN
-    assert DB.startswith("s89_a3_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    """A store this run creates, on whichever cluster the operator named.
+
+    The staging tree under ``.ad01-runs`` is deliberately left alone. It is
+    keyed by DSN, so a per-run store gives a per-run directory, and every test
+    here re-derives the directory it needs rather than reading the tree. A
+    whole-tree delete removes a sibling's staged bytes, and the failure
+    surfaces as an unreadable staged source rather than as the deletion that
+    caused it.
+    """
+    admin = _admin_dsn()
+    assert "live" not in _dbname(admin)
+    database = create_disposable_db(RUN_TOKEN, admin_dsn=admin,
+                                    migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                        "-U", "ubuntu", DB],
-                       capture_output=True, text=True, timeout=60)
-        _scrub_runs()
+        drop_disposable_db(database, admin_dsn=admin)
+
+
+def test_the_store_is_named_for_this_run_not_for_the_file(store):
+    """Two concurrent runs of this module must not share a store.
+
+    The closeout path binds and runs one acquisition. The fixture used to
+    create and drop one fixed name, so a sibling's teardown destroyed this
+    run's store mid-module and the failures read as product defects rather
+    than as the collision they are. Only the per-run suffix keeps the two
+    disjoint, so that is what this pins.
+    """
+    mine = _dbname(store)
+
+    assert mine.startswith(DB_PREFIX + "_" + RUN_TOKEN), mine
+
+    with disposable_db(RUN_TOKEN, admin_dsn=_admin_dsn()) as fresh:
+        assert fresh.name != mine
+        assert fresh.name.startswith(DB_PREFIX + "_" + RUN_TOKEN)
+        assert re.fullmatch(r"[0-9a-f]{12}", fresh.name.rsplit("_", 1)[1])
+    assert mine != _dbname(LOCAL_DSN), mine
 
 
 class ScriptedModelBoundaryDouble:
@@ -192,7 +230,8 @@ def test_public_acquisition_check_retention_use(store, tmp_path):
     allocation = "ad01-campaign-%s" % ACQ_CID
     [record] = trajectory.run_use(
         loaded, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        dsn=store, allocation_id=allocation, release_id=release)
+        policy=admit(member["capability_id"]), dsn=store,
+        allocation_id=allocation, release_id=release)
     assert record["selected"] == member["capability_id"]
     assert record["executed"] == member["capability_id"]
     assert record["executed_source"] == SIMULATED_MODEL_SW_SOURCE
@@ -209,11 +248,17 @@ def test_public_acquisition_check_retention_use(store, tmp_path):
         cwd=str(ROOT), capture_output=True, text=True, timeout=300)
     assert proc.returncode == 0, proc.stderr
     [fresh] = json.loads(proc.stdout)
-    assert fresh["selected"] == member["capability_id"]
-    assert fresh["executed"] == member["capability_id"]
-    assert fresh["executed_source"] == SIMULATED_MODEL_SW_SOURCE
-    assert fresh["fallback_reason"] == ""
-    assert fresh["release_id"] == release
+    # `ad01-traj use` has no policy argument and this file may not give it
+    # one, so the shipped surface holds no policy and owes a refusal. The
+    # run_use call above is where the policy belongs. The merged CLI grows
+    # `--policy-source`; until it lands this assertion describes the shipped
+    # surface rather than the one a merged cli.py will have.
+    assert fresh["status"] == "refused"
+    assert fresh["selected"] == "refused"
+    assert fresh["executed"] == "refused"
+    assert fresh["output"] == {}
+    assert fresh["costs"]["witness_queries"] == 0
+    assert "no policy" in fresh["fallback_reason"]
 
 
 def test_archived_model_bytes_execute_through_fixed_child():
@@ -228,7 +273,7 @@ def test_archived_model_bytes_execute_through_fixed_child():
     assert report["next_failure"] is None
 
 
-def test_invalid_candidate_refused_and_use_falls_back(store):
+def test_invalid_candidate_refused_and_use_refuses_it(store):
     from experiments.ad01 import construct as C
     from experiments.ad01 import trajectory, worlds
     _campaign(store, REJ_CID)
@@ -248,10 +293,13 @@ def test_invalid_candidate_refused_and_use_falls_back(store):
     assert broken["reason"]
     [empty] = trajectory.run_use(
         {"campaign_id": REJ_CID, "members": []}, 0, "I",
-        [USE_TASK], {"tokens": 0, "sandbox_ops": 0})
-    assert empty["selected"] == "incumbent"
-    assert empty["executed"] == "incumbent"
-    assert "no eligible repertoire member" in empty["fallback_reason"]
+        [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
+        policy=admit("seed-sw-greedy"))
+    assert empty["status"] == "refused"
+    assert empty["selected"] == "refused"
+    assert empty["executed"] == "refused"
+    assert empty["costs"]["witness_queries"] == 0
+    assert "absent from the repertoire" in empty["fallback_reason"]
     life = _lifecycle(store, REJ_CID, SIMULATED_MODEL_SW_SOURCE,
                       "acquired_sw_bare")
     release = "s89a3-rej"
@@ -266,10 +314,12 @@ def test_invalid_candidate_refused_and_use_falls_back(store):
     [pinned] = trajectory.run_use(
         {"campaign_id": REJ_CID, "members": [failing]}, 0, "I",
         [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        dsn=store, allocation_id="ad01-campaign-%s" % REJ_CID,
-        release_id=release)
-    assert pinned["selected"] == "incumbent"
-    assert pinned["executed"] == "incumbent"
+        policy=admit("acquired-sw-s89a3boom"), dsn=store,
+        allocation_id="ad01-campaign-%s" % REJ_CID, release_id=release)
+    assert pinned["status"] == "refused"
+    assert pinned["selected"] == "refused"
+    assert pinned["executed"] == "refused"
+    assert pinned["output"] == {}
     assert "pins bytes" in pinned["fallback_reason"]
     assert release in pinned["fallback_reason"]
     _bind(store, life, release, ["acquired-sw-s89a3good"],
@@ -285,8 +335,8 @@ def test_invalid_candidate_refused_and_use_falls_back(store):
     [fallback] = trajectory.run_use(
         {"campaign_id": REJ_CID, "members": [broken_entry]}, 0, "I",
         [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        dsn=store, allocation_id="ad01-campaign-%s" % REJ_CID,
-        release_id=release)
+        policy=admit("acquired-sw-s89a3good"), dsn=store,
+        allocation_id="ad01-campaign-%s" % REJ_CID, release_id=release)
     assert fallback["requested"] == "acquired-sw-s89a3good"
     assert fallback["selected"] == "acquired-sw-s89a3good"
     assert fallback["executed"] == "incumbent"

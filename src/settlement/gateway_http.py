@@ -5,8 +5,9 @@ import json
 import os
 import threading
 import time
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 import httpx
 
@@ -28,6 +29,54 @@ RESPONSES_CONTRACT = "settlement-gateway/http-responses-v1"
 
 APIS = ("chat", "responses")
 _ROUTE_FIELDS = ("endpoint", "requested_model", "resolved_model", "provider", "tier")
+
+# What a route field is decides how it may be compared, and the answer is not
+# the same for every field. Two kinds, and a third that is a join rather than a
+# comparison:
+#
+#   CASELESS LABELS. `provider` and `tier` name a vendor and a service class.
+#   They are words, and a word has no case. The live gateway spells the vendor
+#   `Nvidia` against a frozen `nvidia`; measured 2026-09-29, and `provider` is
+#   invariant across `nvidia/`, `openrouter/nvidia/` and `kilo/nvidia/`, so it
+#   names the vendor and not the aggregator that the catalog's `owned_by` names.
+#   Folded, on both halves.
+#
+#   EXACT IDS. `requested_model` and `resolved_model` are lookup keys into the
+#   128-entry catalog. A model id is not a word: the gateway answered
+#   `NVIDIA/nemotron-3-ultra-550b-a55b:free` with HTTP 503
+#   `auth_not_found` and `nvidia/...` with HTTP 200 in the same minute. Folding
+#   one would admit a key the catalog cannot answer for. Compared exactly.
+#
+#   `endpoint` is not a comparison either; it is a URL identity, folded to
+#   `(scheme, host, port, path)` by `_endpoints_equal` so that loopback aliases
+#   agree.
+#
+# The defect this table exists to prevent: `reconcile_model_route` folded
+# `provider` and `_response_meta` did not, so a correct response was refused as
+# `response_metadata` after the tokens were spent. Both halves now go through
+# `_route_value_matches`, so a field added to `_ROUTE_FIELDS` cannot be judged
+# one way in the catalog and the other way in the response.
+#
+# The same shape recurred once more, for `tier`, and the table could not have
+# caught it: the halves agreed on how to compare and disagreed on what to
+# compare. `reconcile_model_route` read the free signal off the `:free` model
+# id, `_response_meta` read only `tier` or `pricing`, and the live body
+# carries neither. So a table that governs comparison is not enough, and the
+# derivation is one function, `_free_signal`, which both halves call. See
+# `tests/test_gateway_free_signal.py`.
+#
+# It recurred a third time, in the counting guard, and again it was neither
+# the table nor the derivation: `experiments.ad01.live_construct._route_failure`
+# compared a whole returned route to the frozen one with raw dict equality, so
+# `Nvidia` and `nvidia` disagreed there while agreeing in both halves here. The
+# first live E1 campaign spent eight attempts and recorded zero constructions,
+# every one of them filed as a route refusal, which is a claim about the model
+# and is not one. So a third reader of a route field needed the same owner, and
+# the answer is `route_matches`, which judges a whole route field by field
+# through this table. See `tests/test_w1_guard_route_owner.py`.
+_CASELESS_ROUTE_FIELDS = ("provider", "tier")
+_CASE_INSENSITIVE_ROUTE_FIELDS = _CASELESS_ROUTE_FIELDS
+_EXACT_ROUTE_FIELDS = ("requested_model", "resolved_model")
 
 _CANCELLATION_REQUESTED = "requested"
 _CANCELLATION_WORKER_STOPPED = "worker_stopped"
@@ -58,8 +107,102 @@ def _with_response(error: GatewayError, status: int, digest: str) -> GatewayErro
                    response_digest=digest)
 
 
+def _canonical_local_endpoint(endpoint: object) -> str | None:
+    if not isinstance(endpoint, str):
+        return None
+    try:
+        parsed = urlsplit(endpoint)
+        port = parsed.port
+    except ValueError:
+        return None
+    if not parsed.scheme or not parsed.netloc or parsed.username is not None \
+            or parsed.password is not None:
+        return None
+    try:
+        hostname = parsed.hostname
+    except ValueError:
+        return None
+    if hostname is None:
+        return None
+    local_aliases = {"localhost", "127.0.0.1", "::1"}
+    canonical_host = "loopback" if hostname.lower() in local_aliases \
+        else hostname.lower()
+    canonical_netloc = (
+        f"[{canonical_host}]" if ":" in canonical_host
+        else canonical_host)
+    if port is not None:
+        canonical_netloc += f":{port}"
+    return urlunsplit((parsed.scheme.lower(), canonical_netloc, parsed.path,
+                       parsed.query, parsed.fragment))
+
+
+def _endpoints_equal(left: object, right: object) -> bool:
+    left_identity = _canonical_local_endpoint(left)
+    right_identity = _canonical_local_endpoint(right)
+    return left_identity is not None and left_identity == right_identity
+
+
+def _route_value_matches(field: str, returned: object, frozen: object) -> bool:
+    """The one comparison for a route field, shared by both halves.
+
+    `reconcile_model_route` and `_response_meta` both call this, so the
+    catalog's verdict on a field and the response's verdict on the same field
+    cannot come apart. `endpoint` has no contract field to be compared against,
+    so it is refused here and compared by `_endpoints_equal` at each call site.
+    """
+    if field not in _ROUTE_FIELDS or field == "endpoint":
+        return False
+    if not isinstance(returned, str) or not isinstance(frozen, str):
+        return False
+    if field in _CASELESS_ROUTE_FIELDS:
+        return returned.casefold() == frozen.casefold()
+    if field in _EXACT_ROUTE_FIELDS:
+        return returned == frozen
+    return False
+
+
 def _route_mapping(expected: dict[str, Any] | RouteContract) -> dict[str, Any]:
     return expected.as_dict() if isinstance(expected, RouteContract) else expected
+
+
+# How a response names what the route calls it. The gateway calls it
+# `model` and the route calls it `resolved_model`; every other field
+# keeps its name. This join is the answer to "which returned field is
+# compared to which frozen field", so it lives beside the owner of the
+# comparison rather than being spelled at each call site.
+_RESPONSE_ROUTE_KEYS = (
+    ("resolved_model", "model"),
+    ("provider", "provider"),
+    ("tier", "tier"),
+)
+
+
+def route_matches(returned: dict[str, Any],
+                  frozen: dict[str, Any]) -> bool:
+    """The one comparison of a whole returned route against a frozen one.
+
+    `returned` is keyed as a response names its route fields (`model` for
+    the model the gateway says it served, `endpoint` for the one it was
+    reached at); `frozen` is keyed as `RouteContract` names them. Each
+    pair goes through `_route_value_matches`, or through
+    `_endpoints_equal` for `endpoint`, which is a URL identity rather
+    than a comparison. A field the returned side omits, states as a
+    non-string, or answers differently is a refusal, never a match.
+
+    Three callers and one rule. `reconcile_model_route` and
+    `_response_meta` compare field by field through the same owner, and
+    `LiveGuard` compares the whole route here. Before this entry point
+    the guard compared the same values with raw dict equality, so it
+    refused `Nvidia` against a frozen `nvidia` that the adapter had
+    already admitted, and a live campaign recorded zero constructions
+    across eight attempts with the tokens spent.
+    """
+    if not _endpoints_equal(returned.get("endpoint"), frozen.get("endpoint")):
+        return False
+    return all(
+        _route_value_matches(field, returned.get(response_key), frozen.get(field))
+        for field, response_key in _RESPONSE_ROUTE_KEYS
+    )
 
 
 def _route_contract(expected: dict[str, Any] | RouteContract | None) -> RouteContract | None:
@@ -86,11 +229,11 @@ def _decode_usage(body: dict[str, Any], input_key: str, output_key: str,
                   operation_id: str) -> Usage | GatewayError:
     raw = body.get("usage", _MISSING_USAGE)
     if raw is _MISSING_USAGE:
-        return Usage()
+        return Usage(provider_enforced_ceiling=None)
     if not isinstance(raw, dict):
         return _error(
             GatewayErrorKind.PROTOCOL, "gateway returned malformed usage", False,
-            operation_id, Usage(),
+            operation_id, Usage(provider_enforced_ceiling=None),
         )
     input_tokens = _usage_int(raw.get(input_key))
     output_tokens = _usage_int(raw.get(output_key))
@@ -98,8 +241,6 @@ def _decode_usage(body: dict[str, Any], input_key: str, output_key: str,
     charge_units = _usage_int(raw.get("charge_units"))
     scale_present = "charge_scale" in raw
     charge_scale = _usage_int(raw.get("charge_scale"))
-    if charge_units is not None:
-        charge_scale = 1000 if not scale_present else charge_scale
     billed_present = "billed" in raw
     billed_value = raw.get("billed")
     billed = billed_value if billed_present and isinstance(billed_value, bool) else None
@@ -108,7 +249,7 @@ def _decode_usage(body: dict[str, Any], input_key: str, output_key: str,
         output_tokens=output_tokens,
         charge_units=charge_units,
         charge_scale=charge_scale,
-        provider_enforced_ceiling=False,
+        provider_enforced_ceiling=None,
         billed=billed,
     )
     if billed_present and not isinstance(billed_value, bool):
@@ -172,23 +313,21 @@ def _responses_input(messages: tuple[dict[str, Any], ...]) -> Any:
             for message in messages]
 
 
-def _free_tier(model: dict[str, Any]) -> str | None:
-    explicit = model.get("tier")
-    if isinstance(explicit, str) and explicit:
-        return explicit
-    pricing = model.get("pricing")
-    if not isinstance(pricing, dict):
-        return None
-    values = []
-    for key in ("prompt", "completion"):
-        value = pricing.get(key)
-        if isinstance(value, bool):
-            return None
-        try:
-            values.append(float(value))
-        except (TypeError, ValueError):
-            return None
-    return "free" if values and all(value == 0 for value in values) else None
+@dataclass(frozen=True)
+class FreeSignal:
+    """What one document says about its own price, and what refused it.
+
+    A single answer read by the catalog half and the response half alike.
+    `tier` is the class the document names, which is `free` or `None`:
+    a tier names a class rather than a party, so the class is the whole of
+    the claim and no spelling of it survives. `refusal` is the reason no
+    free statement could be established, or `None` when one was. Callers
+    compare `tier` through `_route_value_matches` and surface `refusal`
+    in the reason they file.
+    """
+
+    tier: str | None
+    refusal: str | None = None
 
 
 def _model_namespace(model_id: str) -> str | None:
@@ -196,36 +335,70 @@ def _model_namespace(model_id: str) -> str | None:
     return namespace.lower() if separator and namespace else None
 
 
-def _catalog_free_signal(model: dict[str, Any], model_id: str) -> str | None:
+def _free_signal(model: dict[str, Any], model_id: str) -> FreeSignal:
+    """The one derivation of "is this route free", for both halves.
+
+    Three channels, in the order a document's own statement outranks its
+    own name, because a document that states `paid` is not free no matter
+    what it is called:
+
+      TIER. An explicit `tier`, which is a statement and not a default. A
+        tier of `free` is as good on its own as the `:free` name is; the two
+        are the same kind of claim by the same writer, and a rule that
+        demanded corroboration for the label while accepting the bare name
+        would trust the weaker of the two and refuse the stronger.
+      PRICING. An explicit price per token, all of which must be zero. This
+        is a second statement, so it is checked against the first: a free
+        label beside a paid price is a contradiction and is refused, which
+        is the case the old `tier without pricing` rule half covered by
+        refusing every unpriced tier instead.
+      THE MODEL ID. The `:free` suffix, which is the only free statement
+        the live gateway makes at all: the body measured 2026-09-29
+        carries `model`, `provider: "Nvidia"`, `service_tier: null` and
+        `usage.cost: 0`, and no `tier` key and no `pricing` key anywhere.
+
+    `usage.cost` is deliberately not a channel. It is a real statement and
+    it is on every free response, but it is the provider's accounting for a
+    call it has already served, so reading it cannot refuse before the
+    spend; and no catalog entry carries one, so a route admitted by it would
+    pass live and fail preflight. The preflight is the pre-token gate and
+    it reads the catalog, so a channel only the response carries would make
+    the two halves disagree in the other direction, which is the defect
+    being repaired.
+
+    Absence is not a free statement. A body that names a model with no
+    `:free` suffix, states no tier and quotes no price has not established
+    anything, and returns a refusal rather than falling through.
+    """
     if "tier" in model:
         tier = model["tier"]
         if not isinstance(tier, str) or not tier:
-            return "tier is malformed"
-        if tier.lower() != "free":
-            return "explicit paid tier"
+            return FreeSignal(None, "tier is malformed")
+        if tier.casefold() != "free":
+            return FreeSignal(None, "explicit paid tier")
         if "pricing" not in model:
-            return "tier without pricing"
+            return FreeSignal("free")
     if "pricing" in model:
         pricing = model["pricing"]
         if not isinstance(pricing, dict):
-            return "pricing is malformed"
+            return FreeSignal(None, "pricing is malformed")
         if any(key not in pricing for key in ("prompt", "completion")):
-            return "pricing incomplete"
+            return FreeSignal(None, "pricing incomplete")
         values = []
         for key in ("prompt", "completion"):
             value = pricing.get(key)
             if isinstance(value, bool):
-                return "pricing is malformed"
+                return FreeSignal(None, "pricing is malformed")
             try:
                 values.append(float(value))
             except (TypeError, ValueError):
-                return "pricing is malformed"
+                return FreeSignal(None, "pricing is malformed")
         if not all(value == 0 for value in values):
-            return "explicit paid pricing"
-        return "free"
+            return FreeSignal(None, "explicit paid pricing")
+        return FreeSignal("free")
     if model_id.endswith(":free"):
-        return "free"
-    return None
+        return FreeSignal("free")
+    return FreeSignal(None, "no signal")
 
 
 def _sanitized_catalog_entry(model: dict[str, Any]) -> dict[str, Any]:
@@ -293,7 +466,8 @@ def reconcile_model_route(body: Any, expected: dict[str, Any] | RouteContract) -
                 presence, relevant,
                 "model list has conflicting metadata for %s" % model_id)
     resolved_namespace = _model_namespace(expected["resolved_model"])
-    if resolved_namespace != expected["provider"].lower():
+    if not _route_value_matches(
+            "provider", resolved_namespace, expected["provider"]):
         return _route_reconciliation(
             presence, relevant,
             "resolved model namespace does not match provider")
@@ -304,16 +478,17 @@ def reconcile_model_route(body: Any, expected: dict[str, Any] | RouteContract) -
             if not isinstance(provider, str) or not provider:
                 return _route_reconciliation(
                     presence, relevant, "explicit provider is malformed")
-            if provider.lower() != expected["provider"].lower():
+            if not _route_value_matches(
+                    "provider", provider, expected["provider"]):
                 return _route_reconciliation(
                     presence, relevant,
                     "explicit provider does not match resolved namespace")
-        free_signal = _catalog_free_signal(entry, model_id)
-        if free_signal != "free":
+        free_signal = _free_signal(entry, model_id)
+        if not _route_value_matches("tier", free_signal.tier, expected["tier"]):
             return _route_reconciliation(
                 presence, relevant,
                 "model entry has no trustworthy free signal: %s"
-                % (free_signal or "no signal"))
+                % free_signal.refusal)
     return _route_reconciliation(
         presence, relevant, None,
         route={key: expected[key] for key in _ROUTE_FIELDS})
@@ -347,12 +522,13 @@ def _returned_route(body: dict[str, Any]) -> dict[str, Any]:
     provider = body.get("provider")
     if not isinstance(provider, str) or not provider:
         provider = body.get("provider_id")
-    tier = body.get("tier")
-    if not isinstance(tier, str) or not tier:
-        tier = _free_tier(body)
-    return {"model": body.get("model", ""),
+    # The same call the catalog half makes, on the same document shape. The
+    # body is keyed by the model it returned, so a response is derived from
+    # the model id it actually names rather than the one that was asked for.
+    signal = _free_signal(body, body.get("model") or "")
+    return {"model": body.get("model"),
             "provider": provider if isinstance(provider, str) else None,
-            "tier": tier if isinstance(tier, str) else None}
+            "tier": signal.tier}
 
 
 class HttpGatewayAdapter(GatewayAdapter):
@@ -404,12 +580,13 @@ class HttpGatewayAdapter(GatewayAdapter):
         gateway: GatewayConfig = settings.gateway
         key = api_key if api_key is not None else os.environ.get(gateway.api_key_env, "")
         shape = api if api is not None else os.environ.get("SETTLEMENT_GATEWAY_API", "chat")
+        timeouts = gateway_timeout_overrides()
         return cls(
             endpoint=gateway.endpoint,
             api_key=key,
-            timeout_connect_ms=gateway.timeout_connect_ms,
-            timeout_read_ms=gateway.timeout_read_ms,
-            timeout_total_ms=gateway.timeout_total_ms,
+            timeout_connect_ms=timeouts["timeout_connect_ms"],
+            timeout_read_ms=timeouts["timeout_read_ms"],
+            timeout_total_ms=timeouts["timeout_total_ms"],
             api=shape,
             expected_route=expected_route,
             route_mode=route_mode,
@@ -426,13 +603,14 @@ class HttpGatewayAdapter(GatewayAdapter):
         return headers
 
     def _http_timeout(self, budget_s: float) -> httpx.Timeout:
-        capped = max(min(self.timeouts["read"], budget_s), 0.001)
-        narrow = max(min(self.timeouts["connect"], budget_s), 0.001)
+        def capped(phase: str) -> float:
+            return max(min(self.timeouts[phase], budget_s), 0.001)
+
         return httpx.Timeout(
-            connect=narrow,
-            read=capped,
-            write=narrow,
-            pool=narrow,
+            connect=capped("connect"),
+            read=capped("read"),
+            write=capped("write"),
+            pool=capped("pool"),
         )
 
     def _client_for(self, timeout: httpx.Timeout) -> tuple[httpx.Client, bool]:
@@ -540,7 +718,7 @@ class HttpGatewayAdapter(GatewayAdapter):
             return refused("expected route is malformed")
         if not self.api_key:
             return refused("gateway credentials are not configured")
-        if self.endpoint != expected_route.get("endpoint"):
+        if not _endpoints_equal(self.endpoint, expected_route.get("endpoint")):
             return refused("gateway endpoint is not the frozen endpoint")
         try:
             timeout = self._http_timeout(self.total_s)
@@ -587,7 +765,7 @@ class HttpGatewayAdapter(GatewayAdapter):
             return _error(GatewayErrorKind.AUTH,
                           "gateway credentials are not configured", False,
                           "preflight")
-        if self.endpoint != expected_route.get("endpoint"):
+        if not _endpoints_equal(self.endpoint, expected_route.get("endpoint")):
             return _error(GatewayErrorKind.PROTOCOL,
                           "gateway endpoint is not the frozen endpoint", False,
                           "preflight")
@@ -651,13 +829,27 @@ class HttpGatewayAdapter(GatewayAdapter):
                 for key in _ROUTE_FIELDS
             )
             returned_endpoint_valid = (
-                "endpoint" not in body or returned_endpoint == self.endpoint
+                "endpoint" not in body
+                or _endpoints_equal(returned_endpoint, self.endpoint)
             )
+            # `provider` is a routing field, not a note. The gateway is
+            # contractually obliged to return it, and settlement refuses the
+            # response when it is absent, empty, or names a different vendor --
+            # the same verdict the catalog half reaches, on the same predicate,
+            # for the same field. An absent field is not a free pass: it is the
+            # one case this defect had hidden, because `None` was being
+            # compared as though it were a vendor name.
+            #
+            # The route is judged as a whole, by the same entry point the
+            # campaign's guard judges it by, so the adapter and the guard
+            # cannot come apart about a response the adapter has already
+            # admitted.
+            route_agrees = route_matches(
+                {**route, "endpoint": self.endpoint}, expected)
             if (not expected_complete
-                    or self.endpoint != expected.get("endpoint")
-                    or route["model"] != expected.get("resolved_model")
-                    or route["provider"] != expected.get("provider")
-                    or route["tier"] != expected.get("tier")
+                    or not _endpoints_equal(
+                        self.endpoint, expected.get("endpoint"))
+                    or not route_agrees
                     or not returned_endpoint_valid):
                 meta["route_error"] = GatewayRouteError.RESPONSE_METADATA.value
         return meta
@@ -680,7 +872,7 @@ class HttpGatewayAdapter(GatewayAdapter):
                 GatewayErrorKind.PROTOCOL, "expected route tier is not free", False,
                 request.operation_id, route_error=GatewayRouteError.EXPECTED_ROUTE,
             )
-        if self.endpoint != self._route_contract.endpoint:
+        if not _endpoints_equal(self.endpoint, self._route_contract.endpoint):
             return _error(
                 GatewayErrorKind.PROTOCOL,
                 "gateway endpoint is not the frozen endpoint", False,
@@ -692,9 +884,57 @@ class HttpGatewayAdapter(GatewayAdapter):
                 "requested model is not the frozen model", False,
                 request.operation_id, route_error=GatewayRouteError.REQUESTED_MODEL,
             )
+        # The frozen route names a `provider`, and `route_matches` refuses a
+        # response that does not carry one. The Responses API publishes `id`,
+        # `object`, `status`, `model`, `output`, `service_tier` and `usage`,
+        # and no `provider`: the field is not part of that surface, so there
+        # is nothing on the wire to compare and no reader that could supply
+        # one. The local gateway does not add it either. `_attest_route` in
+        # `modules/router.py` injects `provider` only on the pooled member
+        # path, where `_forward_pool` passes a member and `_forward_once`
+        # passes `None`; the frozen route is not a pool name in
+        # `data/pools.json`, so a call on it is forwarded unattested.
+        #
+        # So this is refused here, before the wire, rather than taught to
+        # read a `provider` that is not there. Reading a field the surface
+        # does not publish would mean deriving it from the requested model
+        # id, and a provider inferred from the model that was asked for is
+        # not evidence of the vendor that served the call. It would
+        # manufacture exactly the agreement this check exists to demand,
+        # and it would do it silently: `route_matches` would report a match
+        # for a response whose route nothing ever attested. A route check
+        # that agrees with everything is not a check.
+        #
+        # The refusal is placed here, beside the other pre-send route
+        # decisions, because that is the only place it costs nothing. Left
+        # where it was, the answer was computed in full, the tokens were
+        # spent, and `_response_meta` filed `response_metadata` a few
+        # seconds later over a field no responses body could have carried.
+        # Diagnosing a refusal the study has already paid for is the
+        # expensive direction to be wrong in, so the surface that cannot
+        # attest a route never reaches the socket.
+        #
+        # Scoped to a frozen route, not to the API. `APIS` still offers
+        # `responses`, and a call with nothing to attest is still built and
+        # sent, because there is no route claim for it to fail. `responses`
+        # is where `reasoning_effort` is legal at all
+        # (`tests/test_c17_reasoning_effort_route_disagreement.py`), so
+        # deleting the surface would refuse work this repository knows how
+        # to do. See `tests/test_w1_responses_route_contract.py`.
+        if self.api != "chat":
+            return _error(
+                GatewayErrorKind.PROTOCOL,
+                f"the {self.api} api publishes no provider, so a frozen route "
+                f"cannot be attested on it; route this call to chat, where the "
+                f"response names the vendor",
+                False, request.operation_id,
+                route_error=GatewayRouteError.RESPONSE_METADATA,
+            )
         return None
 
     def infer(self, request: ModelRequest) -> ModelResponse | GatewayError:
+        started = time.monotonic()
+        deadline = started + min(request.deadline_ms / 1000, self.total_s)
         if request.operation_id in self._cancelled:
             return self._cancelled_error(request.operation_id, worker_stopped=False)
         if not self.endpoint:
@@ -707,11 +947,6 @@ class HttpGatewayAdapter(GatewayAdapter):
         route_error = self._pre_dispatch_route_error(request)
         if route_error is not None:
             return route_error
-        budget_s = min(request.deadline_ms / 1000, self.total_s)
-        if budget_s <= 0:
-            return _error(
-                GatewayErrorKind.TIMEOUT, "deadline already expired", False, request.operation_id
-            )
         if self.api == "responses":
             url = f"{self.endpoint}/responses"
             payload = {
@@ -727,6 +962,7 @@ class HttpGatewayAdapter(GatewayAdapter):
                     GatewayErrorKind.PROTOCOL,
                     "reasoning_effort needs the responses api", False,
                     request.operation_id,
+                    route_error=GatewayRouteError.REASONING_EFFORT,
                 )
             url = f"{self.endpoint}/chat/completions"
             payload = {
@@ -734,9 +970,12 @@ class HttpGatewayAdapter(GatewayAdapter):
                 "messages": list(request.messages),
                 "max_tokens": request.max_output_tokens,
             }
-        started = time.monotonic()
-        deadline = started + budget_s
-        timeout = self._http_timeout(budget_s)
+        remaining_s = deadline - time.monotonic()
+        if remaining_s <= 0:
+            return _error(
+                GatewayErrorKind.TIMEOUT, "deadline already expired", False, request.operation_id
+            )
+        timeout = self._http_timeout(remaining_s)
         outcome: dict[str, Any] = {}
         finished = threading.Event()
         resigned = threading.Event()
@@ -768,8 +1007,8 @@ class HttpGatewayAdapter(GatewayAdapter):
                             client.close()
                         except httpx.HTTPError:
                             pass
-            except httpx.TimeoutException:
-                outcome["timeout"] = True
+            except httpx.TimeoutException as exc:
+                outcome["timeout"] = type(exc).__name__
             except httpx.HTTPError as exc:
                 outcome["transport"] = str(exc)
             except Exception as exc:
@@ -779,25 +1018,45 @@ class HttpGatewayAdapter(GatewayAdapter):
 
         worker = threading.Thread(target=_work, daemon=True)
         worker.start()
-        while True:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
+        while not finished.is_set():
+            remaining_s = deadline - time.monotonic()
+            if remaining_s <= 0:
                 break
             if request.operation_id in self._cancelled:
                 outcome["cancelled"] = True
                 break
-            finished.wait(timeout=min(0.05, remaining))
-            if finished.is_set():
-                break
+            finished.wait(timeout=min(0.05, remaining_s))
+        completed = finished.is_set()
+        if completed and "status" in outcome:
+            status = outcome["status"]
+            body = outcome["body"]
+            response_digest = hashlib.sha256(body).hexdigest()
+            if time.monotonic() >= deadline:
+                return _with_response(
+                    _error(
+                        GatewayErrorKind.TIMEOUT, "total attempt deadline exceeded", True,
+                        request.operation_id,
+                    ),
+                    status, response_digest,
+                )
+        else:
+            status = body = response_digest = None
         resigned.set()
         if "raised" in outcome:
             raise outcome["raised"]
-        if "status" not in outcome:
+        if status is None:
             if request.operation_id in self._cancelled or outcome.get("cancelled"):
                 return self._cancelled_error(request.operation_id)
-            if outcome.get("timeout"):
+            if time.monotonic() >= deadline:
                 return _error(
-                    GatewayErrorKind.TIMEOUT, "gateway request timed out", True,
+                    GatewayErrorKind.TIMEOUT, "total attempt deadline exceeded", True,
+                    request.operation_id,
+                )
+            if outcome.get("timeout") is not None:
+                timeout_name = str(outcome["timeout"]).removesuffix("Timeout").lower()
+                return _error(
+                    GatewayErrorKind.TIMEOUT,
+                    f"gateway {timeout_name} timed out", True,
                     request.operation_id,
                 )
             if outcome.get("transport") is not None:
@@ -807,19 +1066,11 @@ class HttpGatewayAdapter(GatewayAdapter):
                     request.operation_id,
                 )
             return _error(
-                GatewayErrorKind.TIMEOUT, "total attempt deadline exceeded", True,
-                request.operation_id,
-            )
-        if time.monotonic() >= deadline:
-            return _error(
-                GatewayErrorKind.TIMEOUT, "total attempt deadline exceeded", True,
+                GatewayErrorKind.TRANSPORT, "gateway transport failed", True,
                 request.operation_id,
             )
         if request.operation_id in self._cancelled or outcome.get("cancelled"):
             return self._cancelled_error(request.operation_id)
-        status = outcome["status"]
-        body = outcome["body"]
-        response_digest = hashlib.sha256(body).hexdigest()
         if status != 200:
             decoded_usage = _decode_error_usage(
                 body,
@@ -831,6 +1082,14 @@ class HttpGatewayAdapter(GatewayAdapter):
                 return _with_response(decoded_usage, status, response_digest)
             return self._status_error(
                 status, request.operation_id, response_digest, decoded_usage)
+        if time.monotonic() >= deadline:
+            return _with_response(
+                _error(
+                    GatewayErrorKind.TIMEOUT, "total attempt deadline exceeded", True,
+                    request.operation_id,
+                ),
+                status, response_digest,
+            )
         if self.api == "responses":
             response = self._decode_responses_body(body, request.operation_id)
         else:
@@ -911,7 +1170,7 @@ class HttpGatewayAdapter(GatewayAdapter):
         if isinstance(decoded_usage, GatewayError):
             return decoded_usage
         usage = decoded_usage
-        status = body.get("status", "")
+        status = body.get("status")
         if status == "cancelled":
             self._cancel_confirmed.add(operation_id)
             return _error(
@@ -954,7 +1213,7 @@ class HttpGatewayAdapter(GatewayAdapter):
             reason = (body.get("incomplete_details") or {}).get("reason", "")
             stop = "length" if reason == "max_output_tokens" else f"incomplete-{reason}"
         else:
-            stop = str(status) if status else "stop"
+            stop = str(status) if status else "unknown-status"
         return ModelResponse(
             operation_id=operation_id,
             text=text,

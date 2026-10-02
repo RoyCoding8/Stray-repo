@@ -157,3 +157,58 @@ behaved correctly.
 
 `s09_local_c3_diag` and `s09_local_control` were created by a previous worker and are left
 untouched. My own `s09o_*` databases are dropped. `evidence_inv01_live/` is unchanged.
+
+## Generality campaign update (M0–M2), 2026-09-25
+
+Branch `codex/implementation-investigation-learning-02`. This section supersedes nothing
+above; it records what the generality campaign changed and what it did not.
+
+**The empirical question is still unanswered, and one more thing is now known about why.**
+The earlier report attributed the failure to the free model's inability to emit a valid
+executable policy. The campaign found a second, independent cause that would have produced
+the same result: no policy artifact could reach any world's decision point. The world could
+be driven only by a Python callback, so a model-authored arm had no execution path into the
+study at all. That is now fixed — a bounded bridge runs exact verified policy bytes through
+the existing launcher and driver, and a hand-written policy chooses its own probe, its own
+commit, or an immediate stop with all eight queries unspent. It is a mechanism result about
+authored bytes, and it is the first time an executable policy has governed admitted actions
+in this repository.
+
+**Four recorded defects are fixed and merged**, each with a failing-before test and
+verification by driving production code: a trusted `initial_measure` in the AD01 checker, the
+r4 preflight zero-overwrite, replay returning before the immutable body was bound, and a
+control gate that trusted `control_pass` without executing anything. Two of them were
+verified against disposable migrated databases so the coverage is real rather than skipped.
+
+**Three findings that change how any future Stage 9 result must be read.**
+
+1. The task inventory cannot support a family-level claim. The three worlds contain the same
+   ten structural clusters, so the study resolves ten independent units rather than 54 cells
+   or 30 world-cells. The software half is 4 clusters, where a *perfect* sweep is p=0.125 and
+   significance is unreachable at any effect size. Reaching roughly 24 independent clusters
+   needs 14 new generation families, family-disjoint across development, qualification and
+   audit, not 14 new cells.
+2. Contamination is structural, not nominal. Nine `dev`/`within` graph pairs in the same
+   world are isomorphic up to vertex relabeling, which a template-level audit cannot see. The
+   duplicate guard compares literal labels and therefore reports clean.
+3. The control gate, once it actually executes, reports a real control failure:
+   `C-ctrl-sw-invalid` is `unsupported`, so the checker cannot be clean. Any earlier
+   "checker clean" statement for the representation pilot was clean under a gate that read a
+   file, and must be bounded accordingly.
+
+**Inherited liability is 5563 units, not r4's 2294.** Enumerating every row of `reservations`
+in `invl02_live` -- not just the current study's root, and never an evidence export -- finds a
+second uncertain reservation of **3269 units** belonging to the older AD01 campaign of
+2026-09-23, alongside r4's 2294. Its operation is `unresolved/unresolved` with a
+lost-response-shaped receipt, so it is a real terminal state and not an empty row. Any new
+freeze must carry both; computing liability from r4 alone understates prior unresolved
+exposure by 3269. This generality campaign added no exposure of its own, having spent zero.
+
+**Bottlenecks, revised.** Model access remains the binding constraint on the empirical
+question, and it is unchanged. Ahead of it sit three items that must land before a live round
+is worth running: a panel with family-disjoint splits and no isomorphic overlap; a shared
+execution entry in `policy_step.py`, since the bridge duplicates an executor and carries no
+durable DSN operation provenance; and a bound or a fix for the failing C control. The
+incumbent `STEP` source verifier is a denylist and accepts `f = open; f(...)`; executing
+model-authored bytes through it is bounded execution, not safe execution, and a positive AST
+allowlist plus a real OS boundary is required before any arm's bytes run.

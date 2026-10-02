@@ -1,0 +1,51 @@
+{
+ "catalog": {
+  "exact_id_presence": {
+   "requested_model": true,
+   "resolved_model": true
+  },
+  "relevant_entries": [
+   {
+    "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "owned_by": "Openrouter"
+   },
+   {
+    "id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "owned_by": "Openrouter"
+   }
+  ]
+ },
+ "git_commit": "eb16745b5b72538748e5346c226eb46b32c31aaf",
+ "module": {
+  "path": "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/live_construct.py",
+  "source_sha256": "5611a222827e094217c3f7e94bb64188a97c219ccc805d1b0fbbc5754c485c3f"
+ },
+ "request": {
+  "method": "GET",
+  "url": "http://localhost:4000/v1/models"
+ },
+ "response": {
+  "model_count": 127,
+  "sha256": "2a7f101327c48d1bab8df6c7731163f5f52e3ade2cb26b0e93409aa1400e1ae0",
+  "status": 200
+ },
+ "result": {
+  "reason": null,
+  "route": {
+   "endpoint": "http://localhost:4000/v1",
+   "provider": "nvidia",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+   "tier": "free"
+  },
+  "verdict": "accepted"
+ },
+ "route_passed_to_adapter": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "schema": "settlement-gateway/route-discovery-v1"
+}

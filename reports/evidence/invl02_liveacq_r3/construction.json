@@ -1,0 +1,167 @@
+{
+ "arm_gr01": {
+  "acquisition_evidence": {
+   "earned": false,
+   "operation_id": "ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init",
+   "prompt_digest": "38f786ef25c623d04ab31af15fb75d752bfeca306f943fdfc6bb36fdc938e640",
+   "reason": "member bytes are not the settled response",
+   "receipt_identity": "gw:ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "response_digest": "2473a297cec9b43317e3bb2ecdb308422e2ee4d6198d4e648127435b43dc3f93",
+   "route": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "nvidia",
+    "tier": "free"
+   },
+   "simulated": null,
+   "version": "invl02-acquisition-evidence-v1"
+  },
+  "arm": "arm_gr01",
+  "bound_digest": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672",
+  "campaign_id": "r3acq-t1-ad01-w0-within-gr-00",
+  "candidate_digest": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672",
+  "construction_requests": [
+   {
+    "effect": "model-inference",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "operation_id": "ad01-r3acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init"
+   }
+  ],
+  "family": "graph",
+  "policy_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_graph(task, oracle, max_queries=max_queries, method=\"ddmin\")\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+  "source_digest": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672",
+  "task_id": "ad01-w0-within-gr-00"
+ },
+ "arm_gr03": {
+  "acquisition_evidence": {
+   "earned": false,
+   "operation_id": "ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init",
+   "prompt_digest": "ef8c411ac239d7473d4a525f99cabc15217b50d54a48b389e31a204e639c9529",
+   "reason": "member bytes are not the settled response",
+   "receipt_identity": "gw:ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "response_digest": "1e093547855cd0f457beddcb4086d666e285c17b391beac6bcd1020d7d21c9f0",
+   "route": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "nvidia",
+    "tier": "free"
+   },
+   "simulated": null,
+   "version": "invl02-acquisition-evidence-v1"
+  },
+  "arm": "arm_gr03",
+  "bound_digest": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672",
+  "campaign_id": "r3acq-t3-ad01-w1-within-gr-00",
+  "candidate_digest": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672",
+  "construction_requests": [
+   {
+    "effect": "model-inference",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "operation_id": "ad01-r3acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init"
+   }
+  ],
+  "family": "graph",
+  "policy_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_graph(task, oracle, max_queries=max_queries, method=\"ddmin\")\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+  "source_digest": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672",
+  "task_id": "ad01-w1-within-gr-00"
+ },
+ "arm_gr05": {
+  "acquisition_evidence": {
+   "earned": false,
+   "operation_id": "ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init",
+   "prompt_digest": "478d88161ee2fc8f51eabdb5ebebff5531d871b248465acbb2bfd6b9597f1011",
+   "reason": "member bytes are not the settled response",
+   "receipt_identity": "gw:ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "response_digest": "4a4f3784f28847c3ad00353abec6e5bf14d2e212f3429af7f288813a1d0631ca",
+   "route": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "nvidia",
+    "tier": "free"
+   },
+   "simulated": null,
+   "version": "invl02-acquisition-evidence-v1"
+  },
+  "arm": "arm_gr05",
+  "bound_digest": "261e2677d142ec84916ebc3b25eb129453184345b6c063788c31ceb0dd688b80",
+  "campaign_id": "r3acq-t5-ad01-w2-within-gr-00",
+  "candidate_digest": "261e2677d142ec84916ebc3b25eb129453184345b6c063788c31ceb0dd688b80",
+  "construction_requests": [
+   {
+    "effect": "model-inference",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "operation_id": "ad01-r3acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init"
+   }
+  ],
+  "family": "graph",
+  "policy_source": "def ENTRY(task, oracle, max_queries=16):\n    return reduce_graph(task, oracle, max_queries=max_queries, method=\"ddmin\")",
+  "source_digest": "261e2677d142ec84916ebc3b25eb129453184345b6c063788c31ceb0dd688b80",
+  "task_id": "ad01-w2-within-gr-00"
+ },
+ "arm_so00": {
+  "acquisition_evidence": {
+   "earned": false,
+   "operation_id": "ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init",
+   "prompt_digest": "40ee88d97f035fd5414e999ff94c0fb8100f15b547087fb9d32d30af821bb1a2",
+   "reason": "member bytes are not the settled response",
+   "receipt_identity": "gw:ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "response_digest": "b78318c25b767fcf6e9e538442fc38815eb4fd3000ffa7a926475f11c4a5be55",
+   "route": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "nvidia",
+    "tier": "free"
+   },
+   "simulated": null,
+   "version": "invl02-acquisition-evidence-v1"
+  },
+  "arm": "arm_so00",
+  "bound_digest": "c20f2724999ede96aa773de545bc12791da09ea15b063a97aa9406433286a56b",
+  "campaign_id": "r3acq-t0-ad01-w0-within-sw-00",
+  "candidate_digest": "c20f2724999ede96aa773de545bc12791da09ea15b063a97aa9406433286a56b",
+  "construction_requests": [
+   {
+    "effect": "model-inference",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "operation_id": "ad01-r3acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init"
+   }
+  ],
+  "family": "software",
+  "policy_source": "def ENTRY(task, oracle, max_queries=16):\n    result = reduce_software(task, oracle, max_queries=max_queries, method=\"ddmin\")\n    return {\"candidate\": result[\"candidate\"], \"queries\": result[\"queries\"]}",
+  "source_digest": "c20f2724999ede96aa773de545bc12791da09ea15b063a97aa9406433286a56b",
+  "task_id": "ad01-w0-within-sw-00"
+ },
+ "arm_so04": {
+  "acquisition_evidence": {
+   "earned": false,
+   "operation_id": "ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init",
+   "prompt_digest": "91ce7cb82452db3aa2a3e9a9f1fdfde7cbd15bdecad42b518b3a678bebf93569",
+   "reason": "member bytes are not the settled response",
+   "receipt_identity": "gw:ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init",
+   "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "response_digest": "95c1035b290cd27b06d7f0e5e2160690c002893ae7b8a6f874af9ad9519cfccd",
+   "route": {
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "nvidia",
+    "tier": "free"
+   },
+   "simulated": null,
+   "version": "invl02-acquisition-evidence-v1"
+  },
+  "arm": "arm_so04",
+  "bound_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+  "campaign_id": "r3acq-t4-ad01-w2-within-sw-00",
+  "candidate_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+  "construction_requests": [
+   {
+    "effect": "model-inference",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "operation_id": "ad01-r3acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init"
+   }
+  ],
+  "family": "software",
+  "policy_source": "def ENTRY(task, oracle, max_queries=16):\n    return reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)",
+  "source_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+  "task_id": "ad01-w2-within-sw-00"
+ }
+}

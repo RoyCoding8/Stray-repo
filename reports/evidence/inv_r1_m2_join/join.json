@@ -1,0 +1,2922 @@
+{
+ "database_read": false,
+ "gateway_contacted": false,
+ "generated_offline": true,
+ "join_version": "inv01-m2-join-v1",
+ "method_rows": [
+  {
+   "campaign_id": "ad01-w0-I-00",
+   "capability_id": "acquired-sw-2074657c",
+   "computed_digest_agrees": true,
+   "construction_receipt": "gw:ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-init",
+   "construction_receipt_operation_id": "ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-init",
+   "declared_bytes": 209,
+   "member_id_agrees": true,
+   "member_id_declared": "acquired-sw-2074657c",
+   "member_id_recomputed": "acquired-sw-2074657c",
+   "reconstructed_source": "def ENTRY(task, oracle, max_queries=16):\n    reduction = reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)\n    return {\"candidate\": reduction[\"candidate\"], \"queries\": reduction[\"queries\"]}",
+   "retained_at_transition": 1,
+   "run": "inv_r1_m3",
+   "source_bytes": 209,
+   "source_digest_computed": "2074657cfea5b3339703c8ee2c3d931eb20b889b0f407705d517c85e0b0fa3c7",
+   "source_digest_declared": "2074657cfea5b3339703c8ee2c3d931eb20b889b0f407705d517c85e0b0fa3c7",
+   "source_digest_matches_raw": true,
+   "uses": []
+  },
+  {
+   "campaign_id": "ad01-w2-I-00",
+   "capability_id": "acquired-sw-5b65c917",
+   "computed_digest_agrees": true,
+   "construction_receipt": "gw:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+   "construction_receipt_operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+   "declared_bytes": 122,
+   "member_id_agrees": true,
+   "member_id_declared": "acquired-sw-5b65c917",
+   "member_id_recomputed": "acquired-sw-5b65c917",
+   "reconstructed_source": "def ENTRY(task, oracle, max_queries=16):\n    return reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)",
+   "retained_at_transition": 1,
+   "run": "inv_r1_m3b",
+   "source_bytes": 122,
+   "source_digest_computed": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "source_digest_declared": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "source_digest_matches_raw": true,
+   "uses": [
+    {
+     "executed_source_equals_retained_source": true,
+     "executed_source_sha256": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+     "final_measure": 3,
+     "initial_measure": 13,
+     "normalized_reduction": 0.7692307692307693,
+     "operation_ids_declared": [
+      "ad01-ad01-w2-I-00-use-ad01-w2-within-sw-00-acquired-sw-5b65c917"
+     ],
+     "operation_ids_present_in_any_export": [],
+     "receipts_found": 0,
+     "record_id": "ad01-w2-I-00-I-ad01-w2-within-sw-00",
+     "task_id": "ad01-w2-within-sw-00",
+     "verdict": "preserved"
+    },
+    {
+     "executed_source_equals_retained_source": true,
+     "executed_source_sha256": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+     "final_measure": 3,
+     "initial_measure": 10,
+     "normalized_reduction": 0.7,
+     "operation_ids_declared": [
+      "ad01-ad01-w2-I-00-use-ad01-w2-within-sw-01-acquired-sw-5b65c917"
+     ],
+     "operation_ids_present_in_any_export": [],
+     "receipts_found": 0,
+     "record_id": "ad01-w2-I-00-I-ad01-w2-within-sw-01",
+     "task_id": "ad01-w2-within-sw-01",
+     "verdict": "preserved"
+    },
+    {
+     "executed_source_equals_retained_source": true,
+     "executed_source_sha256": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+     "final_measure": 7,
+     "initial_measure": 10,
+     "normalized_reduction": 0.3,
+     "operation_ids_declared": [
+      "ad01-ad01-w2-I-00-use-ad01-w2-transfer-sw-00-acquired-sw-5b65c917"
+     ],
+     "operation_ids_present_in_any_export": [],
+     "receipts_found": 0,
+     "record_id": "ad01-w2-I-00-I-ad01-w2-transfer-sw-00",
+     "task_id": "ad01-w2-transfer-sw-00",
+     "verdict": "preserved"
+    }
+   ]
+  }
+ ],
+ "operation_rows": [
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "173b0ad182f835da8c52437a750b74a2c0e1fb2c2c43bbd6609413c4350b21f9",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 354,
+     "text_sha256": "173b0ad182f835da8c52437a750b74a2c0e1fb2c2c43bbd6609413c4350b21f9"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "dd000225ec50a6aba9b265d23d1bd76c009c9a7e7ebe0bf921545a2d7c9a99a7",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 341,
+     "text_sha256": "dd000225ec50a6aba9b265d23d1bd76c009c9a7e7ebe0bf921545a2d7c9a99a7"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "34603bdf9194d1bcd189c3972c2221d95373e7a01bfa407ef8c4bfd2c8636768",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 415,
+     "text_sha256": "34603bdf9194d1bcd189c3972c2221d95373e7a01bfa407ef8c4bfd2c8636768"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "904d59cdfbe8f4964538bf31aeb59a6b3a9c01749c84de7cdd1d0c54765825d5",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 389,
+     "text_sha256": "904d59cdfbe8f4964538bf31aeb59a6b3a9c01749c84de7cdd1d0c54765825d5"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "e5e3bb288c9540f59e7145250e5394ab2b86009b5fd7d16e28b01b31761c0438",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 268,
+     "text_sha256": "e5e3bb288c9540f59e7145250e5394ab2b86009b5fd7d16e28b01b31761c0438"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-b3-ad01-w0-dev-gr-01-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "5d6fa332b5371257570e20826600a0afe22f9488d401836cd41d8fd97404f729",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-b3-ad01-w0-dev-gr-01-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 230,
+     "text_sha256": "5d6fa332b5371257570e20826600a0afe22f9488d401836cd41d8fd97404f729"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w0-R-00-b3-ad01-w0-dev-gr-01-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w0-R-00-b3-ad01-w0-dev-gr-01-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "unresolved",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "error",
+      "error_kind",
+      "operation_id",
+      "response_class",
+      "response_digest",
+      "response_operation_id",
+      "response_received",
+      "response_status",
+      "retryable",
+      "route_error",
+      "usage"
+     ],
+     "outcome": "unknown",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-0:lost-response",
+     "response_digest": null,
+     "response_received": false,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": false,
+   "transition_indices": [
+    0
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-0-c1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "9566eb1dfe312436de22af28c848cc36f76d1544bac246d82d66d0578d9d27f7",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-0-c1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 290,
+     "text_sha256": "9566eb1dfe312436de22af28c848cc36f76d1544bac246d82d66d0578d9d27f7"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "53d28a680bca84be3a8abee45976d8b5e0c2852b56b7618f91f39bcf754c289f",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 345,
+     "text_sha256": "53d28a680bca84be3a8abee45976d8b5e0c2852b56b7618f91f39bcf754c289f"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "16f664c77468340a9e6e3029b136c55a04ebd439bade1f25f0b3d704884447f3",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 388,
+     "text_sha256": "16f664c77468340a9e6e3029b136c55a04ebd439bade1f25f0b3d704884447f3"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "unresolved",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "error",
+      "error_kind",
+      "operation_id",
+      "response_class",
+      "response_digest",
+      "response_operation_id",
+      "response_received",
+      "response_status",
+      "retryable",
+      "route_error",
+      "usage"
+     ],
+     "outcome": "unknown",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-3:lost-response",
+     "response_digest": null,
+     "response_received": false,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": false,
+   "transition_indices": [
+    3
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-3-c1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "41155bba22ec39dc6173f7a3ab09c7afdfb041eac63bbcf2717834971d9d4d13",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-3-c1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 294,
+     "text_sha256": "41155bba22ec39dc6173f7a3ab09c7afdfb041eac63bbcf2717834971d9d4d13"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-I-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "b8f92800a3c5563619658c7352e2015f5e984cd02a3ecafa197570ff38ae0481",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-I-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 324,
+     "text_sha256": "b8f92800a3c5563619658c7352e2015f5e984cd02a3ecafa197570ff38ae0481"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-I-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "73d53abfb8356cfab3b2ff935cb2531d2eae3fb8ac2fc1d36f55313f78d66585",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-I-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 403,
+     "text_sha256": "73d53abfb8356cfab3b2ff935cb2531d2eae3fb8ac2fc1d36f55313f78d66585"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-I-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "b02b5d5b5aa668d46f824d4e8923c7083ae8647f89a17ef0ecd69e0ebdbd156b",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-I-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 347,
+     "text_sha256": "b02b5d5b5aa668d46f824d4e8923c7083ae8647f89a17ef0ecd69e0ebdbd156b"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-I-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "17b55a56a6b5303eb955b568db62fc6540a1327f71ffabc3dd94b4ce6a4ab4ef",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-I-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 409,
+     "text_sha256": "17b55a56a6b5303eb955b568db62fc6540a1327f71ffabc3dd94b4ce6a4ab4ef"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "b6317149b772900b430c26497101b01f7a58307842b4126590b30b88e8c333cd",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 8813,
+     "text_sha256": "b6317149b772900b430c26497101b01f7a58307842b4126590b30b88e8c333cd"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-repair",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "76ae5d184a4e6d7bef46e009f0fabb83d8d41c2be75cfd80e0e369c5c951aa1b",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-repair",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 216,
+     "text_sha256": "76ae5d184a4e6d7bef46e009f0fabb83d8d41c2be75cfd80e0e369c5c951aa1b"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-validate-l1-repair",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-validate-l1-repair_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-b2-ad01-w1-dev-sw-01-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "61cb0607f77ed3cb7fb4702a2e56ac0cb0e3a9f11f7b4f0a1557f212423e811d",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-b2-ad01-w1-dev-sw-01-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 249,
+     "text_sha256": "61cb0607f77ed3cb7fb4702a2e56ac0cb0e3a9f11f7b4f0a1557f212423e811d"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w1-R-00-b2-ad01-w1-dev-sw-01-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w1-R-00-b2-ad01-w1-dev-sw-01-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "cb04e84faad0b8e2a530ab823e2f28d77f9c8070506b7b905f24698efee660f4",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 334,
+     "text_sha256": "cb04e84faad0b8e2a530ab823e2f28d77f9c8070506b7b905f24698efee660f4"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "3890355b2c478fb4882e4f861c77a6f932816b29a3776f0e4884e606d50e38f7",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 300,
+     "text_sha256": "3890355b2c478fb4882e4f861c77a6f932816b29a3776f0e4884e606d50e38f7"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "unresolved",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "error",
+      "error_kind",
+      "operation_id",
+      "response_class",
+      "response_digest",
+      "response_operation_id",
+      "response_received",
+      "response_status",
+      "retryable",
+      "route_error",
+      "usage"
+     ],
+     "outcome": "unknown",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-2:lost-response",
+     "response_digest": null,
+     "response_received": false,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": false,
+   "transition_indices": [
+    2
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-2-c1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "1ed611d1397aae6533d1a767ec9d6f52fb90cc3814485f6130a9e095ed794089",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-2-c1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 356,
+     "text_sha256": "1ed611d1397aae6533d1a767ec9d6f52fb90cc3814485f6130a9e095ed794089"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "7533973293040fe996cb2437113322dd5cb15fcd457c052e29be0b723759cbd2",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 311,
+     "text_sha256": "7533973293040fe996cb2437113322dd5cb15fcd457c052e29be0b723759cbd2"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-b2-ad01-w2-dev-gr-00-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "a3643ecce818651d527a3f05eb6d7085da1ad097344d3bf0bdde13e8efa92fad",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-b2-ad01-w2-dev-gr-00-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 262,
+     "text_sha256": "a3643ecce818651d527a3f05eb6d7085da1ad097344d3bf0bdde13e8efa92fad"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w2-I-00-b2-ad01-w2-dev-gr-00-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w2-I-00-b2-ad01-w2-dev-gr-00-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "04a835456b856435c4c463414efe31d826e845cd42acfdb14069d2465cb617eb",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 316,
+     "text_sha256": "04a835456b856435c4c463414efe31d826e845cd42acfdb14069d2465cb617eb"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "8b000be38f5db19dfb8bc8c2c7a8784e402a8317344ae644b37a82d7cb87eae5",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 345,
+     "text_sha256": "8b000be38f5db19dfb8bc8c2c7a8784e402a8317344ae644b37a82d7cb87eae5"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "234ee5ede3d472251d2fd80b94b7845aa376febed3c624fe8c21a0e7dd765527",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 344,
+     "text_sha256": "234ee5ede3d472251d2fd80b94b7845aa376febed3c624fe8c21a0e7dd765527"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "803e2e780362f3633cc06f39a04f4ada7bc786dc1b30a5f9cceeaa78f0d1c109",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 372,
+     "text_sha256": "803e2e780362f3633cc06f39a04f4ada7bc786dc1b30a5f9cceeaa78f0d1c109"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "6c0af380b80f52ce6b41726f65a7cbb5f211fe9e06119f545ae6dd68e651f20e",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 321,
+     "text_sha256": "6c0af380b80f52ce6b41726f65a7cbb5f211fe9e06119f545ae6dd68e651f20e"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "23c642594510db3ae5436787a2e7766a08fc2d85ce46e5c666d54d0d05c5a637",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 305,
+     "text_sha256": "23c642594510db3ae5436787a2e7766a08fc2d85ce46e5c666d54d0d05c5a637"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "45e60eb09d47435f6777a31febddd309256e4f1f06440a848226bff4dd242a01",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 398,
+     "text_sha256": "45e60eb09d47435f6777a31febddd309256e4f1f06440a848226bff4dd242a01"
+    }
+   ],
+   "run": "inv_r1_m3",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "61a3a31e91cfc4710073241fad57ee140e3fda6de83a7d1922d0e6469b698f35",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 320,
+     "text_sha256": "61a3a31e91cfc4710073241fad57ee140e3fda6de83a7d1922d0e6469b698f35"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "77af841fd8458e638e79dff0c8315fb272f8804988e7035ba191adde8cc4ecbd",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 360,
+     "text_sha256": "77af841fd8458e638e79dff0c8315fb272f8804988e7035ba191adde8cc4ecbd"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "cdfeeefc527d4197d65d7d10663ac02bd52c0b7a0306401111ab84cd87572677",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 354,
+     "text_sha256": "cdfeeefc527d4197d65d7d10663ac02bd52c0b7a0306401111ab84cd87572677"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-I-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "52ac35a5eb04728ff6c6b429acc03203eb00881fc303611170260850bd9dbe21",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-I-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 313,
+     "text_sha256": "52ac35a5eb04728ff6c6b429acc03203eb00881fc303611170260850bd9dbe21"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "unresolved",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "error",
+      "error_kind",
+      "operation_id",
+      "response_class",
+      "response_digest",
+      "response_operation_id",
+      "response_received",
+      "response_status",
+      "retryable",
+      "route_error",
+      "usage"
+     ],
+     "outcome": "unknown",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-b0-ad01-w0-dev-sw-00-construct-l1-init:lost-response",
+     "response_digest": null,
+     "response_received": false,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": false,
+   "transition_indices": [
+    0
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "8eb0b5d27c6f223d6023138d931723ecffc14a73893bd3eb0b77974969048cda",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 234,
+     "text_sha256": "8eb0b5d27c6f223d6023138d931723ecffc14a73893bd3eb0b77974969048cda"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "ea97dede08f6ff884a42e223588f7e3897014a9d58f91bfd9bcdb0a8d072eaac",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 283,
+     "text_sha256": "ea97dede08f6ff884a42e223588f7e3897014a9d58f91bfd9bcdb0a8d072eaac"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "a6e14e0039e206992f5fb7e598ce18160483cb65ff9794c9e182f9720a11ac89",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 323,
+     "text_sha256": "a6e14e0039e206992f5fb7e598ce18160483cb65ff9794c9e182f9720a11ac89"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "1ca76c37f76fa131882b39149116c64b4d78f7dfc3e7d753b19b70361d7a114c",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 346,
+     "text_sha256": "1ca76c37f76fa131882b39149116c64b4d78f7dfc3e7d753b19b70361d7a114c"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "86447c91db036aebeda219d286ad77903cedd6482b1f78b965a3554826c5dbc5",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 315,
+     "text_sha256": "86447c91db036aebeda219d286ad77903cedd6482b1f78b965a3554826c5dbc5"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w0-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w0-R-00-learner-4",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "e1726e795b17dca7fba4552a404143b7b102a55fbe793520820471445f9ec5a1",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w0-R-00-learner-4",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 289,
+     "text_sha256": "e1726e795b17dca7fba4552a404143b7b102a55fbe793520820471445f9ec5a1"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    4
+   ],
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-I-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "13bbc276778fdec6e031d474e43ba5b18b1bbbb750d9977ae889e92cc64eae79",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-I-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 343,
+     "text_sha256": "13bbc276778fdec6e031d474e43ba5b18b1bbbb750d9977ae889e92cc64eae79"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-I-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "2c79daf34cf50470548ef05d6984d7502c2ccc9d9cf5c8b14f6cf4d7fffd8179",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-I-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 318,
+     "text_sha256": "2c79daf34cf50470548ef05d6984d7502c2ccc9d9cf5c8b14f6cf4d7fffd8179"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "95104edadf6010e92cbcfa201b685e783494d82a9bb329c11f6ba0a077d53f8c",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 210,
+     "text_sha256": "95104edadf6010e92cbcfa201b685e783494d82a9bb329c11f6ba0a077d53f8c"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "unresolved",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-b3-ad01-w1-dev-gr-01-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "error",
+      "error_kind",
+      "operation_id",
+      "response_class",
+      "response_digest",
+      "response_operation_id",
+      "response_received",
+      "response_status",
+      "retryable",
+      "route_error",
+      "usage"
+     ],
+     "outcome": "unknown",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-b3-ad01-w1-dev-gr-01-construct-l1-init:lost-response",
+     "response_digest": null,
+     "response_received": false,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": false,
+   "transition_indices": [
+    3
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "566051ad4eea90f947429817cd97a5013a86741c2083fc75352d6c890e505ea2",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 336,
+     "text_sha256": "566051ad4eea90f947429817cd97a5013a86741c2083fc75352d6c890e505ea2"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "4e99d0cffab097dba60965cb3a77a0872d14eba1dc09e90a0e5fad1823287019",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 310,
+     "text_sha256": "4e99d0cffab097dba60965cb3a77a0872d14eba1dc09e90a0e5fad1823287019"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "a3a1f431de60737d36e36132abdfc71e871c079f24f0b2e97a73606069db3d56",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 299,
+     "text_sha256": "a3a1f431de60737d36e36132abdfc71e871c079f24f0b2e97a73606069db3d56"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "d8d858402c2bba5573836811fa5f2b79b4c3874218ea4a019d4073108eaff652",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 327,
+     "text_sha256": "d8d858402c2bba5573836811fa5f2b79b4c3874218ea4a019d4073108eaff652"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w1-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w1-R-00-learner-4",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "0e0e8b915a37f458a4b07dc37cba1ae72a20ed4070e239bbbf50237f3b76348b",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w1-R-00-learner-4",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 391,
+     "text_sha256": "0e0e8b915a37f458a4b07dc37cba1ae72a20ed4070e239bbbf50237f3b76348b"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    4
+   ],
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "0442fa474c55afe3ba28e593dfe5b0167662a171b02008196a68cd5cbed62021",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 236,
+     "text_sha256": "0442fa474c55afe3ba28e593dfe5b0167662a171b02008196a68cd5cbed62021"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "sandbox-exec",
+   "launcher_id": "local-1",
+   "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "local-1",
+   "receipts": [
+    {
+     "containment": false,
+     "content_keys": [
+      "_verdict",
+      "argv",
+      "containment",
+      "data",
+      "parse",
+      "profile",
+      "truncated"
+     ],
+     "outcome": "success",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "local:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init_exec-default.result",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "dbd075d46eed876ce2fecd17790c442984a3a349a1078c05d856dc87c73b4adf",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 325,
+     "text_sha256": "dbd075d46eed876ce2fecd17790c442984a3a349a1078c05d856dc87c73b4adf"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "unresolved",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "error",
+      "error_kind",
+      "operation_id",
+      "response_class",
+      "response_digest",
+      "response_operation_id",
+      "response_received",
+      "response_status",
+      "retryable",
+      "route_error",
+      "usage"
+     ],
+     "outcome": "unknown",
+     "raw_response_digest": null,
+     "raw_response_digest_matches_text": null,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-1:lost-response",
+     "response_digest": null,
+     "response_received": false,
+     "text_chars": null,
+     "text_sha256": null
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": false,
+   "transition_indices": [
+    1
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-1-c1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "441768c66beddb37d00c8fbbcfb519233e4ceb9a3b22e8c6bbf2178d2dfdbc5c",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-1-c1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 382,
+     "text_sha256": "441768c66beddb37d00c8fbbcfb519233e4ceb9a3b22e8c6bbf2178d2dfdbc5c"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "022627a46ce4e2269a3169c032c5eecc9e1c3fa956f00d1ffc4ca2219754ad7b",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 382,
+     "text_sha256": "022627a46ce4e2269a3169c032c5eecc9e1c3fa956f00d1ffc4ca2219754ad7b"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 2
+  },
+  {
+   "arm": "I",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-I-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-I-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "767e719260ac53d7a630a4c138c12b3db004c22ec8c3ad06128b92f4b00723e4",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 352,
+     "text_sha256": "767e719260ac53d7a630a4c138c12b3db004c22ec8c3ad06128b92f4b00723e4"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-0",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "5a9177765f64ab70ef17ec11ff543ee066854a715e05bc92b4d7ef4d440ab511",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-0",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 371,
+     "text_sha256": "5a9177765f64ab70ef17ec11ff543ee066854a715e05bc92b4d7ef4d440ab511"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    0
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-1",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "d64a30398c949d17d1352157075900aab2b524dd54ab322973b67622d5e2223d",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-1",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 306,
+     "text_sha256": "d64a30398c949d17d1352157075900aab2b524dd54ab322973b67622d5e2223d"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    1
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-2",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "ecf639ecac9bc02cf087b9a58399ca8bfefc2c291ba3eb3c3b21a319d9746f28",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-2",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 312,
+     "text_sha256": "ecf639ecac9bc02cf087b9a58399ca8bfefc2c291ba3eb3c3b21a319d9746f28"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    2
+   ],
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "byte_identity": null,
+   "campaign_id": "ad01-w2-R-00",
+   "dispatch_state": "observed",
+   "effect": "model-inference",
+   "launcher_id": "gateway",
+   "operation_id": "ad01-ad01-w2-R-00-learner-3",
+   "receipt_actual_cost": null,
+   "receipt_count": 1,
+   "receipt_provenance": "gateway",
+   "receipts": [
+    {
+     "containment": null,
+     "content_keys": [
+      "model_meta",
+      "operation_id",
+      "stop_reason",
+      "text",
+      "usage"
+     ],
+     "outcome": "success",
+     "raw_response_digest": "850d096bb0cdba7c0b13e8c0957112be3b108916e97eee10b4c866a35678d609",
+     "raw_response_digest_matches_text": true,
+     "receipt_identity": "gw:ad01-ad01-w2-R-00-learner-3",
+     "response_digest": null,
+     "response_received": null,
+     "text_chars": 370,
+     "text_sha256": "850d096bb0cdba7c0b13e8c0957112be3b108916e97eee10b4c866a35678d609"
+    }
+   ],
+   "run": "inv_r1_m3b",
+   "settled": true,
+   "transition_indices": [
+    3
+   ],
+   "world": 2
+  }
+ ],
+ "repertoire_member_rows": [
+  {
+   "authored": false,
+   "byte_identity_verified": true,
+   "campaign_id": "ad01-w0-I-00",
+   "capability_id": "acquired-sw-2074657c",
+   "declared_byte_identity_note": null,
+   "declared_construction_matches_receipt_derived": true,
+   "declared_construction_operation": "ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-init",
+   "file": "repertoire-w0-I.json",
+   "origin": null,
+   "run": "inv_r1_m3",
+   "source_digest_computed_from_method_source": "2074657cfea5b3339703c8ee2c3d931eb20b889b0f407705d517c85e0b0fa3c7",
+   "source_digest_declared": "2074657cfea5b3339703c8ee2c3d931eb20b889b0f407705d517c85e0b0fa3c7"
+  },
+  {
+   "authored": true,
+   "byte_identity_verified": false,
+   "campaign_id": "ad01-w0-control",
+   "capability_id": "seed-sw-ddmin",
+   "declared_byte_identity_note": "source_digest does not equal sha256(method_source)",
+   "declared_construction_matches_receipt_derived": null,
+   "declared_construction_operation": null,
+   "file": "control-sw.json",
+   "origin": "supplied-rpr01",
+   "run": "inv_r1_m3b",
+   "source_digest_computed_from_method_source": "c9f1f7f70d5881ed005cd0a73f03a6c84239dd05d067656dde9aee4e03fb9d70",
+   "source_digest_declared": "e2ca3cf190c27c90bf75932ec6144e520e2ff27197858e2e29f92fd6915ff26f"
+  },
+  {
+   "authored": true,
+   "byte_identity_verified": false,
+   "campaign_id": "ad01-w0-control",
+   "capability_id": "seed-sw-greedy",
+   "declared_byte_identity_note": "source_digest does not equal sha256(method_source)",
+   "declared_construction_matches_receipt_derived": null,
+   "declared_construction_operation": null,
+   "file": "control-sw.json",
+   "origin": "supplied-rpr01",
+   "run": "inv_r1_m3b",
+   "source_digest_computed_from_method_source": "c9f1f7f70d5881ed005cd0a73f03a6c84239dd05d067656dde9aee4e03fb9d70",
+   "source_digest_declared": "0ba85e8177884e3216da6b664a96bf8537e178014371c2426d6076e9d5b23059"
+  },
+  {
+   "authored": false,
+   "byte_identity_verified": true,
+   "campaign_id": "ad01-w2-I-00",
+   "capability_id": "acquired-sw-5b65c917",
+   "declared_byte_identity_note": null,
+   "declared_construction_matches_receipt_derived": true,
+   "declared_construction_operation": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+   "file": "repertoire-w2-I.json",
+   "origin": null,
+   "run": "inv_r1_m3b",
+   "source_digest_computed_from_method_source": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+   "source_digest_declared": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804"
+  }
+ ],
+ "requirement": "WORKER-STAGE-09-CONNECTED-STUDY.md:53",
+ "runs": [
+  {
+   "directory": "inv_r1_m3",
+   "study_root": "inv_r1_m3_run7",
+   "use_record_dispositions": {
+    "refused": 24
+   }
+  },
+  {
+   "directory": "inv_r1_m3b",
+   "study_root": "inv_r1_m3_run8",
+   "use_record_dispositions": {
+    "acquired-sw-5b65c917": 3,
+    "refused": 33
+   }
+  }
+ ]
+}

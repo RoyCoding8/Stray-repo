@@ -1,0 +1,4 @@
+=== group 19  token=5e9b0013  files=1 ===
+  tests/test_coord02_m3_acquisition.py
+rc=0
+summary: 27 passed in 57.82s

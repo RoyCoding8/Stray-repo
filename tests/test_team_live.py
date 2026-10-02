@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sys
 import uuid
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -65,7 +66,12 @@ class ScriptedGateway:
     def infer(self, request):
         self.requests.append(request)
         if self.error is not None:
-            return self.error
+            # The broker fences a response whose operation identity does not
+            # match the operation it sent (59a10df) and files an
+            # identity-failure receipt, which the planner classifies as
+            # gateway-error. An error carrying a placeholder id therefore
+            # never reaches the timeout path it was written to exercise.
+            return replace(self.error, operation_id=request.operation_id)
         return ModelResponse(request.operation_id, self.text,
                              {"simulated": True}, self.usage, "stop")
 
@@ -177,6 +183,16 @@ def test_live_planner_falls_back_honestly_on_gateway_error(live_db):
     assert planner.calls[0]["outcome"] == "fallback-timeout"
     assert planner.calls[0]["usage"] == {"in": 0, "out": 0}
     assert decision["live_source"] == "fallback"
+    # The timeout is only reachable if the broker took its gateway-error
+    # branch rather than the identity fence, so pin the error it filed: the
+    # fence substitutes its own message and its own class, and either one
+    # would classify as gateway-error rather than timeout.
+    receipts = live._receipt_contents(dsn, planner.calls[0]["operation_id"])
+    assert len(receipts) == 1, receipts
+    content = receipts[0]["content"]
+    assert content["response_class"] != "identity-failure", content
+    assert content["error"] == "gateway request timed out", content
+    assert live._classify_error(content["error"]) == "timeout"
 
 
 def test_continuity_resume_submits_remaining_child_once(live_db, tmp_path):

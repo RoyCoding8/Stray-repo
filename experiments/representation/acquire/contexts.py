@@ -71,7 +71,7 @@ def _fixture_digest(fixtures_root: Path, task_id: str) -> tuple:
         path = fixtures_root / sub / ("%s.json" % task_id)
         if path.is_file():
             raw = path.read_bytes()
-            return str(path.relative_to(fixtures_root)), _digest(raw), raw
+            return path.relative_to(fixtures_root).as_posix(), _digest(raw), raw
     raise KeyError("unknown fixture %s" % task_id)
 
 

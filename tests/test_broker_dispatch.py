@@ -305,7 +305,7 @@ class ScriptGateway:
             return action
         from settlement.gateway import ModelResponse, Usage
         return ModelResponse(request.operation_id, action, {"simulated": True},
-                             Usage(charge_units=3, provider_enforced_ceiling=False), "stop")
+                             Usage(charge_units=3, provider_enforced_ceiling=None), "stop")
 
 
 def test_heartbeat_drives_outbox_and_repair_without_inference(migrated_db):

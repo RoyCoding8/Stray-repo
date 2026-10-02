@@ -1,0 +1,436 @@
+{
+ "does_not_survive": [
+  "e3-crossover.json's own `agenda_ahead_on_held_out_at: [14, 60]`",
+  "the control's resources_used_total series as an independent run per budget; it is a cumulative prefix sum of one traversal (crossover() constructs each policy once and then loops worlds and budgets, s09_e3_selection.py:133)"
+ ],
+ "finding": "B6 / N-80",
+ "join": "jq --slurpfile m committed-ladder-status.json '$metadata' reports/evidence/inv_r1_e3_ladder/e3-postfix-ladder.json",
+ "measurement": {
+  "artifact": "reports/evidence/inv_r1_e3_ladder/e3-postfix-ladder.json",
+  "carries_any_withdrawal_marker": false,
+  "claims_the_source_is": "reports/evidence/inv_r1_e3_selection/e3-crossover.json",
+  "finding": "B6 / N-80",
+  "identity_to_withdrawn_ladder": {
+   "budgets_compared": 6,
+   "budgets_in_source": 6,
+   "every_compared_budget_agrees_on_every_field": true,
+   "per_budget": [
+    {
+     "arms": {
+      "agenda": {
+       "choices": {
+        "embedded": 3,
+        "equal": true,
+        "source": 3
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.027296777296777295,
+        "equal": true,
+        "source": 0.027296777296777295
+       },
+       "resources_used_total": {
+        "embedded": 21,
+        "equal": true,
+        "source": 21
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 2,
+         "resources_used": 21,
+         "retained_behaviors": 1
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 2,
+         "resources_used": 21,
+         "retained_behaviors": 1
+        }
+       }
+      },
+      "control": {
+       "choices": {
+        "embedded": 3,
+        "equal": true,
+        "source": 3
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.0,
+        "equal": true,
+        "source": 0.0
+       },
+       "resources_used_total": {
+        "embedded": 19,
+        "equal": true,
+        "source": 19
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 1,
+         "resources_used": 19,
+         "retained_behaviors": 0
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 1,
+         "resources_used": 19,
+         "retained_behaviors": 0
+        }
+       }
+      }
+     },
+     "budget": 8
+    },
+    {
+     "arms": {
+      "agenda": {
+       "choices": {
+        "embedded": 5,
+        "equal": true,
+        "source": 5
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.1450565411349725,
+        "equal": true,
+        "source": 0.1450565411349725
+       },
+       "resources_used_total": {
+        "embedded": 36,
+        "equal": true,
+        "source": 36
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 3,
+         "resources_used": 36,
+         "retained_behaviors": 3
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 3,
+         "resources_used": 36,
+         "retained_behaviors": 3
+        }
+       }
+      },
+      "control": {
+       "choices": {
+        "embedded": 4,
+        "equal": true,
+        "source": 4
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.0,
+        "equal": true,
+        "source": 0.0
+       },
+       "resources_used_total": {
+        "embedded": 27,
+        "equal": true,
+        "source": 27
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 1,
+         "resources_used": 27,
+         "retained_behaviors": 0
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 1,
+         "resources_used": 27,
+         "retained_behaviors": 0
+        }
+       }
+      }
+     },
+     "budget": 14
+    },
+    {
+     "arms": {
+      "agenda": {
+       "choices": {
+        "embedded": 6,
+        "equal": true,
+        "source": 6
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.1568834941383961,
+        "equal": true,
+        "source": 0.1568834941383961
+       },
+       "resources_used_total": {
+        "embedded": 45,
+        "equal": true,
+        "source": 45
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 4,
+         "resources_used": 45,
+         "retained_behaviors": 4
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 4,
+         "resources_used": 45,
+         "retained_behaviors": 4
+        }
+       }
+      },
+      "control": {
+       "choices": {
+        "embedded": 6,
+        "equal": true,
+        "source": 6
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.25346042846042843,
+        "equal": true,
+        "source": 0.25346042846042843
+       },
+       "resources_used_total": {
+        "embedded": 46,
+        "equal": true,
+        "source": 46
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        }
+       }
+      }
+     },
+     "budget": 20
+    },
+    {
+     "arms": {
+      "agenda": {
+       "choices": {
+        "embedded": 9,
+        "equal": true,
+        "source": 9
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.23142960888058928,
+        "equal": true,
+        "source": 0.23142960888058928
+       },
+       "resources_used_total": {
+        "embedded": 78,
+        "equal": true,
+        "source": 78
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 7,
+         "resources_used": 78,
+         "retained_behaviors": 7
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 7,
+         "resources_used": 78,
+         "retained_behaviors": 7
+        }
+       }
+      },
+      "control": {
+       "choices": {
+        "embedded": 6,
+        "equal": true,
+        "source": 6
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.20093795093795094,
+        "equal": true,
+        "source": 0.20093795093795094
+       },
+       "resources_used_total": {
+        "embedded": 46,
+        "equal": true,
+        "source": 46
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        }
+       }
+      }
+     },
+     "budget": 30
+    },
+    {
+     "arms": {
+      "agenda": {
+       "choices": {
+        "embedded": 12,
+        "equal": true,
+        "source": 12
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.21873911007897937,
+        "equal": true,
+        "source": 0.21873911007897937
+       },
+       "resources_used_total": {
+        "embedded": 101,
+        "equal": true,
+        "source": 101
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 10,
+         "resources_used": 101,
+         "retained_behaviors": 10
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 10,
+         "resources_used": 101,
+         "retained_behaviors": 10
+        }
+       }
+      },
+      "control": {
+       "choices": {
+        "embedded": 6,
+        "equal": true,
+        "source": 6
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.2512025012025012,
+        "equal": true,
+        "source": 0.2512025012025012
+       },
+       "resources_used_total": {
+        "embedded": 46,
+        "equal": true,
+        "source": 46
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        }
+       }
+      }
+     },
+     "budget": 40
+    },
+    {
+     "arms": {
+      "agenda": {
+       "choices": {
+        "embedded": 19,
+        "equal": true,
+        "source": 19
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.23355318610220568,
+        "equal": true,
+        "source": 0.23355318610220568
+       },
+       "resources_used_total": {
+        "embedded": 167,
+        "equal": true,
+        "source": 167
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 17,
+         "resources_used": 167,
+         "retained_behaviors": 17
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 17,
+         "resources_used": 167,
+         "retained_behaviors": 17
+        }
+       }
+      },
+      "control": {
+       "choices": {
+        "embedded": 6,
+        "equal": true,
+        "source": 6
+       },
+       "held_out_reduction_mean": {
+        "embedded": 0.12257495590828922,
+        "equal": true,
+        "source": 0.12257495590828922
+       },
+       "resources_used_total": {
+        "embedded": 46,
+        "equal": true,
+        "source": 46
+       },
+       "yield_totals": {
+        "embedded": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        },
+        "equal": true,
+        "source": {
+         "diagnoses_correct": 4,
+         "resources_used": 46,
+         "retained_behaviors": 3
+        }
+       }
+      }
+     },
+     "budget": 60
+    }
+   ]
+  },
+  "json_pointer": "$.committed_ladder",
+  "marker_word_counts": {
+   "invalid": 0,
+   "retract": 0,
+   "superseded": 0,
+   "withdrawn": 0
+  },
+  "measure_digest": {
+   "artifact": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8",
+   "equal": true,
+   "withdrawn_ladder": "ce5a140aff83bccc55a916958fdbaf568cb7c576d5c6a66361510181c83cf7e8"
+  },
+  "measured_at": "2026-09-28T13:36:15+00:00",
+  "policy_instance_scope": "shared-across-worlds",
+  "source_file_retracted_by": "reports/evidence/inv_r1_e3_selection/RETRACTED.md cause 1",
+  "source_of_truth": "reports/evidence/inv_r1_e3_selection/e3-crossover.json"
+ },
+ "not_modified": "reports/evidence/inv_r1_e3_ladder/e3-postfix-ladder.json is left byte-identical. This marker is a sibling so the committed bytes survive as the record of the defect.",
+ "reason": "This key re-embeds the withdrawn E3 crossover ladder under a name that carries no withdrawal. Its per-budget values are identical to reports/evidence/inv_r1_e3_selection/e3-crossover.json and its measure_digest is the same, so a reader who opens the post-fix artifact sees the pre-fix numbers under a live-looking key.",
+ "status": "withdrawn",
+ "subject": {
+  "artifact": "reports/evidence/inv_r1_e3_ladder/e3-postfix-ladder.json",
+  "json_pointer": "$.committed_ladder"
+ },
+ "superseded_by": "the same document's post-fix ladder, in this file, measured with one policy per cell",
+ "why_it_is_kept": "It is the pre-fix/post-fix bridge. Deleting it would break the comparison permanently, so it is annotated and left in place."
+}

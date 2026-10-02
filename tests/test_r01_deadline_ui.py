@@ -72,7 +72,25 @@ def _trickle_server():
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     endpoint = f"http://127.0.0.1:{server.server_port}"
-    adapter = gateway_http.HttpGatewayAdapter(endpoint=endpoint, api_key="test-key")
+    # The adapter needs a route contract, and it has to agree with the
+    # request on the model: `_request` below sends "stub-model" and the
+    # stub server answers as "stub-model". `expected_route` defaults to
+    # None and `route_mode` to "free", so without one
+    # `_pre_dispatch_route_error` returns PROTOCOL *before any socket is
+    # opened* and the deadline logic these tests exist to exercise is
+    # never reached. The sibling file `test_gateway_final_routes.py` has
+    # passed `expected_route=ROUTE` since the guard landed in 9682fb8;
+    # this file was not updated, so all four deadline tests had been
+    # asserting against a pre-dispatch refusal.
+    route = {
+        "endpoint": endpoint,
+        "requested_model": "stub-model",
+        "resolved_model": "stub-model",
+        "provider": "stub",
+        "tier": "free",
+    }
+    adapter = gateway_http.HttpGatewayAdapter(
+        endpoint=endpoint, api_key="test-key", expected_route=route)
     return adapter, server, thread
 
 
@@ -132,7 +150,7 @@ def test_cancel_during_trickle_reports_unknown_outcome():
         assert outcome[0].kind == GatewayErrorKind.CANCELLED
         assert outcome[0].retryable is False
         assert "unknown" in outcome[0].message
-        assert adapter.cancel_status(request.operation_id) == "confirmed"
+        assert adapter.cancel_status(request.operation_id) == "worker_stopped"
         assert elapsed < 5.0
     finally:
         server.shutdown()
@@ -350,14 +368,22 @@ def test_shared_next_decision_matches_single_path(migrated_db):
     import uuid
 
     from settlement import agenda, store
-    from settlement.common import Command
+    from settlement.common import Command, ResultCode
 
     dsn = migrated_db
     _seed_many_attempts(dsn, n=4, per_inv=2)
-    store.prepare_operation(dsn, Command(request_id=f"req_{uuid.uuid4().hex[:12]}",
-                                         payload={"operation_id": "bulk-op1",
-                                                  "attempt_id": "bulk-w0",
-                                                  "operation": {"effect": "note"}}))
+    # 5577a89 (2026-09-24) made an operation naming an attempt without its
+    # bound allocation a refusal. `prepare_operation` returns that result
+    # rather than raising, so without the allocation_id below it wrote no
+    # row and `next_decision_for` correctly reported `idle` for a running
+    # attempt holding no operation.
+    prepared = store.prepare_operation(
+        dsn, Command(request_id=f"req_{uuid.uuid4().hex[:12]}",
+                     payload={"operation_id": "bulk-op1",
+                              "attempt_id": "bulk-w0",
+                              "allocation_id": "bulk-a1",
+                              "operation": {"effect": "note"}}))
+    assert prepared.code == ResultCode.APPLIED
     batch = agenda.next_decisions_for(dsn, ["bulk-w0", "bulk-w1", "bulk-missing"])
     assert batch["bulk-w0"] == agenda.next_decision_for(dsn, "bulk-w0") == "dispatch-bulk-op1"
     assert batch["bulk-w1"] == agenda.next_decision_for(dsn, "bulk-w1")
@@ -373,7 +399,7 @@ def test_precancelled_operation_reports_unknown_outcome():
         assert result.kind == GatewayErrorKind.CANCELLED
         assert result.retryable is False
         assert "unknown" in result.message
-        assert adapter.cancel_status(request.operation_id) == "confirmed"
+        assert adapter.cancel_status(request.operation_id) == "requested"
     finally:
         server.shutdown()
         thread.join()

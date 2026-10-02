@@ -21,9 +21,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-DB = "s09_m1_driver"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
 MIGRATIONS = ROOT / "migrations"
+TOKEN = "m1-driver"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -100,21 +99,19 @@ RESUME_WRAPPED = (
     "print(json.dumps(out, default=str))\n" % (repr(CHARTER), repr(CAPS)))
 
 
+def _database_name(dsn):
+    return [field for field in dsn.split() if field.startswith("dbname=")][0][7:]
+
+
 @pytest.fixture(scope="module")
 def store():
-    assert "live" not in DSN
-    assert DB.startswith("s09_m1_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
-    try:
+    from experiments.ad01 import s09_run_isolation as iso
+
+    with iso.disposable_db(TOKEN) as database:
         from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
-    finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                        "-U", "ubuntu", DB],
-                       capture_output=True, text=True, timeout=60)
+        assert "live" not in database.name
+        db.apply_migrations(database.dsn, MIGRATIONS)
+        yield database.dsn
 
 
 def _run_phase(script, *args):
@@ -203,3 +200,28 @@ def test_kill_after_effect_incorporates_without_renewed_limits(
         tasks=[TASK], campaign_seq=43)
     assert resumed["queries"] == control["queries"]
     assert resumed["stop"] == control["stop"]
+
+
+def test_the_store_is_one_this_run_created(store):
+    """A dropped store must never be a store somebody else still runs on.
+
+    The gate that failed under a campaign run reads as duplicate effects
+    across a crash, which is the exact failure this file exists to detect.
+    A per-run name means the only database destroyed here is the one this
+    run made.
+    """
+    name = _database_name(store)
+
+    assert name.startswith("s09iso_m1-driver_"), name
+    assert store.count(name) == 1, name
+
+
+def test_the_store_survives_a_second_module_scope(store):
+    """Re-deriving the store must not reuse this module's database."""
+    from experiments.ad01 import s09_run_isolation as iso
+
+    other = iso.create_disposable_db(TOKEN)
+
+    assert other.name != _database_name(store)
+    assert other.name.startswith("s09iso_m1-driver_")
+    iso.drop_disposable_db(other)

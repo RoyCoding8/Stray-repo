@@ -1,6 +1,6 @@
 # Agenda 01: durable investigation choice and a rejecting experiment
 
-Status: selected implementation contract, based on `913bda791bd0fb3cf87c568fb57daea17fe4a240`. No Agenda 01 implementation or scored result exists yet. The [worker assignment](../../WORKER-AGENDA-01.md) commissions this slice. Read the [policy](AUTONOMOUS-AGENDA.md) and [experiment protocol](AGENDA-EXPERIMENT-01.md) for the underlying semantics. This document resolves their implementation boundary; it does not replace their controls or interpretation limits.
+Status: selected implementation contract, based on `913bda791bd0fb3cf87c568fb57daea17fe4a240`. No Agenda 01 implementation or scored result exists yet. The [worker assignment](../HISTORY.md#worker-agenda-01) commissions this slice. Read the [policy](AUTONOMOUS-AGENDA.md) and [experiment protocol](AGENDA-EXPERIMENT-01.md) for the underlying semantics. This document resolves their implementation boundary; it does not replace their controls or interpretation limits.
 
 ## 1. What this slice should establish
 

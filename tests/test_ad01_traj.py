@@ -7,6 +7,9 @@ import sys
 from pathlib import Path
 
 import pytest
+from psycopg.conninfo import conninfo_to_dict
+
+from test_s09_migrate_callers import first_eligible
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -16,11 +19,32 @@ DSN = os.environ.get(
     "dbname=ec02test_adtr host=/var/run/postgresql user=ubuntu")
 MIGRATIONS = ROOT / "migrations"
 
+# This battery truncates its store, so the property worth asserting is that the
+# store is disposable and private to the run -- not that it carries the name
+# this module defaults to. `tests/conftest_isolation.py` hands every session
+# `s09iso_<token>_<original>`, so a name comparison could never hold and the
+# seam was pinned rather than redirected. The shared and live names are the
+# ones that must actually be refused.
+_SHARED_PREFIX = "ec02test_"
+_SHARED_NAMES = ("postgres", "template0", "template1")
+
+
+def _assert_disposable_store(dsn: str) -> str:
+    """Refuse a store this battery must not empty, and return its dbname."""
+    name = conninfo_to_dict(dsn).get("dbname") or ""
+    if not name:
+        raise AssertionError("EC02_ADTR_DSN carries no dbname: %r" % (dsn,))
+    if (name.startswith(("live", _SHARED_PREFIX)) or name.endswith("_live")
+            or name in _SHARED_NAMES):
+        raise AssertionError(
+            "the AD01 trajectory battery truncates its store, so it must not "
+            "be aimed at a shared or live database, got %r" % (name,))
+    return name
+
 
 @pytest.fixture()
 def pg():
-    assert "live" not in DSN
-    assert DSN.split("dbname=")[1].split()[0] == "ec02test_adtr"
+    _assert_disposable_store(DSN)
     from settlement import db
     db.apply_migrations(DSN, MIGRATIONS)
     with db.connect(DSN) as conn:
@@ -252,7 +276,7 @@ def test_recording_double_proposal_enters_through_campaign():
     assert campaign["episodes"][0]["disposition"] == "inspected"
 
 
-def test_use_phase_selects_frozen_repertoire_and_falls_back(tmp_path):
+def test_use_phase_runs_the_method_a_policy_admits_and_verifies(tmp_path):
     from experiments.ad01 import checker, trajectory
 
     def develop(experience, charter):
@@ -273,18 +297,25 @@ def test_use_phase_selects_frozen_repertoire_and_falls_back(tmp_path):
     use_tasks = ["ad01-w0-within-sw-00", "ad01-w0-transfer-sw-00",
                  "ad01-w0-transfer-gr-00"]
     records = trajectory.run_use(repertoire, 0, "I", use_tasks,
-                                 {"tokens": 0, "sandbox_ops": 0})
+                                 {"tokens": 0, "sandbox_ops": 0},
+                                 policy=first_eligible)
     assert len(records) == 3
-    for record in records:
-        assert checker._verify_record(record, checker.worlds.FROZEN_DIR,
-                                      []) == []
-        assert record["requested"] and record["selected"]
-        assert record["executed"] == record["selected"]
     by_task = {r["task_id"]: r for r in records}
-    assert by_task["ad01-w0-within-sw-00"]["selected"] != "incumbent"
-    fallback = by_task["ad01-w0-transfer-gr-00"]
-    assert fallback["selected"] == "incumbent"
-    assert fallback["fallback_reason"]
+    for task_id in ("ad01-w0-within-sw-00", "ad01-w0-transfer-sw-00"):
+        record = by_task[task_id]
+        assert checker._verify_record(record, checker.worlds.FROZEN_DIR,
+                                      []) == [], task_id
+        assert record["selected"] == "seed-sw-greedy"
+        assert record["executed"] == "seed-sw-greedy"
+        assert record["fallback_reason"] == ""
+        assert record["verdict"] == "preserved"
+    graph = by_task["ad01-w0-transfer-gr-00"]
+    assert graph["status"] == "refused"
+    assert graph["selected"] == "refused"
+    assert graph["executed"] == "refused"
+    assert graph["output"] == {}
+    assert graph["costs"]["witness_queries"] == 0
+    assert "cannot answer a graph task" in graph["fallback_reason"]
 
 
 def test_cost_union_covers_acquisition_and_use_once(tmp_path):
@@ -296,7 +327,8 @@ def test_cost_union_covers_acquisition_and_use_once(tmp_path):
     repertoire = trajectory.load_repertoire(frozen)
     use_tasks = ["ad01-w0-within-sw-00", "ad01-w0-transfer-sw-00"]
     records = trajectory.run_use(repertoire, 0, "I", use_tasks,
-                                 {"tokens": 0, "sandbox_ops": 0})
+                                 {"tokens": 0, "sandbox_ops": 0},
+                                 policy=first_eligible)
     union = trajectory.cost_union(campaign, records)
     assert union["acquisition"]["witness_queries"] == campaign["queries"]
     assert union["use"]["witness_queries"] == sum(

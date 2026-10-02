@@ -1,0 +1,56 @@
+{
+ "config": {
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free"
+ },
+ "freeze_digest": "8642998d03c9d3752e98f99e60b05c5fc3657a31385690c956bc54a75b102b10",
+ "metric_rule": {
+  "quality": "normalized_reduction"
+ },
+ "policy_identities": {
+  "arm_gr00": {
+   "artifact": {
+    "applicability": {
+     "families": [
+      "graph"
+     ]
+    },
+    "entry": "STEP",
+    "kind": "policy-step",
+    "members": [
+     "policy-gr-f1b67417"
+    ],
+    "origin": "model-acquired"
+   },
+   "member_digests": {
+    "policy-gr-f1b67417": "f1b674171ad1a3e85001171b7a297b01295e738b48381f65209729fd2df48d32"
+   },
+   "source_digest": "f1b674171ad1a3e85001171b7a297b01295e738b48381f65209729fd2df48d32"
+  },
+  "arm_sw00": {
+   "artifact": {
+    "applicability": {
+     "families": [
+      "software"
+     ]
+    },
+    "entry": "STEP",
+    "kind": "policy-step",
+    "members": [
+     "policy-sw-e910a154"
+    ],
+    "origin": "model-acquired"
+   },
+   "member_digests": {
+    "policy-sw-e910a154": "e910a154eba95305059e5dacc0cdc4e1853bc7654012e1f4cef78a686dcc0bdf"
+   },
+   "source_digest": "e910a154eba95305059e5dacc0cdc4e1853bc7654012e1f4cef78a686dcc0bdf"
+  }
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ }
+}

@@ -1,0 +1,130 @@
+{
+ "attempts": [
+  1,
+  2
+ ],
+ "campaign_id": "w1-e1-boolean-r3",
+ "cap_sheet": "reports/cap-sheets/w1-e1-cap.md",
+ "cell": {
+  "representation": "output-shape predictor",
+  "task": "the frozen qual and audit splits with all eight queries already spent, so the model is asked to commit rather than probe",
+  "world": "boolean"
+ },
+ "conforming_answer_characters": 143,
+ "conforming_answer_note": "the shortest payload the protocol's own validator accepts. Below Cap A, so Cap A does not make a conforming answer impossible.",
+ "dispatch_deadline_ms": 300000,
+ "freeze": "reports/evidence/w1-e1-boolean-r3/FREEZE.md",
+ "independence": {
+  "cap_sheet_rule": "disjointness of ancestor chains, which is a bookkeeping rule about lineage identity. It is not evidence that the inputs differed, and a digest test cannot stand in for one.",
+  "consequence": "the protocol offers 4 distinct prompts per arm and no repetition axis. n is reported as draws, never as independent opportunities, and a draw at a repeated prompt is labelled as a repeat.",
+  "sampling_knob": "none. `ModelRequest` carries `reasoning_effort` and no temperature, top_p or seed, and `gateway_http` builds no sampling field into either payload.",
+  "what_varies": "task (2 frozen seeds) and attempt (1 or 2), which changes the literal text `Attempt N of 2` and nothing else, plus the arm's permitted history"
+ },
+ "limits_read_from_protocol": {
+  "automatic_retries": 0,
+  "initial_dispatches": 4,
+  "max_dispatches": 8,
+  "max_output_tokens": 2048,
+  "max_response_characters": 512,
+  "repairs_per_task": 1
+ },
+ "parameters_that_are_this_campaigns": {
+  "character_cap": {
+   "cap_key": "A",
+   "not_enforced_by": "live_construct.LiveGuard, `render_output_prompt`, `extract_and_validate_boolean`, or the `RuleSession` scorer",
+   "second_cap_reported": "B, unbounded, which is the parser's own implied limit",
+   "shipped_enforcement": [
+    "scripts/invl02_live.py:1195 finalizes `too-long`",
+    "experiments/ad01/offline_recompute.py:2266 flags `response-character-cap-exceeded`"
+   ],
+   "value": 512,
+   "who_fixed_it": "this campaign inherited the literal; no shipped code derives the number 512"
+  }
+ },
+ "planned": {
+  "cap_sheet_formula": "N = 4 x supported cells x treatments",
+  "construction_opportunities": 8,
+  "grid": "2 arms x 2 frozen seeds x 2 attempt numbers = 8, every cell dispatched once",
+  "model_call_ceiling": 16
+ },
+ "prompts": {
+  "P1:audit:23:a1": {
+   "characters": 983,
+   "digest": "1c0f4fbcfb77147ae26ac3536cf6a6e7dedb6037067e5507601c78b0490a8f7c"
+  },
+  "P1:audit:23:a2": {
+   "characters": 983,
+   "digest": "44d0562cef1e747535005ca392717e7e8938b69081f2b0557fe1d6b4f540669e"
+  },
+  "P1:qual:11:a1": {
+   "characters": 982,
+   "digest": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487"
+  },
+  "P1:qual:11:a2": {
+   "characters": 982,
+   "digest": "c447457fe2ca07b1cf8a1b38b44c36693ef9780b73949b0e645c306d59c31174"
+  },
+  "P2:audit:23:a1": {
+   "characters": 1337,
+   "digest": "062e2cfc69ad9e9ff3f4272a904f2b9bc51d886739be83bef765258e6e67c494"
+  },
+  "P2:audit:23:a2": {
+   "characters": 1337,
+   "digest": "741c61cdf0968301474ec8ab785931ecafb5681528f67deeb2e8dd58895d54e6"
+  },
+  "P2:qual:11:a1": {
+   "characters": 1336,
+   "digest": "43d4d38883b6377e8d882be82291baf4f1d8df0d931e4db9e14f7fb3886c69b2"
+  },
+  "P2:qual:11:a2": {
+   "characters": 1336,
+   "digest": "af43f8e19fe231bf8715f8668de8601099fd86d5954b33da8910eb26068300d9"
+  }
+ },
+ "reason_superseded": "r1 is invalid because the route contract had two halves that disagreed on `provider`, which is a harness fact rather than a model result. r2 ran on the repaired contract but measured its zero against a 512-character cap whose value no shipped code derives, and it dispatched a single task identity eight times: every one of its records is `split=qual seed=11` at attempt 1, so the audit seed the protocol freezes beside it was never dispatched, and the eight were two prompts sent four times each rather than eight lineages. Its records are retained and reported beside r3 as a different protocol. Neither campaign is repaired or selectively re-run.",
+ "reference_scores": {
+  "audit:23": {
+   "oracle_overall": 1.0,
+   "task_id": "rule-audit-1c8426c20337",
+   "zero_predictor_overall": 0.0625
+  },
+  "qual:11": {
+   "oracle_overall": 1.0,
+   "task_id": "rule-qual-194dba80c87f",
+   "zero_predictor_overall": 0.0625
+  }
+ },
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "route_api": "chat",
+ "route_note": "the credential is never written to this directory; the guard compares endpoint, model, provider and tier through `route_matches` on every response",
+ "schema": "w1-e1-boolean-campaign-v3",
+ "score_floor": 1.0,
+ "score_floor_note": "the shipped literal, untuned; 1.0 is the oracle",
+ "stopping_rule": "the study stops when the 8-cell grid is filled. A refusal, transport loss or no-candidate outcome does not authorise a replacement episode, no authored solver is written after a failure, and no cap, prompt or floor is moved after an outcome is seen.",
+ "supersedes": [
+  "w1-e1-boolean-r1",
+  "w1-e1-boolean-r2"
+ ],
+ "tasks": [
+  {
+   "seed": 11,
+   "split": "qual"
+  },
+  {
+   "seed": 23,
+   "split": "audit"
+  }
+ ],
+ "treatments": {
+  "P1": "interface-only acquisition: the frozen public view and nothing else",
+  "P2": "prior-task summary: two dev-split predictor digests and their scores, no program text"
+ },
+ "written_at": "2026-09-30T05:57:21Z",
+ "written_before_any_dispatch": true
+}

@@ -1,0 +1,43 @@
+{
+ "dispatch_allowance": {
+  "guard_ceiling": 12,
+  "guard_spent_dispatches": 6,
+  "note": "a lost response is still a send; the guard counts it and so does this",
+  "refunded_pre_gateway": 0,
+  "status": "REPORTED"
+ },
+ "internal_held_units": {
+  "free_units": 1046080,
+  "note": "free = authorized minus consumed minus children's authorization",
+  "status": "REPORTED"
+ },
+ "lost_responses": {
+  "count": 3,
+  "note": "receipts with no success and no token usage; the provider may or may not have answered and billed.",
+  "operation_ids": [
+   "ad01-r4acq-t0-ad01-w0-within-sw-00-b0-ad01-w0-within-sw-00-construct-l1-init",
+   "ad01-r4acq-t4-ad01-w2-within-sw-00-b0-ad01-w2-within-sw-00-construct-l1-init",
+   "ad01-r4acq-t5-ad01-w2-within-gr-00-b0-ad01-w2-within-gr-00-construct-l1-init"
+  ],
+  "status": "UNCERTAIN"
+ },
+ "provider_billing": {
+  "billed_reported_null": 3,
+  "input_tokens": 4746,
+  "note": "every settled gateway receipt carries billed=null and charge_units=null, so the token counts are known and the charge is not. This is not zero.",
+  "output_tokens": 4551,
+  "settled_success_receipts": 3,
+  "status": "UNMEASURED"
+ },
+ "reservation_allowance": {
+  "authorized_derivation": 3138240,
+  "campaign_units": 209216,
+  "children_subdivided": 13,
+  "cost_currencies_note": "cost_currencies sizes the study's own shape of six campaigns plus two extra arms, which is not the shape this run subdivides; its number is carried beside this one rather than in place of it",
+  "cost_currencies_reports": 1673728,
+  "source": "s09_cap_sheet unit allowance times (_arms_run() + _v1_use_arms() - 1). _arms_run() is the count of children this run creates: one campaign and one use phase per acquisition, and one for the control.",
+  "status": "REPORTED",
+  "study_units_authorized": 3138240
+ },
+ "supersedes": "cost_currencies reports provider_billing as NOT_REPORTED with the recording-double reason, which is the wrong label for a live run. The four measured numbers are here."
+}

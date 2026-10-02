@@ -1,0 +1,4 @@
+=== group 16  token=5e9b0010  files=1 ===
+  tests/test_s09_store_cleanup.py
+rc=1
+summary: 1 failed, 62 passed in 74.96s (0:01:14)

@@ -1,0 +1,33 @@
+{
+ "acquired_orderings": [
+  "I",
+  "R"
+ ],
+ "acquired_records": 36,
+ "compared_ordering": "I",
+ "control_distinct": false,
+ "control_distinct_refusal": "refused: control is not distinct from the acquired arm: 12 task(s) returned a byte-identical candidate on both arms",
+ "control_records": 18,
+ "cost": {
+  "dispatch_allowance": "REPORTED",
+  "internal_held_units": "REPORTED",
+  "provider_billing": "NOT_REPORTED",
+  "reservation_allowance": "REPORTED"
+ },
+ "executed_policy_ids": {
+  "acquired": [
+   "acquired-gr-b0bd83b7",
+   "acquired-sw-b0bd83b7"
+  ],
+  "control": [
+   "ctl-graph-greedy",
+   "ctl-software-ddmin",
+   "ctl-software-greedy"
+  ]
+ },
+ "experience_refusal": "refused: the control arm's experience is a constant: 18 observations, 1 distinct verdict(s) ['preserved'], minimum 2",
+ "experience_varies": false,
+ "mean_acquired_minus_control": -0.009149184149184145,
+ "paired_tasks": 18,
+ "utility": "CONTROL_WINS"
+}

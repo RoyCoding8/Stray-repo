@@ -1,0 +1,68 @@
+{
+ "caps_digest": "e104bd12cbc93b8b6b8947016f46feca74136bb4dccce566366033a7178a3e69",
+ "freeze": {
+  "repertoire-C.json": "1ca09df5e58eb51979161f194624e0f6586e9fa401273d02f42a3b0c73f36bf3",
+  "repertoire-w0-I.json": "7d0432a6308f3e1bbba945ffe28803b743d32a9b73a84bc4965cbb8e30ee3c86",
+  "repertoire-w0-R.json": "b431717c2cafba8210d550d4bc54d9014c1abd52331701ffaf54e7db076957d4",
+  "repertoire-w1-I.json": "a46b4605e0b8043679b731e8de0da5faec2608bdfad90f0c59cc47e8a8568f51",
+  "repertoire-w1-R.json": "1190868ced0f0f31012b8e3415a792af9d8d993a74ddd338f1f4527793780973",
+  "repertoire-w2-I.json": "50ecb0fd08d42638d7b9ecf10b53f2462aa28550ba42ff185b653a32c345684e",
+  "repertoire-w2-R.json": "2ed8bfcf070ea18e933de4b87839b9b4b0847362ec742f46dc2efed00421660a"
+ },
+ "model": "inv01-study-double",
+ "pilot": {
+  "calibration_trajectories": 2,
+  "comparison_trajectories": 4,
+  "protected_use_records": 54,
+  "worlds": [
+   1,
+   2
+  ]
+ },
+ "provider": "recording",
+ "study_root": "s09iso-ctlarm44774aef-root",
+ "trajectories": [
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w0-I-00",
+   "construction_calls": 2,
+   "model_calls": 5,
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w0-R-00",
+   "construction_calls": 2,
+   "model_calls": 8,
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w1-I-00",
+   "construction_calls": 2,
+   "model_calls": 5,
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w1-R-00",
+   "construction_calls": 2,
+   "model_calls": 8,
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "campaign_id": "ad01-w2-I-00",
+   "construction_calls": 2,
+   "model_calls": 5,
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "campaign_id": "ad01-w2-R-00",
+   "construction_calls": 2,
+   "model_calls": 8,
+   "world": 2
+  }
+ ]
+}

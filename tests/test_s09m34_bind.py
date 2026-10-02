@@ -5,19 +5,26 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 import pytest
+
+from experiments.ad01.s09_run_isolation import DB_PREFIX, \
+    create_disposable_db, disposable_db, drop_disposable_db
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-DB = "s09_m34_bind"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
 MIGRATIONS = ROOT / "migrations"
+LOCAL_HOST = "/var/run/postgresql"
+LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
+
+RUN_TOKEN = "m34bind%s" % uuid.uuid4().hex[:10]
 
 DEV_TASK = "ad01-w0-dev-sw-00"
 USE_TASK = "ad01-w0-within-sw-00"
@@ -32,21 +39,46 @@ GOOD_SOURCE = (
 GOOD_ENTRY = "m34_good_entry"
 
 
+def _dbname(dsn: str) -> str:
+    return dict(field.split("=", 1) for field in dsn.split()
+                if "=" in field).get("dbname", "").strip("'\"")
+
+
+def _admin_dsn() -> str:
+    """The DSN names the instance to create on, never a store to empty."""
+    return os.environ.get("SETTLEMENT_TEST_DSN") or LOCAL_DSN
+
+
 @pytest.fixture(scope="module")
 def store():
-    assert "live" not in DSN
-    assert DB.startswith("s09_m34_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    admin = _admin_dsn()
+    assert "live" not in _dbname(admin)
+    database = create_disposable_db(RUN_TOKEN, admin_dsn=admin,
+                                    migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                        "-U", "ubuntu", DB],
-                       capture_output=True, text=True, timeout=60)
+        drop_disposable_db(database, admin_dsn=admin)
+
+
+def test_the_store_is_named_for_this_run_not_for_the_file(store):
+    """Two concurrent runs of this module must not share a store.
+
+    Atomic bind is proven against a fresh process. The fixture used to
+    create and drop one fixed name, so a sibling's teardown destroyed this
+    run's store mid-module and the failures read as product defects rather
+    than as the collision they are. Only the per-run suffix keeps the two
+    disjoint, so that is what this pins.
+    """
+    mine = _dbname(store)
+
+    assert mine.startswith(DB_PREFIX + "_" + RUN_TOKEN), mine
+
+    with disposable_db(RUN_TOKEN, admin_dsn=_admin_dsn()) as fresh:
+        assert fresh.name != mine
+        assert fresh.name.startswith(DB_PREFIX + "_" + RUN_TOKEN)
+        assert re.fullmatch(r"[0-9a-f]{12}", fresh.name.rsplit("_", 1)[1])
+    assert mine != _dbname(LOCAL_DSN), mine
 
 
 def _env():

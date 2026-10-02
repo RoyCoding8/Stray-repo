@@ -23,11 +23,14 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from experiments.ad01.agenda_policy import step_policy_consumer
 from experiments.ad01.policy_step import make_policy_artifact
+from experiments.ad01.s09_run_isolation import create_disposable_db, \
+    disposable_db, drop_disposable_db
 
-DB = "s09_m2_policy"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
+RUN_TOKEN = "m2policy"
 MIGRATIONS = ROOT / "migrations"
 RUNS = ROOT / ".ad01-runs"
+
+NAMESPACE_TOKEN = ""
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -68,29 +71,40 @@ def _env():
 
 @pytest.fixture(scope="module")
 def store():
-    assert "live" not in DSN
-    assert DB.startswith("s09_m2_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
     before = set(p.name for p in RUNS.iterdir()) if RUNS.is_dir() else set()
+    database = create_disposable_db(RUN_TOKEN, migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
+        drop_disposable_db(database)
         if RUNS.is_dir():
             for child in RUNS.iterdir():
                 if child.name not in before:
                     import shutil
                     shutil.rmtree(child, ignore_errors=True)
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                        "-U", "ubuntu", DB],
-                       capture_output=True, text=True, timeout=60)
+
+
+def _pinned_trajectory():
+    """`trajectory` pinned to the un-namespaced campaign id form.
+
+    `NAMESPACE_TOKEN` is process-global and nothing ever clears it, so any
+    earlier campaign test that calls `scripts.s09_pilot.run_study` leaves its
+    own token behind for the rest of the pytest session. Unpinned, the parent
+    mints `ad01-w0-I-62-pe` while the fresh interpreter in the restart test
+    mints `ad01-w0-I-62`, and the child refuses to resume the campaign the
+    parent started. The empty token is the only form `resume_campaign` accepts.
+
+    `RESUME_SCRIPT` re-pins it in the child, because a fresh interpreter
+    starts from the module default and would otherwise re-derive a different
+    campaign id than the parent that wrote the rows.
+    """
+    from experiments.ad01 import trajectory
+    trajectory.set_namespace_token(NAMESPACE_TOKEN)
+    return trajectory
 
 
 def _consumer(dsn, cid, source, gateway=None):
-    from experiments.ad01 import trajectory
+    trajectory = _pinned_trajectory()
     artifact = make_policy_artifact(
         source, origin="authored-control",
         applicability={"world": 0, "arm": "I"})
@@ -103,7 +117,7 @@ def _consumer(dsn, cid, source, gateway=None):
 
 
 def _s09_row(dsn, cid, seq):
-    from experiments.ad01 import trajectory
+    trajectory = _pinned_trajectory()
     with trajectory._read_conn(dsn) as conn:
         return conn.execute(
             "SELECT * FROM s09_policy_state"
@@ -112,7 +126,7 @@ def _s09_row(dsn, cid, seq):
 
 
 def _policy_ops(dsn, cid):
-    from experiments.ad01 import trajectory
+    trajectory = _pinned_trajectory()
     with trajectory._read_conn(dsn) as conn:
         return conn.execute(
             "SELECT id FROM operations WHERE starts_with(id, %s)"
@@ -120,7 +134,7 @@ def _policy_ops(dsn, cid):
 
 
 def test_two_authored_policies_diverge_through_public_entry(store):
-    from experiments.ad01 import trajectory
+    trajectory = _pinned_trajectory()
     cid_a = trajectory.campaign_id(0, "I", 60)
     cid_b = trajectory.campaign_id(0, "I", 61)
     out_a = trajectory.run_campaign(
@@ -158,8 +172,9 @@ def test_two_authored_policies_diverge_through_public_entry(store):
 
 RESUME_SCRIPT = (
     "import json, sys\n"
-    "dsn, cid, source_path = sys.argv[1:4]\n"
+    "dsn, cid, source_path, token = sys.argv[1:5]\n"
     "from experiments.ad01 import trajectory\n"
+    "trajectory.set_namespace_token(token)\n"
     "from experiments.ad01.agenda_policy import step_policy_consumer\n"
     "from experiments.ad01.policy_step import make_policy_artifact\n"
     "source = open(source_path).read()\n"
@@ -176,7 +191,7 @@ RESUME_SCRIPT = (
 
 def test_policy_consistent_after_fresh_process_restart(store,
                                                        tmp_path):
-    from experiments.ad01 import trajectory
+    trajectory = _pinned_trajectory()
     cid = trajectory.campaign_id(0, "I", 62)
     first = trajectory.run_campaign(
         0, "I", CHARTER, dict(CAPS, max_boundaries=1),
@@ -189,7 +204,7 @@ def test_policy_consistent_after_fresh_process_restart(store,
     source_path.write_text(DIAGNOSE_SOURCE)
     proc = subprocess.run(
         [sys.executable, "-c", RESUME_SCRIPT, store, cid,
-         str(source_path)],
+         str(source_path), NAMESPACE_TOKEN],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300,
         env=_env())
     assert proc.returncode == 0, proc.stderr
@@ -203,3 +218,27 @@ def test_policy_consistent_after_fresh_process_restart(store,
     assert _policy_ops(store, cid) == before
     row = _s09_row(store, cid, 0)
     assert row["status"] == "incorporated"
+
+
+def test_the_store_is_one_this_run_created(store):
+    """A dropped store must never be a store somebody else still runs on.
+
+    A fixed database name is shared state: any other suite that creates the
+    same name destroys this run's rows, and the restart test then fails on a
+    missing campaign rather than on the collision that caused it. The name
+    carries a per-run token, so only this run's name is ever destroyed.
+    """
+    name = store.split("dbname=")[1].split()[0]
+
+    assert name.startswith("s09iso_m2policy_"), name
+
+
+def test_the_store_survives_a_second_module_scope():
+    """Re-deriving the store must not reuse this module's database.
+
+    The collision that produced the original failures was two runs of this
+    file at once. Each run's fixture mints its own name, so a second fixture
+    can never observe or destroy the first one's database.
+    """
+    with disposable_db(RUN_TOKEN) as other:
+        assert other.name.startswith("s09iso_m2policy_"), other.name

@@ -1,0 +1,24 @@
+{
+ "artifact": "output-run.json",
+ "problems": [
+  "dispatch-budget-mismatch P1-qual",
+  "dispatch-budget-mismatch P2-audit",
+  "dispatch-budget-mismatch P2-qual",
+  "durable-receipt-conflict-outcome-invalid invl02-output-P1-audit-0023-a1",
+  "durable-receipt-usage-state-invalid",
+  "missing-dispatch P1-qual",
+  "missing-dispatch P2-audit",
+  "missing-dispatch P2-qual",
+  "study-incomplete"
+ ],
+ "recomputed": {
+  "accepted_candidates": 0,
+  "dispatches": 1,
+  "tasks": [
+   "P1-audit"
+  ]
+ },
+ "status": "fail",
+ "study_status": "incomplete",
+ "verifier": "offline_recompute.verify_bundle"
+}

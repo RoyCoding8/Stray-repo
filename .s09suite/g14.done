@@ -1,0 +1,4 @@
+=== group 14  token=5e9b000e  files=1 ===
+  tests/test_s09m5_pilot.py
+rc=0
+summary: 9 passed in 24.46s

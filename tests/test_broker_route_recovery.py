@@ -229,7 +229,7 @@ def test_model_receipts_distinguish_route_and_response_outcomes(
     assert receipt["content"]["response_class"] == response_class
     assert receipt["outcome"] == outcome
     assert receipt.get("actual_cost") == actual_cost
-    assert fake_store.deliveries == ["dispatch:op-route"]
+    assert fake_store.deliveries == ([] if outcome == "unknown" else ["dispatch:op-route"])
 
 
 def test_identity_failure_retains_exact_response_evidence(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -364,6 +364,7 @@ def test_reset_refuses_without_positive_launcher_proof(
     fake_store = _BrokerStore()
     fake_store.row["dispatch_state"] = "dispatching"
     fake_store.row["launcher_id"] = "launcher-test"
+    fake_store.row["payload"]["_dispatch_generation"] = 1
     fake_store.install(monkeypatch)
     launcher = _Launcher(proof)
 
@@ -384,6 +385,7 @@ def test_reset_calls_store_only_after_positive_launcher_proof(
     fake_store = _BrokerStore()
     fake_store.row["dispatch_state"] = "dispatching"
     fake_store.row["launcher_id"] = "launcher-test"
+    fake_store.row["payload"]["_dispatch_generation"] = 1
     fake_store.install(monkeypatch)
     launcher = _Launcher(proof=True)
     expected = DispatchStatus(
@@ -406,13 +408,19 @@ def test_cancellation_exposure_release_requires_launcher_proof(
     fake_store = _BrokerStore()
     fake_store.row["dispatch_state"] = "dispatching"
     fake_store.row["launcher_id"] = "launcher-test"
+    fake_store.row["payload"]["_dispatch_generation"] = 1
     fake_store.install(monkeypatch)
 
     refused = broker.confirm_cancel("unused", "op-route", {"launcher-test": _Launcher(False)})
     allowed = broker.confirm_cancel("unused", "op-route", {"launcher-test": _Launcher(True)})
 
     assert refused.data["never_sent_proof"] is False
-    assert allowed.data["never_sent_proof"] is True
+    assert allowed.data["never_sent_proof"] == {
+        "claim": "never-sent",
+        "subject": "op-route",
+        "provenance": "launcher-test:prove_never_sent",
+        "dispatch_generation": 1,
+    }
 
 
 def test_cancellation_never_releases_over_an_existing_receipt(
@@ -504,6 +512,352 @@ def test_broker_refuses_retry_multiplier_it_does_not_schedule(
     assert result.code == ResultCode.INVALID_INPUT
     assert result.detail == "retries must be zero; use distinct operation identities"
     assert prepared == []
+
+
+def test_unknown_model_receipt_is_not_delivered_as_success(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_store = _BrokerStore()
+    fake_store.install(monkeypatch)
+
+    status = broker.dispatch_operation(
+        "unused", "op-route", gateway=_Gateway(None), ownership_generation=1
+    )
+
+    assert status.dispatch_state == "unresolved"
+    assert status.next_decision == "needs-reconciliation"
+    assert fake_store.deliveries == []
+
+
+def test_settlement_refusal_is_not_reported_as_admitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_store = _BrokerStore()
+    fake_store.admission_results = [CommandResult(
+        code=ResultCode.APPLIED,
+        request_id="cost-refused",
+        data={"settlement_refused": "actual cost conflicts with usage charge_units"},
+    )]
+    fake_store.install(monkeypatch)
+    response = ModelResponse(
+        "op-route",
+        "answer",
+        {"provider": "vendor"},
+        Usage(input_tokens=1, output_tokens=1, charge_units=3, billed=True),
+        "stop",
+    )
+
+    status = broker.dispatch_operation(
+        "unused", "op-route", gateway=_Gateway(response), ownership_generation=1
+    )
+
+    assert status.dispatch_state == "dispatching"
+    assert status.next_decision == "receipt-admission-refused"
+    assert fake_store.deliveries == []
+
+
+def test_reconcile_unknown_result_is_not_reported_as_receipt_admitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_store = _BrokerStore()
+    fake_store.row["dispatch_state"] = "dispatching"
+    fake_store.row["launcher_id"] = "launcher-test"
+    fake_store.install(monkeypatch)
+    launcher = _Launcher(proof=True)
+    launcher.result = {"outcome": "unknown", "text": "not received"}
+
+    decision = broker.reconcile("unused", "op-route", {"launcher-test": launcher})
+
+    assert decision.decision == "unresolved-liability"
+    assert decision.next == "retry-later"
+    assert fake_store.deliveries == []
+
+
+def test_reset_passes_generation_bound_structured_never_sent_proof(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_store = _BrokerStore()
+    fake_store.row["dispatch_state"] = "dispatching"
+    fake_store.row["launcher_id"] = "launcher-test"
+    fake_store.row["payload"]["_dispatch_generation"] = 4
+    fake_store.install(monkeypatch)
+    commands: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        broker.store,
+        "reset_dispatch",
+        lambda _dsn, command: commands.append(command.payload) or CommandResult(
+            code=ResultCode.APPLIED, request_id=command.request_id,
+            data={"dispatch_generation": 5},
+        ),
+    )
+    launcher = _Launcher(proof=True)
+    monkeypatch.setattr(
+        broker,
+        "dispatch_operation",
+        lambda *_args, **_kwargs: DispatchStatus(
+            operation_id="op-route", dispatch_state="observed", sent_this_call=True
+        ),
+    )
+
+    status = broker.redispatch_after_reset(
+        "unused", "op-route", {"launcher-test": launcher}, expected_generation=4
+    )
+
+    assert status.sent_this_call is True
+    assert commands[0]["never_sent_proof"] == {
+        "claim": "never-sent",
+        "subject": "op-route",
+        "provenance": "launcher-test:prove_never_sent",
+        "dispatch_generation": 4,
+    }
+
+
+def test_cancellation_passes_generation_bound_structured_never_sent_proof(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_store = _BrokerStore()
+    fake_store.row["dispatch_state"] = "dispatching"
+    fake_store.row["launcher_id"] = "launcher-test"
+    fake_store.row["payload"]["_dispatch_generation"] = 2
+    fake_store.install(monkeypatch)
+
+    result = broker.confirm_cancel("unused", "op-route", {"launcher-test": _Launcher(proof=True)})
+
+    assert result.data["never_sent_proof"] == {
+        "claim": "never-sent",
+        "subject": "op-route",
+        "provenance": "launcher-test:prove_never_sent",
+        "dispatch_generation": 2,
+    }
+
+
+def test_workflow_replay_never_calls_dispatch_again(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from settlement import run as runmod
+
+    monkeypatch.setitem(
+        broker.ATTEMPT_WORKFLOW_RESOURCES,
+        "att-route",
+        {"launchers": {}, "gateway": None},
+    )
+    monkeypatch.setattr(
+        runmod,
+        "operation_outcome",
+        lambda *_args: {
+            "found": True,
+            "outcome": "success",
+            "dispatch_state": "observed",
+        },
+    )
+    prepared: list[dict[str, Any]] = []
+
+    def record_ensure(_dsn: str, **kwargs: Any) -> CommandResult:
+        prepared.append(kwargs)
+        return CommandResult(
+            code=ResultCode.ALREADY_APPLIED,
+            request_id="replayed",
+            detail="operation already prepared",
+            data={},
+        )
+
+    monkeypatch.setattr(broker, "ensure_operation", record_ensure)
+    monkeypatch.setattr(
+        broker,
+        "dispatch_operation",
+        lambda *_args, **_kwargs: pytest.fail("replay must not dispatch"),
+    )
+
+    op_args = {
+        "operation_id": "op-route",
+        "effect": broker.MODEL_INFERENCE,
+        "payload": {
+            "model": "m1",
+            "messages": [{"role": "user", "content": "hello"}],
+            "max_output_tokens": 8,
+        },
+        "allocation_id": "a1",
+    }
+    summary = broker.wf_ensure_dispatch(
+        "unused",
+        op_args,
+        1,
+        1,
+        "node",
+        "att-route",
+    )
+
+    assert summary["next_decision"] == "already-replayed"
+    assert summary["replay"] is True
+    assert len(prepared) == 1
+    assert prepared[0] == {
+        "operation_id": op_args["operation_id"],
+        "effect": op_args["effect"],
+        "payload": op_args["payload"],
+        "allocation_id": op_args["allocation_id"],
+        "attempt_id": None,
+        "execution_version": "",
+        "retries": 0,
+    }
+
+
+def test_workflow_does_not_advance_from_observed_status_without_receipt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from settlement import run as runmod
+
+    composition = {
+        "version": "run/v1",
+        "revision": 1,
+        "allocation_id": "a1",
+        "authority_version": 1,
+        "root": {
+            "kind": "invoke",
+            "node_id": "n1",
+            "effect": "sandbox-exec",
+            "payload": {
+                "profile": "local-process",
+                "argv": ["/bin/true"],
+                "timeout_ms": 5_000,
+                "max_output_bytes": 1_024,
+            },
+        },
+    }
+    continuation = runmod.fresh_continuation(
+        runmod.Composition.model_validate(composition), "att-route"
+    ).model_dump(mode="json")
+    monkeypatch.setattr(
+        runmod,
+        "operation_outcome",
+        lambda *_args: {"found": False, "outcome": "unknown", "dispatch_state": "unknown"},
+    )
+    recorded: list[dict[str, Any]] = []
+    monkeypatch.setattr(
+        runmod,
+        "record_continuation",
+        lambda _dsn, _attempt, cont, _ref, _generation: recorded.append(cont) or
+        CommandResult(code=ResultCode.APPLIED, request_id="recorded"),
+    )
+
+    result = broker.wf_record(
+        "unused",
+        "att-route",
+        composition,
+        continuation,
+        {"node_id": "n1", "operation_id": "op-route", "dispatch_state": "observed"},
+        "workflow:r1",
+    )
+
+    assert result["completed"] == {}
+    assert result["unresolved_ops"] == ["n1:op-route"]
+
+
+def test_receipt_identity_mismatch_is_refused_before_store(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_store = _BrokerStore()
+    fake_store.row["dispatch_state"] = "dispatching"
+    fake_store.row["payload"]["_dispatch_generation"] = 1
+    fake_store.install(monkeypatch)
+
+    result = broker.admit_launcher_receipt(
+        "unused",
+        "op-route",
+        ReceiptProposal(
+            receipt_identity="forged-response",
+            content={
+                "operation_id": "op-route",
+                "response_operation_id": "other-operation",
+                "response_class": "observed-provider-failure",
+            },
+            outcome="failure",
+            provenance="gateway",
+        ),
+    )
+
+    assert result.code == ResultCode.INVALID_INPUT
+    assert fake_store.receipts == []
+
+
+def test_delivery_refusal_does_not_report_send_complete(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_store = _BrokerStore()
+    fake_store.row["dispatch_state"] = "observed"
+    fake_store.row["payload"]["_dispatch_generation"] = 1
+    fake_store.install(monkeypatch)
+    monkeypatch.setattr(
+        broker.store,
+        "record_delivery",
+        lambda _dsn, _command: CommandResult(
+            code=ResultCode.INVALID_INPUT, request_id="delivery-refused"
+        ),
+    )
+
+    status = broker._finish_send(
+        "unused",
+        "op-route",
+        LaunchOutcome(
+            sent=True,
+            receipt=ReceiptProposal(
+                receipt_identity="fake:op-route",
+                content={"ok": True},
+                outcome="success",
+                provenance="fake",
+            ),
+        ),
+        admitted_generation=1,
+    )
+
+    assert status.sent_this_call is True
+    assert status.next_decision == "needs-reconciliation"
+    assert fake_store.deliveries == []
+
+
+def test_workflow_finish_waits_when_store_refuses_completion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import inspect
+    from types import SimpleNamespace
+
+    from settlement import run as runmod
+
+    composition = runmod.Composition.model_validate({
+        "version": "run/v1",
+        "revision": 1,
+        "allocation_id": "a1",
+        "authority_version": 1,
+        "root": {"kind": "sequence", "node_id": "root", "steps": []},
+    })
+    continuation = runmod.fresh_continuation(composition, "att-finish")
+    monkeypatch.setattr(
+        broker,
+        "wf_snapshot",
+        lambda *_args: {
+            "lifecycle": "running",
+            "continuation": continuation.model_dump(mode="json"),
+        },
+    )
+    monkeypatch.setattr(
+        broker,
+        "wf_finish",
+        lambda *_args: {
+            "code": "missing_evidence",
+            "detail": "attempt has unresolved operation op",
+        },
+    )
+    monkeypatch.setattr(
+        broker,
+        "DBOS",
+        SimpleNamespace(run_step=lambda _ctx, fn, *args: fn(*args)),
+    )
+
+    result = inspect.unwrap(broker.attempt_workflow)(
+        "unused", "att-finish", 1, composition.model_dump(mode="json"), 2
+    )
+
+    assert result["outcome"] == "waiting"
+    assert result["finish"]["code"] == "missing_evidence"
 
 
 def _refused() -> CommandResult:

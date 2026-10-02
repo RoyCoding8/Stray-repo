@@ -23,6 +23,8 @@ KINDS = ("calibration", "development", "repair", "use")
 
 PHASES = ("diagnostic", "validation")
 
+STRANDED_DISPATCH_STATES = ("dispatching", "sent", "unresolved")
+
 
 def _j(value: Any) -> Json:
     return Json(dict(value) if isinstance(value, dict) else value)
@@ -82,7 +84,7 @@ def authorize_study(dsn: str, study_root: str, *, authorized: int,
     for name, value in dict(ceilings or {}).items():
         if not isinstance(name, str) or not name.strip():
             raise SettlementError("study ceilings name a resource")
-        if name not in store.CEILING_COUNTERS:
+        if not store.is_ceiling_name(name):
             raise SettlementError(f"unsupported study ceiling {name}")
         if isinstance(value, dict):
             value = value.get("max", value.get("limit"))
@@ -197,7 +199,8 @@ def admit_study_call(dsn: str, study_root: str, *, kind: str,
                      operation_id: str, effect: str, payload: dict[str, Any],
                      attempt_id: str | None = None,
                      execution_version: str = "",
-                     retries: int = 0):
+                     retries: int = 0,
+                     resource: str | None = None):
     from . import loop as _loop
 
     if kind not in KINDS:
@@ -226,6 +229,11 @@ def admit_study_call(dsn: str, study_root: str, *, kind: str,
         "kind": kind,
         "allocation_id": child_id,
     }
+    # The resource this call draws on, for the ceilings that bound a resource
+    # rather than an effect. `kind` above names the study phase, which is a
+    # different axis, so the two cannot share a key.
+    if resource is not None:
+        body["resource"] = str(resource)
     try:
         result = store.admit_study_operation(
             dsn, Command(
@@ -326,6 +334,29 @@ def _summarize_receipts(receipts: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def _stranded_exposure(unreceipted: list[dict[str, Any]]) -> dict[str, int]:
+    """Receiptless exposure held by an operation nothing will ever finish.
+
+    An operation that is still ``prepared`` holds exposure a dispatch will
+    consume, so its units are pending in the ordinary sense. One that has
+    been dispatched and produced no receipt has left the queue: the launcher
+    that was given the work either never spawned it or can no longer report
+    on it, and no receipt will arrive to settle the reservation. Those units
+    are lost, not pending, and counting them as pending is what let a study
+    holding them report an all-clear — the amount appeared on both sides of
+    the ledger's own arithmetic, so the arithmetic agreed with itself about
+    an exposure nothing would ever release.
+    """
+    stranded: dict[str, int] = {}
+    for row in unreceipted:
+        if str(row.get("dispatch_state") or "") not in STRANDED_DISPATCH_STATES:
+            continue
+        amount = int(row["reserved_amount"])
+        if amount > 0:
+            stranded[str(row["id"])] = amount
+    return stranded
+
+
 def verify_ledger(dsn: str, study_root: str) -> dict[str, Any]:
     from psycopg.rows import dict_row
 
@@ -353,7 +384,8 @@ def verify_ledger(dsn: str, study_root: str) -> dict[str, Any]:
                 " FROM allocations WHERE id = ANY(%s)", (alloc_ids,))
             totals = dict(cur.fetchone())
             cur.execute(
-                "SELECT o.id, COALESCE(res.amount, 0) AS reserved_amount"
+                "SELECT o.id, COALESCE(res.amount, 0) AS reserved_amount,"
+                " o.dispatch_state"
                 " FROM operations o LEFT JOIN receipts r"
                 " ON r.operation_id = o.id"
                 " LEFT JOIN reservations res ON res.id = o.reservation_id"
@@ -365,6 +397,7 @@ def verify_ledger(dsn: str, study_root: str) -> dict[str, Any]:
     summary = _summarize_receipts(receipts)
     pending = summary["pending"] + sum(
         int(row["reserved_amount"]) for row in unreceipted)
+    stranded = _stranded_exposure(unreceipted)
     consumed, reserved = int(totals["consumed"]), int(totals["reserved"])
     return {
         "study_root": study_root,
@@ -377,8 +410,9 @@ def verify_ledger(dsn: str, study_root: str) -> dict[str, Any]:
         "unknown_usage": summary["unknown_usage"],
         "conflicts": conflicts,
         "unreceipted": sorted(row["id"] for row in unreceipted),
+        "stranded": stranded,
         "match": not conflicts and consumed == summary["expected_consumed"]
-        and reserved == pending,
+        and reserved == pending and not stranded,
     }
 
 

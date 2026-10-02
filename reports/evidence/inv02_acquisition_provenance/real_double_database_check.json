@@ -1,0 +1,24 @@
+{
+ "acquired_source_sha256": "b0bd83b7ec80e6c23ba670da9fe2ba594139b9c98f8a113ae19a275e3c59a35c",
+ "after_this_change": {
+  "construction_path_reason": "member bytes are not the settled response",
+  "origin_written": "fixture-stand-in",
+  "replay_finds_operation": "ad01-ad01-w0-I-00-b0-ad01-w0-dev-sw-00-construct-l1-init",
+  "replay_re_derives_origin": "fixture-stand-in"
+ },
+ "before_this_change": {
+  "checked_against_evidence": "nothing",
+  "origin_written": "model-acquired",
+  "written_where": [
+   "experiments/ad01/construct.py (2 sites)",
+   "experiments/ad01/trajectory.py (2 sites)"
+  ]
+ },
+ "database": "inv_r1_probe (pre-existing; created by an earlier lane, not by this one, not dropped by it)",
+ "matches_ACQUIRED_ORDER_SOURCE": true,
+ "no_full_suite": true,
+ "operation_id": "ad01-ad01-w0-I-00-b0-ad01-w0-dev-sw-00-construct-l1-init",
+ "reading": "The construction path is called with the parsed source rather than the raw response text, so it reports 'member bytes are not the settled response' first. Both refusals are correct and both land on fixture-stand-in: the raw text is the envelope, the parsed source is the member, and neither is live-served. The replay path is the stronger demonstration, because it is given exactly the bytes the freeze still calls model-acquired and independently re-derives fixture-stand-in from the receipt.",
+ "tests": "35 passed across tests/test_inv02_acquisition_origin.py, tests/test_s09m2_construct.py and tests/test_inv_c_qualification.py",
+ "what_this_is": "The fix run against the database the recording double actually served, on the operation the study actually ran. Not a synthetic row."
+}

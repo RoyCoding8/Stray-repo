@@ -23,6 +23,32 @@ USE_WITHIN_PER_DOMAIN = 3
 USE_TRANSFER_PER_DOMAIN = 3
 FROZEN_DIR = Path(__file__).resolve().parent / "worlds"
 
+# The HMAC key for public task ids, and the reason it lives here rather
+# than in a per-campaign config.
+#
+# N-01 replaced `rule-dev-0004` with a digest, which stopped the id
+# *naming* its seed. N-34 measured that the leak survived anyway: the
+# digest is unsalted over a 0..9999 seed space, so enumerating the space
+# reproduces any id - for `make_task("dev", 4)` at seed 4, in a thousand
+# hashes. A keyed digest closes it, because recovering the id now needs
+# the key.
+#
+# The key is frozen world state rather than a per-campaign secret.
+# `offline_recompute` re-derives ids from `(split, seed)` in a *different
+# process* to verify frozen evidence - `_task_id_for` and the frozen-task
+# check both compare `make_task(...)[task_id]` against the bundle. A
+# per-run key would make that verification impossible. A frozen key is
+# stable across processes, which the recompute needs, and absent from the
+# policy view, which is the whole point.
+#
+# It is a study constant, not a secret in any operational sense: it is in
+# the repository. What it buys is that the id stops being a function of
+# published values alone, so a policy holding the view cannot invert it
+# without also holding the source. That is a real reduction in what a
+# policy can do from the view alone, and it is not a defence against an
+# adversary who reads this file.
+TASK_ID_KEY = b"ad01-task-id-hmac-v1"
+
 
 def _world_tasks(world: int) -> list:
     tasks = []
@@ -57,7 +83,7 @@ def build_freeze(root) -> dict:
             raw = (json.dumps(task, sort_keys=True, indent=2) + "\n").encode()
             target.write_bytes(raw)
             manifest["files"].append(
-                {"path": str(target.relative_to(root)),
+                {"path": target.relative_to(root).as_posix(),
                  "task_id": task["task_id"], "digest": _digest(raw),
                  "bytes": len(raw)})
             by_kind.setdefault(kind, {}).setdefault(task["family"],

@@ -11,8 +11,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-DB = "s09o_export"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
+TOKEN = "o-export"
 MIGRATIONS = ROOT / "migrations"
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -53,16 +52,15 @@ REJECTED_CANDIDATE = (
 
 @pytest.fixture(scope="module")
 def store():
-    assert DB.startswith("s09o_export")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    from experiments.ad01 import s09_run_isolation as iso
+
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    database = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                        migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql", "-U", "ubuntu", DB],
-                       check=True, capture_output=True, text=True, timeout=60)
+        iso.drop_disposable_db(database, admin_dsn=admin_dsn)
 
 
 class Provider:
@@ -254,3 +252,29 @@ def test_unavailable_export_is_distinct_and_durable(store):
     assert policy["refusal"]["outcome"] == "unavailable"
     assert policy["refusal"]["durable"] is True
     assert _verify(exported)["status"] == "pass"
+
+
+def test_the_store_is_named_for_this_run_not_for_the_file():
+    """A fixed name is shared state; a sibling run's teardown destroys it.
+
+    Two runs of this file on one cluster collided on one name, and the first
+    teardown dropped the store the second was still writing to. The name
+    carries a per-run token, so only a name this run minted is ever dropped
+    and a second fixture can never reuse the first one's database.
+    """
+    from experiments.ad01 import s09_run_isolation as iso
+
+    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
+    first = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                     migrations_dir=ROOT / "migrations")
+    try:
+        assert first.name.startswith(iso.DB_PREFIX + "_"), first.name
+        assert TOKEN in first.name, first.name
+        again = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
+                                         migrations_dir=ROOT / "migrations")
+        try:
+            assert again.name != first.name
+        finally:
+            iso.drop_disposable_db(again, admin_dsn=admin_dsn)
+    finally:
+        iso.drop_disposable_db(first, admin_dsn=admin_dsn)

@@ -17,7 +17,7 @@ The prior review's three conclusions remain: exact-match replay support cannot r
 
 ## Decision and complete task
 
-Proceed with one investigation driver over existing execution guarantees, a bounded executable policy step, separately governed feedback/assessment, explicit active bindings, and a prospective comparison of incumbent/direct/experience-informed policy construction. The worker owns sequential M0–M7 design concretization, implementation, qualification and delivery under [the full assignment](../WORKER-STAGE-09-CONSOLIDATION.md).
+Proceed with one investigation driver over existing execution guarantees, a bounded executable policy step, separately governed feedback/assessment, explicit active bindings, and a prospective comparison of incumbent/direct/experience-informed policy construction. The worker owns sequential M0–M7 design concretization, implementation, qualification and delivery under [the full assignment](../docs/HISTORY.md#worker-stage-09-consolidation).
 
 No full suite or Linux child rerun was needed for this documentation-only audit. The new probe is DB-free; the last review's nine focused checks and worker-reported integrated results keep their original scope. The handoff requires real integrated checks for the implementation. There is no new live grant in this note.
 

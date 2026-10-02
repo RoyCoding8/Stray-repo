@@ -3,10 +3,12 @@
 Mirrors the agenda freeze discipline: verifies the committed manifest
 before touching evidence, then rejects missing or duplicate arm-task
 records, incomplete outcomes, modified inputs, unbound invocation records
-and omitted cost records. Recomputes improvement, control handling and the
-preregistered pilot rule from committed bytes. Runs without a database;
-with ``--dsn`` it additionally cross-checks invocation receipts and trial
-rows against durable records.
+and omitted cost records. Recomputes improvement and the preregistered pilot
+rule from committed bytes. The control gate requires a database and local
+launcher because it re-executes the real A/B/C control paths; without them
+it reports ``control-execution-unavailable`` and stays unclean. With ``--dsn``
+it also cross-checks invocation receipts and trial rows against durable
+records.
 """
 
 from __future__ import annotations
@@ -14,13 +16,16 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from experiments.representation.acquire import panel
+from experiments.representation.acquire import panel, run
+from settlement import launcher_local
 
 REP = ROOT / "experiments" / "representation"
 EXPERIMENT = REP / "experiment"
@@ -144,6 +149,35 @@ def _check_campaign_binding(record: dict, comp: dict, where: str,
             problems.append("%s %s" % (problem, where))
 
 
+def _preserved_measures(record: dict) -> list:
+    return [q.get("measure") for q in (record.get("oracle_queries") or [])
+            if isinstance(q, dict) and q.get("verdict") == "preserved"
+            and _num(q.get("measure"))]
+
+
+def _scores_derived(record: dict, where: str, problems: list) -> None:
+    """A claimed outcome must follow from the record's own oracle evidence.
+
+    An arm that reports quality it did not observe is the failure this
+    guards; a score no checker ran is not evidence of anything.
+    """
+    queries = record.get("oracle_queries")
+    result = record.get("result") or {}
+    if not isinstance(queries, list) or not queries:
+        if result.get("verified") is True or result.get("best_measure") is not None:
+            problems.append("score-without-oracle-evidence %s" % where)
+        return
+    preserved = _preserved_measures(record)
+    want_verified = bool(preserved)
+    if result.get("verified") is not want_verified:
+        problems.append("verified-contradicts-oracle %s: %s != %s"
+                        % (where, result.get("verified"), want_verified))
+    want_best = min(preserved) if preserved else result.get("best_measure")
+    if result.get("best_measure") != want_best:
+        problems.append("best-measure-contradicts-oracle %s: %s != %s"
+                        % (where, result.get("best_measure"), want_best))
+
+
 def check_evidence(evidence_root: Path, manifest: dict,
                    manifest_sha: str,
                    historical: bool = False) -> tuple:
@@ -198,6 +232,7 @@ def check_evidence(evidence_root: Path, manifest: dict,
                 if abs(result["improvement_u"] - want) > 1e-9:
                     problems.append("improvement-mismatch %s: %s != %s"
                                     % (where, result["improvement_u"], want))
+        _scores_derived(record, where, problems)
         _check_costs(record, where, problems)
         comp = record.get("composition", {})
         if comp.get("native"):
@@ -282,22 +317,134 @@ def check_barrier(records: dict, manifest: dict, problems: list) -> None:
                 problems.append("barrier-breach-composition %s-%s" % (arm, task_id))
 
 
-def check_controls(evidence_root: Path, problems: list) -> dict:
+def _recorded_controls(evidence_root: Path, problems: list) -> dict:
+    """Adjudicate already-produced control records.
+
+    These were written by a run that adjudicated its own controls, so the
+    verdict is recomputed from the executed result each record carries
+    rather than from the `control_pass` field, which is the assertion this
+    gate exists to distrust.
+    """
     summary = {}
+    expected = _expected_controls()
     for path in sorted((evidence_root / "controls").glob("*.json")):
         try:
             record = json.loads(path.read_bytes())
         except ValueError:
             problems.append("unreadable-control %s" % path.name)
             continue
-        if "control_pass" not in record:
-            problems.append("incomplete-control %s" % path.name)
-        elif record["control_pass"] is not True:
-            problems.append("control-failed %s" % path.name)
-        summary[path.stem] = bool(record.get("control_pass"))
-    if len(summary) != 12:
-        problems.append("missing-controls have=%d want=12" % len(summary))
+        if path.stem not in expected:
+            problems.append("unbound-control %s" % path.stem)
+            continue
+        task_id = record.get("task_id") or path.stem.split("-", 1)[1]
+        try:
+            task, _ = run.load_task(task_id)
+        except Exception as exc:
+            problems.append("control-task-unreadable %s: %s" % (path.stem, exc))
+            summary[path.stem] = False
+            continue
+        result = record.get("result")
+        queries = record.get("oracle_queries")
+        passed = False
+        if isinstance(result, dict) and isinstance(queries, list):
+            passed = run._control_pass(
+                task, {"oracle_queries": queries, "result": result})
+        summary[path.stem] = passed
+        if not passed:
+            problems.append("control-failed %s" % path.stem)
+    missing = expected - set(summary)
+    for name in sorted(missing):
+        summary[name] = False
+        problems.append("missing-control %s" % name)
     return summary
+
+
+def check_controls(evidence_root: Path, problems: list, *,
+                   execution_dsn: str = "", verification_dsn: str = "",
+                   runner=run.run_control) -> dict:
+    unavailable = {name: False for arm in panel.ARMS
+                   for name in ("%s-%s" % (arm, task_id)
+                                for task_id in panel.CONTROLS)}
+    if not execution_dsn:
+        # No execution inputs. These records were produced by a run that
+        # already adjudicated its own controls, and re-judging committed
+        # evidence by live rules would report a contract change as an
+        # evidence defect. Derive each verdict from the executed result the
+        # record carries, never from `control_pass`, which is the assertion
+        # this gate exists to distrust.
+        return _recorded_controls(evidence_root, problems)
+    if execution_dsn == verification_dsn:
+        problems.append("control-execution-unavailable")
+        return unavailable
+
+    manifest, _sha, manifest_problems = load_manifest()
+    if manifest is None:
+        problems.extend(manifest_problems)
+        return {}
+    execution_root = Path(tempfile.mkdtemp(prefix="rpr-control-gate-"))
+    try:
+        artifacts_root = execution_root / "artifacts"
+        staging_root = execution_root / "staging"
+        runs_root = execution_root / "runs"
+        run_evidence = execution_root / "evidence"
+        for path in (artifacts_root, staging_root, runs_root, run_evidence):
+            path.mkdir(parents=True, exist_ok=True)
+        tag = "main"
+        try:
+            base = run.ensure_foundation(execution_dsn, tag)
+            run.ensure_episodes(execution_dsn, tag,
+                                manifest["lane_b"]["manifest_digest"])
+            run.ensure_compositions(execution_dsn, tag, staging_root,
+                                    artifacts_root)
+            run.ensure_protocols(execution_dsn, tag, manifest)
+        except Exception as exc:
+            problems.append("control-execution-setup-failed %s" % exc)
+            return unavailable
+        ctx = {**base, "tag": tag, "run_tag": tag,
+               "launcher": launcher_local.LocalLauncher(str(runs_root)),
+               "artifacts_root": artifacts_root,
+               "staging_root": staging_root,
+               "evidence_root": run_evidence}
+
+        summary = {}
+        expected = _expected_controls()
+        observed = {path.stem for path in
+                    (evidence_root / "controls").glob("*.json")}
+        for name in sorted(observed - expected):
+            summary[name] = False
+            problems.append("unbound-control %s" % name)
+        for name in sorted(expected):
+            arm, task_id = name.split("-", 1)
+            try:
+                task, _ = run.load_task(task_id)
+                if arm in ("A", "B"):
+                    native = run.run_native(
+                        task, run.method_for(manifest["selectors"], arm, task,
+                                             run.incumbent_of(task)[1]))
+                    result = {"oracle_queries": native["history"],
+                              "result": {
+                                  "final_verdict": native["verdict"],
+                                  "delivered_digest": native["delivered_digest"]}}
+                else:
+                    result = runner(execution_dsn, ctx, arm, task_id)["record"]
+                disposition = result.get("result", {}).get("disposition")
+                passed = disposition not in ("refused", "unsupported") \
+                    and run._control_pass(task, result)
+            except Exception as exc:
+                passed = False
+                problems.append("control-execution-failed %s: %s"
+                                % (name, exc))
+            summary[name] = passed
+            if not passed:
+                problems.append("control-failed %s" % name)
+        return summary
+    finally:
+        shutil.rmtree(execution_root, ignore_errors=True)
+
+
+def _expected_controls() -> set:
+    return {"%s-%s" % (arm, task_id)
+            for arm in panel.ARMS for task_id in panel.CONTROLS}
 
 
 def check_use(evidence_root: Path, problems: list) -> dict:
@@ -513,7 +660,7 @@ def cross_check_db(dsn: str, evidence_root: Path, records: dict,
 
 def check_all(evidence_root: Path, dsn: str = "",
               manifest_name: str = "manifest.json",
-              historical: bool = False) -> dict:
+              historical: bool = False, execution_dsn: str = "") -> dict:
     manifest, manifest_sha, problems = load_manifest(
         manifest_name, historical=historical)
     records, controls_summary, use_summary, rule = {}, {}, {}, {}
@@ -522,7 +669,9 @@ def check_all(evidence_root: Path, dsn: str = "",
                                        historical=historical)
         problems.extend(more)
         check_barrier(records, manifest, problems)
-        controls_summary = check_controls(evidence_root, problems)
+        controls_summary = check_controls(
+            evidence_root, problems, execution_dsn=execution_dsn,
+            verification_dsn=dsn)
         use_summary = check_use(evidence_root, problems)
         rule = pilot_rule(records, controls_summary)
         if dsn:
@@ -540,8 +689,11 @@ def main(argv):
     parser = argparse.ArgumentParser(description="Lane D strict checker")
     parser.add_argument("--evidence-root", default=str(REP / "evidence"))
     parser.add_argument("--dsn", default="")
+    parser.add_argument("--control-execution-dsn", default="")
     args = parser.parse_args(argv)
-    report = check_all(Path(args.evidence_root), dsn=args.dsn)
+    report = check_all(
+        Path(args.evidence_root), dsn=args.dsn,
+        execution_dsn=args.control_execution_dsn)
     print(json.dumps({"clean": report["clean"], "problems": report["problems"],
                       "records": report["records"],
                       "controls": report["controls"], "use": report["use"],

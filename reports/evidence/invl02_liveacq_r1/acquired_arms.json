@@ -1,0 +1,18 @@
+{
+ "ad01-w0-transfer-sw-00": {
+  "acquired": false,
+  "reason": "LiveRefused: live policy acquisition failed: construction call ad01-liveacq02-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init left no settled response"
+ },
+ "ad01-w0-transfer-gr-00": {
+  "acquired": false,
+  "reason": "LiveRefused: live policy acquisition failed: construction call ad01-liveacq02-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init left no settled response"
+ },
+ "ad01-w0-transfer-sw-01": {
+  "acquired": false,
+  "reason": "LiveRefused: live policy acquisition failed: lineage cap reached (2/trajectory)"
+ },
+ "ad01-w0-transfer-gr-01": {
+  "acquired": false,
+  "reason": "LiveRefused: live policy acquisition failed: lineage cap reached (2/trajectory)"
+ }
+}

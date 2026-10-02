@@ -1,0 +1,1524 @@
+{
+ "allocation": {
+  "amount_scale": 1,
+  "authorized": 209216,
+  "consumed": 11023,
+  "created_at": "2026-09-26 18:25:02.278187+00:00",
+  "domain": "study",
+  "epoch": 0,
+  "id": "ad01-campaign-ad01-w2-I-00",
+  "max_occupancy": 8,
+  "occupancy": 4,
+  "owner_scope": "",
+  "parent_id": "inv_r1_m3_run8",
+  "reserved": 2628
+ },
+ "arm": "I",
+ "campaign_id": "ad01-w2-I-00",
+ "db": "s09iso_m3run8_ef70d43f4552",
+ "export_version": "inv01-export-v1",
+ "identities": {
+  "allocation": {
+   "amount_scale": 1,
+   "authorized": 209216,
+   "consumed": 11023,
+   "created_at": "2026-09-26 18:25:02.278187+00:00",
+   "domain": "study",
+   "epoch": 0,
+   "id": "ad01-campaign-ad01-w2-I-00",
+   "max_occupancy": 8,
+   "occupancy": 4,
+   "owner_scope": "",
+   "parent_id": "inv_r1_m3_run8",
+   "reserved": 2628
+  },
+  "caps": {
+   "agenda_authorized": 64,
+   "construction_tokens": 2048,
+   "diagnostic_queries": 96,
+   "max_boundaries": 6,
+   "model_calls": 60
+  },
+  "charter": {
+   "freeze_id": "ad01",
+   "objective": "smaller valid explanatory examples"
+  },
+  "effective": {
+   "caps": {
+    "agenda_authorized": 64,
+    "construction_tokens": 2048,
+    "diagnostic_queries": 96,
+    "max_boundaries": 6,
+    "model_calls": 60
+   },
+   "charter": {
+    "freeze_id": "ad01",
+    "objective": "smaller valid explanatory examples"
+   },
+   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+   "freeze_id": "ad01",
+   "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "packet_version": "ad01-packet-v1",
+   "profile": "local-process",
+   "protocol": "broker-v1",
+   "reasoning_effort": "high"
+  },
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "freeze_id": "ad01",
+  "source": {
+   "export_version": "inv01-export-v1",
+   "git_sha": "58452e5cfaa4313369a6b27b45e428e08c0a86a4"
+  },
+  "versions": {
+   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+   "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "packet_version": "ad01-packet-v1",
+   "profile": "local-process",
+   "protocol": "broker-v1"
+  }
+ },
+ "operations": [
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Write one python method that searches explanatory examples.\nFamily: software.\nTask (authoritative content, not a reference): {\"family\": \"software\", \"ops\": [{\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"a\", \"op\": \"get\"}, {\"op\": \"clear\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"del\"}, {\"id\": \"o4\", \"key\": \"b\", \"op\": \"get\"}, {\"id\": \"o5\", \"key\": \"b\", \"op\": \"get\"}, {\"op\": \"clear\"}], \"seed\": 5303, \"task_id\": \"ad01-w2-dev-sw-02\", \"template\": \"stale-read-2chain\"}\nPublic operations: {\"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, method=\\\"ddmin\\\"|\\\"greedy\\\", max_queries=16)\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, method=\\\"ddmin\\\"|\\\"greedy\\\", max_queries=16)\"}}\nCandidate shape: {\"family_value\": \"software\", \"legality\": \"candidate ops must be a legal deletion of the task ops holding the witness observation\", \"required_keys\": [\"family\", \"task_id\", \"ops\", \"witness\"]}\nShape example (the incumbent task itself, a valid candidate): {\"family\": \"software\", \"ops\": [{\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"a\", \"op\": \"get\"}, {\"op\": \"clear\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"del\"}, {\"id\": \"o4\", \"key\": \"b\", \"op\": \"get\"}, {\"id\": \"o5\", \"key\": \"b\", \"op\": \"get\"}, {\"op\": \"clear\"}], \"seed\": 5303, \"task_id\": \"ad01-w2-dev-sw-02\", \"template\": \"stale-read-2chain\"}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps witness observation ?: it must stay a legal deletion holding that observation. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-deletion,invalid-candidate,invalid-task,observation-missing,ok-incumbent,ok-preserved,task-mismatch,witness-lost-agree,witness-value-changed.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"max_queries\": 10, \"model_calls\": 4}.\nPrior observations: [{\"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"detail\": null, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}, {\"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-02\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}]",
+       "role": "user"
+      }
+     ],
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "reasoning_effort": "high"
+    },
+    "retries": 0
+   },
+   "provider_id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init",
+   "launcher_id": "local-1",
+   "payload": {
+    "_admitted_launcher": "local-1",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "local-1",
+    "budget_kind": "hard-ceiling",
+    "effect": "sandbox-exec",
+    "payload": {
+     "argv": [
+      "/home/ubuntu/AI/Agent-Society-v2/.venv/bin/python",
+      "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/914d5f83e0f0c20d3674547ddb196ef7d7ef2cd269accf31241ab8de505b5f70/driver.py",
+      "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/914d5f83e0f0c20d3674547ddb196ef7d7ef2cd269accf31241ab8de505b5f70",
+      "ad01-8649f967eb044576f5077464ca4df0e0289e728e7428a40b87e1243304fca3e2",
+      "/home/ubuntu/AI/Agent-Society-v2"
+     ],
+     "cpu_seconds": null,
+     "max_output_bytes": 1048576,
+     "memory_bytes": null,
+     "profile": "local-process",
+     "timeout_ms": 30000
+    },
+    "retries": 0
+   },
+   "provider_id": "",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-I-00-learner-0",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-02-seed\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 6, \"dev_episodes\": 3, \"model_calls\": 60, \"queries\": 96}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "reasoning_effort": "high"
+    },
+    "retries": 0
+   },
+   "provider_id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "settled": true
+  },
+  {
+   "dispatch_state": "unresolved",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-I-00-learner-1",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 5, \"dev_episodes\": 3, \"model_calls\": 59, \"queries\": 35}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "reasoning_effort": "high"
+    },
+    "retries": 0
+   },
+   "provider_id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "settled": false
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-I-00-learner-1-c1",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\nPRIOR FAILURE (correct it): {\"attempt\": 0, \"reason\": \"learner call ad01-ad01-w2-I-00-learner-1 left no settled response\", \"target\": null}\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"prior_failure\": {\"attempt\": 0, \"reason\": \"learner call ad01-ad01-w2-I-00-learner-1 left no settled response\", \"target\": null}, \"remaining\": {\"boundaries\": 5, \"dev_episodes\": 3, \"model_calls\": 59, \"queries\": 35}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "reasoning_effort": "high"
+    },
+    "retries": 0
+   },
+   "provider_id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-I-00-learner-2",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-02\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-02\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 4, \"dev_episodes\": 2, \"model_calls\": 56, \"queries\": 24}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-5b65c917\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-02\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "reasoning_effort": "high"
+    },
+    "retries": 0
+   },
+   "provider_id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "settled": true
+  },
+  {
+   "dispatch_state": "observed",
+   "execution_version": "",
+   "id": "ad01-ad01-w2-I-00-learner-3",
+   "launcher_id": "gateway",
+   "payload": {
+    "_admitted_launcher": "gateway",
+    "_authority_version": 1,
+    "_dispatch_generation": 1,
+    "_receipt_actual_cost": null,
+    "_receipt_provenance": "gateway",
+    "budget_kind": "estimated-budget",
+    "effect": "model-inference",
+    "payload": {
+     "deadline_ms": 300000,
+     "max_output_tokens": 2048,
+     "messages": [
+      {
+       "content": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-02\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-02\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 23, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 11, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 22, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"seed\"}, \"queries\": 22, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"seed seed=10 novel=11\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"seed seed=10 novel=11\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-01-seed\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 3, \"dev_episodes\": 2, \"model_calls\": 55, \"queries\": 1}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-5b65c917\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-02\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+       "role": "user"
+      }
+     ],
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "reasoning_effort": "high"
+    },
+    "retries": 0
+   },
+   "provider_id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "settled": true
+  }
+ ],
+ "policy": null,
+ "policy_revisions": [],
+ "run_id": "2ed70da4869d2b65",
+ "transitions": [
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 1,
+    "witness_queries": 60
+   },
+   "costs_unknown": [],
+   "decision": {
+    "basis_references": [
+     "obs-ad01-w2-dev-gr-02-seed"
+    ],
+    "next_action": {
+     "diagnostic": "graph",
+     "kind": "diagnostic",
+     "max_queries": 5,
+     "task_id": "ad01-w2-dev-gr-02"
+    },
+    "question": "How does the greedy algorithm perform on the graph development task?",
+    "requested_resources": {
+     "queries": 5
+    }
+   },
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "operation_id": "ad01-ad01-w2-I-00-learner-0",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-02-seed\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 6, \"dev_episodes\": 3, \"model_calls\": 60, \"queries\": 96}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "ab35a77191e3a6ce541371ce378264681cb977a37b165f6661d9136715f53af0",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "disposition": "inspected",
+    "kind": "diagnostic",
+    "queries": 60,
+    "task_id": "ad01-w2-dev-gr-02"
+   },
+   "index": 0,
+   "observation": {
+    "basis_references": [
+     "obs-ad01-w2-dev-gr-02-seed"
+    ],
+    "capability_id": "seed-gr-greedy",
+    "detail": {
+     "control_id": "c3-novel-unproductive",
+     "detail": {
+      "authored": true,
+      "budget": 95,
+      "control_id": "c3-novel-unproductive",
+      "novel_final": 10,
+      "novel_verdict": "preserved",
+      "origin": "ad01-controls",
+      "queries": 60,
+      "seed_final": 10,
+      "seed_verdict": "preserved",
+      "task_id": "ad01-w2-dev-gr-02",
+      "winner": "tie"
+     },
+     "queries": 60,
+     "task_id": "ad01-w2-dev-gr-02",
+     "verdict": "tie seed=10 novel=10"
+    },
+    "grounded": true,
+    "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+    "queries": 60,
+    "task_id": "ad01-w2-dev-gr-02",
+    "verdict": "tie seed=10 novel=10"
+   },
+   "operations": [
+    "ad01-ad01-w2-I-00-learner-0"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "I",
+     "seq": 0,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": null,
+    "observations": [
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-gr-02-seed",
+      "task_id": "ad01-w2-dev-gr-02",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 6,
+     "dev_episodes": 3,
+     "model_calls": 60,
+     "queries": 96
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "841cd3bba2e8fc68557888a10ea3dce9ad16a6bd803dc5fcba1ae9640d6d6a15",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [
+     "obs-ad01-w2-dev-gr-02-seed"
+    ],
+    "inputs": {
+     "basis_references": [
+      "obs-ad01-w2-dev-gr-02-seed"
+     ],
+     "diagnostic": "graph",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 5,
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "How does the greedy algorithm perform on the graph development task?",
+     "task_id": "ad01-w2-dev-gr-02"
+    },
+    "instrument": "diagnostic",
+    "requested": {
+     "queries": 5
+    },
+    "target": "ad01-w2-dev-gr-02"
+   },
+   "raw_responses": [
+    {
+     "digest": "dbd075d46eed876ce2fecd17790c442984a3a349a1078c05d856dc87c73b4adf",
+     "operation_id": "ad01-ad01-w2-I-00-learner-0",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-0",
+     "simulated": false,
+     "text": "{\n  \"basis_references\": [\"obs-ad01-w2-dev-gr-02-seed\"],\n  \"question\": \"How does the greedy algorithm perform on the graph development task?\",\n  \"next_action\": {\n    \"kind\": \"diagnostic\",\n    \"diagnostic\": \"graph\",\n    \"max_queries\": 5,\n    \"task_id\": \"ad01-w2-dev-gr-02\"\n  },\n  \"requested_resources\": {\n    \"queries\": 5\n  }\n}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "adapter": "http",
+       "contract": "settlement-gateway/http-responses-v1",
+       "endpoint": "http://localhost:4000/v1",
+       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+       "provider": "nvidia",
+       "request_endpoint": "http://localhost:4000/v1",
+       "response_received": true,
+       "returned_endpoint": "http://127.0.0.1:4000/v1",
+       "tier": "free"
+      },
+      "operation_id": "ad01-ad01-w2-I-00-learner-0",
+      "stop_reason": "stop",
+      "text": "{\n  \"basis_references\": [\"obs-ad01-w2-dev-gr-02-seed\"],\n  \"question\": \"How does the greedy algorithm perform on the graph development task?\",\n  \"next_action\": {\n    \"kind\": \"diagnostic\",\n    \"diagnostic\": \"graph\",\n    \"max_queries\": 5,\n    \"task_id\": \"ad01-w2-dev-gr-02\"\n  },\n  \"requested_resources\": {\n    \"queries\": 5\n  }\n}",
+      "usage": {
+       "billed": null,
+       "charge_scale": null,
+       "charge_units": null,
+       "input_tokens": 523,
+       "model_calls": 1,
+       "output_tokens": 724,
+       "provider_enforced_ceiling": null
+      }
+     },
+     "operation_id": "ad01-ad01-w2-I-00-learner-0",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-0"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-I-00-learner-0"
+   ],
+   "retained_bytes": [],
+   "spend": 61
+  },
+  {
+   "corrections": [
+    {
+     "failure": {
+      "attempt": 0,
+      "reason": "learner call ad01-ad01-w2-I-00-learner-1 left no settled response",
+      "target": null
+     },
+     "number": 1
+    }
+   ],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 3,
+    "witness_queries": 10
+   },
+   "costs_unknown": [
+    "gw:ad01-ad01-w2-I-00-learner-1:lost-response"
+   ],
+   "decision": {
+    "basis_references": [
+     "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+     "obs-ad01-w2-dev-sw-02-seed"
+    ],
+    "next_action": {
+     "diagnostic": "software",
+     "kind": "development",
+     "max_queries": 10,
+     "task_id": "ad01-w2-dev-sw-02"
+    },
+    "question": "Why is seed-sw-greedy unmeasured while seed-gr-greedy resulted in a tie?",
+    "requested_resources": {
+     "queries": 10
+    }
+   },
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+     "prompt": "Write one python method that searches explanatory examples.\nFamily: software.\nTask (authoritative content, not a reference): {\"family\": \"software\", \"ops\": [{\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"a\", \"op\": \"get\"}, {\"op\": \"clear\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"del\"}, {\"id\": \"o4\", \"key\": \"b\", \"op\": \"get\"}, {\"id\": \"o5\", \"key\": \"b\", \"op\": \"get\"}, {\"op\": \"clear\"}], \"seed\": 5303, \"task_id\": \"ad01-w2-dev-sw-02\", \"template\": \"stale-read-2chain\"}\nPublic operations: {\"oracle.query\": {\"origin\": \"host-oracle\", \"returns\": \"the verdict report for that candidate; past the query budget it returns unknown with reason budget-exhausted\", \"signature\": \"oracle.query(candidate)\"}, \"reduce_graph\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (graph-shaped) and queries used\", \"signature\": \"reduce_graph(task, oracle, *, method=\\\"ddmin\\\"|\\\"greedy\\\", max_queries=16)\"}, \"reduce_software\": {\"origin\": \"authored-supplied-rpr01\", \"returns\": \"dict with candidate (software-shaped) and queries used\", \"signature\": \"reduce_software(task, oracle, *, method=\\\"ddmin\\\"|\\\"greedy\\\", max_queries=16)\"}}\nCandidate shape: {\"family_value\": \"software\", \"legality\": \"candidate ops must be a legal deletion of the task ops holding the witness observation\", \"required_keys\": [\"family\", \"task_id\", \"ops\", \"witness\"]}\nShape example (the incumbent task itself, a valid candidate): {\"family\": \"software\", \"ops\": [{\"key\": \"c\", \"op\": \"set\", \"value\": \"v2\"}, {\"id\": \"o0\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o1\", \"key\": \"c\", \"op\": \"get\"}, {\"id\": \"o2\", \"key\": \"a\", \"op\": \"get\"}, {\"op\": \"clear\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v4\"}, {\"key\": \"b\", \"op\": \"set\", \"value\": \"v3\"}, {\"id\": \"o3\", \"key\": \"b\", \"op\": \"get\"}, {\"key\": \"b\", \"op\": \"del\"}, {\"id\": \"o4\", \"key\": \"b\", \"op\": \"get\"}, {\"id\": \"o5\", \"key\": \"b\", \"op\": \"get\"}, {\"op\": \"clear\"}], \"seed\": 5303, \"task_id\": \"ad01-w2-dev-sw-02\", \"template\": \"stale-read-2chain\"}\nPreservation objective: a strictly smaller candidate that keeps the witness; the byte-identical incumbent is valid but not an improvement the candidate keeps witness observation ?: it must stay a legal deletion holding that observation. Verdicts preserved/not_preserved/invalid/unknown with reasons budget-exhausted,checker-failure,illegal-deletion,invalid-candidate,invalid-task,observation-missing,ok-incumbent,ok-preserved,task-mismatch,witness-lost-agree,witness-value-changed.\nEntry: ENTRY(task, oracle, max_queries=16) with the first two parameters must be named task and oracle, at most three parameters in total, no *args, **kwargs, or keyword-only parameters; exactly one module-level function carries the entry name.\nThe word import anywhere in the entry source fails validation, so use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nReturn envelope: the entry function must return its own result envelope shaped {\"candidate\": <candidate-shaped object>, \"queries\": <nonnegative integer of oracle queries used>}; returning the candidate object directly fails execution with malformed-result-envelope.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"max_queries\": 10, \"model_calls\": 4}.\nPrior observations: [{\"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"detail\": null, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}, {\"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-02\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}]",
+     "prompt_digest": "eb91b7d66182a77741266857ab7bbd27ab8bd768864a752d97d1f047db04b487",
+     "settled": true
+    },
+    {
+     "dispatch_state": "observed",
+     "effect": "sandbox-exec",
+     "model": "",
+     "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init",
+     "prompt": "",
+     "prompt_digest": "",
+     "settled": true
+    },
+    {
+     "dispatch_state": "unresolved",
+     "effect": "model-inference",
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "operation_id": "ad01-ad01-w2-I-00-learner-1",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 5, \"dev_episodes\": 3, \"model_calls\": 59, \"queries\": 35}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "589124017fba5ae3d6685e07c911b32bf76733f902926c17c97befb5bd430c44",
+     "settled": false
+    },
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "operation_id": "ad01-ad01-w2-I-00-learner-1-c1",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\nPRIOR FAILURE (correct it): {\"attempt\": 0, \"reason\": \"learner call ad01-ad01-w2-I-00-learner-1 left no settled response\", \"target\": null}\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-02-seed\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"prior_failure\": {\"attempt\": 0, \"reason\": \"learner call ad01-ad01-w2-I-00-learner-1 left no settled response\", \"target\": null}, \"remaining\": {\"boundaries\": 5, \"dev_episodes\": 3, \"model_calls\": 59, \"queries\": 35}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "a9d9d9ef2d23f0f82159c983701ce7f128f8109c56a28001f31bb707a6867d00",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "candidate": {
+     "family": "software",
+     "fault": "stale-read",
+     "ops": [
+      {
+       "key": "b",
+       "op": "set",
+       "value": "v4"
+      },
+      {
+       "key": "b",
+       "op": "set",
+       "value": "v3"
+      },
+      {
+       "id": "o3",
+       "key": "b",
+       "op": "get"
+      },
+      {
+       "key": "b",
+       "op": "del"
+      }
+     ],
+     "seed": 5303,
+     "task_id": "ad01-w2-dev-sw-02",
+     "witness": {
+      "faulty": {
+       "type": "str",
+       "value": "v4"
+      },
+      "observation": "o3",
+      "ref": {
+       "type": "str",
+       "value": "v3"
+      }
+     }
+    },
+    "check": {
+     "initial_measure": 12,
+     "measure": 4,
+     "reason": "ok-preserved",
+     "verdict": "preserved"
+    },
+    "construction_calls": 1,
+    "disposition": "retained",
+    "executable": {
+     "authored": false,
+     "capability_id": "acquired-sw-5b65c917",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w2-I-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null,
+      "study_root": "inv_r1_m3_run8"
+     },
+     "entry": "ENTRY",
+     "method_source": "def ENTRY(task, oracle, max_queries=16):\n    return reduce_software(task, oracle, method=\"ddmin\", max_queries=max_queries)",
+     "params": {
+      "max_queries": 10
+     },
+     "qualified_on": "ad01-w2-dev-sw-02",
+     "scope": {
+      "family": "software"
+     },
+     "source_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804"
+    },
+    "final_size": 4,
+    "initial_size": 12,
+    "lineage": [
+     {
+      "authored": false,
+      "capability_id": "acquired-sw-5b65c917",
+      "construction": {
+       "calls_made": 1,
+       "campaign_id": "ad01-w2-I-00",
+       "init_failure": null,
+       "init_operation": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+       "lineage": 1,
+       "repair_operation": null,
+       "study_root": "inv_r1_m3_run8"
+      },
+      "source_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804"
+     }
+    ],
+    "queries": 10,
+    "task_id": "ad01-w2-dev-sw-02"
+   },
+   "index": 1,
+   "observation": {
+    "basis_references": [
+     "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+     "obs-ad01-w2-dev-sw-02-seed"
+    ],
+    "capability_id": "seed-sw-greedy",
+    "detail": {
+     "control_id": "c4-diagnostic",
+     "detail": {
+      "authored": true,
+      "control_id": "c4-diagnostic",
+      "diagnostic_reason": "ok-preserved",
+      "diagnostic_verdict": "preserved",
+      "nondiagnostic_reason": "observation-missing",
+      "nondiagnostic_verdict": "not_preserved",
+      "origin": "ad01-controls",
+      "task_id": "ad01-w2-dev-sw-02"
+     },
+     "task_id": "ad01-w2-dev-sw-02",
+     "verdict": "preserved-vs-not_preserved"
+    },
+    "grounded": true,
+    "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-02",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-sw-02",
+    "verdict": "preserved-vs-not_preserved"
+   },
+   "operations": [
+    "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+    "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init",
+    "ad01-ad01-w2-I-00-learner-1",
+    "ad01-ad01-w2-I-00-learner-1-c1"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "I",
+     "seq": 1,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": null,
+    "observations": [
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 95,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 10,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 60,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-02",
+        "winner": "tie"
+       },
+       "queries": 60,
+       "task_id": "ad01-w2-dev-gr-02",
+       "verdict": "tie seed=10 novel=10"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+      "task_id": "ad01-w2-dev-gr-02",
+      "verdict": "tie seed=10 novel=10"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-sw-02-seed",
+      "task_id": "ad01-w2-dev-sw-02",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 5,
+     "dev_episodes": 3,
+     "model_calls": 59,
+     "queries": 35
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "1284e51e61b4065c4bafb20a1a881849e1e5fb99d6c40d4c09ff1cd57c50e73e",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [
+     "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+     "obs-ad01-w2-dev-sw-02-seed"
+    ],
+    "inputs": {
+     "basis_references": [
+      "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+      "obs-ad01-w2-dev-sw-02-seed"
+     ],
+     "diagnostic": "software",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 10,
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "Why is seed-sw-greedy unmeasured while seed-gr-greedy resulted in a tie?",
+     "task_id": "ad01-w2-dev-sw-02"
+    },
+    "instrument": "development",
+    "requested": {
+     "queries": 10
+    },
+    "target": "ad01-w2-dev-sw-02"
+   },
+   "raw_responses": [
+    {
+     "digest": "0442fa474c55afe3ba28e593dfe5b0167662a171b02008196a68cd5cbed62021",
+     "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+     "simulated": false,
+     "text": "{\"entry\": \"def ENTRY(task, oracle, max_queries=16):\\n    return reduce_software(task, oracle, method=\\\"ddmin\\\", max_queries=max_queries)\", \"notes\": \"Uses the provided ddmin reduction to find a minimal candidate preserving the witness.\"}"
+    },
+    {
+     "digest": "441768c66beddb37d00c8fbbcfb519233e4ceb9a3b22e8c6bbf2178d2dfdbc5c",
+     "operation_id": "ad01-ad01-w2-I-00-learner-1-c1",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-1-c1",
+     "simulated": false,
+     "text": "{\n  \"basis_references\": [\"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"obs-ad01-w2-dev-sw-02-seed\"],\n  \"question\": \"Why is seed-sw-greedy unmeasured while seed-gr-greedy resulted in a tie?\",\n  \"next_action\": {\n    \"kind\": \"development\",\n    \"diagnostic\": \"software\",\n    \"max_queries\": 10,\n    \"task_id\": \"ad01-w2-dev-sw-02\"\n  },\n  \"requested_resources\": {\n    \"queries\": 10\n  }\n}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "adapter": "http",
+       "contract": "settlement-gateway/http-responses-v1",
+       "endpoint": "http://localhost:4000/v1",
+       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+       "provider": "nvidia",
+       "request_endpoint": "http://localhost:4000/v1",
+       "response_received": true,
+       "returned_endpoint": "http://127.0.0.1:4000/v1",
+       "tier": "free"
+      },
+      "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+      "stop_reason": "stop",
+      "text": "{\"entry\": \"def ENTRY(task, oracle, max_queries=16):\\n    return reduce_software(task, oracle, method=\\\"ddmin\\\", max_queries=max_queries)\", \"notes\": \"Uses the provided ddmin reduction to find a minimal candidate preserving the witness.\"}",
+      "usage": {
+       "billed": null,
+       "charge_scale": null,
+       "charge_units": null,
+       "input_tokens": 1555,
+       "model_calls": 1,
+       "output_tokens": 1117,
+       "provider_enforced_ceiling": null
+      }
+     },
+     "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init"
+    },
+    {
+     "content": {
+      "_verdict": "success",
+      "argv": [
+       "/home/ubuntu/AI/Agent-Society-v2/.venv/bin/python",
+       "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/914d5f83e0f0c20d3674547ddb196ef7d7ef2cd269accf31241ab8de505b5f70/driver.py",
+       "/home/ubuntu/AI/Agent-Society-v2/.ad01-runs/914d5f83e0f0c20d3674547ddb196ef7d7ef2cd269accf31241ab8de505b5f70",
+       "ad01-8649f967eb044576f5077464ca4df0e0289e728e7428a40b87e1243304fca3e2",
+       "/home/ubuntu/AI/Agent-Society-v2"
+      ],
+      "containment": false,
+      "data": {
+       "supervised": true,
+       "timed_out": false,
+       "wall_ms": 148,
+       "worker": {
+        "data": {
+         "candidate": {
+          "family": "software",
+          "fault": "stale-read",
+          "ops": [
+           {
+            "key": "b",
+            "op": "set",
+            "value": "v4"
+           },
+           {
+            "key": "b",
+            "op": "set",
+            "value": "v3"
+           },
+           {
+            "id": "o3",
+            "key": "b",
+            "op": "get"
+           },
+           {
+            "key": "b",
+            "op": "del"
+           }
+          ],
+          "seed": 5303,
+          "task_id": "ad01-w2-dev-sw-02",
+          "witness": {
+           "faulty": {
+            "type": "str",
+            "value": "v4"
+           },
+           "observation": "o3",
+           "ref": {
+            "type": "str",
+            "value": "v3"
+           }
+          }
+         },
+         "queries": 10
+        },
+        "error": "",
+        "status": "ok"
+       }
+      },
+      "parse": "typed-json",
+      "profile": "local-process",
+      "truncated": false
+     },
+     "operation_id": "ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init",
+     "outcome": "success",
+     "receipt_identity": "local:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init_exec-default.result"
+    },
+    {
+     "content": {
+      "error": "gateway read timed out",
+      "error_kind": "timeout",
+      "operation_id": "ad01-ad01-w2-I-00-learner-1",
+      "response_class": "lost-response",
+      "response_digest": null,
+      "response_operation_id": "ad01-ad01-w2-I-00-learner-1",
+      "response_received": false,
+      "response_status": null,
+      "retryable": true,
+      "route_error": null,
+      "usage": {
+       "billed": null,
+       "charge_scale": null,
+       "charge_units": null,
+       "input_tokens": null,
+       "output_tokens": null
+      }
+     },
+     "operation_id": "ad01-ad01-w2-I-00-learner-1",
+     "outcome": "unknown",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-1:lost-response"
+    },
+    {
+     "content": {
+      "model_meta": {
+       "adapter": "http",
+       "contract": "settlement-gateway/http-responses-v1",
+       "endpoint": "http://localhost:4000/v1",
+       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+       "provider": "nvidia",
+       "request_endpoint": "http://localhost:4000/v1",
+       "response_received": true,
+       "returned_endpoint": "http://127.0.0.1:4000/v1",
+       "tier": "free"
+      },
+      "operation_id": "ad01-ad01-w2-I-00-learner-1-c1",
+      "stop_reason": "stop",
+      "text": "{\n  \"basis_references\": [\"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"obs-ad01-w2-dev-sw-02-seed\"],\n  \"question\": \"Why is seed-sw-greedy unmeasured while seed-gr-greedy resulted in a tie?\",\n  \"next_action\": {\n    \"kind\": \"development\",\n    \"diagnostic\": \"software\",\n    \"max_queries\": 10,\n    \"task_id\": \"ad01-w2-dev-sw-02\"\n  },\n  \"requested_resources\": {\n    \"queries\": 10\n  }\n}",
+      "usage": {
+       "billed": null,
+       "charge_scale": null,
+       "charge_units": null,
+       "input_tokens": 849,
+       "model_calls": 1,
+       "output_tokens": 1119,
+       "provider_enforced_ceiling": null
+      }
+     },
+     "operation_id": "ad01-ad01-w2-I-00-learner-1-c1",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-1-c1"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-construct-l1-init",
+    "gw:ad01-ad01-w2-I-00-learner-1-c1",
+    "gw:ad01-ad01-w2-I-00-learner-1:lost-response",
+    "local:ad01-ad01-w2-I-00-b1-ad01-w2-dev-sw-02-validate-l1-init_exec-default.result"
+   ],
+   "retained_bytes": [
+    {
+     "bytes": 122,
+     "capability_id": "acquired-sw-5b65c917",
+     "computed_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804",
+     "source_digest": "5b65c917eebf1f99ad432bdadf9092967010b10b0bc59b6abb58fb94ac42f804"
+    }
+   ],
+   "spend": 11
+  },
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 1,
+    "witness_queries": 22
+   },
+   "costs_unknown": [],
+   "decision": {
+    "basis_references": [
+     "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+     "obs-ad01-w2-dev-gr-01-seed"
+    ],
+    "next_action": {
+     "diagnostic": "graph",
+     "kind": "diagnostic",
+     "max_queries": 10,
+     "task_id": "ad01-w2-dev-gr-00"
+    },
+    "question": "What are the minimal valid examples for graph greedy capability?",
+    "requested_resources": {
+     "queries": 10
+    }
+   },
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "operation_id": "ad01-ad01-w2-I-00-learner-2",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-02\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-02\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-gr-01-seed\", \"task_id\": \"ad01-w2-dev-gr-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 4, \"dev_episodes\": 2, \"model_calls\": 56, \"queries\": 24}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-5b65c917\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-02\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "aaa9af7af8a76304303a0daa178e6b2427a979713ef36775dca871f8e0ddcac4",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "disposition": "inspected",
+    "kind": "diagnostic",
+    "queries": 22,
+    "task_id": "ad01-w2-dev-gr-00"
+   },
+   "index": 2,
+   "observation": {
+    "basis_references": [
+     "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+     "obs-ad01-w2-dev-gr-01-seed"
+    ],
+    "capability_id": "seed-gr-greedy",
+    "detail": {
+     "control_id": "c3-novel-unproductive",
+     "detail": {
+      "authored": true,
+      "budget": 23,
+      "control_id": "c3-novel-unproductive",
+      "novel_final": 11,
+      "novel_verdict": "preserved",
+      "origin": "ad01-controls",
+      "queries": 22,
+      "seed_final": 10,
+      "seed_verdict": "preserved",
+      "task_id": "ad01-w2-dev-gr-00",
+      "winner": "seed"
+     },
+     "queries": 22,
+     "task_id": "ad01-w2-dev-gr-00",
+     "verdict": "seed seed=10 novel=11"
+    },
+    "grounded": true,
+    "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-00",
+    "queries": 22,
+    "task_id": "ad01-w2-dev-gr-00",
+    "verdict": "seed seed=10 novel=11"
+   },
+   "operations": [
+    "ad01-ad01-w2-I-00-learner-2"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "I",
+     "seq": 2,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": null,
+    "observations": [
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 95,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 10,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 60,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-02",
+        "winner": "tie"
+       },
+       "queries": 60,
+       "task_id": "ad01-w2-dev-gr-02",
+       "verdict": "tie seed=10 novel=10"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+      "task_id": "ad01-w2-dev-gr-02",
+      "verdict": "tie seed=10 novel=10"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "ok-preserved",
+        "diagnostic_verdict": "preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-02"
+       },
+       "task_id": "ad01-w2-dev-sw-02",
+       "verdict": "preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-02",
+      "task_id": "ad01-w2-dev-sw-02",
+      "verdict": "preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-gr-00-seed",
+      "task_id": "ad01-w2-dev-gr-00",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 4,
+     "dev_episodes": 2,
+     "model_calls": 56,
+     "queries": 24
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [
+     {
+      "capability_id": "acquired-sw-5b65c917",
+      "family": "software",
+      "qualified_on": "ad01-w2-dev-sw-02"
+     }
+    ],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "66ec75e2443470cbf7527cd862685ca4c4b3a0d31822417e179f029c6ac369a6",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [
+     "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+     "obs-ad01-w2-dev-gr-01-seed"
+    ],
+    "inputs": {
+     "basis_references": [
+      "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+      "obs-ad01-w2-dev-gr-01-seed"
+     ],
+     "diagnostic": "graph",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 10,
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "What are the minimal valid examples for graph greedy capability?",
+     "task_id": "ad01-w2-dev-gr-00"
+    },
+    "instrument": "diagnostic",
+    "requested": {
+     "queries": 10
+    },
+    "target": "ad01-w2-dev-gr-00"
+   },
+   "raw_responses": [
+    {
+     "digest": "022627a46ce4e2269a3169c032c5eecc9e1c3fa956f00d1ffc4ca2219754ad7b",
+     "operation_id": "ad01-ad01-w2-I-00-learner-2",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-2",
+     "simulated": false,
+     "text": "{\n  \"basis_references\": [\n    \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\",\n    \"obs-ad01-w2-dev-gr-01-seed\"\n  ],\n  \"question\": \"What are the minimal valid examples for graph greedy capability?\",\n  \"next_action\": {\n    \"kind\": \"diagnostic\",\n    \"diagnostic\": \"graph\",\n    \"max_queries\": 10,\n    \"task_id\": \"ad01-w2-dev-gr-00\"\n  },\n  \"requested_resources\": {\n    \"queries\": 10\n  }\n}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "adapter": "http",
+       "contract": "settlement-gateway/http-responses-v1",
+       "endpoint": "http://localhost:4000/v1",
+       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+       "provider": "nvidia",
+       "request_endpoint": "http://localhost:4000/v1",
+       "response_received": true,
+       "returned_endpoint": "http://127.0.0.1:4000/v1",
+       "tier": "free"
+      },
+      "operation_id": "ad01-ad01-w2-I-00-learner-2",
+      "stop_reason": "stop",
+      "text": "{\n  \"basis_references\": [\n    \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\",\n    \"obs-ad01-w2-dev-gr-01-seed\"\n  ],\n  \"question\": \"What are the minimal valid examples for graph greedy capability?\",\n  \"next_action\": {\n    \"kind\": \"diagnostic\",\n    \"diagnostic\": \"graph\",\n    \"max_queries\": 10,\n    \"task_id\": \"ad01-w2-dev-gr-00\"\n  },\n  \"requested_resources\": {\n    \"queries\": 10\n  }\n}",
+      "usage": {
+       "billed": null,
+       "charge_scale": null,
+       "charge_units": null,
+       "input_tokens": 1004,
+       "model_calls": 1,
+       "output_tokens": 975,
+       "provider_enforced_ceiling": null
+      }
+     },
+     "operation_id": "ad01-ad01-w2-I-00-learner-2",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-2"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-I-00-learner-2"
+   ],
+   "retained_bytes": [],
+   "spend": 23
+  },
+  {
+   "corrections": [],
+   "costs_measured": {
+    "measured_charge_units": 0,
+    "model_calls": 1,
+    "witness_queries": 0
+   },
+   "costs_unknown": [],
+   "decision": {
+    "basis_references": [
+     "obs-ad01-w2-dev-sw-01-seed"
+    ],
+    "next_action": {
+     "diagnostic": "software",
+     "kind": "diagnostic",
+     "max_queries": 1,
+     "task_id": "ad01-w2-dev-sw-01"
+    },
+    "question": "Should we run a diagnostic on software for task ad01-w2-dev-sw-01 to understand why it's unmeasured?",
+    "requested_resources": {
+     "queries": 1
+    }
+   },
+   "delivered_requests": [
+    {
+     "dispatch_state": "observed",
+     "effect": "model-inference",
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "operation_id": "ad01-ad01-w2-I-00-learner-3",
+     "prompt": "Reply with ONLY one JSON object and no other text: no prose, no explanation, no code fences. next_action.kind must always be present: diagnostic, development, or stop. next_action.diagnostic must be exactly software or graph. basis_references must be observation_id strings copied from the observations list exactly, character for character, never truncated, abbreviated, invented, or section names like charter or remaining. requested_resources must be an object mapping a resource name to a nonnegative integer amount, e.g. {\"queries\": 3}. When curriculum_item is not null, next_action.task_id must equal curriculum_item. When curriculum_item is null, next_action.task_id must be one of visible_opportunities.\n{\"boundary\": null, \"charter\": {\"freeze_id\": \"ad01\", \"objective\": \"smaller valid explanatory examples\"}, \"curriculum_item\": null, \"observations\": [{\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 95, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 10, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 60, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-02\", \"winner\": \"tie\"}, \"queries\": 60, \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-02\", \"task_id\": \"ad01-w2-dev-gr-02\", \"verdict\": \"tie seed=10 novel=10\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": {\"control_id\": \"c4-diagnostic\", \"detail\": {\"authored\": true, \"control_id\": \"c4-diagnostic\", \"diagnostic_reason\": \"ok-preserved\", \"diagnostic_verdict\": \"preserved\", \"nondiagnostic_reason\": \"observation-missing\", \"nondiagnostic_verdict\": \"not_preserved\", \"origin\": \"ad01-controls\", \"task_id\": \"ad01-w2-dev-sw-02\"}, \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, \"observation_id\": \"obs-c4-diagnostic-ad01-w2-dev-sw-02\", \"task_id\": \"ad01-w2-dev-sw-02\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"capability_id\": \"seed-gr-greedy\", \"detail\": {\"control_id\": \"c3-novel-unproductive\", \"detail\": {\"authored\": true, \"budget\": 23, \"control_id\": \"c3-novel-unproductive\", \"novel_final\": 11, \"novel_verdict\": \"preserved\", \"origin\": \"ad01-controls\", \"queries\": 22, \"seed_final\": 10, \"seed_verdict\": \"preserved\", \"task_id\": \"ad01-w2-dev-gr-00\", \"winner\": \"seed\"}, \"queries\": 22, \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"seed seed=10 novel=11\"}, \"observation_id\": \"obs-c3-novel-unproductive-ad01-w2-dev-gr-00\", \"task_id\": \"ad01-w2-dev-gr-00\", \"verdict\": \"seed seed=10 novel=11\"}, {\"capability_id\": \"seed-sw-greedy\", \"detail\": null, \"observation_id\": \"obs-ad01-w2-dev-sw-01-seed\", \"task_id\": \"ad01-w2-dev-sw-01\", \"verdict\": \"unmeasured\"}], \"packet_version\": \"ad01-packet-v1\", \"remaining\": {\"boundaries\": 3, \"dev_episodes\": 2, \"model_calls\": 55, \"queries\": 1}, \"required_response\": {\"fields\": [\"basis_references\", \"question\", \"next_action\", \"requested_resources\"], \"format\": \"one JSON object\", \"next_action\": {\"diagnostic\": \"software|graph\", \"kind\": \"diagnostic|development|stop\", \"max_queries\": \"positive int\", \"task_id\": \"curriculum_item when not null, else one of visible_opportunities\"}, \"requested_resources\": \"object mapping resource name to nonnegative integer amount, e.g. {\\\"queries\\\": 3}\"}, \"retained\": [{\"capability_id\": \"acquired-sw-5b65c917\", \"family\": \"software\", \"qualified_on\": \"ad01-w2-dev-sw-02\"}], \"visible_opportunities\": [\"ad01-w2-dev-gr-00\", \"ad01-w2-dev-gr-01\", \"ad01-w2-dev-gr-02\", \"ad01-w2-dev-sw-00\", \"ad01-w2-dev-sw-01\", \"ad01-w2-dev-sw-02\"]}",
+     "prompt_digest": "f019ee2951fd2f55af3cc8e7bfa1fa4047599573ecc9c8e52bc14302c52857e5",
+     "settled": true
+    }
+   ],
+   "episode": {
+    "disposition": "inspected",
+    "kind": "diagnostic",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-sw-01"
+   },
+   "index": 3,
+   "observation": {
+    "basis_references": [
+     "obs-ad01-w2-dev-sw-01-seed"
+    ],
+    "capability_id": "seed-sw-greedy",
+    "detail": {
+     "control_id": "c4-diagnostic",
+     "detail": {
+      "authored": true,
+      "control_id": "c4-diagnostic",
+      "diagnostic_reason": "witness-lost-agree",
+      "diagnostic_verdict": "not_preserved",
+      "nondiagnostic_reason": "observation-missing",
+      "nondiagnostic_verdict": "not_preserved",
+      "origin": "ad01-controls",
+      "task_id": "ad01-w2-dev-sw-01"
+     },
+     "task_id": "ad01-w2-dev-sw-01",
+     "verdict": "not_preserved-vs-not_preserved"
+    },
+    "grounded": true,
+    "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-01",
+    "queries": 0,
+    "task_id": "ad01-w2-dev-sw-01",
+    "verdict": "not_preserved-vs-not_preserved"
+   },
+   "operations": [
+    "ad01-ad01-w2-I-00-learner-3"
+   ],
+   "packet": {
+    "boundary": {
+     "arm": "I",
+     "seq": 3,
+     "world": 2
+    },
+    "charter": {
+     "freeze_id": "ad01",
+     "objective": "smaller valid explanatory examples"
+    },
+    "curriculum_item": null,
+    "observations": [
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 95,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 10,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 60,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-02",
+        "winner": "tie"
+       },
+       "queries": 60,
+       "task_id": "ad01-w2-dev-gr-02",
+       "verdict": "tie seed=10 novel=10"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-02",
+      "task_id": "ad01-w2-dev-gr-02",
+      "verdict": "tie seed=10 novel=10"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": {
+       "control_id": "c4-diagnostic",
+       "detail": {
+        "authored": true,
+        "control_id": "c4-diagnostic",
+        "diagnostic_reason": "ok-preserved",
+        "diagnostic_verdict": "preserved",
+        "nondiagnostic_reason": "observation-missing",
+        "nondiagnostic_verdict": "not_preserved",
+        "origin": "ad01-controls",
+        "task_id": "ad01-w2-dev-sw-02"
+       },
+       "task_id": "ad01-w2-dev-sw-02",
+       "verdict": "preserved-vs-not_preserved"
+      },
+      "observation_id": "obs-c4-diagnostic-ad01-w2-dev-sw-02",
+      "task_id": "ad01-w2-dev-sw-02",
+      "verdict": "preserved-vs-not_preserved"
+     },
+     {
+      "capability_id": "seed-gr-greedy",
+      "detail": {
+       "control_id": "c3-novel-unproductive",
+       "detail": {
+        "authored": true,
+        "budget": 23,
+        "control_id": "c3-novel-unproductive",
+        "novel_final": 11,
+        "novel_verdict": "preserved",
+        "origin": "ad01-controls",
+        "queries": 22,
+        "seed_final": 10,
+        "seed_verdict": "preserved",
+        "task_id": "ad01-w2-dev-gr-00",
+        "winner": "seed"
+       },
+       "queries": 22,
+       "task_id": "ad01-w2-dev-gr-00",
+       "verdict": "seed seed=10 novel=11"
+      },
+      "observation_id": "obs-c3-novel-unproductive-ad01-w2-dev-gr-00",
+      "task_id": "ad01-w2-dev-gr-00",
+      "verdict": "seed seed=10 novel=11"
+     },
+     {
+      "capability_id": "seed-sw-greedy",
+      "detail": null,
+      "observation_id": "obs-ad01-w2-dev-sw-01-seed",
+      "task_id": "ad01-w2-dev-sw-01",
+      "verdict": "unmeasured"
+     }
+    ],
+    "packet_version": "ad01-packet-v1",
+    "remaining": {
+     "boundaries": 3,
+     "dev_episodes": 2,
+     "model_calls": 55,
+     "queries": 1
+    },
+    "required_response": {
+     "fields": [
+      "basis_references",
+      "question",
+      "next_action",
+      "requested_resources"
+     ],
+     "format": "one JSON object",
+     "next_action": {
+      "diagnostic": "software|graph",
+      "kind": "diagnostic|development|stop",
+      "max_queries": "positive int",
+      "task_id": "curriculum_item when not null, else one of visible_opportunities"
+     },
+     "requested_resources": "object mapping resource name to nonnegative integer amount, e.g. {\"queries\": 3}"
+    },
+    "retained": [
+     {
+      "capability_id": "acquired-sw-5b65c917",
+      "family": "software",
+      "qualified_on": "ad01-w2-dev-sw-02"
+     }
+    ],
+    "visible_opportunities": [
+     "ad01-w2-dev-gr-00",
+     "ad01-w2-dev-gr-01",
+     "ad01-w2-dev-gr-02",
+     "ad01-w2-dev-sw-00",
+     "ad01-w2-dev-sw-01",
+     "ad01-w2-dev-sw-02"
+    ]
+   },
+   "packet_digest": "f04fe585040ba948b6259cb5189b3dd21f7c98f13b8362b7e1bee009c0229091",
+   "packet_source": "reconstructed",
+   "proposal": {
+    "dependencies": [
+     "obs-ad01-w2-dev-sw-01-seed"
+    ],
+    "inputs": {
+     "basis_references": [
+      "obs-ad01-w2-dev-sw-01-seed"
+     ],
+     "diagnostic": "software",
+     "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+     "max_queries": 1,
+     "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+     "packet_version": "ad01-packet-v1",
+     "profile": "local-process",
+     "protocol": "broker-v1",
+     "question": "Should we run a diagnostic on software for task ad01-w2-dev-sw-01 to understand why it's unmeasured?",
+     "task_id": "ad01-w2-dev-sw-01"
+    },
+    "instrument": "diagnostic",
+    "requested": {
+     "queries": 1
+    },
+    "target": "ad01-w2-dev-sw-01"
+   },
+   "raw_responses": [
+    {
+     "digest": "767e719260ac53d7a630a4c138c12b3db004c22ec8c3ad06128b92f4b00723e4",
+     "operation_id": "ad01-ad01-w2-I-00-learner-3",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-3",
+     "simulated": false,
+     "text": "{\n  \"basis_references\": [\"obs-ad01-w2-dev-sw-01-seed\"],\n  \"question\": \"Should we run a diagnostic on software for task ad01-w2-dev-sw-01 to understand why it's unmeasured?\",\n  \"next_action\": {\n    \"kind\": \"diagnostic\",\n    \"diagnostic\": \"software\",\n    \"max_queries\": 1,\n    \"task_id\": \"ad01-w2-dev-sw-01\"\n  },\n  \"requested_resources\": {\"queries\": 1}\n}"
+    }
+   ],
+   "receipts": [
+    {
+     "content": {
+      "model_meta": {
+       "adapter": "http",
+       "contract": "settlement-gateway/http-responses-v1",
+       "endpoint": "http://localhost:4000/v1",
+       "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+       "provider": "nvidia",
+       "request_endpoint": "http://localhost:4000/v1",
+       "response_received": true,
+       "returned_endpoint": "http://127.0.0.1:4000/v1",
+       "tier": "free"
+      },
+      "operation_id": "ad01-ad01-w2-I-00-learner-3",
+      "stop_reason": "stop",
+      "text": "{\n  \"basis_references\": [\"obs-ad01-w2-dev-sw-01-seed\"],\n  \"question\": \"Should we run a diagnostic on software for task ad01-w2-dev-sw-01 to understand why it's unmeasured?\",\n  \"next_action\": {\n    \"kind\": \"diagnostic\",\n    \"diagnostic\": \"software\",\n    \"max_queries\": 1,\n    \"task_id\": \"ad01-w2-dev-sw-01\"\n  },\n  \"requested_resources\": {\"queries\": 1}\n}",
+      "usage": {
+       "billed": null,
+       "charge_scale": null,
+       "charge_units": null,
+       "input_tokens": 1231,
+       "model_calls": 1,
+       "output_tokens": 923,
+       "provider_enforced_ceiling": null
+      }
+     },
+     "operation_id": "ad01-ad01-w2-I-00-learner-3",
+     "outcome": "success",
+     "receipt_identity": "gw:ad01-ad01-w2-I-00-learner-3"
+    }
+   ],
+   "results": [
+    "gw:ad01-ad01-w2-I-00-learner-3"
+   ],
+   "retained_bytes": [],
+   "spend": 1
+  }
+ ],
+ "unknown_exposure": [
+  "ad01-ad01-w2-I-00-learner-1"
+ ],
+ "use_records": [],
+ "world": 2
+}

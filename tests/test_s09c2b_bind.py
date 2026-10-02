@@ -16,8 +16,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-DB = "s09_c2b_bind"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DB
+from experiments.ad01.s09_run_isolation import create_disposable_db, \
+    disposable_db, drop_disposable_db
+
+RUN_TOKEN = "c2bbind"
 MIGRATIONS = ROOT / "migrations"
 
 DEV_TASK = "ad01-w0-dev-sw-00"
@@ -47,19 +49,35 @@ BROKEN_ENTRY = "c2b_broken_entry"
 
 @pytest.fixture(scope="module")
 def store():
-    assert "live" not in DSN
-    assert DB.startswith("s09_c2b_")
-    subprocess.run(["createdb", "-h", "/var/run/postgresql",
-                    "-U", "ubuntu", DB],
-                   check=True, capture_output=True, text=True, timeout=60)
+    database = create_disposable_db(RUN_TOKEN, migrations_dir=MIGRATIONS)
     try:
-        from settlement import db
-        db.apply_migrations(DSN, MIGRATIONS)
-        yield DSN
+        yield database.dsn
     finally:
-        subprocess.run(["dropdb", "-h", "/var/run/postgresql",
-                        "-U", "ubuntu", DB],
-                       capture_output=True, text=True, timeout=60)
+        drop_disposable_db(database)
+
+
+def _admitting(method_id: str):
+    """A STEP policy naming one method, as a bound release would.
+
+    `run_use` takes its method identity from an admitted action, so a caller
+    wanting a specific release has to say so. Naming a method the release
+    does not hold is still refused, so this cannot admit its way past the
+    release pin.
+    """
+    def step(view, state):
+        task = view["task_content"]
+        if state.get("used"):
+            return {"action": {"kind": "stop", "target": task["task_id"],
+                               "inputs": {"reason": "done"},
+                               "evidence_refs": [], "requested_resources": {}},
+                    "state": state}
+        return {"action": {"kind": "use_method", "target": task["task_id"],
+                           "inputs": {"method_id": method_id,
+                                      "max_queries": 16},
+                           "evidence_refs": [],
+                           "requested_resources": {"queries": 16}},
+                "state": {"used": True}}
+    return step
 
 
 def _env():
@@ -324,9 +342,11 @@ def test_overlapping_family_studies_mutual_non_selection(store):
         _member(life_b["version_id"], OTHER_SOURCE, OTHER_ENTRY)]}
     [record_a] = trajectory.run_use(
         repertoire, 0, "I", [USE_TASK], {}, dsn=store,
+        policy=_admitting(life_a["version_id"]),
         allocation_id=allocation, release_id="c2b-fam-a")
     [record_b] = trajectory.run_use(
         repertoire, 0, "I", [USE_TASK], {}, dsn=store,
+        policy=_admitting(life_b["version_id"]),
         allocation_id=allocation, release_id="c2b-fam-b")
     assert record_a["selected"] == life_a["version_id"]
     assert record_a["executed_source"] == GOOD_SOURCE
@@ -346,18 +366,30 @@ def test_pinned_use_resolves_identical_bytes_fresh_process(store, tmp_path):
     probe = tmp_path / "fresh_pinned_use.py"
     probe.write_text(
         "import json, sys\n"
-        "repertoire_path, dsn, allocation, release = sys.argv[1:5]\n"
+        "repertoire_path, dsn, allocation, release, method = sys.argv[1:6]\n"
         "from experiments.ad01 import trajectory\n"
         "repertoire = json.loads(open(repertoire_path).read())\n"
+        "def step(view, state):\n"
+        "    task = view['task_content']\n"
+        "    if state.get('used'):\n"
+        "        return {'action': {'kind': 'stop', 'target': task['task_id'],\n"
+        "               'inputs': {'reason': 'done'}, 'evidence_refs': [],\n"
+        "               'requested_resources': {}}, 'state': state}\n"
+        "    return {'action': {'kind': 'use_method',\n"
+        "           'target': task['task_id'],\n"
+        "           'inputs': {'method_id': method, 'max_queries': 16},\n"
+        "           'evidence_refs': [],\n"
+        "           'requested_resources': {'queries': 16}},\n"
+        "            'state': {'used': True}}\n"
         "[record] = trajectory.run_use(\n"
-        "    repertoire, 0, 'I', [%r], {}, dsn=dsn,\n"
+        "    repertoire, 0, 'I', [%r], {}, dsn=dsn, policy=step,\n"
         "    allocation_id=allocation, release_id=release)\n"
         "print(json.dumps({'selected': record['selected'],\n"
         "                  'executed_source':"
         " record['executed_source']}))\n" % USE_TASK)
     proc = subprocess.run(
         [sys.executable, str(probe), str(frozen), store, allocation,
-         "c2b-fresh"],
+         "c2b-fresh", life["version_id"]],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300,
         env=_env())
     assert proc.returncode == 0, proc.stderr
@@ -395,9 +427,29 @@ def test_cli_use_release_is_optional(store, tmp_path):
         _member(life["version_id"], GOOD_SOURCE, GOOD_ENTRY)]}
     frozen = tmp_path / "repertoire.json"
     frozen.write_text(json.dumps(repertoire))
+    policy_file = tmp_path / "policy.py"
+    policy_file.write_text(
+                           "def STEP(view, state):\n"
+                           "    task = view['task_content']\n"
+                           "    if state.get('used'):\n"
+                           "        return {'action': {'kind': 'stop',"
+                           " 'target': task['task_id'],\n"
+                           "                       'inputs': {'reason': 'done'},"
+                           " 'evidence_refs': [],\n"
+                           "                       'requested_resources': {}},"
+                           " 'state': state}\n"
+                           "    return {'action': {'kind': 'use_method',\n"
+                           "           'target': task['task_id'],\n"
+                           "           'inputs': {'method_id': %r,"
+                           " 'max_queries': 16},\n"
+                           "           'evidence_refs': [],\n"
+                           "           'requested_resources': {'queries': 16}},\n"
+                           "            'state': {'used': True}}\n"
+                           % life["version_id"])
     base = [sys.executable, "-m", "experiments.ad01.cli", "use",
             "--repertoire", str(frozen), "--world", "0", "--arm", "I",
             "--tasks", USE_TASK, "--dsn", store,
+            "--policy-source", str(policy_file),
             "--allocation-id", allocation]
     repertoire_only = subprocess.run(
         base, cwd=str(ROOT), capture_output=True, text=True, timeout=300,
@@ -425,14 +477,45 @@ def test_resumed_use_precise_refusal(store):
     allocation = _authorize(store, cid)
     absent = {"campaign_id": cid, "queries": 0, "members": [
         _member("c2b-unrelated", OTHER_SOURCE, OTHER_ENTRY)]}
+    # The release holds a method this repertoire does not carry. It used to
+    # answer `incumbent`, which was the silent fallback this campaign
+    # removed: a run without a usable method now refuses and says why.
     [record] = trajectory.run_use(
         absent, 0, "I", [USE_TASK], {}, dsn=store,
+        policy=_admitting(life["version_id"]),
         allocation_id=allocation, release_id="c2b-refuse")
-    assert record["selected"] == "incumbent"
-    assert record["executed_source"] == "incumbent"
+    assert record["selected"] == "refused"
+    assert record["executed_source"] == "refused"
+    assert record["status"] == "refused"
     assert "c2b-refuse" in record["fallback_reason"]
     [unknown] = trajectory.run_use(
         absent, 0, "I", [USE_TASK], {}, dsn=store,
+        policy=_admitting(life["version_id"]),
         allocation_id=allocation, release_id="c2b-never-bound")
-    assert unknown["selected"] == "incumbent"
-    assert "c2b-never-bound" in unknown["fallback_reason"]
+    assert unknown["selected"] == "refused"
+    assert "absent from the repertoire" in unknown["fallback_reason"]
+    assert life["version_id"] in unknown["fallback_reason"]
+
+
+def test_the_store_is_one_this_run_created(store):
+    """A dropped store must never be a store somebody else still runs on.
+
+    A fixed database name is shared state: any other suite that creates the
+    same name destroys this run's rows, and the scoping refusals then fail on
+    rows that vanished rather than on the collision that caused it. The name
+    carries a per-run token, so only this run's name is ever destroyed.
+    """
+    name = store.split("dbname=")[1].split()[0]
+
+    assert name.startswith("s09iso_c2bbind_"), name
+
+
+def test_the_store_survives_a_second_module_scope():
+    """Re-deriving the store must not reuse this module's database.
+
+    The collision that produced the original failures was two runs of this
+    file at once. Each run's fixture mints its own name, so a second fixture
+    can never observe or destroy the first one's database.
+    """
+    with disposable_db(RUN_TOKEN) as other:
+        assert other.name.startswith("s09iso_c2bbind_"), other.name

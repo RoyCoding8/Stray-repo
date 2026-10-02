@@ -11,13 +11,29 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import cli as ad01_cli
 from experiments.ad01 import live_construct as live
 from experiments.ad01 import offline_recompute
-from experiments.ad01 import rule_learner
 from scripts import invl02_live as driver
-from settlement.gateway import ModelResponse, Usage
+from settlement.gateway import ModelRequest, ModelResponse, Usage
+def _output_task_ids_by_split() -> dict:
+    """The output study's task ids, read from the generator.
+
+    These were literal `rule-qual-0011` / `rule-audit-0023` strings. The
+    worlds made their ids opaque so a public id no longer names its own
+    seed, and a test that restates the old format asserts against an id the
+    study can no longer produce - it fails for a reason that has nothing to
+    do with what it is checking.
+    """
+    from experiments.ad01 import boolean_rule
+    from experiments.ad01 import live_construct
+
+    return {split: boolean_rule.make_task(split, seed)["task_id"]
+            for split, seed in live_construct.OUTPUT_TASKS.items()}
+
+
+def _output_task_ids() -> set:
+    return set(_output_task_ids_by_split().values())
 
 
 class _OutputGateway:
@@ -33,17 +49,18 @@ class _OutputGateway:
         response = self.responses.pop(0)
         if isinstance(response, GatewayError):
             return response
+        metadata = {
+            "adapter": "http",
+            "contract": "settlement-gateway/http-responses-v1",
+        }
+        for key in ("endpoint", "model", "provider", "tier"):
+            value = response.get(key)
+            if value is not None:
+                metadata[key] = value
         return ModelResponse(
             request.operation_id,
             response["text"],
-            {
-                "adapter": "http",
-                "contract": "settlement-gateway/http-responses-v1",
-                "endpoint": self.route["endpoint"],
-                "model": response.get("model", self.route["resolved_model"]),
-                "provider": response.get("provider", self.route["provider"]),
-                "tier": response.get("tier", self.route["tier"]),
-            },
+            metadata,
             Usage(input_tokens=3, output_tokens=5, charge_units=0, billed=False),
             response.get("stop_reason", "stop"),
         )
@@ -58,27 +75,55 @@ class _OutputGateway:
         return True
 
 
+_ADMISSIBLE_CANDIDATE_TEXT = {
+    ("audit", 23): (
+        '{"specs": [{"const": 1, "mask": 0, "pair": null}, '
+        '{"const": 0, "mask": 2, "pair": [0, 3]}, '
+        '{"const": 0, "mask": 1, "pair": [0, 2]}, '
+        '{"const": 1, "mask": 13, "pair": [1, 3]}]}'
+    ),
+    ("qual", 11): (
+        '{"specs": [{"const": 0, "mask": 8, "pair": [0, 3]}, '
+        '{"const": 1, "mask": 5, "pair": [1, 3]}, '
+        '{"const": 0, "mask": 9, "pair": [0, 3]}, '
+        '{"const": 1, "mask": 15, "pair": null}]}'
+    ),
+}
+_RECORDED_FREE_ROUTE_AUDIT_23_MODEL_REPLY_2026_09_24 = (
+    '{"specs":[{"const":1,"mask":5,"pair":[0,1]},'
+    '{"const":0,"mask":12,"pair":null},'
+    '{"const":1,"mask":3,"pair":[2,3]},'
+    '{"const":0,"mask":7,"pair":[1,2]}]}'
+)
+
+
 def _legal_text(split, seed):
-    task = rules.make_task(split, seed)
-    session = rules.RuleSession(task)
-    learner = rule_learner.VersionSpaceLearner(rules.CLASS_TABLES, seed)
-    while session.remaining > 0:
-        pick = learner.choose_query(dict(session.queried))
-        if pick is None:
-            break
-        learner.observe(pick, session.query(pick))
-    return json.dumps({"specs": [dict(s) for s in learner.predict(
-        dict(session.queried))["specs"]]})
+    return _ADMISSIBLE_CANDIDATE_TEXT[(split, int(seed))]
 
 
-def _responses():
-    return [{"text": "not json"}, {"text": _legal_text("audit", 23)},
-            {"text": _legal_text("qual", 11)},
-            {"text": _legal_text("audit", 23)},
-            {"text": _legal_text("qual", 11)},
-            {"text": _legal_text("audit", 23)},
-            {"text": _legal_text("qual", 11)},
-            {"text": _legal_text("audit", 23)}]
+def _route_response(text, route=live.OUTPUT_ROUTE, **overrides):
+    response = {
+        "text": text,
+        "endpoint": route["endpoint"],
+        "model": route["resolved_model"],
+        "provider": route["provider"],
+        "tier": route["tier"],
+    }
+    response.update(overrides)
+    return response
+
+
+def _responses(route=live.OUTPUT_ROUTE):
+    return [
+        _route_response("not json", route),
+        _route_response(_legal_text("audit", 23), route),
+        _route_response(_legal_text("qual", 11), route),
+        _route_response(_legal_text("audit", 23), route),
+        _route_response(_legal_text("qual", 11), route),
+        _route_response(_legal_text("audit", 23), route),
+        _route_response(_legal_text("qual", 11), route),
+        _route_response(_legal_text("audit", 23), route),
+    ]
 
 
 def _rebuild_dispatch_evidence(dispatch, **updates):
@@ -150,10 +195,117 @@ def _verify(result, private_dir=None):
     return offline_recompute.verify_bundle(result, private)
 
 
+def test_output_gateway_does_not_fabricate_omitted_route_metadata():
+    route = live.OUTPUT_ROUTE
+    gateway = _OutputGateway([{"text": "reply"}], route)
+    request = ModelRequest(
+        model=route["requested_model"],
+        messages=({"role": "user", "content": "input"},),
+        max_output_tokens=2048,
+        deadline_ms=1000,
+        operation_id="route-omission",
+    )
+
+    response = gateway.infer(request)
+
+    assert response.model_meta == {
+        "adapter": "http",
+        "contract": "settlement-gateway/http-responses-v1",
+    }
+    observed_route = {key: response.model_meta.get(key) for key in (
+        "endpoint", "model", "provider", "tier")}
+    expected_route = {key: route.get(key) for key in (
+        "endpoint", "resolved_model", "provider", "tier")}
+    assert observed_route != expected_route
+    assert response.model_meta.get("provider") is None
+    assert response.model_meta != route
+
+
+def test_output_gateway_preserves_mismatched_route_metadata():
+    route = live.OUTPUT_ROUTE
+    gateway = _OutputGateway(
+        [{"text": "reply", "provider": "other-provider"}], route)
+    request = ModelRequest(
+        model=route["requested_model"],
+        messages=({"role": "user", "content": "input"},),
+        max_output_tokens=2048,
+        deadline_ms=1000,
+        operation_id="route-mismatch",
+    )
+
+    response = gateway.infer(request)
+
+    assert response.model_meta["provider"] == "other-provider"
+    assert response.model_meta["provider"] != route["provider"]
+
+
+def test_admissible_candidate_fixture_is_frozen_lit(monkeypatch):
+    from experiments.ad01 import rule_learner
+
+    monkeypatch.setattr(
+        rule_learner,
+        "VersionSpaceLearner",
+        lambda *args, **kwargs: pytest.fail("fixture called the incumbent solver"),
+    )
+
+    assert json.loads(_legal_text("audit", 23)) == {
+        "specs": [
+            {"const": 1, "mask": 0, "pair": None},
+            {"const": 0, "mask": 2, "pair": [0, 3]},
+            {"const": 0, "mask": 1, "pair": [0, 2]},
+            {"const": 1, "mask": 13, "pair": [1, 3]},
+        ],
+    }
+
+
+def test_recorded_model_reply_has_four_boolean_specs():
+    candidate = live.extract_and_validate_boolean(
+        _RECORDED_FREE_ROUTE_AUDIT_23_MODEL_REPLY_2026_09_24)
+
+    assert candidate == {
+        "specs": [
+            {"const": 1, "mask": 5, "pair": [0, 1]},
+            {"const": 0, "mask": 12, "pair": None},
+            {"const": 1, "mask": 3, "pair": [2, 3]},
+            {"const": 0, "mask": 7, "pair": [1, 2]},
+        ],
+    }
+    assert len(candidate["specs"]) == 4
+    assert all(set(spec) == {"const", "mask", "pair"}
+               for spec in candidate["specs"])
+
+
+@pytest.mark.parametrize("malformed", [
+    "not json",
+    '{"candidate": []}',
+])
+def test_malformed_model_reply_consumes_repair_and_is_never_accepted(
+        tmp_path, malformed):
+    freeze = driver.freeze_output(tmp_path)
+    responses = _responses(freeze["route"])
+    responses[0] = _route_response(malformed, freeze["route"])
+    gateway = _OutputGateway(responses, freeze["route"])
+
+    result = driver.run_output(
+        tmp_path, gateway=gateway,
+        model=freeze["route"]["requested_model"])
+
+    dispatches = result["candidate_view"]["dispatches"]
+    assert dispatches[0]["parse_outcome"] == "parse-failed"
+    assert dispatches[1]["parse_outcome"] == "accepted"
+    assert dispatches[0]["attempt"] == 1
+    assert dispatches[1]["attempt"] == 2
+    assert dispatches[0]["task_id"] == dispatches[1]["task_id"]
+    assert not any(dispatch["parse_outcome"] == "accepted"
+                   and dispatch["raw_response"] == malformed
+                   for dispatch in dispatches)
+
+
 def test_output_freeze_binds_one_protocol_and_limits(tmp_path):
     freeze = driver.freeze_output(tmp_path)
-    assert freeze["protocol"] == "invl02-output-shape-550b-r1-v1"
-    assert freeze["study_root"] == "invl02-output-shape-550b-r1"
+    assert freeze["protocol"] == driver.OUTPUT_PROTOCOL_ID
+    assert freeze["study_root"] == driver.STUDY_ROOT_OUTPUT
+    assert freeze["round"] == driver.OUTPUT_ROUND
     assert freeze["route"] == live.OUTPUT_ROUTE
     assert freeze["limits"] == {
         "max_response_characters": 512,
@@ -172,6 +324,7 @@ def test_output_freeze_binds_one_protocol_and_limits(tmp_path):
     assert freeze["source_digests"]["experiments/ad01/live_construct.py"]
     assert freeze["freeze_digest"] == driver._digest(
         {k: v for k, v in freeze.items() if k != "freeze_digest"})
+    assert freeze["round"] == driver.OUTPUT_ROUND
 
 
 def test_output_run_uses_2048_and_new_id_for_one_repair(tmp_path):
@@ -189,11 +342,15 @@ def test_output_run_uses_2048_and_new_id_for_one_repair(tmp_path):
     assert len(dispatches) == len(operation_ids)
     assert {d["attempt"] for d in dispatches} <= {1, 2}
     assert all(d["requested_output_cap"] == 2048 for d in dispatches)
+    assert all(d["round"] == freeze["round"] for d in dispatches)
 
 
 def test_output_run_has_no_hidden_empty_retry(tmp_path):
     freeze = driver.freeze_output(tmp_path)
-    responses = [{"text": ""}, {"text": _legal_text("audit", 23)}]
+    responses = [
+        _route_response(""),
+        _route_response(_legal_text("audit", 23)),
+    ]
     responses.extend(_responses()[1:])
     gateway = _OutputGateway(responses, freeze["route"])
     result = driver.run_output(tmp_path, gateway=gateway,
@@ -205,6 +362,27 @@ def test_output_run_has_no_hidden_empty_retry(tmp_path):
     assert first["operation_id"] != second["operation_id"]
     assert first["attempt"] == 1
     assert second["attempt"] == 2
+
+
+@pytest.mark.parametrize(("first_text", "expected_outcome"), [
+    ("", "empty"),
+    ("x" * 513, "too-long"),
+    ("not json", "parse-failed"),
+    (_legal_text("audit", 23), "accepted"),
+])
+def test_output_finalization_outcomes_use_frozen_round(
+        tmp_path, first_text, expected_outcome):
+    freeze = driver.freeze_output(tmp_path)
+    gateway = _OutputGateway(
+        [_route_response(first_text)] + _responses()[1:], freeze["route"])
+    result = driver.run_output(
+        tmp_path, gateway=gateway, model=freeze["route"]["requested_model"])
+
+    dispatches = result["candidate_view"]["dispatches"]
+    assert dispatches
+    assert all(dispatch["round"] == freeze["round"] for dispatch in dispatches)
+    assert expected_outcome in {
+        dispatch["parse_outcome"] for dispatch in dispatches}
 
 
 def test_output_run_real_gateway_route_mismatch_is_terminal(tmp_path):
@@ -247,8 +425,8 @@ def test_output_run_real_gateway_route_mismatch_is_terminal(tmp_path):
 def test_output_run_refuses_route_mismatch_without_repair(tmp_path):
     freeze = driver.freeze_output(tmp_path)
     responses = _responses()
-    responses[0] = {"text": _legal_text("qual", 11),
-                    "model": "openrouter/other:free"}
+    responses[0] = _route_response(
+        _legal_text("qual", 11), model="openrouter/other:free")
     gateway = _OutputGateway(responses, freeze["route"])
     result = driver.run_output(tmp_path, gateway=gateway,
                                model=freeze["route"]["requested_model"])
@@ -258,9 +436,29 @@ def test_output_run_refuses_route_mismatch_without_repair(tmp_path):
     first_task = result["candidate_view"]["dispatches"][0]
     assert len(result["candidate_view"]["dispatches"]) == 1
     assert first_task["parse_outcome"] == "route-refused"
+    assert first_task["round"] == freeze["round"]
     assert not any(d["task_id"] == first_task["task_id"]
                    and d["attempt"] == 2
                    for d in result["candidate_view"]["dispatches"])
+
+
+def test_output_gateway_error_route_refusal_uses_frozen_round(tmp_path):
+    from settlement.gateway import (
+        GatewayError, GatewayErrorKind, GatewayRouteError, Usage,
+    )
+
+    freeze = driver.freeze_output(tmp_path)
+    operation_id = "invl02-output-P1-audit-0023-a1"
+    route_error = GatewayError(
+        GatewayErrorKind.PROTOCOL, "route refused", False, operation_id,
+        Usage(), route_error=GatewayRouteError.RESPONSE_METADATA)
+    gateway = _OutputGateway([route_error] + _responses()[1:], freeze["route"])
+    result = driver.run_output(
+        tmp_path, gateway=gateway, model=freeze["route"]["requested_model"])
+
+    refused = result["candidate_view"]["dispatches"][0]
+    assert refused["parse_outcome"] == "route-refused"
+    assert refused["round"] == freeze["round"]
 
 
 def test_output_evidence_retains_raw_bytes_without_private_targets(tmp_path):
@@ -325,7 +523,7 @@ def test_output_offline_recompute_uses_raw_response_and_fails_closed(tmp_path):
 
 def test_incomplete_output_recompute_is_nonzero(tmp_path):
     freeze = driver.freeze_output(tmp_path)
-    responses = [{"text": "not json"} for _ in range(8)]
+    responses = [_route_response("not json") for _ in range(8)]
     result = driver.run_output(
         tmp_path, gateway=_OutputGateway(responses, freeze["route"]),
         model=freeze["route"]["requested_model"])
@@ -348,7 +546,7 @@ def test_verify_output_malformed_shape_fails_without_raising():
 
 def test_recompute_cli_preserves_incomplete_output_status(tmp_path):
     freeze = driver.freeze_output(tmp_path)
-    responses = [{"text": "not json"} for _ in range(8)]
+    responses = [_route_response("not json") for _ in range(8)]
     result = driver.run_output(
         tmp_path, gateway=_OutputGateway(responses, freeze["route"]),
         model=freeze["route"]["requested_model"])
@@ -665,10 +863,11 @@ def test_verify_output_requires_conflict_usage_and_unresolved_exposure(
     receipt["receipt_conflicts"][0]["unresolved_exposure"] = 12
     assert _verify(result, tmp_path)["status"] == "fail"
 
-
-    freeze = driver.freeze_output(tmp_path)
+    lineage_dir = tmp_path / "lineage"
+    lineage_dir.mkdir()
+    freeze = driver.freeze_output(lineage_dir)
     result = driver.run_output(
-        tmp_path, gateway=_OutputGateway(_responses(), freeze["route"]),
+        lineage_dir, gateway=_OutputGateway(_responses(), freeze["route"]),
         model=freeze["route"]["requested_model"])
     accepted = next(entry for entry in result["candidate_view"]["dispatches"]
                     if entry["parse_outcome"] == "accepted")
@@ -885,6 +1084,135 @@ def test_output_success_requires_settled_operation(monkeypatch):
     assert durable.durable_receipts[0]["unresolved_exposure"] == 11
 
 
+def test_lost_response_stops_round_with_exact_terminal_evidence(
+        tmp_path, monkeypatch):
+    from settlement import broker, store
+    from settlement.common import ResultCode
+
+    freeze = driver.freeze_output(tmp_path)
+    operation_id = live.output_operation_id(
+        "P1", "audit", 23, 1, round_run_id=freeze["run_id"])
+    receipt = {
+        "receipt_identity": "gw:%s:lost-response" % operation_id,
+        "outcome": "unknown",
+        "content": {
+            "operation_id": operation_id,
+            "response_class": "lost-response",
+            "response_received": False,
+            "error": "gateway deadline exceeded",
+        },
+    }
+    operation = {
+        "reservation_id": "res-1",
+        "dispatch_state": "unresolved",
+        "reconcile_state": "unresolved",
+        "settled": False,
+    }
+    dispatched = SimpleNamespace(
+        dispatch_state="unresolved", reconcile_state="unresolved",
+        settled=False, next_decision="needs-reconciliation")
+    monkeypatch.setattr(
+        broker, "ensure_operation",
+        lambda *args, **kwargs: SimpleNamespace(
+            code=ResultCode.APPLIED,
+            data={"reservation_id": "res-1", "exposure": 2294}))
+    monkeypatch.setattr(
+        broker, "dispatch_operation", lambda *args, **kwargs: dispatched)
+    monkeypatch.setattr(
+        broker, "read_operation", lambda *args, **kwargs: operation)
+    monkeypatch.setattr(
+        store, "operation_receipts", lambda *args, **kwargs: [receipt])
+    monkeypatch.setattr(
+        store, "operation_receipt_conflicts", lambda *args, **kwargs: [])
+    durable = driver._DurableBrokerOutput(
+        "unused", _OutputGateway([], freeze["route"]),
+        allocation_id="allocation-1", expected_route=freeze["route"])
+    guard = driver._OutputGuard(
+        durable, pinned_model=freeze["route"]["requested_model"],
+        ceiling=freeze["limits"]["max_dispatches"], automatic_retries=0,
+        expected_route=freeze["route"])
+    _task, session = driver._output_public_task("audit", 23)
+    prompt = live.render_output_prompt(session.model_input(), [], 1)
+
+    with pytest.raises(RuntimeError, match="unsettled or unresolved"):
+        guard.infer(ModelRequest(
+            model=freeze["route"]["requested_model"],
+            messages=({"role": "user", "content": prompt},),
+            max_output_tokens=2048, deadline_ms=1000,
+            operation_id=operation_id), evidence={
+                "arm": "P1", "task": "rule-audit-0023", "attempt": 1,
+                "raw_prompt": prompt, "round": freeze["round"]})
+
+    assert guard.guard_status()["dispatch_count"] == 1
+    dispatches, receipts = driver._bind_output_dispatches(
+        guard.finalized_dispatches(), durable.durable_receipts)
+    controls, private_scores = driver._p0_output_controls(freeze)
+    result = driver._output_unavailable(
+        tmp_path, freeze, "durable broker refused an output dispatch",
+        receipts, dispatches, controls, private_scores)
+    view = result["candidate_view"]
+    dispatch = view["dispatches"][0]
+    durable_receipt = view["durable_receipts"][0]
+    private = json.loads((tmp_path / "scorer-private.json").read_text())
+    assert result["status"] == "unavailable"
+    assert view["dispatch_count"] == 1
+    assert view["physical_dispatch_count"] == 1
+    assert view["replay_count"] == 0
+    assert view["automatic_retry_count"] == 0
+    assert dispatch["operation_id"] == operation_id
+    assert dispatch["raw_response"] is None
+    assert dispatch["response_digest"] is None
+    assert "returned_model" not in dispatch
+    assert "provider" not in dispatch
+    assert durable_receipt["receipt_outcome"] == "unknown"
+    assert durable_receipt["outcome"] == "unresolved"
+    assert durable_receipt["response_class"] == "lost-response"
+    assert durable_receipt["response_received"] is False
+    assert durable_receipt["unresolved_exposure"] == 2294
+    assert durable_receipt["measurement_status"] == "unresolved"
+    assert {row["task_id"] for row in view["incumbent_control"]} \
+        == _output_task_ids()
+    assert all(row["arm"] == "P0" and row["model_calls"] == 0
+               for row in view["incumbent_control"])
+    assert {row["task_id"] for row in private["scores"]} == _output_task_ids()
+    assert result["claims"] == {
+        "task_utility": "not-established",
+        "transfer": "not-established",
+        "recursive_improvement": "not-established",
+    }
+
+
+@pytest.mark.parametrize(("response_class", "response_received"), [
+    ("lost-response", False),
+    (None, None),
+])
+def test_durable_observation_fact_preserve_absence(
+        response_class, response_received):
+    operation = {
+        "reservation_id": "res-1", "dispatch_state": "unresolved",
+        "reconcile_state": "unresolved", "settled": False,
+    }
+    receipt = {
+        "receipt_identity": "gw:op:unknown", "outcome": "unknown",
+        "content": {
+            "operation_id": "op",
+            "error": "gateway deadline exceeded",
+        },
+    }
+    if response_class is not None:
+        receipt["content"]["response_class"] = response_class
+    if response_received is not None:
+        receipt["content"]["response_received"] = response_received
+
+    exported = driver._durable_receipt_record(
+        receipt, operation, 2294, "op")
+
+    assert exported["response_class"] == response_class
+    assert exported["response_received"] is response_received
+    assert exported["usable_result"] is False
+    assert exported["result"] is None
+
+
 def test_output_unresolved_reconciliation_records_exposure(monkeypatch):
     from settlement import broker, store
     from settlement.common import ResultCode
@@ -922,7 +1250,8 @@ def test_output_unresolved_reconciliation_records_exposure(monkeypatch):
     assert durable.durable_receipts == [{
         "operation_id": "invl02-output-P1-qual-0011-a1",
         "reservation_id": "res-2", "receipt_identity": None,
-        "receipt_outcome": None, "outcome": "unresolved", "usage": {},
+        "receipt_outcome": None, "outcome": "unresolved",
+        "response_class": None, "response_received": None, "usage": {},
         "exposure": 13, "unresolved_exposure": 13,
         "dispatch_state": "unresolved", "reconcile_state": "unresolved",
         "settled": False, "unsettled": True, "conflict": False,
@@ -1071,14 +1400,15 @@ def test_settled_broker_replay_is_not_counted_as_new_dispatch(monkeypatch):
         max_output_tokens=2048, deadline_ms=1000,
         operation_id=operation_id), evidence={
             "arm": "P1", "task": "rule-qual-0011", "attempt": 1,
-            "raw_prompt": "input"})
+            "raw_prompt": "input", "round": driver.OUTPUT_ROUND})
     assert response.text == "{}"
     assert guard.guard_status()["dispatch_count"] == 0
     assert guard.guard_status()["replay_count"] == 1
     assert durable.last_replay is True
     assert len(durable.durable_receipts) == 1
     guard.finalize_evidence(operation_id, parse_outcome="accepted",
-                            accepted_candidate_digest="a" * 64)
+                            accepted_candidate_digest="a" * 64,
+                            round_no=driver.OUTPUT_ROUND)
     assert guard.finalized_dispatches()[0]["replay"] is True
 
 
@@ -1279,8 +1609,8 @@ def test_output_rejects_repair_after_route_refusal(tmp_path):
 
     freeze = driver.freeze_output(tmp_path)
     responses = _responses()
-    responses[0] = {"text": _legal_text("qual", 11),
-                    "model": "other/resolved:free"}
+    responses[0] = _route_response(
+        _legal_text("qual", 11), model="other/resolved:free")
     result = driver.run_output(
         tmp_path, gateway=_OutputGateway(responses, freeze["route"]),
         model=freeze["route"]["requested_model"])
@@ -1292,7 +1622,7 @@ def test_output_rejects_repair_after_route_refusal(tmp_path):
     history = [] if first["arm"] == "P1" else live.output_permitted_history()
     prompt = live.render_output_prompt(session.model_input(), history, 2)
     operation_id = live.output_operation_id(
-        first["arm"], split, seed, 2)
+        first["arm"], split, seed, 2, round_run_id=freeze["run_id"])
     details = copy.deepcopy(first["details"])
     details["raw_payload"] = {"raw_prompt": prompt, "raw_response": "not json"}
     repair = frontier.make_evidence_record(
@@ -1561,7 +1891,44 @@ def test_recompute_returns_structured_failure_for_unreadable_declared_artifact(
     verified = driver.recompute(tmp_path)
 
     assert verified["status"] == "fail"
-    assert verified["problems"] == ["declared-artifact-unavailable"]
+    assert verified["problems"] == ["artifact-unreadable output-run.json"]
+
+
+@pytest.mark.parametrize("name", ["output-run.json", "m4-bundle.json"])
+def test_recompute_rejects_recognized_artifact_without_study_root(tmp_path, name):
+    driver.freeze_output(tmp_path)
+    (tmp_path / name).write_text("{}\n")
+
+    verified = driver.recompute(tmp_path)
+
+    assert verified["status"] == "fail"
+    assert verified["problems"] == ["artifact-study-root-missing %s" % name]
+
+
+@pytest.mark.parametrize("name", ["output-run.json", "m4-bundle.json"])
+def test_recompute_rejects_recognized_artifact_with_malformed_study_root(
+        tmp_path, name):
+    driver.freeze_output(tmp_path)
+    (tmp_path / name).write_text(json.dumps({"study_root": []}) + "\n")
+
+    verified = driver.recompute(tmp_path)
+
+    assert verified["status"] == "fail"
+    assert verified["problems"] == ["artifact-study-root-invalid %s" % name]
+
+
+@pytest.mark.parametrize("name", ["output-run.json", "m4-bundle.json"])
+def test_recompute_rejects_conflicting_artifact_study_roots(tmp_path, name):
+    freeze = driver.freeze_output(tmp_path)
+    (tmp_path / name).write_text(json.dumps({
+        "protocol": {"study_root": freeze["study_root"]},
+        "freeze": {"study_root": "foreign-study"},
+        "study_root": freeze["study_root"]}) + "\n")
+
+    verified = driver.recompute(tmp_path)
+
+    assert verified["status"] == "fail"
+    assert verified["problems"] == ["artifact-study-root-invalid %s" % name]
 
 
 def test_recompute_rejects_mixed_output_and_m4_artifacts(tmp_path):

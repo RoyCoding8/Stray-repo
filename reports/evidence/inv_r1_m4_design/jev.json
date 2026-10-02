@@ -1,0 +1,24 @@
+{
+ "answers": {
+  "best_option": {
+   "choice": "summarise",
+   "confidence": 0.41,
+   "probabilities": {
+    "none_of_these": 0.36,
+    "raise_cap": 0.02,
+    "summarise": 0.56,
+    "withhold": 0.06
+   },
+   "type": "choice"
+  },
+  "needs_human_call": {
+   "probability": 0.83,
+   "type": "boolean"
+  },
+  "withhold_is_valid": {
+   "probability": 0.21,
+   "type": "boolean"
+  }
+ },
+ "model": "typesafe-ai/jev"
+}

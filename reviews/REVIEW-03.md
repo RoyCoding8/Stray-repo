@@ -469,7 +469,7 @@ changed; establish the forbidden behavior is prevented through the real entry po
 
 ## Next action and architectural interpretation
 
-Use [WORKER-REVIEW-03-PROMPT.md](../WORKER-REVIEW-03-PROMPT.md) in the existing worker conversation.
+Use [WORKER-REVIEW-03-PROMPT.md](../docs/HISTORY.md#worker-review-03-prompt) in the existing worker conversation.
 Assess the findings, repair confirmed S0–S3 defects, and publish a reproducible handoff. Hold
 S4–S7. Live environment gates can be qualified once the repaired path is runnable;
 missing credentials/runtime access remain explicit blockers, not inferred passes.

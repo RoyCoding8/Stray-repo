@@ -4,7 +4,7 @@ Reviewed `0b47dcf` on `codex/implementation-executable-coordination-02`, 2026-09
 
 **Disposition: useful fixture apparatus, incomplete live implementation.** Do not start the large held-out panels. The provider problem may be real, but it is not the sole blocker. The new entry still implements authored stand-ins and synthetic accounting. A reported absence of usable construction outputs is not evidence against the architecture, and the delivered evidence is insufficient to certify a fully reconciled, prescribed no-acquisition study.
 
-This review is deliberately limited to execution, experimental validity and evidence preservation. It does not request a style cleanup or whole-repository audit. The completion assignment is [here](../WORKER-COORDINATION-02-COMPLETION-CORRECTION.md).
+This review is deliberately limited to execution, experimental validity and evidence preservation. It does not request a style cleanup or whole-repository audit. The completion assignment is [here](../docs/HISTORY.md#worker-coordination-02-completion-correction).
 
 ## Verification and boundaries
 
@@ -71,7 +71,7 @@ Do not redesign executable memory on this evidence. We have not yet measured the
 - [x] Inspect the whole delivered tip and relevant call paths.
 - [x] Reproduce entry, context, cost and frozen-order failures without touching live evidence.
 - [x] Check selected existing tests; distinguish their passing scope from the missing behavior.
-- [x] Specify corrections, concrete integration contracts and the full completion sequence for the worker in [the current assignment](../WORKER-COORDINATION-02-COMPLETION-CORRECTION.md).
+- [x] Specify corrections, concrete integration contracts and the full completion sequence for the worker in [the current assignment](../docs/HISTORY.md#worker-coordination-02-completion-correction).
 - [ ] Worker closes ECR2-01–05 or provides a concrete source/behavior rebuttal.
 - [ ] Establish a genuine live vertical path and candidate selection, then continue through the already commissioned frozen study after internal review; alternatively complete an auditable bounded no-acquisition outcome.
 - [ ] Independently reconstruct the final evidence and deliver mechanism, benefit, transfer and next-design conclusions in the same worker handback.

@@ -8,11 +8,16 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from conftest_isolation import dbname_of
 
 DSN = os.environ.get(
     "INV_R3_DSN",
     "dbname=inv_r3_export host=/var/run/postgresql user=ubuntu")
 MIGRATIONS = ROOT / "migrations"
+
+_SHARED_STORES = frozenset({"inv_r3_export", "inv_r3_probe", "postgres"})
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -26,7 +31,12 @@ SW1 = "ad01-w0-dev-sw-01"
 
 def _fresh_db(dsn: str):
     assert "live" not in dsn
-    assert dsn.split("dbname=")[1].split()[0].startswith("inv_r3_")
+    # This file destroys and rebuilds its store, so the guard is the one that
+    # matters: refuse the shared study names, and accept anything a run owns.
+    # It used to demand a leading ``inv_r3_`` instead, which is a naming
+    # convention rather than a safety property, and no per-run name can hold it
+    # -- ``conftest_isolation.derived_name`` leads with its own token.
+    assert dbname_of(dsn) not in _SHARED_STORES
     from settlement import db
     from experiments.coord02 import experience as E
     db.apply_migrations(dsn, MIGRATIONS)
@@ -165,23 +175,59 @@ def test_export_binds_delivered_request_and_pinned_identities():
         "failure"]["reason"]
 
 
+def _admit(method_id: str):
+    """A use policy that admits one named method, the way a real one would.
+
+    `run_use` takes the method identity from an admitted policy action and
+    refuses without one (`77001fc`), so a test of the export and the byte
+    chain has to supply the decision its use phase needs. The admitted id
+    still has to be in the repertoire, carry the task's family and satisfy
+    the release binding, so this admits a method; it does not admit one the
+    repertoire would not have carried anyway.
+    """
+    def step(view, state):
+        return {
+            "action": {
+                "kind": "use_method",
+                "target": view["task_content"]["task_id"],
+                "inputs": {"method_id": method_id, "max_queries": 16},
+                "evidence_refs": [],
+                "requested_resources": {"queries": 16}},
+            "state": dict(state or {})}
+    return step
+
+
 def _run_pilot(dsn, seq, tmp_path):
     from experiments.ad01 import trajectory
     cid, _gateway, campaign = _run_correction(dsn, seq=seq)
     frozen = tmp_path / ("repertoire-%d.json" % seq)
     repertoire = trajectory.freeze_repertoire(campaign, frozen)
     assert repertoire["members"]
+    member_id = repertoire["members"][0]["capability_id"]
     member_task = SW0
     retained_batch = trajectory.run_use(
         repertoire, 0, "I", [member_task], {},
-        dsn=dsn, allocation_id=trajectory._alloc_id(cid))
-    assert retained_batch[0]["selected"] != "incumbent"
+        dsn=dsn, allocation_id=trajectory._alloc_id(cid),
+        policy=_admit(member_id))
+    assert retained_batch[0]["selected"] == member_id
     empty = {"campaign_id": cid, "members": [], "queries": 0}
+    # An empty repertoire is a refusal, not a fallback. The test asserted
+    # `selected == "incumbent"` here from before `77001fc` made the method
+    # identity a thing only a policy can supply, and that commit deleted
+    # the incumbent path an empty repertoire used to reach. A policy
+    # admitting the member it *would* have run is refused by name, which
+    # is the decided rule: see reviews/STAGE-09-EMPTY-REPERTOIRE.md.
     fallback_batch = trajectory.run_use(
         empty, 0, "I", [SW1], {},
-        dsn=dsn, allocation_id=trajectory._alloc_id(cid))
-    assert fallback_batch[0]["selected"] == "incumbent"
-    assert fallback_batch[0]["executed_source"] == "incumbent"
+        dsn=dsn, allocation_id=trajectory._alloc_id(cid),
+        policy=_admit(member_id))
+    assert fallback_batch[0]["status"] == "refused"
+    assert fallback_batch[0]["selected"] == "refused"
+    assert fallback_batch[0]["executed"] == "refused"
+    assert fallback_batch[0]["output"] == {}
+    assert fallback_batch[0]["costs"]["witness_queries"] == 0
+    assert member_id in fallback_batch[0]["fallback_reason"]
+    assert "absent from the repertoire" in fallback_batch[0]["fallback_reason"]
     return cid, campaign, retained_batch + fallback_batch
 
 

@@ -1,0 +1,130 @@
+{
+  "ast_seam": {
+    "ast_takes_a_world_parameter": false,
+    "ast_world_signatures": [],
+    "hardcoded_targets_in_validator": [
+      "boolean.commit",
+      "boolean.query",
+      "boolean.task"
+    ],
+    "view_type_names": [
+      "action_schema",
+      "instrument",
+      "observed",
+      "public_world",
+      "remaining",
+      "task_id"
+    ],
+    "view_types_is_module_level": true
+  },
+  "closes_across_held_out": {
+    "closed": 30,
+    "closes_everywhere": true,
+    "failures": [],
+    "held_out_instances": 30
+  },
+  "field_resolution": {
+    "both_stages_agree": true,
+    "chosen_action": "construct/code.inspect",
+    "field": "observed.0.actual",
+    "guard_evaluated": true,
+    "loader_admits": true,
+    "loader_says_type": "string",
+    "policy_admitted": true,
+    "unprojected_make_view": {
+      "evaluator_failure": "KeyError: 'observed'",
+      "evaluator_returns": null,
+      "field": "observed.0.actual",
+      "loader_admits": true,
+      "loader_says_type": "string"
+    }
+  },
+  "field_type_fallback": {
+    "field_type_with_paths_and_no_field_types": null,
+    "ordering_field_type_via_paths": "string",
+    "ordering_field_type_via_regex_only": null,
+    "reading": "the ordering regex is tested first and its key alternation is fixed at module scope, so a SWE key never reaches the observation_paths check and the paths cannot make it resolvable",
+    "regex_matches_a_swe_field": false,
+    "regex_matches_an_ordering_field": true,
+    "regex_pattern": "observed\\.(?P<x>[0-9]+)\\.(?P<key>left|right|earlier)",
+    "swe_paths_supplied": [
+      "actual",
+      "expected",
+      "kind",
+      "test"
+    ]
+  },
+  "fixed_target_fields": {
+    "production_reads": {
+      "construct_target": 0,
+      "probe_target": 0,
+      "stop_target": 3
+    },
+    "reading": "probe_target and construct_target are declared and assigned but never read, so the three-target shape is not what blocks SWE; stop_target is read from ORDERING_WORLD rather than from a world the validator is handed, because it is handed none",
+    "stop_target_reads_name_the_module_global": true,
+    "validate_action_signature_takes_a_world": false
+  },
+  "instrument": "software-fault-repair-v1",
+  "lane": "AA1",
+  "live_dispatches": {
+    "count": 0,
+    "currencies": {}
+  },
+  "observation_index": {
+    "derived_fields_reach_the_loader": false,
+    "observations_after_one_public_test": 1,
+    "probe_allowance": 303,
+    "public_cases_in_the_world": 2,
+    "reading": "a guard names the index it reads, and derived_fields is consulted by the evaluator but not by the loader, so an index no episode has reached yet cannot be admitted at load time"
+  },
+  "ordering_allowed_kinds": [
+    "construct",
+    "probe",
+    "stop"
+  ],
+  "second_world_reach": {
+    "delegates_the_frozen_loader": true,
+    "imports_first_as_frozen": true,
+    "lines_first": 894,
+    "lines_second": 421,
+    "reach": "delegates",
+    "reading": "the second world is reached by projecting the view and borrowing the frozen loader and node set, so a third world costs a projection rather than a copied module",
+    "redefines_validate_action": true,
+    "second_world_module": "experiments.ad01.ordering_ast_policy"
+  },
+  "swe_action_kinds": [
+    "check",
+    "construct",
+    "observe",
+    "stop",
+    "use"
+  ],
+  "swe_observation_keys": [
+    "actual",
+    "expected",
+    "kind",
+    "test"
+  ],
+  "swe_targets": {
+    "check": "test.run_all",
+    "construct": [
+      "code.inspect",
+      "code.localize",
+      "code.try"
+    ],
+    "observe": "test.run",
+    "stop": "swe.task",
+    "use": "code.repair"
+  },
+  "verdict": {
+    "ast": {
+      "a_world_value_is_sufficient": false,
+      "reason": "boolean_ast_policy takes no World, so a value cannot reach it; the second world is reached by delegates instead, so a SWE AST arm costs the same shape of work that arm already did"
+    },
+    "graph": {
+      "a_world_value_is_sufficient": true,
+      "reason": "a World value whose make_view projects the SWE view into the shape the evaluator reads is admitted by the real load_policy and steers a real arm through the real guard evaluator, so the graph cell is a binding and not a re-shape"
+    }
+  },
+  "version": "ad01-e1-world-fit-probe/2"
+}

@@ -1,0 +1,34 @@
+{
+ "ad01-liveacq-gr00-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-liveacq-gr00-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init",
+  "receipts": [
+   {
+    "operation_id": "ad01-liveacq-gr00-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-liveacq-gr00-b0-ad01-w0-transfer-gr-00-policy-policy-l1-init",
+    "usage": {
+     "billed": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init": {
+  "effect": "model-inference",
+  "operation_id": "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+  "receipts": [
+   {
+    "operation_id": "ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-liveacq01-b0-ad01-w0-transfer-sw-00-policy-policy-l1-init",
+    "usage": {
+     "billed": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ }
+}

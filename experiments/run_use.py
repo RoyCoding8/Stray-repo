@@ -23,7 +23,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve()
 EXPERIMENTS = HERE.parent
 WORKTREE = EXPERIMENTS.parent
-for _anchor in (str(EXPERIMENTS), str(WORKTREE / "src")):
+for _anchor in (str(EXPERIMENTS), str(WORKTREE / "src"), str(WORKTREE)):
     if _anchor not in sys.path:
         sys.path.insert(0, _anchor)
 
@@ -58,11 +58,11 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
-    from run_dev_episode import _fixture_double, _live_adapter
-    from run_live_abc import _effective_config, _source_fingerprint
+    from experiments.run_dev_episode import _fixture_double, _live_adapter
+    from experiments.run_live_abc import _effective_config, _source_fingerprint
 
     args = _parse(argv)
-    from fault_tasks import BY_ID
+    from experiments.fault_tasks import BY_ID
 
     if args.use_task not in BY_ID:
         print(f"subsequent use refused: unknown task {args.use_task}")

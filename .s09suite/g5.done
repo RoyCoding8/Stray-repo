@@ -1,0 +1,7 @@
+=== group 5  token=5e9b0005  files=4 ===
+  tests/test_r01_deadline_ui.py
+  tests/test_r02_explearn.py
+  tests/test_ui_views.py
+  tests/test_state_operations.py
+rc=1
+summary: 2 failed, 29 passed, 2 warnings in 79.16s (0:01:19)
