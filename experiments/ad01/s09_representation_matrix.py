@@ -79,11 +79,6 @@ def _if(cond: dict, then: dict, otherwise: dict) -> dict:
     return {"op": "if", "cond": cond, "then": then, "else": otherwise}
 
 
-def _observed_field(index: int, output: int) -> dict:
-    return _index(_index(_index(_field("view", "observed"),
-                                 _const(0)), _const("y")), _const(output))
-
-
 def _constant_specs() -> dict:
     return _list(*[_obj(const=_const(bit), mask=_const(0), pair=_const(None))
                    for bit in COMMIT_Y])

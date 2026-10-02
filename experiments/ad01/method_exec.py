@@ -277,12 +277,6 @@ def _budget_parameter(signature_parameters) -> str | None:
     return None
 
 
-def _required_unsupplied(required: list, supplies: dict) -> list:
-    """Required names no child-side value fills, choices excluded."""
-    return [name for name in required
-            if name not in supplies and name not in _CHOICE_PARAMS]
-
-
 def _wrapper_for(name: str, target: str, profile: dict) -> str:
     """One wrapper, generated for one binding, with no strategy default.
 

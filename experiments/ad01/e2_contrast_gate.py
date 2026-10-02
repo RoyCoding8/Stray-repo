@@ -33,13 +33,6 @@ def gate() -> dict:
     return result
 
 
-def projection_drops(reason) -> dict:
-    body = replica.contrast_block()
-    task = worlds.load_task(worlds.FROZEN_DIR, body["target_task_ids"][0])
-    return replica.qualify_instrument(
-        task, reason, eligible_methods=replica.eligible_for(task))
-
-
 def as_dict_compatibility() -> dict:
     """Can a campaign keep `Reading.as_dict()` and reuse the frozen estimator?
 

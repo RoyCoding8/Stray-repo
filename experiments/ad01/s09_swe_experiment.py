@@ -669,33 +669,6 @@ def unreverse(stripped):
     return out
 
 
-def digit_groups(text):
-    """Contiguous digit runs in `text`, as `(start, end, value)`.
-
-    A widening arrives as `+ 1` whose right operand is itself `1 + 1`, so
-    the run that restores the reference is the trailing `1` of the inner
-    sum. Decrementing every run covers it, and the panel's own literals
-    are the only ones considered.
-    """
-    out = []
-    index = 0
-    while index < len(text):
-        char = text[index]
-        if char.isdigit():
-            before_ok = index == 0 or not (text[index - 1].isalnum()
-                                           or text[index - 1] == ".")
-            start = index
-            while index < len(text) and text[index].isdigit():
-                index = index + 1
-            after_ok = index >= len(text) or not (text[index].isalnum()
-                                                  or text[index] == ".")
-            if before_ok and after_ok:
-                out.append((start, index, int(text[start:index])))
-        else:
-            index = index + 1
-    return out
-
-
 def swap_slice_bounds(stripped):
     """Exchange the two bounds of the first `[a:b]` this line carries.
 
@@ -1254,11 +1227,6 @@ def search_driver(lineage: Lineage) -> Callable:
         return search.driven(state, view)
 
     return choose
-
-
-def in_process_lineages(count: int = 1) -> tuple:
-    """Supported lineages that run in-process, for scoring assertions."""
-    return tuple(supported_lineages()[:count])
 
 
 def run_episode(driver: Callable, split: str, seed: int) -> dict:

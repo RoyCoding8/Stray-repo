@@ -1,4 +1,6 @@
-# Current assignment: complete the Stage 9 research comparison
+# Research scope: Stage 9 comparison
+
+Checkpoint 2026-09-30: read reports/PROJECT-INVENTORY.md and reports/PROJECT-LEDGER.md first. They describe the squashed source at 6096442 and supersede this prompt's older starting-state notes. This document preserves the research acceptance scope. The next implementation batch will follow the current research checkpoint; do not automatically rerun the old studies or create another lifecycle.
 
 You are the implementation and experiment coordinator in a fresh session. Complete the connected research batch below, including repairs and independent verification. Do not stop after infrastructure tests or replace the research with another general bug sweep.
 
@@ -9,12 +11,14 @@ The aim is general autonomous investigation, acquired executable methods and eve
 1. Read AGENTS.md, reports/PROJECT-LEDGER.md and IMPLEMENTATION-WORKFLOW.md.
 2. Read reviews/STAGE-09-TRANSFER-ASSESSMENT.md, then reports/STAGE-09-TRANSFER-BRIEF.md for the worker's underlying delivery. Treat the latter's completion claims as claims to check.
 3. Read docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md and the contracts relevant to your first lane. Use docs/design/README.md to find them; do not reread every historical assignment.
-4. Inspect local Git state, worktrees, active processes, database ownership and available runtime. Fetch origin. The reviewed implementation base is c06b3e90e6daf5b95238707664364f48abb73044; d0a95eb adds its assessment. This handoff is on codex/stage09-clean-handoff.
-5. Merge the handoff into codex/implementation-investigation-learning-02, or a clean integration branch based on it, before assigning lanes. Do not reset an active checkout. Verify ancestry and account for any newer commits.
+4. Inspect local Git state, worktrees, active processes, database ownership and available runtime. Fetch origin. The current source is on codex/implementation-development-01 at 6096442. The earlier c06b3e9/d0a95eb review and stage09-clean-handoff branch are historical context, not the current base.
+5. Read the codex/stage09-state-inventory documentation checkpoint before starting a new batch. Use the latest canonical source and the newly agreed design. Do not merge old branches merely because they are no longer ancestors after the squash, and do not reset an active checkout.
 
 Use reports/PLAN.md for the task graph. Update the existing ledger and prompt in place when scope changes; old assignments are historical, indexed in docs/HISTORY.md.
 
-## What is already known
+## Starting observations from the previous handoff
+
+These observations describe the earlier transfer review. E1 r2/r3, E2 contrast/retention and E4 have since run. Current scoped conclusions are in the inventory; the old statements that E2/E4 were unrun are historical.
 
 - Existing runtime and representation instruments are valuable. Preserve them unless a concrete causal defect requires replacement.
 - The small live reducer campaign in reports/evidence/invl02_liveacq_r4/ has six construction attempts, three acquired ENTRY wrappers delegating to authored ddmin, and three surviving paired outcomes. Their mean normalized-reduction delta is -0.15277777777777776 versus control. This is evidence of wrapper acquisition with worse outcomes on those pairs; it is not the full representation matrix.

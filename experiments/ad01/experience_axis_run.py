@@ -339,10 +339,6 @@ def _step_policy(source: str):
     return record, step
 
 
-def _member_ids(repertoire: dict) -> list:
-    return [member["capability_id"] for member in repertoire["members"]]
-
-
 def _reason_of(record: dict) -> str:
     return result._reason_of(record)
 

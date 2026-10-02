@@ -1,4 +1,0 @@
-=== group 18  token=5e9b0012  files=1 ===
-  tests/test_ag01_experiment.py
-rc=1
-summary: 2 failed, 39 passed in 134.06s (0:02:14)

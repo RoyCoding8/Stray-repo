@@ -1,5 +1,0 @@
-=== group 13  token=5e9b000d  files=2 ===
-  tests/test_s09c3_policy_pilot.py
-  tests/test_m1_shared_executor.py
-rc=1
-summary: 1 failed, 29 passed in 17.84s

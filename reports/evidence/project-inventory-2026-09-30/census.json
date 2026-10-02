@@ -1,0 +1,96 @@
+{
+  "source": "60964423455dcecb076745b3bcd85db0299dfbc5",
+  "anchors": [
+    {
+      "ref": "HEAD",
+      "commits": 119,
+      "tip": "6096442"
+    },
+    {
+      "ref": "backup/pre-squash-067a1fa",
+      "commits": 394,
+      "tip": "067a1fa"
+    },
+    {
+      "ref": "rescue/debloat-work",
+      "commits": 1844,
+      "tip": "f79f312"
+    },
+    {
+      "ref": "rescue/debloat-squash",
+      "commits": 1840,
+      "tip": "230fdcc"
+    },
+    {
+      "ref": "rescue/single-squash",
+      "commits": 108,
+      "tip": "02c2acc"
+    },
+    {
+      "ref": "origin/codex/implementation-investigation-learning-02",
+      "commits": 1752,
+      "tip": "c06b3e9"
+    }
+  ],
+  "categories": {
+    "local other retained anchor ancestry": 4,
+    "local separate history": 10,
+    "local pre-squash rescue ancestry": 34,
+    "remote pre-squash rescue ancestry": 126,
+    "remote separate history": 19,
+    "remote current ancestry": 2,
+    "local current ancestry before review": 1
+  },
+  "localBeforeReview": 49,
+  "remoteTracking": 147,
+  "remoteServerBranches": 147,
+  "serverOnly": [],
+  "staleTracking": [],
+  "allReachableCommits": "1998",
+  "sourceTree": "c940572f5de07fcf492ad15512ee654937f3ec52",
+  "equivalentTrees": [
+    {
+      "ref": "rescue/debloat-work",
+      "tip": "f79f312fa3c26a8c01e38890e28bd1465ebd16d0",
+      "tree": "c940572f5de07fcf492ad15512ee654937f3ec52"
+    },
+    {
+      "ref": "rescue/debloat-squash",
+      "tip": "230fdcc5ec1968bf4e259e79f85953f1fd257ee9",
+      "tree": "c940572f5de07fcf492ad15512ee654937f3ec52"
+    },
+    {
+      "ref": "rescue/single-squash",
+      "tip": "02c2acca993b5aa92ef8bece6ed3a90ebeee7db9",
+      "tree": "c940572f5de07fcf492ad15512ee654937f3ec52"
+    }
+  ],
+  "postDevelopment01Commits": 12,
+  "gitBeforeReviewWorktrees": [
+    "D:/AI/Agent-Society-v2",
+    "D:/AI/Agent-Society-v2-review-02"
+  ],
+  "temporaryReviewRefs": [
+    "codex/state-runtime-review",
+    "codex/state-learning-review",
+    "codex/state-evidence-review"
+  ],
+  "inventoryBranch": "codex/stage09-state-inventory",
+  "metrics": {
+    "trackedFiles": 3250,
+    "trackedBytes": 47393947,
+    "pythonFiles": 919,
+    "runtimePythonFiles": 31,
+    "runtimeLines": 21404,
+    "experimentPythonFiles": 400,
+    "experimentLines": 90164,
+    "testPythonFiles": 417,
+    "activeTestPythonFiles": 332,
+    "archivedTestPythonFiles": 85,
+    "declaredActiveTestFunctions": 3470,
+    "declaredArchivedTestFunctions": 871,
+    "migrations": 18
+  },
+  "note": "Ancestry classification preserves provenance only. It does not prove that separate branch effects are semantically merged, or that code is qualified.",
+  "interpretation": "Review-created branches are excluded from the pre-review totals. HEAD is the inspected source tip6096442, not a claim that later documentation commits have identical trees. Retained ancestry is not semantic qualification."
+}

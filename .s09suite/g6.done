@@ -1,7 +1,0 @@
-=== group 6  token=5e9b0006  files=3 ===
-  tests/test_settle_actual.py
-  tests/test_rpr13_endtoend.py
-  tests/test_dev01_compare.py
-rc=124
-summary: <none: group did not finish>
-KILLED-BY-TIMEOUT: token=5e9b0006 leaked its databases; reclaim them

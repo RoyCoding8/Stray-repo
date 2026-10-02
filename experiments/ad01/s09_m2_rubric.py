@@ -354,17 +354,6 @@ def verify_frozen() -> None:
             % (FROZEN_DIGEST, actual))
 
 
-def provenance_of(evidence: ArmEvidence) -> str:
-    """What kind of claim an arm's programs can carry at all.
-
-    A `mechanism-witness` arm may be compared on expressiveness,
-    executability and sensitivity. It may never be scored on model
-    construction, and the panel selection cannot complete on its
-    numbers alone.
-    """
-    return evidence.program_provenance
-
-
 def _acquisition_axis_value(evidence: ArmEvidence) -> tuple:
     if evidence.program_provenance != ACQUIRED:
         return None, ("arm is a mechanism witness: its program is a %s "

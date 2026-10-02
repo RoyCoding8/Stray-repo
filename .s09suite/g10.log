@@ -1,9 +1,0 @@
-.F                                                                       [100%]
-=================================== FAILURES ===================================
-E   AssertionError: ['score-without-oracle-evidence B-gr-eva-00', 'score-without-oracle-evidence B-gr-eva-01', 'score-without-oracle-evide...e-evidence B-gr-eva-03', 'score-without-oracle-evidence B-gr-eva-04', 'score-without-oracle-evidence B-gr-eva-05', ...]
-    assert False
-/home/ubuntu/AI/Agent-Society-v2/tests/test_rpr13_endtoend.py:466: AssertionError: ['score-without-oracle-evidence B-gr-eva-00', 'score-without-oracle-evidence B-gr-eva-01', 'score-without-oracle-evide...e-evidence B-gr-eva-03', 'score-without-oracle-evidence B-gr-eva-04', 'score-without-oracle-evidence B-gr-eva-05', ...]
-=========================== short test summary info ============================
-FAILED tests/test_rpr13_endtoend.py::test_no_candidate_path - AssertionError:...
-1 failed, 1 passed in 139.61s (0:02:19)
-S09ISO: dropped 1 database(s) for this run

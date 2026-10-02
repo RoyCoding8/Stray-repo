@@ -151,36 +151,3 @@ def score_from_proposals(relevant: dict, irrelevant: dict, *,
         detail={"relevant_method": rel.method, "irrelevant_method": irr.method})
 
 
-def live_scored_contrast(dsn: str, *, target_task: dict,
-                         source_task_ids: list, filler_task_ids: list,
-                         visible: list, gateway: Any, model: str,
-                         charter: dict, world: int, arm: str,
-                         allocation_id: str,
-                         budget: dict | None = None) -> ScoredContrast:
-    """Dispatch both arms through the real learner path and score the pair.
-
-    Each arm gets its own campaign id, so the two construction calls are
-    two operations and neither is served from the other's settled receipt.
-    """
-    pair = build_scored_contrast(target_task, source_task_ids,
-                                 filler_task_ids, visible, budget=budget)
-    results = {}
-    for name in ("relevant", "irrelevant"):
-        cid = "%s-e2-%s" % (target_task.get("task_id", "t"), name)
-        prop = learner.propose_from_model(
-            dsn, cid=cid, gateway=gateway, model=model, charter=charter,
-            world=world, arm=arm, allocation_id=allocation_id)
-        try:
-            proposal = prop(pair[name], {})
-            results[name] = {"source": proposal.get("source", ""),
-                             "operation_id": cid}
-        except Exception as exc:
-            results[name] = {"source": "",
-                             "error": "%s: %s" % (type(exc).__name__, exc),
-                             "operation_id": cid}
-    scored = score_from_proposals(
-        results["relevant"], results["irrelevant"],
-        target_task_id=target_task.get("task_id", ""),
-        relevant_chars=pair["relevant_chars"],
-        irrelevant_chars=pair["irrelevant_chars"])
-    return scored

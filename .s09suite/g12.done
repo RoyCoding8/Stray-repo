@@ -1,8 +1,0 @@
-=== group 12  token=5e9b000c  files=5 ===
-  tests/test_bacq_method.py
-  tests/test_ag01_demo.py
-  tests/test_rpr07_resume.py
-  tests/test_team_live.py
-  tests/test_r03_flow.py
-rc=1
-summary: 2 failed, 28 passed in 85.21s (0:01:25)

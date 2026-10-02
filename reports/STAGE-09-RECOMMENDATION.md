@@ -1,3 +1,5 @@
+> Historical batch report. Current scoped status is reconciled in [PROJECT-INVENTORY.md](PROJECT-INVENTORY.md) and [PROJECT-LEDGER.md](PROJECT-LEDGER.md). Read this file for its source revisions and measurements; its completion prose does not govern the current checkpoint.
+
 # Stage 9 architectural recommendation
 
 Replacement for §5 of `reports/STAGE-09-COMPLETION-MATRIX.md`. Written after three
@@ -139,28 +141,23 @@ corrected for.
 same 8. The gap is `+0.3750` on `unqueried` and `+0.1875` on `overall`. It halves
 and survives.
 
-### 1.3 The ceiling number, corrected
+### 1.3 The ceiling number
 
-`0.00622` is a **selected max-minus-min over 16 inputs**. An earlier revision of
-this document added that it was "chosen on the same data it is scored on" and
-that the same record's own `input_means` made it **2.33 times** the unselected
-spread. **Both of those were wrong, and the correction is larger than the
-number.**
+`0.00622` is a **selected max-minus-min over 16 inputs**. `z` is 1.42.
 
-**It is not chosen on the data it is scored on.** `learner_revision.ceiling()`
-(`learner_revision.py:909`) does a deliberate half-split -- `search =
-list(search or seeds[0::2])`, and the argmax is taken on that half and scored
-on the other. Its own docstring at `:915-916` says the ceiling "is not the
-maximum of the numbers it is reported next to." This document asserted the
-opposite of the function it was citing. Its `z` is 1.42.
+It is not chosen on the data it is scored on. `learner_revision.ceiling()`
+(`learner_revision.py:909`) half-splits the cohort — `search =
+list(search or seeds[0::2])` — and takes the argmax on that half while scoring
+on the other. Its docstring at `:915-916` says the ceiling "is not the maximum
+of the numbers it is reported next to."
 
-**The 2.33x is withdrawn as a comparison.** It divided `0.00622` (`result.json`
-`$.ceiling`, `audit` split, 75 scoring seeds, best x=7 against worst x=15) by
-`0.002667` (`headroom.json` `$.ceiling.input_means`, `dev` split, 1500
-population seeds, best x=13 against worst x=11, produced by
-`make_evidence.py:147-166`). Different split, different cohort, different code
-path, different selected inputs. `result.json` carries no `input_means` key at
-all. The arithmetic was right and the comparison meaningless.
+The `2.33x` figure that an earlier revision carried does not compare anything.
+It divided `0.00622` (`result.json` `$.ceiling`, `audit`, 75 scoring seeds, best
+x=7 against worst x=15) by `0.002667` (`headroom.json` `$.ceiling.input_means`,
+`dev`, 1500 population seeds, best x=13 against worst x=11, from
+`make_evidence.py:147-166`). Different split, cohort, code path and selected
+inputs; `result.json` carries no `input_means` key at all. The arithmetic was
+right and the comparison meaningless.
 
 Nothing in this recommendation needs a ceiling number. The two-element-menu
 argument in §6 is arithmetic on `_STRATEGY_SOURCE` and needs no measurement.
@@ -261,16 +258,13 @@ the intended one.
 | 4 | 4.0 | 12 | 0.0950 | 0.1100 | +0.0150 |
 | 8 | 8.0 | 8 | 0.5208 | 0.8958 | +0.3750 |
 
-**An earlier revision of this table was wrong in three of four cells in each
-column, and this document is the record of that.** It carried blind
-`0.0611`/`0.0560`/`0.1125` and informed `0.1250`/`0.9083` at budgets 1/2/4/8.
-Only the budget-8 blind cell was right. The `0.9083` was `0.5208 + 0.3750 +
-0.0125`, i.e. the budget-4 delta added into the budget-8 row — an arithmetic
-slip on a column that was never measured, not a disagreement about any
-mechanism. No artifact on HEAD holds those four numbers, which is the reason
-they were wrong: they had no source to be checked against. They survived
-eleven review rounds because a grep for `0.9083` returns exactly one hit, and
-one hit reads as clean.
+These four rows are measured and the artifact holds them. An earlier table in
+this document carried no measurement behind it at all, and a `0.9083` in its
+budget-8 informed cell — which decomposes to `0.5208 + 0.3750 + 0.0125`, the
+budget-4 delta added into the budget-8 row. It survived eleven review rounds
+because a grep for `0.9083` returns exactly one hit, and one hit reads as
+clean. `e4_budget_ladder.py` exists so the next reader does not have to
+re-derive this.
 
 **Where it bites.** The incumbent (`improve_channel.py:496`,
 `INCUMBENT_EVIDENCE = (3,)`) gathers one input, so it is scored over 15 on
@@ -336,18 +330,14 @@ not relevant-versus-irrelevant.
 **Two things make the null uninformative about experience, and both are
 located, not guessed:**
 
-1. **~~The contrast is 0.0 by arithmetic.~~ RETRACTED.** The coordinator
-   asserted this and an independent final review refuted it: `_reduction_of`
+1. **The contrast is not 0.0 by arithmetic.** `_reduction_of`
    (`e2_replication.py:1322`) reads `NORMALIZED_REDUCTION`, not `action`, and
-   every row in `invr1e2contrastr2/report.json` carries both
-   `normalized_reduction` and `action`. The per-task values give delta
-   `0.4545 - 0.7273 = -0.2727`, which is a real difference. The campaign's
-   driver bypasses `_measured_row` deliberately. **The coordinator's evidence
-   was a grep for key names across a function body that returned matches from
-   a neighbouring docstring, and the result was reported as mechanism.** A
-   wiring defect of the kind described may still exist in `_measured_row` for
-   callers that use it; it does not explain this contrast, and the bottleneck
-   ordering below no longer rests on it.
+   every row in `invr1e2contrastr2/report.json` carries both. The per-task
+   values give delta `0.4545 - 0.7273 = -0.2727`, a real difference; the
+   campaign's driver bypasses `_measured_row` deliberately. A wiring defect of
+   that kind may still exist in `_measured_row` for callers that use it. It
+   does not explain this contrast, and the bottleneck ordering below does not
+   rest on it.
 
 2. **The panel closes the positive side.** A reachability census over the
    whole decision grid, offline and with no model, shows `ddmin@8` -- the
@@ -911,40 +901,18 @@ recommendation above is conditional.
 
 ## 8. Corrections to the sources this document replaces
 
-Recorded in place, because a handback that inherits a review's errors inherits
-them twice.
+Two of the eight corrections a review pass required survive here, because
+they change what a reader would conclude. The rest are recorded at their own
+sites above and are not repeated.
 
-1. **Pass 3's "the metric moves on count, not identity" is false.** The draft's
-   fixed-subset check measured `range(0..7)` at 0.060 and `range(8..15)` at
-   0.031. Two eight-element contiguous subsets differ by a factor of two, so
-   count does not determine the score. Pass 3's conclusion that the reducer's own
-   choice is worth nothing survives on other evidence. Its stated reason does not.
-2. **Pass 3's `random8` per-block figures come from a different random stream**
-   than the `0.6017` it reports beside them, and the per-block signs flip with
-   it. The pooled conclusion survives. The per-block numbers should not be quoted
-   as if they were the same draw set.
-3. **Pass 3's 7,200-line containment figure counts 85 renames as insertions.**
-   `7238352` contributes 27 added lines and 0 deletions. The real split is in
-   §5, and it does not support the draft's "containment was slightly the larger
-   half" either. The two lines are the same size.
-4. **The E4 `0.00622` is a max-minus-min over 16 inputs**, with `z` 1.42, and
-   `ceiling()` half-splits the cohort so it is not scored on its own selection
-   data. **This corrects two errors in the entry above**: the claim that it was
-   chosen on the data it is scored on, and the "2.33x the same record's
-   `input_means`" figure, which mixed `result.json` (`audit`, 75 seeds) with
-   `headroom.json` (`dev`, 1500 population seeds) and is withdrawn. The
-   two-element-menu argument needs no ceiling number and does not use one.
-5. **Pass 3's cap-sheet row was already fixed** at `5d8f56e` on 2026-09-29,
-   before pass 3's author read it. The batch did the right thing on the day.
-6. **"E1 has one prompt and one constructible cell of nine" is wrong about the
-   tree.** `packet.py:342` is a second acquisition prompt and r4 used it. The
-   correct scope is in §4's B2: the Boolean output world has one prompt, the
-   method-repertoire path has a second serving `software` and `graph`, and
-   ordering and the typed AST have none.
-7. **The first draft's E4 mechanism was a no-op.** `rule_learner.py:40-50` reads
-   only the keys of the queried dict. The factorial in §0 is the proof.
-8. **The E2 state label is `completed`, which contradicts the matrix's own rule.**
-   Both pass 2 and this document reached that independently.
+1. **The E2 contrast is not 0.0 by arithmetic** (§4, B1). It was reported that
+   way; `_reduction_of` reads `NORMALIZED_REDUCTION`, and the per-task
+   difference is `-0.2727`.
+2. **The E4 `0.00622` is not scored on its own selection data** (§1.3).
+   `ceiling()` half-splits the cohort.
+
+Both had the same cause: a claim written from a grep rather than from the
+artifact the grep was standing in for.
 
 ---
 

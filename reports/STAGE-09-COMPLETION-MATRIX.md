@@ -1,3 +1,5 @@
+> Historical batch report. Current scoped status is reconciled in [PROJECT-INVENTORY.md](PROJECT-INVENTORY.md) and [PROJECT-LEDGER.md](PROJECT-LEDGER.md). Read this file for its source revisions and measurements; its completion prose does not govern the current checkpoint.
+
 # Stage 9 completion matrix and architectural recommendation
 
 W5 handback. Reconstructed from committed artifacts and source at `19fbe69` on

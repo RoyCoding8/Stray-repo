@@ -13,8 +13,9 @@ labels in prompts, substitution bytes followed to scored failure).
   substitution failure; disconnect refusal; incompatible failure after
   one bounded rework repair round).
 - `calls/`: per-call prompt/response/parse files (`<episode>__<op>.*`).
-- `runs-manifest.sha256`: the 4.1 MB `runs/` bulk (sandbox envelopes)
-  by hash, kept in the run area, not committed.
+- The 4.1 MB `runs/` bulk (sandbox envelopes) was kept in the run area and
+  not committed. Its hash manifest was removed here: every path it named is
+  absent, so it could not be rechecked.
 - Model/config: `muse-spark-1.3-contributor-free`, responses API,
   `reasoning_effort=low`, same task/source/tool access and per-episode
   bounded allocations for all arms.

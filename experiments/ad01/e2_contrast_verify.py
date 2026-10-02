@@ -39,36 +39,6 @@ class VerifierRefused(Exception):
 # ---------------------------------------------------------------------------
 
 
-def observe_evidence_row(row: Mapping[str, Any], *, max_queries: int) -> dict:
-    """One experience record, recomputed from the task it names.
-
-    Runs the campaign's reducer on the task at the budget the row says and
-    grades with the campaign's checker. Returns the recomputed `verdict`,
-    `reason` and `reduction` beside the row's own, so the caller can compare
-    rather than assert. A row naming a task the panel does not hold is
-    refused rather than skipped: an unverifiable record is not a clean one.
-    """
-    task_id = str(row.get("task_id") or "")
-    if task_id not in _panel_task_ids():
-        raise VerifierRefused("the record names %r, which the panel does not"
-                              " hold" % task_id)
-    task = worlds.load_task(worlds.FROZEN_DIR, task_id)
-    capability = next((c for c in campaign._seed_capabilities()
-                       if c["capability_id"] == replica._capability(task)), None)
-    if capability is None:
-        raise VerifierRefused("no authored capability for %s" % task_id)
-    result = campaign._run_seed(capability, task, max_queries=int(max_queries))
-    report = replica._grade(task, result["candidate"])
-    return {"task_id": task_id, "max_queries": int(max_queries),
-            "verdict": str(report["verdict"]), "reason": str(report["reason"]),
-            "reduction": replica._normalized_reduction(report)}
-
-
-def observe_detail(row: Mapping[str, Any], *, max_queries: int) -> str:
-    """The `detail` string, recomputed from the record's own graded fields."""
-    return campaign._detail_for(row, max_queries=int(max_queries))
-
-
 def _panel_task_ids() -> set:
     ids = set()
     for world in worlds.world_membership(worlds.FROZEN_DIR).values():

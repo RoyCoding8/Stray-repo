@@ -1,5 +1,0 @@
-=== group 11  token=5e9b000b  files=2 ===
-  tests/test_rpr13_endtoend.py::test_tampered_retention_hard_errors
-  tests/test_rpr13_endtoend.py::test_fresh_process_use_from_disk
-rc=0
-summary: 2 passed in 148.38s (0:02:28)

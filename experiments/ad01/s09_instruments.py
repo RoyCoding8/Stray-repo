@@ -332,21 +332,6 @@ class Panel:
         return asdict(self)
 
 
-def _cells_for(world: str, split: str, seeds: Sequence[int]) -> tuple[Cell, ...]:
-    spec = spec_for(world)
-    cells = []
-    for seed in seeds:
-        task = spec.module.make_task(split, seed)
-        cells.append(Cell(
-            world=world,
-            split=split,
-            seed=seed,
-            task_id=task["task_id"],
-            target_digest=target_digest(world, task),
-            difficulty=spec.difficulty(task)))
-    return tuple(cells)
-
-
 def build_panel(world: str, *, dev: int, held: int,
                 held_splits: Sequence[str] = (QUAL, AUDIT)) -> Panel:
     """A panel whose cells are distinct by target, not by seed.
