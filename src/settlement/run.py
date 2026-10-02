@@ -343,7 +343,7 @@ def revise(comp: Composition, proposal: dict[str, Any]) -> Composition:
         raise InvalidComposition(f"proposed revision is not a valid composition: {exc}") from exc
     if _depth(root) > comp.max_depth:
         raise InvalidComposition(f"proposed revision exceeds max depth {comp.max_depth}")
-    from .broker import validate_effect  # noqa: PLC0415
+    from .broker import validate_effect
 
     for node in _walk(root):
         if isinstance(node, InvokeNode):
@@ -368,7 +368,7 @@ def _validate_node(proposal: dict[str, Any]) -> Node:
 
 
 def check_eligibility(dsn: str, attempt_id: str, comp: Composition) -> dict[str, Any]:
-    from psycopg.rows import dict_row  # noqa: PLC0415
+    from psycopg.rows import dict_row
 
     reasons: list[str] = []
     authority = store.get_control(dsn)["authority_version"]
@@ -392,13 +392,13 @@ def check_eligibility(dsn: str, attempt_id: str, comp: Composition) -> dict[str,
         reasons.append(f"attempt is {attempt['lifecycle']}")
     if disposition in ("withdrawn", "fulfilled"):
         reasons.append(f"investigation is {disposition}")
-    from . import capabilities as _capabilities  # noqa: PLC0415
+    from psycopg import errors as _pgerrors
+
+    from . import capabilities as _capabilities
 
     try:
         quarantined = _capabilities.pinned_quarantines(dsn, attempt_id)
-    except Exception as exc:  # noqa: BLE001
-        if "42P01" not in str(exc) and "quarantine_registry" not in str(exc):
-            raise
+    except _pgerrors.UndefinedTable:
         quarantined = []
     for hit in quarantined:
         reasons.append(
@@ -408,7 +408,7 @@ def check_eligibility(dsn: str, attempt_id: str, comp: Composition) -> dict[str,
 
 def record_continuation(dsn: str, attempt_id: str, cont: Continuation, ref: str,
                         ownership_generation: int | None = None) -> Any:
-    import json  # noqa: PLC0415
+    import json
 
     payload: dict[str, Any] = {"attempt_id": attempt_id,
                                "continuation_ref": json.dumps(
@@ -420,7 +420,7 @@ def record_continuation(dsn: str, attempt_id: str, cont: Continuation, ref: str,
 
 def migrate_continuation(dsn: str, attempt_id: str, old_ref: str, cont: Continuation,
                          ownership_generation: int | None = None) -> Any:
-    import json  # noqa: PLC0415
+    import json
 
     payload: dict[str, Any] = {"attempt_id": attempt_id,
                                "continuation_ref": json.dumps(
@@ -429,3 +429,109 @@ def migrate_continuation(dsn: str, attempt_id: str, old_ref: str, cont: Continua
         payload["ownership_generation"] = ownership_generation
     return store.install_continuation(
         dsn, Command(request_id=f"run-migrate-{old_ref}", payload=payload))
+
+
+def operation_outcome(dsn: str, operation_id: str) -> dict[str, Any]:
+    from psycopg.rows import dict_row
+
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT dispatch_state, reconcile_state, cancel_state, settled,"
+                        " attempt_id FROM operations WHERE id = %s", (operation_id,))
+            row = cur.fetchone()
+            receipts: list[dict[str, Any]] = []
+            lifecycle = ""
+            if row is not None:
+                cur.execute("SELECT receipt_identity, outcome FROM receipts"
+                            " WHERE operation_id = %s ORDER BY receipt_identity",
+                            (operation_id,))
+                receipts = [dict(r) for r in cur.fetchall()]
+                if row["attempt_id"] is not None:
+                    cur.execute("SELECT lifecycle FROM attempts WHERE id = %s",
+                                (row["attempt_id"],))
+                    found = cur.fetchone()
+                    lifecycle = found["lifecycle"] if found else ""
+            conn.commit()
+    if row is None:
+        return {"found": False, "outcome": "unresolved", "dispatch_state": "unknown",
+                "receipts": []}
+    outcomes = {r["outcome"] for r in receipts}
+    if "success" in outcomes and "failure" not in outcomes:
+        typed = "success"
+    elif "failure" in outcomes and "success" not in outcomes:
+        typed = "failure"
+    elif outcomes:
+        typed = "unknown"
+    elif (row["cancel_state"] or "none") == "confirmed":
+        typed = "cancelled"
+    elif lifecycle == "suspended":
+        typed = "suspended"
+    else:
+        typed = "unresolved"
+    return {"found": True, "outcome": typed, "dispatch_state": row["dispatch_state"],
+            "reconcile_state": row["reconcile_state"], "cancel_state": row["cancel_state"],
+            "settled": bool(row["settled"]), "receipts": receipts}
+
+
+def _tries_key(node_id: str, iteration: int | None) -> str:
+    return f"{node_id}:tries" if iteration is None else f"{node_id}:i{iteration}:tries"
+
+
+def retry_tries(cont: Continuation, node_id: str,
+                iteration: int | None = None) -> list[str]:
+    seen = cont.observations.get(_tries_key(node_id, iteration), [])
+    return list(seen) if isinstance(seen, list) else []
+
+
+def retry_operation_id(base_operation_id: str, cont: Continuation, node_id: str,
+                       iteration: int | None = None) -> str:
+    used = len(retry_tries(cont, node_id, iteration))
+    if used <= 0:
+        return base_operation_id
+    return f"{base_operation_id}:retry{used}"
+
+
+def retry_allowed(comp: Composition, node_id: str) -> int:
+    node = node_index(comp).get(node_id)
+    if isinstance(node, InvokeNode):
+        return max(int(node.retry_max), 0)
+    return 0
+
+
+def record_failed_try(comp: Composition, cont: Continuation, node_id: str,
+                      operation_id: str, iteration: int | None = None) -> Continuation:
+    key = _tries_key(node_id, iteration)
+    tries = retry_tries(cont, node_id, iteration)
+    if operation_id not in tries:
+        tries.append(operation_id)
+    cont.observations[key] = tries
+    cont.unresolved_ops = [e for e in cont.unresolved_ops
+                           if e != node_id and not e.startswith(f"{node_id}:")]
+    if len(tries) > retry_allowed(comp, node_id):
+        cont.observations[f"{node_id}:outcome"] = "failure"
+        return advance(comp, cont, {"type": "node_completed", "node_id": node_id,
+                                   "result_ref": f"op:{operation_id}:failed"})
+    return _refresh(comp, cont)
+
+
+def consume_operation_outcome(comp: Composition, cont: Continuation, node_id: str,
+                              operation_id: str, outcome: str) -> Continuation:
+    if outcome == "success":
+        return advance(comp, cont, {"type": "node_completed", "node_id": node_id,
+                                   "result_ref": f"op:{operation_id}"})
+    if outcome in ("failure", "cancelled", "suspended"):
+        cont.observations[f"{node_id}:outcome"] = outcome
+    if outcome == "failure":
+        cont.unresolved_ops = [e for e in cont.unresolved_ops
+                               if e != node_id and not e.startswith(f"{node_id}:")]
+        return _refresh(comp, cont)
+    return register_ops(comp, cont, {node_id: operation_id})
+
+
+def suspend_for_barrier(dsn: str, attempt_id: str, barrier_ref: str,
+                        ownership_generation: int | None = None) -> Any:
+    payload: dict[str, Any] = {"attempt_id": attempt_id}
+    if ownership_generation is not None:
+        payload["ownership_generation"] = ownership_generation
+    return store.suspend_attempt(
+        dsn, Command(request_id=f"run-barrier-{barrier_ref}-{attempt_id}", payload=payload))

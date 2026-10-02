@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import urllib.parse
 import uuid
 
 import pytest
@@ -10,7 +11,11 @@ from settlement.common import Command, ResultCode
 from settlement.gateway import FakeGatewayAdapter
 from settlement.launcher_local import LocalLauncher
 
-SYSTEM_DB = "settlement_t1broker_dbos"
+SYSTEM_DB_SUFFIX = "_dbos"
+
+
+def _base_name(dsn: str) -> str:
+    return urllib.parse.urlparse(dsn).path.lstrip("/") or "settlement"
 
 
 def _cmd(payload: dict, **kw) -> Command:
@@ -18,13 +23,14 @@ def _cmd(payload: dict, **kw) -> Command:
 
 
 def _swap_db(dsn: str, name: str) -> str:
-    head, sep, tail = dsn.partition("settlement_t1broker")
+    base = urllib.parse.urlparse(dsn).path.lstrip("/") or "settlement"
+    head, sep, tail = dsn.partition(base)
     assert sep, f"unexpected test DSN shape {dsn!r}"
     return head + name + tail
 
 
 def _system_dsn(dsn: str) -> str:
-    return _swap_db(dsn, SYSTEM_DB)
+    return _swap_db(dsn, _base_name(dsn) + SYSTEM_DB_SUFFIX)
 
 
 @pytest.fixture(scope="module")
@@ -38,7 +44,7 @@ def dbos_home():
     with _db.connect(_swap_db(dsn, "postgres"), autocommit=True) as conn:
         with conn.cursor() as cur:
             try:
-                cur.execute(f'CREATE DATABASE "{SYSTEM_DB}"')
+                cur.execute(f'CREATE DATABASE "{_base_name(dsn) + SYSTEM_DB_SUFFIX}"')
             except _pgerrors.DuplicateDatabase:
                 pass
     broker.init_dbos(sys_dsn)

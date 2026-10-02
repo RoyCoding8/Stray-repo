@@ -4,6 +4,7 @@ import uuid
 
 from settlement import broker, store
 from settlement.common import Command, ResultCode
+from settlement.exec_profile import STOP_SETTLE_S
 
 
 def _cmd(payload: dict, **kw) -> Command:
@@ -65,7 +66,7 @@ def test_sandbox_prepare_reserves_hard_ceiling(migrated_db):
                                      payload=payload, allocation_id="a1", attempt_id="att1",
                                      retries=1)
     assert result.code == ResultCode.APPLIED
-    assert result.data["exposure"] == 28
+    assert result.data["exposure"] == (8 + STOP_SETTLE_S + 1) * 2
     assert result.data["budget_kind"] == "hard-ceiling"
 
 

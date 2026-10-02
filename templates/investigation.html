@@ -13,7 +13,9 @@
 {% for o in view.operations %}<tr><td><a href="/operations/{{ o.id }}">{{ o.id }}</a></td><td>{{ o.dispatch_state }}</td><td>{{ o.reconcile_state }}</td><td>{{ o.cancel_state }}</td></tr>{% endfor %}</table>
 <h2>evidence</h2>
 <ul>{% for o in view.observations %}<li>{{ o.id }}: {{ o.content }}</li>{% endfor %}</ul>
+{% if view.t4_observations %}<h3>observations</h3><ul>{% for o in view.t4_observations %}<li>{{ o.receipt_id }}: {{ o.content }}</li>{% endfor %}</ul>{% endif %}
 {% if view.derivations %}<h3>derivations</h3><ul>{% for d in view.derivations %}<li>{{ d.id }}: {{ d.result }}</li>{% endfor %}</ul>{% endif %}
+{% if view.relations %}<h3>relations</h3><ul>{% for r in view.relations %}<li>{{ r.src_ref }} -{{ r.kind }}-&gt; {{ r.dst_ref }}</li>{% endfor %}</ul>{% endif %}
 <h2>versions</h2>
 <ul>{% for r in view.revisions %}<li>r{{ r.revision }}: {{ r.objective }}</li>{% endfor %}</ul>
 {% endblock %}

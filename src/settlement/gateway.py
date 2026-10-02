@@ -32,6 +32,7 @@ class ModelRequest:
     max_output_tokens: int
     deadline_ms: int
     operation_id: str = field(default_factory=lambda: new_id("op"))
+    dispatch_generation: int = 0
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,7 @@ class Usage:
     charge_units: int = 0
     charge_scale: int = 1000
     provider_enforced_ceiling: bool = False
+    billed: bool = False
 
 
 @dataclass(frozen=True)

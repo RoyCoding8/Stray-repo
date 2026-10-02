@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+import threading
 import time
 from typing import Any
 
@@ -78,11 +80,12 @@ class HttpGatewayAdapter(GatewayAdapter):
 
     def _http_timeout(self, budget_s: float) -> httpx.Timeout:
         capped = max(min(self.timeouts["read"], budget_s), 0.001)
+        narrow = max(min(self.timeouts["connect"], budget_s), 0.001)
         return httpx.Timeout(
-            connect=self.timeouts["connect"],
+            connect=narrow,
             read=capped,
-            write=self.timeouts["write"],
-            pool=self.timeouts["pool"],
+            write=narrow,
+            pool=narrow,
         )
 
     def _client_for(self, timeout: httpx.Timeout) -> tuple[httpx.Client, bool]:
@@ -107,9 +110,12 @@ class HttpGatewayAdapter(GatewayAdapter):
                 GatewayErrorKind.TRANSPORT, "gateway endpoint is not configured", False, "discovery"
             )
         try:
-            client, owned = self._client_for(self._http_timeout(self.total_s))
+            timeout = self._http_timeout(self.total_s)
+            client, owned = self._client_for(timeout)
             try:
-                response = client.get(f"{self.endpoint}/models", headers=self._headers())
+                response = client.get(
+                    f"{self.endpoint}/models", headers=self._headers(), timeout=timeout
+                )
             finally:
                 if owned:
                     client.close()
@@ -131,9 +137,12 @@ class HttpGatewayAdapter(GatewayAdapter):
                 GatewayErrorKind.AUTH, "gateway credentials are not configured", False, "auth"
             )
         try:
-            client, owned = self._client_for(self._http_timeout(self.total_s))
+            timeout = self._http_timeout(self.total_s)
+            client, owned = self._client_for(timeout)
             try:
-                response = client.get(f"{self.endpoint}/models", headers=self._headers())
+                response = client.get(
+                    f"{self.endpoint}/models", headers=self._headers(), timeout=timeout
+                )
             finally:
                 if owned:
                     client.close()
@@ -145,13 +154,18 @@ class HttpGatewayAdapter(GatewayAdapter):
             return GatewayStatus.AUTHENTICATED
         return self._status_error(response.status_code, "auth")
 
+    def _cancelled_error(self, operation_id: str) -> GatewayError:
+        self._cancel_confirmed.add(operation_id)
+        return _error(
+            GatewayErrorKind.CANCELLED,
+            "operation cancelled; external outcome unknown",
+            False,
+            operation_id,
+        )
+
     def infer(self, request: ModelRequest) -> ModelResponse | GatewayError:
         if request.operation_id in self._cancelled:
-            self._cancel_confirmed.add(request.operation_id)
-            return _error(
-                GatewayErrorKind.CANCELLED, "operation cancelled before send", False,
-                request.operation_id,
-            )
+            return self._cancelled_error(request.operation_id)
         if not self.endpoint:
             return _error(
                 GatewayErrorKind.TRANSPORT,
@@ -170,46 +184,91 @@ class HttpGatewayAdapter(GatewayAdapter):
             "max_tokens": request.max_output_tokens,
         }
         started = time.monotonic()
-        try:
-            client, owned = self._client_for(self._http_timeout(budget_s))
+        deadline = started + budget_s
+        timeout = self._http_timeout(budget_s)
+        outcome: dict[str, Any] = {}
+        finished = threading.Event()
+        resigned = threading.Event()
+
+        def _work() -> None:
             try:
-                response = client.post(
-                    f"{self.endpoint}/chat/completions",
-                    headers=self._headers(),
-                    json=payload,
-                )
+                client, owned = self._client_for(timeout)
+                try:
+                    with client.stream(
+                        "POST", f"{self.endpoint}/chat/completions",
+                        headers=self._headers(), json=payload, timeout=timeout,
+                    ) as streamed:
+                        if resigned.is_set() or request.operation_id in self._cancelled:
+                            return
+                        raw = bytearray()
+                        for chunk in streamed.iter_raw():
+                            raw += chunk
+                            if request.operation_id in self._cancelled:
+                                outcome["cancelled"] = True
+                                return
+                            if resigned.is_set() or time.monotonic() >= deadline:
+                                outcome["expired"] = True
+                                return
+                        outcome["status"] = streamed.status_code
+                        outcome["body"] = bytes(raw)
+                finally:
+                    if owned:
+                        try:
+                            client.close()
+                        except httpx.HTTPError:
+                            pass
+            except httpx.TimeoutException:
+                outcome["timeout"] = True
+            except httpx.HTTPError as exc:
+                outcome["transport"] = str(exc)
+            except Exception as exc:
+                outcome["raised"] = exc
             finally:
-                if owned:
-                    client.close()
-        except httpx.TimeoutException:
-            return _error(
-                GatewayErrorKind.TIMEOUT, "gateway request timed out", True, request.operation_id
-            )
-        except httpx.HTTPError as exc:
-            return _error(
-                GatewayErrorKind.TRANSPORT, f"gateway transport failed: {exc}", True,
-                request.operation_id,
-            )
-        if time.monotonic() - started > budget_s:
+                finished.set()
+
+        worker = threading.Thread(target=_work, daemon=True)
+        worker.start()
+        finished.wait(timeout=max(deadline - time.monotonic(), 0))
+        resigned.set()
+        if "raised" in outcome:
+            raise outcome["raised"]
+        if "status" not in outcome:
+            if request.operation_id in self._cancelled or outcome.get("cancelled"):
+                return self._cancelled_error(request.operation_id)
+            if outcome.get("timeout"):
+                return _error(
+                    GatewayErrorKind.TIMEOUT, "gateway request timed out", True,
+                    request.operation_id,
+                )
+            if outcome.get("transport") is not None:
+                return _error(
+                    GatewayErrorKind.TRANSPORT,
+                    f"gateway transport failed: {outcome['transport']}", True,
+                    request.operation_id,
+                )
             return _error(
                 GatewayErrorKind.TIMEOUT, "total attempt deadline exceeded", True,
                 request.operation_id,
             )
-        if request.operation_id in self._cancelled:
-            self._cancel_confirmed.add(request.operation_id)
+        if time.monotonic() >= deadline:
             return _error(
-                GatewayErrorKind.CANCELLED,
-                "operation cancelled; external outcome unknown",
-                False,
+                GatewayErrorKind.TIMEOUT, "total attempt deadline exceeded", True,
                 request.operation_id,
             )
-        if response.status_code != 200:
-            return self._status_error(response.status_code, request.operation_id)
-        return self._decode(response, request.operation_id)
+        if request.operation_id in self._cancelled or outcome.get("cancelled"):
+            return self._cancelled_error(request.operation_id)
+        status = outcome["status"]
+        body = outcome["body"]
+        if status != 200:
+            return self._status_error(status, request.operation_id)
+        return self._decode_body(body, request.operation_id)
 
     def _decode(self, response: httpx.Response, operation_id: str) -> ModelResponse | GatewayError:
+        return self._decode_body(response.content, operation_id)
+
+    def _decode_body(self, raw: bytes, operation_id: str) -> ModelResponse | GatewayError:
         try:
-            body: Any = response.json()
+            body: Any = json.loads(raw)
         except ValueError:
             return _error(
                 GatewayErrorKind.PROTOCOL, "gateway returned non-JSON body", False, operation_id
@@ -238,10 +297,40 @@ class HttpGatewayAdapter(GatewayAdapter):
                 GatewayErrorKind.PROTOCOL, "gateway returned non-numeric usage", False,
                 operation_id,
             )
+        charge_units = 0
+        charge_scale = 1000
+        billed = False
+        if "charge_units" in usage_raw:
+            charge = usage_raw["charge_units"]
+            if isinstance(charge, bool) or not isinstance(charge, int) or charge < 0:
+                return _error(
+                    GatewayErrorKind.PROTOCOL, "gateway returned non-numeric usage charge",
+                    False, operation_id,
+                )
+            charge_units = charge
+            billed = True
+        if "charge_scale" in usage_raw:
+            scale = usage_raw["charge_scale"]
+            if isinstance(scale, bool) or not isinstance(scale, int) or scale <= 0:
+                return _error(
+                    GatewayErrorKind.PROTOCOL, "gateway returned non-numeric usage charge",
+                    False, operation_id,
+                )
+            if scale != 1000:
+                return _error(
+                    GatewayErrorKind.PROTOCOL,
+                    "gateway quoted a non-canonical charge scale:"
+                    " convert to milli-units before settling",
+                    False, operation_id,
+                )
+            charge_scale = scale
         usage = Usage(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
+            charge_units=charge_units,
+            charge_scale=charge_scale,
             provider_enforced_ceiling=False,
+            billed=billed,
         )
         stop = first.get("finish_reason", "stop") if isinstance(first, dict) else "stop"
         return ModelResponse(

@@ -102,13 +102,15 @@ def test_stale_admissibility_loses_against_fulfillment_order(migrated_db):
     evidence.retract(dsn, _cmd(), a, "withdrawn")
     store.complete_attempt(dsn, _cmd({"attempt_id": "att1", "ownership_generation": gen,
                                       "outcome": "completed"}))
+    control = store.get_control(dsn)
+    pinned = {"investigation_id": "inv1", "attempt_id": "att1",
+              "ownership_generation": gen, "revision": 1,
+              "authority_version": int(control["authority_version"]), "obligations": {}}
     stale = store.fulfill_investigation(
-        dsn, _cmd({"investigation_id": "inv1", "attempt_id": "att1",
-                   "ownership_generation": gen, "evidence_epoch": snap_epoch}))
+        dsn, _cmd({**pinned, "evidence_epoch": snap_epoch}))
     assert stale.code == ResultCode.MISSING_EVIDENCE
     fresh = store.fulfill_investigation(
-        dsn, _cmd({"investigation_id": "inv1", "attempt_id": "att1",
-                   "ownership_generation": gen}))
+        dsn, _cmd({**pinned, "evidence_epoch": int(control["evidence_epoch"])}))
     assert fresh.code == ResultCode.APPLIED
 
 

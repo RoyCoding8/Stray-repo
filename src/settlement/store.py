@@ -14,6 +14,9 @@ runs, or external writes happen inside a retried transaction.
 
 from __future__ import annotations
 
+import hashlib
+import math
+import threading
 import time
 from typing import Any, Callable
 
@@ -37,6 +40,55 @@ from .common import (
 )
 
 _RETRY = (_pgerrors.SerializationFailure, _pgerrors.DeadlockDetected)
+
+
+def _connect_before(dsn: str, wait_s: float, orphan_s: float):
+    """Open a connection, returning None when the wait outlasts the deadline.
+
+    Fast failures (refused, unknown database) still raise. A wait that
+    outlasts the caller's deadline returns None so the caller can report a
+    bounded result; the orphaned attempt is daemonized and itself bounded by
+    ``orphan_s``.
+    """
+    holder: dict[str, Any] = {}
+
+    def _open() -> None:
+        try:
+            holder["conn"] = db.connect(dsn, connect_timeout=orphan_s)
+        except Exception as exc:  # noqa: BLE001 - transported to the waiter
+            holder["error"] = exc
+
+    thread = threading.Thread(target=_open, daemon=True)
+    thread.start()
+    thread.join(wait_s)
+    if thread.is_alive():
+        return None
+    if "conn" not in holder:
+        raise holder.get("error")
+    return holder["conn"]
+
+
+class _DeadlineCursor:
+    """Re-arm statement timeouts from the remaining command budget per statement."""
+
+    def __init__(self, cur: Any, deadline: float) -> None:
+        self._cur = cur
+        self._deadline = deadline
+
+    def _rearm(self) -> None:
+        remaining_ms = max(int((self._deadline - time.monotonic()) * 1000), 1)
+        self._cur.execute(f"SET LOCAL statement_timeout = '{remaining_ms}ms'")
+
+    def execute(self, *args: Any, **kwargs: Any) -> Any:
+        self._rearm()
+        return self._cur.execute(*args, **kwargs)
+
+    def executemany(self, *args: Any, **kwargs: Any) -> Any:
+        self._rearm()
+        return self._cur.executemany(*args, **kwargs)
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._cur, name)
 
 _OUTCOMES = {"success", "failure", "unknown"}
 _TERMINAL_ATTEMPT = {"completed", "failed", "cancelled"}
@@ -97,12 +149,25 @@ Handler = Callable[..., tuple[ResultCode, str, dict, list, list]]
 def transact(dsn: str, cmd: Command, fn: Handler, *args: Any) -> CommandResult:
     """Run ``fn(cur, control, *args)`` once through the locked control row."""
     digest = payload_digest(cmd.payload)
-    deadline = time.monotonic() + max(int(cmd.deadline_ms), 1) / 1000.0
+    budget_ms = max(int(cmd.deadline_ms), 1)
+    deadline = time.monotonic() + budget_ms / 1000.0
+    orphan_s = max(2.0, min(30.0, math.ceil(budget_ms / 1000.0)))
     while True:
+        if time.monotonic() >= deadline:
+            return CommandResult(code=ResultCode.UNAVAILABLE_DEPENDENCY, request_id=cmd.request_id,
+                                 detail="absolute command deadline exhausted", data={})
+        remaining_s = max(deadline - time.monotonic(), 0.001)
         try:
-            with db.connect(dsn) as conn:
-                with conn.cursor(row_factory=dict_row) as cur:
-                    cur.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+            conn = _connect_before(dsn, remaining_s, orphan_s)
+            if conn is None:
+                return CommandResult(code=ResultCode.UNAVAILABLE_DEPENDENCY, request_id=cmd.request_id,
+                                     detail="connection wait exceeded the command deadline", data={})
+            with conn:
+                with conn.cursor(row_factory=dict_row) as raw:
+                    raw.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+                    remaining_ms = max(int((deadline - time.monotonic()) * 1000), 1)
+                    raw.execute(f"SET LOCAL lock_timeout = '{remaining_ms}ms'")
+                    cur = _DeadlineCursor(raw, deadline)
                     cur.execute("SELECT * FROM control WHERE id = 1 FOR UPDATE")
                     control = cur.fetchone()
                     if control is None:
@@ -129,8 +194,9 @@ def transact(dsn: str, cmd: Command, fn: Handler, *args: Any) -> CommandResult:
                         code, detail, data, events, outbox = fn(cur, control, *args)
                     except SettlementError as exc:
                         conn.rollback()
-                        with conn.cursor(row_factory=dict_row) as cur2:
-                            cur2.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+                        with conn.cursor(row_factory=dict_row) as raw2:
+                            raw2.execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+                            cur2 = _DeadlineCursor(raw2, deadline)
                             result = CommandResult(code=_code(exc), request_id=cmd.request_id, detail=str(exc), data={})
                             cur2.execute(
                                 "INSERT INTO command_journal (request_id, payload_digest, result_code,"
@@ -145,6 +211,9 @@ def transact(dsn: str, cmd: Command, fn: Handler, *args: Any) -> CommandResult:
                     return result
         except ConflictPayload:
             raise
+        except (_pgerrors.LockNotAvailable, _pgerrors.QueryCanceled):
+            return CommandResult(code=ResultCode.UNAVAILABLE_DEPENDENCY, request_id=cmd.request_id,
+                                 detail="control-row wait exceeded the command deadline", data={})
         except _RETRY:
             if time.monotonic() >= deadline:
                 return CommandResult(code=ResultCode.UNAVAILABLE_DEPENDENCY, request_id=cmd.request_id,
@@ -340,6 +409,9 @@ def withdraw_commitment(dsn: str, cmd: Command) -> CommandResult:
 def seed_allocation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
+        cur.execute("SELECT 1 FROM allocations WHERE id = %s", (p["allocation_id"],))
+        if cur.fetchone() is not None:
+            raise SettlementError(f"allocation {p['allocation_id']} already exists")
         cur.execute(
             "INSERT INTO allocations (id, parent_id, domain, epoch, authorized, amount_scale,"
             " max_occupancy, owner_scope) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
@@ -430,6 +502,52 @@ def _check_owner(cur, attempt: dict, generation: Any) -> None:
     if generation is not None and int(generation) != int(attempt["ownership_generation"]):
         raise StaleRevision(
             f"attempt {attempt['id']} owned by generation {attempt['ownership_generation']}, not {generation}")
+
+
+def _check_grant(control: dict, supplied: dict, stored: dict) -> None:
+    current = int(control["authority_version"])
+    pinned = int(stored.get("_authority_version", current))
+    if pinned != current:
+        raise Unauthorized(
+            f"operation prepared under authority v{pinned}, current v{current}")
+    if supplied.get("grant_version") is not None and int(supplied["grant_version"]) != current:
+        raise Unauthorized("stale dispatch grant")
+
+
+def _check_release(cur, attempt_id: str) -> None:
+    cur.execute("SELECT q.version_id, q.reason FROM attempt_capability_pins p"
+                " JOIN quarantine_registry q ON q.version_id = p.version_id"
+                " WHERE p.attempt_id = %s ORDER BY q.version_id LIMIT 1", (attempt_id,))
+    hit = cur.fetchone()
+    if hit is not None:
+        raise Unauthorized(
+            f"attempt pinned to quarantined capability {hit['version_id']}: {hit['reason']}")
+
+
+def _admission_checks(cur, control, op, ownership_generation: Any, grant_version: Any) -> None:
+    if bool(control.get("dispatch_paused", False)):
+        raise SettlementError(
+            f"dispatch paused for {control.get('paused_reason') or 'recovery'}: {op['id']} refused")
+    _check_grant(control, {"grant_version": grant_version}, dict(op["payload"] or {}))
+    if op["attempt_id"] is not None:
+        attempt = _get_attempt(cur, op["attempt_id"])
+        _check_owner(cur, attempt, ownership_generation
+                     if ownership_generation is not None else attempt["ownership_generation"])
+        if attempt["lifecycle"] not in ("running", "suspended"):
+            raise SettlementError(f"attempt {attempt['id']} is {attempt['lifecycle']}")
+        cur.execute("SELECT disposition, revision FROM investigations WHERE id = %s",
+                    (attempt["investigation_id"],))
+        inv = cur.fetchone()
+        if inv is None:
+            raise SettlementError(f"unknown investigation {attempt['investigation_id']}")
+        if inv["disposition"] in ("withdrawn", "fulfilled"):
+            raise SettlementError(
+                f"investigation {attempt['investigation_id']} is {inv['disposition']}")
+        if int(attempt["investigation_revision"]) != int(inv["revision"]):
+            raise StaleRevision(
+                f"attempt {attempt['id']} revision {attempt['investigation_revision']} !="
+                f" current {inv['revision']}")
+        _check_release(cur, op["attempt_id"])
 
 
 def acquire_work(dsn: str, cmd: Command) -> CommandResult:
@@ -545,37 +663,137 @@ def resume_attempt(dsn: str, cmd: Command) -> CommandResult:
     return transact(dsn, cmd, _fn)
 
 
+def _fulfillment_target(cur, cmd: Command) -> tuple[dict, dict]:
+    p = cmd.payload
+    cur.execute("SELECT * FROM investigations WHERE id = %s", (p.get("investigation_id"),))
+    inv = cur.fetchone()
+    if inv is None:
+        raise SettlementError(f"unknown investigation {p.get('investigation_id')}")
+    if cmd.expected_revision is not None and int(cmd.expected_revision) != int(inv["revision"]):
+        raise StaleRevision(f"expected revision {cmd.expected_revision}, current {inv['revision']}")
+    if inv["disposition"] == "withdrawn":
+        raise SettlementError(f"investigation {inv['id']} is withdrawn")
+    if inv["disposition"] == "fulfilled" and inv["fulfilled_revision"] == inv["revision"]:
+        raise SettlementError(f"investigation {inv['id']} revision {inv['revision']} already fulfilled")
+    return inv, p
+
+
+def _check_obligation_witnesses(dsn: str, cur, control, inv: dict, attempt: dict,
+                               artifacts_root: str | None = None) -> None:
+    from . import evidence as _evidence
+
+    wanted = dict(inv["obligations"] or {})
+    epoch = int(control["evidence_epoch"])
+    for name, spec in wanted.items():
+        if not isinstance(spec, dict) or set(spec) not in ({"success"}, {"claim"}):
+            raise MissingEvidence(
+                f"obligation {name!r} has no discharge witness:"
+                " use {\"success\": operation_id} or {\"claim\": claim_id}")
+        if "success" in spec:
+            cur.execute("SELECT attempt_id, dispatch_state FROM operations WHERE id = %s",
+                        (spec["success"],))
+            op = cur.fetchone()
+            if op is None:
+                raise MissingEvidence(f"obligation {name!r}: unknown operation {spec['success']!r}")
+            if op["attempt_id"] != attempt["id"]:
+                raise MissingEvidence(
+                    f"obligation {name!r}: operation {spec['success']!r} is not this attempt's work")
+            cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s AND outcome = 'success'",
+                        (spec["success"],))
+            if cur.fetchone() is None:
+                raise MissingEvidence(
+                    f"obligation {name!r}: operation {spec['success']!r} never succeeded")
+            if op["dispatch_state"] not in ("observed", "reconciled"):
+                raise MissingEvidence(
+                    f"obligation {name!r}: operation {spec['success']!r} has no observed receipt")
+        else:
+            _evidence.check_use_verified(dsn, spec["claim"], epoch, artifacts_root)
+
+
+def attempts_with_continuations(dsn: str) -> list[dict]:
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT id, ownership_generation FROM attempts"
+                        " WHERE lifecycle IN ('running', 'suspended')"
+                        " AND continuation_ref IS NOT NULL ORDER BY id")
+            rows = [dict(r) for r in cur.fetchall()]
+            conn.commit()
+            return rows
+
+
 def fulfill_investigation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
-        p = cmd.payload
-        cur.execute("SELECT * FROM investigations WHERE id = %s", (p["investigation_id"],))
-        inv = cur.fetchone()
-        if inv is None:
-            raise SettlementError(f"unknown investigation {p['investigation_id']}")
-        if cmd.expected_revision is not None and int(cmd.expected_revision) != int(inv["revision"]):
-            raise StaleRevision(f"expected revision {cmd.expected_revision}, current {inv['revision']}")
-        if inv["disposition"] == "withdrawn":
-            raise SettlementError(f"investigation {inv['id']} is withdrawn")
-        if inv["disposition"] == "fulfilled" and inv["fulfilled_revision"] == inv["revision"]:
-            raise SettlementError(f"investigation {inv['id']} revision {inv['revision']} already fulfilled")
-        if "authority_version" in p and int(p["authority_version"]) != int(control["authority_version"]):
+        inv, p = _fulfillment_target(cur, cmd)
+        if not p.get("attempt_id"):
+            raise SettlementError("fulfillment needs a completed attempt; use the override operation to bypass it")
+        attempt = _get_attempt(cur, p["attempt_id"])
+        if attempt["investigation_id"] != inv["id"]:
+            raise SettlementError(
+                f"attempt {attempt['id']} belongs to {attempt['investigation_id']}, not {inv['id']}")
+        if p.get("ownership_generation") is None:
+            raise SettlementError("fulfillment needs the attempt ownership generation")
+        _check_owner(cur, attempt, p["ownership_generation"])
+        if p.get("revision") is None:
+            raise SettlementError("fulfillment needs the current investigation revision")
+        if int(p["revision"]) != int(inv["revision"]):
+            raise StaleRevision(f"fulfillment revision {p['revision']} != current {inv['revision']}")
+        if p.get("authority_version") is None:
+            raise SettlementError("fulfillment needs the current completion authority version")
+        if int(p["authority_version"]) != int(control["authority_version"]):
             raise Unauthorized("stale completion authority")
-        attempt = None
-        if p.get("attempt_id") is not None:
-            attempt = _get_attempt(cur, p["attempt_id"])
-            _check_owner(cur, attempt, p.get("ownership_generation"))
-            if attempt["lifecycle"] != "completed":
-                raise SettlementError(f"attempt {attempt['id']} is {attempt['lifecycle']}, not completed")
-            if int(attempt["investigation_revision"]) != int(inv["revision"]):
-                raise StaleRevision(f"attempt revision {attempt['investigation_revision']} != {inv['revision']}")
+        if p.get("evidence_epoch") is None:
+            raise SettlementError("fulfillment needs the current evidence epoch")
+        if int(p["evidence_epoch"]) != int(control["evidence_epoch"]):
+            raise MissingEvidence(
+                f"evidence epoch {p['evidence_epoch']} != current {control['evidence_epoch']}")
+        if attempt["lifecycle"] != "completed":
+            raise SettlementError(f"attempt {attempt['id']} is {attempt['lifecycle']}, not completed")
+        if int(attempt["investigation_revision"]) != int(inv["revision"]):
+            raise StaleRevision(f"attempt revision {attempt['investigation_revision']} != {inv['revision']}")
+        if not isinstance(p.get("obligations"), dict):
+            raise SettlementError("fulfillment needs the current completion obligations")
+        if dict(p["obligations"]) != dict(inv["obligations"] or {}):
+            raise StaleRevision("completion obligations changed since this fulfillment was prepared")
+        _check_obligation_witnesses(dsn, cur, control, inv, attempt,
+                                   p.get("artifacts_root"))
+        _check_release(cur, attempt["id"])
         cur.execute(
             "UPDATE investigations SET disposition = 'fulfilled', fulfilled_revision = %s,"
             " updated_at = now() WHERE id = %s",
             (int(inv["revision"]), inv["id"]),
         )
         return (ResultCode.APPLIED, f"investigation {inv['id']} r{inv['revision']} fulfilled",
-                {"investigation_id": inv["id"], "revision": int(inv["revision"])},
-                [("commitment.fulfilled", {"investigation_id": inv["id"], "revision": int(inv["revision"])})], [])
+                {"investigation_id": inv["id"], "revision": int(inv["revision"]),
+                 "attempt_id": attempt["id"]},
+                [("commitment.fulfilled", {"investigation_id": inv["id"], "revision": int(inv["revision"]),
+                                           "attempt_id": attempt["id"]})], [])
+    return transact(dsn, cmd, _fn)
+
+
+def fulfill_investigation_override(dsn: str, cmd: Command) -> CommandResult:
+    def _fn(cur, control):
+        inv, p = _fulfillment_target(cur, cmd)
+        if p.get("revision") is None:
+            raise SettlementError("override needs the current investigation revision")
+        if int(p["revision"]) != int(inv["revision"]):
+            raise StaleRevision(f"override revision {p['revision']} != current {inv['revision']}")
+        operator = p.get("operator", "")
+        reason = p.get("override_reason", "")
+        if not (isinstance(operator, str) and operator.strip()):
+            raise SettlementError("override needs an attributable operator")
+        if not (isinstance(reason, str) and reason.strip()):
+            raise SettlementError("override needs an explicit reason")
+        cur.execute(
+            "UPDATE investigations SET disposition = 'fulfilled', fulfilled_revision = %s,"
+            " updated_at = now() WHERE id = %s",
+            (int(inv["revision"]), inv["id"]),
+        )
+        return (ResultCode.APPLIED, f"investigation {inv['id']} r{inv['revision']} fulfilled by override",
+                {"investigation_id": inv["id"], "revision": int(inv["revision"]),
+                 "override": True, "operator": operator},
+                [("commitment.fulfilled_override", {"investigation_id": inv["id"],
+                                                   "revision": int(inv["revision"]),
+                                                   "operator": operator, "reason": reason})], [])
     return transact(dsn, cmd, _fn)
 
 
@@ -609,11 +827,13 @@ def prepare_operation(dsn: str, cmd: Command) -> CommandResult:
             if not reservation_id or not p.get("allocation_id"):
                 raise SettlementError("exposure needs reservation_id and allocation_id")
             _take_reservation(cur, p["allocation_id"], reservation_id, exposure, op_id)
+        stored = dict(body) if isinstance(body, dict) else {}
+        stored["_authority_version"] = int(control["authority_version"])
         cur.execute(
             "INSERT INTO operations (id, attempt_id, allocation_id, reservation_id, payload_digest,"
             " payload, dispatch_state, execution_version)"
             " VALUES (%s, %s, %s, %s, %s, %s, 'prepared', %s)",
-            (op_id, attempt_id, p.get("allocation_id"), reservation_id, digest, _j(body),
+            (op_id, attempt_id, p.get("allocation_id"), reservation_id, digest, _j(stored),
              p.get("execution_version", "")),
         )
         return (ResultCode.APPLIED, f"operation {op_id} prepared",
@@ -626,27 +846,30 @@ def advance_dispatch(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
         op = _get_operation(cur, p["operation_id"])
+        launcher = p.get("launcher_id", op["launcher_id"])
+        stored = dict(op["payload"] or {})
         if op["dispatch_state"] != "prepared":
-            if op["launcher_id"] == p.get("launcher_id", op["launcher_id"]) and op["dispatch_state"] == "dispatching":
+            if op["launcher_id"] == launcher and op["dispatch_state"] == "dispatching":
+                _admission_checks(cur, control, op, p.get("ownership_generation"), p.get("grant_version"))
                 return (ResultCode.ALREADY_APPLIED, "already dispatching",
-                        {"operation_id": op["id"]}, [], [])
+                        {"operation_id": op["id"], "admitted": False,
+                         "dispatch_generation": int(stored.get("_dispatch_generation", 0)),
+                         "admission_current": True}, [], [])
             raise SettlementError(f"operation {op['id']} is {op['dispatch_state']}, not prepared")
-        if "grant_version" in p and int(p["grant_version"]) != int(control["authority_version"]):
-            raise Unauthorized("stale dispatch grant")
-        if op["attempt_id"] is not None:
-            attempt = _get_attempt(cur, op["attempt_id"])
-            _check_owner(cur, attempt, p.get("ownership_generation"))
-            if attempt["lifecycle"] not in ("running", "suspended"):
-                raise SettlementError(f"attempt {attempt['id']} is {attempt['lifecycle']}")
+        _admission_checks(cur, control, op, p.get("ownership_generation"), p.get("grant_version"))
+        generation = int(stored.get("_dispatch_generation", 0)) + 1
+        stored["_dispatch_generation"] = generation
+        stored["_admitted_launcher"] = launcher
         cur.execute(
             "UPDATE operations SET dispatch_state = 'dispatching', launcher_id = %s,"
-            " provider_id = %s, updated_at = now() WHERE id = %s",
-            (p.get("launcher_id", ""), p.get("provider_id", ""), op["id"]),
+            " provider_id = %s, payload = %s, updated_at = now() WHERE id = %s",
+            (launcher, p.get("provider_id", ""), _j(stored), op["id"]),
         )
-        intent = {"operation_id": op["id"], "payload": op["payload"], "launcher_id": p.get("launcher_id", "")}
+        intent = {"operation_id": op["id"], "payload": stored, "launcher_id": launcher}
         return (ResultCode.APPLIED, f"operation {op['id']} dispatching",
-                {"operation_id": op["id"]},
-                [("operation.dispatching", {"operation_id": op["id"]})],
+                {"operation_id": op["id"], "admitted": True, "dispatch_generation": generation},
+                [("operation.dispatching", {"operation_id": op["id"],
+                                            "dispatch_generation": generation})],
                 [("dispatch", intent, f"dispatch:{op['id']}")])
     return transact(dsn, cmd, _fn)
 
@@ -690,7 +913,21 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
                     [("operation.receipted", {"operation_id": op["id"]})], [])
         settled = False
         if op["reservation_id"] is not None and outcome in ("success", "failure"):
-            settled, _, _ = _settle_amount(cur, op["reservation_id"], outcome, p.get("actual_cost"))
+            try:
+                settled, _, _ = _settle_amount(cur, op["reservation_id"], outcome, p.get("actual_cost"))
+            except SettlementError as exc:
+                cur.execute(
+                    "UPDATE operations SET dispatch_state = 'observed', reconcile_state = 'unresolved',"
+                    " receipt_provenance = %s, settled = FALSE, updated_at = now() WHERE id = %s",
+                    (p.get("provenance", ""), op["id"]),
+                )
+                return (ResultCode.APPLIED,
+                        f"receipt preserved, settlement infeasible: {exc}",
+                        {"operation_id": op["id"], "settled": False,
+                         "settlement_refused": str(exc), "actual_cost": p.get("actual_cost")},
+                        [("operation.receipted", {"operation_id": op["id"], "outcome": outcome}),
+                         ("operation.settlement_infeasible",
+                          {"operation_id": op["id"], "reason": str(exc)})], [])
         elif op["reservation_id"] is not None:
             _settle_amount(cur, op["reservation_id"], "unknown")
         state = "observed" if outcome in ("success", "failure") else "unresolved"
@@ -723,6 +960,47 @@ def confirm_cancellation(dsn: str, cmd: Command) -> CommandResult:
             "UPDATE operations SET cancel_state = 'confirmed', updated_at = now() WHERE id = %s", (op["id"],))
         return (ResultCode.APPLIED, "cancellation confirmed", {"operation_id": op["id"]},
                 [("operation.cancel_confirmed", {"operation_id": op["id"]})], [])
+    return transact(dsn, cmd, _fn)
+
+
+def operation_receipts(dsn: str, operation_id: str) -> list[dict]:
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT receipt_identity, outcome FROM receipts WHERE operation_id = %s"
+                        " ORDER BY receipt_identity", (operation_id,))
+            rows = [dict(r) for r in cur.fetchall()]
+            conn.commit()
+            return rows
+
+
+def reset_dispatch(dsn: str, cmd: Command) -> CommandResult:
+    def _fn(cur, control):
+        cur.execute("SELECT * FROM operations WHERE id = %s", (cmd.payload["operation_id"],))
+        op = cur.fetchone()
+        if op is None:
+            raise SettlementError(f"unknown operation {cmd.payload['operation_id']}")
+        if op["dispatch_state"] != "dispatching":
+            raise SettlementError(f"operation {op['id']} is {op['dispatch_state']}, not dispatching")
+        if (op["cancel_state"] or "none") != "none":
+            raise SettlementError(f"operation {op['id']} has cancel activity; explicit reconcile only")
+        cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s", (op["id"],))
+        if cur.fetchone() is not None:
+            raise SettlementError(f"operation {op['id']} already has receipts")
+        stored = dict(op["payload"] or {})
+        if cmd.payload.get("expected_generation") is not None \
+                and int(cmd.payload["expected_generation"]) != int(stored.get("_dispatch_generation", 0)):
+            raise StaleRevision(
+                f"operation {op['id']} is at dispatch generation"
+                f" {stored.get('_dispatch_generation', 0)}, not {cmd.payload['expected_generation']}")
+        generation = int(stored.get("_dispatch_generation", 0)) + 1
+        stored["_dispatch_generation"] = generation
+        stored["_admitted_launcher"] = ""
+        cur.execute("UPDATE operations SET dispatch_state = 'prepared', launcher_id = '',"
+                    " payload = %s, updated_at = now() WHERE id = %s", (_j(stored), op["id"],))
+        return (ResultCode.APPLIED, f"operation {op['id']} returned to prepared",
+                {"operation_id": op["id"], "dispatch_generation": generation},
+                [("dispatch.reset", {"operation_id": op["id"],
+                                     "dispatch_generation": generation})], [])
     return transact(dsn, cmd, _fn)
 
 
@@ -830,6 +1108,146 @@ def restart_reconciliation(dsn: str) -> dict:
             conn.commit()
     return {"unfinished_operations": operations, "live_attempts": attempts, "execution_versions": versions}
 
+
+
+def _bump_inflight_dispatch(cur) -> list[dict]:
+    cur.execute("SELECT id, payload FROM operations"
+                " WHERE dispatch_state IN ('dispatching', 'sent', 'unresolved') ORDER BY id")
+    fenced = []
+    for op in cur.fetchall():
+        stored = dict(op["payload"] or {})
+        generation = int(stored.get("_dispatch_generation", 0)) + 1
+        stored["_dispatch_generation"] = generation
+        cur.execute("UPDATE operations SET payload = %s, updated_at = now() WHERE id = %s",
+                    (_j(stored), op["id"]))
+        fenced.append({"id": op["id"], "dispatch_generation": generation})
+    return fenced
+
+
+def _live_continuations(cur) -> list[dict]:
+    cur.execute("SELECT id, continuation_ref, ownership_generation, lifecycle FROM attempts"
+                " WHERE lifecycle NOT IN ('completed', 'failed', 'cancelled') ORDER BY id")
+    snapshot = []
+    for attempt in cur.fetchall():
+        ref = attempt["continuation_ref"] or ""
+        snapshot.append({"id": attempt["id"], "lifecycle": attempt["lifecycle"],
+                         "ownership_generation": int(attempt["ownership_generation"]),
+                         "continuation_digest": hashlib.sha256(ref.encode()).hexdigest()})
+    return snapshot
+
+
+def checkpoint_barrier(dsn: str, cmd: Command) -> CommandResult:
+    def _fn(cur, control):
+        pre_paused = bool(control.get("dispatch_paused", False))
+        pre_reason = str(control.get("paused_reason") or "")
+        cur.execute("UPDATE control SET admission_epoch = admission_epoch + 1 WHERE id = 1"
+                    " RETURNING admission_epoch")
+        epoch = int(cur.fetchone()["admission_epoch"])
+        if pre_paused:
+            reason = pre_reason
+        else:
+            cur.execute("UPDATE control SET dispatch_paused = TRUE,"
+                        " paused_reason = 'checkpoint' WHERE id = 1")
+            reason = "checkpoint"
+        cur.execute("SELECT COUNT(*) AS n FROM command_journal")
+        journal = int(cur.fetchone()["n"]) + 1
+        cur.execute("SELECT workflow_identity FROM outbox WHERE delivered = FALSE"
+                    " ORDER BY workflow_identity")
+        pending = [r["workflow_identity"] for r in cur.fetchall()]
+        fenced = _bump_inflight_dispatch(cur)
+        continuations = _live_continuations(cur)
+        data = {"barrier_epoch": epoch, "journal_count": journal,
+                "event_epoch": int(control["event_epoch"]) + 1,
+                "outbox_pending": pending, "dispatch_paused": True,
+                "paused_reason": reason, "pre_paused": pre_paused,
+                "pause_owner": reason, "fenced_operations": fenced,
+                "continuations": continuations}
+        return (ResultCode.APPLIED, f"checkpoint barrier at admission epoch {epoch}", data,
+                [("recovery.barrier", data)], [])
+    return transact(dsn, cmd, _fn)
+
+
+def resume_dispatch(dsn: str, cmd: Command) -> CommandResult:
+    def _fn(cur, control):
+        only = cmd.payload.get("only_reason")
+        reason = str(control.get("paused_reason") or "")
+        if only is not None and reason != str(only):
+            return (ResultCode.ALREADY_APPLIED,
+                    f"dispatch pause owned by {reason or 'none'};"
+                    f" {cmd.payload.get('reason', 'operator')} is not resuming it",
+                    {"resumed": False, "paused_reason": reason,
+                     "reason": cmd.payload.get("reason", "")}, [], [])
+        cur.execute("UPDATE control SET dispatch_paused = FALSE, paused_reason = '' WHERE id = 1")
+        return (ResultCode.APPLIED,
+                f"dispatch resumed ({cmd.payload.get('reason', 'operator')})",
+                {"resumed": True, "reason": cmd.payload.get("reason", "")},
+                [("recovery.resumed", {"reason": cmd.payload.get("reason", "")})], [])
+    return transact(dsn, cmd, _fn)
+
+
+def checkpoint_verify(dsn: str, barrier: dict) -> list[str]:
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT admission_epoch, event_epoch, dispatch_paused, paused_reason"
+                        " FROM control WHERE id = 1")
+            control = cur.fetchone()
+            cur.execute("SELECT COUNT(*) AS n FROM command_journal")
+            journal = int(cur.fetchone()["n"])
+            cur.execute("SELECT workflow_identity FROM outbox WHERE delivered = FALSE"
+                        " ORDER BY workflow_identity")
+            pending = [r["workflow_identity"] for r in cur.fetchall()]
+            continuations = _live_continuations(cur)
+            conn.commit()
+    mismatches = []
+    if int(control["admission_epoch"]) != int(barrier["barrier_epoch"]):
+        mismatches.append(
+            f"admission moved during checkpoint: barrier={barrier['barrier_epoch']}"
+            f" now={control['admission_epoch']}")
+    if int(control["event_epoch"]) != int(barrier["event_epoch"]):
+        mismatches.append(
+            f"events moved during checkpoint: barrier={barrier['event_epoch']}"
+            f" now={control['event_epoch']}")
+    if journal != int(barrier["journal_count"]):
+        mismatches.append(
+            f"journal moved during checkpoint: barrier={barrier['journal_count']} now={journal}")
+    if pending != list(barrier["outbox_pending"]):
+        mismatches.append(
+            f"outbox moved during checkpoint: barrier={barrier['outbox_pending']} now={pending}")
+    if bool(control.get("dispatch_paused", True)) != bool(barrier.get("dispatch_paused", True)):
+        mismatches.append(
+            f"dispatch pause flipped during checkpoint: barrier={barrier.get('dispatch_paused')}"
+            f" now={control.get('dispatch_paused')}")
+    if str(control.get("paused_reason") or "") != str(barrier.get("paused_reason") or ""):
+        mismatches.append(
+            f"pause owner moved during checkpoint: barrier={barrier.get('paused_reason')}"
+            f" now={control.get('paused_reason')}")
+    if continuations != list(barrier.get("continuations", [])):
+        mismatches.append(
+            f"workflow continuations moved during checkpoint: barrier={barrier.get('continuations')}"
+            f" now={continuations}")
+    return mismatches
+
+
+def restore_fence(dsn: str, cmd: Command) -> CommandResult:
+    def _fn(cur, control):
+        cur.execute("SELECT id, ownership_generation FROM attempts"
+                    " WHERE lifecycle NOT IN ('completed', 'failed', 'cancelled') ORDER BY id")
+        bumped = []
+        for attempt in cur.fetchall():
+            generation = int(attempt["ownership_generation"]) + 1
+            cur.execute("UPDATE attempts SET ownership_generation = %s, updated_at = now()"
+                        " WHERE id = %s", (generation, attempt["id"]))
+            bumped.append({"id": attempt["id"], "ownership_generation": generation})
+        fenced = _bump_inflight_dispatch(cur)
+        cur.execute("UPDATE control SET dispatch_paused = TRUE,"
+                    " paused_reason = 'restore' WHERE id = 1")
+        data = {"attempts": bumped, "operations": fenced,
+                "reason": cmd.payload.get("reason", ""), "dispatch_paused": True}
+        return (ResultCode.APPLIED,
+                f"fenced {len(bumped)} attempts and {len(fenced)} operations;"
+                " dispatch paused until resume_dispatch", data,
+                [("recovery.fenced", data)], [])
+    return transact(dsn, cmd, _fn)
 
 
 def register_evidence_change(dsn: str, cmd: Command) -> CommandResult:

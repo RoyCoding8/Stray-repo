@@ -6,7 +6,7 @@ This repository is the shared handoff between the implementation agent and the d
 
 ## Start the implementation agent
 
-Clone `the configured repository` and attach [WORKER-PROMPT.md](WORKER-PROMPT.md). The prompt contains the full assignment and points to all committed inputs. If a fresh clone has not selected a default branch, fetch and check out `codex/architecture-handoff` from origin first.
+Open the repository checkout and attach [WORKER-PROMPT.md](WORKER-PROMPT.md). The prompt contains the full assignment and points to all committed inputs. If the checkout has not selected a default branch, fetch and check out `codex/architecture-handoff` first.
 
 The initial assignment is **S0-S3**, ending with a reviewable first learning system and a matched-resource comparison of ordinary baseline behavior, retained textual lessons and retained executable methods. S4-S7 remain specified future slices rather than part of this first assignment.
 

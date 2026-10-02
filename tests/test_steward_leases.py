@@ -117,7 +117,12 @@ def test_amend_allocation_refuses_shrink_below_commitments(migrated_db):
     assert good.code == ResultCode.APPLIED and good.data["authorized"] == 200
 
 
-def test_quarantine_degrades_cleanly_without_t5_tables(migrated_db):
+def test_quarantine_degrades_cleanly_without_t5_tables(migrated_db, monkeypatch):
+    import sys
+
+    import settlement.capabilities  # noqa: F401  (prove the slice exists here)
+
+    monkeypatch.setitem(sys.modules, "settlement.capabilities", None)
     dsn = migrated_db
     result = steward.quarantine_subject(dsn, _cmd({"subject": "cap-v3"}))
     assert result.code == ResultCode.UNAVAILABLE_DEPENDENCY

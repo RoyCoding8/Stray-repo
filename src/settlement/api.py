@@ -27,8 +27,11 @@ from . import agenda, broker, steward, store
 from .common import Command, CommandResult, ConflictPayload, ResultCode
 
 HERE = Path(__file__).resolve().parent.parent.parent
-T5_PROBES = ("trials", "trial_assignments", "trial_results", "candidates", "releases",
-             "quarantine", "capability_versions", "capability_releases")
+T5_PROBES = ("trial_protocols", "trial_assignments", "trial_results",
+             "candidate_submissions", "capability_versions", "capability_releases",
+             "quarantine_registry", "router_policies", "evaluator_receipts")
+
+
 T4_TABLES = ("artifact_versions", "claims", "derivations", "observations", "context_views",
              "continuation_docs")
 OUTCOME_UNKNOWN_NOTE = ("external outcome unknown: cancellation stops new work only;"
@@ -77,9 +80,10 @@ def _rows(dsn: str, sql: str, args: tuple = ()) -> list[dict]:
 
 def overview_data(dsn: str) -> dict[str, Any]:
     snap = agenda.agenda_snapshot(dsn)
-    nexts = {a["id"]: agenda.next_decision_for(dsn, a["id"]) for a in snap["attempts"]}
+    nexts = agenda.next_decisions_for(dsn, [a["id"] for a in snap["attempts"]])
     control = store.get_control(dsn)
     return {"obligations": snap["obligations"], "attempts": snap["attempts"],
+            "attempt_total": snap["attempt_total"], "attempt_limit": snap["attempt_limit"],
             "unresolved_operations": snap["unresolved_operations"], "capacity": snap["capacity"],
             "due": snap["due"], "next_decisions": nexts,
             "authority_version": control.get("authority_version"),
@@ -90,21 +94,39 @@ def investigation_data(dsn: str, iid: str) -> dict[str, Any] | None:
     inv = _rows(dsn, "SELECT * FROM investigations WHERE id = %s", (iid,))
     if not inv:
         return None
-    attempts = _rows(dsn, "SELECT * FROM attempts WHERE investigation_id = %s ORDER BY id", (iid,))
+    attempts = _rows(dsn, "SELECT * FROM attempts WHERE investigation_id = %s ORDER BY id"
+                          " LIMIT 200", (iid,))
     ops = _rows(dsn, "SELECT o.* FROM operations o JOIN attempts a ON a.id = o.attempt_id"
-                     " WHERE a.investigation_id = %s ORDER BY o.id", (iid,))
+                     " WHERE a.investigation_id = %s ORDER BY o.id LIMIT 500", (iid,))
     obs = _rows(dsn, "SELECT ob.* FROM attempt_observations ob JOIN attempts a ON a.id = ob.attempt_id"
-                     " WHERE a.investigation_id = %s ORDER BY ob.id", (iid,))
+                     " WHERE a.investigation_id = %s ORDER BY ob.id LIMIT 500", (iid,))
     revs = _rows(dsn, "SELECT * FROM investigation_revisions WHERE investigation_id = %s"
-                      " ORDER BY revision", (iid,))
-    waits = {a["id"]: agenda.next_decision_for(dsn, a["id"]) for a in attempts}
+                      " ORDER BY revision LIMIT 200", (iid,))
+    waits = agenda.next_decisions_for(dsn, [a["id"] for a in attempts])
     data: dict[str, Any] = {"investigation": inv[0], "attempts": attempts, "operations": ops,
                             "observations": obs, "revisions": revs, "wait_reasons": waits,
-                            "diagram": dependency_svg(inv[0], attempts, ops)}
-    if table_present(dsn, "evidence_relations"):
-        data["relations"] = _rows(dsn, "SELECT * FROM evidence_relations ORDER BY id LIMIT 100")
+                            "diagram": dependency_svg(inv[0], attempts, ops),
+                            "t4_observations": [], "derivations": [], "relations": []}
+    attempt_ids = [a["id"] for a in attempts]
+    if table_present(dsn, "observations"):
+        data["t4_observations"] = _rows(
+            dsn, "SELECT * FROM observations WHERE attempt_id = ANY(%s)"
+                 " ORDER BY receipt_id LIMIT 200", (attempt_ids,))
     if table_present(dsn, "derivations"):
-        data["derivations"] = _rows(dsn, "SELECT * FROM derivations ORDER BY id LIMIT 100")
+        data["derivations"] = _rows(
+            dsn, "SELECT DISTINCT d.* FROM derivations d"
+                 " JOIN derivation_premises p ON p.derivation_id = d.id"
+                 " JOIN observations o ON o.receipt_id = p.premise_ref"
+                 " AND p.premise_kind = 'observation'"
+                 " WHERE o.attempt_id = ANY(%s) ORDER BY d.id LIMIT 100", (attempt_ids,))
+    if table_present(dsn, "evidence_relations"):
+        refs = (attempt_ids + [o["id"] for o in ops]
+                + [o["receipt_id"] for o in data["t4_observations"]]
+                + [d["claim_id"] for d in data["derivations"]])
+        data["relations"] = _rows(
+            dsn, "SELECT * FROM evidence_relations"
+                 " WHERE src_ref = ANY(%s) OR dst_ref = ANY(%s) ORDER BY id LIMIT 100",
+            (refs, refs))
     return data
 
 
@@ -145,15 +167,56 @@ def capabilities_data(dsn: str) -> dict[str, Any]:
 
 def trials_data(dsn: str) -> dict[str, Any]:
     state = t5_state(dsn)
-    return {"t5": state, "rows": [], "pending": not state["installed"]}
+    if not state["installed"]:
+        return {"t5": state, "rows": [], "pending": True}
+    protocols = _rows(dsn, "SELECT id, frozen, evaluator_version FROM trial_protocols ORDER BY id"
+                             " LIMIT 50")
+    results = _rows(dsn, "SELECT a.protocol_id, r.outcome, COUNT(*) AS n"
+                         " FROM trial_assignments a LEFT JOIN trial_results r"
+                         " ON r.assignment_id = a.id GROUP BY a.protocol_id, r.outcome"
+                         " ORDER BY a.protocol_id")
+    return {"t5": state, "rows": protocols, "results": results, "pending": False}
 
 
 def learning_data(dsn: str) -> dict[str, Any]:
     state = t5_state(dsn)
     hypotheses = _rows(dsn, "SELECT * FROM derivations ORDER BY id LIMIT 100") \
         if table_present(dsn, "derivations") else []
-    return {"t5": state, "pending": not state["installed"], "hypotheses": hypotheses,
-            "comparisons": []}
+    if not state["installed"]:
+        return {"t5": state, "pending": True, "hypotheses": hypotheses, "comparisons": []}
+    protocols = _rows(dsn, "SELECT id, candidate_version, reference_version, evaluator_version,"
+                            " exclusions, uncertainty FROM trial_protocols ORDER BY id LIMIT 50")
+    pids = [p["id"] for p in protocols]
+    outcomes = _rows(dsn, "SELECT a.protocol_id, a.arm, r.outcome, COUNT(*) AS n"
+                           " FROM trial_assignments a LEFT JOIN trial_results r"
+                           " ON r.assignment_id = a.id WHERE a.protocol_id = ANY(%s)"
+                           " GROUP BY a.protocol_id, a.arm, r.outcome"
+                           " ORDER BY a.protocol_id, a.arm", (pids,)) if pids else []
+    spend = _rows(dsn, "SELECT protocol_id, category, SUM(amount) AS amount"
+                        " FROM expenditure_ledger WHERE protocol_id = ANY(%s)"
+                        " GROUP BY protocol_id, category ORDER BY protocol_id, category",
+                  (pids,)) if pids else []
+    by_outcome: dict[str, dict[str, dict[str, int]]] = {}
+    for row in outcomes:
+        by_outcome.setdefault(row["protocol_id"], {}).setdefault(
+            row["arm"], {})[str(row["outcome"])] = int(row["n"])
+    by_spend: dict[str, dict[str, int]] = {}
+    for row in spend:
+        by_spend.setdefault(row["protocol_id"], {})[row["category"]] = int(row["amount"])
+    comparisons = [{"protocol_id": p["id"], "candidate_version": p["candidate_version"],
+                    "reference_version": p["reference_version"],
+                    "evaluator_version": p["evaluator_version"],
+                    "arms": by_outcome.get(p["id"], {}),
+                    "expenditure": by_spend.get(p["id"], {}),
+                    "exclusions": p["exclusions"], "uncertainty": p["uncertainty"]}
+                   for p in protocols]
+    releases = _rows(dsn, "SELECT id, disposition, versions, fallback FROM capability_releases"
+                          " ORDER BY id LIMIT 100")
+    quarantined = _rows(dsn, "SELECT version_id, reason FROM quarantine_registry"
+                             " ORDER BY version_id LIMIT 100")
+    routers = _rows(dsn, "SELECT version FROM router_policies ORDER BY version LIMIT 100")
+    return {"t5": state, "pending": False, "hypotheses": hypotheses, "comparisons": comparisons,
+            "releases": releases, "quarantined": quarantined, "router_policies": routers}
 
 
 def evidence_data(dsn: str) -> dict[str, Any]:
@@ -260,43 +323,49 @@ def create_app(dsn: str, gateway: Any | None = None, token: str | None = None,
                       autoescape=select_autoescape(["html", "xml"]))
     state = {"dsn": dsn, "gateway": gateway, "launchers": launchers or {}}
 
-    def _render(name: str, context: dict, status: int = 200) -> HTMLResponse:
-        context = dict(context, gateway_down=gateway is None)
+    def _render(name: str, context: dict, status: int = 200,
+                poll_url: str = "/") -> HTMLResponse:
+        context = dict(context, gateway_down=gateway is None, poll_url=poll_url)
         return HTMLResponse(env.get_template(name).render(**context), status_code=status)
 
     @app.get("/", response_class=HTMLResponse)
     def overview():
-        return _render("overview.html", {"view": overview_data(state["dsn"])})
+        return _render("overview.html", {"view": overview_data(state["dsn"])}, poll_url="/")
 
     @app.get("/investigations/{iid}", response_class=HTMLResponse)
     def investigation(iid: str):
         data = investigation_data(state["dsn"], iid)
         if data is None:
             return _render("error.html", {"message": f"unknown investigation {iid}"}, status=404)
-        return _render("investigation.html", {"view": data, "iid": iid})
+        return _render("investigation.html", {"view": data, "iid": iid},
+                       poll_url=f"/investigations/{iid}")
 
     @app.get("/capabilities", response_class=HTMLResponse)
     def capabilities():
-        return _render("capabilities.html", {"view": capabilities_data(state["dsn"])})
+        return _render("capabilities.html", {"view": capabilities_data(state["dsn"])},
+                       poll_url="/capabilities")
 
     @app.get("/trials", response_class=HTMLResponse)
     def trials():
-        return _render("trials.html", {"view": trials_data(state["dsn"])})
+        return _render("trials.html", {"view": trials_data(state["dsn"])}, poll_url="/trials")
 
     @app.get("/learning", response_class=HTMLResponse)
     def learning():
-        return _render("learning.html", {"view": learning_data(state["dsn"])})
+        return _render("learning.html", {"view": learning_data(state["dsn"])},
+                       poll_url="/learning")
 
     @app.get("/evidence", response_class=HTMLResponse)
     def evidence():
-        return _render("evidence.html", {"view": evidence_data(state["dsn"])})
+        return _render("evidence.html", {"view": evidence_data(state["dsn"])},
+                       poll_url="/evidence")
 
     @app.get("/operations/{op_id}", response_class=HTMLResponse)
     def inspect_operation(op_id: str):
         data = operation_data(state["dsn"], op_id)
         if data is None:
             return _render("error.html", {"message": f"unknown operation {op_id}"}, status=404)
-        return _render("operation.html", {"view": data, "op_id": op_id})
+        return _render("operation.html", {"view": data, "op_id": op_id},
+                       poll_url=f"/operations/{op_id}")
 
     @app.get("/login", response_class=HTMLResponse)
     def login_form():

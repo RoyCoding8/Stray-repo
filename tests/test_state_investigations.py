@@ -55,6 +55,16 @@ def test_stale_generation_completion_refused_while_observation_allowed(migrated_
     assert done.code == ResultCode.APPLIED
 
 
+def _fulfill(dsn, inv, attempt, gen, revision):
+    control = store.get_control(dsn)
+    return store.fulfill_investigation(dsn, Command(
+        request_id=f"req_{uuid.uuid4().hex[:12]}", expected_revision=revision,
+        payload={"investigation_id": inv, "attempt_id": attempt,
+                 "ownership_generation": gen, "revision": revision,
+                 "authority_version": int(control["authority_version"]),
+                 "evidence_epoch": int(control["evidence_epoch"]), "obligations": {}}))
+
+
 def test_fulfillment_twice_refused_and_needs_completed_attempt(migrated_db):
     dsn = migrated_db
     _admit(dsn)
@@ -65,14 +75,10 @@ def test_fulfillment_twice_refused_and_needs_completed_attempt(migrated_db):
         payload={"investigation_id": "i1", "attempt_id": "att1", "ownership_generation": gen}))
     assert early.code == ResultCode.INVALID_INPUT
     store.complete_attempt(dsn, _cmd({"attempt_id": "att1", "ownership_generation": gen}))
-    first = store.fulfill_investigation(dsn, Command(
-        request_id="f1", expected_revision=1,
-        payload={"investigation_id": "i1", "attempt_id": "att1", "ownership_generation": gen}))
-    assert first.code == ResultCode.APPLIED
-    second = store.fulfill_investigation(dsn, Command(
-        request_id="f2", expected_revision=1,
-        payload={"investigation_id": "i1", "attempt_id": "att1", "ownership_generation": gen}))
+    assert _fulfill(dsn, "i1", "att1", gen, 1).code == ResultCode.APPLIED
+    second = _fulfill(dsn, "i1", "att1", gen, 1)
     assert second.code == ResultCode.INVALID_INPUT
+    assert "already fulfilled" in second.detail
     stale_rev = store.fulfill_investigation(dsn, Command(
         request_id="f3", expected_revision=7, payload={"investigation_id": "i1"}))
     assert stale_rev.code == ResultCode.STALE_REVISION
@@ -82,19 +88,17 @@ def test_fulfillment_after_amend_targets_new_revision(migrated_db):
     dsn = migrated_db
     _admit(dsn)
     a1 = _acquire(dsn, "att1")
-    store.complete_attempt(dsn, _cmd({"attempt_id": "att1", "ownership_generation": a1.data["ownership_generation"]}))
-    assert store.fulfill_investigation(dsn, Command(
-        request_id="f1", expected_revision=1, payload={"investigation_id": "i1"})).code == ResultCode.APPLIED
+    gen1 = a1.data["ownership_generation"]
+    store.complete_attempt(dsn, _cmd({"attempt_id": "att1", "ownership_generation": gen1}))
+    assert _fulfill(dsn, "i1", "att1", gen1, 1).code == ResultCode.APPLIED
     reopened = store.amend_commitment(dsn, Command(
         request_id="am1", expected_revision=1,
         payload={"investigation_id": "i1", "objective": "follow-up"}))
     assert reopened.code == ResultCode.APPLIED and reopened.data["revision"] == 2
-    refilled = store.fulfill_investigation(dsn, Command(
-        request_id="f2", expected_revision=2, payload={"investigation_id": "i1"}))
-    assert refilled.code == ResultCode.APPLIED
-    assert store.fulfill_investigation(dsn, Command(
-        request_id="f3", expected_revision=2, payload={"investigation_id": "i1"})).code \
-        == ResultCode.INVALID_INPUT
+    gen2 = _acquire(dsn, "att2").data["ownership_generation"]
+    store.complete_attempt(dsn, _cmd({"attempt_id": "att2", "ownership_generation": gen2}))
+    assert _fulfill(dsn, "i1", "att2", gen2, 2).code == ResultCode.APPLIED
+    assert _fulfill(dsn, "i1", "att2", gen2, 2).code == ResultCode.INVALID_INPUT
 
 
 def test_suspend_resume_lifecycle(migrated_db):

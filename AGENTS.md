@@ -2,9 +2,9 @@
 
 ## Scope and authority
 
-- This is a fresh implementation of the committed design, separate from the older Agent-Society repository.
+- This checkout implements the committed Settlement design.
 - The human's current assignment takes precedence over historical design notes. The first assignment is `WORKER-PROMPT.md`: S0-S3, followed by review.
-- Commit and push to the assigned branch on `the configured repository` are authorized. No force-push, history rewriting, unrelated checkout edits, or automatic merge into another agent's branch.
+- Commit and push to the assigned branch are authorized. No force-push, history rewriting, unrelated checkout edits, or automatic merge into another agent's branch.
 - The design/review role evaluates results and records findings; it does not take over implementation unless the human requests that change of role.
 - Parallel subagents and Git worktrees are authorized for the S0-S3 assignment. Follow `IMPLEMENTATION-WORKFLOW.md`; do not ask again for that permission. Each delegation must name its worktree, owned paths, requirement IDs and exact skills/design sections to load. Review available skills and project context, but do not require uncommitted local skills or memories to understand the assignment.
 

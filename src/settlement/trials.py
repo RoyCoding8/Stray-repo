@@ -35,6 +35,7 @@ def freeze_protocol(dsn: str, cmd: Command, *, protocol_id: str,
                     budgets: dict | None = None, metrics: list | None = None,
                     stopping: dict | None = None, exclusions: list | None = None,
                     uncertainty: dict | None = None,
+                    supported_scope: dict | None = None,
                     _frozen: bool = True) -> CommandResult:
     groups = list(task_groups or [])
     kinds = {g.get("kind") for g in groups if isinstance(g, dict)}
@@ -49,10 +50,12 @@ def freeze_protocol(dsn: str, cmd: Command, *, protocol_id: str,
         cur.execute(
             "INSERT INTO trial_protocols (id, candidate_version, reference_version,"
             " evaluator_version, task_groups, budgets, metrics, stopping, exclusions,"
-            " uncertainty, frozen) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            " uncertainty, supported_scope, frozen)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (protocol_id, candidate_version, reference_version, evaluator_version,
              _j(groups), _j(budgets or {}), _j(metrics or []), _j(stopping or {}),
-             _j(exclusions or []), _j(uncertainty or {}), _frozen))
+             _j(exclusions or []), _j(uncertainty or {}),
+             _j(supported_scope or {}), _frozen))
         return (ResultCode.APPLIED, f"protocol {protocol_id} frozen",
                 {"protocol_id": protocol_id},
                 [("trial.protocol_frozen", {"protocol_id": protocol_id})], [])
@@ -72,6 +75,8 @@ def amend_protocol(dsn: str, cmd: Command, *, protocol_id: str,
             ("candidate_version", "reference_version", "evaluator_version")}
     base.update({k: v for k, v in fields.items() if k in base})
     groups = fields.get("task_groups", list(old["task_groups"] or []))
+    supported_scope = fields.get("supported_scope",
+                                 dict(old.get("supported_scope") or {}))
     budgets = fields.get("budgets", dict(old["budgets"] or {}))
     metrics = fields.get("metrics", list(old["metrics"] or []))
     stopping = fields.get("stopping", dict(old["stopping"] or {}))
@@ -80,7 +85,8 @@ def amend_protocol(dsn: str, cmd: Command, *, protocol_id: str,
     result = freeze_protocol(
         dsn, cmd, protocol_id=protocol_id, task_groups=groups, budgets=budgets,
         metrics=metrics, stopping=stopping, exclusions=exclusions,
-        uncertainty=uncertainty, _frozen=False, **base)
+        uncertainty=uncertainty, supported_scope=supported_scope,
+        _frozen=False, **base)
     with db.connect(dsn, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute("UPDATE trial_protocols SET supersedes = %s, frozen = TRUE"
@@ -158,6 +164,8 @@ def record_result(dsn: str, cmd: Command, *, assignment_id: str, outcome: str,
         raise SettlementError(f"unknown outcome {outcome!r}")
     if invocation_ref and broker.read_operation(dsn, invocation_ref) is None:
         raise SettlementError(f"result references no actual invocation {invocation_ref}")
+    stamped = dict(detail or {})
+    stamped.setdefault("origin", "direct-caller-outcome")
 
     def _fn(cur, control):
         cur.execute("SELECT 1 FROM trial_assignments WHERE id = %s", (assignment_id,))
@@ -167,7 +175,7 @@ def record_result(dsn: str, cmd: Command, *, assignment_id: str, outcome: str,
                     " conditions, cost, detail) VALUES (%s, %s, %s, %s, %s, %s)"
                     " ON CONFLICT (assignment_id) DO NOTHING",
                     (assignment_id, outcome, invocation_ref, _j(conditions or {}),
-                     _j(cost or {}), _j(detail or {})))
+                     _j(cost or {}), _j(stamped)))
         if cur.rowcount == 0:
             cur.execute("SELECT outcome FROM trial_results WHERE assignment_id = %s",
                         (assignment_id,))

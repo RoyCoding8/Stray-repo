@@ -54,7 +54,10 @@ def test_evidence_view_reads_durable_records(client):
     assert "<script>evil" not in body
 
 
-def test_trial_views_show_pending_state_without_t5_tables(client):
+def test_trial_views_show_pending_state_without_t5_tables(client, monkeypatch):
+    from settlement import api as _api
+
+    monkeypatch.setattr(_api, "t5_state", lambda dsn: {"installed": False, "tables": []})
     for path in ("/trials", "/learning", "/capabilities"):
         body = client.get(path).text
         assert "pending" in body

@@ -3,7 +3,10 @@
 Identity is derived from the operation, never fresh randomness: recovery
 inspects the run directory (pid and result files) before any new spawn.
 Every result is labeled containment=False. Worker bytes are parsed as typed
-JSON only, never executed. Stops use process-group kill.
+JSON only, never executed. Stops use process-group kill. Children run with a scrubbed environment and
+never inherit the controller working directory: payload `cwd` selects an
+existing isolated directory, otherwise the launcher run directory, which the
+caller must create outside the repository.
 """
 
 from __future__ import annotations
@@ -13,6 +16,7 @@ import os
 import re
 import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -57,12 +61,59 @@ class LocalLauncher:
     def _paths(self, operation_id: str, execution_version: str) -> dict[str, Path]:
         base = self.run_dir / self.native_id(operation_id, execution_version)
         return {"pid": base.with_suffix(".pid"), "result": base.with_suffix(".result.json"),
-                "spawns": base.with_suffix(".spawns")}
+                "spawns": base.with_suffix(".spawns"), "generation": base.with_suffix(".gen")}
+
+    def _work_dirs(self, operation_id: str,
+                   execution_version: str) -> dict[str, Path]:
+        work = self.run_dir / f"{self.native_id(operation_id, execution_version)}.work"
+        return {"work": work, "inputs": work / "inputs", "outputs": work / "outputs"}
+
+    def stage_input(self, operation_id: str, execution_version: str,
+                    relpath: str, data: bytes) -> Path:
+        if (not isinstance(relpath, str) or not relpath or relpath.startswith("/")
+                or ".." in relpath.split("/")):
+            raise ValueError(f"refusing unsafe artifact relpath {relpath!r}")
+        target = self._work_dirs(operation_id, execution_version)["inputs"]
+        target.mkdir(parents=True, exist_ok=True)
+        dest = target / relpath
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(data)
+        return dest
+
+    def exec_dirs(self, operation_id: str,
+                  execution_version: str) -> tuple[str, str]:
+        dirs = self._work_dirs(operation_id, execution_version)
+        dirs["inputs"].mkdir(parents=True, exist_ok=True)
+        dirs["outputs"].mkdir(parents=True, exist_ok=True)
+        return (str(dirs["inputs"]), str(dirs["outputs"]))
+
+    def staged_python(self) -> str:
+        return sys.executable
+
+    def read_output(self, operation_id: str, execution_version: str,
+                    relpath: str) -> bytes:
+        return (self._work_dirs(operation_id, execution_version)["outputs"]
+                / relpath).read_bytes()
+
+    def _recorded_generation(self, path: Path) -> int | None:
+        try:
+            return int(path.read_text().strip())
+        except (ValueError, OSError):
+            return None
 
     def prior_send(self, operation_id: str) -> bool:
         if any(self.run_dir.glob(f"{_sanitize(operation_id)}_*.pid")):
             return True
         return self.read_result(operation_id) is not None
+
+    def prove_never_sent(self, operation_id: str, dispatch_generation: int | None = None) -> bool:
+        if not self.run_dir.is_dir():
+            return False
+        base = _sanitize(operation_id)
+        for suffix in (".pid", ".result", ".spawns", ".gen"):
+            if any(self.run_dir.glob(f"{base}_*{suffix}")):
+                return False
+        return True
 
     def live_ids(self) -> list[str]:
         alive = []
@@ -138,12 +189,27 @@ class LocalLauncher:
         paths = self._paths(op.operation_id, op.execution_version)
         if paths["result"].exists():
             return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
+        generation = int(op.dispatch_generation or 0)
         if not self._claim(paths["pid"]):
+            recorded = self._recorded_generation(paths["generation"])
+            if recorded is not None and recorded != generation:
+                if generation > recorded:
+                    paths["generation"].write_text(str(generation))
+                return LaunchOutcome(sent=False, refused_reason="superseded-claim")
             return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
+        recorded = self._recorded_generation(paths["generation"])
+        if recorded is not None and recorded > generation:
+            return LaunchOutcome(sent=False, refused_reason="superseded-generation")
+        paths["generation"].write_text(str(generation))
+        if self._recorded_generation(paths["generation"]) != generation:
+            return LaunchOutcome(sent=False, refused_reason="superseded-generation")
         payload = op.payload
         timeout_ms = int(payload.get("timeout_ms", 30_000))
         max_bytes = int(payload.get("max_output_bytes", 1_048_576))
         argv = list(payload["argv"])
+        requested = payload.get("cwd")
+        child_cwd = str(requested) if isinstance(requested, str) and \
+            Path(requested).is_dir() else str(self.run_dir)
         try:
             seen = int(paths["spawns"].read_text().strip()) if paths["spawns"].exists() else 0
         except (ValueError, OSError):
@@ -154,6 +220,7 @@ class LocalLauncher:
             proc = subprocess.Popen(
                 argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 env=scrub_env({"SETTLEMENT_OPERATION": op.operation_id}),
+                cwd=child_cwd,
                 preexec_fn=_child_setup(payload),
             )
         except OSError as exc:

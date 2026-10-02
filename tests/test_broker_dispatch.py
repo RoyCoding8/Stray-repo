@@ -6,6 +6,7 @@ import pytest
 
 from settlement import broker, store
 from settlement.broker import BrokerOp, DispatchStatus, LaunchOutcome, ReceiptProposal
+from settlement.exec_profile import STOP_SETTLE_S
 from settlement.common import Command, ResultCode
 from settlement.gateway import FakeGatewayAdapter, GatewayError, GatewayErrorKind
 
@@ -138,7 +139,7 @@ def test_lost_response_retains_exposure_and_blocks_resend(migrated_db):
     status = broker.dispatch_operation(dsn, "op1", launchers=_launchers(fake),
                                        ownership_generation=gen)
     assert status.dispatch_state == "unresolved"
-    assert store.allocation_status(dsn, "a1")["reserved"] == 11
+    assert store.allocation_status(dsn, "a1")["reserved"] == 5 + STOP_SETTLE_S + 1
     again = broker.dispatch_operation(dsn, "op1", launchers=_launchers(fake),
                                       ownership_generation=gen)
     assert again.sent_this_call is False and fake.sends == ["op1"]

@@ -9,13 +9,14 @@ the launcher contract proves idempotency or reconciliation concluded.
 
 from __future__ import annotations
 
+import uuid
 from typing import Any, Protocol
 
 from dbos import DBOS
 from pydantic import BaseModel, Field
 
 from . import db, store
-from .common import Command, CommandResult, ConflictPayload, ResultCode
+from .common import Command, CommandResult, ConflictPayload, ResultCode, SettlementError
 
 MODEL_INFERENCE = "model-inference"
 SANDBOX_EXEC = "sandbox-exec"
@@ -142,8 +143,9 @@ def _model_exposure(p: dict[str, Any], retries: int) -> tuple[int, str]:
 
 
 def _sandbox_exposure(p: dict[str, Any], retries: int) -> tuple[int, str]:
-    grace_s = 5
-    return (int(p["timeout_ms"]) // 1000 + grace_s + 1) * (retries + 1), "hard-ceiling"
+    from .exec_profile import STOP_SETTLE_S
+    return ((int(p["timeout_ms"]) // 1000 + STOP_SETTLE_S + 1)
+            * (retries + 1)), "hard-ceiling"
 
 
 class ReceiptProposal(BaseModel):
@@ -171,6 +173,7 @@ class BrokerOp(BaseModel):
     payload: dict[str, Any]
     execution_version: str = ""
     attempt_id: str | None = None
+    dispatch_generation: int = 0
 
     model_config = {"extra": "forbid"}
 
@@ -187,6 +190,22 @@ class Launcher(Protocol):
     def is_live(self, operation_id: str) -> bool: ...
     def read_result(self, operation_id: str) -> dict[str, Any] | None: ...
 
+    def stage_input(self, operation_id: str, execution_version: str,
+                    relpath: str, data: bytes) -> Any: ...
+    def exec_dirs(self, operation_id: str,
+                  execution_version: str) -> tuple[str, str]: ...
+    def staged_python(self) -> str: ...
+    def read_output(self, operation_id: str, execution_version: str,
+                    relpath: str) -> bytes: ...
+
+    def prove_never_sent(self, operation_id: str) -> bool:
+        """True only with positive proof nothing was ever sent under this identity.
+
+        The proof is valid only while the launcher's run state survives broker
+        restarts (stable run directory). Wiping run state voids it: when the
+        run directory itself is gone the answer must be False (park, don't reset).
+        """
+
 
 class DispatchStatus(BaseModel):
     operation_id: str
@@ -201,7 +220,7 @@ class DispatchStatus(BaseModel):
 
 
 def read_operation(dsn: str, operation_id: str) -> dict[str, Any] | None:
-    from psycopg.rows import dict_row  # noqa: PLC0415
+    from psycopg.rows import dict_row
 
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -277,7 +296,8 @@ def _advance(dsn: str, operation_id: str, launcher_id: str, provider_id: str,
     if grant_version is not None:
         payload["grant_version"] = grant_version
     return store.advance_dispatch(
-        dsn, Command(request_id=f"broker-adv-{operation_id}-{launcher_id}", payload=payload))
+        dsn, Command(request_id=f"broker-adv-{operation_id}-{launcher_id}-{uuid.uuid4().hex[:12]}",
+                     payload=payload))
 
 
 def _refusal(dsn: str, operation_id: str, result: CommandResult) -> DispatchStatus:
@@ -287,8 +307,24 @@ def _refusal(dsn: str, operation_id: str, result: CommandResult) -> DispatchStat
                       decision=mapping.get(result.code, f"refused-{result.code.value}"))
 
 
+def _revalidate(dsn: str, operation_id: str, launcher_id: str, provider_id: str,
+                ownership_generation: int | None,
+                grant_version: int | None,
+                expected_generation: int) -> DispatchStatus | None:
+    current = _advance(dsn, operation_id, launcher_id, provider_id,
+                       ownership_generation, grant_version)
+    if current.code == ResultCode.ALREADY_APPLIED:
+        live = int((current.data or {}).get("dispatch_generation", 0))
+        if live != int(expected_generation):
+            return _status_of(dsn, operation_id, decision="stale-dispatch-generation")
+        return None
+    if current.code == ResultCode.APPLIED:
+        return _status_of(dsn, operation_id)
+    return _refusal(dsn, operation_id, current)
+
+
 def admit_launcher_receipt(dsn: str, operation_id: str, receipt: ReceiptProposal) -> CommandResult:
-    from .common import payload_digest  # noqa: PLC0415
+    from .common import payload_digest
 
     payload: dict[str, Any] = {"operation_id": operation_id,
                                "receipt_identity": receipt.receipt_identity,
@@ -346,13 +382,20 @@ def _send_sandbox(dsn: str, row: dict, op: BrokerOp, launchers: dict,
         return _status_of(dsn, op.operation_id, decision="incompatible-profile")
     advanced = _advance(dsn, op.operation_id, launcher.launcher_id, "",
                         ownership_generation, grant_version)
-    if advanced.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+    if advanced.code == ResultCode.ALREADY_APPLIED:
+        return _status_of(dsn, op.operation_id)
+    if advanced.code != ResultCode.APPLIED:
         return _refusal(dsn, op.operation_id, advanced)
+    generation = int((advanced.data or {}).get("dispatch_generation", 0))
+    held = _revalidate(dsn, op.operation_id, launcher.launcher_id, "",
+                       ownership_generation, grant_version, generation)
+    if held is not None:
+        return held
     if launcher.prior_send(op.operation_id):
         _deliver(dsn, f"dispatch:{op.operation_id}")
         return _status_of(dsn, op.operation_id, decision="needs-reconciliation")
     try:
-        outcome = launcher.dispatch(op)
+        outcome = launcher.dispatch(op.model_copy(update={"dispatch_generation": generation}))
     except Exception as exc:
         code = getattr(exc, "code", ResultCode.INCOMPATIBLE_VERSION)
         if code == ResultCode.INCOMPATIBLE_VERSION:
@@ -363,7 +406,7 @@ def _send_sandbox(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                           decision=outcome.refused_reason or "launcher-refused")
     if crash:
         return _status_of(dsn, op.operation_id, sent_this_call=True)
-    return _finish_send(dsn, op.operation_id, outcome)
+    return _finish_send(dsn, op.operation_id, outcome, generation)
 
 
 def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
@@ -373,15 +416,23 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
         return _status_of(dsn, op.operation_id, decision="awaiting-gateway")
     advanced = _advance(dsn, op.operation_id, "gateway", op.payload.get("model", ""),
                         ownership_generation, grant_version)
-    if advanced.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+    if advanced.code == ResultCode.ALREADY_APPLIED:
+        return _status_of(dsn, op.operation_id)
+    if advanced.code != ResultCode.APPLIED:
         return _refusal(dsn, op.operation_id, advanced)
-    from .gateway import GatewayError, ModelRequest  # noqa: PLC0415
+    generation = int((advanced.data or {}).get("dispatch_generation", 0))
+    held = _revalidate(dsn, op.operation_id, "gateway", op.payload.get("model", ""),
+                       ownership_generation, grant_version, generation)
+    if held is not None:
+        return held
+    from .gateway import GatewayError, ModelRequest
 
     request = ModelRequest(model=op.payload["model"],
                            messages=tuple(op.payload["messages"]),
                            max_output_tokens=op.payload["max_output_tokens"],
                            deadline_ms=op.payload["deadline_ms"],
-                           operation_id=op.operation_id)
+                           operation_id=op.operation_id,
+                           dispatch_generation=generation)
     response = gateway.infer(request)
     if response is None or isinstance(response, GatewayError):
         admit_launcher_receipt(dsn, op.operation_id, ReceiptProposal(
@@ -401,8 +452,11 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                      "usage": {"input_tokens": usage.input_tokens,
                                "output_tokens": usage.output_tokens,
                                "charge_units": usage.charge_units,
+                               "billed": bool(usage.billed),
                                "provider_enforced_ceiling": usage.provider_enforced_ceiling}},
-            outcome="success", provenance="gateway", actual_cost=usage.charge_units)))
+            outcome="success", provenance="gateway",
+            actual_cost=usage.charge_units if usage.billed else None)),
+        generation)
     return outcome
 
 
@@ -411,12 +465,19 @@ def _run_inline(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                 grant_version: int | None, crash: bool) -> DispatchStatus:
     advanced = _advance(dsn, op.operation_id, "broker-inline", "",
                         ownership_generation, grant_version)
-    if advanced.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+    if advanced.code == ResultCode.ALREADY_APPLIED:
+        return _status_of(dsn, op.operation_id)
+    if advanced.code != ResultCode.APPLIED:
         return _refusal(dsn, op.operation_id, advanced)
+    generation = int((advanced.data or {}).get("dispatch_generation", 0))
+    held = _revalidate(dsn, op.operation_id, "broker-inline", "",
+                       ownership_generation, grant_version, generation)
+    if held is not None:
+        return held
     if op.effect == OBSERVATION_ADAPTER:
         content: dict[str, Any] = {"adapter": op.payload["adapter"]}
         if op.payload["adapter"] == "clock":
-            from .common import utcnow  # noqa: PLC0415
+            from .common import utcnow
 
             content["utcnow"] = utcnow().isoformat()
     else:
@@ -425,18 +486,48 @@ def _run_inline(dsn: str, row: dict, op: BrokerOp, launchers: dict,
     return _finish_send(dsn, op.operation_id, LaunchOutcome(
         sent=True, receipt=ReceiptProposal(
             receipt_identity=f"inline:{op.operation_id}", content=content,
-            outcome="success", provenance="broker-inline")))
+            outcome="success", provenance="broker-inline")), generation)
 
 
-def _finish_send(dsn: str, operation_id: str, outcome: LaunchOutcome) -> DispatchStatus:
+def _admitted(result: Any) -> bool:
+    return getattr(result, "code", None) in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+
+
+def _finish_send(dsn: str, operation_id: str, outcome: LaunchOutcome,
+                 admitted_generation: int | None = None) -> DispatchStatus:
+    if admitted_generation is not None:
+        row = read_operation(dsn, operation_id)
+        live = int((((row or {}).get("payload")) or {}).get("_dispatch_generation", 0))
+        if row is None or live != int(admitted_generation):
+            if outcome.receipt is not None:
+                admit_launcher_receipt(dsn, operation_id, outcome.receipt)
+            elif outcome.lost:
+                admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
+                    receipt_identity=f"lost:{operation_id}", content={"lost": True},
+                    outcome="unknown", provenance="broker"))
+            fence = admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
+                receipt_identity=f"fenced:{operation_id}:g{admitted_generation}",
+                content={"fenced": True, "admitted_generation": int(admitted_generation),
+                         "current_generation": live,
+                         "late_receipt": (outcome.receipt.receipt_identity
+                                          if outcome.receipt is not None else "")},
+                outcome="unknown", provenance="broker-fence"))
+            if _admitted(fence):
+                _deliver(dsn, f"dispatch:{operation_id}")
+                return _status_of(dsn, operation_id, sent_this_call=True)
+            return _status_of(dsn, operation_id, decision="needs-reconciliation")
     if outcome.receipt is not None:
-        admit_launcher_receipt(dsn, operation_id, outcome.receipt)
+        admitted = admit_launcher_receipt(dsn, operation_id, outcome.receipt)
     elif outcome.lost:
-        admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
+        admitted = admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
             receipt_identity=f"lost:{operation_id}", content={"lost": True},
             outcome="unknown", provenance="broker"))
-    _deliver(dsn, f"dispatch:{operation_id}")
-    return _status_of(dsn, operation_id, sent_this_call=True)
+    else:
+        admitted = None
+    if admitted is None or _admitted(admitted):
+        _deliver(dsn, f"dispatch:{operation_id}")
+        return _status_of(dsn, operation_id, sent_this_call=True)
+    return _status_of(dsn, operation_id, decision="needs-reconciliation")
 
 
 def request_cancel(dsn: str, operation_id: str,
@@ -480,13 +571,13 @@ def note_worker_stopped(dsn: str, operation_id: str) -> CommandResult:
 
 
 def _missing(operation_id: str):
-    from .common import SettlementError  # noqa: PLC0415
+    from .common import SettlementError
 
     return SettlementError(f"unknown operation {operation_id}")
 
 
 def _cancel_order(operation_id: str, state: str):
-    from .common import SettlementError  # noqa: PLC0415
+    from .common import SettlementError
 
     return SettlementError(f"operation {operation_id} cancel state is {state}, not requested")
 
@@ -557,9 +648,13 @@ def reconcile(dsn: str, operation_id: str, launchers: dict[str, Any],
     store.reconcile_operation(dsn, Command(request_id=f"broker-recon-{operation_id}",
                                            payload={"operation_id": operation_id,
                                                     "resolution": "unresolved"}))
+    if launcher is None and row["dispatch_state"] == "dispatching":
+        detail = (f"no launcher registered for {row['launcher_id']!r}"
+                  f" (registered: {sorted(index)}); exposure retained")
+    else:
+        detail = "no launcher outcome available; exposure retained"
     return ReconcileDecision(operation_id=operation_id, decision="unresolved-liability",
-                             detail="no launcher outcome available; exposure retained",
-                             next="retry-later")
+                             detail=detail, next="retry-later")
 
 
 def _is_live(launcher: Any, operation_id: str) -> bool:
@@ -573,7 +668,7 @@ def _is_live(launcher: Any, operation_id: str) -> bool:
 
 
 def scan_prepared(dsn: str, limit: int = 50) -> list[dict[str, Any]]:
-    from psycopg.rows import dict_row  # noqa: PLC0415
+    from psycopg.rows import dict_row
 
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -646,9 +741,96 @@ def dispatch_pending(dsn: str, launchers: dict[str, Any], gateway: Any | None = 
     return report
 
 
+def redispatch_after_reset(dsn: str, operation_id: str, launchers: dict[str, Any],
+                           expected_generation: int, gateway: Any | None = None,
+                           ownership_generation: int | None = None,
+                           grant_version: int | None = None) -> DispatchStatus:
+    reset = store.reset_dispatch(
+        dsn, Command(request_id=f"broker-redispatch-{operation_id}-g{expected_generation}",
+                     payload={"operation_id": operation_id,
+                              "expected_generation": expected_generation}))
+    if reset.code != ResultCode.APPLIED:
+        return _status_of(dsn, operation_id, decision=f"reset-refused-{reset.code.value}")
+    return dispatch_operation(dsn, operation_id, launchers=launchers, gateway=gateway,
+                              ownership_generation=ownership_generation,
+                              grant_version=grant_version)
+
+
+def _stored_composition(resources_key: str) -> dict[str, Any] | None:
+    import json
+
+    raw = (ATTEMPT_WORKFLOW_RESOURCES.get(resources_key) or {}).get("composition")
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str) and raw.strip():
+        try:
+            parsed = json.loads(raw)
+        except ValueError:
+            return None
+        return parsed if isinstance(parsed, dict) else None
+    return None
+
+
+def wake_waiting_workflows(dsn: str, launchers: dict[str, Any] | None = None,
+                           gateway: Any | None = None,
+                           limit: int = 200) -> dict[str, Any]:
+    from . import run as runmod
+
+    woken: list[str] = []
+    resumed: list[str] = []
+    deferred: list[str] = []
+    for attempt in store.attempts_with_continuations(dsn)[:limit]:
+        aid = attempt["id"]
+        try:
+            restore_workflow_resources(dsn, aid, launchers or {}, gateway)
+        except Exception:
+            continue
+        snap = wf_snapshot(dsn, aid)
+        if snap["lifecycle"] in _TERMINAL_LIFECYCLE or not snap["continuation"]:
+            continue
+        composition = _stored_composition(aid)
+        if composition is None:
+            continue
+        try:
+            comp = runmod.Composition.model_validate(composition)
+            cont = runmod.Continuation.model_validate(snap["continuation"])
+        except Exception:
+            continue
+        advanced = False
+        for entry in list(cont.unresolved_ops):
+            node_id, _, operation_id = entry.partition(":")
+            if not operation_id or cont.completed.get(node_id) == f"op:{operation_id}":
+                continue
+            outcome = runmod.operation_outcome(dsn, operation_id)
+            if outcome["outcome"] not in ("success", "failure"):
+                continue
+            consumed = wf_consume(dsn, aid, composition, cont.model_dump(mode="json"),
+                                 node_id, operation_id, f"wake:{aid}")
+            if consumed.get("applied"):
+                cont = runmod.Continuation.model_validate(consumed["continuation"])
+                advanced = True
+        if advanced:
+            woken.append(aid)
+        if not advanced and cont.next.get("decision") not in ("invoke", "fork", "done"):
+            continue
+        try:
+            from dbos import SetWorkflowID
+
+            with SetWorkflowID(f"attempt:{aid}:gen{attempt['ownership_generation']}"):
+                DBOS.start_workflow(attempt_workflow, dsn, aid,
+                                    attempt["ownership_generation"], composition, 10)
+            resumed.append(aid)
+        except Exception:
+            deferred.append(aid)
+    return {"woken": woken, "resumed": resumed, "resume_deferred": deferred}
+
+
 def heartbeat(dsn: str, launchers: dict[str, Any], gateway: Any | None = None,
               ownership_generation: int | None = None, repair_due: bool = False,
               limit: int = 50) -> HeartbeatReport:
+    for attempt in store.attempts_with_continuations(dsn):
+        if attempt["id"] not in ATTEMPT_WORKFLOW_RESOURCES:
+            restore_workflow_resources(dsn, attempt["id"], launchers, gateway)
     report = dispatch_pending(dsn, launchers, gateway, ownership_generation, None, limit)
     if repair_due:
         state = store.restart_reconciliation(dsn)
@@ -665,6 +847,12 @@ def heartbeat(dsn: str, launchers: dict[str, Any], gateway: Any | None = None,
                 report.repaired.append(op["id"])
         if report.repaired and report.next_decision == "idle":
             report.next_decision = "repair-done"
+    woken = wake_waiting_workflows(dsn, launchers, gateway)
+    for aid in woken["woken"]:
+        if f"wake:{aid}" not in report.repaired:
+            report.repaired.append(f"wake:{aid}")
+    if woken["woken"] and report.next_decision == "idle":
+        report.next_decision = "work-done"
     return report
 
 
@@ -685,7 +873,7 @@ _TERMINAL_LIFECYCLE = ("completed", "failed", "cancelled")
 
 
 def init_dbos(system_dsn: str, app_name: str = "settlement-s1") -> None:
-    from dbos import DBOS, DBOSConfig  # noqa: PLC0415
+    from dbos import DBOS, DBOSConfig
 
     config: DBOSConfig = {"name": app_name, "system_database_url": system_dsn,
                           "database_url": system_dsn}
@@ -694,14 +882,14 @@ def init_dbos(system_dsn: str, app_name: str = "settlement-s1") -> None:
 
 
 def shutdown_dbos() -> None:
-    from dbos import DBOS  # noqa: PLC0415
+    from dbos import DBOS
 
     DBOS.destroy()
 
 
 def wf_snapshot(dsn: str, attempt_id: str) -> dict[str, Any]:
-    import json  # noqa: PLC0415
-    from psycopg.rows import dict_row  # noqa: PLC0415
+    import json
+    from psycopg.rows import dict_row
 
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
@@ -720,10 +908,54 @@ def wf_snapshot(dsn: str, attempt_id: str) -> dict[str, Any]:
     return {"lifecycle": row["lifecycle"], "continuation": continuation}
 
 
+def restore_workflow_resources(dsn: str, attempt_id: str,
+                               launchers: dict[str, Any],
+                               gateway: Any | None = None,
+                               admitted_execution_versions: tuple[str, ...] = ()
+                               ) -> dict[str, Any]:
+    from psycopg.rows import dict_row
+
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT id, allocation_id, composition, model, env, lifecycle"
+                        " FROM attempts WHERE id = %s", (attempt_id,))
+            attempt = cur.fetchone()
+            if attempt is None:
+                raise SettlementError(f"unknown attempt {attempt_id}")
+            cur.execute("SELECT execution_version FROM operations WHERE attempt_id = %s"
+                        " AND execution_version <> '' ORDER BY id", (attempt_id,))
+            versions = sorted({r["execution_version"] for r in cur.fetchall()})
+            conn.commit()
+    admitted = set(admitted_execution_versions)
+    unknown = [v for v in versions if admitted and v not in admitted]
+    if unknown:
+        raise SettlementError(
+            f"attempt {attempt_id} needs unadmitted execution versions {unknown}")
+    ATTEMPT_WORKFLOW_RESOURCES[attempt_id] = {
+        "launchers": launchers, "gateway": gateway,
+        "allocation_id": attempt["allocation_id"], "composition": attempt["composition"],
+        "model": attempt["model"], "env": attempt["env"],
+        "lifecycle": attempt["lifecycle"], "execution_versions": versions}
+    return {"attempt_id": attempt_id, "lifecycle": attempt["lifecycle"],
+            "execution_versions": versions}
+
+
 def wf_ensure_dispatch(dsn: str, op_args: dict[str, Any], retries: int,
                        ownership_generation: int | None, node_id: str,
                        resources_key: str) -> dict[str, Any]:
-    res = ATTEMPT_WORKFLOW_RESOURCES[resources_key]
+    try:
+        res = ATTEMPT_WORKFLOW_RESOURCES[resources_key]
+    except KeyError:
+        raise SettlementError(
+            f"workflow resources for {resources_key!r} need restore_workflow_resources first"
+        ) from None
+    from . import run as runmod
+
+    prior = runmod.operation_outcome(dsn, op_args["operation_id"])
+    if prior["found"] and prior["outcome"] == "failure":
+        return {"node_id": node_id, "operation_id": op_args["operation_id"],
+                "dispatch_state": prior["dispatch_state"],
+                "next_decision": "already-failed", "failed_try": True}
     ensure_operation(dsn, operation_id=op_args["operation_id"], effect=op_args["effect"],
                      payload=op_args["payload"], allocation_id=op_args["allocation_id"],
                      attempt_id=op_args.get("attempt_id"),
@@ -738,15 +970,58 @@ def wf_ensure_dispatch(dsn: str, op_args: dict[str, Any], retries: int,
             "next_decision": status.next_decision}
 
 
+def wf_consume(dsn: str, attempt_id: str, composition: dict[str, Any],
+               cont_dict: dict[str, Any], node_id: str, operation_id: str,
+               identity_base: str) -> dict[str, Any]:
+    from . import run as runmod
+
+    comp = runmod.Composition.model_validate(composition)
+    cont = runmod.Continuation.model_validate(cont_dict)
+    outcome = runmod.operation_outcome(dsn, operation_id)
+    if cont.completed.get(node_id) == f"op:{operation_id}":
+        return {"continuation": cont.model_dump(mode="json"), "applied": False,
+                "outcome": outcome}
+    cont = runmod.consume_operation_outcome(comp, cont, node_id, operation_id,
+                                            outcome["outcome"])
+    receipts = outcome.get("receipts") or [{}]
+    try:
+        recorded = runmod.record_continuation(
+            dsn, attempt_id, cont,
+            f"{identity_base}:{operation_id}:{receipts[0].get('receipt_identity', outcome['dispatch_state'])}",
+            None)
+    except ConflictPayload:
+        return {"continuation": cont.model_dump(mode="json"), "applied": False,
+                "outcome": outcome, "record": "conflict-replay"}
+    return {"continuation": cont.model_dump(mode="json"), "applied": True,
+            "outcome": outcome, "record": recorded.code.value}
+
+
 def wf_record(dsn: str, attempt_id: str, composition: dict[str, Any],
               cont_dict: dict[str, Any], summary: dict[str, Any],
               identity_base: str) -> dict[str, Any]:
-    from . import run as runmod  # noqa: PLC0415
+    from . import run as runmod
 
     comp = runmod.Composition.model_validate(composition)
     cont = runmod.Continuation.model_validate(cont_dict)
     node_id = summary["node_id"]
-    if summary["dispatch_state"] == "observed":
+    iteration = summary.get("iteration")
+    if summary.get("failed_try"):
+        cont = runmod.record_failed_try(comp, cont, node_id,
+                                        summary["operation_id"], iteration)
+        runmod.record_continuation(dsn, attempt_id, cont, identity_base, None)
+        return cont.model_dump(mode="json")
+    outcome = runmod.operation_outcome(dsn, summary["operation_id"])
+    if outcome["found"]:
+        if outcome["outcome"] == "success":
+            cont = runmod.advance(comp, cont,
+                                  {"type": "node_completed", "node_id": node_id,
+                                   "result_ref": f"op:{summary['operation_id']}"})
+        elif outcome["outcome"] == "failure":
+            cont = runmod.consume_operation_outcome(comp, cont, node_id,
+                                                    summary["operation_id"], "failure")
+        else:
+            cont = runmod.register_ops(comp, cont, {node_id: summary["operation_id"]})
+    elif summary["dispatch_state"] == "observed":
         cont = runmod.advance(comp, cont,
                               {"type": "node_completed", "node_id": node_id,
                                "result_ref": f"op:{summary['operation_id']}"})
@@ -768,7 +1043,7 @@ def wf_finish(dsn: str, attempt_id: str, ownership_generation: int | None,
 
 def attempt_workflow(dsn: str, attempt_id: str, ownership_generation: int,
                      composition: dict[str, Any], max_rounds: int = 10) -> dict[str, Any]:
-    from . import run as runmod  # noqa: PLC0415
+    from . import run as runmod
 
     comp = runmod.Composition.model_validate(composition)
     wfid = f"attempt:{attempt_id}:gen{ownership_generation}"
@@ -784,16 +1059,35 @@ def attempt_workflow(dsn: str, attempt_id: str, ownership_generation: int,
                           "completed", f"{wfid}:finish")
             return {"attempt_id": attempt_id, "outcome": "completed",
                     "rounds": round_no + 1}
+        for entry in list(cont.unresolved_ops):
+            node_id, _, operation_id = entry.partition(":")
+            if not operation_id or cont.completed.get(node_id) == f"op:{operation_id}":
+                continue
+            consumed = DBOS.run_step(None, wf_consume, dsn, attempt_id, composition,
+                                    cont.model_dump(mode="json"), node_id,
+                                    operation_id, wfid)
+            if consumed.get("applied"):
+                cont = runmod.Continuation.model_validate(consumed["continuation"])
+        if cont.next.get("decision") == "done":
+            DBOS.run_step(None, wf_finish, dsn, attempt_id, ownership_generation,
+                          "completed", f"{wfid}:finish")
+            return {"attempt_id": attempt_id, "outcome": "completed",
+                    "rounds": round_no + 1}
         pending = runmod.pending_invokes(comp, cont)
         if not pending:
             return {"attempt_id": attempt_id, "outcome": "waiting",
                     "rounds": round_no, "next": cont.next}
         node = pending[0]
+        iteration = runmod.iteration_of(comp, cont, node.node_id)
         args = runmod.invoke_to_broker_args(
             node, attempt_id=attempt_id, allocation_id=comp.allocation_id,
-            iteration=runmod.iteration_of(comp, cont, node.node_id))
+            iteration=iteration)
+        args["operation_id"] = runmod.retry_operation_id(
+            args["operation_id"], cont, node.node_id, iteration)
         summary = DBOS.run_step(None, wf_ensure_dispatch, dsn, args, node.retry_max,
                                 ownership_generation, node.node_id, attempt_id)
+        summary = dict(summary)
+        summary["iteration"] = iteration
         DBOS.run_step(None, wf_record, dsn, attempt_id, composition,
                       cont.model_dump(mode="json"), summary, f"{wfid}:r{round_no}")
     return {"attempt_id": attempt_id, "outcome": "rounds-exhausted",

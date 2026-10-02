@@ -149,9 +149,13 @@ def retract(dsn: str, cmd: Command, target_ref: str, reason: str = "") -> Comman
     return store.transact(dsn, cmd, _fn)
 
 
-def _live_premise(cur, ref: str, kind: str, stack: frozenset, artifacts_root: str | None) -> bool:
+def _retracted(cur, ref: str) -> bool:
     cur.execute("SELECT 1 FROM retractions WHERE target_ref = %s", (ref,))
-    if cur.fetchone() is not None:
+    return cur.fetchone() is not None
+
+
+def _live_premise(cur, ref: str, kind: str, stack: frozenset, artifacts_root: str | None) -> bool:
+    if _retracted(cur, ref):
         return False
     if kind == "observation":
         cur.execute("SELECT authenticated FROM observations WHERE receipt_id = %s", (ref,))
@@ -173,7 +177,7 @@ def _covers(claim_scope: dict, derivation_scope: dict) -> bool:
 
 
 def _supported(cur, claim_id: str, stack: frozenset, artifacts_root: str | None) -> tuple[bool, list]:
-    if claim_id in stack:
+    if claim_id in stack or _retracted(cur, claim_id):
         return False, []
     cur.execute("SELECT scope FROM claims WHERE id = %s", (claim_id,))
     claim = cur.fetchone()
@@ -202,24 +206,66 @@ def _supported(cur, claim_id: str, stack: frozenset, artifacts_root: str | None)
     return (bool(live), live)
 
 
+def _epoch(cur) -> int:
+    cur.execute("SELECT evidence_epoch FROM control WHERE id = 1")
+    return int(cur.fetchone()["evidence_epoch"])
+
+
+_ROUNDS = 25
+
+
 def current_support(dsn: str, claim_id: str, artifacts_root: str | Path | None = None) -> dict:
+    root = str(artifacts_root) if artifacts_root else None
+    for _ in range(_ROUNDS):
+        with db.connect(dsn) as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                before = _epoch(cur)
+                supported, live = _supported(cur, claim_id, frozenset(), root)
+                after = _epoch(cur)
+                if before != after:
+                    conn.rollback()
+                    continue
+                cur.execute("SELECT version FROM support_cache WHERE claim_id = %s", (claim_id,))
+                cached = cur.fetchone()
+                version = int(cached["version"]) + 1 if cached else 1
+                detail = {"derivations": live}
+                cur.execute("INSERT INTO support_cache (claim_id, supported, version, epoch, detail)"
+                            " VALUES (%s, %s, %s, %s, %s) ON CONFLICT (claim_id) DO UPDATE SET"
+                            " supported = EXCLUDED.supported, version = EXCLUDED.version,"
+                            " epoch = EXCLUDED.epoch, detail = EXCLUDED.detail, updated_at = now()",
+                            (claim_id, supported, version, after, _j(detail)))
+                conn.commit()
+        return {"claim_id": claim_id, "supported": supported, "version": version,
+                "epoch": after, "derivations": live}
+    raise SettlementError(f"evidence churn: support for {claim_id} did not stabilize")
+
+
+def _rests_on_artifacts(dsn: str, derivation_ids: list) -> bool:
+    if not derivation_ids:
+        return False
     with db.connect(dsn) as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            supported, live = _supported(cur, claim_id, frozenset(), str(artifacts_root) if artifacts_root else None)
-            cur.execute("SELECT evidence_epoch FROM control WHERE id = 1")
-            epoch = int(cur.fetchone()["evidence_epoch"])
-            cur.execute("SELECT version FROM support_cache WHERE claim_id = %s", (claim_id,))
-            cached = cur.fetchone()
-            version = int(cached["version"]) + 1 if cached else 1
-            detail = {"derivations": live}
-            cur.execute("INSERT INTO support_cache (claim_id, supported, version, epoch, detail)"
-                        " VALUES (%s, %s, %s, %s, %s) ON CONFLICT (claim_id) DO UPDATE SET"
-                        " supported = EXCLUDED.supported, version = EXCLUDED.version,"
-                        " epoch = EXCLUDED.epoch, detail = EXCLUDED.detail, updated_at = now()",
-                        (claim_id, supported, version, epoch, _j(detail)))
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM derivation_premises"
+                        " WHERE derivation_id = ANY(%s) AND premise_kind = 'artifact' LIMIT 1",
+                        (list(derivation_ids),))
+            hit = cur.fetchone()
             conn.commit()
-    return {"claim_id": claim_id, "supported": supported, "version": version,
-            "epoch": epoch, "derivations": live}
+    return hit is not None
+
+
+def check_use_verified(dsn: str, claim_id: str, evidence_epoch: int,
+                       artifacts_root: str | Path | None = None) -> dict:
+    """Admit a claim only with byte-verified artifact premises.
+
+    With a root, artifact premises are re-hashed from disk during the
+    check. Without a root, a claim whose live support rests on artifact
+    bytes is refused: the database flag alone cannot discharge it.
+    """
+    snapshot = check_use(dsn, claim_id, evidence_epoch, artifacts_root)
+    if artifacts_root is None and _rests_on_artifacts(dsn, snapshot["derivations"]):
+        raise MissingEvidence(
+            f"claim {claim_id} rests on artifact bytes: re-admit with an artifacts root")
+    return snapshot
 
 
 def check_use(dsn: str, claim_id: str, evidence_epoch: int,

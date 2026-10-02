@@ -1,6 +1,6 @@
 # Git collaboration protocol
 
-The remote is `the configured repository`. Git carries the specification, implementation and written reviews. The human initiates work by attaching the worker prompt or requesting a review; no scheduler, cross-agent messaging service or automatic polling is required.
+Git carries the specification, implementation and written reviews. The human initiates work by attaching the worker prompt or requesting a review; no scheduler, cross-agent messaging service or automatic polling is required.
 
 ## Branch ownership
 

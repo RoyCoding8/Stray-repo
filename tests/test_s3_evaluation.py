@@ -6,7 +6,7 @@ from settlement import broker, evaluation, store, trials
 from settlement.common import Command, SettlementError, Unauthorized
 from settlement.launcher_local import LocalLauncher
 
-from test_s3_helpers import acquire, seed_env
+from test_s3_helpers import acquire, bind_assignment, seed_env
 
 
 @pytest.fixture()
@@ -26,7 +26,7 @@ def _protocol(dsn, tag, evaluator="v1"):
     return f"{tag}-p"
 
 
-def _grade_op(dsn, launcher, env, tag, argv=None):
+def _grade_op(dsn, launcher, env, tag, argv=None, assignment_id=None):
     op = f"{tag}-grade"
     broker.ensure_operation(dsn, operation_id=op, effect=broker.SANDBOX_EXEC,
                             payload={"profile": "local-process",
@@ -34,6 +34,8 @@ def _grade_op(dsn, launcher, env, tag, argv=None):
                                      "timeout_ms": 30_000,
                                      "max_output_bytes": 1024},
                             allocation_id=env["allocation_id"])
+    if assignment_id is not None:
+        bind_assignment(dsn, tag, assignment_id, op)
     broker.dispatch_operation(dsn, op, launchers={"local-process": launcher})
     return op
 
@@ -96,8 +98,9 @@ def test_candidate_cannot_write_receipt(migrated_db, launcher):
             result={"outcome": "success"})
     evaluation.register_evaluator(dsn, Command(request_id="s3cw-e", payload={}),
                                   "s3-eval", "v1")
-    op = _grade_op(dsn, launcher, env, "s3cw")
-    with pytest.raises(SettlementError, match="receipt claims"):
+    op = _grade_op(dsn, launcher, env, "s3cw",
+                   assignment_id=f"{pid}:candidate:t1")
+    with pytest.raises(SettlementError, match="evaluator replacement refused"):
         evaluation.submit_evaluator_receipt(
             dsn, Command(request_id="s3cw-r2", payload={}), receipt_id="s3cw-r2",
             assignment_id=f"{pid}:candidate:t1", evaluator_id="s3-eval",
@@ -118,18 +121,20 @@ def test_always_pass_swap_detected_and_release_refused(migrated_db, launcher):
                   "t1", "panel", "candidate", {})
     trials.assign(dsn, Command(request_id="s3ap-a2", payload={}), pid,
                   "t1", "panel", "reference", {})
-    good = _grade_op(dsn, launcher, env, "s3ap-good")
-    bad = _grade_op(dsn, launcher, env, "s3ap-bad", ["false"])
+    good = _grade_op(dsn, launcher, env, "s3ap-good",
+                     assignment_id=f"{pid}:candidate:t1")
+    bad = _grade_op(dsn, launcher, env, "s3ap-bad", ["false"],
+                    assignment_id=f"{pid}:reference:t1")
     evaluation.submit_evaluator_receipt(
         dsn, Command(request_id="s3ap-r1", payload={}), receipt_id="s3ap-r1",
         assignment_id=f"{pid}:candidate:t1", evaluator_id="s3-eval",
         evaluator_version="v1", invocation_ref=good,
-        result={"outcome": "success"})
+        result={"outcome": "success", "detail": {"task_id": "t1"}})
     evaluation.submit_evaluator_receipt(
         dsn, Command(request_id="s3ap-r2", payload={}), receipt_id="s3ap-r2",
         assignment_id=f"{pid}:reference:t1", evaluator_id="s3-eval",
         evaluator_version="v1", invocation_ref=bad,
-        result={"outcome": "failure"})
+        result={"outcome": "failure", "detail": {"task_id": "t1"}})
     evaluation.register_evaluator(dsn, Command(request_id="s3ap-e2", payload={}),
                                   "always-pass", "v2")
     with db.connect(dsn) as conn:

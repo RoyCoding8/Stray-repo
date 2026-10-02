@@ -8,7 +8,7 @@ from settlement import broker, capabilities, evidence, run, store, trials
 from settlement.common import Command, SettlementError
 from settlement.launcher_local import LocalLauncher
 
-from test_s3_helpers import EXPERIMENTS, acquire, publish_method, seed_env, stage_method
+from test_s3_helpers import EXPERIMENTS, acquire, bind_assignment, publish_method, seed_env, stage_method
 
 
 @pytest.fixture()
@@ -29,7 +29,7 @@ def _mini_protocol(dsn, tag, cand="cap-v1", ref="cap-v0", evaluator="s3-eval",
     return f"{tag}-p"
 
 
-def _observed_op(dsn, launcher, env, tag, argv=None):
+def _observed_op(dsn, launcher, env, tag, argv=None, assignment_id=None):
     op = f"{tag}-op"
     broker.ensure_operation(dsn, operation_id=op, effect=broker.SANDBOX_EXEC,
                             payload={"profile": "local-process",
@@ -37,6 +37,8 @@ def _observed_op(dsn, launcher, env, tag, argv=None):
                                      "timeout_ms": 30_000,
                                      "max_output_bytes": 1024},
                             allocation_id=env["allocation_id"])
+    if assignment_id is not None:
+        bind_assignment(dsn, tag, assignment_id, op)
     broker.dispatch_operation(dsn, op, launchers={"local-process": launcher})
     return op
 
@@ -97,8 +99,6 @@ def test_scoped_release_preserves_outside_scope(migrated_db, tmp_roots, launcher
     acquire(dsn, "s3rel", "s3rel-att", env)
     _publish_fixer(dsn, launcher, env, tmp_roots, "s3rel", "cap-v1")
     pid = _mini_protocol(dsn, "s3rel")
-    op_ok = _observed_op(dsn, launcher, env, "s3rel-ok")
-    op_bad = _observed_op(dsn, launcher, env, "s3rel-bad", ["false"])
     from settlement import evaluation
     evaluation.register_evaluator(dsn, Command(request_id="s3rel-eval"),
                                   "s3-eval", "v1")
@@ -106,14 +106,20 @@ def test_scoped_release_preserves_outside_scope(migrated_db, tmp_roots, launcher
                   "t1", "panel", "candidate", {})
     trials.assign(dsn, Command(request_id="s3rel-a2", payload={}), pid,
                   "t1", "panel", "reference", {})
+    op_ok = _observed_op(dsn, launcher, env, "s3rel-ok",
+                         assignment_id=f"{pid}:candidate:t1")
+    op_bad = _observed_op(dsn, launcher, env, "s3rel-bad", ["false"],
+                          assignment_id=f"{pid}:reference:t1")
     evaluation.submit_evaluator_receipt(
         dsn, Command(request_id="s3rel-r1", payload={}), receipt_id="s3rel-r1",
         assignment_id=f"{pid}:candidate:t1", evaluator_id="s3-eval",
-        evaluator_version="v1", invocation_ref=op_ok, result={"outcome": "success"})
+        evaluator_version="v1", invocation_ref=op_ok,
+        result={"outcome": "success", "detail": {"task_id": "t1"}})
     evaluation.submit_evaluator_receipt(
         dsn, Command(request_id="s3rel-r2", payload={}), receipt_id="s3rel-r2",
         assignment_id=f"{pid}:reference:t1", evaluator_id="s3-eval",
-        evaluator_version="v1", invocation_ref=op_bad, result={"outcome": "failure"})
+        evaluator_version="v1", invocation_ref=op_bad,
+        result={"outcome": "failure", "detail": {"task_id": "t1"}})
     claim = _supported_claim(dsn, "s3rel")
     assert trials.verdict(dsn, pid)["label"] == "observed-gain"
     capabilities.scoped_release(

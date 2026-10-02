@@ -7,7 +7,7 @@ sys.path.insert(0, "experiments")
 import pytest
 
 from settlement import broker, capabilities, evaluation, experiment, store, trials
-from settlement.common import Command, SettlementError
+from settlement.common import Command, SettlementError, payload_digest
 from settlement.launcher_local import LocalLauncher
 
 from doubles import ScriptedDouble
@@ -41,7 +41,9 @@ def _double():
     fixes = {t["id"]: t["fixed"] for t in TASKS}
     broken = {t["id"]: t["broken"] for t in TASKS}
     competence = {("A", "panel-triangular"): True,
-                  ("B", "panel-triangular"): True, ("B", "panel-batcher"): True}
+                  ("B", "panel-triangular"): True, ("B", "panel-batcher"): True,
+                  ("DEV", "dev-sum"): True, ("DEV", "dev-collect"): True,
+                  ("DEV", "dev-series"): True}
     return ScriptedDouble(competence, fixes, broken)
 
 
@@ -61,8 +63,8 @@ def test_full_simulated_abc(migrated_db, tmp_roots, launcher):
     assert report["simulated"] is True
     assert all(cell["simulated"] for arm in report["arms"].values()
                for cell in arm.values())
-    assert report["verdicts"]["panel-C"]["label"] == "observed-gain"
-    assert report["verdicts"]["panel-C"]["candidate_successes"] == 3
+    assert report["verdicts"]["panel-C"]["label"] == "regression"
+    assert report["verdicts"]["panel-C"]["candidate_successes"] == 0
     assert report["verdicts"]["panel-B"]["label"] == "observed-gain"
     for name in ("transfer-B", "transfer-C"):
         assert report["verdicts"][name]["label"] == "inconclusive"
@@ -104,65 +106,75 @@ def _release_setup(dsn, launcher, env, tag):
     return "s3-eval"
 
 
-def _grade(dsn, launcher, env, tag, ok=True):
-    op = f"{tag}-g"
+def _bound_receipt(dsn, launcher, env, tag, pid, group, arm, ok=True):
+    op = f"{tag}-{arm}-g"
     broker.ensure_operation(dsn, operation_id=op, effect=broker.SANDBOX_EXEC,
                             payload={"profile": "local-process",
                                      "argv": ["true"] if ok else ["false"],
                                      "timeout_ms": 30_000,
                                      "max_output_bytes": 1024},
                             allocation_id=env["allocation_id"])
+    assignment_id = f"{pid}:{arm}:t1"
+    trials.assign(dsn, Command(request_id=f"{tag}-{arm}-a", payload={}),
+                  pid, "t1", group, arm, {})
+    content = {"code": "true" if ok else "false"}
+    evaluation.submit_candidate(
+        dsn, Command(request_id=f"{tag}-{arm}-cand"), assignment_id, content)
+    evaluation.bind_evaluation(
+        dsn, Command(request_id=f"{tag}-{arm}-bind"), assignment_id,
+        candidate_digest=payload_digest(content),
+        evaluator_id="s3-eval", evaluator_version="v1", invocation_ref=op)
     broker.dispatch_operation(dsn, op, launchers={"local-process": launcher})
-    return op
+    evaluation.submit_evaluator_receipt(
+        dsn, Command(request_id=f"{tag}-{arm}-r", payload={}),
+        receipt_id=f"{tag}-{arm}-r", assignment_id=assignment_id,
+        evaluator_id="s3-eval", evaluator_version="v1",
+        invocation_ref=op,
+        result={"outcome": "success" if ok else "failure",
+                "detail": {"task_id": "t1"}})
 
 
-def _compared_protocol(dsn, launcher, env, tag, cand_ok, ref_ok, group="panel"):
+def _compared_protocol(dsn, launcher, env, tag, cand_ok, ref_ok, group="panel",
+                     cand_version=None, ref_version=None):
     pid = f"{tag}-p"
     trials.freeze_protocol(
         dsn, Command(request_id=f"{tag}-frz"), protocol_id=pid,
-        candidate_version=f"{tag}-cand", reference_version=f"{tag}-ref",
+        candidate_version=cand_version or f"{tag}-cand",
+        reference_version=ref_version or f"{tag}-ref",
         evaluator_version="v1",
         task_groups=[{"name": "development", "kind": "development"},
                      {"name": group, "kind": "protected-eval"}],
         budgets={}, metrics=["success_rate"], stopping={}, exclusions=[],
         uncertainty={})
-    trials.assign(dsn, Command(request_id=f"{tag}-a1", payload={}), pid,
-                  "t1", group, "candidate", {})
-    trials.assign(dsn, Command(request_id=f"{tag}-a2", payload={}), pid,
-                  "t1", group, "reference", {})
-    evaluation.submit_evaluator_receipt(
-        dsn, Command(request_id=f"{tag}-r1", payload={}),
-        receipt_id=f"{tag}-r1", assignment_id=f"{pid}:candidate:t1",
-        evaluator_id="s3-eval", evaluator_version="v1",
-        invocation_ref=_grade(dsn, launcher, env, f"{tag}-c", cand_ok),
-        result={"outcome": "success" if cand_ok else "failure"})
-    evaluation.submit_evaluator_receipt(
-        dsn, Command(request_id=f"{tag}-r2", payload={}),
-        receipt_id=f"{tag}-r2", assignment_id=f"{pid}:reference:t1",
-        evaluator_id="s3-eval", evaluator_version="v1",
-        invocation_ref=_grade(dsn, launcher, env, f"{tag}-f", ref_ok),
-        result={"outcome": "success" if ref_ok else "failure"})
+    _bound_receipt(dsn, launcher, env, tag, pid, group, "candidate", cand_ok)
+    _bound_receipt(dsn, launcher, env, tag, pid, group, "reference", ref_ok)
     return pid
 
 
-def _capability_row(dsn, version_id):
+def _capability_row(dsn, version_id, family_scope=""):
     from settlement import db
+    from psycopg.types.json import Json
 
+    scope = {"family": family_scope} if family_scope else {}
     with db.connect(dsn, autocommit=True) as conn:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO capability_versions (id, family) VALUES (%s, %s)"
-                        " ON CONFLICT (id) DO NOTHING", (version_id, "x"))
+            cur.execute("INSERT INTO capability_versions (id, family, applicability,"
+                        " scope) VALUES (%s, %s, %s, %s)"
+                        " ON CONFLICT (id) DO NOTHING",
+                        (version_id, "x", Json(scope), Json(scope)))
 
 
 def test_router_mixed_with_regression(migrated_db, tmp_roots, launcher):
     dsn = migrated_db
     env = seed_env(dsn, "s3r")
     _release_setup(dsn, launcher, env, "s3r")
-    _capability_row(dsn, "base-v1")
-    _capability_row(dsn, "feat-v2")
-    pid_x = _compared_protocol(dsn, launcher, env, "s3rx", True, False)
+    _capability_row(dsn, "base-v1", "Y")
+    _capability_row(dsn, "feat-v2", "X")
+    pid_x = _compared_protocol(dsn, launcher, env, "s3rx", True, False,
+                               cand_version="feat-v2", ref_version="base-v1")
     pid_y = _compared_protocol(dsn, launcher, env, "s3ry", False, True)
-    pid_v1 = _compared_protocol(dsn, launcher, env, "s3rv1", True, False)
+    pid_v1 = _compared_protocol(dsn, launcher, env, "s3rv1", True, False,
+                                cand_version="base-v1", ref_version="base-v0")
     assert trials.verdict(dsn, pid_x)["label"] == "observed-gain"
     assert trials.verdict(dsn, pid_y)["label"] == "regression"
     with pytest.raises(SettlementError, match="regressed"):
@@ -206,7 +218,7 @@ def test_budget_quarantine_cancel_while_dispatched(migrated_db, tmp_path):
 
     dsn = migrated_db
     launcher = LocalLauncher(tmp_path / "runs")
-    env = seed_env(dsn, "s3d", authorized=100)
+    env = seed_env(dsn, "s3d", authorized=1000)
     acquire(dsn, "s3d", "s3d-att", env)
     op = "s3d-op"
     broker.ensure_operation(dsn, operation_id=op, effect=broker.SANDBOX_EXEC,

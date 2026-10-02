@@ -150,20 +150,13 @@ def reveal_allowed(proposal: dict[str, Any]) -> bool:
     return all(m in proposal["committed"] for m in proposal["members"])
 
 
-def next_decision_for(dsn: str, attempt_id: str) -> str:
-    with store.db.connect(dsn) as conn:
-        from psycopg.rows import dict_row
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT lifecycle FROM attempts WHERE id = %s", (attempt_id,))
-            row = cur.fetchone()
-            cur.execute("SELECT id, dispatch_state, reconcile_state, cancel_state FROM operations"
-                        " WHERE attempt_id = %s ORDER BY id", (attempt_id,))
-            ops = [dict(r) for r in cur.fetchall()]
-            conn.commit()
-    if row is None:
-        return "unknown-attempt"
-    if row["lifecycle"] != "running":
-        return f"attempt-{row['lifecycle']}"
+OVERVIEW_ATTEMPT_LIMIT = 50
+OVERVIEW_OPERATION_LIMIT = 200
+
+
+def derive_next_decision(lifecycle: str, ops: list[dict[str, Any]]) -> str:
+    if lifecycle != "running":
+        return f"attempt-{lifecycle}"
     for op in ops:
         if op["reconcile_state"] in ("conflict", "unresolved"):
             return f"reconcile-{op['id']}"
@@ -174,7 +167,38 @@ def next_decision_for(dsn: str, attempt_id: str) -> str:
     return "idle" if not ops else "advance-continuation"
 
 
-def agenda_snapshot(dsn: str, now: datetime | None = None) -> dict[str, Any]:
+def next_decisions_for(dsn: str, attempt_ids: list[str]) -> dict[str, str]:
+    ids = list(attempt_ids)
+    if not ids:
+        return {}
+    with store.db.connect(dsn) as conn:
+        from psycopg.rows import dict_row
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT a.id, a.lifecycle, o.id AS op_id, o.dispatch_state,"
+                        " o.reconcile_state FROM attempts a LEFT JOIN operations o"
+                        " ON o.attempt_id = a.id WHERE a.id = ANY(%s) ORDER BY a.id, o.id",
+                        (ids,))
+            rows = [dict(r) for r in cur.fetchall()]
+            conn.commit()
+    grouped: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        group = grouped.setdefault(row["id"], {"lifecycle": row["lifecycle"], "ops": []})
+        if row["op_id"] is not None:
+            group["ops"].append({"id": row["op_id"],
+                                 "dispatch_state": row["dispatch_state"],
+                                 "reconcile_state": row["reconcile_state"]})
+    out = {aid: "unknown-attempt" for aid in ids}
+    for aid, group in grouped.items():
+        out[aid] = derive_next_decision(group["lifecycle"], group["ops"])
+    return out
+
+
+def next_decision_for(dsn: str, attempt_id: str) -> str:
+    return next_decisions_for(dsn, [attempt_id]).get(attempt_id, "unknown-attempt")
+
+
+def agenda_snapshot(dsn: str, now: datetime | None = None,
+                    attempt_limit: int = OVERVIEW_ATTEMPT_LIMIT) -> dict[str, Any]:
     moment = now or datetime.now(timezone.utc)
     with store.db.connect(dsn) as conn:
         from psycopg.rows import dict_row
@@ -182,12 +206,18 @@ def agenda_snapshot(dsn: str, now: datetime | None = None) -> dict[str, Any]:
             cur.execute("SELECT COUNT(*) AS n FROM investigations WHERE disposition IN"
                         " ('accepted', 'amended')")
             obligations = int(cur.fetchone()["n"])
-            cur.execute("SELECT id, investigation_id, lifecycle FROM attempts ORDER BY id")
+            cur.execute("SELECT COUNT(*) AS n FROM attempts")
+            attempt_total = int(cur.fetchone()["n"])
+            cur.execute("SELECT id, investigation_id, lifecycle FROM attempts"
+                        " ORDER BY (lifecycle IN ('running', 'suspended')) DESC, id LIMIT %s",
+                        (attempt_limit,))
             attempts = [dict(r) for r in cur.fetchall()]
             cur.execute("SELECT id, attempt_id, dispatch_state, reconcile_state FROM operations"
                         " WHERE dispatch_state IN ('dispatching', 'sent', 'unresolved')"
-                        " OR reconcile_state IN ('conflict', 'unresolved') ORDER BY id")
+                        " OR reconcile_state IN ('conflict', 'unresolved') ORDER BY id LIMIT %s",
+                        (OVERVIEW_OPERATION_LIMIT,))
             unresolved = [dict(r) for r in cur.fetchall()]
             conn.commit()
-    return {"obligations": obligations, "attempts": attempts, "unresolved_operations": unresolved,
+    return {"obligations": obligations, "attempts": attempts, "attempt_total": attempt_total,
+            "attempt_limit": attempt_limit, "unresolved_operations": unresolved,
             "capacity": capacity_view(dsn), "due": steward.due_attempts(dsn, moment)}

@@ -4,7 +4,7 @@ You are the implementation engineer for this project. The human has chosen this 
 
 `the configured repository`
 
-Implement the assignment below, verify it, make coherent commits, and push your branch to this origin. Commit and push are authorized; do not ask for confirmation again. Work only in this v2 checkout. No access to the older Agent-Society checkout, another conversation, or uncommitted design files is required.
+Implement the assignment below, verify it, make coherent commits, and push your branch. Commit and push are authorized; do not ask for confirmation again. Work only in this checkout; the committed files provide the assignment and design.
 
 ## 1. Start here
 

@@ -33,6 +33,22 @@ def acquire(dsn, tag, attempt_id, env, allocation_id=None):
         "allocation_id": allocation_id or env["allocation_id"]}))
 
 
+def bind_assignment(dsn, tag, assignment_id, invocation_ref, content=None,
+                    evaluator_id="s3-eval", evaluator_version="v1"):
+    from settlement import evaluation
+    from settlement.common import payload_digest
+
+    body = dict(content or {"code": f"{tag}-candidate"})
+    evaluation.submit_candidate(
+        dsn, Command(request_id=f"{tag}-sub-{assignment_id}", payload={}),
+        assignment_id, body)
+    return evaluation.bind_evaluation(
+        dsn, Command(request_id=f"{tag}-bind-{assignment_id}", payload={}),
+        assignment_id, candidate_digest=payload_digest(body),
+        evaluator_id=evaluator_id, evaluator_version=evaluator_version,
+        invocation_ref=invocation_ref)
+
+
 def stage_method(dsn, staging_root, source_path, entry_name, access_label="public"):
     raw = Path(source_path).read_bytes()
     manifest = {"files": [{"path": entry_name, "kind": "file",

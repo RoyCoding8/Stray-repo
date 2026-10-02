@@ -13,7 +13,7 @@
 <a href="/learning">learning</a>
 </nav>
 {% if gateway_down %}<div id="gateway-banner">models unavailable: inspection and mechanical recovery stay enabled</div>{% endif %}
-<div id="content" hx-get="/" hx-select="#content" hx-trigger="every 60s" hx-target="#content" hx-swap="outerHTML">
+<div id="content" hx-get="{{ poll_url | default('/') }}" hx-select="#content" hx-trigger="every 60s" hx-target="#content" hx-swap="outerHTML">
 {% block content %}{% endblock %}
 </div>
 </body>

@@ -29,6 +29,15 @@ from .common import (
 
 _LIVE = ("running", "suspended")
 
+_LEASE_DEFAULT_TTL_MS = 600_000
+
+
+def _lease_terms(payload: dict) -> tuple[int, datetime]:
+    ttl = int(payload.get("ttl_ms", _LEASE_DEFAULT_TTL_MS))
+    if ttl <= 0:
+        raise SettlementError("ttl_ms must be a positive integer")
+    return ttl, datetime.now(timezone.utc) + timedelta(milliseconds=ttl)
+
 
 def admit_commitment(dsn: str, cmd: Command) -> CommandResult:
     return store.admit_commitment(dsn, cmd)
@@ -136,10 +145,7 @@ def issue_lease(dsn: str, cmd: Command) -> CommandResult:
         seen = cur.fetchone()
         if seen is not None and seen["state"] == "active":
             raise SettlementError(f"attempt {attempt['id']} already holds an active lease")
-        ttl = int(p.get("ttl_ms", 600_000))
-        if ttl <= 0:
-            raise SettlementError("ttl_ms must be a positive integer")
-        expires = datetime.now(timezone.utc) + timedelta(milliseconds=ttl)
+        _, expires = _lease_terms(p)
         cur.execute(
             "INSERT INTO worker_leases (attempt_id, holder, ownership_generation, state, expires_at)"
             " VALUES (%s, %s, %s, 'active', %s)"
@@ -196,10 +202,7 @@ def reacquire_lease(dsn: str, cmd: Command) -> CommandResult:
         lease = cur.fetchone()
         if lease is None or lease["state"] == "active":
             raise SettlementError(f"attempt {attempt['id']} has no retired lease to reacquire")
-        ttl = int(p.get("ttl_ms", 600_000))
-        if ttl <= 0:
-            raise SettlementError("ttl_ms must be a positive integer")
-        expires = datetime.now(timezone.utc) + timedelta(milliseconds=ttl)
+        _, expires = _lease_terms(p)
         cur.execute("UPDATE worker_leases SET holder = %s, ownership_generation = %s, state = 'active',"
                     " issued_at = now(), expires_at = %s, updated_at = now() WHERE attempt_id = %s",
                     (p.get("holder", ""), int(attempt["ownership_generation"]), expires, attempt["id"]))
@@ -249,7 +252,7 @@ def expire_attempt(dsn: str, cmd: Command) -> CommandResult:
     return store.transact(dsn, cmd, _fn)
 
 
-def _delegate(name: str, dsn: str, cmd: Command) -> CommandResult:
+def _delegate(name: str, dsn: str, cmd: Command, *args: Any) -> CommandResult:
     try:
         module = importlib.import_module("settlement.capabilities")
         func = getattr(module, name)
@@ -261,7 +264,11 @@ def _delegate(name: str, dsn: str, cmd: Command) -> CommandResult:
             raise UnavailableDependency(missing)
         return store.transact(dsn, cmd, _missing)
     try:
-        result = func(dsn, cmd)
+        result = func(dsn, cmd, *args)
+    except SettlementError as exc:
+        def _refused(cur, control):
+            raise exc
+        return store.transact(dsn, cmd, _refused)
     except _pgerrors.UndefinedTable as exc:
         def _absent(cur, control):
             raise UnavailableDependency(
@@ -273,7 +280,8 @@ def _delegate(name: str, dsn: str, cmd: Command) -> CommandResult:
 
 
 def quarantine_subject(dsn: str, cmd: Command) -> CommandResult:
-    return _delegate("quarantine", dsn, cmd)
+    version_id = cmd.payload.get("version_id", cmd.payload.get("subject", ""))
+    return _delegate("quarantine", dsn, cmd, version_id, cmd.payload.get("reason", ""))
 
 
 def release_subject(dsn: str, cmd: Command) -> CommandResult:
@@ -282,6 +290,10 @@ def release_subject(dsn: str, cmd: Command) -> CommandResult:
 
 def fulfill_investigation(dsn: str, cmd: Command) -> CommandResult:
     return store.fulfill_investigation(dsn, cmd)
+
+
+def fulfill_investigation_override(dsn: str, cmd: Command) -> CommandResult:
+    return store.fulfill_investigation_override(dsn, cmd)
 
 
 def dispatch_guarded(dsn: str, cmd: Command) -> CommandResult:
