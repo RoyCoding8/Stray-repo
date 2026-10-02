@@ -1,6 +1,6 @@
 # Architecture synthesis: persistent investigations that improve their learning procedure
 
-Status: selected next design, subject to explicit experimental reversal conditions. Design owner: Codex. Source baseline: `7e87d739344d30e3304bd6d96d38c955abcc4bce`. This packet completes the present design pass; it does not claim that the target architecture is implemented or empirically superior.
+Status: selected design, subject to experimental reversal. Design owner: Codex. Sections 1–12 record the 2026-09-22 design and its historical baseline. Section 13 is the current consolidation contract, grounded in the source inventory at `6096442`; the project ledger records subsequent implementation and verification. This document does not claim empirical superiority.
 
 Read [research and its limits](RSI-RESEARCH-2026-09-22.md), then the [worker assignment](../HISTORY.md#worker-investigation-learning-02). Historical experiments retain their original contracts and evidence.
 
@@ -230,4 +230,125 @@ Three ranked uncertainties remain: whether the model can propose useful executab
 
 ## 12. Review trail
 
-The initial [Jev request](../../reports/jev/s09-synthesis-plan-request.json) and [response](../../reports/jev/s09-synthesis-plan-response.json) supported alternative B and identified common action semantics as the largest missing contract, with private-state activation next. Sections 5 and 8 resolve those contracts explicitly. Jev is a typed second opinion, not independent proof or authority to spend. The final challenge and disposition are recorded in the synthesis worklist.
+The historical review cited `reports/jev/s09-synthesis-plan-request.json` and
+`reports/jev/s09-synthesis-plan-response.json`, which are no longer in this
+checkout; consult [history](../HISTORY.md) for archived material. Its recorded
+opinion supported alternative B and identified common action semantics and
+private-state activation as gaps. This was a second opinion, not execution
+evidence or authority to spend. Current decisions are in section 13.
+
+## 13. Current consolidation contract — 2026-09-30
+
+The [inventory](../../reports/PROJECT-INVENTORY.md) replaces historical completion
+claims above. The architectural choice remains persistent investigations with
+executable learning behavior. The implementation question is how to converge
+the existing paths without creating another cognitive owner.
+
+### Ownership and alternatives
+
+Keep AD01's existing trajectory as the investigation owner for this prototype.
+It owns accepted decisions, private-state continuation, construction, retention
+and revision activation. `settlement` owns external authority, operation identity,
+dispatch, receipts and accounting. A study schedules initial opportunities and
+assessment; it must not secretly choose the treatment's subsequent actions.
+
+The alternative is to promote `settlement.loop.run_boundary` into the investigation
+owner and port AD01's semantics into it. That function currently has test callers,
+but no production callers. Its packet and effect facilities are reusable; replacing
+the working trajectory with it now would require another migration of retention,
+assessment, policy modes and version activation. Use the existing trajectory and
+converge its effect boundaries instead. Later move domain-neutral ownership into
+the core package by migrating callers and deleting the old implementation, if
+packaging warrants it. Do not preserve two production owners.
+
+This choice does not require every historical team, memory, agenda and
+representation experiment to share a controller. Historical instruments remain
+controls; the selected prototype needs one authoritative path.
+
+The JSON `frontier` currently owns a separate decision/authority projection.
+Reuse its useful frontier and permitted-view semantics, then migrate production
+ownership into the selected durable trajectory. Keep its frozen experiments as
+instruments. `policy_action` already provides a representation contract, but a
+bijective name map is insufficient: demonstrate that translated actions admit
+the same effects and produce the same observations, refusal and resource use.
+Do not force operational checks and learner-revision proposals to become the
+same operation merely to preserve a fixed enum count.
+
+### The causal unit
+
+An investigation owns a mission, open questions, attributable observations,
+retained artifacts, active program version, private state and pending operations.
+These are projections of existing records, not a request for new services or
+eight new tables. Operational and improvement programs use the existing STEP
+ABI and bounded executor. The host supplies purpose, permitted view and authority;
+the program chooses the next admissible action.
+
+The required chain is:
+
+`permitted experience -> executable decision -> admitted operation -> observation
+-> checked artifact -> retention/binding -> fresh-process use`.
+
+For an improvement claim add:
+
+`inherited acquisition-procedure change -> fresh acquisition episodes -> produced
+descendants -> independent assessment of those descendants`.
+
+Every arrow needs a behavior check. A digest proves byte identity only. A useful
+wrapper is still a wrapper. A program that changes evidence selection can be a
+learner revision even when its measured effect is zero; eligibility concerns what
+changed, whereas benefit concerns what that change achieved.
+
+Model construction is a leaf effect through the broker. Source-policy execution
+must use the bounded child, including loading and fresh use. Method release identity
+and policy identity are separate: a pinned method does not supply a missing policy.
+Missing results remain attributable unknowns. Replaying an existing operation must
+not issue another model call or renew its allowance.
+
+### What the next study must distinguish
+
+Measure operational acquisition, experience effects, retention/transfer,
+autonomous selection and learner revision separately. For learner revision let
+`Acquire(v, h, b)` denote the acquisition procedure implemented by version `v`
+under permitted history `h` and finite authority `b`. Assess the descendants
+produced by parent and revised versions on fresh tasks; do not substitute the
+reviser's own task score. Match opportunity and account for construction, policy
+compute, observations, repair and use. A positive result is scoped to the tested
+tasks and horizon, not evidence of unlimited recursive improvement.
+
+Use at least two genuinely different task structures, rather than relabeling
+reducers as new domains: function identification from observations and software
+diagnosis/repair through interventions are suitable first targets. Existing
+ordering/reduction worlds can remain regressions and transfer instruments.
+Check headroom before model acquisition with an independently authored effectful
+control, a competent deployable learner and a disconnect control. A perfect
+baseline or unreachable gain makes a benefit study uninformative; redesign or
+limit that question before freezing assessment. An oracle using held-out answers
+is diagnostic only.
+
+The fresh offline evidence diagnostic shows an equal-query difference between
+informed and blind selection on disjoint Boolean tasks. It identifies a measurable
+mechanism, not model acquisition, learner revision or general transfer. The next
+learner must actually inherit executable selection behavior; merely running the
+authored informed control does not satisfy that condition.
+
+### Stage boundaries and stopping
+
+Stage 9 closes when the selected ownership and causal contracts are implemented,
+the supported comparisons are completed under informative frozen protocols, and
+each architectural mechanism has a keep/change/remove disposition. Valid nulls
+are allowed. Missing arms, uninterpretable controls and unrun comparisons are
+recorded explicitly rather than counted as closure.
+
+Stage 10 is the connected prototype: persistent mission and frontier, governed
+experience/context, acquired executable methods, fresh-process reuse, an inherited
+improvement procedure, and restart-safe operation under one owner across the chosen
+domains. Optional teams and background replay use the same authority and evidence
+path; add them when a demonstrated dependency requires them. A static study driver
+with connected components is insufficient. Positive learner advantage remains a
+separate empirical verdict.
+
+Deployment containment, supported installation and recovery qualification belong
+to stages 11–12. A bounded subprocess is not a containment claim. Finish the
+prospective matrix, diagnose at most three architecture-relevant bottlenecks and
+stop; neither indefinite repair loops nor a search for a favorable result is an
+acceptance condition.

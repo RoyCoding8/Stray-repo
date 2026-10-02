@@ -28,20 +28,11 @@ def _tasks(value: str | None) -> list | None:
 
 
 def _use_policy(args):
-    """Compile the policy the use phase must be governed by, or None.
-
-    A callable, not source text. `run_use` calls its policy, so a string
-    raises at the call and is recorded as a policy that failed rather than
-    one that governed, which is indistinguishable from a broken policy.
-    Absent a policy the phase refuses, which is deliberate: a use record with
-    no policy behind it is not a measurement of anything.
-    """
-    from experiments.ad01 import policy_step
+    """Load source bytes for the bounded use policy, or return ``None``."""
     path = getattr(args, "policy_source", "") or ""
     if not path:
         return None
-    source = Path(path).read_text(encoding="utf-8")
-    return policy_step.compile_step(source, origin="<cli-policy>")
+    return Path(path).read_text(encoding="utf-8")
 
 
 def _refuse(exc: BaseException) -> int:
@@ -250,7 +241,7 @@ def main(argv: list | None = None) -> int:
             records = trajectory.run_use(
                 repertoire, args.world, args.arm,
                 _tasks(args.tasks) or [],
-                {}, policy=_use_policy(args), dsn=args.dsn,
+                {}, policy_source=_use_policy(args), dsn=args.dsn,
                 allocation_id=args.allocation_id,
                 release_id=args.release)
         except Exception as exc:

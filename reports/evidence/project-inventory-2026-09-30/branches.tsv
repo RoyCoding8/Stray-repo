@@ -1,10 +1,10 @@
 ref	commit	retained_ancestor_anchors
 backup/pre-squash-067a1fa	067a1faddd40c21356097134c67235dfca41f5bd	backup/pre-squash-067a1fa
 codex/ad01-behavior-review	067a1faddd40c21356097134c67235dfca41f5bd	backup/pre-squash-067a1fa
-codex/architecture-handoff	c4ac2ffcbadfb924e6e36e800d732078dfc3fc81	
+codex/architecture-handoff	c4ac2ffcbadfb924e6e36e800d732078dfc3fc81	none-of-listed-anchors
 codex/development-02-live-assessment	913bda791bd0fb3cf87c568fb57daea17fe4a240	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
-codex/engineering-assessment-01	07c8cb79a6570a3075378e83e7315a8bb5ff7eb5	
-codex/executable-coordination-02-review	8a27a55d1adc4628e5070e6c59da279406eb90b0	
+codex/engineering-assessment-01	07c8cb79a6570a3075378e83e7315a8bb5ff7eb5	none-of-listed-anchors
+codex/executable-coordination-02-review	8a27a55d1adc4628e5070e6c59da279406eb90b0	none-of-listed-anchors
 codex/implementation-development-01	60964423455dcecb076745b3bcd85db0299dfbc5	HEAD
 codex/investigation-01-completion-review	77b4c62d3da5dbc6a20e74ba688a4cda13392f8b	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/investigation-01-review	cd7e15640fc2478f14234176197b5256815d618b	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
@@ -12,8 +12,8 @@ codex/investigation-learning-02-acquisition-review	660a365ece07aa3c95477905f1439
 codex/investigation-learning-02-review	4027814eb2f727a508d6a14a6f07ec71762f6f38	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/investigation-learning-02-route-audit	5e0a0ca8974752cb6e7e03bfb6b612f46b684ba8	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/investigation-transition-review	123c21138b0f15c39303805abf1ca2d1addd7fec	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
-codex/review-s0-s3-01	4596e9e3824cae32eb5495d157e90383f0e94a49	
-codex/review-s0-s3-02	3268620cbe253b72b54fae4fda8f0869d7dc71aa	
+codex/review-s0-s3-01	4596e9e3824cae32eb5495d157e90383f0e94a49	none-of-listed-anchors
+codex/review-s0-s3-02	3268620cbe253b72b54fae4fda8f0869d7dc71aa	none-of-listed-anchors
 codex/stage-09-architecture-synthesis	beb4c29fdec90ba7084ef991bfe82218ae3d191e	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/stage-09-complete-handoff	9984baf6fbf516b5db0a9ae13b7b2c55ad784815	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/stage-09-consolidation-review	ef36a27de948d23790a6a6f2bb6d1ee167f38ddc	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
@@ -22,7 +22,7 @@ codex/stage-09-local-completion	8e05c148add0b59aeb29d486eeed79a234700306	rescue/
 codex/stage-09-opus-completion	7e87d739344d30e3304bd6d96d38c955abcc4bce	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/stage-09-review	0e142be20c9567c4252b267283b22d4547bbdca6	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/stage09-clean-handoff	dfbd557f7c38fd6722eefa1b14aeb447479d24ae	rescue/debloat-work,rescue/debloat-squash
-codex/stage09-expanded-study-handoff	7ebbb223af39c6d9ca1d6706c7fd96618fcf9ae9	
+codex/stage09-expanded-study-handoff	7ebbb223af39c6d9ca1d6706c7fd96618fcf9ae9	none-of-listed-anchors
 codex/stage09-new-worker-handoff	2d12d566064c79ca6245121e08dcb203b7e69dd6	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/stage09-research-checkpoint	293a120685828b8e350486a1ccc16bf9615f2d5f	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 codex/stage09-state-inventory	60964423455dcecb076745b3bcd85db0299dfbc5	HEAD
@@ -34,26 +34,26 @@ wt/w0-archived-check	5b1479e5a2c9f63ac3bae89ba374caa82780035e	rescue/debloat-wor
 wt/w0-host-unify	52d398d680f9979615991699b91e002c78ced08e	rescue/debloat-work,rescue/debloat-squash
 wt/w0-launcher-escape	db44622ff0597607cb5146f9fe73c386a0d5b1de	rescue/debloat-work,rescue/debloat-squash
 wt/w0-ledger	edee2b66b81ff9831b1707c0f8a3182541b7d84a	rescue/debloat-work,rescue/debloat-squash
-wt/w0-linux-host	72f48b5ec15a099434fa2857b4851f69f67e0a01	
+wt/w0-linux-host	72f48b5ec15a099434fa2857b4851f69f67e0a01	none-of-listed-anchors
 wt/w0-relay	01e72dcaa7c6443a8fae409c7be46cd7f1bc6ab3	rescue/debloat-work,rescue/debloat-squash
 wt/w1-e1-r3	7de9891ada5a7bd1562bb6744a6aaee9c6ff04d5	rescue/debloat-work,rescue/debloat-squash
-wt/w1-e1-run	ad5e9cd784b857cd0b9dd878d896886c240cb26c	
+wt/w1-e1-run	ad5e9cd784b857cd0b9dd878d896886c240cb26c	none-of-listed-anchors
 wt/w1-live-preflight	624847286613ba42cead12940830e669117854c3	rescue/debloat-work,rescue/debloat-squash
 wt/w1-responses-api	3e337289d6b524dcb8b0591bd8100796ea16bd20	rescue/debloat-work,rescue/debloat-squash
 wt/w1-route-contract	2fab0dfad7a582757b11b3d24090a47c1ac37abf	rescue/debloat-work,rescue/debloat-squash
 wt/w1-swe-executor	13d78a5daf0c7c1da3001efdbd213413b77acf96	rescue/debloat-work,rescue/debloat-squash
 wt/w2-e2-contrast	f6f4a2d8ea34881ffa1fb3908dc95f253a09d374	rescue/debloat-work,rescue/debloat-squash
 wt/w2-e2-metric	d42049c291d6978c0b2d47f77595d677f1baad61	rescue/debloat-work,rescue/debloat-squash
-wt/w2-e2-rerun	04ef9035096423728ab1463f427571f3a9a356ab	
+wt/w2-e2-rerun	04ef9035096423728ab1463f427571f3a9a356ab	none-of-listed-anchors
 wt/w2-e2-retention	a0edeaf03a6528c1b321b221412af05010a819bb	rescue/debloat-work,rescue/debloat-squash
 wt/w3-reproduce	c40388e745f6d10c30e7f78d9b37d34ce7ae1c78	rescue/debloat-work,rescue/debloat-squash
 wt/w4-leakage	01e72dcaa7c6443a8fae409c7be46cd7f1bc6ab3	rescue/debloat-work,rescue/debloat-squash
-wt/w5-forgery	405101d02d2ac53ba04fce2e4148df53b9e484fa	
+wt/w5-forgery	405101d02d2ac53ba04fce2e4148df53b9e484fa	none-of-listed-anchors
 origin/codex/ad01-behavior-review	4e36a9a9dd3b664736bc2a4ba5b6bbbed3f00dd9	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/ag01-demo	24a447b52b9394b92239e9b26335c3ac1d99c619	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/ag01-exp	3b24332f097867050158197589313f4dbb382aad	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/ag01-policy	27b9f0d4942b0cf9a28e143b0c8cb78021241f3d	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
-origin/codex/architecture-handoff	c4ac2ffcbadfb924e6e36e800d732078dfc3fc81	
+origin/codex/architecture-handoff	c4ac2ffcbadfb924e6e36e800d732078dfc3fc81	none-of-listed-anchors
 origin/codex/cb01-acquire	8bbb19775e5681969b40697887f95e8495137818	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/cb01-exec	1345275dd4f45b3cc159dbec2d002f118bccda5e	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/cb01-source	5d79248482ab85b1170d806d2c81a46990518794	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
@@ -67,7 +67,7 @@ origin/codex/eng-invb	71d34a4bc706b8c3189fb96dabc93384fe6eac4a	backup/pre-squash
 origin/codex/eng-invc	847c39d39212ec330098f2c3c0a952e42f546c82	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/eng-prov	c6b6fa12fb9e430a9aa5baea9a99e7f1c99b836b	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/eng-solv	eaa93b07ed92028e8071e05fe7915213dcdd4047	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
-origin/codex/engineering-assessment-01	07c8cb79a6570a3075378e83e7315a8bb5ff7eb5	
+origin/codex/engineering-assessment-01	07c8cb79a6570a3075378e83e7315a8bb5ff7eb5	none-of-listed-anchors
 origin/codex/executable-coordination-02-review	d2d89240dd83e03c0ba60e42b597a5981e58094d	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/implementation-agenda-01	051811fd59ab6d1de0f85a1be8849e94b638ebf5	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/implementation-cognitive-batch-01	cb8a62a2ae1508e45ff4883f3c997791914822e1	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
@@ -89,15 +89,15 @@ origin/codex/investigation-learning-02-acquisition-review	660a365ece07aa3c954779
 origin/codex/investigation-learning-02-review	4027814eb2f727a508d6a14a6f07ec71762f6f38	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/investigation-learning-02-route-audit	5e0a0ca8974752cb6e7e03bfb6b612f46b684ba8	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/investigation-transition-review	123c21138b0f15c39303805abf1ca2d1addd7fec	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
-origin/codex/review-s0-s3-01	4596e9e3824cae32eb5495d157e90383f0e94a49	
-origin/codex/review-s0-s3-02	3268620cbe253b72b54fae4fda8f0869d7dc71aa	
-origin/codex/review01-r01-admit	0e6373545a6dab02249d806da49c33d1c380c11e	
-origin/codex/review01-r01-deadline-ui	fd65c845e01e01a77c4e41fb17dc96ce07b67b92	
-origin/codex/review01-r01-eval-b	240e0749d20db725fcb5a5d93822b38dd8e5c5a4	
-origin/codex/review01-r01-eval-c	cb9ceca783560d014a43f0cf59af1de7ab0d1dd1	
-origin/codex/review01-r01-evalexp	67383159b16ae734e19325b647a6697f1b168919	
-origin/codex/review01-r01-evidence	aefebbd67683c39eaa2945b6c0fe4d0c2999b95e	
-origin/codex/review01-r01-runsc	084fc1a1a378adb6c1b3bb5467c84e235e750bfa	
+origin/codex/review-s0-s3-01	4596e9e3824cae32eb5495d157e90383f0e94a49	none-of-listed-anchors
+origin/codex/review-s0-s3-02	3268620cbe253b72b54fae4fda8f0869d7dc71aa	none-of-listed-anchors
+origin/codex/review01-r01-admit	0e6373545a6dab02249d806da49c33d1c380c11e	none-of-listed-anchors
+origin/codex/review01-r01-deadline-ui	fd65c845e01e01a77c4e41fb17dc96ce07b67b92	none-of-listed-anchors
+origin/codex/review01-r01-eval-b	240e0749d20db725fcb5a5d93822b38dd8e5c5a4	none-of-listed-anchors
+origin/codex/review01-r01-eval-c	cb9ceca783560d014a43f0cf59af1de7ab0d1dd1	none-of-listed-anchors
+origin/codex/review01-r01-evalexp	67383159b16ae734e19325b647a6697f1b168919	none-of-listed-anchors
+origin/codex/review01-r01-evidence	aefebbd67683c39eaa2945b6c0fe4d0c2999b95e	none-of-listed-anchors
+origin/codex/review01-r01-runsc	084fc1a1a378adb6c1b3bb5467c84e235e750bfa	none-of-listed-anchors
 origin/codex/stage-09-architecture-synthesis	beb4c29fdec90ba7084ef991bfe82218ae3d191e	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/stage-09-complete-handoff	9984baf6fbf516b5db0a9ae13b7b2c55ad784815	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/stage-09-consolidation-review	ef36a27de948d23790a6a6f2bb6d1ee167f38ddc	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
@@ -106,15 +106,15 @@ origin/codex/stage-09-local-completion	8e05c148add0b59aeb29d486eeed79a234700306	
 origin/codex/stage-09-opus-completion	7e87d739344d30e3304bd6d96d38c955abcc4bce	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/stage-09-review	0e142be20c9567c4252b267283b22d4547bbdca6	rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/codex/stage09-clean-handoff	dfbd557f7c38fd6722eefa1b14aeb447479d24ae	rescue/debloat-work,rescue/debloat-squash
-origin/codex/stage09-expanded-study-handoff	7ebbb223af39c6d9ca1d6706c7fd96618fcf9ae9	
+origin/codex/stage09-expanded-study-handoff	7ebbb223af39c6d9ca1d6706c7fd96618fcf9ae9	none-of-listed-anchors
 origin/codex/stage09-transfer-review	d0a95eb4f51fde605fc12bfb1f91140ebf8cd657	rescue/debloat-work,rescue/debloat-squash
-origin/codex/task-s0-env	5697bc9ffdcc3e90c667695c19628de1216fad12	
-origin/codex/task-s0-validate	164b964363dfef535f89bf27f181c77e8c51ac50	
-origin/codex/task-s1-broker	f0a2cfc2a2340836a9e271f886e911ec14bedd4a	
-origin/codex/task-s1-operator	09683cc8d06cab153b27883d740614bb1f541384	
-origin/codex/task-s1-state	41b0767d8f90c958a7e211e87bdf67a5eb8f6442	
-origin/codex/task-s2-evidence	643814b1c70a7068f1317b2f22bc169519f5834a	
-origin/codex/task-s3-learning	86ad2cb5e02021dc8106b4e3671d4d9b053451cc	
+origin/codex/task-s0-env	5697bc9ffdcc3e90c667695c19628de1216fad12	none-of-listed-anchors
+origin/codex/task-s0-validate	164b964363dfef535f89bf27f181c77e8c51ac50	none-of-listed-anchors
+origin/codex/task-s1-broker	f0a2cfc2a2340836a9e271f886e911ec14bedd4a	none-of-listed-anchors
+origin/codex/task-s1-operator	09683cc8d06cab153b27883d740614bb1f541384	none-of-listed-anchors
+origin/codex/task-s1-state	41b0767d8f90c958a7e211e87bdf67a5eb8f6442	none-of-listed-anchors
+origin/codex/task-s2-evidence	643814b1c70a7068f1317b2f22bc169519f5834a	none-of-listed-anchors
+origin/codex/task-s3-learning	86ad2cb5e02021dc8106b4e3671d4d9b053451cc	none-of-listed-anchors
 origin/ec02-lane-D	da9ddad6e09b369074cebf092c61e81efa694ab6	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/ec02-lane-E	905213b099f0e1d206f13bcca44c97139766195c	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02
 origin/ec02-lane-L	76b011ac2737713c3ac86058b171f3e4c976ec19	backup/pre-squash-067a1fa,rescue/debloat-work,rescue/debloat-squash,origin/codex/implementation-investigation-learning-02

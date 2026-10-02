@@ -42,7 +42,15 @@ _FORBIDDEN_CALLS = frozenset([
 
 
 class MethodExecutionError(Exception):
-    pass
+    def __init__(self, message: str, *, operation_id: str | None = None,
+                 operation_current: bool = False):
+        super().__init__(message)
+        # The trajectory may report an operation only when this executor
+        # proved that the durable row belongs to the current authority and
+        # payload.  A row with the same deterministic id is not proof: it
+        # may be a replay conflict from another allocation or source.
+        self.operation_id = operation_id
+        self.operation_current = bool(operation_current)
 
 
 CHILD_CONTRACT_VERSION = "ad01-child-v1"
@@ -928,7 +936,8 @@ def _durable_operation(dsn: str, operation_id: str) -> dict | None:
     from settlement import db
     with db.connect(dsn) as conn:
         row = conn.execute(
-            "SELECT dispatch_state, reconcile_state, settled, payload"
+            "SELECT dispatch_state, reconcile_state, settled, allocation_id,"
+            " payload_digest, payload"
             " FROM operations WHERE id = %s",
             (operation_id,)).fetchone()
     if row is None:
@@ -937,11 +946,14 @@ def _durable_operation(dsn: str, operation_id: str) -> dict | None:
         state = row.get("dispatch_state")
         reconcile = row.get("reconcile_state")
         settled = row.get("settled")
+        allocation_id = row.get("allocation_id")
+        stored_payload_digest = row.get("payload_digest")
         payload = row.get("payload")
     else:
-        state, reconcile, settled, payload = row
+        state, reconcile, settled, allocation_id, stored_payload_digest, payload = row
     return {"dispatch_state": state, "reconcile_state": reconcile,
-            "settled": bool(settled), "payload": payload or {}}
+            "settled": bool(settled), "allocation_id": allocation_id,
+            "payload_digest": stored_payload_digest, "payload": payload or {}}
 
 
 def _reclaimable(state: str | None, receipted: bool) -> bool:
@@ -963,16 +975,43 @@ def _reclaimable(state: str | None, receipted: bool) -> bool:
     return state == "dispatching" and not receipted
 
 
-def _durable_receipt(dsn: str, operation_id: str) -> dict | None:
+def _durable_receipt(dsn: str, operation_id: str, *,
+                     expected_payload: dict | None = None,
+                     allocation_id: str | None = None,
+                     current_out: dict | None = None) -> dict | None:
     from settlement import db
     operation = _durable_operation(dsn, operation_id)
+    stored_body = operation.get("payload") if operation else None
+    expected_clean = (broker.validate_effect(broker.SANDBOX_EXEC,
+                                              expected_payload)
+                      if expected_payload is not None else None)
+    expected_body_digest = (payload_digest({
+        "effect": broker.SANDBOX_EXEC, "payload": expected_clean,
+        "retries": 0,
+        "budget_kind": broker.exposure_schedule(
+            broker.SANDBOX_EXEC, expected_clean, 0)[1]})
+        if expected_clean is not None else None)
+    payload_matches = expected_clean is None or (
+        isinstance(stored_body, dict)
+        and stored_body.get("effect") == broker.SANDBOX_EXEC
+        and stored_body.get("payload") == expected_clean
+        and operation.get("payload_digest") == expected_body_digest)
+    current = operation is not None \
+        and (allocation_id is None
+             or operation.get("allocation_id") == allocation_id) \
+        and payload_matches
+    if current_out is not None:
+        current_out["current"] = current
+
+    def refused(message: str, *, attributable: bool = True) -> None:
+        raise MethodExecutionError(message, operation_id=operation_id,
+                                   operation_current=(current and attributable))
+
     if operation is None:
-        raise MethodExecutionError(
-            "refused: durable child operation is missing")
+        refused("refused: durable child operation is missing")
     if (operation.get("reconcile_state") in ("conflict", "unresolved")
             or operation.get("dispatch_state") == "unresolved"):
-        raise MethodExecutionError(
-            "refused: durable child operation is conflicted or unresolved")
+        refused("refused: durable child operation is conflicted or unresolved")
     state = operation.get("dispatch_state")
     with db.connect(dsn) as conn:
         cursor = conn.execute(
@@ -986,13 +1025,11 @@ def _durable_receipt(dsn: str, operation_id: str) -> dict | None:
             rows = [] if row is None else [row]
     if not operation.get("settled") and state != "prepared" \
             and not _reclaimable(state, bool(rows)):
-        raise MethodExecutionError(
-            "refused: durable child operation is conflicted or unresolved")
+        refused("refused: durable child operation is conflicted or unresolved")
     if not rows:
         return None
     if state == "prepared":
-        raise MethodExecutionError(
-            "refused: durable receipt exists for undispatched child operation")
+        refused("refused: durable receipt exists for undispatched child operation")
     receipts = []
     for row in rows:
         if isinstance(row, dict):
@@ -1003,38 +1040,41 @@ def _durable_receipt(dsn: str, operation_id: str) -> dict | None:
         else:
             identity, outcome, content, stored_digest = row
         if not isinstance(identity, str) or not identity:
-            raise MethodExecutionError(
-                "refused: durable child receipt identity is missing")
+            refused("refused: durable child receipt identity is missing")
         if not isinstance(content, dict):
-            raise MethodExecutionError(
-                "refused: durable child receipt content is not an object")
+            refused("refused: durable child receipt content is not an object")
         expected_digest = payload_digest(content)
         if stored_digest != expected_digest:
-            raise MethodExecutionError(
-                "refused: durable child receipt content digest mismatch")
+            refused("refused: durable child receipt content digest mismatch")
         receipt = (str(identity), str(outcome), content, expected_digest)
         if receipt not in receipts:
             receipts.append(receipt)
     if len(receipts) != 1:
-        raise MethodExecutionError(
-            "refused: durable child operation has conflicting receipts")
+        refused("refused: durable child operation has conflicting receipts")
     identity, outcome, content, content_digest = receipts[0]
     if outcome != "success":
-        raise MethodExecutionError(
-            "refused: durable child operation has no successful receipt")
+        refused("refused: durable child operation has no successful receipt",
+                attributable=bool(operation.get("settled"))
+                and state != "prepared")
     return {**content, "outcome": outcome, "receipt_identity": identity,
             "content_digest": content_digest, "_operation": operation}
 
 
 def _result(receipt: dict | None, member: dict, operation_id: str | None,
-            source_digest: str) -> dict:
+            source_digest: str, *, operation_current: bool | None = None) -> dict:
     data = (receipt or {}).get("data", {})
+    current = (isinstance((receipt or {}).get("_operation"), dict)
+               if operation_current is None else operation_current)
     if receipt is None or receipt.get("outcome") != "success":
         raise MethodExecutionError("%s: %s" % (
-            "timeout" if data.get("timed_out") else "member-failed", data))
+            "timeout" if data.get("timed_out") else "member-failed", data),
+            operation_id=operation_id,
+            operation_current=current)
     output = data.get("worker", {}).get("data", {})
     if not isinstance(output.get("candidate"), dict):
-        raise MethodExecutionError("member-failed: malformed-result")
+        raise MethodExecutionError("member-failed: malformed-result",
+                                   operation_id=operation_id,
+                                   operation_current=current)
     return {"candidate": output["candidate"], "queries": output.get("queries", 0),
             "operation_id": operation_id,
             "operation_ids": [operation_id] if operation_id else [],
@@ -1127,9 +1167,13 @@ def run_member_out_of_process(member: dict, task: dict, *,
                 dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
                 payload=payload, allocation_id=allocation_id)
             if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-                raise MethodExecutionError("refused: %s" % ensured.detail)
+                raise MethodExecutionError(
+                    "refused: %s" % ensured.detail,
+                    operation_id=operation_id, operation_current=False)
             _verify_operation_provenance(work, provenance)
-            receipt = _durable_receipt(dsn, operation_id)
+            receipt = _durable_receipt(
+                dsn, operation_id, expected_payload=payload,
+                allocation_id=allocation_id)
             if receipt is not None:
                 _verify_durable_payload(receipt, payload)
                 executed_digest = _verified_source_digest(
@@ -1190,17 +1234,25 @@ def run_member_out_of_process(member: dict, task: dict, *,
             finally:
                 stopped.set()
                 host.join()
-        receipt = (_durable_receipt(dsn, operation_id)
+        receipt_status = {}
+        receipt = (_durable_receipt(
+                       dsn, operation_id, expected_payload=payload,
+                       allocation_id=allocation_id,
+                       current_out=receipt_status)
                    if dsn is not None else launcher.read_result(operation_id))
         if errors:
-            raise MethodExecutionError("bad-frame: %s" % errors[0])
+            raise MethodExecutionError(
+                "bad-frame: %s" % errors[0],
+                operation_id=operation_id if dsn is not None else None,
+                operation_current=receipt_status.get("current", False))
         _verify_operation_provenance(work, provenance)
         executed_digest = _verified_source_digest(
             work / "member.py", requested_digest)
         if dsn is not None:
             _verify_durable_payload(receipt, payload)
         result = _result(
-            receipt, member, operation_id if dsn else None, executed_digest)
+            receipt, member, operation_id if dsn else None, executed_digest,
+            operation_current=receipt_status.get("current", False))
         result.update(_result_provenance(
             member["method_source"], input_data, payload, provenance))
         if dsn is None:
@@ -1292,22 +1344,30 @@ except Exception as exc:
 
 
 def _step_result(receipt: dict | None, operation_id: str | None, *,
-                 durable_operation_id: str | None = None) -> dict:
+                 durable_operation_id: str | None = None,
+                 operation_current: bool | None = None) -> dict:
     from . import policy_step
     data = (receipt or {}).get("data", {})
+    current = (isinstance((receipt or {}).get("_operation"), dict)
+               if operation_current is None else operation_current)
     if receipt is None or receipt.get("outcome") != "success":
         raise MethodExecutionError("%s: %s" % (
-            "timeout" if data.get("timed_out") else "step-failed", data))
+            "timeout" if data.get("timed_out") else "step-failed", data),
+            operation_id=operation_id,
+            operation_current=current)
     output = data.get("worker", {}).get("data", {})
     if not isinstance(output.get("action"), dict) \
             or not isinstance(output.get("state"), dict):
         raise MethodExecutionError(
-            "step-failed: malformed-step-envelope")
+            "step-failed: malformed-step-envelope", operation_id=operation_id,
+            operation_current=current)
     try:
         policy_step.validate_step_result(
             {"action": output["action"], "state": output["state"]})
     except ValueError as exc:
-        raise MethodExecutionError("step-failed: refused: %s" % exc)
+        raise MethodExecutionError("step-failed: refused: %s" % exc,
+                                   operation_id=operation_id,
+                                   operation_current=current)
     return {"action": output["action"], "state": output["state"],
             "operation_id": operation_id,
             "operation_ids": ([durable_operation_id]
@@ -1408,14 +1468,19 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
                    "cpu_seconds": cpu_seconds,
                    "memory_bytes": memory_bytes}
         receipt_identity = None
+        receipt_status = {}
         if dsn is not None:
             ensured = broker.ensure_operation(
                 dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
                 payload=payload, allocation_id=allocation_id)
             if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-                raise MethodExecutionError("refused: %s" % ensured.detail)
+                raise MethodExecutionError(
+                    "refused: %s" % ensured.detail,
+                    operation_id=operation_id, operation_current=False)
             _verify_operation_provenance(work, provenance)
-            raw_receipt = _durable_receipt(dsn, operation_id)
+            raw_receipt = _durable_receipt(
+                dsn, operation_id, expected_payload=payload,
+                allocation_id=allocation_id)
             if raw_receipt is not None:
                 _verify_durable_payload(raw_receipt, payload)
                 receipt_identity = str(raw_receipt["receipt_identity"])
@@ -1440,7 +1505,9 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
                 }
             _verify_operation_provenance(work, provenance)
             broker.dispatch_operation(dsn, operation_id, launchers={PROFILE: launcher})
-            receipt = _durable_receipt(dsn, operation_id)
+            receipt = _durable_receipt(
+                dsn, operation_id, expected_payload=payload,
+                allocation_id=allocation_id, current_out=receipt_status)
         else:
             _verify_operation_provenance(work, provenance)
             launched = launcher.dispatch(broker.BrokerOp(
@@ -1457,10 +1524,14 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
         if not receipt_identity and isinstance(receipt, dict):
             receipt_identity = receipt.get("receipt_identity")
         if not receipt_identity:
-            raise MethodExecutionError("refused: child receipt identity is missing")
+            raise MethodExecutionError(
+                "refused: child receipt identity is missing",
+                operation_id=operation_id if dsn is not None else None,
+                operation_current=receipt_status.get("current", False))
         result = _step_result(
             receipt, operation_id,
-            durable_operation_id=operation_id if dsn is not None else None)
+            durable_operation_id=operation_id if dsn is not None else None,
+            operation_current=receipt_status.get("current", False))
         return {
             **result,
             "source_digest": executed_digest,

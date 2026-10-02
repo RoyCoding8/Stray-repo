@@ -1365,8 +1365,14 @@ def _run_member(member: dict, task: dict, *,
 class _UsePolicyRefused(Exception):
     """Never downgraded to a method fallback."""
 
+    def __init__(self, reason: str, *, operation_ids: list | None = None):
+        super().__init__(reason)
+        self.operation_ids = list(operation_ids or [])
 
-def _use_policy_action(policy, view: dict, state: dict) -> dict:
+
+def _use_policy_action(policy, view: dict, state: dict, *,
+                       policy_record: dict | None = None,
+                       execution: dict | None = None) -> dict:
     """The method identity lives in the admitted action, not in the
     repertoire, so an episode with no action in hand is not one this can
     build. No path out of here supplies a method of its own. A policy that
@@ -1375,10 +1381,26 @@ def _use_policy_action(policy, view: dict, state: dict) -> dict:
     an episode the way a missing one must not substitute a method.
     """
     from . import policy_step
-    if policy is None:
+    source_record = policy_record
+    if source_record is None and isinstance(policy, policy_step.BoundedPolicy):
+        source_record = policy.record
+    if source_record is not None:
+        try:
+            stepped = policy_step.run_policy_step(
+                source_record, view, state, **(execution or {}))
+        except Exception as exc:
+            operation_ids = []
+            operation_id = getattr(exc, "operation_id", None)
+            if operation_id and getattr(exc, "operation_current", False):
+                operation_ids = [operation_id]
+            raise _UsePolicyRefused(
+                "policy raised: %s" % exc,
+                operation_ids=operation_ids) from exc
+        action = stepped["action"]
+    elif policy is None:
         raise _UsePolicyRefused("use ran with no policy: the method identity"
                                 " must come from an admitted policy action")
-    if hasattr(policy, "decide"):
+    elif hasattr(policy, "decide"):
         decision = _call(policy.decide, {
             "observations": [{"task_id": view["task_content"]["task_id"]}]},
             state, boundary={"seq": 0}, experience={})
@@ -1428,42 +1450,70 @@ def _member_digest(member: dict) -> str:
 
 def _use_governed_member(repertoire: dict, task: dict, policy, *,
                          dsn: str | None,
-                         release_id: str | None) -> tuple:
-    from . import packet as _use_packet
-    view = {
-        "task_content": _use_packet.strip_task(task),
-        "observations": [], "open_questions": [], "last_result": None,
-        "eligible_methods": [m.get("capability_id")
-                             for m in repertoire.get("members", [])],
-        "remaining": {},
-    }
-    action = _use_policy_action(policy, view, {})
-    method_id = _use_admitted_method(action)
-    member = next((m for m in repertoire.get("members", [])
-                   if m.get("capability_id") == method_id), None)
-    if member is None:
-        raise _UsePolicyRefused("admitted %r is absent from the repertoire"
-                                % (method_id,))
-    if (member.get("scope", {}) or {}).get("family") != task.get("family"):
-        raise _UsePolicyRefused(
-            "admitted %r is scoped to %r and cannot answer a %s task"
-            % (method_id, (member.get("scope") or {}).get("family"),
-               task.get("family")))
-    if not _select_member({"members": [member]}, task, dsn=dsn,
-                          release_id=release_id):
-        raise _UsePolicyRefused(
-            "release %r pins bytes %s, which repertoire member %r does not"
-            " carry" % (release_id, _member_digest(member)[:12], method_id))
-    inputs = action.get("inputs") or {}
-    max_queries = inputs.get("max_queries")
-    if type(max_queries) is not int or max_queries < 0:
-        raise _UsePolicyRefused("admitted use_method carries no query budget")
-    return dict(member), max_queries
+                         allocation_id: str | None,
+                         release_id: str | None,
+                         policy_record: dict | None = None) -> tuple:
+    from . import policy_step
+    view = policy_step.materialize_view(
+        task=task, observations=[], open_questions=[], last_result=None,
+        eligible_methods=[m.get("capability_id")
+                          for m in repertoire.get("members", [])],
+        remaining={})
+    policy_operation_id = None
+    policy_operation_admitted = False
+    execution = None
+    if policy_record is not None and dsn is not None:
+        import hashlib
+        authority_digest = hashlib.sha256(
+            str(allocation_id).encode("utf-8")).hexdigest()[:12]
+        policy_operation_id = _versioned_use_op_id(
+            repertoire["campaign_id"], task["task_id"],
+            "policy-%s-%s" % (
+                policy_record["artifact"]["source_digest"][:16],
+                authority_digest))
+        execution = {"dsn": dsn, "allocation_id": allocation_id,
+                     "operation_id": policy_operation_id}
+    try:
+        action = _use_policy_action(
+            policy, view, {}, policy_record=policy_record,
+            execution=execution)
+        policy_operation_admitted = bool(policy_operation_id)
+        method_id = _use_admitted_method(action)
+        member = next((m for m in repertoire.get("members", [])
+                       if m.get("capability_id") == method_id), None)
+        if member is None:
+            raise _UsePolicyRefused(
+                "admitted %r is absent from the repertoire" % (method_id,))
+        if (member.get("scope", {}) or {}).get("family") != task.get("family"):
+            raise _UsePolicyRefused(
+                "admitted %r is scoped to %r and cannot answer a %s task"
+                % (method_id, (member.get("scope") or {}).get("family"),
+                   task.get("family")))
+        if not _select_member({"members": [member]}, task, dsn=dsn,
+                              release_id=release_id):
+            raise _UsePolicyRefused(
+                "release %r pins bytes %s, which repertoire member %r does not"
+                " carry" % (release_id, _member_digest(member)[:12], method_id))
+        inputs = action.get("inputs") or {}
+        max_queries = inputs.get("max_queries")
+        if type(max_queries) is not int or max_queries < 0:
+            raise _UsePolicyRefused(
+                "admitted use_method carries no query budget")
+    except _UsePolicyRefused as refusal:
+        if policy_operation_admitted and policy_operation_id \
+                and policy_operation_id not in refusal.operation_ids:
+                refusal.operation_ids.insert(0, policy_operation_id)
+        raise
+    policy_operation_ids = []
+    if policy_operation_admitted:
+        policy_operation_ids = [policy_operation_id]
+    return dict(member), max_queries, policy_operation_ids
 
 
 def _policy_refused_record(repertoire: dict, world: int, arm: str,
-                           task_id: str, domain: str, release_id, reason: str
-                           ) -> dict:
+                           task_id: str, domain: str, release_id, reason: str,
+                           *, operation_ids: list | None = None,
+                           policy_source_digest: str | None = None) -> dict:
     """A distinct `status` is the point. `selected` and `executed` both
     read `refused`, so a caller that branches on those alone cannot read
     this as the incumbent an empty repertoire also produces.
@@ -1475,10 +1525,12 @@ def _policy_refused_record(repertoire: dict, world: int, arm: str,
         "freeze": worlds.FREEZE_ID,
         "freeze_digest": checker.freeze_digest(worlds.FROZEN_DIR),
         "release_id": release_id,
+        "policy_source_digest": policy_source_digest,
         "status": "refused",
         "verdict": "refused",
         "initial_measure": 0, "final_measure": 0,
-        "normalized_reduction": 0.0, "output": {}, "operation_ids": [],
+        "normalized_reduction": 0.0, "output": {},
+        "operation_ids": list(operation_ids or []),
         "costs": {"witness_queries": 0},
         "requested": "refused", "selected": "refused", "executed": "refused",
         "executed_source": "refused", "query_trace": None,
@@ -1487,10 +1539,22 @@ def _policy_refused_record(repertoire: dict, world: int, arm: str,
 
 
 def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
-            base_costs: dict, *, policy=None, dsn: str | None = None,
+            base_costs: dict, *, policy=None, policy_source: str | None = None,
+            policy_origin: str = "authored-control",
+            dsn: str | None = None,
             allocation_id: str | None = None,
             release_id: str | None = None) -> list:
     from . import checker
+    from . import policy_step
+    if policy is not None and policy_source is not None:
+        raise ValueError("use accepts policy or policy_source, not both")
+    policy_record = None
+    if policy_source is not None:
+        policy_record = policy_step.make_policy_artifact(
+            policy_source, origin=policy_origin)
+        policy_step.verify_policy_record(policy_record)
+    elif isinstance(policy, policy_step.BoundedPolicy):
+        policy_record = policy.record
     if dsn is not None and not allocation_id:
         raise ValueError("use requires explicit execution allocation")
     if dsn is None and release_id is not None:
@@ -1502,14 +1566,19 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
         task = worlds.load_task(worlds.FROZEN_DIR, task_id)
         domain = task["family"]
         try:
-            member, method_queries = _use_governed_member(
-                repertoire, task, policy, dsn=dsn, release_id=release_id)
+            member, method_queries, policy_operation_ids = \
+                _use_governed_member(
+                    repertoire, task, policy, dsn=dsn,
+                    allocation_id=allocation_id, release_id=release_id,
+                    policy_record=policy_record)
         except _UsePolicyRefused as refusal:
             records.append(_policy_refused_record(
                 repertoire, world, arm, task_id, domain, release_id,
-                str(refusal)))
+                str(refusal), operation_ids=refusal.operation_ids,
+                policy_source_digest=(policy_record or {}).get(
+                    "artifact", {}).get("source_digest")))
             continue
-        operation_ids = []
+        operation_ids = list(policy_operation_ids)
         execution = None
         if dsn is not None:
             execution = {"dsn": dsn, "allocation_id": allocation_id,
@@ -1522,10 +1591,9 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
             result = _run_member(member, task, max_queries=method_queries,
                                  **(execution or {}))
         except MethodExecutionError as exc:
-            if execution:
-                from settlement import broker
-                if broker.read_operation(dsn, execution["operation_id"]) is not None:
-                    operation_ids = [execution["operation_id"]]
+            if execution and getattr(exc, "operation_current", False) \
+                    and execution["operation_id"] not in operation_ids:
+                operation_ids.append(execution["operation_id"])
             output = controls.incumbent(task)
             report = _check(task, output)
             initial, final = _size(task, output)
@@ -1537,6 +1605,8 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
                 "freeze_digest": checker.freeze_digest(
                     worlds.FROZEN_DIR),
                 "release_id": release_id,
+                "policy_source_digest": (policy_record or {}).get(
+                    "artifact", {}).get("source_digest"),
                 "verdict": report["verdict"],
                 "initial_measure": initial, "final_measure": final,
                 "normalized_reduction": 0.0,
@@ -1552,7 +1622,7 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
         output = result["candidate"]
         queries = result["queries"]
         reason = ""
-        operation_ids = list(result.get("operation_ids") or [])
+        operation_ids.extend(result.get("operation_ids") or [])
         executed_source = result.get("executed_source")
         report = _check(task, output)
         initial, final = _size(task, output)
@@ -1563,6 +1633,8 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
             "domain": domain, "freeze": worlds.FREEZE_ID,
             "freeze_digest": checker.freeze_digest(worlds.FROZEN_DIR),
             "release_id": release_id,
+            "policy_source_digest": (policy_record or {}).get(
+                "artifact", {}).get("source_digest"),
             "verdict": report["verdict"],
             "initial_measure": initial, "final_measure": final,
             "normalized_reduction": ((initial - final) / initial

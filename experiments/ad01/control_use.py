@@ -14,6 +14,10 @@ as a refusal by `run_use` rather than as an exception out of the study;
 both of those properties come from being in another process, not from the
 CLI being the thing that starts it.
 
+The old `compile_step` compatibility entry point is bounded too, but this
+fresh-process caller passes source bytes directly to `run_use` so the policy
+operation can be accounted for with the use record.
+
 Written rather than borrowed so that `cli.py` stays untouched by an arm
 that does not exist in its vocabulary.
 """
@@ -42,28 +46,22 @@ def main(argv: list | None = None) -> int:
     parser.add_argument("--tasks", required=True)
     args = parser.parse_args(argv)
 
-    from experiments.ad01 import policy_step, trajectory, worlds
+    from experiments.ad01 import trajectory, worlds
 
     if args.world not in worlds.WORLDS:
         print("unknown --world %r" % args.world, file=sys.stderr)
         return 2
     try:
         repertoire = trajectory.load_repertoire(args.repertoire)
-        policy = policy_step.compile_step(
-            Path(args.policy_source).read_text(encoding="utf-8"),
-            origin="<control-use-policy>")
+        policy_source = Path(args.policy_source).read_text(encoding="utf-8")
     except Exception as exc:
         print("ad01-control-use refused: %s" % exc, file=sys.stderr)
-        return 2
-    if policy is None:
-        print("ad01-control-use refused: the selector compiled to nothing",
-              file=sys.stderr)
         return 2
     try:
         records = trajectory.run_use(
             repertoire, args.world, args.arm,
             [task for task in args.tasks.split(",") if task],
-            {}, policy=policy, dsn=args.dsn,
+            {}, policy_source=policy_source, dsn=args.dsn,
             allocation_id=args.allocation_id)
     except Exception as exc:
         print("ad01-control-use refused: %s" % exc, file=sys.stderr)

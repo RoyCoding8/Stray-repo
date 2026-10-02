@@ -2187,12 +2187,13 @@ def run_e0(dsn: str, out) -> dict:
 
 
 def restart_use(*, dsn: str, campaign_path, repertoire_path,
-                release_id: str, task_id: str, out) -> dict:
+                release_id: str, policy_source, task_id: str, out) -> dict:
     from experiments.ad01 import trajectory
     from settlement import store
     from settlement.common import Command
     campaign = json.loads(Path(campaign_path).read_text())
     repertoire = trajectory.load_repertoire(repertoire_path)
+    policy_bytes = Path(policy_source).read_text(encoding="utf-8")
     use_cid = "invl02-live-reuse-%s" % task_id.replace("-", "")[:12]
     store.subdivide_allocation(
         dsn, Command(request_id="subdivide-%s" % use_cid,
@@ -2207,7 +2208,7 @@ def restart_use(*, dsn: str, campaign_path, repertoire_path,
     records = trajectory.run_use(
         repertoire, 1, "I", [task_id], {}, dsn=dsn,
         allocation_id="ad01-campaign-%s" % use_cid,
-        release_id=release_id)
+        release_id=release_id, policy_source=policy_bytes)
     result = {"task_id": task_id, "release_id": release_id,
               "records": records}
     Path(out).write_text(
@@ -4324,12 +4325,14 @@ def main(argv: list | None = None) -> int:
         if verb == "restart-use":
             kwargs = {}
             for flag in ("--dsn", "--campaign", "--repertoire",
-                         "--release", "--task", "--out"):
+                         "--release", "--policy-source", "--task", "--out"):
                 kwargs[flag[2:]] = rest[rest.index(flag) + 1]
             result = restart_use(
                 dsn=kwargs["dsn"], campaign_path=kwargs["campaign"],
                 repertoire_path=kwargs["repertoire"],
-                release_id=kwargs["release"], task_id=kwargs["task"],
+                release_id=kwargs["release"],
+                policy_source=kwargs["policy-source"],
+                task_id=kwargs["task"],
                 out=kwargs["out"])
             print("reuse task=%s records=%d" % (
                 result["task_id"], len(result["records"])))

@@ -1,5 +1,91 @@
 # Verification
 
+## Current closure checkpoint — 2026-09-30
+
+Environment: WSL Ubuntu, Python 3.12.14, PostgreSQL 18.6, real child
+processes and fixture gateways. No live inference or Jev calls ran. Historical
+live artifacts and uncertain reservations were preserved.
+
+The coordinator observed these separate checks; they are not a combined suite:
+
+| Check | Observed result | Boundary |
+|---|---|---|
+| Merged learner acquisition at `4be0de6` | 81 passed | Admission, replay, caps, route identity, response/source attribution and unknown response with real PostgreSQL; model transport doubled |
+| Historical exposure and budget units | 53 passed | Offline audit against committed evidence and current ledger; no historical store changes |
+| Portable Linux runtime baseline | 96 passed, 16 skipped | Platform/database skips remain explicit; not deployment or full-suite qualification |
+
+Final integrated acceptance on `cae712b`: **281 passed, zero failures and skips,
+in 534.47 seconds**. This covers the 28 named affected files below, not the whole
+repository suite. Only documentation and this raw diagnostic export changed
+after the tested source tip. The 90-second faulthandler printed a PostgreSQL
+commit wait during the controlled HTTP pilot; it was diagnostic output, not a
+test failure. The prior complete
+run on `7327a14` gave 278 passed and three failures, all in a control test helper
+omitting the required view contract version. The fix uses the canonical view
+builder, with assertions and runtime guards preserved. A separate earlier run
+was interrupted by the coordinator after 148 passes; it is not acceptance.
+
+Exact affected-gate command, run in WSL Ubuntu from the repository root after
+creating the owned `s09c_checkpoint` database:
+
+```sh
+S09ISO_DISABLE=1 \
+SETTLEMENT_TEST_DSN="dbname=s09c_checkpoint user=root host=/var/run/postgresql" \
+SETTLEMENT_TEST_TRUNCATE_DSN="dbname=s09c_checkpoint user=root host=/var/run/postgresql" \
+S09ISO_ADMIN_DSN="dbname=postgres user=root host=/var/run/postgresql" \
+EC02_AD01C_DSN="dbname=s09c_checkpoint user=root host=/var/run/postgresql" \
+INV_F2_DSN="dbname=s09c_checkpoint user=root host=/var/run/postgresql" \
+PYTHONPATH="$PWD:$PWD/src" PYTHONUNBUFFERED=1 \
+/tmp/asv2-closure-env/bin/python -u -m pytest -q -p no:cacheprovider \
+  -o faulthandler_timeout=90 \
+  tests/test_s09_learner_revision_accounting.py \
+  tests/test_s09_learner_revision.py \
+  tests/test_s09_e4_qualification.py \
+  tests/test_s09rev_acquisition.py \
+  tests/test_s09rev_boundary.py \
+  tests/test_evidence_ceiling_diagnostic.py \
+  tests/test_s09c_policy_boundary.py \
+  tests/test_s89a3_closeout.py \
+  tests/test_s09_run_use_policy.py \
+  tests/test_inv01_control_arm_in_study.py \
+  tests/test_inv_r1_use_policy.py \
+  tests/test_s09m6fix_bind.py \
+  tests/test_s09c3_policy_pilot.py \
+  tests/test_s09m1_driver.py \
+  tests/test_s09m34_cycle.py \
+  tests/test_s09m2_policy.py \
+  tests/test_s09m34_bind.py \
+  tests/test_s09m34_visibility.py \
+  tests/test_aleb_construct.py \
+  tests/test_ad01_live_acquired_ddmin.py \
+  tests/test_s09m5_pilot.py \
+  tests/test_s09_exposure_ledger.py \
+  tests/test_s09cs01_budget_denominations.py \
+  tests/test_s09_older_reconciliation.py \
+  tests/test_s09_reservation_operation_fk.py \
+  tests/test_invl02_accounting.py \
+  tests/test_s09_policy_governance.py \
+  tests/test_inv_f2_loop.py
+```
+
+The fresh [evidence diagnostic](evidence/project-inventory-2026-09-30/evidence-headroom.json)
+contains 150 unique truth tables, disjoint from the old E4 cohort. The coordinator
+independently recomputed the mean difference from raw rows: informed versus
+blind eight-query procedures gain 0.1875 in overall accuracy. Both are authored
+controls; this establishes observation-sensitive headroom, not acquired learning,
+transfer, learner improvement or statistical significance. Its three tests
+include direct truth-table scoring independent of the instrument's scorer.
+
+Reproduce this diagnostic from the repository root with the project environment:
+
+```sh
+PYTHONPATH="$PWD:$PWD/src" python -m experiments.ad01.evidence_ceiling_diagnostic
+```
+
+Full-suite, provider, deployment and containment qualification were not attempted
+as this checkpoint's acceptance condition. Earlier runs below retain their
+original scope and are not current-tip results.
+
 ## REVIEW-01 fix cycle (tested code revision `c827942`; report commit `4884d24`)
 
 Full-suite command (real PostgreSQL 16, real subprocesses, fake/simulated models only):

@@ -379,17 +379,9 @@ def _use_phase_from(arm: str, repertoire: dict | None = None) -> str:
 
 def _use_phase_policy(arm: str, entry: dict, freeze: dict,
                       repertoire: dict | None = None):
-    """Compile the arm's use-phase policy source into a callable, or None.
-
-    The result is a callable, not a source string. `run_use` calls the
-    policy, and a string that is merely stored raises at the call and is
-    recorded as a policy that failed rather than one that governed.
-    """
-    from experiments.ad01 import policy_step
+    """Return the arm's source policy bytes, or ``None``."""
     source = _use_phase_policy_source(arm, entry, freeze, repertoire)
-    if not source:
-        return None
-    return policy_step.compile_step(source, origin="<use-policy:%s>" % arm)
+    return source or None
 
 
 USE_PHASE_POLICY_SOURCE = (
@@ -1272,7 +1264,7 @@ def run_study(dsn: str, out_dir, *,
         use_policy = _use_phase_policy(arm, entry, freeze, use_repertoire)
         saved_records = trajectory.run_use(
             use_repertoire, spec["world"], "I", list(spec["use_tasks"]), {},
-            policy=use_policy, dsn=dsn, allocation_id=allocation)
+            policy_source=use_policy, dsn=dsn, allocation_id=allocation)
         for task_id, saved in zip(spec["use_tasks"], saved_records):
             saved["record_id"] = "%s-%s" % (spec["episode_id"], task_id)
             saved["episode_id"] = spec["episode_id"]

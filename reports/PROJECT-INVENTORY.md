@@ -2,6 +2,9 @@
 
 Inspected 2026-09-30 at source tip `60964423455dcecb076745b3bcd85db0299dfbc5`. Three Luna reviewers independently covered runtime, cognitive call paths and committed campaign evidence. This report describes source presence and evidence separately. It does not report a full-suite, provider or deployment qualification performed by the researcher.
 
+This is the baseline census. Later closure repairs, current stage status and the
+next assignment are recorded in the [project ledger](PROJECT-LEDGER.md).
+
 ## Where we are
 
 Stage 9 remains active. We have a substantial execution/investigation prototype and several learning experiment systems. Useful inherited competence, broad transfer, autonomous investigation selection and improvement of the learner remain unproven. Several narrow negative results are valid; they do not complete the broader comparison.

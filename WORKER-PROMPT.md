@@ -1,113 +1,173 @@
-# Research scope: Stage 9 comparison
+# Worker assignment: finish consolidation, build the connected prototype
 
-Checkpoint 2026-09-30: read reports/PROJECT-INVENTORY.md and reports/PROJECT-LEDGER.md first. They describe the squashed source at 6096442 and supersede this prompt's older starting-state notes. This document preserves the research acceptance scope. The next implementation batch will follow the current research checkpoint; do not automatically rerun the old studies or create another lifecycle.
+You are the implementation and experiment coordinator in a fresh local session.
+The goal is general autonomous investigation, acquired executable competence and
+improvement of the procedure that acquires competence. Complete the milestones
+below; infrastructure tests alone do not complete them. Valid negative studies
+are useful. Do not search indefinitely for a positive result.
 
-You are the implementation and experiment coordinator in a fresh session. Complete the connected research batch below, including repairs and independent verification. Do not stop after infrastructure tests or replace the research with another general bug sweep.
+## Starting point and authority
 
-The aim is general autonomous investigation, acquired executable methods and eventually improvement of the learner itself. SWE, Boolean and ordering tasks are experimental worlds, not a restriction on the eventual system. Stage 8 is closed at its bounded scope; Stage 9 is active. Useful learning, transfer and recursive improvement remain unproven.
+Work in D:/AI/Agent-Society-v2. Start from the pushed
+codex/stage09-closure-checkpoint branch, then create your integration branch.
+Inspect local changes before switching or merging; do not reset an active checkout.
+The remote default and similarly named older branches are not the current source.
+Remote sync is a backup; local worktrees and stores hold current working state.
 
-## Start here
+The closure checks used WSL Ubuntu, PostgreSQL 18.6 and real POSIX child
+processes. Use that existing runtime for the selected child profile; Windows
+host execution is not a substitute. Fixture gateways in these checks establish
+durable behavior, not live acquisition or containment qualification.
 
-1. Read AGENTS.md, reports/PROJECT-LEDGER.md and IMPLEMENTATION-WORKFLOW.md.
-2. Read reviews/STAGE-09-TRANSFER-ASSESSMENT.md, then reports/STAGE-09-TRANSFER-BRIEF.md for the worker's underlying delivery. Treat the latter's completion claims as claims to check.
-3. Read docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md and the contracts relevant to your first lane. Use docs/design/README.md to find them; do not reread every historical assignment.
-4. Inspect local Git state, worktrees, active processes, database ownership and available runtime. Fetch origin. The current source is on codex/implementation-development-01 at 6096442. The earlier c06b3e9/d0a95eb review and stage09-clean-handoff branch are historical context, not the current base.
-5. Read the codex/stage09-state-inventory documentation checkpoint before starting a new batch. Use the latest canonical source and the newly agreed design. Do not merge old branches merely because they are no longer ancestors after the squash, and do not reset an active checkout.
+Read AGENTS.md, reports/PROJECT-LEDGER.md, reports/PROJECT-INVENTORY.md,
+docs/design/REFINEMENT-ROADMAP.md and section 13 of
+docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md. IMPLEMENTATION-WORKFLOW.md owns
+the reusable engineering rules. Update reports/PLAN.md for your dependency graph.
+Do not recreate competing prompts, ledgers or current design documents.
 
-Use reports/PLAN.md for the task graph. Update the existing ledger and prompt in place when scope changes; old assignments are historical, indexed in docs/HISTORY.md.
+The user authorizes fresh live experiments on verified free routes and is not
+concerned about token consumption. This is standing authority for the finite
+prospective studies in this assignment. Write their grant and cap sheet from
+the complete matrix before effects; a missing grant file is setup work, not a
+reason to ask for authorization again. Discover the actual current route locally;
+no paid fallback, credential commits or Jev calls. A vanished route or absent
+credentials is a specific external dependency, not model failure.
 
-## Starting observations from the previous handoff
+Old exposure remains under its original grants. Do not settle unknowns, reuse
+spent grants, redispatch terminal historical rounds or edit frozen evidence to
+unblock a new study. Account for carried-in spend separately. Freeze source,
+route, model, effort, protocols, selectors and finite ceilings. A change creates
+a new freeze; it does not make the old and new runs comparable.
 
-These observations describe the earlier transfer review. E1 r2/r3, E2 contrast/retention and E4 have since run. Current scoped conclusions are in the inventory; the old statements that E2/E4 were unrun are historical.
+## A — consolidate the causal path
 
-- Existing runtime and representation instruments are valuable. Preserve them unless a concrete causal defect requires replacement.
-- The small live reducer campaign in reports/evidence/invl02_liveacq_r4/ has six construction attempts, three acquired ENTRY wrappers delegating to authored ddmin, and three surviving paired outcomes. Their mean normalized-reduction delta is -0.15277777777777776 versus control. This is evidence of wrapper acquisition with worse outcomes on those pairs; it is not the full representation matrix.
-- The SWE qualification rows use fixture/authored programs. They do not demonstrate model-acquired STEP/AST/graph policies.
-- The reviewed builder sample contains four AST records but one unique AST program, four graph records but one unique graph program, and authored STEP controls. Distinguish construction events, unique source programs and retained artifact records. Independent model calls may legitimately converge to identical programs.
-- E2 and E4 were closed unrun using old exposure as a blanket blocker. That contradicts the authorized separate-allocation design. The old exposure stays unresolved; it does not consume a new campaign's dispatch count.
-- E2's constant terminal 'preserved' flag cannot measure experience benefit. It does not show that the experiment is impossible.
-- E3 has conflicting prose about controls. Recompute scoped tables from source records before claiming a win.
-- The review ran 43 tests successfully and hit one Windows-only AST child failure because the child imports Unix resource. No live calls or real-DB gates were rerun by that review. Historical broad suite numbers are not current qualification.
+Keep the existing AD01 trajectory as investigation owner. Reuse the broker,
+store, bounded executors, artifact bytes and binding machinery. Converge the
+frontier's useful decision/view semantics into this owner; retire duplicate
+production authority and continuation, preserving old frozen instruments.
+Do not introduce another coordinator or a generic framework around the studies.
 
-## Authority and experimental limits
+Trace all production callers of model inference and executable policy source.
+Finish migration to broker-owned effects and bounded source execution. Each
+accepted operation must have persistent identity, allocation, result or unknown
+outcome, and exposure. Pending work must retain its old program/input identity
+through restart. No source file may become trusted merely because it is local.
 
-The user has authorized live testing on a verified free model and does not require token minimization. This is standing authorization for fresh, prospectively bounded studies in this assignment. Do not ask again merely because a new study namespace or freeze is required.
+Use one action meaning across the chosen representations. Inspect existing
+policy_action translations by actual admitted effects, observations, refusals
+and resource use. A round-trip enum test is insufficient. Preserve distinctions
+between checking a task result and proposing a learner revision where they alter
+execution. Do not create a Python interpreter hidden behind an AST/graph label.
 
-Discover the configured route and credentials locally without printing secrets. Verify the actual route and free-tier restrictions before inference; do not assume an old model still exists. No paid fallback and no Jev calls. If free status cannot be established or the service requires new credentials, report that specific external dependency while continuing independent work.
+Prove the full chain through the public entry:
+permitted experience -> program decision -> admitted effect -> observation ->
+checked artifact -> retention/binding -> fresh-process use. Method release and
+policy identity remain separate. Check unrelated-route replay, changed bytes,
+missing authority, no candidate, partial response, timeout and pending resume.
+Use independent reviewer-written source and clean-baseline counterexamples.
 
-Freeze a finite cap sheet for each new campaign, derived from its complete matrix: construction, development repairs, child/model calls, controls, repeats, retries and resume. Existing frozen caps remain immutable. Larger new studies are allowed; an old 64-call or eight-call study is not a global limit. Persist counters and pending exposure before effects, including crashes. Free price does not make usage, compute or experimental opportunity unmeasured.
+## B — finish the informative Stage 9 comparison
 
-Keep old reservations under their original grants and report them separately. 5563 is a historical internal estimated exposure subtotal, not money, a dispatch count or necessarily the current total. Do not settle it by assumption. Do not reuse spent grants or restart terminal historical rounds. Create a fresh study root with explicit allocation and lineage to the standing authorization.
+Before a large run, qualify measurable headroom and competent controls. The
+fresh evidence-headroom diagnostic is an authored equal-query comparison,
+not acquired learning. Its historical blind-query metric is not an adaptive
+learner result. Do not reuse its now-observed cohort as sealed assessment.
 
-Pin source, route, model, effort, protocols, selectors and limits before assessment. A route/model change requires a new freeze, with old results retained; do not mix the runs as though comparable.
+Use two genuinely different task structures: function identification from
+observations and software diagnosis/repair through interventions. Reuse existing
+worlds where they meet this requirement. Ordering/reduction can remain regression
+or transfer instruments. Deduplicate hidden targets and separate templates or
+families before evaluation. An oracle using held-out answers is diagnostic only.
 
-## Milestones and dependency order
+Freeze the supported representation/world matrix after an expressive-action
+probe. Compare canonical STEP with the existing typed AST and graph where they
+can express the same required behavior. Unsupported cells need a concrete witness
+and an architectural disposition, not a new DSL built merely to fill the table.
+Plan at least four independent construction opportunities per supported cell.
 
-### W0 — reconcile and establish readiness
+Compare relevant, absent and equal-sized irrelevant experience with matched
+interfaces and opportunity. Pin each actual permitted view. Select and repair
+using development information only. Score operational quality, intermediate
+behavior and complete resources; constant preservation is not a benefit metric.
+Failed acquisition never becomes an authored learned arm.
 
-Map TR-01 through TR-05 to evidence, confirming or rebutting each with concrete records. Correct current status; retain original bundles and mark superseded interpretations.
+Measure retained reuse versus cold acquisition and adaptation to a held-out
+family/domain. Follow acquired bytes and scoped applicability into a new process.
+An archive with no usable members is a no-acquisition result, not transfer evidence.
+Use a second independent namespace for replication where the first run supports
+the comparison; an apparatus repair rerun is not replication.
 
-Inventory reusable production paths for STEP, typed AST, action graph, experience, autonomous selection and learner revision. Identify which paths are actually connected and what must change. Produce a short crosswalk in PLAN, not a new architecture framework.
+The investigation program must choose a diagnostic, construction, reuse,
+continuation or stop from the admissible frontier. Compare it with a competent
+development-fitted allocation control. Initial mission seeds are allowed; a
+scripted subsequent task order is not autonomous selection.
 
-Run a small real child and real gateway probe under the intended profile before large campaigns. Prove response capture, artifact binding, execution, receipt export and offline reconstruction. Distinguish route refusal, transport loss, empty content, invalid program and a poor task result. Failed preflight cannot be reported as model inability.
+## C — connect inherited learning behavior and Stage 10
 
-Repair material authority, provenance or accounting defects before affected live work. Other lanes may continue independently. A missing Unix resource module requires a supported Linux execution environment or an explicit deployment limitation, never removing the child limits.
+Make an acquisition decision executable and inheritable: evidence selection,
+probe allocation, constructor inputs or development-only repair. The improvement
+program chooses it from permitted experience through the same action executor.
+The model constructor is a leaf effect, not the owner of a fixed research script.
+The program cannot edit grants, accounting, execution limits or sealed assessment.
 
-### W1 / E1 — connected representation and acquisition comparison
+Qualify the channel with independently written effectful, no-op and disconnect
+controls. From identical starting conditions, the first control must change an
+acquisition decision and the disconnect must refuse. Restart under the selected
+version and observe its effect in the next descendant-producing episode.
 
-Use one shared controlled path for authored baseline, interface-only acquisition and experience-conditioned acquisition. Compare executable STEP, typed AST and action graph on Boolean, ordering and substantive SWE worlds where each can express the required behavior.
+Attempt live acquisition of a revised learning program. Eligibility concerns a
+change to the acquisition procedure, not whether its score happens to improve.
+Compare revised and parent learners on fresh acquisition episodes with matched
+opportunity and complete resource accounting. Assess the descendants they produce
+on independent tasks. The reviser's own solver score is not this measurement.
+If no eligible revision exists, finish the bounded attempt honestly; do not run
+empty panels or claim a negative learner-benefit comparison.
 
-Target at least four independent construction opportunities per supported representation/world/acquisition-treatment cell. Record all attempts, failed constructions, selected and rejected programs. Select and repair using development information only. Do not substitute an authored solver after acquisition fails and count that as the learned arm.
+Build one persistent mission entry with frontier, permitted experience, active
+program, acquired artifacts, retained use and improvement mode. Demonstrate a
+multi-episode mission across the two selected domains, including suspend/resume
+with pending work. Teams and background replay use this same authority and
+evidence path; add them only for a demonstrated dependency. A static study driver
+does not meet the general prototype requirement. Move domain-neutral code out of
+experiments only by migrating callers and deleting the duplicate implementation.
 
-Verify substantive learner behavior: observation-dependent probes, edits or actions reach the shared executor and affect the trajectory. A wrapper calling a fixed reducer remains labeled as such. Preserve that acquisition evidence without presenting it as invented investigation strategy.
+## Workflow, self-checks and delivery
 
-For SWE, target at least four distinct families and 24 held-out instances if the instrument supports genuine diversity. Deduplicate finite target support in tiny worlds. Freeze family/template separation before evaluation; do not create replication by renaming the same hidden target.
+Use 12–16 substantive isolated lanes where the harness permits, and queue additional
+independent review, world, representation and experiment work. Expand concurrency
+when disjoint work and runtime capacity support it. Assign disjoint
+paths/stores; never two writers in one worktree. Follow git-worktree-discipline,
+tdd and the other available applicable skills. Coordinator integration is serial,
+with affected checks on every merged source tip. Reviewers use their own cases.
 
-If a representation cannot express a required action, show the concrete limitation, leave the cell missing and continue supported cells. Do not hide a Python interpreter beneath an AST/graph label or build a general DSL platform just to fill the matrix.
+Run two broad search/repair passes over material behavioral and evidence defects,
+then a final independent acceptance pass. Keep each reviewer separate from the
+author of its target. Prioritize authority, causal disconnects, invalid assessment,
+identity and lost data. Ledger minor issues instead of allowing them to replace
+the experiments. Never weaken a contract merely to make inherited tests green.
 
-Report per-world and per-lineage outcomes, common-support paired comparisons, failures and resource distributions. Qualification fixtures are separate from the live results.
+Specifically guard against our recurring failures: skipped regressions reported
+as passes; fixture bytes relabeled live; missing policy passed as a method release;
+route drift on replay; raw source executed on the host; file-based crash-losable
+counters; unknown usage reported zero; double-counted or omitted policy compute;
+sealed feedback in prompts; stale lane gates after merge; and tamper tests whose
+baseline already fails. Counterchecks must add failures to a clean baseline.
 
-### W2 / E2 — experience, retention and transfer
+Freeze live execution before effects. Continue independent reviews against other
+worktrees while it runs, without mutating its pinned source. Check the entire
+relevant suite on the final implementation, report every skip/failure/timeout by
+scope, and never add counts from different runs into a fictional green suite.
+Export/recompute raw evidence offline before deleting receipt stores. A store
+snapshot supports attribution; it does not cryptographically prove provider truth.
 
-On supported acquisition paths compare relevant experience, no experience and equally sized irrelevant or shuffled experience. Keep interfaces, opportunity and assessment equal. Verify what information each treatment actually receives.
+Give separate dispositions for mechanism, acquisition, utility, transfer,
+autonomous selection and learner improvement. Stage 9 needs explicit keep/change/
+remove decisions under the completed supported protocols. Stage 10 needs the
+connected mission prototype; its existence does not claim beneficial RSI.
+Deployment qualification and product release are stages 11–12.
 
-Measure selected probes, decision sequences, intermediate failures, reduction/quality and complete resource vectors. Terminal preservation can be a validity condition but cannot be the sole benefit metric when constant by construction.
-
-Compare retained-method reuse against cold reacquisition and within-domain versus held-out-domain adaptation where applicable. Add controlled changes in observations to test causal sensitivity. An unchanged decision may be a real null; do not require a difference before admitting a result.
-
-Run at least two independent campaign namespaces for replication where the first valid campaign leaves supported arms. Keep mutable state and assessment feedback separate. A rerun after an apparatus failure is not scientific replication.
-
-### W3 / E3 — autonomous investigation selection
-
-Exercise the actual policy that selects investigations, diagnostics, reuse, continuation and stopping under a shared finite budget. Compare against a competent development-fitted allocation control and the specified default.
-
-Trace each decision into admitted operations and outcomes. Recompute the disputed budget tables. Label any held-out best-in-space oracle as a retrospective reference, not a deployable control trained on held-out results.
-
-Use fresh evaluation tasks and show which choices the system made. Do not call a scripted campaign order an autonomous agenda, or infer general agency from a single finite benchmark.
-
-### W4 / E4 — one executable learner revision
-
-Connect a revisable decision that changes how new capabilities are acquired: diagnostic evidence selection, probe allocation, candidate construction or development-only repair policy. It must alter the learner, not just solve the downstream task or add advice to a prompt.
-
-Freeze the allowed interface. The reviser cannot modify grants, accounting, execution limits, evaluators or sealed assessments. Qualify it with an independently written known-effect revision, no-op control and a disconnect counterexample.
-
-Attempt acquisition of a revision through the real model path. Compare revised and incumbent learners on a fresh acquisition cohort with equal opportunity and limits; evaluate the descendants they produce. If no revision is admissible, report that observed result and retain the qualified mechanism separately. Do not declare this milestone ineligible just because an unrelated acquired reducer was only a task solver.
-
-### W5 — integration, analysis and handback
-
-Follow IMPLEMENTATION-WORKFLOW.md for parallel ownership, serial integration and three independent review passes. Use a large useful swarm, not four generalists serializing the entire batch. Separate runtime repairs, representation instruments, worlds, experiments, controls, evidence checking and independent reviews into disjoint lanes. Queue dependent work rather than give two agents one file.
-
-The coordinator owns experiment authority and the final source freeze. Reviewer/maintenance lanes can run alongside long experiments without mutating their pinned source. When a bug invalidates a campaign, preserve it as invalid and use a new freeze; do not selectively repair favorable cells.
-
-Before delivery:
-- Check the public entry path with reviewer-authored bytes and evidence disconnects.
-- Demonstrate a clean verifier baseline and that each intended tamper produces an added failure.
-- Export enough raw construction, execution and receipt evidence to recompute verdicts offline. Verify exports before deleting receipt databases.
-- Run affected gates on the final integrated source and appropriately broader checks. Report incomplete, skipped and failed runs exactly; never combine counts into a fictional suite.
-- Produce one completion matrix for W0–W5 and E1–E4 with implemented, qualified, attempted, completed or specifically blocked states. A negative valid study can complete its question; unrun studies do not.
-- Issue separate verdicts for mechanism, acquisition, task utility, transfer, autonomous selection and learner improvement. Identify no more than three decision-relevant bottlenecks and recommend what architecture to keep, simplify or change.
-- Update reports/PROJECT-LEDGER.md and the roadmap. Keep Stage 9 active unless the assigned evidence supports closure. Push, verify remote equality, and clean only owned disposable work.
-
-## Stopping condition
-
-Complete the supported matrix and analysis, not an unlimited search for a positive result. Predetermine sampling and selection rules, preserve nulls and failed attempts, and do not tune on sealed outcomes. If a genuine external dependency prevents an experiment, finish independent milestones and give a reproducible blocker with the exact remaining work. No cosmetic cleanup or extra test count can replace the missing empirical answer.
+Update the ledger, roadmap and one completion matrix. Give no more than three
+architecture-relevant bottlenecks. Push and verify remote equality. Remove only
+owned worktrees, task refs, disposable databases and scratch; preserve unrelated
+work and historical evidence. Stop after the frozen scope and analysis, not after
+finding a flattering outcome or exhausting an arbitrary number of bug passes.

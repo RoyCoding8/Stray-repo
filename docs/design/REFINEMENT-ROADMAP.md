@@ -27,7 +27,9 @@ The [current inventory](../../reports/PROJECT-INVENTORY.md) reconciles source an
 
 E1 r2/r3 yielded no usable Boolean program and did not run the representation/world matrix. E2 has a contrast on a panel without positive headroom and partial retention/adaptation evidence. E3 is an authored-policy versus schedule comparison. E4 received six executable candidates but admitted no eligible revision or revised descendants. These are narrower observations than completing the original questions.
 
-Before another implementation batch, specify one causal learning trajectory: investigation ownership, permitted experience, acquired executable behavior, retained use and an inherited change to acquisition. Choose task panels with measurable headroom and competent controls. Reuse the trusted runtime and converge redundant cognitive authorities instead of adding a third lifecycle.
+The selected consolidation contract is [architecture synthesis §13](ARCHITECTURE-SYNTHESIS-2026-09-22.md). AD01's trajectory owns investigation; the settlement broker owns admitted effects and receipts. The current closure checkpoint repairs durable learner-construction accounting and source-policy execution/use. A fresh authored diagnostic establishes observation-sensitive headroom, without establishing learned improvement.
+
+The [worker assignment](../../WORKER-PROMPT.md) carries that contract through informative acquisition, experience and transfer comparisons, then an inherited change to acquisition and a connected mission across two task structures. Reuse these owners and converge redundant cognitive authorities. Stage 9 remains active until supported comparisons justify what to keep, change or remove; a valid null can close a question, while missing arms leave their conditional questions unmeasured.
 
 Stage 10 requires a connected general prototype with evidence for its selected scope. Stage 11 requires deployment qualification; stage 12 requires a supported release. None follows from a green instrument or from running four named experiments.
 

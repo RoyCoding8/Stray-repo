@@ -58,6 +58,14 @@ FAILING_MEMBER_SOURCE = (
     "    raise RuntimeError(\"s89a3-control-failure\")\n"
 )
 
+FAIL_ON_USE_MEMBER_SOURCE = (
+    "def acquired_sw_use_boom(task, oracle, max_queries=16):\n"
+    "    if task['task_id'] == 'ad01-w0-within-sw-00':\n"
+    "        raise RuntimeError(\"s89a3-use-failure\")\n"
+    "    return reduce_software(task, oracle, method=\"greedy\",\n"
+    "                          max_queries=max_queries)\n"
+)
+
 
 def _dbname(dsn: str) -> str:
     return dict(field.split("=", 1) for field in dsn.split()
@@ -141,13 +149,14 @@ class ScriptedModelBoundaryDouble:
         return False
 
 
-def _lifecycle(dsn, investigation, source, entry):
+def _lifecycle(dsn, investigation, source, entry,
+               parent_digest="seed-sw-greedy"):
     from experiments.ad01 import records
     proposal = records.open_revision_proposal(
         dsn, investigation_id=investigation,
-        parent_digest="seed-sw-greedy",
+        parent_digest=parent_digest,
         failure_record={"task_id": USE_TASK,
-                        "parent_digest": "seed-sw-greedy",
+                        "parent_digest": parent_digest,
                         "verdict": "not_preserved"},
         scope={"family": "software"})
     freeze = records.freeze_candidate(
@@ -259,6 +268,210 @@ def test_public_acquisition_check_retention_use(store, tmp_path):
     assert fresh["output"] == {}
     assert fresh["costs"]["witness_queries"] == 0
     assert "no policy" in fresh["fallback_reason"]
+
+
+def test_fresh_public_source_policy_joins_release_receipts(store, tmp_path):
+    """A fresh public use joins source policy, release bytes, and receipts."""
+    from experiments.ad01 import construct as C
+    from experiments.ad01 import trajectory, worlds
+    from settlement import db
+
+    cid = "ad01-w0-I-62"
+    _campaign(store, cid)
+    task = worlds.load_task(worlds.FROZEN_DIR, DEV_TASK)
+    gateway = ScriptedModelBoundaryDouble([SIMULATED_MODEL_SW_SOURCE])
+    member = C.construct_method(
+        store, campaign_id=cid, task=task,
+        experience={"observations": []},
+        budget={"max_output_tokens": 512},
+        gateway=gateway, model="s89a3-source-policy")
+    episode = trajectory.dev_episode(
+        DEV_TASK, "seed-sw-greedy", max_queries=16,
+        member=member, result=member["validation"]["result"])
+    assert episode["disposition"] == "retained"
+    executable = episode["executable"]
+    life = _lifecycle(store, cid, SIMULATED_MODEL_SW_SOURCE,
+                      member["entry"])
+    release = "s89a3-source-policy"
+    _bind(store, life, release, [member["capability_id"]])
+    repertoire = {"campaign_id": cid, "members": [executable]}
+    frozen = tmp_path / "source-policy-repertoire.json"
+    trajectory.freeze_repertoire(
+        {"campaign_id": cid, "queries": 0, "episodes": [episode]}, frozen)
+    allocation = "ad01-campaign-%s" % cid
+    policy_source = (
+        "def STEP(view, state):\n"
+        "    task = view['task_content']\n"
+        "    return {'action': {'kind': 'use_method',\n"
+        "                      'target': task['task_id'],\n"
+        "                      'inputs': {'method_id': %r, 'max_queries': 4},\n"
+        "                      'evidence_refs': [],\n"
+        "                      'requested_resources': {'queries': 4}},\n"
+        "            'state': {}}\n" % member["capability_id"])
+    policy_path = tmp_path / "use-policy.py"
+    policy_path.write_text(policy_source, encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, "-m", "experiments.ad01.cli", "use",
+         "--repertoire", str(frozen), "--dsn", store,
+         "--allocation-id", allocation, "--release", release,
+         "--policy-source", str(policy_path), "--world", "0", "--arm", "I",
+         "--tasks", USE_TASK],
+        cwd=str(ROOT), capture_output=True, text=True, timeout=300)
+    assert proc.returncode == 0, proc.stderr
+    [record] = json.loads(proc.stdout)
+    assert record["selected"] == member["capability_id"]
+    assert record["executed"] == member["capability_id"]
+    assert record["executed_source"] == SIMULATED_MODEL_SW_SOURCE
+    assert executable["source_digest"] == hashlib.sha256(
+        SIMULATED_MODEL_SW_SOURCE.encode("utf-8")).hexdigest()
+    assert record["verdict"] == "preserved"
+    assert record["release_id"] == release
+    assert record["policy_source_digest"] == hashlib.sha256(
+        policy_source.encode("utf-8")).hexdigest()
+    assert len(record["operation_ids"]) == 2
+    with db.connect(store) as conn:
+        for operation_id in record["operation_ids"]:
+            assert conn.execute(
+                "SELECT count(*) FROM receipts WHERE operation_id = %s",
+                (operation_id,)).fetchone()[0] == 1
+    union = trajectory.cost_union(repertoire, [record], dsn=store)
+    assert union["use"]["sandbox_ops"] == 2
+
+    repeat = subprocess.run(
+        [sys.executable, "-m", "experiments.ad01.cli", "use",
+         "--repertoire", str(frozen), "--dsn", store,
+         "--allocation-id", allocation, "--release", release,
+         "--policy-source", str(policy_path), "--world", "0", "--arm", "I",
+         "--tasks", USE_TASK],
+        cwd=str(ROOT), capture_output=True, text=True, timeout=300)
+    assert repeat.returncode == 0, repeat.stderr
+    [replayed] = json.loads(repeat.stdout)
+    assert replayed["operation_ids"] == record["operation_ids"]
+    with db.connect(store) as conn:
+        assert conn.execute(
+            "SELECT count(*) FROM operations WHERE id LIKE %s",
+            ("ad01-%s-use-%%" % repertoire["campaign_id"],)).fetchone()[0] == 2
+        for operation_id in record["operation_ids"]:
+            assert conn.execute(
+                "SELECT count(*) FROM receipts WHERE operation_id = %s",
+                (operation_id,)).fetchone()[0] == 1
+
+    refused = trajectory.run_use(
+        repertoire, 0, "I", [USE_TASK], {}, dsn=store,
+        allocation_id="ad01-campaign-s09c-unbound", release_id=release,
+        policy_source=policy_source)
+    assert refused[0]["status"] == "refused"
+    assert refused[0]["operation_ids"] == []
+    with db.connect(store) as conn:
+        assert conn.execute(
+            "SELECT count(*) FROM operations WHERE id LIKE %s",
+            ("ad01-%s-use-%%" % repertoire["campaign_id"],)).fetchone()[0] == 2
+
+    revised_source = SIMULATED_MODEL_SW_SOURCE + "\n# revised bytes\n"
+    revised_life = _lifecycle(
+        store, cid, revised_source, member["entry"],
+        parent_digest="seed-sw-greedy-revised")
+    revised_release = "s89a3-source-policy-revised"
+    _bind(store, revised_life, revised_release, [member["capability_id"]])
+    revised_member = dict(executable,
+                          method_source=revised_source,
+                          source_digest=hashlib.sha256(
+                              revised_source.encode("utf-8")).hexdigest())
+    [stale] = trajectory.run_use(
+        {"campaign_id": cid, "members": [revised_member]}, 0, "I",
+        [USE_TASK], {}, dsn=store, allocation_id=allocation,
+        release_id=revised_release, policy_source=policy_source)
+    assert stale["executed"] == "incumbent"
+    assert "member execution failed" in stale["fallback_reason"]
+    assert stale["operation_ids"] == [record["operation_ids"][0]]
+    with db.connect(store) as conn:
+        assert conn.execute(
+            "SELECT count(*) FROM operations WHERE id LIKE %s",
+            ("ad01-%s-use-%%" % repertoire["campaign_id"],)).fetchone()[0] == 2
+
+
+def test_source_policy_cost_survives_member_refusal(store, monkeypatch):
+    """A failed member keeps the admitted policy child in its cost union."""
+    from experiments.ad01 import trajectory
+    from settlement import db
+
+    cid = "ad01-w0-I-63"
+    capability = "acquired-sw-s89a3-use-boom"
+    entry = "acquired_sw_use_boom"
+    _campaign(store, cid)
+    life = _lifecycle(store, cid, FAIL_ON_USE_MEMBER_SOURCE, entry)
+    release = "s89a3-source-policy-failure"
+    _bind(store, life, release, [capability])
+    member = {"capability_id": capability,
+              "method_source": FAIL_ON_USE_MEMBER_SOURCE,
+              "entry": entry, "params": {"max_queries": 16},
+              "scope": {"family": "software"}, "authored": False,
+              "source_digest": hashlib.sha256(
+                  FAIL_ON_USE_MEMBER_SOURCE.encode("utf-8")).hexdigest()}
+    policy_source = (
+        "def STEP(view, state):\n"
+        "    return {'action': {'kind': 'use_method',\n"
+        "                      'target': %r,\n"
+        "                      'inputs': {'method_id': %r, 'max_queries': 4},\n"
+        "                      'evidence_refs': [],\n"
+        "                      'requested_resources': {'queries': 4}},\n"
+        "            'state': {}}\n" % (USE_TASK, capability))
+    allocation = "ad01-campaign-%s" % cid
+    [record] = trajectory.run_use(
+        {"campaign_id": cid, "members": [member]}, 0, "I", [USE_TASK], {},
+        dsn=store, allocation_id=allocation, release_id=release,
+        policy_source=policy_source)
+    assert record["executed"] == "incumbent"
+    assert "member execution failed" in record["fallback_reason"]
+    assert record["policy_source_digest"] == hashlib.sha256(
+        policy_source.encode("utf-8")).hexdigest()
+    assert len(record["operation_ids"]) == 2
+    with db.connect(store) as conn:
+        for operation_id in record["operation_ids"]:
+            assert conn.execute(
+                "SELECT count(*) FROM receipts WHERE operation_id = %s",
+                (operation_id,)).fetchone()[0] == 1
+    union = trajectory.cost_union(
+        {"campaign_id": cid, "members": [member]}, [record], dsn=store)
+    assert union["use"]["sandbox_ops"] == 2
+
+    from settlement import broker
+    original_dispatch = broker.dispatch_operation
+
+    def hold_member(dsn, operation_id, **kwargs):
+        if capability not in operation_id:
+            return original_dispatch(dsn, operation_id, **kwargs)
+        with db.connect(dsn) as conn:
+            conn.execute(
+                "UPDATE operations SET dispatch_state = 'dispatching',"
+                " settled = FALSE WHERE id = %s", (operation_id,))
+            conn.commit()
+        return broker.DispatchStatus(
+            operation_id=operation_id, dispatch_state="dispatching",
+            next_decision="awaiting-receipt")
+
+    monkeypatch.setattr(
+        broker, "dispatch_operation", hold_member)
+    pending_policy = policy_source.replace(USE_TASK, DEV_TASK)
+    [pending] = trajectory.run_use(
+        {"campaign_id": cid, "members": [member]}, 0, "I", [DEV_TASK], {},
+        dsn=store, allocation_id=allocation, release_id=release,
+        policy_source=pending_policy)
+    assert pending["executed"] == "incumbent"
+    assert len(pending["operation_ids"]) == 2
+    assert pending["costs"]["sandbox_ops"] == 2
+    pending_member = next(op for op in pending["operation_ids"]
+                          if capability in op)
+    with db.connect(store) as conn:
+        state, settled, reservation_id = conn.execute(
+            "SELECT dispatch_state, settled, reservation_id FROM operations"
+            " WHERE id = %s", (pending_member,)).fetchone()
+        reservation_state, amount = conn.execute(
+            "SELECT state, amount FROM reservations WHERE id = %s",
+            (reservation_id,)).fetchone()
+    assert (state, settled) == ("dispatching", False)
+    assert reservation_state == "reserved"
+    assert amount > 0
 
 
 def test_archived_model_bytes_execute_through_fixed_child():

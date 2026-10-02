@@ -179,17 +179,21 @@ STEP_ENTRY = "STEP"
 
 
 def compile_step(source: str, *, origin: str = "<policy>") -> object:
-    """Compile policy source into the callable the step ABI expects.
+    """Return a bounded STEP callable for legacy fixture callers.
 
-    `run_use` calls its policy, so handing it source text records a policy
-    that raised rather than one that governed, and the two are
-    indistinguishable in the evidence. Every caller that holds source must
-    come through here, or the failure looks like a broken policy.
+    Source is never compiled in this process.  The returned callable keeps
+    the old fixture shape, but invokes the existing child executor for every
+    decision.  Production callers should pass the source bytes to
+    ``trajectory.run_use(policy_source=...)`` so durable use accounting can
+    include the policy operation.
     """
-    namespace: dict = {}
-    exec(compile(source, origin, "exec"), namespace)
-    step = namespace.get(STEP_ENTRY)
-    return step if callable(step) else None
+    # ``origin`` remains a diagnostic label for callers that still use the
+    # compatibility entry point.  It is deliberately not a trust claim about
+    # the supplied source; all such source runs under the child boundary.
+    del origin
+    record = make_policy_artifact(source, origin="fixture-stand-in")
+    verify_policy_record(record)
+    return BoundedPolicy(record)
 
 POLICY_ORIGINS = (
     "authored-control",
@@ -212,6 +216,35 @@ ARTIFACT_REQUIRED = (
     "abi",
     "origin",
 )
+
+
+class BoundedPolicy:
+    """Legacy callable facade over a verified source policy artifact."""
+
+    def __init__(self, record: dict):
+        self.record = dict(record)
+        verify_policy_record(self.record)
+
+    def run(self, view: dict, state: dict, **execution) -> dict:
+        if "contract_versions" not in view:
+            from . import method_exec, packet
+            view = dict(view)
+            view["contract_versions"] = {
+                "policy_step": POLICY_STEP_VERSION,
+                "child": method_exec.CHILD_CONTRACT_VERSION,
+                "packet": packet.PACKET_VERSION,
+            }
+        return run_policy_step(self.record, view, state, **execution)
+
+    def __call__(self, view: dict, state: dict) -> dict:
+        try:
+            result = self.run(view, state)
+        except Exception as exc:
+            # Historical fixture callers expect a ValueError for an invalid
+            # decision.  The production path catches the richer child error
+            # before it reaches this facade.
+            raise ValueError(str(exc)) from exc
+        return {"action": result["action"], "state": result["state"]}
 
 
 def step_limits() -> dict:

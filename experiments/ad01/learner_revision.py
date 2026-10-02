@@ -33,6 +33,7 @@ write a result artifact that claims a live acquisition it cannot point at.
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
@@ -54,6 +55,12 @@ from experiments.ad01 import improve_channel as channel
 from experiments.ad01 import method_exec as _method_exec
 
 RUN_VERSION = "invl02-e4-run-v1"
+
+
+def _route_execution_version(route: dict) -> str:
+    """Bind the prepared operation to the complete pinned route contract."""
+    digest = _frontier.source_digest(_frontier.canonical(route))
+    return "%s-route-%s" % (RUN_VERSION, digest)
 
 # The revision interface, frozen before any model call. A revision may change
 # exactly one thing: the integer the learner hands to `probe`. Everything the
@@ -292,6 +299,12 @@ class Dispatch:
     usage: dict = field(default_factory=dict)
     latency_ms: int = 0
     error: str = ""
+    durable_receipt: dict | None = None
+    reservation_exposure: int | None = None
+    dispatch_state: str | None = None
+    reconcile_state: str | None = None
+    settled: bool | None = None
+    next_decision: str = ""
 
 
 class LiveAcquisition:
@@ -310,7 +323,17 @@ class LiveAcquisition:
     it was given, so a report can reproduce the dispatch that was made.
     """
 
-    def __init__(self, *, environ=None) -> None:
+    def __init__(self, *, dsn: str, allocation_id: str, attempt_id: str,
+                 operation_namespace: str, environ=None) -> None:
+        for name, value in (("dsn", dsn), ("allocation_id", allocation_id),
+                            ("attempt_id", attempt_id),
+                            ("operation_namespace", operation_namespace)):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError("%s is required for durable model dispatch" % name)
+        self.dsn = dsn
+        self.allocation_id = allocation_id
+        self.attempt_id = attempt_id
+        self.operation_namespace = operation_namespace.strip()
         values = dict(environ if environ is not None else os.environ)
         raw = (values.get("SETTLEMENT_EXPECTED_ROUTE") or "").strip()
         if raw[:1] in ("'", '"') and raw[-1:] == raw[:1]:
@@ -364,10 +387,11 @@ class LiveAcquisition:
 
     def dispatch(self, index: int, messages: list, *,
                  max_output_tokens: int, timeout_total_ms: int) -> Dispatch:
-        from settlement.gateway import ModelRequest
+        from settlement import broker, store
+        from settlement.common import ResultCode
         from settlement.gateway_http import HttpGatewayAdapter
 
-        operation_id = "invl02-e4-revision-%04d" % index
+        operation_id = "%s-revision-%04d" % (self.operation_namespace, index)
         prompt_digest = _frontier.source_digest(_frontier.canonical(messages))
         route = self._attested_route()
         adapter = HttpGatewayAdapter(
@@ -377,25 +401,112 @@ class LiveAcquisition:
             timeout_connect_ms=5_000, timeout_read_ms=timeout_total_ms - 20_000,
             timeout_total_ms=timeout_total_ms)
         started = time.monotonic()
-        response = adapter.infer(ModelRequest(
-            model=self.model,
-            messages=tuple(messages),
-            max_output_tokens=max_output_tokens,
-            deadline_ms=timeout_total_ms - 5_000,
-            operation_id=operation_id))
-        elapsed = int((time.monotonic() - started) * 1000)
-        if not hasattr(response, "text"):
+        payload = {
+            "model": self.model,
+            "messages": list(messages),
+            "max_output_tokens": max_output_tokens,
+            "deadline_ms": timeout_total_ms - 5_000,
+            "reasoning_effort": None,
+        }
+        try:
+            prepared = broker.ensure_operation(
+                self.dsn, operation_id=operation_id,
+                effect=broker.MODEL_INFERENCE, payload=payload,
+                allocation_id=self.allocation_id, attempt_id=self.attempt_id,
+                execution_version=_route_execution_version(route),
+                resource="model_calls")
+        except Exception as exc:
+            elapsed = int((time.monotonic() - started) * 1000)
             return Dispatch(operation_id, prompt_digest, route, self.model,
-                            error="%s: %s" % (getattr(response, "kind", "?"),
-                                              getattr(response, "message", "")),
+                            error="operation admission failed: %s" % exc,
                             latency_ms=elapsed)
-        usage = getattr(response, "usage", None)
+        if prepared.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+            elapsed = int((time.monotonic() - started) * 1000)
+            return Dispatch(operation_id, prompt_digest, route, self.model,
+                            error="operation admission refused: %s" % prepared.detail,
+                            latency_ms=elapsed)
+        exposure = (prepared.data or {}).get("exposure")
+        if type(exposure) is not int or exposure < 0:
+            exposure = None
+        status = broker.dispatch_operation(self.dsn, operation_id,
+                                           gateway=adapter)
+        receipts = store.operation_receipts(self.dsn, operation_id)
+        elapsed = int((time.monotonic() - started) * 1000)
+        if not receipts:
+            return Dispatch(operation_id, prompt_digest, route, self.model,
+                            error=("missing durable receipt for %s (state=%s,"
+                                    " reconcile=%s, next=%s)" % (
+                                        operation_id, status.dispatch_state,
+                                        status.reconcile_state,
+                                        status.next_decision)),
+                            latency_ms=elapsed, reservation_exposure=exposure,
+                            dispatch_state=status.dispatch_state,
+                            reconcile_state=status.reconcile_state,
+                            settled=status.settled,
+                            next_decision=status.next_decision)
+        receipt = receipts[-1]
+        content = dict(receipt.get("content") or {})
+        durable_receipt = {
+            "operation_id": operation_id,
+            "receipt_identity": receipt.get("receipt_identity"),
+            "outcome": receipt.get("outcome"),
+            "provenance": receipt.get("provenance"),
+            "content": copy.deepcopy(content),
+            "usage": copy.deepcopy(content.get("usage")),
+            "response_class": content.get("response_class"),
+            "response_received": content.get("response_received"),
+            "exposure": exposure,
+            "unresolved_exposure": (exposure if not status.settled else 0),
+            "dispatch_state": status.dispatch_state,
+            "reconcile_state": status.reconcile_state,
+            "settled": status.settled,
+        }
+        if receipt.get("outcome") != "success":
+            detail = content.get("error") or content.get("response_class") \
+                or receipt.get("outcome") or "unknown"
+            return Dispatch(operation_id, prompt_digest, route, self.model,
+                            error=("durable receipt %s: %s" % (
+                                receipt.get("outcome"), detail)),
+                            usage=dict(content.get("usage") or {}),
+                            latency_ms=elapsed, durable_receipt=durable_receipt,
+                            reservation_exposure=exposure,
+                            dispatch_state=status.dispatch_state,
+                            reconcile_state=status.reconcile_state,
+                            settled=status.settled,
+                            next_decision=status.next_decision)
+        if (receipt.get("receipt_identity") != "gw:%s" % operation_id
+                or receipt.get("provenance") != "gateway"
+                or content.get("operation_id") != operation_id):
+            return Dispatch(operation_id, prompt_digest, route, self.model,
+                            error="durable success receipt identity/provenance mismatch",
+                            usage=dict(content.get("usage") or {}),
+                            latency_ms=elapsed, durable_receipt=durable_receipt,
+                            reservation_exposure=exposure,
+                            dispatch_state=status.dispatch_state,
+                            reconcile_state=status.reconcile_state,
+                            settled=status.settled,
+                            next_decision=status.next_decision)
+        text = content.get("text")
+        if not isinstance(text, str) or not text.strip():
+            return Dispatch(operation_id, prompt_digest, route, self.model,
+                            error="durable success receipt has no response text",
+                            usage=dict(content.get("usage") or {}),
+                            latency_ms=elapsed, durable_receipt=durable_receipt,
+                            reservation_exposure=exposure,
+                            dispatch_state=status.dispatch_state,
+                            reconcile_state=status.reconcile_state,
+                            settled=status.settled,
+                            next_decision=status.next_decision)
         return Dispatch(
             operation_id, prompt_digest, route, self.model,
-            reply=response.text or "",
-            usage={"input_tokens": getattr(usage, "input_tokens", None),
-                   "output_tokens": getattr(usage, "output_tokens", None)},
-            latency_ms=elapsed)
+            reply=text,
+            usage=dict(content.get("usage") or {}),
+            latency_ms=elapsed, durable_receipt=durable_receipt,
+            reservation_exposure=exposure,
+            dispatch_state=status.dispatch_state,
+            reconcile_state=status.reconcile_state,
+            settled=status.settled,
+            next_decision=status.next_decision)
 
 
 # --- eligibility -----------------------------------------------------------
@@ -1173,7 +1284,9 @@ def _adjudication(judgements: list) -> dict:
     }
 
 
-def run_campaign(*, workdir: Path, attempts: int = ACQUISITION_ATTEMPTS,
+def run_campaign(*, workdir: Path, dsn: str, allocation_id: str,
+                 attempt_id: str, operation_namespace: str,
+                 attempts: int = ACQUISITION_ATTEMPTS,
                  split: str = SPLIT, cohort: list = None) -> dict:
     """Dispatch for an eligible revision, then run every arm and control.
 
@@ -1194,7 +1307,9 @@ def run_campaign(*, workdir: Path, attempts: int = ACQUISITION_ATTEMPTS,
     dispatches: list = []
     for index in range(1, attempts + 1):
         try:
-            live = LiveAcquisition()
+            live = LiveAcquisition(
+                dsn=dsn, allocation_id=allocation_id, attempt_id=attempt_id,
+                operation_namespace=operation_namespace)
         except ValueError as exc:
             acquisition = {"acquisition": NO_REPLY, "detail": str(exc),
                            "live_attributable": False, "eligible": False}
@@ -1209,10 +1324,18 @@ def run_campaign(*, workdir: Path, attempts: int = ACQUISITION_ATTEMPTS,
                                       operation_id=dispatch.operation_id)
         judgement["route"] = dispatch.route
         judgement["model"] = dispatch.model
-        judgement["usage"] = dispatch.usage
+        judgement["usage"] = (
+            dispatch.durable_receipt.get("usage")
+            if dispatch.durable_receipt is not None else dispatch.usage)
         judgement["latency_ms"] = dispatch.latency_ms
         judgement["prompt_digest"] = dispatch.prompt_digest
         judgement["provider_fold"] = live.provider_fold or None
+        judgement["durable_receipt"] = dispatch.durable_receipt
+        judgement["reservation_exposure"] = dispatch.reservation_exposure
+        judgement["dispatch_state"] = dispatch.dispatch_state
+        judgement["reconcile_state"] = dispatch.reconcile_state
+        judgement["settled"] = dispatch.settled
+        judgement["next_decision"] = dispatch.next_decision
         if dispatch.error:
             judgement["acquisition"] = UNUSABLE
             judgement["detail"] = dispatch.error
@@ -1236,9 +1359,8 @@ def run_campaign(*, workdir: Path, attempts: int = ACQUISITION_ATTEMPTS,
     summary = _adjudication([dict(d, eligible=d.get("eligible", False))
                              for d in dispatches])
     acquisition = dict(acquisition)
-    acquisition["live_attributable"] = any(
-        d.get("acquisition") == ACQUIRED and d.get("eligible")
-        for d in dispatches)
+    acquisition["live_attributable"] = live_attributable(
+        {"dispatches": dispatches})
 
     incumbent_x = int(channel.INCUMBENT_EVIDENCE[0])
     arms: dict = {}
@@ -1387,20 +1509,45 @@ def _arm_record(arm: dict) -> dict:
 
 
 def live_attributable(evidence: dict) -> bool:
-    """Whether the artifact can point at a live call for its acquired arm.
+    """Whether the artifact links acquired bytes to a durable gateway receipt.
 
-    A report that claims a model did something is only allowed to be written
-    if this returns true, and it is checked against the dispatches rather
-    than against a flag. A recorded double, a replayed receipt or a
-    hand-written reply all fail it, because none of them carries a dispatch
-    that the gateway performed.
+    This is a durable accounting claim, not proof of external provider
+    physics. It requires the receipt identity and provenance recorded by the
+    broker, the response bytes and operation identity to agree, and usage to
+    remain an object from the receipt rather than being replaced with zero.
     """
     for dispatch in evidence.get("dispatches") or []:
-        if dispatch.get("acquisition") == ACQUIRED \
-                and dispatch.get("eligible") \
-                and dispatch.get("operation_id") \
-                and dispatch.get("route") \
-                and dispatch.get("model") \
-                and dispatch.get("source_digest"):
-            return True
+        if not (dispatch.get("acquisition") == ACQUIRED
+                and dispatch.get("eligible")
+                and dispatch.get("operation_id")
+                and dispatch.get("route")
+                and dispatch.get("model")
+                and dispatch.get("source_digest")):
+            continue
+        operation_id = dispatch["operation_id"]
+        receipt = dispatch.get("durable_receipt")
+        if not isinstance(receipt, dict):
+            continue
+        content = receipt.get("content")
+        usage = receipt.get("usage")
+        if not isinstance(content, dict) or not isinstance(usage, dict) \
+                or not usage:
+            continue
+        judged = judge_acquisition(dispatch.get("reply", ""),
+                                  operation_id=operation_id)
+        if (judged.get("acquisition") != ACQUIRED
+                or judged.get("source_digest") != dispatch.get("source_digest")):
+            continue
+        if (receipt.get("operation_id") != operation_id
+                or receipt.get("receipt_identity") != "gw:%s" % operation_id
+                or receipt.get("provenance") != "gateway"
+                or receipt.get("outcome") != "success"
+                or receipt.get("dispatch_state") != "observed"
+                or receipt.get("reconcile_state") != "none"
+                or receipt.get("settled") is not True
+                or content.get("operation_id") != operation_id
+                or content.get("text") != dispatch.get("reply")
+                or content.get("usage") != usage):
+            continue
+        return True
     return False

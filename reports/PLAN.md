@@ -1,4 +1,25 @@
-# S0-S3 implementation plan
+# Implementation plan
+
+## Current closure checkpoint — 2026-09-30
+
+Integration: `codex/stage09-closure-checkpoint`, from `0c581ef`.
+Stage 9 remains active; this batch closes material seams and specifies the next
+connected study. It does not claim a general prototype or learning advantage.
+
+| Lane | Ownership | Dependency | Acceptance | State |
+|---|---|---|---|---|
+| AC | `learner_revision.py`, one new accounting test | Existing broker/grant contracts | Real PostgreSQL admission, attribution, replay, cap and lost-response checks | Merged through `5424c10`; coordinator observed 81 related checks passing |
+| CY | `policy_step.py`, use region of `trajectory.py`, source-policy callers and regression tests | Existing trajectory and bounded executor | No host execution; fresh-process retained use; actual policy/method operation accounting on success and refusal | Merged through `07b58b9`; independent boundary review closed its material findings |
+| ST | One fresh evidence diagnostic and its test; read-only boundary reviews | Frozen E4 semantics | Independent scoring, observation sensitivity, disjoint cohort and raw results | Merged through `71eb58f`; diagnostic run and independent recomputation observed |
+| FX | Remaining control test helper only | CY's versioned policy view | Canonical view construction without weakening assertions or runtime checks | Merged through `0e991d2`; lane gate 6 passed; temporary worktree removed |
+| Coordinator | Architecture synthesis, ledger, roadmap, worker prompt, serial integration | AC/CY/ST/FX | Inspect changes, rerun integrated checks, clean owned resources, snapshot remotely | Source acceptance at `cae712b`: 281 passed, zero failures/skips; all four temporary worktrees removed |
+
+All three implementation/review delegates use Luna in isolated worktrees under
+`.worktrees/`. Only the coordinator changes this task graph and canonical design.
+Linux checks use the existing WSL Ubuntu runtime and disposable databases owned
+by this batch; historical stores and evidence remain untouched.
+
+## Historical S0–S3 implementation plan
 
 Base: `be7956d` (`origin/codex/architecture-handoff`).
 Integration branch: `codex/implementation-s0-s3` (coordinator only).

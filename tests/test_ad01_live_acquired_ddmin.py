@@ -80,7 +80,7 @@ def _control_pick(task_id: str) -> dict:
     a measurement, not a position in a list, and the test reads the same
     decision `control_use` reads.
     """
-    from experiments.ad01 import control_arm, packet, policy_step, trajectory
+    from experiments.ad01 import control_arm, policy_step, trajectory
     from experiments.ad01 import worlds
 
     repertoire = control_arm.control_repertoire("ad01-ctl")
@@ -89,13 +89,10 @@ def _control_pick(task_id: str) -> dict:
         repertoire, features=tables["shape"], coarse=tables["template"])
     policy = policy_step.compile_step(source, origin="<ctl-selector>")
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
-    view = {
-        "task_content": packet.strip_task(task), "observations": [],
-        "open_questions": [], "last_result": None,
-        "eligible_methods": [m["capability_id"]
-                             for m in repertoire["members"]],
-        "remaining": {},
-    }
+    view = policy_step.materialize_view(
+        task=task, observations=[], open_questions=[], last_result=None,
+        eligible_methods=[m["capability_id"]
+                          for m in repertoire["members"]], remaining={})
     action = trajectory._use_policy_action(policy, view, {})
     method_id = trajectory._use_admitted_method(action)
     return next(m for m in repertoire["members"]
