@@ -1,6 +1,54 @@
 # Implementation plan
 
-## Current consolidation batch — 2026-10-01
+## Current batch — 2026-10-02, A–C closure
+
+Integration: `codex/ab-closure-2026-10-02`, from `codex/agent-society` at `5349dab`.
+This batch runs *after* the one-time consolidation, so the milestone-A–C
+inventory below describes the pre-consolidation graph. It is kept because those
+lanes' findings still constrain what may honestly be claimed. This batch starts
+from the consolidated 20-commit history; nothing in this section has yet landed.
+
+The named remaining work is the one the consolidation record states plainly: the
+live JSON `FrontierStore` path is **not** migrated to the SQL investigation
+owner, and Stage 10's connected mission is not demonstrated. The four
+coordinator repairs in the ledger (mission admission, measured coverage, source
+identity, executed-lineage reporting) each carry an explicit "what this does not
+establish" column, and those four exclusions are the seed of this batch.
+
+### Runtime factors, measured before any lane started
+
+| Factor | Resolution | Evidence |
+|---|---|---|
+| WSL resource cap | **3GB / 3 processors**, verified applied, not merely written. One shared VM serves every lane, so this cap is the whole project's ceiling. | `nproc` → 3, `free -m` → 2908 MB total, read back after `wsl --shutdown` |
+| Suite cost | The full suite is ~4 hours. A prior lane ran it four times concurrently and starved a 15.6GB host. Lanes run **only their owned files**. | `docs/RUNBOOK-ISOLATED-FULL-SUITE.md`; `reports/STAGE-09-COMPLETION-MATRIX.md` records the incident |
+| RUNTIME | WSL2 Ubuntu, PostgreSQL 18.6 live on the socket, `/home/ubuntu/.venvs/as9/bin/python` (3.14.4), `PYTHONPATH=src`, run as `ubuntu` for peer auth. | `pg_isready` → accepting connections |
+| Lane isolation | Each test run gets its own `S09ISO_TOKEN`; `tests/conftest_isolation.py` mints and drops `s09iso_<token>_<suffix>` databases. A missing admin DSN is a collection INTERNALERROR, not a test failure. | `docs/RUNBOOK-ISOLATED-FULL-SUITE.md` |
+
+Two mistakes in the WSL cap are worth recording because the first one survived a
+partial fix: `.wslconfig` is **silently ignored** under a UTF-8 BOM *and* under a
+section named `[experimental]` instead of `[wsl2]`. WSL starts normally in both
+cases. The cap is only real once `nproc` and `free -m` are read back.
+
+### Lane graph — round 1, census (read-only, disjoint)
+
+Six lanes dispatched concurrently. Five are Windows-side only; `x0-baseline` is
+the sole WSL/PostgreSQL consumer for this round, so the shared VM is never
+contended.
+
+| Lane | Task | Ownership | Depends on | State |
+|---|---|---|---|---|
+| a0-state | 46 | `FrontierStore` private state, writers/readers, durability, per-fact single owner | — | running |
+| a1-sqlowner | 47 | SQL investigation owner's tables, lifecycle, continuation identity, gaps | — | running |
+| a2-callers | 48 | production call sites, reachability, safe migration order | — | running |
+| b0-census | 49 | milestone B: established / negative / absent / closed-unrun, with denominators | — | running |
+| c0-census | 50 | milestone C: same discipline, plus the freeze-path reachability verdict | — | running |
+| x0-baseline | 51 | real clean baseline on PostgreSQL, per file, per run | — | running |
+
+"Closed unrun" is kept distinct from "negative" throughout this batch. The two
+have been conflated in earlier passes, and the difference decides whether a
+result may be described as a measurement.
+
+## Prior batch — 2026-10-01
 
 Integration: `codex/stage09-consolidation-2026-10-01`, from `70223fb` via the
 read-only milestone inventories at `f03db5b`. Base checkpoint is the
