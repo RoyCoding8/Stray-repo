@@ -1,0 +1,29 @@
+{
+  "campaign_id": "ad01-w2-I-00",
+  "members": [
+    {
+      "authored": true,
+      "capability_id": "seed-sw-greedy",
+      "method": "greedy",
+      "params": {
+        "max_queries": 16
+      },
+      "qualified_on": "ad01-w2-dev-sw-01",
+      "scope": {
+        "family": "software"
+      }
+    },
+    {
+      "authored": true,
+      "capability_id": "seed-sw-greedy",
+      "method": "greedy",
+      "params": {
+        "max_queries": 16
+      },
+      "qualified_on": "ad01-w2-dev-sw-02",
+      "scope": {
+        "family": "software"
+      }
+    }
+  ]
+}

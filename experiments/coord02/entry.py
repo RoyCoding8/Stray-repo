@@ -113,12 +113,14 @@ _POLICY_F_CONDITIONAL = "\n".join([
     "deps = task.get('dependency_versions', {}) or {}",
     "stale = [k for k, v in deps.items() if v in ('', None)]",
     "coupled = [o for o in obs",
-    "           if isinstance(o, dict) and o.get('interface')]",
+    "           if isinstance(o, dict) and o.get('interface')",
+    "           and o.get('error') is None]",
+    "probed = [o for o in obs if isinstance(o, dict)]",
     "if phase == 'pre-plan':",
     "    proposal = {'action': 'probe', 'invocations': [",
     "        {'interface': 'observe-broken', 'input': {'path': ''}}]}",
     "elif phase == 'post-probe':",
-    "    if len(paths) > 1 and not stale:",
+    "    if len(paths) > 1 and not stale and (coupled or not probed):",
     "        half = max(1, len(paths) // 2)",
     "        groups = [sorted(paths[:half]), sorted(paths[half:])]",
     "        proposal = {'action': 'plan', 'shape': 'decompose',",
@@ -129,7 +131,7 @@ _POLICY_F_CONDITIONAL = "\n".join([
     "                         'output_contract': {'entry': 'partition',",
     "                                             'checks': ['public']},",
     "                         'input_bindings': {'base_%d' % j: p",
-    "                                            'for j, p in enumerate(group)}}",
+    "                                            for j, p in enumerate(group)}}",
     "                        for i, group in enumerate(groups) if group]}",
     "    else:",
     "        proposal = {'action': 'plan', 'shape': 'single',",
@@ -167,14 +169,15 @@ _POLICY_EPILOGUE = "\n".join([
     "        'source_digest': req['source_digest'],",
     "        'plan_revision': req['plan_revision'],",
     "        'phase': req['phase'], 'proposal': proposal,",
-    "        'state': {'arm': ARM}}",
+    "        'state': dict({'arm': ARM}, **_SEED_STATE)}",
     "json.dump(resp, open(sys.argv[2], 'w'))",
     ""])
 
 
 def arm_policy_entry(arm: str, *, task_id: str = "",
                      package_entry: bytes | None = None,
-                     package_digest: str = "") -> bytes:
+                     package_digest: str = "",
+                     model_proposal: dict | None = None) -> bytes:
     if arm == "L":
         if not package_entry:
             raise ValueError("arm L needs the acquired package entry bytes")
@@ -197,6 +200,9 @@ def arm_policy_entry(arm: str, *, task_id: str = "",
     text = (_POLICY_PREAMBLE % (arm, package_digest or "",
                                 plan_children(task_id, "single"),
                                 selected_source_text(task_id))) \
+        + "\n_SEED_STATE = %r\n" % (
+            ({"model_proposal": dict(model_proposal)}
+             if arm == "A" and isinstance(model_proposal, dict) else {}),) \
         + "\n" + body + "\n" + _POLICY_EPILOGUE
     return text.encode("utf-8")
 
@@ -223,7 +229,8 @@ def _interpret_with_model(*, gateway: Any, model: str, prompt: str,
         dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
         payload={"model": model,
                  "messages": [{"role": "user", "content": prompt}],
-                 "max_output_tokens": 2048, "deadline_ms": 300_000},
+                 "max_output_tokens": 16384, "deadline_ms": 300_000,
+                 "reasoning_effort": "low"},
         allocation_id=allocation_id)
     if ensured.code not in (ResultCode.APPLIED,
                             ResultCode.ALREADY_APPLIED):
@@ -289,32 +296,97 @@ def arm_decision(arm: str, *, task_id: str, package_entry: bytes | None,
     proposal = dict(decided["proposal"])
     if proposal.get("action") == "plan" and not proposal.get("children"):
         proposal["children"] = plan_children(task_id, "single")
+    if proposal.get("action") == "stop":
+        return {"kind": "stop",
+                "reason": proposal.get("reason", "model stop"),
+                "usage": decided["usage"],
+                "provenance": "model-interpreted-decision"}
+    if proposal.get("action") == "unsupported":
+        return {"kind": "unsupported",
+                "reason": proposal.get("reason", "model unsupported"),
+                "usage": decided["usage"],
+                "provenance": "model-interpreted-decision"}
     return {"kind": "interpreted", "proposal": proposal,
             "usage": decided["usage"],
             "provenance": "model-interpreted-decision"}
 
 
-def arm_child_factory(arm: str, task_id: str,
-                      package_text: str = "",
-                      constructor_label: str = FIXTURE_LABEL) -> Callable:
-    if arm not in ARMS:
-        raise ValueError("unknown arm %r" % (arm,))
-    if constructor_label != FIXTURE_LABEL:
-        raise ValueError("unknown constructor label %r" % (constructor_label,))
-    if arm == "A":
-        assert isinstance(package_text, str) and package_text
-    return solved_child_factory(task_id)
+def dispatch_admitted_child(dsn: str, *, gateway: Any, model: str,
+                               task_id: str, node: str, child: dict,
+                               rendered: dict, allocation_id: str,
+                               operation_id: str) -> dict | None:
+    from settlement import broker
+    from settlement.common import ResultCode
+    owned = list(child.get("owned_paths", []))
+    snap = snapshot_files(task_id)
+    current = {p: snap.get(p, "") for p in owned}
+    prompt = "\n".join([
+        "Repair owned paths for task %s node %s." % (task_id, node),
+        "Obligation: %s" % child.get("obligation", ""),
+        "Admitted observations: %s" % json.dumps(
+            rendered.get("admitted_observations", []), sort_keys=True),
+        "Current bytes: %s" % json.dumps(current, sort_keys=True),
+        "Reply with exactly one JSON object and nothing else, shaped "
+        '{"files": { "<owned relpath>": "<complete file content>" }, '
+        '"notes": "<one or two sentences>"}. '
+        "Include an entry for every owned path, even if unchanged."])
+    ensured = broker.ensure_operation(
+        dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
+        payload={"model": model,
+                 "messages": [{"role": "user", "content": prompt}],
+                 "max_output_tokens": 8192, "deadline_ms": 300_000,
+                 "reasoning_effort": "low"},
+        allocation_id=allocation_id)
+    if ensured.code not in (ResultCode.APPLIED,
+                            ResultCode.ALREADY_APPLIED):
+        return None
+    broker.dispatch_operation(dsn, operation_id, launchers={},
+                              gateway=gateway)
+    from psycopg.rows import dict_row
+    from settlement import db
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT content FROM receipts WHERE operation_id = %s"
+                        " AND receipt_identity = %s",
+                        (operation_id, "gw:%s" % operation_id))
+            row = cur.fetchone()
+            conn.commit()
+    text = str(dict((row or {}).get("content") or {}).get("text", ""))
+    body = text.strip()
+    if body.startswith("```"):
+        lines = body.split("\n")[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        body = "\n".join(lines)
+    try:
+        data = json.loads(body) if body else None
+    except ValueError:
+        return None
+    files = None
+    if isinstance(data, dict):
+        files = data.get("files")
+        if files is None and isinstance(data.get("children"), list):
+            plan = [c for c in data["children"]
+                    if isinstance(c, dict)
+                    and c.get("node_id") == node]
+            if plan and isinstance(plan[0].get("files"), dict):
+                files = plan[0]["files"]
+    if not isinstance(files, dict) or set(files) != set(owned):
+        return None
+    if any(not isinstance(v, str) or not v.strip()
+           for v in files.values()):
+        return None
+    return {p: files[p] for p in owned}
 
 
-def live_child_factory(arm: str, task_id: str) -> Callable:
-    if arm not in ARMS:
-        raise ValueError("unknown arm %r" % (arm,))
-
-    def _build(node: str, child: dict, rendered: dict) -> dict:
-        owned = list(child.get("owned_paths", []))
-        snap = snapshot_files(task_id)
-        return {p: snap[p] for p in owned if p in snap}
-
+def run_child_factory(dsn: str, *, task_id: str, gateway: Any,
+                      model: str, allocation_id: str,
+                      operation_id: str) -> Callable:
+    def _build(node: str, child: dict, rendered: dict) -> dict | None:
+        return dispatch_admitted_child(
+            dsn, gateway=gateway, model=model, task_id=task_id,
+            node=node, child=child, rendered=rendered,
+            allocation_id=allocation_id, operation_id=operation_id)
     return _build
 
 
@@ -435,6 +507,9 @@ def stage_record(root: Any, trial: dict, tree: dict | None) -> dict:
         "freeze_id": trial["freeze_id"], "panel": trial["panel"],
         "task_id": trial["task_id"], "repeat": trial["repeat"],
         "arm": trial["arm"],
+        "executed_treatment": trial.get("executed_treatment",
+                                        trial["arm"]),
+        "fallback_reason": trial.get("fallback_reason"),
         "procedure_digest": trial["package_digest"],
         "input_digest": oracle.task_input_digest(trial["task_id"]),
         "outcome": "success" if solved else "failure",
@@ -462,27 +537,46 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
     tag = "e-%s-%s-r%d-%s-%s" % (panel, task_id, repeat, arm,
                                  uuid.uuid4().hex[:6])
     seed = seed_episode(dsn, tag, snapshot_files(task_id))
+    if gateway is None:
+        gateway = FakeGatewayAdapter(text="")
+    if not model:
+        model = "doubled-default"
     decision = arm_decision(
         arm, task_id=task_id, package_entry=package_entry,
         package_digest=package_digest, package_text=package_text,
-        gateway=gateway or FakeGatewayAdapter(),
-        model=model or "fixture-label",
+        gateway=gateway, model=model,
         dsn=dsn, run_id="run-%s" % tag,
         allocation_id=seed["allocation_id"])
     fallback_note = ""
+    scheduled_arm = arm
+    executed_treatment: str | None = None
+    if decision["kind"] == "retained":
+        executed_treatment = "L-acquired"
     if decision["kind"] == "none":
         fallback_note = "none-selection:S-fallback"
+        executed_treatment = "S-fallback"
         arm = "S"
         decision = arm_decision(
             "S", task_id=task_id, package_entry=None,
             package_digest=package_digest, package_text=package_text,
-            gateway=gateway or FakeGatewayAdapter(),
-            model=model or "fixture-label",
+            gateway=gateway, model=model,
+            dsn=dsn, run_id="run-%s" % tag,
+            allocation_id=seed["allocation_id"])
+    elif decision["kind"] in ("stop", "unsupported"):
+        fallback_note = "model-%s:S-fallback" % decision["kind"]
+        executed_treatment = "S-fallback"
+        arm = "S"
+        decision = arm_decision(
+            "S", task_id=task_id, package_entry=None,
+            package_digest=package_digest, package_text=package_text,
+            gateway=gateway, model=model,
             dsn=dsn, run_id="run-%s" % tag,
             allocation_id=seed["allocation_id"])
     entry = decision.get("entry") or arm_policy_entry(
         arm, task_id=task_id, package_entry=package_entry,
-        package_digest=package_digest)
+        package_digest=package_digest,
+        model_proposal=(decision.get("proposal")
+                        if decision.get("kind") == "interpreted" else None))
     snapshot = snapshot_files(task_id)
     payload = oracle.build_solver_payload(task_id)
     requires = _requires_for(task_id, snapshot)
@@ -503,8 +597,13 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
                                                     "probe_calls": 0}))
     if problems:
         raise ValueError("pre-admit ceiling breach: %s" % problems)
-    factory = arm_child_factory(arm, task_id, package_text,
-                                constructor_label=constructor_label)
+    if constructor_label != FIXTURE_LABEL:
+        raise ValueError("unknown constructor label %r" % (
+            constructor_label,))
+    factory = run_child_factory(
+        dsn, task_id=task_id, gateway=gateway, model=model,
+        allocation_id=seed["allocation_id"],
+        operation_id="coord02-child:%s:%s" % (tag, task_id))
     outcome = run_episode(dsn, cfg, launcher_factory(tag), factory)
     solved = outcome.get("status") == "success"
     protected = _protected_of(outcome)
@@ -524,7 +623,7 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
     trial_outcome = "success" if solved else "failure"
     trial = SE.build_trial_record(
         freeze_id=freeze["freeze_id"], panel=panel, task_id=task_id,
-        repeat=repeat, arm=arm, source_sha=source_sha,
+        repeat=repeat, arm=scheduled_arm, source_sha=source_sha,
         config_digest=config_digest, package_digest=package_digest,
         outcome=trial_outcome, solved=solved,
         protected={"passed": int(protected.get("passed", 0)),
@@ -533,7 +632,9 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
         failures=failures, costs=costs, receipts=receipts,
         operations=[{"operation_id": r, "kind": "episode"}
                     for r in receipts],
-        liabilities=outcome.get("liabilities") or [])
+        liabilities=outcome.get("liabilities") or [],
+        executed_treatment=executed_treatment,
+        fallback_reason=fallback_note or None)
     problems = check_ceilings(trial["costs"])
     if problems:
         raise ValueError("pre-admit ceiling breach: %s" % problems)
@@ -547,7 +648,9 @@ def run_panel(dsn: str, *, freeze: dict, panel: str,
               package_digest: str = "none",
               package_text: str = "",
               source_sha: str = "entry-base",
-              config_digest: str = "entry-base") -> list:
+              config_digest: str = "entry-base",
+              gateway: Any | None = None,
+              model: str = "") -> list:
     repeats = repeats if repeats is not None else freeze_mod.REPEATS
     wanted = {(c["task"], c["repeat"], c["arm"]) for c in freeze["schedule"]
               if c["panel"] == panel}
@@ -572,7 +675,8 @@ def run_panel(dsn: str, *, freeze: dict, panel: str,
             package_entry=package_entry,
             package_digest=package_digest,
             package_text=package_text,
-            source_sha=source_sha, config_digest=config_digest))
+            source_sha=source_sha, config_digest=config_digest,
+            gateway=gateway, model=model))
     return results
 
 
@@ -611,9 +715,10 @@ def write_evidence(cells: list, *, freeze: dict, evidence_root: Any,
             json.dumps(record, indent=2) + "\n")
     freeze_path = root / "freeze.json"
     freeze_mod.write_freeze(freeze_path, freeze)
-    first = sorted({str(trial["panel"]) for trial in
-                    (c.record for c in cells)})
-    report = checker.check_evidence(root, freeze_path, panels=tuple(first))
+    present = sorted({str(trial["panel"]) for trial in
+                      (c.record for c in cells)})
+    report = checker.check_evidence(root, freeze_path,
+                                    panels=tuple(present))
     union = SE.reconcile_cost_union(
         [{"operation_id": r, "kind": "episode",
           "costs": dict(cell.record["costs"])} for cell in cells
@@ -635,8 +740,13 @@ def status_view(dsn: str, *, freeze: dict, evidence_root: Any,
             "arms": list(ARMS), "evidence": report}
 
 
-def gateway_factory() -> Any:
-    return FakeGatewayAdapter()
+def gateway_factory(*, doubled: bool = False) -> Any:
+    if doubled:
+        return FakeGatewayAdapter()
+    from settlement.config import Settings
+    from settlement.gateway_http import HttpGatewayAdapter
+    return HttpGatewayAdapter.from_settings(
+        Settings.from_env(), api="responses")
 
 
 def main(argv: list | None = None) -> int:
@@ -659,12 +769,14 @@ def main(argv: list | None = None) -> int:
         except PermissionError as exc:
             print("blocked: %s" % exc)
             return 2
-    gateway = gateway_factory()
-    assert gateway.check_discovery() is not None
     label = DOUBLED_LABEL if args.doubled or not args.model \
         else "LIVE"
     if label == "LIVE" and not args.model:
         raise ValueError("live execution requires an explicit --model")
+    if label == "LIVE":
+        os.environ["TEAM01_LIVE_MODEL"] = args.model
+    gateway = gateway_factory(doubled=(label == DOUBLED_LABEL))
+    assert gateway.check_discovery() is not None
     freeze = freeze_mod.build_freeze(args.freeze_id,
                                      source_sha=args.source_sha)
     panel_cells = [c for c in freeze["schedule"]
@@ -681,7 +793,9 @@ def main(argv: list | None = None) -> int:
     cells = run_panel(args.dsn, freeze=freeze_view, panel=args.panel,
                       launcher_factory=_factory,
                       source_sha=args.source_sha,
-                      config_digest=ENTRY_VERSION, **doubled)
+                      config_digest=ENTRY_VERSION,
+                      gateway=gateway, model=args.model or "doubled",
+                      **doubled)
     summary = write_evidence(cells, freeze=freeze, evidence_root=root,
                              dsn=args.dsn)
     print(json.dumps({"label": label, "panel": args.panel,

@@ -1,0 +1,178 @@
+{
+  "reviewed_commit": "23a3e686da19e2a65087684ce4e5a24cddd008d8",
+  "bounds": "Offline source/fixture probes and committed JSON; no live calls or database reconciliation. Resume uses the exact persisted episode shape with a mocked read, not a process-kill proof.",
+  "child_semantics": {
+    "changed_bytes": true,
+    "python_files": 4,
+    "all_semantically_unchanged": true,
+    "live_constructor_refusal": "unknown constructor label 'LIVE'"
+  },
+  "direct_costs_without_database": {
+    "model_tokens_in": 100,
+    "model_tokens_out": 20,
+    "model_calls": 1,
+    "tool_invocations": 2,
+    "sandbox_ops": 6,
+    "policy_exec_ops": 3,
+    "protected_check_ops": 1,
+    "cpu_seconds": 0,
+    "wall_seconds": 0,
+    "elapsed_seconds": 0,
+    "abandoned_ops": 0
+  },
+  "committed_fallback": {
+    "S": {
+      "records": 24,
+      "failures": 24,
+      "fixed_100_20_tokens": 24,
+      "model_calls_one": 24
+    },
+    "A": {
+      "records": 24,
+      "failures": 24,
+      "fixed_100_20_tokens": 24,
+      "model_calls_one": 24
+    },
+    "F": {
+      "records": 24,
+      "failures": 24,
+      "fixed_100_20_tokens": 24,
+      "model_calls_one": 24
+    },
+    "L": {
+      "records": 24,
+      "failures": 24,
+      "fixed_100_20_tokens": 24,
+      "model_calls_one": 24
+    }
+  },
+  "unreconciled_invented_receipt_skips": true,
+  "ad01": {
+    "default_I_tasks": [
+      "ad01-w0-dev-sw-00",
+      "ad01-w0-dev-sw-01",
+      "ad01-w0-dev-sw-02"
+    ],
+    "default_R_tasks": [
+      "ad01-w0-dev-sw-00",
+      "ad01-w0-dev-sw-01",
+      "ad01-w0-dev-sw-02"
+    ],
+    "forced_stop_still_runs_episodes": 3,
+    "six_boundaries_run_six_episodes": 6,
+    "retained_all_authored": [
+      {
+        "capability_id": "seed-sw-greedy",
+        "method": "greedy",
+        "params": {
+          "max_queries": 16
+        },
+        "scope": {
+          "family": "software"
+        },
+        "authored": true,
+        "qualified_on": "ad01-w0-dev-sw-00"
+      },
+      {
+        "capability_id": "seed-sw-greedy",
+        "method": "greedy",
+        "params": {
+          "max_queries": 16
+        },
+        "scope": {
+          "family": "software"
+        },
+        "authored": true,
+        "qualified_on": "ad01-w0-dev-sw-01"
+      },
+      {
+        "capability_id": "seed-sw-greedy",
+        "method": "greedy",
+        "params": {
+          "max_queries": 16
+        },
+        "scope": {
+          "family": "software"
+        },
+        "authored": true,
+        "qualified_on": "ad01-w0-dev-sw-02"
+      }
+    ],
+    "learner_inputs": [
+      {
+        "observations": [
+          {
+            "observation_id": "obs-ad01-w0-dev-sw-00-seed",
+            "task_id": "ad01-w0-dev-sw-00",
+            "capability_id": "seed-sw-greedy",
+            "verdict": "unmeasured"
+          }
+        ],
+        "charter": {}
+      },
+      {
+        "observations": [
+          {
+            "observation_id": "obs-ad01-w0-dev-sw-01-seed",
+            "task_id": "ad01-w0-dev-sw-01",
+            "capability_id": "seed-sw-greedy",
+            "verdict": "unmeasured"
+          }
+        ],
+        "charter": {}
+      },
+      {
+        "observations": [
+          {
+            "observation_id": "obs-ad01-w0-dev-sw-02-seed",
+            "task_id": "ad01-w0-dev-sw-02",
+            "capability_id": "seed-sw-greedy",
+            "verdict": "unmeasured"
+          }
+        ],
+        "charter": {}
+      }
+    ],
+    "persisted_shape_loses_executable_on_resume": true
+  },
+  "acquisition": {
+    "accounting": {
+      "calls_used": 2,
+      "calls_refused": 0,
+      "ceiling": 4,
+      "live_calls_used": 2,
+      "live_calls_authorized": 4,
+      "label": "LIVE",
+      "lineages": [
+        1,
+        2
+      ]
+    },
+    "stages": [
+      {
+        "lineage": 1,
+        "stage": "init",
+        "profile_reason": "capability verification executed but did not succeed"
+      },
+      {
+        "lineage": 1,
+        "stage": "repair",
+        "profile_reason": "artifact already published"
+      },
+      {
+        "lineage": 2,
+        "stage": "init",
+        "profile_reason": "capability verification executed but did not succeed"
+      },
+      {
+        "lineage": 2,
+        "stage": "repair",
+        "profile_reason": "artifact already published"
+      }
+    ]
+  },
+  "source_integration": {
+    "entry_calls_store_reconciliation": false,
+    "public_panel_calls_resume_plan": false
+  }
+}

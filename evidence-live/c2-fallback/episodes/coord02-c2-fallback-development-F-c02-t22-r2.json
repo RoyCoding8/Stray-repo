@@ -1,0 +1,124 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t22",
+  "repeat": 2,
+  "arm": "F",
+  "executed_treatment": "F",
+  "fallback_reason": null,
+  "procedure_digest": "none",
+  "input_digest": "4a132f4c8b355b5292b2c2d271d23a1165a05091025e84b6f7d9dc8c096809e4",
+  "outcome": "failure",
+  "protected": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 457
+          }
+        ]
+      },
+      "expected": {
+        "total": 457
+      },
+      "got": {
+        "total": 4570
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 450
+          }
+        ]
+      },
+      "expected": {
+        "total": 450
+      },
+      "got": {
+        "total": 4500
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 452
+          },
+          {
+            "n": 452
+          }
+        ]
+      },
+      "expected": {
+        "total": 904
+      },
+      "got": {
+        "total": 9040
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 460
+          },
+          {
+            "n": 470
+          },
+          {
+            "n": 480
+          }
+        ]
+      },
+      "expected": {
+        "total": 1410
+      },
+      "got": {
+        "total": 14100
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 454
+          }
+        ]
+      },
+      "expected": {
+        "total": 454
+      },
+      "got": {
+        "total": 4540
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t22-r2-F-a3de20:c02-t22:step:0000",
+    "coord:run-e-development-c02-t22-r2-F-a3de20:c02-t22:step:0001",
+    "coord:run-e-development-c02-t22-r2-F-a3de20:c02-t22:step:0002"
+  ],
+  "candidate_digest": "735708abd69ad0e9a08098f308392a05a8bda91d4eace74a0336a7045606ee20",
+  "frozen_digest": ""
+}

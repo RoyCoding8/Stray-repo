@@ -157,11 +157,11 @@ def test_experience_packet_from_real_episodes(dsn, tmp_path):
 
 
 def test_construction_call_ceiling(dsn, tmp_path):
-    seed = seed_episode(dsn, _tag("ledger"), {"m": "1"})
+    budget = E.construction_budget()
+    seed = E.seed_construction_campaign(dsn, _tag("ledger"), budget)
     ledger = E.ConstructionLedger(dsn, seed["allocation_id"])
     packet = {"packet_version": "coord02-experience/1",
               "probe_observations": []}
-    budget = E.construction_budget()
     gateway = FakeGatewayAdapter(text=json.dumps({"entry": "x = 1\n"}))
     init_ops = []
     for lineage in (1, 2):
@@ -195,11 +195,11 @@ def test_construction_call_ceiling(dsn, tmp_path):
 
 
 def test_empty_response_kept_and_counted(dsn, tmp_path):
-    seed = seed_episode(dsn, _tag("ledger"), {"m": "1"})
+    budget = E.construction_budget()
+    seed = E.seed_construction_campaign(dsn, _tag("ledger"), budget)
     ledger = E.ConstructionLedger(dsn, seed["allocation_id"])
     packet = {"packet_version": "coord02-experience/1",
               "probe_observations": []}
-    budget = E.construction_budget()
     empty = ledger.request_call(
         E.construction_request(packet, budget, lineage=1, attempt="init"),
         gateway=FakeGatewayAdapter(text=""))
@@ -222,7 +222,8 @@ def test_empty_response_kept_and_counted(dsn, tmp_path):
 
 
 def test_repair_after_protected_feedback_impossible(dsn, tmp_path):
-    seed = seed_episode(dsn, _tag("ledger"), {"m": "1"})
+    seed = E.seed_construction_campaign(dsn, _tag("ledger"),
+                                        E.construction_budget())
     ledger = E.ConstructionLedger(dsn, seed["allocation_id"])
     packet = {"packet_version": "coord02-experience/1",
               "probe_observations": []}
@@ -393,3 +394,214 @@ def test_construction_prompt_plain_text_with_response_contract():
     assert not text.lstrip().startswith("{")
     assert '"entry"' in text
     assert "single" in text or "probe" in text
+
+
+SENTINEL_DSN = os.environ.get(
+    "EC02_SENTINEL_DSN",
+    "dbname=ec02test_sentinel host=/var/run/postgresql user=ubuntu")
+
+
+def _sentinel_episode(dsn, tmp_path, marker: str) -> dict:
+    episodes = E.acquire_episodes(
+        dsn, tmp_path, task_ids=["c02-t16"],
+        launcher_factory=_factory(tmp_path),
+        constructor=E.dev_constructor("c02-t16", solved=True))
+    made = episodes[0]
+    packet = dict(made["packet"])
+    inputs = dict(packet["versioned_inputs"])
+    snapshot = dict(inputs["task_snapshot"])
+    snapshot["sentinel_module"] = marker
+    inputs["task_snapshot"] = snapshot
+    packet["versioned_inputs"] = inputs
+    return {"task_id": made["task_id"], "episode": made["episode"],
+            "packet": packet}
+
+
+def test_construction_request_carries_bounded_actual_contents(dsn,
+                                                             tmp_path):
+    from experiments.coord02 import schemas as S
+    marker = f"SENTINEL-SOURCE-{uuid.uuid4().hex[:8]}"
+    episode = _sentinel_episode(dsn, tmp_path, marker)
+    req = E.construction_request([episode], E.construction_budget(),
+                                 lineage=1, attempt="init")
+    contents = req["episode_contents"]
+    assert len(contents) == 1
+    first = contents[0]
+    for key in ("task_id", "source", "contracts", "initial_state",
+                "proposals", "admissions", "observed_outputs",
+                "child_artifacts", "failed_joins", "revisions", "costs"):
+        assert key in first, key
+    assert first["source"]["sentinel_module"] == marker
+    assert first["proposals"], "decisions must be delivered, not digested"
+    assert first["observed_outputs"], "observations must be delivered"
+    assert first["costs"]["unknown"], "unknown costs stay unknown"
+    wire = req["wire_schema"]
+    assert wire["profile"] == S.PROFILE
+    assert wire["profile_version"] == S.PROFILE_VERSION
+    assert wire["phases"] == dict(S.ALLOWED)
+    assert wire["actions"] == list(S.ACTIONS)
+    specimen = req["transport_specimen"]
+    S.validate_response(
+        dict(specimen["response"]), decision_id=specimen["decision_id"],
+        package_digest=specimen["package_digest"],
+        source_digest=specimen["source_digest"],
+        plan_revision=specimen["plan_revision"],
+        phase=specimen["phase"], allowed=list(specimen["allowed"]))
+    text = E.render_construction_prompt(req)
+    assert marker in text, "actual source must reach the prompt"
+    assert "doubled-fake-gateway" not in text
+    assert "TEAM01" not in text
+
+
+def test_construction_request_refuses_oversize_without_truncation(dsn,
+                                                                  tmp_path):
+    episode = _sentinel_episode(dsn, tmp_path, "oversize-probe")
+    packet = dict(episode["packet"])
+    inputs = dict(packet["versioned_inputs"])
+    snapshot = dict(inputs["task_snapshot"])
+    snapshot["blob"] = "x" * (E.CONSTRUCTION_CONTENT_BUDGET_BYTES + 1)
+    inputs["task_snapshot"] = snapshot
+    packet["versioned_inputs"] = inputs
+    episode["packet"] = packet
+    with pytest.raises(E.ConstructionRequestTooLarge):
+        E.construction_request([episode], E.construction_budget(),
+                               lineage=1, attempt="init")
+
+
+def test_construction_budget_defaults_large_cap_low_effort():
+    budget = E.construction_budget()
+    assert budget["max_output_tokens"] >= 65536
+    assert budget["reasoning_effort"] == "low"
+
+
+def test_request_call_threads_reasoning_effort(dsn):
+    seed = E.seed_construction_campaign(dsn, _tag("effort"),
+                                        E.construction_budget())
+    ledger = E.ConstructionLedger(dsn, seed["allocation_id"])
+    packet = {"packet_version": "coord02-experience/1",
+              "probe_observations": []}
+    rec = ledger.request_call(
+        E.construction_request(packet, E.construction_budget(),
+                               lineage=1, attempt="init"),
+        gateway=FakeGatewayAdapter(text=json.dumps({"entry": "x = 1\n"})))
+    stored = broker.read_operation(dsn, rec["operation_id"])
+    inner = stored["payload"]["payload"]
+    assert inner["reasoning_effort"] == "low"
+    assert inner["max_output_tokens"] >= 65536
+
+
+def test_ledger_survives_process_replacement(dsn):
+    seed = E.seed_construction_campaign(dsn, _tag("durable"),
+                                        E.construction_budget())
+    prefix = f"coord02-L-durable-{uuid.uuid4().hex[:6]}"
+    first = E.ConstructionLedger(dsn, seed["allocation_id"],
+                                 attempt_prefix=prefix)
+    packet = {"packet_version": "coord02-experience/1",
+              "probe_observations": []}
+    gateway = FakeGatewayAdapter(text=json.dumps({"entry": "x = 1\n"}))
+    rec = first.request_call(
+        E.construction_request(packet, E.construction_budget(),
+                               lineage=1, attempt="init"),
+        gateway=gateway)
+    pending_id = f"{prefix}-l2-init-pending"
+    ensured = broker.ensure_operation(
+        dsn, operation_id=pending_id, effect=broker.MODEL_INFERENCE,
+        payload={"model": "doubled-fake-gateway",
+                 "messages": [{"role": "user", "content": "held"}],
+                 "max_output_tokens": 8, "deadline_ms": 300_000},
+        allocation_id=seed["allocation_id"], attempt_id=None)
+    assert ensured.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+    fresh = E.ConstructionLedger(dsn, seed["allocation_id"],
+                                 attempt_prefix=prefix)
+    assert fresh.calls_used() == 2
+    assert fresh.remaining() == E.MAX_CONSTRUCTION_CALLS - 2
+    assert {c["operation_id"] for c in fresh.calls} >= {
+        rec["operation_id"], pending_id}
+    assert pending_id in fresh.unresolved_effects()
+    assert rec["operation_id"] not in fresh.unresolved_effects()
+
+
+def test_invalid_requests_consume_defined_budget(dsn):
+    seed = seed_episode(dsn, _tag("invalid"), {"m": "1"})
+    prefix = f"coord02-L-invalid-{uuid.uuid4().hex[:6]}"
+    ledger = E.ConstructionLedger(dsn, seed["allocation_id"],
+                                  attempt_prefix=prefix)
+    packet = {"packet_version": "coord02-experience/1",
+              "probe_observations": []}
+    budget = E.construction_budget()
+    gateway = FakeGatewayAdapter(text=json.dumps({"entry": "x = 1\n"}))
+    with pytest.raises(Exception, match="lineage"):
+        ledger.request_call(
+            E.construction_request(packet, budget, lineage=99,
+                                   attempt="init"),
+            gateway=gateway)
+    assert ledger.calls_used() == 1
+    assert ledger.remaining() == E.MAX_CONSTRUCTION_CALLS - 1
+    fresh = E.ConstructionLedger(dsn, seed["allocation_id"],
+                                 attempt_prefix=prefix)
+    assert fresh.calls_used() == 1
+    assert fresh.remaining() == E.MAX_CONSTRUCTION_CALLS - 1
+
+
+def test_repair_carries_lineage_and_concrete_failure(dsn, tmp_path):
+    out = E.acquire(
+        dsn, tmp_path, task_ids=["c02-t16"],
+        launcher_factory=_factory(tmp_path),
+        constructor=E.dev_constructor("c02-t16", solved=True),
+        construction_gateway=FakeGatewayAdapter(text=""),
+        budget=E.construction_budget())
+    for rec in out["lineages"]:
+        assert rec["repair"] is not None
+        assert rec["repair"]["lineage"] == rec["lineage"]
+        assert rec["repair"]["operation_id"] != rec["init"]["operation_id"]
+        failure = rec["repair_failure"]
+        assert failure["lineage"] == rec["lineage"]
+        assert failure["reason"]
+        assert failure["operation_id"] == rec["init"]["operation_id"]
+        assert rec["rejections"], "failed keeps/parses must be preserved"
+        assert rec["init"]["text"] == "", "raw response must be preserved"
+
+
+def test_sentinel_destructive_setup_refused():
+    from psycopg.types.json import Json
+    db.apply_migrations(SENTINEL_DSN, MIGRATIONS)
+    E.designate_db(SENTINEL_DSN, kind="evidence",
+                     purpose="sentinel proof contents")
+    seed = seed_episode(SENTINEL_DSN, f"sentinel-{uuid.uuid4().hex[:8]}",
+                        {"m": "1"})
+    sentinel_op = f"sentinel-op-{uuid.uuid4().hex[:8]}"
+    ensured = broker.ensure_operation(
+        SENTINEL_DSN, operation_id=sentinel_op,
+        effect=broker.MODEL_INFERENCE,
+        payload={"model": "doubled-fake-gateway",
+                 "messages": [{"role": "user", "content": "sentinel"}],
+                 "max_output_tokens": 8, "deadline_ms": 300_000},
+        allocation_id=seed["allocation_id"], attempt_id=None)
+    assert ensured.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+    marker = f"sentinel-proof-{uuid.uuid4().hex[:8]}"
+    with db.connect(SENTINEL_DSN) as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO receipts (receipt_identity,"
+                        " operation_id, content_digest, content, outcome)"
+                        " VALUES (%s, %s, 'sentinel', %s, 'success')"
+                        " ON CONFLICT DO NOTHING",
+                        (marker, sentinel_op, Json({})))
+            conn.commit()
+    with pytest.raises(E.EvidenceDBProtected):
+        E.prepare_disposable_db(SENTINEL_DSN, MIGRATIONS)
+    with db.connect(SENTINEL_DSN) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM receipts WHERE"
+                        " receipt_identity = %s", (marker,))
+            assert int(cur.fetchone()[0]) == 1
+            conn.commit()
+
+
+def test_disposable_designation_permits_setup(dsn):
+    E.designate_db(dsn, kind="disposable", purpose="lane test database")
+    E.prepare_disposable_db(dsn, MIGRATIONS)
+    with db.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM operations")
+            assert int(cur.fetchone()[0]) == 0
+            conn.commit()

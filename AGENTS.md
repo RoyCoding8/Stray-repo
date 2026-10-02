@@ -3,12 +3,14 @@
 ## Scope and authority
 
 - This checkout implements the committed Settlement design.
-- The human's current assignment takes precedence over historical design notes. The current worker assignment is `WORKER-COORDINATION-02-COMPLETION-CORRECTION.md`: complete Coordination 02 implementation, live acquisition and the gated frozen study, then deliver independently checked architectural evidence. It retains the original `docs/design/EXECUTABLE-COORDINATION-02.md` treatment, limits and outcome rules. Earlier assignments provide context, not competing scope or a new whole-repository audit. See `docs/design/REFINEMENT-ROADMAP.md` for maintained stage status.
+- The human's current assignment takes precedence over historical design notes. The current worker assignment is `WORKER-EC02-AD01-BEHAVIORAL-COMPLETION.md`: finish actual shared execution and the model-driven two-domain development cycle. Review `23a3e68` in `reviews/EC02-AD01-COMPLETION-ASSESSMENT.md`; its C1/C3 and EC02-closure labels are not accepted. EC02 and AD01 retain separate freezes, verdicts and finite authority. Earlier assignments provide unchanged contracts and context, not competing scope or a new whole-repository audit. See `docs/design/REFINEMENT-ROADMAP.md` for maintained stage status.
 - Commit and push to the assigned branch are authorized. No force-push, history rewriting, unrelated checkout edits, or automatic merge into another agent's branch.
 - The design/review role evaluates results and records findings; it does not take over implementation unless the human requests that change of role.
 - Parallel subagents and Git worktrees are authorized for implementation assignments, including Development 02. Follow `IMPLEMENTATION-WORKFLOW.md`; do not ask again for that permission. Each delegation must name its worktree, owned paths, requirement IDs and exact skills/design sections to load. Review available skills and project context, but do not require uncommitted local skills or memories to understand the assignment.
 
 ## Work quality
+
+- Preserve the original generality goal across long tasks and handoffs: autonomous discovery, capability acquisition, knowledge/context management and improvement across SWE, mathematics and scientific exploration. Narrow task families are experimental instruments, not the product definition. Before proposing the next batch, apply the generality checkpoint in `docs/design/REFINEMENT-ROADMAP.md`. Do not let repeated SWE hardening displace autonomous development and cross-domain transfer.
 
 - Maintain a task list. Complete meaningful vertical slices and their applicable checks.
 - Compact code, clear functions, data-driven repeated structure, no inline comments, no unused abstraction layers.

@@ -1,10 +1,10 @@
 # Settlement: philosophy to final implementation
 
-Updated 2026-09-12. This is the maintained project map and design task list. The product is infrastructure for a persistent, general, autonomous society; the early work determines the behavior that infrastructure must support.
+Updated 2026-09-15. This is the maintained project map and design task list. The product is infrastructure for a persistent, general, autonomous society; early experiments determine the behavior that infrastructure must support.
 
-**Stage 8.6 has a real-repair prototype and completed live panels at a qualified scope; stage 9 architecture consolidation has begun.** Worker `5864740` delivers non-promising real S/P/T and warm/cold results. The design role independently recomputed their arithmetic and confirmed that correcting the known refusal usage does not change either decision. The retained artifact is advisory prose, so executable coordination-template acquisition remains open. [The final assessment](../../reviews/COGNITIVE-BATCH-02-FINAL-ASSESSMENT.md) records what this supports and what remains unmet.
+**Stage 8 remains ongoing; the current handback is partially implemented.** The [EC02/AD01 assessment](../../reviews/EC02-AD01-COMPLETION-ASSESSMENT.md) reviews `23a3e68`: live construction is worker-reported, but child repair/accounting remain disconnected and AD01 retains authored seed methods along a supplied task list. Its environment and useful state helpers do not complete autonomous development. Keep earlier advisory-team and representation evidence at their original scope. [AD01 section 10](AUTONOMOUS-DEVELOPMENT-01.md) now makes action control, executable acquisition and continuity acceptance explicit.
 
-**Current worker assignment:** [Executable Coordination 02](../../WORKER-EXECUTABLE-COORDINATION-02.md), including the pending historical delivery corrections as one independent lane. The [selected design](EXECUTABLE-COORDINATION-02.md) specifies acquired decision programs for binding, diagnostics, ownership and selective rework; four comparison arms; six workload families; causal controls, live acquisition and fresh-process transfer. This is a new informative study, not a rerun or retrofit of Team 01. General learner revision and final infrastructure release remain later milestones.
+**Current worker assignment:** [EC02 and AD01 behavioral completion](../../WORKER-EC02-AD01-BEHAVIORAL-COMPLETION.md). Finish the already specified C1–C5 paths and applicable live study, including the missed eligible repairs and two-domain system-directed investigation. Preserve separate evidence, freezes and grants. No larger benchmark or positive SWE coordination result is required to advance.
 
 ## The mental model
 
@@ -15,6 +15,25 @@ This sequence has feedback. We revisit an earlier decision when evidence challen
 “Done” means the stated deliverable exists at its stated scope. A selected design is revisable. A built mechanism is not necessarily empirically useful. A simulated test is not a live experiment.
 
 ## Overall stages
+
+### Standing generality checkpoint — user direction, 2026-09-13
+
+The destination is a general autonomous system that identifies worthwhile work, acquires executable capabilities, manages experience/context/resources, and improves how it learns. SWE, mathematics and scientific exploration are possible domains, not a restriction to a coding-agent product. The user explicitly asked that this direction survive long tasks, context changes and worker handoffs.
+
+Keep architectural support, implemented behavior and demonstrated generality separate. A generic interface is not evidence of broad competence. Human-designed curricula, fixed panels and reviewer-selected improvements do not demonstrate that the system can discover its own capability gaps. Do not let the intelligence needed to select and improve the system remain permanently in the human/design coordinator while calling the result autonomous learning.
+
+Before selecting each substantial new batch, answer briefly in its existing design or assignment:
+
+1. Which part of the original autonomy/generality goal does this batch test, and what new observation will it produce?
+2. Which choices does the system make itself, and which are still supplied by us?
+3. Which restrictions are temporary experimental controls rather than intended permanent architectural limits?
+4. What is the stopping condition, and how does this batch enable autonomous development or transfer beyond the current task family?
+
+Prioritize execution, authority and evidence defects that invalidate those observations. Ledger minor or unrelated issues; do not require endless SWE coordination optimization before testing broader autonomy. Negative results can close a study and inform the next design choice. Test counts and increasingly elaborate infrastructure are not substitutes for that progress.
+
+Finish the currently assigned Coordination 02 study within its existing gates and authority. At its architectural handback, prioritize designing a bounded autonomous development cycle: broad objective and finite resources -> system-selected capability gap/investigation -> construction -> independent evaluation -> retention or rejection -> later use. Include meaningfully different task types so success cannot depend only on SWE-specific scaffolding. Choose the concrete next experiment from the observed bottleneck; this checkpoint neither predetermines a positive result nor authorizes extra live work or changes to the active frozen study.
+
+### Stage status
 
 | Stage | Purpose and existing mapping | Status | Evidence or next completion condition |
 |---|---|---|---|
@@ -40,8 +59,10 @@ This sequence has feedback. We revisit an earlier decision when evidence challen
 | 8.3 | Memory and decision context | **Integrated prototype; validation remains scoped** | Experience, opposition, packet delivery/binding and stale-state contracts have deterministic evidence in the refreshed [compatibility mapping](../../reviews/COGNITIVE-DESIGN-COMPATIBILITY.md). The whole runtime suite is worker-reported 590 green. Universal context sufficiency and live semantic benefit are unproven. |
 | 8.4 | Background development and autonomous agenda | **Scoped prototype experiment accepted; operational limitation retained** | Worker `324174f`: v3 stored traces and source freeze independently checked, grades 288–288, 16-unit Q saving in family 1. Same-DB resume path inspected; real-PG tests remain worker-reported. Claimed/partially receipted mid-send recovery is not qualified. |
 | 8.5 | Representation invention and transfer | **Connected prototype; live unsuccessful acquisition observed** | Worker `6942fa2` publishes live3: 48 held-out records and 12 controls; means/clauses independently recompute. C produced no usable source candidate and therefore no transfer core. The scoped no-acquisition/fallback result is accepted; successful acquired C transfer and useful learning remain unproven. |
-| 8.6 | Temporary teams and collective reasoning | **Live repair/advisory pilot accepted; executable procedure design selected, implementation pending** | `5864740`: eval 16/15/16, transfer 8/8/8; neither rule promising, even with corrected refusal usage. [Coordination 02](EXECUTABLE-COORDINATION-02.md) now tests actual executable acquisition, applicability, probes, partitions, rework and transfer. Historical delivery fixes are included; old panels are not repeated. |
+| 8.6 | Temporary teams and collective reasoning | **Advisory pilot accepted; executable coordination integration incomplete** | Worker `23a3e68`: real construction is reported but EC02 closure is not accepted; repair execution, accounting and eligible acquisition steps remain open. [Assessment](../../reviews/EC02-AD01-COMPLETION-ASSESSMENT.md). Preserve earlier S/P/T results separately. |
 | 8.7 | Learner revision and consolidation | **First semantic and study draft complete; working mechanism pending** | [Learner revision](LEARNER-REVISION.md): whole trajectories, bounded self-revision, consolidation, evaluator corrections/epochs and rollback. S6/E7 implementation and empirical qualification remain pending. |
+
+Current continuation: **AD01 environment implemented; autonomous trajectory incomplete.** Independent local environment/trajectory subset: 47 passed, 3 DB/process checks deselected. C3 remains open because those tests accept authored seed execution, decorative decisions and incomplete persisted repertoire. C4 live remains unrun and requires separate authority after implementation. These are stage 8 behavioral gaps, not a restart of philosophy or a new stack-selection phase.
 
 The order expresses dependencies, not a demand to finish each part globally. Agenda 01 tested scheduling without waiting for a learned-method release; Representation 01 tested narrow mathematical transfer without waiting for autonomous scheduling. Coordination 02 follows the scoped Team 01 findings. Learner revision remains deferred until an observed development bottleneck identifies a useful intervention. The [checkpoint](COGNITIVE-DESIGN-CHECKPOINT.md) records this progression; it does not authorize building every cognitive draft at once.
 

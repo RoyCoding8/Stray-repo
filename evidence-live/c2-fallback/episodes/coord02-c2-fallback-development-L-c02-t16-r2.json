@@ -1,0 +1,70 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t16",
+  "repeat": 2,
+  "arm": "L",
+  "executed_treatment": "S-fallback",
+  "fallback_reason": "none-selection:S-fallback",
+  "procedure_digest": "none",
+  "input_digest": "9773820efc75b0c1d51285b8527898f980062b28d2946aaf91f6a48556528f59",
+  "outcome": "failure",
+  "protected": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "nums": [
+          3,
+          1,
+          4,
+          1,
+          5
+        ],
+        "k": 4
+      },
+      "expected": {
+        "total": 11
+      },
+      "got": {
+        "total": 9
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "nums": [
+          -2,
+          5
+        ],
+        "k": 1
+      },
+      "expected": {
+        "total": 5
+      },
+      "got": {
+        "total": -2
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t16-r2-L-ca8199:c02-t16:step:0000",
+    "coord:run-e-development-c02-t16-r2-L-ca8199:c02-t16:step:0001",
+    "coord:run-e-development-c02-t16-r2-L-ca8199:c02-t16:step:0002"
+  ],
+  "candidate_digest": "45af5fc7895b5234ac4919af366ba34c1daa75524a5bb329b62096c2c9a941ce",
+  "frozen_digest": ""
+}

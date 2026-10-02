@@ -1,0 +1,224 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t01",
+  "repeat": 2,
+  "arm": "L",
+  "executed_treatment": "S-fallback",
+  "fallback_reason": "none-selection:S-fallback",
+  "procedure_digest": "none",
+  "input_digest": "0f7752972c3017988ee838ab5a1904af2a8fe730cf15e3ee88c680bf59824180",
+  "outcome": "failure",
+  "protected": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "names": [
+          "KILO  ",
+          "  lima"
+        ],
+        "scores": [
+          0,
+          100,
+          -1,
+          101
+        ],
+        "tags": [
+          "solo"
+        ],
+        "values": [
+          1,
+          2,
+          2
+        ]
+      },
+      "expected": {
+        "names": [
+          "kilo",
+          "lima"
+        ],
+        "scores": [
+          0,
+          100,
+          0,
+          100
+        ],
+        "tags": [
+          "solo"
+        ],
+        "stat": 1.67
+      },
+      "got": {
+        "names": [
+          "kilo  ",
+          "  lima"
+        ],
+        "scores": [
+          0,
+          100,
+          -1,
+          101
+        ],
+        "tags": [
+          "solo"
+        ],
+        "stat": 5
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "names": [
+          "  DUP "
+        ],
+        "scores": [
+          5
+        ],
+        "tags": [
+          "b",
+          "a",
+          "b",
+          "A"
+        ],
+        "values": [
+          9
+        ]
+      },
+      "expected": {
+        "names": [
+          "dup"
+        ],
+        "scores": [
+          5
+        ],
+        "tags": [
+          "A",
+          "a",
+          "b"
+        ],
+        "stat": 9.0
+      },
+      "got": {
+        "names": [
+          "  dup "
+        ],
+        "scores": [
+          5
+        ],
+        "tags": [
+          "A",
+          "a",
+          "b",
+          "b"
+        ],
+        "stat": 9
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "names": [
+          "  oscar  ",
+          "PAPA"
+        ],
+        "scores": [
+          1
+        ],
+        "tags": [],
+        "values": [
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "expected": {
+        "names": [
+          "oscar",
+          "papa"
+        ],
+        "scores": [
+          1
+        ],
+        "tags": [],
+        "stat": 2.0
+      },
+      "got": {
+        "names": [
+          "  oscar  ",
+          "papa"
+        ],
+        "scores": [
+          1
+        ],
+        "tags": [],
+        "stat": 8
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "names": [
+          " x "
+        ],
+        "scores": [
+          100
+        ],
+        "tags": [
+          "q",
+          "q"
+        ],
+        "values": [
+          0.5,
+          1.5
+        ]
+      },
+      "expected": {
+        "names": [
+          "x"
+        ],
+        "scores": [
+          100
+        ],
+        "tags": [
+          "q"
+        ],
+        "stat": 1.0
+      },
+      "got": {
+        "names": [
+          " x "
+        ],
+        "scores": [
+          100
+        ],
+        "tags": [
+          "q",
+          "q"
+        ],
+        "stat": 2.0
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t01-r2-L-932b33:c02-t01:step:0000",
+    "coord:run-e-development-c02-t01-r2-L-932b33:c02-t01:step:0001",
+    "coord:run-e-development-c02-t01-r2-L-932b33:c02-t01:step:0002"
+  ],
+  "candidate_digest": "25c97b233d6ea6876addfc8db89f00cc69fb0b6932d86c59ce1d595a859e6910",
+  "frozen_digest": ""
+}

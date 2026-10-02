@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from settlement import broker, db
 from settlement.representation import canonical_bytes, sha_hex
 
 from . import freeze as freeze_mod
@@ -22,7 +23,31 @@ REPEATS = tuple(freeze_mod.REPEATS)
 
 OUTCOMES = ("success", "failure", "refusal", "timeout", "incomplete")
 
-OP_KINDS = ("build", "validation", "episode", "failed", "cancelled")
+EXECUTED_TREATMENTS = ("S", "A", "F", "L", "L-acquired", "S-fallback")
+
+OP_KINDS = ("build", "validation", "episode", "failed", "cancelled",
+            "policy_step", "construction", "a_interpretation",
+            "child_inference", "check", "probe")
+
+KIND_EFFECTS = {"build": broker.SANDBOX_EXEC,
+                "validation": broker.SANDBOX_EXEC,
+                "episode": broker.SANDBOX_EXEC,
+                "failed": broker.SANDBOX_EXEC,
+                "cancelled": broker.SANDBOX_EXEC,
+                "policy_step": broker.SANDBOX_EXEC,
+                "construction": broker.MODEL_INFERENCE,
+                "a_interpretation": broker.MODEL_INFERENCE,
+                "child_inference": broker.MODEL_INFERENCE,
+                "check": broker.SANDBOX_EXEC,
+                "probe": broker.OBSERVATION_ADAPTER}
+
+USAGE_FIELDS = ("input_tokens", "output_tokens", "model_calls")
+
+TOKEN_MAP = {"model_tokens_in": "input_tokens",
+             "model_tokens_out": "output_tokens",
+             "model_calls": "model_calls"}
+
+SETTLEMENTS = ("observed", "cancelled", "refused", "unresolved")
 
 UNKNOWN = "unknown"
 
@@ -125,6 +150,22 @@ def _check_liabilities(liabilities: Any) -> list:
     return cleaned
 
 
+def _check_provenance(executed_treatment: Any,
+                       fallback_reason: Any) -> tuple:
+    if executed_treatment not in EXECUTED_TREATMENTS:
+        raise TrialError("executed treatment %r is not one of %r"
+                         % (executed_treatment, EXECUTED_TREATMENTS))
+    if fallback_reason is not None and (
+            not isinstance(fallback_reason, str) or not fallback_reason):
+        raise TrialError("fallback reason is null or a non-empty string")
+    if executed_treatment == "S-fallback" and fallback_reason is None:
+        raise TrialError("S-fallback execution needs its fallback reason")
+    if executed_treatment != "S-fallback" and fallback_reason is not None:
+        raise TrialError("only S-fallback execution carries a "
+                         "fallback reason")
+    return executed_treatment, fallback_reason
+
+
 def build_trial_record(*, freeze_id: str, panel: str, task_id: str,
                        repeat: int, arm: str, source_sha: str,
                        config_digest: str, package_digest: str,
@@ -134,7 +175,9 @@ def build_trial_record(*, freeze_id: str, panel: str, task_id: str,
                        operations: list | None = None,
                        liabilities: list | None = None,
                        internal_accounting: dict | None = None,
-                       external_billing: dict | None = None) -> dict:
+                       external_billing: dict | None = None,
+                       executed_treatment: str | None = None,
+                       fallback_reason: str | None = None) -> dict:
     if panel not in PANELS:
         raise TrialError("panel %r is not one of %r" % (panel, PANELS))
     if arm not in ARMS:
@@ -189,12 +232,19 @@ def build_trial_record(*, freeze_id: str, panel: str, task_id: str,
     if not isinstance(receipts, list) or not receipts \
             or not all(isinstance(r, str) and r for r in receipts):
         raise TrialError("receipts must be a non-empty list of strings")
+    if executed_treatment is None:
+        executed_treatment = "S-fallback" if arm == "L" and fallback_reason \
+            else arm
+    treatment, reason = _check_provenance(executed_treatment,
+                                          fallback_reason)
     return {"version": TRIAL_VERSION, "freeze_id": freeze_id,
             "panel": panel, "task_id": task_id, "repeat": repeat,
             "arm": arm, "source_sha": source_sha,
             "config_digest": config_digest,
             "package_digest": package_digest, "outcome": outcome,
             "solved": solved,
+            "executed_treatment": treatment,
+            "fallback_reason": reason,
             "protected": {"passed": protected["passed"],
                           "failed": protected["failed"],
                           "total": protected["total"]},
@@ -228,7 +278,10 @@ def validate_trial_record(record: dict) -> dict:
         operations=record.get("operations", []),
         liabilities=record.get("liabilities", []),
         internal_accounting=record.get("internal_accounting", {}),
-        external_billing=record.get("external_billing", {}))
+        external_billing=record.get("external_billing", {}),
+        executed_treatment=record.get("executed_treatment",
+                                      record.get("arm", "")),
+        fallback_reason=record.get("fallback_reason", None))
 
 
 def trial_record_bytes(record: dict) -> bytes:
@@ -253,6 +306,10 @@ def from_checker_record(w_record: dict, *, source_sha: str,
     solved = w_record.get("outcome") == "success" \
         and protected.get("failed") == 0 \
         and bool(w_record.get("frozen_digest"))
+    treatment = w_record.get("executed_treatment")
+    if treatment is None:
+        treatment = "S-fallback" if w_record.get("fallback_reason") \
+            else w_record.get("arm", "")
     return build_trial_record(
         freeze_id=w_record.get("freeze_id", ""),
         panel=w_record.get("panel", ""),
@@ -261,6 +318,8 @@ def from_checker_record(w_record: dict, *, source_sha: str,
         source_sha=source_sha, config_digest=config_digest,
         package_digest=w_record.get("procedure_digest") or "none",
         outcome="success" if solved else "failure", solved=solved,
+        executed_treatment=treatment,
+        fallback_reason=w_record.get("fallback_reason", None),
         protected={"passed": protected.get("passed", 0),
                    "failed": protected.get("failed", 0),
                    "total": protected.get("total", 0)},
@@ -275,6 +334,281 @@ def from_checker_record(w_record: dict, *, source_sha: str,
                "elapsed_seconds": None, "abandoned_ops": 0},
         receipts=w_record.get("receipts") or [],
         external_billing={"model": UNKNOWN, "infra": UNKNOWN})
+
+
+def _check_usage(usage: Any, operation_id: str) -> dict | None:
+    if usage is None:
+        return None
+    if not isinstance(usage, dict):
+        raise TrialError("operation %r usage must be an object"
+                         % operation_id)
+    if set(usage) != set(USAGE_FIELDS):
+        raise TrialError("operation %r usage needs exactly %r"
+                         % (operation_id, USAGE_FIELDS))
+    clean: dict = {}
+    for field in USAGE_FIELDS:
+        value = usage[field]
+        if isinstance(value, bool) or not isinstance(value, int) \
+                or value < 0:
+            raise TrialError("operation %r usage %r must be a "
+                             "non-negative int" % (operation_id, field))
+        clean[field] = value
+    return clean
+
+
+def _check_settlement(settlement: Any, refusal: Any,
+                      operation_id: str) -> tuple:
+    if settlement not in SETTLEMENTS:
+        raise TrialError("operation %r settlement %r is not one of %r"
+                         % (operation_id, settlement, SETTLEMENTS))
+    if settlement == "unresolved":
+        if refusal is not None:
+            raise TrialError("operation %r unresolved carries no refusal"
+                             % operation_id)
+        return settlement, None
+    if refusal is not None and not isinstance(refusal, dict):
+        raise TrialError("operation %r refusal must be an object"
+                         % operation_id)
+    if settlement in ("cancelled", "refused") and refusal is None:
+        raise TrialError("operation %r %s needs its refusal"
+                         % (operation_id, settlement))
+    return settlement, None if refusal is None else dict(refusal)
+
+
+def _check_liability_entry(entry: Any, operation_id: str) -> dict:
+    if not isinstance(entry, dict):
+        raise TrialError("operation %r liability must be an object"
+                         % operation_id)
+    party = entry.get("party")
+    reason = entry.get("reason")
+    if not isinstance(party, str) or not party:
+        raise TrialError("operation %r liability needs a party"
+                         % operation_id)
+    if not isinstance(reason, str) or not reason:
+        raise TrialError("operation %r liability needs a reason"
+                         % operation_id)
+    return {"party": party, "reason": reason,
+            "operation": entry.get("operation", operation_id)}
+
+
+def build_operation_record(*, operation_id: str, kind: str,
+                           effect: str, receipts: list,
+                           usage: dict | None, settlement: str,
+                           refusal: dict | None,
+                           liability: dict | None,
+                           artifacts: list) -> dict:
+    if not isinstance(operation_id, str) or not operation_id:
+        raise TrialError("operation needs a non-empty operation_id")
+    if kind not in OP_KINDS:
+        raise TrialError("operation kind %r is not one of %r"
+                         % (kind, OP_KINDS))
+    if effect != KIND_EFFECTS[kind]:
+        raise TrialError("operation %r kind %r admits only effect %r"
+                         % (operation_id, kind, KIND_EFFECTS[kind]))
+    if not isinstance(receipts, list) \
+            or not all(isinstance(r, str) and r for r in receipts):
+        raise TrialError("operation %r needs receipt identity strings"
+                         % operation_id)
+    clean_usage = _check_usage(usage, operation_id)
+    clean_settlement, clean_refusal = _check_settlement(
+        settlement, refusal, operation_id)
+    clean_liability = None if liability is None else _check_liability_entry(
+        liability, operation_id)
+    if not isinstance(artifacts, list):
+        raise TrialError("operation %r artifacts must be a list"
+                         % operation_id)
+    return {"operation_id": operation_id, "kind": kind, "effect": effect,
+            "receipts": list(receipts), "usage": clean_usage,
+            "settlement": clean_settlement, "refusal": clean_refusal,
+            "liability": clean_liability, "artifacts": list(artifacts)}
+
+
+STORE_KIND_BY_EFFECT = {
+    broker.MODEL_INFERENCE: "child_inference",
+    broker.SANDBOX_EXEC: "episode",
+    broker.OBSERVATION_ADAPTER: "probe",
+}
+
+STORE_SETTLEMENT_BY_STATE = {
+    "observed": "observed",
+    "reconciled": "observed",
+    "cancelled": "cancelled",
+    "unresolved": "unresolved",
+}
+
+
+def _full_usage(receipts: list) -> dict | None:
+    for receipt in receipts:
+        seen = (receipt.get("content") or {}).get("usage") or {}
+        if all(isinstance(seen.get(field), int)
+               and not isinstance(seen.get(field), bool)
+               and seen[field] >= 0 for field in USAGE_FIELDS):
+            return {field: seen[field] for field in USAGE_FIELDS}
+    return None
+
+
+def operation_record_from_store_row(row: dict, receipts: list, *,
+                                    kind: str | None = None) -> dict:
+    operation_id = row.get("id", "")
+    effect = (row.get("payload") or {}).get("effect", "")
+    resolved_kind = kind or STORE_KIND_BY_EFFECT.get(effect, "")
+    state = row.get("dispatch_state", "")
+    if (row.get("cancel_state") or "none") not in ("none", ""):
+        settlement = "cancelled"
+    else:
+        settlement = STORE_SETTLEMENT_BY_STATE.get(state, "unresolved")
+    usage = _full_usage(receipts)
+    refusal = None
+    if settlement in ("cancelled", "refused"):
+        refusal = {"reason": "cancel-%s" % (row.get("cancel_state")
+                                            or "confirmed"),
+                   "operation": operation_id}
+    liability = None
+    if settlement == "unresolved":
+        liability = {"party": "campaign",
+                     "reason": "unresolved-external-effect",
+                     "operation": operation_id}
+    identities = [r.get("receipt_identity", "") for r in receipts
+                  if r.get("receipt_identity")]
+    return build_operation_record(
+        operation_id=operation_id, kind=resolved_kind, effect=effect,
+        receipts=identities, usage=usage, settlement=settlement,
+        refusal=refusal, liability=liability, artifacts=[])
+
+
+def costs_for_operations(dsn: str, op_ids: list) -> dict:
+    from psycopg.rows import dict_row
+
+    if not isinstance(op_ids, list) or not all(
+            isinstance(o, str) and o for o in op_ids):
+        raise TrialError("costs need an operation_ids list")
+    seen: dict = {}
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            for operation_id in dict.fromkeys(op_ids):
+                cur.execute("SELECT receipt_identity, content"
+                            " FROM receipts WHERE operation_id = %s"
+                            " ORDER BY receipt_identity",
+                            (operation_id,))
+                usage = _full_usage([dict(r) for r in cur.fetchall()])
+                if usage is None:
+                    raise TrialError("operation %r has no measured usage"
+                                     % operation_id)
+                seen[operation_id] = usage
+            conn.commit()
+    return {"in": sum(u["input_tokens"] for u in seen.values()),
+            "out": sum(u["output_tokens"] for u in seen.values()),
+            "calls": sum(u["model_calls"] for u in seen.values())}
+
+
+def reconcile_campaign_union_from_store(dsn: str, cells: list,
+                                        *, kinds: dict | None = None) -> dict:
+    from psycopg.rows import dict_row
+
+    if not isinstance(cells, list):
+        raise TrialError("campaign union needs a list of cells")
+    wanted: dict = {}
+    for cell in cells:
+        if not isinstance(cell, dict):
+            raise TrialError("cells must be objects")
+        cell_id = cell.get("cell_id")
+        ids = cell.get("operation_ids")
+        if not isinstance(cell_id, str) or not cell_id:
+            raise TrialError("cells need a non-empty cell_id")
+        if not isinstance(ids, list) or not all(
+                isinstance(o, str) and o for o in ids):
+            raise TrialError("cell %r needs an operation_ids list"
+                             % cell_id)
+        wanted[cell_id] = list(ids)
+    hints = dict(kinds or {})
+    rows: dict = {}
+    receipts_by_op: dict = {}
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            for cell_id in wanted:
+                for operation_id in wanted[cell_id]:
+                    if operation_id in rows:
+                        continue
+                    cur.execute("SELECT * FROM operations WHERE id = %s",
+                                (operation_id,))
+                    row = cur.fetchone()
+                    if row is None:
+                        raise TrialError("operation %r has no durable row"
+                                         % operation_id)
+                    rows[operation_id] = dict(row)
+                    cur.execute("SELECT receipt_identity, outcome, content"
+                                " FROM receipts WHERE operation_id = %s"
+                                " ORDER BY receipt_identity",
+                                (operation_id,))
+                    receipts_by_op[operation_id] = [
+                        dict(r) for r in cur.fetchall()]
+            conn.commit()
+    records = {operation_id: operation_record_from_store_row(
+        row, receipts_by_op[operation_id], kind=hints.get(operation_id))
+        for operation_id, row in rows.items()}
+    union_cells = [{"cell_id": cell_id,
+                    "operations": [records[o] for o in ids]}
+                   for cell_id, ids in wanted.items()]
+    union = reconcile_campaign_union(union_cells)
+    union["records"] = [records[o] for o in union["operation_ids"]]
+    return union
+
+
+def _operation_costs(record: dict) -> dict:
+    usage = record.get("usage") or {}
+    costs = {field: 0 for field in COST_FIELDS}
+    for trial_field, usage_field in TOKEN_MAP.items():
+        costs[trial_field] = usage.get(usage_field, 0)
+    return costs
+
+
+def reconcile_campaign_union(cells: list) -> dict:
+    if not isinstance(cells, list):
+        raise TrialError("campaign union needs a list of cells")
+    attribution: dict = {}
+    flat: dict = {}
+    order: list = []
+    for cell in cells:
+        if not isinstance(cell, dict):
+            raise TrialError("cells must be objects")
+        cell_id = cell.get("cell_id")
+        if not isinstance(cell_id, str) or not cell_id:
+            raise TrialError("cells need a non-empty cell_id")
+        operations = cell.get("operations")
+        if not isinstance(operations, list):
+            raise TrialError("cell %r needs an operations list" % cell_id)
+        for record in operations:
+            if not isinstance(record, dict):
+                raise TrialError("cell %r operations must be objects"
+                                 % cell_id)
+            op_id = record.get("operation_id")
+            if not isinstance(op_id, str) or not op_id:
+                raise TrialError("cell %r operations need a non-empty "
+                                 "operation_id" % cell_id)
+            if op_id in flat:
+                if flat[op_id] != record:
+                    raise TrialError("conflicting entries for operation "
+                                     "%r" % op_id)
+            else:
+                flat[op_id] = record
+                order.append(op_id)
+            attribution.setdefault(op_id, [])
+            if cell_id not in attribution[op_id]:
+                attribution[op_id].append(cell_id)
+    costs_union = reconcile_cost_union(
+        [{"operation_id": op_id, "kind": flat[op_id].get("kind"),
+          "costs": _operation_costs(flat[op_id])} for op_id in order])
+    unknown = any(flat[op_id].get("usage") is None for op_id in order)
+    totals = dict(costs_union["totals"])
+    if unknown:
+        for field in NULLABLE_COSTS:
+            totals[field] = UNKNOWN
+        for trial_field in TOKEN_MAP:
+            totals[trial_field] = UNKNOWN
+    return {"n_operations": costs_union["n_operations"],
+            "operation_ids": costs_union["operation_ids"],
+            "attribution": attribution,
+            "totals": totals, "by_kind": costs_union["by_kind"]}
 
 
 def reconcile_cost_union(operations: list) -> dict:
@@ -330,6 +664,182 @@ def reconcile_cost_union(operations: list) -> dict:
         by_kind[entry["kind"]] = by_kind.get(entry["kind"], 0) + 1
     return {"totals": totals, "operation_ids": sorted(by_id),
             "by_kind": by_kind, "n_operations": len(by_id)}
+
+
+def cell_key(freeze_id: str, panel: str, task: str, repeat: int,
+               arm: str) -> tuple:
+    if panel not in PANELS:
+        raise TrialError("panel %r is not one of %r" % (panel, PANELS))
+    if arm not in ARMS:
+        raise TrialError("arm %r is not one of %r" % (arm, ARMS))
+    if repeat not in REPEATS:
+        raise TrialError("repeat %r is not one of %r" % (repeat, REPEATS))
+    return (freeze_id, panel, task, repeat, arm)
+
+
+def select_panel_cells(freeze: dict, *, panel: str) -> list:
+    if panel not in PANELS:
+        raise TrialError("panel %r is not one of %r" % (panel, PANELS))
+    schedule = freeze.get("schedule")
+    if not isinstance(schedule, list):
+        raise TrialError("freeze needs a schedule list")
+    freeze_id = freeze.get("freeze_id", "")
+    cells = []
+    for cell in schedule:
+        if cell.get("panel") != panel:
+            continue
+        cell_key(freeze_id, cell.get("panel"), cell.get("task"),
+                 cell.get("repeat"), cell.get("arm"))
+        cells.append({"panel": cell.get("panel"), "task": cell.get("task"),
+                      "repeat": cell.get("repeat"), "arm": cell.get("arm")})
+    return cells
+
+
+LEGACY_PACKAGE_DIGEST_FIELDS = ("package_digest", "digest")
+
+
+def _freeze_package_digest(freeze: dict) -> str | None:
+    package = freeze.get("package") or {}
+    for field in LEGACY_PACKAGE_DIGEST_FIELDS:
+        value = package.get(field)
+        if isinstance(value, str) and value:
+            return value
+    return None
+
+
+def _resume_record_settled(record: dict) -> bool:
+    outcome = record.get("outcome")
+    failures = record.get("failures")
+    receipts = record.get("receipts")
+    if outcome == "success":
+        return True
+    return outcome == "failure" and isinstance(failures, list) \
+        and len(failures) > 0 and isinstance(receipts, list) \
+        and len(receipts) > 0
+
+
+def resume_plan(*, freeze: dict, schedule_cells: list,
+                evidence_by_key: dict, pending_by_key: dict,
+                reconciled_operation_ids=None) -> dict:
+    if not isinstance(schedule_cells, list):
+        raise TrialError("resume needs a schedule cell list")
+    if not isinstance(evidence_by_key, dict) \
+            or not isinstance(pending_by_key, dict):
+        raise TrialError("resume needs evidence and pending maps")
+    if reconciled_operation_ids is not None:
+        reconciled = frozenset(reconciled_operation_ids)
+    else:
+        reconciled = None
+    package_digest = _freeze_package_digest(freeze)
+    none_selection = (freeze.get("package") or {}).get("kind") == "none"
+    skip: list = []
+    run: list = []
+    reconcile: list = []
+    for cell in schedule_cells:
+        key = cell_key(freeze.get("freeze_id", ""), cell.get("panel"),
+                       cell.get("task"), cell.get("repeat"),
+                       cell.get("arm"))
+        if key in pending_by_key:
+            reconcile.append(key)
+            continue
+        record = evidence_by_key.get(key)
+        if _resume_skippable(record, package_digest, reconciled,
+                             none_selection=none_selection):
+            skip.append(key)
+            continue
+        run.append(key)
+    return {"skip": skip, "run": run, "reconcile": reconcile}
+
+
+NONE_PACKAGE_MARK = "none"
+
+
+def _resume_skippable(record: Any, package_digest: str | None,
+                      reconciled: frozenset | None,
+                      none_selection: bool = False) -> bool:
+    if not isinstance(record, dict):
+        return False
+    if package_digest is None:
+        if none_selection:
+            if record.get("procedure_digest") != NONE_PACKAGE_MARK:
+                return False
+        elif record.get("procedure_digest") not in (None, NONE_PACKAGE_MARK):
+            return False
+    elif record.get("procedure_digest") != package_digest:
+        return False
+    if not _resume_record_settled(record):
+        return False
+    if record.get("outcome") == "success" and not none_selection \
+            and record.get("frozen_digest") != package_digest:
+        return False
+    claimed = set()
+    for receipt in record.get("receipts") or []:
+        if isinstance(receipt, str) and receipt:
+            claimed.add(receipt)
+    for entry in record.get("operations") or []:
+        if isinstance(entry, dict) and entry.get("operation_id"):
+            claimed.add(entry["operation_id"])
+    if not claimed:
+        return False
+    if reconciled is None:
+        return bool(record.get("outcome"))
+    return claimed <= reconciled
+
+
+def refused_trial_record(*, freeze_id: str, panel: str, task_id: str,
+                         repeat: int, arm: str, source_sha: str,
+                         config_digest: str, package_digest: str,
+                         protected: dict, failures: list, costs: dict,
+                         receipts: list, operations: list,
+                         liabilities: list | None = None) -> dict:
+    if not failures:
+        raise TrialError("refusal needs at least one quoted failure")
+    record = build_trial_record(
+        freeze_id=freeze_id, panel=panel, task_id=task_id, repeat=repeat,
+        arm=arm, source_sha=source_sha, config_digest=config_digest,
+        package_digest=package_digest, outcome="refusal", solved=False,
+        protected=protected, failures=failures, costs=costs,
+        receipts=receipts, operations=operations,
+        liabilities=liabilities or [])
+    return record
+
+
+def require_settled_failure(operation: dict, costs: dict) -> dict:
+    settlement = operation.get("settlement")
+    if settlement == "unresolved":
+        raise TrialError("unresolved effects are never a settled failure")
+    if any(value == UNKNOWN for value in costs.values()):
+        raise TrialError("missing mandatory evidence is never a settled "
+                         "zero-cost failure")
+    return {"settlement": settlement, "costs": dict(costs)}
+
+
+def derive_correction(record: dict, *, reason: str, fixes: dict) -> dict:
+    if not isinstance(record, dict):
+        raise TrialError("correction needs a record object")
+    if not isinstance(reason, str) or not reason:
+        raise TrialError("correction needs a stated reason")
+    if not isinstance(fixes, dict) or not fixes:
+        raise TrialError("correction needs non-empty fixes")
+    validate_trial_record(record)
+    corrected = dict(record)
+    for field, value in fixes.items():
+        corrected[field] = value
+    corrected = validate_trial_record(corrected)
+    return {"kind": "derived-correction", "reason": reason,
+            "raw": record, "record": corrected}
+
+
+def executed_package(package: dict) -> str:
+    if not isinstance(package, dict):
+        raise TrialError("package must be an object")
+    if package.get("provenance") != "retained-bytes":
+        raise TrialError("provenance-only baseline labels never stand in "
+                         "for the executed decision package")
+    digest = package.get("digest")
+    if not isinstance(digest, str) or not digest:
+        raise TrialError("executed package needs a non-empty digest")
+    return digest
 
 
 def assemble_freeze_contents(freeze_id: str, *, source_sha: str,

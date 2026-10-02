@@ -1,0 +1,38 @@
+{
+  "reviewed_source": "fe41fb6f7e80f4afbfe67afdf89a20366761b42f",
+  "observations": {
+    "scope": "real Python seams; database/model/join endpoints intercepted; no live claims",
+    "fixed_model_usage": [
+      {
+        "model_tokens_in": 100,
+        "model_tokens_out": 20,
+        "model_calls": 1
+      },
+      {
+        "model_tokens_in": 100,
+        "model_tokens_out": 20,
+        "model_calls": 1
+      }
+    ],
+    "staged_fallback": {
+      "arm": "L",
+      "outcome": "success",
+      "failures": []
+    },
+    "unstaged_marker_preserved": true,
+    "real_record_resume": {
+      "skip": 0,
+      "run": 1,
+      "reconcile": 0
+    },
+    "fabricated_digest_record_resume": {
+      "skip": 1,
+      "run": 0,
+      "reconcile": 0
+    },
+    "different_A_responses_same_controller_program": true,
+    "different_A_responses_same_repair_bytes": true,
+    "repair_equals_unmodified_snapshot": true,
+    "gateway_factory": "FakeGatewayAdapter"
+  }
+}

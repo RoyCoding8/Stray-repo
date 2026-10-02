@@ -356,3 +356,136 @@ def load_task(path) -> dict:
     if raw.get("family") == "software":
         return software.parse_task(raw)
     return graphs.parse_graph(raw)
+
+
+AD01_FREEZE_ID = "ad01"
+AD01_WORLDS = (0, 1, 2)
+AD01_KINDS = ("dev", "within", "transfer")
+AD01_SW_BASE = {"dev": 5101, "use": 5301}
+AD01_GR_BASE = {"dev": 5201, "use": 5401}
+
+AD01_GRAPH_DEV_SPECS = ("C5+tree", "C7+tree", "C5+shared-vertex")
+AD01_GRAPH_TRANSFER_SPECS = ("C9+tree", "C5+shared-edge",
+                             "C5+joined-by-path")
+
+
+def _ad01_seed(family: str, world: int, kind: str, index: int) -> int:
+    base = (AD01_SW_BASE if family == "software" else AD01_GR_BASE)
+    return base["dev" if kind == "dev" else "use"] + world * 100 + index
+
+
+def generate_ad01_software(world: int, kind: str, index: int) -> dict:
+    if kind not in AD01_KINDS:
+        raise ValueError("unknown-ad01-kind %r" % kind)
+    seed = _ad01_seed("software", world, kind, index)
+    rng = _rng("ad01-software", seed, world, kind, index)
+    transfer = kind == "transfer"
+    fault = software.FAULTS[index % 2]
+    keys = list(software.KEYS)
+    rng.shuffle(keys)
+    hero, others = keys[0], keys[1:]
+    vals = ["v%d" % rng.randint(1, 4) for _ in range(3)]
+    while vals[1] == vals[0]:
+        vals[1] = "v%d" % rng.randint(1, 4)
+    while vals[2] == vals[1]:
+        vals[2] = "v%d" % rng.randint(1, 4)
+    ids = iter(range(1000))
+    prefix = _distractor_ops(rng, keys, rng.randint(2, 5), ids, avoid=(hero,))
+    ops = list(prefix)
+    if fault == "stale-read":
+        ops.append({"op": "set", "key": hero, "value": vals[0]})
+        ops.append({"op": "set", "key": hero, "value": vals[1]})
+        if transfer:
+            ops.append({"op": "set", "key": hero, "value": vals[2]})
+        witness_id = "o%d" % next(ids)
+        ops.append({"op": "get", "key": hero, "id": witness_id})
+        template = ("stale-read-3chain" if transfer else "stale-read-2chain")
+    else:
+        ops.append({"op": "set", "key": others[0],
+                    "value": "v%d" % rng.randint(1, 4)})
+        if not transfer:
+            ops.append({"op": "set", "key": others[1],
+                        "value": "v%d" % rng.randint(1, 4)})
+        ops.append({"op": "set", "key": hero, "value": vals[0]})
+        if transfer:
+            ops.append({"op": "del", "key": others[0]})
+        ops.append({"op": "clear"})
+        witness_id = "o%d" % next(ids)
+        ops.append({"op": "get", "key": hero, "id": witness_id})
+        template = ("stale-clear-del-core" if transfer
+                    else "stale-clear-core")
+    suffix = _distractor_ops(rng, keys, rng.randint(2, 7), ids)
+    ops.extend(suffix)
+    ops = ops[:software.MAX_OPS]
+    ref = software.reference_run(ops)[witness_id]
+    bad = software.faulty_run(ops, fault)[witness_id]
+    assert ref != bad, (world, kind, index, fault)
+    task = {"family": "software",
+            "task_id": "ad01-w%d-%s-sw-%02d" % (world, kind, index),
+            "fault": fault, "ops": ops,
+            "witness": {"observation": witness_id, "ref": ref, "faulty": bad},
+            "template": template, "seed": seed}
+    assert software.task_is_valid(task)
+    return task
+
+
+def ad01_content_key(task: dict):
+    if task["family"] == "software":
+        ops = tuple((entry["op"], entry.get("key"), entry.get("value"))
+                    for entry in task["ops"])
+        witness = task["witness"]
+        return ("software", task["fault"], ops,
+                json.dumps(witness["ref"], sort_keys=True),
+                json.dumps(witness["faulty"], sort_keys=True))
+    return ("graph", tuple(task["vertices"]),
+            tuple(tuple(edge) for edge in task["edges"]))
+
+
+def _build_ad01_graph(seed: int, world: int, kind: str, index: int,
+                      spec: str, salt: int):
+    for attempt in range(25):
+        rng = _rng("ad01-graph", seed, world, kind, index, attempt, salt)
+        vertices, edges = _assemble(spec, rng)
+        task = {"family": "graph",
+                "task_id": "ad01-w%d-%s-gr-%02d" % (world, kind, index),
+                "vertices": sorted(vertices),
+                "edges": [sorted(e) for e in edges],
+                "template": spec, "seed": seed}
+        try:
+            parsed = graphs.parse_graph(task)
+        except graphs.GraphInvalid:
+            continue
+        if graphs.witness_holds(parsed):
+            return task
+    return None
+
+
+def generate_ad01_graph(world: int, kind: str, index: int) -> dict:
+    if kind not in AD01_KINDS:
+        raise ValueError("unknown-ad01-kind %r" % kind)
+    specs = (AD01_GRAPH_DEV_SPECS if kind in ("dev", "within")
+             else AD01_GRAPH_TRANSFER_SPECS)
+    spec = specs[index % len(specs)]
+    seed = _ad01_seed("graph", world, kind, index)
+    avoid = set()
+    if kind != "dev":
+        for pos in range(3):
+            avoid.add(ad01_content_key(
+                generate_ad01_graph(world, "dev", pos)))
+    for salt in range(64):
+        task = _build_ad01_graph(seed, world, kind, index, spec, salt)
+        if task is None:
+            continue
+        if ad01_content_key(task) in avoid:
+            continue
+        return task
+    raise AssertionError("no valid ad01 graph for %d %s %d"
+                         % (world, kind, index))
+
+
+def generate_ad01(family: str, world: int, kind: str, index: int) -> dict:
+    if family == "software":
+        return generate_ad01_software(world, kind, index)
+    if family == "graph":
+        return generate_ad01_graph(world, kind, index)
+    raise ValueError("unknown-family %r" % family)

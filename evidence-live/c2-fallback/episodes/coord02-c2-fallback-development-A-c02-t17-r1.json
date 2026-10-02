@@ -1,0 +1,83 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t17",
+  "repeat": 1,
+  "arm": "A",
+  "executed_treatment": "A",
+  "fallback_reason": null,
+  "procedure_digest": "none",
+  "input_digest": "4cdb60b7523c91c78af508963831d9493ff8d76322e2d70efb9fadb13fb42bd8",
+  "outcome": "failure",
+  "protected": {
+    "passed": 2,
+    "failed": 3,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "nums": [
+          4,
+          5,
+          6
+        ],
+        "threshold": 5
+      },
+      "expected": {
+        "count": 1
+      },
+      "got": {
+        "count": 2
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "nums": [
+          0
+        ],
+        "threshold": 0
+      },
+      "expected": {
+        "count": 0
+      },
+      "got": {
+        "count": 1
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "nums": [
+          2,
+          3
+        ],
+        "threshold": 3
+      },
+      "expected": {
+        "count": 0
+      },
+      "got": {
+        "count": 1
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t17-r1-A-f991e5:c02-t17:step:0000",
+    "coord:run-e-development-c02-t17-r1-A-f991e5:c02-t17:step:0001",
+    "coord:run-e-development-c02-t17-r1-A-f991e5:c02-t17:step:0002"
+  ],
+  "candidate_digest": "615704229daa6867431d9b4cf42c1499f4c45833547b5281e16f1ad01ec2733d",
+  "frozen_digest": ""
+}

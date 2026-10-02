@@ -1,0 +1,124 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t21",
+  "repeat": 1,
+  "arm": "L",
+  "executed_treatment": "S-fallback",
+  "fallback_reason": "none-selection:S-fallback",
+  "procedure_digest": "none",
+  "input_digest": "f617cdbaf58556355da3810dffcc380907f2e3fb964d80d46a3868a1cd294f6e",
+  "outcome": "failure",
+  "protected": {
+    "passed": 0,
+    "failed": 5,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 407
+          }
+        ]
+      },
+      "expected": {
+        "total": 407
+      },
+      "got": {
+        "total": 4070
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 400
+          }
+        ]
+      },
+      "expected": {
+        "total": 400
+      },
+      "got": {
+        "total": 4000
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 402
+          },
+          {
+            "n": 402
+          }
+        ]
+      },
+      "expected": {
+        "total": 804
+      },
+      "got": {
+        "total": 8040
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 410
+          },
+          {
+            "n": 420
+          },
+          {
+            "n": 430
+          }
+        ]
+      },
+      "expected": {
+        "total": 1260
+      },
+      "got": {
+        "total": 12600
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "deliveries": [
+          {
+            "n": 404
+          }
+        ]
+      },
+      "expected": {
+        "total": 404
+      },
+      "got": {
+        "total": 4040
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t21-r1-L-28822b:c02-t21:step:0000",
+    "coord:run-e-development-c02-t21-r1-L-28822b:c02-t21:step:0001",
+    "coord:run-e-development-c02-t21-r1-L-28822b:c02-t21:step:0002"
+  ],
+  "candidate_digest": "2851d82990ec9d169735630335b4a5b93f964baefafa561965a56f8443bdbba4",
+  "frozen_digest": ""
+}

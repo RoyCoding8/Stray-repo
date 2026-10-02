@@ -1,0 +1,224 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t02",
+  "repeat": 1,
+  "arm": "F",
+  "executed_treatment": "F",
+  "fallback_reason": null,
+  "procedure_digest": "none",
+  "input_digest": "dfa0b8f63c6e449ea248386a989878ddb22d99cab326b49eed3945af85b49fdc",
+  "outcome": "failure",
+  "protected": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "names": [
+          "  MIKE",
+          "november "
+        ],
+        "scores": [
+          -50,
+          50,
+          -51,
+          51
+        ],
+        "tags": [
+          "solo"
+        ],
+        "values": [
+          1,
+          2,
+          2
+        ]
+      },
+      "expected": {
+        "names": [
+          "mike",
+          "november"
+        ],
+        "scores": [
+          -50,
+          50,
+          -50,
+          50
+        ],
+        "tags": [
+          "solo"
+        ],
+        "stat": 1.67
+      },
+      "got": {
+        "names": [
+          "  mike",
+          "november "
+        ],
+        "scores": [
+          -50,
+          50,
+          -51,
+          51
+        ],
+        "tags": [
+          "solo"
+        ],
+        "stat": 5
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "names": [
+          "  DUP "
+        ],
+        "scores": [
+          5
+        ],
+        "tags": [
+          "b",
+          "a",
+          "b",
+          "A"
+        ],
+        "values": [
+          9
+        ]
+      },
+      "expected": {
+        "names": [
+          "dup"
+        ],
+        "scores": [
+          5
+        ],
+        "tags": [
+          "A",
+          "a",
+          "b"
+        ],
+        "stat": 9.0
+      },
+      "got": {
+        "names": [
+          "  dup "
+        ],
+        "scores": [
+          5
+        ],
+        "tags": [
+          "A",
+          "a",
+          "b",
+          "b"
+        ],
+        "stat": 9
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "names": [
+          "quebec",
+          "  ROMEO "
+        ],
+        "scores": [
+          -49
+        ],
+        "tags": [],
+        "values": [
+          2,
+          2,
+          2,
+          2
+        ]
+      },
+      "expected": {
+        "names": [
+          "quebec",
+          "romeo"
+        ],
+        "scores": [
+          -49
+        ],
+        "tags": [],
+        "stat": 2.0
+      },
+      "got": {
+        "names": [
+          "quebec",
+          "  romeo "
+        ],
+        "scores": [
+          -49
+        ],
+        "tags": [],
+        "stat": 8
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "names": [
+          " x "
+        ],
+        "scores": [
+          50
+        ],
+        "tags": [
+          "q",
+          "q"
+        ],
+        "values": [
+          0.5,
+          1.5
+        ]
+      },
+      "expected": {
+        "names": [
+          "x"
+        ],
+        "scores": [
+          50
+        ],
+        "tags": [
+          "q"
+        ],
+        "stat": 1.0
+      },
+      "got": {
+        "names": [
+          " x "
+        ],
+        "scores": [
+          50
+        ],
+        "tags": [
+          "q",
+          "q"
+        ],
+        "stat": 2.0
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t02-r1-F-b9bacc:c02-t02:step:0000",
+    "coord:run-e-development-c02-t02-r1-F-b9bacc:c02-t02:step:0001",
+    "coord:run-e-development-c02-t02-r1-F-b9bacc:c02-t02:step:0002"
+  ],
+  "candidate_digest": "c8981e2eaf0a9a1fc60fa2906f24b8e61e88502e497ae8840f9403cd23154041",
+  "frozen_digest": ""
+}

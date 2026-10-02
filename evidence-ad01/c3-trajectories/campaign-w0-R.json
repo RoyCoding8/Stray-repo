@@ -1,0 +1,266 @@
+{
+ "arm": "R",
+ "boundaries": [
+  {
+   "decision": {
+    "action": "stop",
+    "reason": "no admissible work remains"
+   },
+   "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-00",
+   "seq": 0,
+   "spend": 17,
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  {
+   "decision": {
+    "action": "investigate",
+    "evidence_digest": [
+     [
+      "ad01-w0-dev-sw-00",
+      "seed-sw-greedy",
+      "'preserved-vs-not_preserved'"
+     ]
+    ],
+    "next_action": {
+     "capability_id": "seed-sw-greedy",
+     "kind": "diagnostic",
+     "task_id": "ad01-w0-dev-sw-00"
+    },
+    "question": "why did seed-sw-greedy on ad01-w0-dev-sw-00 yield 'preserved-vs-not_preserved'"
+   },
+   "observation_id": "obs-c3-novel-unproductive-ad01-w0-dev-gr-00",
+   "seq": 1,
+   "spend": 17,
+   "task_id": "ad01-w0-dev-gr-00"
+  },
+  {
+   "decision": {
+    "action": "investigate",
+    "evidence_digest": [
+     [
+      "ad01-w0-dev-gr-00",
+      "seed-gr-greedy",
+      "'seed seed=10 novel=11'"
+     ],
+     [
+      "ad01-w0-dev-sw-00",
+      "seed-sw-greedy",
+      "'preserved-vs-not_preserved'"
+     ]
+    ],
+    "next_action": {
+     "capability_id": "seed-gr-greedy",
+     "kind": "diagnostic",
+     "task_id": "ad01-w0-dev-gr-00"
+    },
+    "question": "why did seed-gr-greedy on ad01-w0-dev-gr-00 yield 'seed seed=10 novel=11'"
+   },
+   "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-01",
+   "seq": 2,
+   "spend": 17,
+   "task_id": "ad01-w0-dev-sw-01"
+  }
+ ],
+ "campaign_id": "ad01-w0-R-00",
+ "charter": "smaller valid explanatory examples",
+ "episodes": [
+  {
+   "candidate": {
+    "family": "software",
+    "fault": "stale-read",
+    "ops": [
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v1"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v2"
+     },
+     {
+      "id": "o0",
+      "key": "b",
+      "op": "get"
+     }
+    ],
+    "seed": 5101,
+    "task_id": "ad01-w0-dev-sw-00",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v1"
+     },
+     "observation": "o0",
+     "ref": {
+      "type": "str",
+      "value": "v2"
+     }
+    }
+   },
+   "check": {
+    "initial_measure": 14,
+    "measure": 3,
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   "disposition": "retained",
+   "executable": {
+    "authored": true,
+    "capability_id": "seed-sw-greedy",
+    "method": "greedy",
+    "params": {
+     "max_queries": 16
+    },
+    "qualified_on": "ad01-w0-dev-sw-00",
+    "scope": {
+     "family": "software"
+    }
+   },
+   "final_size": 3,
+   "initial_size": 14,
+   "lineage": [
+    {
+     "authored": true,
+     "capability_id": "seed-sw-greedy"
+    }
+   ],
+   "queries": 16,
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  {
+   "candidate": {
+    "edges": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      0,
+      4
+     ]
+    ],
+    "family": "graph",
+    "seed": 5201,
+    "task_id": "ad01-w0-dev-gr-00",
+    "vertices": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ]
+   },
+   "check": {
+    "initial_measure": 12,
+    "measure": 10,
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   "disposition": "retained",
+   "executable": {
+    "authored": true,
+    "capability_id": "seed-gr-greedy",
+    "method": "greedy",
+    "params": {
+     "max_queries": 16
+    },
+    "qualified_on": "ad01-w0-dev-gr-00",
+    "scope": {
+     "family": "graph"
+    }
+   },
+   "final_size": 10,
+   "initial_size": 12,
+   "lineage": [
+    {
+     "authored": true,
+     "capability_id": "seed-gr-greedy"
+    }
+   ],
+   "queries": 16,
+   "task_id": "ad01-w0-dev-gr-00"
+  },
+  {
+   "candidate": {
+    "family": "software",
+    "fault": "stale-clear",
+    "ops": [
+     {
+      "key": "a",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "op": "clear"
+     },
+     {
+      "id": "o0",
+      "key": "a",
+      "op": "get"
+     }
+    ],
+    "seed": 5102,
+    "task_id": "ad01-w0-dev-sw-01",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v3"
+     },
+     "observation": "o0",
+     "ref": {
+      "type": "missing",
+      "value": null
+     }
+    }
+   },
+   "check": {
+    "initial_measure": 16,
+    "measure": 3,
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   "disposition": "retained",
+   "executable": {
+    "authored": true,
+    "capability_id": "seed-sw-greedy",
+    "method": "greedy",
+    "params": {
+     "max_queries": 16
+    },
+    "qualified_on": "ad01-w0-dev-sw-01",
+    "scope": {
+     "family": "software"
+    }
+   },
+   "final_size": 3,
+   "initial_size": 16,
+   "lineage": [
+    {
+     "authored": true,
+     "capability_id": "seed-sw-greedy"
+    }
+   ],
+   "queries": 16,
+   "task_id": "ad01-w0-dev-sw-01"
+  }
+ ],
+ "queries": 51,
+ "stop": {
+  "reason": "no admissible work remains"
+ },
+ "world": 0
+}

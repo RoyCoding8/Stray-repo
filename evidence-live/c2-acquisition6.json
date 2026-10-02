@@ -1,0 +1,283 @@
+{
+ "campaign": "c2live6",
+ "grant": {
+  "episodes": 204,
+  "construction_calls": 4
+ },
+ "selection": {
+  "selection": "none",
+  "selector": "coord02-dev-select/1",
+  "ordering": [
+   "valid-execution",
+   "solved-tasks",
+   "model-tokens",
+   "sandbox-ops",
+   "canonical-bytes"
+  ],
+  "ranking": [
+   1,
+   1,
+   2,
+   2
+  ],
+  "reason": "neither candidate executable under the contract"
+ },
+ "accounting": {
+  "calls_used": 2,
+  "calls_refused": 0,
+  "ceiling": 4,
+  "live_calls_used": 2,
+  "live_calls_authorized": 4,
+  "label": "LIVE",
+  "lineages": [
+   1,
+   2
+  ]
+ },
+ "results": [
+  {
+   "lineage": 1,
+   "stage": "init",
+   "validation": {
+    "parse_ok": true,
+    "parse_reason": "",
+    "profile_ok": false,
+    "profile_reason": "capability verification executed but did not succeed",
+    "execution_admitted": false,
+    "admitted_tasks": [],
+    "admitted_count": 0,
+    "valid_execution": false,
+    "solved_tasks": [],
+    "solved_count": 0,
+    "fallback_tasks": [],
+    "fallback_count": 0,
+    "failures": [
+     {
+      "task_id": "c02-t01",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t06",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t11",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t16",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t21",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t26",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     }
+    ],
+    "executed": [
+     "c02-t01",
+     "c02-t06",
+     "c02-t11",
+     "c02-t16",
+     "c02-t21",
+     "c02-t26"
+    ],
+    "model_tokens": 0,
+    "sandbox_operations": 18,
+    "canonical_bytes": 4196
+   }
+  },
+  {
+   "lineage": 1,
+   "stage": "repair",
+   "validation": {
+    "parse_ok": true,
+    "parse_reason": "",
+    "profile_ok": false,
+    "profile_reason": "artifact already published",
+    "execution_admitted": false,
+    "admitted_tasks": [],
+    "admitted_count": 0,
+    "valid_execution": false,
+    "solved_tasks": [],
+    "solved_count": 0,
+    "fallback_tasks": [],
+    "fallback_count": 0,
+    "failures": [
+     {
+      "task_id": "c02-t01",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t06",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t11",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t16",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t21",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t26",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     }
+    ],
+    "executed": [
+     "c02-t01",
+     "c02-t06",
+     "c02-t11",
+     "c02-t16",
+     "c02-t21",
+     "c02-t26"
+    ],
+    "model_tokens": 0,
+    "sandbox_operations": 18,
+    "canonical_bytes": 4196
+   }
+  },
+  {
+   "lineage": 2,
+   "stage": "init",
+   "validation": {
+    "parse_ok": true,
+    "parse_reason": "",
+    "profile_ok": false,
+    "profile_reason": "capability verification executed but did not succeed",
+    "execution_admitted": false,
+    "admitted_tasks": [],
+    "admitted_count": 0,
+    "valid_execution": false,
+    "solved_tasks": [],
+    "solved_count": 0,
+    "fallback_tasks": [],
+    "fallback_count": 0,
+    "failures": [
+     {
+      "task_id": "c02-t01",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t06",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t11",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t16",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t21",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t26",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     }
+    ],
+    "executed": [
+     "c02-t01",
+     "c02-t06",
+     "c02-t11",
+     "c02-t16",
+     "c02-t21",
+     "c02-t26"
+    ],
+    "model_tokens": 0,
+    "sandbox_operations": 18,
+    "canonical_bytes": 6397
+   }
+  },
+  {
+   "lineage": 2,
+   "stage": "repair",
+   "validation": {
+    "parse_ok": true,
+    "parse_reason": "",
+    "profile_ok": false,
+    "profile_reason": "artifact already published",
+    "execution_admitted": false,
+    "admitted_tasks": [],
+    "admitted_count": 0,
+    "valid_execution": false,
+    "solved_tasks": [],
+    "solved_count": 0,
+    "fallback_tasks": [],
+    "fallback_count": 0,
+    "failures": [
+     {
+      "task_id": "c02-t01",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t06",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t11",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t16",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t21",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     },
+     {
+      "task_id": "c02-t26",
+      "status": "policy-invalid",
+      "reason": "plan carries only action+shape+children"
+     }
+    ],
+    "executed": [
+     "c02-t01",
+     "c02-t06",
+     "c02-t11",
+     "c02-t16",
+     "c02-t21",
+     "c02-t26"
+    ],
+    "model_tokens": 0,
+    "sandbox_operations": 18,
+    "canonical_bytes": 6397
+   }
+  }
+ ]
+}

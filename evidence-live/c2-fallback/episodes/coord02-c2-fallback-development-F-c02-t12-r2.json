@@ -1,0 +1,68 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t12",
+  "repeat": 2,
+  "arm": "F",
+  "executed_treatment": "F",
+  "fallback_reason": null,
+  "procedure_digest": "none",
+  "input_digest": "5878d51e4396ef62f50215da2250bbf8f5f8e38c8f6c3e828a6c924c0ff28838",
+  "outcome": "failure",
+  "protected": {
+    "passed": 3,
+    "failed": 2,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "code": 5,
+        "vals": []
+      },
+      "expected": {
+        "mode": "b",
+        "result": 1
+      },
+      "got": {
+        "mode": "b",
+        "result": 0
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "code": 100,
+        "vals": [
+          -1,
+          2
+        ]
+      },
+      "expected": {
+        "mode": "b",
+        "result": -2
+      },
+      "got": {
+        "mode": "b",
+        "result": 1
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t12-r2-F-fed408:c02-t12:step:0000",
+    "coord:run-e-development-c02-t12-r2-F-fed408:c02-t12:step:0001",
+    "coord:run-e-development-c02-t12-r2-F-fed408:c02-t12:step:0002"
+  ],
+  "candidate_digest": "2d03ffa5ec8db98788c7348c13e9c2d8251b160734e6632638398bda0464ead2",
+  "frozen_digest": ""
+}

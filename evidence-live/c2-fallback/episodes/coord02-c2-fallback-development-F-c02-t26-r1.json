@@ -1,0 +1,142 @@
+{
+  "freeze_id": "coord02-c2-fallback",
+  "panel": "development",
+  "task_id": "c02-t26",
+  "repeat": 1,
+  "arm": "F",
+  "executed_treatment": "F",
+  "fallback_reason": null,
+  "procedure_digest": "none",
+  "input_digest": "54af624840f93b571a583ea9554ebc27bfb2760ce57a2d242529b0e099521041",
+  "outcome": "failure",
+  "protected": {
+    "passed": 1,
+    "failed": 4,
+    "total": 5
+  },
+  "failures": [
+    {
+      "input": {
+        "cells": [
+          {
+            "v": 0.1
+          }
+        ],
+        "factor": 0.2
+      },
+      "expected": {
+        "values": [
+          0.02
+        ],
+        "total": 0.02
+      },
+      "got": {
+        "values": [
+          0.1
+        ],
+        "total": 0.1
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "cells": [
+          {
+            "v": 1
+          },
+          {
+            "v": 2
+          },
+          {
+            "v": 3
+          }
+        ],
+        "factor": 1.5
+      },
+      "expected": {
+        "values": [
+          1.5,
+          3.0,
+          4.5
+        ],
+        "total": 9.0
+      },
+      "got": {
+        "values": [
+          1,
+          2,
+          3
+        ],
+        "total": 6
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "cells": [
+          {
+            "v": 2.5
+          },
+          {
+            "v": 2.5
+          }
+        ],
+        "factor": 2
+      },
+      "expected": {
+        "values": [
+          5.0,
+          5.0
+        ],
+        "total": 10.0
+      },
+      "got": {
+        "values": [
+          2.5,
+          2.5
+        ],
+        "total": 5.0
+      },
+      "error": ""
+    },
+    {
+      "input": {
+        "cells": [
+          {
+            "v": 100
+          }
+        ],
+        "factor": 0.05
+      },
+      "expected": {
+        "values": [
+          5.0
+        ],
+        "total": 5.0
+      },
+      "got": {
+        "values": [
+          100
+        ],
+        "total": 100
+      },
+      "error": ""
+    }
+  ],
+  "costs": {
+    "model_tokens": {
+      "in": 100,
+      "out": 20
+    },
+    "model_calls": 1,
+    "tool_invocations": 1,
+    "sandbox_ops": 5
+  },
+  "receipts": [
+    "coord:run-e-development-c02-t26-r1-F-652091:c02-t26:step:0000",
+    "coord:run-e-development-c02-t26-r1-F-652091:c02-t26:step:0001",
+    "coord:run-e-development-c02-t26-r1-F-652091:c02-t26:step:0002"
+  ],
+  "candidate_digest": "95933929669060197aebd5b3cd7cceace26be24fb8102c4ddfdf15f37f6135e9",
+  "frozen_digest": ""
+}

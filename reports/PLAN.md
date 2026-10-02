@@ -827,6 +827,457 @@ incident).
   live records exported (`ec02test_live`: 16 receipt rows);
   count reconciled 24 admitted = 20 explained + 4 records-lost.
 - Grant ledger: design 4 construction calls spent many times over
-  across 6 uncoordinated rounds (no durable campaign counter —
-  ECR2-04 fix in flight); episode grant 0/204 spent; no further
-  live construction until durable caps land (correction §3).
+  across 6 uncoordinated rounds (durable campaign counter landed in
+  learn lane ECR2-04); episode grant 0/204 spent; no live
+  construction without an explicit grant (correction §3).
+- M2 DONE (tip `63090c8` = merge of `bec33ff` on `wt/ecr2-m2`):
+  `tests/test_coord02_m2_qualification.py` 12 passed on
+  `ec02test_m2` (doubled gateway only); EC-01..10 + pressure +
+  counterbalanced covered; red-first exposed a misplaced quote in
+  `_POLICY_F_CONDITIONAL` input_bindings (one-line fix in
+  `experiments/coord02/entry.py`; every F policy execution died with
+  SyntaxError); report `reports/EC02-M2-QUALIFICATION.md` holds the
+  per-EC table + red→green log + fresh-checkout commands.
+  Post-merge full gate: 72 passed, 1 pre-existing failure
+  (`test_entry_write_evidence_round_trip:531`, fails at base, lane-E
+  scope). `ec02test_live` receipts still 16, untouched.
+- M3 DONE (tip `a2ee2b0` = merge of `3a1ce83` on `wt/ecr2-m3`):
+  `tests/test_coord02_m3_acquisition.py` 9 passed on `ec02test_m3`
+  (doubled gateway only); nine tests: two dev tasks acquired, both
+  lineages init+repair through the broker with durable ledger
+  consumption, none-selection with explicit machine-readable reason,
+  winner-linkage path proven with executable vs inert stand-ins,
+  S-fallback attribution, budget consumption on invalid/empty, verbatim
+  preflight refusal. Zero production lines changed. Report
+  `reports/EC02-M3-ACQUISITION.md` holds per-claim table, verdict
+  (`none` — neither candidate executable under the contract), blocked
+  command, fresh-checkout commands. Post-merge gate: 21 passed
+  (M3 9 + M2 12). Selection verdict: none. Preflight: admitted false
+  (no endpoint/key/model/grant). Old no-acquisition verdict stands only
+  on absent grant. `ec02test_live` receipts still 16, untouched.
+- M4 DONE (tip `3c032bd` = merge of `182d62c` on `wt/ecr2-m4`):
+  `tests/test_coord02_m4_frozen.py` 8 passed on `ec02test_m4`
+  (doubled gateway only): none-selection freeze with digest chain,
+  144/144 cells executed (96 eval + 48 transfer) with zero silent
+  skips, 36/36 L slots on explicitly-attributed S-fallback
+  (`none-selection:S-fallback`, zero records mention `learned`),
+  same-DB resume (reconcile/skip/rerun + freeze-tamper detection),
+  fresh-process transfer load + binding outcomes, 0/12 interventions
+  (both honestly inactive — no retained execution to target),
+  failure records with settled costs + receipts. All-144-failure
+  outcome is genuine doubled behavior (production path wires
+  `solved_child_factory` raw snapshots, not the solved fixture).
+  Two genuine production fixes: L-slot records keep the scheduled
+  arm (`entry.py`); checker panel-filter shadowing (`checker.py`).
+  Report `reports/EC02-M4-FROZEN.md` holds per-claim table, exact
+  cell accounting, harvest tallies, fresh-checkout commands.
+  Post-merge gate: 20 passed (M4 8 + M2 12); learning 19 passed on
+  lane code. `ec02test_live` receipts still 16, untouched.
+
+## EC02-CLOSURE + AD01 (assignment `WORKER-EC02-CLOSURE-AND-AUTONOMOUS-DEVELOPMENT-01.md`, base `fa777d5`, branch `codex/implementation-executable-coordination-02`)
+
+Assessment `reviews/EC02-COMPLETION-ASSESSMENT.md` (all six ECA confirmed
+against source at `fe41fb6`, none rebutted; probes
+`reviews/probes/ec02_completion_review.py` +
+`ec02-completion-observed.json` preserved as historical evidence, never
+to be edited green). Old M0–M5 labels are superseded; disposition below
+distinguishes implemented helpers, apparatus-tested behavior, live
+observations, blocked work and final delivery.
+
+| Old label | Assessed status (not a completion claim) |
+|---|---|
+| M0 | Partial: 24-vs-20 count reconciled, 16 live receipts preserved; durable authority + destructive-test protection still caller-dependent (ECA-05) |
+| M1 | Not complete: public entry builds `FakeGatewayAdapter`, child factories return unchanged snapshots, A proposals do not govern the controller, accounting helpers unwired (ECA-01/02) |
+| M2 | Partial fixture coverage, not all EC-01–10 obligations (response-to-effect flow, interrupted execution, fresh-process use missing) |
+| M3 | Live blocked in worker env; new `none` cases are doubled/author-controlled, not a new live campaign |
+| M4 | Not the commissioned live comparison: 144 doubled fallback cells are apparatus checks; no-acquisition/fallback disposition was the design-prescribed outcome |
+| M5 | Not complete: production reproduction, integrated reconstruction, architecture conclusions open |
+
+Recovery (coordinator, this session): HEAD `fa777d5` == assessment tip
+(zero diff, additive); no writer processes running; prior lane writers
+stood down (worktrees `.worktrees/{evid,learn,m2,m3,m4}` clean, all
+merged); PG16 up; lane DBs + `ec02test_live` (16 receipts) intact;
+`.gitignore` restored to HEAD (prior-session `AGENTS.md`/`CLAUDE.md`
+ignores were stale — `fa777d5` legitimately modifies `AGENTS.md`);
+`tmp/` + root `CLAUDE.md` left untouched. Identity Nightjar,
+additive commits, no push until final handback.
+
+Live authority (coordinator env, names only): `SETTLEMENT_GATEWAY_ENDPOINT`,
+`TEAM01_LIVE_API_KEY`/`SETTLEMENT_GATEWAY_KEY`, `TEAM01_LIVE_MODEL`,
+`EC02_LIVE_GRANT_EPISODES`/`_CALLS`, `AD01_LIVE_GRANT_*` all unset.
+Single human grant ask recorded below; deterministic work proceeds
+regardless. Lane prompts carry no credential values, ever; lane DBs only,
+never `ec02test_live`.
+
+### Cap sheets (coordinator-recorded before spending; ceilings, not quotes)
+
+EC02-closure caps (design §11): dev 48 + construction 4 (2 lineages x
+init+repair) + eval 96 + transfer 48 + interventions 12 = ≤204 live
+episodes + 4 construction calls. Spent: 0/204 episodes; construction
+authority exhausted across 6 prior uncoordinated rounds (durable counter
+landed in learn lane ECR2-04) — no live construction call without an
+explicit new grant. Per-episode ceilings: 12 model calls, 128k in / 48k
+out tokens, 20 source/tool invocations, 64 sandbox ops, 8 policy steps,
+2 children, 1 probe batch (≤4), 1 rework round, 900 s.
+
+AD01 caps (design §6, proposed maximums, not spending authority): 3
+worlds x (I/R pair) = 6 trajectories; per trajectory 6 agenda boundaries,
+≤3 dev episodes, ≤2 lineages / 4 construction calls incl. repair, ≤16
+diagnostic queries, ≤60 model calls incl. final use; 12 protected use
+tasks/world = 72 use records. Token/wall/source/sandbox aggregates set in
+a committed cap sheet after dev-only calibration, before freezing.
+Existing smaller grant/profile ceilings still bind.
+
+### Call graph (actual public entry; ECA sites marked)
+
+`main` (entry.py:644) → `preflight.require_live` → `gateway_factory`
+(:640, always `FakeGatewayAdapter` — ECA-01) → `freeze_mod.build_freeze`
+→ `run_panel` (:544, no gateway/model forwarded — ECA-01) → `run_cell`
+(:450) → `seed_episode` (controller) → `arm_decision` (:254) →
+`_interpret_with_model` (:217, A-only broker MODEL_INFERENCE op; proposal
+never delivered into controller state — ECA-01) → `arm_child_factory`
+(:297, FIXTURE-only → `solved_child_factory` (:321); `live_child_factory`
+(:309) identical stand-in — ECA-01) → `run_episode` (controller) →
+`restage_tree` (:580) → `stage_record` (:412, drops fallback marker on
+staged trees — ECA-03) → `SE.build_trial_record` → `write_evidence`
+(:597, per-op cost copy — ECA-02) → `checker.check_evidence`. Costs
+`_cell_costs` (:364, constants — ECA-02); receipts `_cell_receipts`
+(:381, run-ID substitute — ECA-02). Acquisition: `acquire`
+(experience.py:1141, fresh UUID campaign per call — ECA-05) →
+`acquire_episodes` → `ConstructionLedger` (:479, prefix-counted, pending
+ignored — ECA-05) → `construct_lineages` → `validate_on_development`
+(:1016, `valid_execution = solved or fallbacks` — ECA-06) →
+`select_candidate` (:1067) → `freeze_selection` (:1183,
+package_digest/entry_digest-or-none — ECA-04) → `publish_retained`.
+Resume `SE.resume_plan` (:529, procedure+frozen digest compare —
+ECA-04). Protection `designate_db` (:683, append-relabe­l) /
+`prepare_disposable_db` (:699 — ECA-05).
+
+Shared-file ownership (sole writers; change requests via coordinator):
+`experiments/coord02/entry.py` → T-EXEC; `schemas_evidence.py` +
+`experience.py` → T-STATE; `controller.py`, `checker.py`, `freeze.py`,
+`oracle.py`, `preflight.py`, `schemas.py`, `policy_exec.py` →
+coordinator-shared (no lane edits); `experiments/representation/` +
+AD01 world/checker paths → T-ADEV; new `experiments/ad01/` →
+T-ADTR; `reports/PLAN.md`, closure reports → coordinator only. New test
+files per lane; no edits to existing `tests/test_coord02_*.py` without
+coordinator approval; existing M2/M3/M4 batteries preserved as fixture
+evidence, never weakened to bless reconnects.
+
+Pinned cross-lane record contract (both sides implement, reviewer
+falsifies): trial record carries `arm` = scheduled/requested arm,
+`executed_treatment` ∈ {S,A,F,L-acquired,S-fallback}, `fallback_reason`
+(null or `none-selection:S-fallback` etc.) persisted by `stage_record`
+independent of grading outcome; resume skips iff
+`procedure_digest == freeze.package.package_digest` with outcome present
+(success via frozen_digest match, settled failure explicitly admitted);
+`freeze_selection` writes one canonical `package_digest` (sha of entry
+bytes; `none` kind carries reason, no digest); `designate_db` refuses to
+relabel an existing evidence designation disposable (append-only history
+kept, latest-evidence wins); `validate` reports parse/profile/execution
+validity, task quality, fallback separately — `select_candidate` ranks by
+the frozen ordering on quality given validity, never fallback-alone.
+
+### Task graph
+
+Machine capacity: 2 CPUs / 7 GB — at most 2 PG-heavy lanes concurrently;
+long suites run serially with progress output. Isolation: temp worktrees
+`.worktrees/<job>` (merged/discarded then deleted, never pushed),
+branch `wt/<job>`, own disposable DB, own scratch; Nightjar identity;
+`git add` only owned paths.
+
+| ID | Req | Owner branch / worktree / DB | Owned paths | Depends on | Output + rejecting check |
+|---|---|---|---|---|---|
+| T-EXEC | ECA-01 (+ entry side of 02/03) | `wt/ec02-exec` / `.worktrees/exec` / `ec02test_exec` | `entry.py`, `tests/test_coord02_exec.py` (new) | pinned contract above | Real adapter/model propagation main→panel→cell; A proposal delivered into admitted controller state (`stop` stops, repair bytes determine submission); broker-routed child generation post-admission; frozen evidence-based F; L executes acquired bytes; `live_child_factory`-as-unchanged-input deleted. Reject: recording adapter with unexpected valid outputs changes submitted+graded bytes at the public entry; poisoned reference loaders change nothing; distinct A `stop`/`unsupported` diverge |
+| T-STATE | ECA-02/04/05/06 (+ schema side of 03) | `wt/ec02-state` / `.worktrees/state` / `ec02test_state` (+`ec02test_sentinel2` guard probe) | `schemas_evidence.py`, `experience.py`, `tests/test_coord02_state.py` (new) | pinned contract above | Per-op canonical records → cell/phase/campaign union (unknown stays unknown, failures/liabilities/shared counted once; no constants, no per-op cost copy); stable campaign root with atomic admission + unresolved-effect hold (re-entry + concurrent final-slot proof); evidence-DB relabel refusal on isolated sentinel; validity/quality/fallback separated in validate+select. Reject: nonuniform multi-op/replay recomputation from durable rows; interrupt-after-probe/child/publication resumes same campaign with identities intact; fabricated digests run, unmodified records skip via the public resume entry |
+| T-ADEV | AD01 §§4–7 | `wt/ad01-env` / `.worktrees/adev` / `ec02test_adev` | AD01 splits/checkers under `experiments/representation/` + `experiments/ad01_worlds/` (new), `tests/test_ad01_env.py` (new) | representation inventory (read-only) | New AD01 freeze + dev/use split (software trace-reduction + graph-counterexample domains), pressure controls, objective + independent checker; authored controls validate each opportunity incl. dependency-invalidated deletion, unproductive direction, cheap-suffices. Reject: checker reproduces membership + refuses altered/missing/duplicate records |
+| T-ADTR | AD01 §§2–6,8 | `wt/ad01-traj` / `.worktrees/adtr` / `ec02test_adtr` | `experiments/ad01/` (new trajectory entry: agenda/packet/development/retention), `tests/test_ad01_traj.py` (new) | pinned contract + T-EXEC/T-STATE seams (develop against contract first, integrate after C1) | System-chosen investigation cycle on the public trajectory entry: model-proposed investigation from real experience → diagnostic → attributed observation → construct/check/reject → resume/use repertoire; I + R arms, frozen selection, full cost union. Reject: changed evidence changes the next decision (deterministic control); renamed bookkeeping identities do not; success AND no-candidate paths both execute |
+| T-VERIF | C1 + §5 challenges 1–4 | `wt/ec02-verif` / `.worktrees/verif` / `ec02test_verif` | `tests/test_ec02ad_verif.py` (new), `reports/workstreams/verif.md` | merged C1 base (starts after T-EXEC+T-STATE merge) | Independent C1: real public path + recording adapter (unexpected valid outputs), positive + rejecting behavior, real op unions, final-slot admission, resume on real PG; then causal/state/learning/fresh-checkout challenges with own counterchecks. Not satisfied by helper-only tests |
+| Q-SLOP x3+ | quality religion | coordinator, post-merge | each merged lane diff | lane merge | `/slop-reduction` pass per merged lane (≥3 total): one source of truth per behavior, delete-first, net-negative-or-justified; lane tests are the preservation oracle |
+| Q-BUG x3+ | falsification | coordinator/reviewer | integrated tip | C1 merge; pre-C2; pre-handback | `/parallel-bugfix` swarms (≥3 total): competing-hypothesis agents on the integrated path chase buggy/flaky/incomplete behavior per ECA/AD gates |
+
+Gates: C1 shared execution (T-VERIF on merged T-EXEC+T-STATE) → C2 live
+EC02 closure (grant-gated; none-acquisition → explicit incumbent fallback,
+no 144-cell learned rerun) → C3 AD01 qualification (T-ADEV+T-ADTR
+integrated) → C4 AD01 live (separately granted: 1 trace + review, then 3
+paired worlds / 72 records) → C5 handback (`reports/EC02-CLOSURE.md` +
+`reports/AUTONOMOUS-DEVELOPMENT-01.md`, recomputed verdicts, receipt
+reconciliation, provenance, fresh-checkout commands, ECA/AD dispositions,
+bottleneck ranking ≤3). No gate skipped by redefinition; no test retired
+without replacement evidence.
+
+Live-ask (single, this batch): endpoint + key + model + EC02 episode grant
+(C2: ≤204 live episodes + explicit construction-grant renewal — prior 4
+spent) + AD01 separate allocation (C4: trajectory maximums above + 72 use
+records + calibration charged/labeled). Sign, counts and blocked phase
+asked once; implementation + C1/C3 deterministic qualification proceed
+while waiting. No live spend on discovery alone; inference auth ≠ grant.
+
+T-ADEV MERGED (`14f94b6` = merge of `6929023`): frozen ad01 3-world
+freeze + content-hashed manifest, R rotation, seed repertoire, 5
+pressure controls + evidence-path base, independent checker, benefit
+rule, agency-boundary schema. Post-merge gate: 30/30 green on merged
+tip. RPR fixtures byte-identical. T-EXEC MERGED (`d329dea` = merge of `96a528a`, coordinator-reclaimed
+after 3 lane stalls): real adapter/model propagation, interpreted A
+proposals on the decision chain, admitted child bytes,
+`live_child_factory` deleted, F on probe evidence, L executes retained
+bytes. Post-merge gate 20/20 (exec 8 + M2 12); lane regressions
+learning+experiment 50, M4 8 green. Pending T-STATE integration:
+`executed_treatment`/`fallback_reason` schema threading.
+T-STATE MERGED (`55671ea` = merge of `7987aae`): canonical store-row
+unions, unified resume digests, stable campaign root, validity split.
+Coordinator amendment `38bb4b0` (ecr202 unknown-stays-unknown).
+Coordinator integration repair `a77f6f9` (none-selection resume skip;
+M4 resume_same_db adjudicated: new-contract gap, not environmental —
+fabricated-record rejection preserved). Combined gate 45/45
+(state 16 + M3 9 + M2 12 + exec 8) + ecr202 8/8 on merged tip. Full M4
+re-run proving the repair. T-ADTR relaunched (transient 503, clean
+tree, verified no orphaned work) and implementing slice-by-slice
+(tracer + admit + diagnostic slices green with sensitivity proofs).
+M4 amendments (uncommitted until battery proves on a quiet tip):
+`second[skip]` 0→141 (old assertion encoded the flagged
+contradiction); digest-cells evidence carries real receipts/ops;
+schemas follow-up accepts the explicit none-marker on digest-less
+freezes. Lesson: never commit under a running long fixture (two
+self-inflicted repo_base staleness failures).
+First /parallel-bugfix hunt (coordinator, direct probes): found and
+closed a REAL hole — resume_plan skipped fabricated receipt-less
+stubs on the default path (reconciled set was opt-in). `37a6f7a`
+requires non-empty claimed identities for any skip; ecr202 + M4
+evidence amended to the contract. M4 full battery proving on the
+hardened tip now.
+T-ADTR MERGED (`9b8394d` = merge of `bd18150`): public trajectory
+entry, PG resume + fresh-process CLI proof, I/R arms, frozen use +
+fallback, cost union, protected-use barrier. Post-merge gate 50/50
+(traj 20 + env 30). All four lanes merged; C3 qualification complete
+on deterministic doubles. Next: T-VERIF (C1 independent gate).
+T-VERIF MERGED + RE-VERIFIED (`aed2887`): 28 green on repair tip,
+D1/D2/D3 CLOSED, C1 unconditional pass. Post-merge gate 52/52
+(verif 28 + exec 8 + state 16). Coordinator VERIF repairs committed
+(dead repairs branch deleted; provenance threading; stage_record
+provenance; M2 stub to contract).
+C2 runbook (coordinator-owned, runs now that C1 passed; live authority
+in coordinator memory only): DB `ec02test_c2live` (allocated empty);
+grants `EC02_LIVE_GRANT_EPISODES` + `EC02_LIVE_GRANT_CALLS` declared in
+the run environment (construction renewal explicit — prior 4 spent);
+entry `python -m experiments.coord02.entry --panel development` for
+acquisition first, then evaluation/transfer only if a valid candidate
+is selected (none → explicit incumbent fallback, no 144-cell learned
+rerun); preflight admitted-required before any spend.
+
+Live-authority finding (coordinator preflight 2026-09-15, memory
+`ec02-ad01-live-gateway-config`, coordinator use only): gateway discovery
+200 with key auth; assigned model listed; one minimal inference probe
+returned a real response with measured usage (15 in / 32 out tokens) —
+inference IS authorized. `ec02test_live` receipts still 16, untouched.
+C2/C4 proceed on lane-merged code once C1 passes; construction-grant
+renewal for the 4-call ceiling is the remaining explicit authorization
+(prior 4 spent across uncoordinated rounds).
+
+## BEHAVIORAL COMPLETION (assignment `WORKER-EC02-AD01-BEHAVIORAL-COMPLETION.md`, review branch `origin/codex/ad01-completion-review` merged additively as `6fec14a`, base `23a3e68`)
+
+Prior unconditional C1/C3 and EC02-closure labels NOT accepted (assessment
+`reviews/EC02-AD01-COMPLETION-ASSESSMENT.md`, EAR-01..06). Useful components
+kept: HTTP adapter propagation, A-proposal insertion, scheduled/executed/
+fallback fields, validity separation, construction serialization/helpers,
+evidence-DB designation protection, two-domain freezes + authored controls.
+
+Recovery (coordinator, this session): tip `23a3e68` == reviewed base (merge
+fast-forwarded to `6fec14a` with zero conflicts, no production changes);
+prior writers stood down — all 10 retained worktrees clean at merged tips,
+no agents running; PG16 up; `ec02test_live` receipts 16, untouched.
+
+Cap reconciliation (§2 third bullet, recorded as discrepancy, not breach
+admission): design ceiling is ≤48 dev episodes INCLUDING calibration and
+validation; the committed fallback export holds 96 dev cells (12×4×2), and
+`ec02test_c2live6` receipts show 26 gw receipts totaling 48,928 in /
+41,812 out tokens (acquisition + validation + A-decision + fallback cells).
+Live grant history supplied in-session was verbal (endpoint/key/model +
+"204 episodes + 4 construction calls" with one recorded human renewal);
+no redacted grant document exists in the repo. Single concrete allocation
+request (C2 repair remainder + C4) goes to the human once; deterministic
+work proceeds regardless.
+
+Authority ledger (durable, from `ec02test_c2live6`): 2 live construction
+ops (`coord02-L-construct-c2live6-l-{1,2}-init-{1,2}`), ZERO repair ops
+(EAR-04 confirmed: profile-invalid repairs never ran); `results[].entry_bytes`
+stripped from the committed export (EAR-04: candidate bytes + raw responses
+not preserved); `selection: none` stands as a narrow observation, NOT a
+closed study verdict.
+
+### Interface/caller map (coordinator-pinned before split)
+
+EC02 public path: `entry.main --panel P --model M` → `preflight.require_live`
+→ `gateway_factory(doubled)` → `freeze.build_freeze` → `run_panel`
+→ `run_cell(dsn, freeze, task, panel, repeat, arm, gateway, model)` →
+`seed_episode` → `arm_decision` (S policy / F policy / A model-interpreted /
+L retained|none) → admission (`team.propose_team_plan` precedent; policy
+`step` via broker sandbox-exec precedent in G0) → SHARED child path NEW:
+render permitted task/source/contract/observation inputs → ONE broker
+`MODEL_INFERENCE` dispatch on the configured child model → parse + stage
+ACTUAL response bytes → `submit_child` → `assemble_and_join` → permitted
+public feedback → `join` → `stage_record` (arm + executed_treatment +
+fallback_reason) → `write_evidence` (store-derived op union) →
+`checker.check_evidence`. S keeps iterative diagnostics/self-review; A reads
+`selected_source_text` = actual retained bytes (not the task snapshot); F
+runs the frozen conditional on probe evidence; L invokes the exact retained
+bytes. Stop/refusal dispatches zero dependent work. NO free-form `repairs`
+policy field, NO hash-comment stamp channel (both deleted, not bypassed).
+
+Operation identity: `(freeze, panel, task, repeat, arm, attempt)`-keyed op
+ids; cell cost = union over that cell's settled op rows; receipt = settled
+`gw:<op>` rows; shared/replayed counted once; unknown stays unknown
+(no zero-fill); liabilities preserved; run-ID substitutes deleted.
+
+Resume: `run_panel --resume` loads the SAME freeze + campaign root,
+reconciles saved campaign, validates claimed ops against settled op rows
+(empty/unreconciled claim refuses), continues pending with stable
+identities (no fresh UUID per cell on resume).
+
+Acquisition: seed campaign root ONCE (no fresh-UUID default) →
+development episodes under the root → init construct (2 lineages) →
+`validate_on_development` (parse/profile/execution validity SEPARATE from
+task quality) → ELIGIBLE repair with the concrete failure (parseable but
+profile/execution-invalid reaches `repair_call`; missing repair = no row,
+NOT re-labeled init) → revalidate → `select_candidate` (frozen ordering,
+valid-but-low-quality ≠ malformed) → freeze/retain or none+reason.
+Export preserves raw responses, accepted bytes, checks, usage/receipt
+lineage per attempt.
+
+AD01 public path: `ad01-traj run|resume` → `materialize_Xt` (charter,
+opportunities, prior diagnostics incl. failures, repertoire, pending,
+remaining) → context-packet learner request → `admit_investigation`
+(validates, commits identity BEFORE dispatch) → dispatcher executes the
+ACCEPTED target (not the task-loop item); `stop` dispatches zero episodes.
+I selects the opportunity from the visible set; R takes the frozen
+curriculum item, same learner/constructor/evaluator after. Inspection work
+consumes boundaries WITHOUT construction capacity; 6 boundaries ≠ 6 dev
+episodes (independent counters). Construction: broker MODEL_INFERENCE via
+the representation profile → model-produced source OUTSIDE the seed menu →
+check → immutable artifact/version → `freeze_repertoire` → fresh-process
+`run_use` loads EXACT retained bytes (never seed-menu lookup by name).
+Persist decision+pending BEFORE dispatch; resume reconstructs X_t incl.
+repertoire. Caps per trajectory: 6 boundaries, ≤3 dev episodes, ≤2
+lineages/4 construction calls, ≤16 diagnostic queries, ≤60 model calls
+incl. use (+ aggregate token/wall/source/sandbox ceilings in the cap
+sheet). `claimed_ops` invention deleted; `ensure_campaign` 1000-unit
+insert replaced by the durable grant mechanism.
+
+### Acceptance matrix (each row: claim → rejecting check on the PUBLIC path)
+
+| # | Claim | Rejecting check |
+|---|---|---|
+| A1 | Child bytes are model-generated | Recording adapter with unexpected-but-valid bytes changes submitted + graded artifacts; comment-only bytes change digest but NOT behavior |
+| A2 | A proposal drives work | Distinct selected target dispatched; `stop`/refused ownership → zero dependent calls |
+| A3 | Learner sees real experience | Successive packets carry actual diagnostics, failed hypothesis, remaining budget + real charter (never `unmeasured` seed / `{}`) |
+| A4 | Acquired ≠ relabeled seed | Outside-menu executable supplied via the model seam, seed fallback disabled for the control, exact retained bytes execute in a new process |
+| A5 | No caller bypass | Public CLI un-monkeypatched; doubles ONLY at the configured adapter seam |
+| A6 | Costs measured | Nonuniform receipts + shared op + failure + unknown liability reconstruct cell/phase/campaign exports from durable rows |
+| A7 | Resume keeps learning | Kill-before-dispatch vs kill-after-receipt vs uninterrupted: same pending/ops/caps/X_t/repertoire/use; invented claims refuse |
+| A8 | Repair rows ↔ calls 1:1 | Parseable-but-profile-invalid source reaches repair with its failure; every attempt row maps to its own admitted call |
+| A9 | I/R differ at selection | Same world + opportunity set; I proposal changes selection, R curriculum governs; shared learner after |
+| A10 | Blockers stay open | Cross-lane issues open until the integrated consumer proves them; report asserts no more than proven |
+
+### Task graph (machine: 2 CPU / 7 GB — max 2 PG-heavy lanes; serial merges)
+
+| ID | Req | Branch / worktree / DB | Owned paths | Depends on | Output + gate |
+|---|---|---|---|---|---|
+| B-MAP | §4 map+matrix | coordinator, integration branch | `reports/PLAN.md` (this section) | — | committed before split (this commit) |
+| B-EXEC | EC02 child path + entry | `wt/b-exec` / `.worktrees/bexec` / `ec02test_bexec` | `entry.py`, `controller.py` (child seam only), `tests/test_bexec_child.py` (new) | B-MAP + read `experiments/team01/solver.py`, `experiments/representation/acquire/` | Shared admitted child dispatch (S/A/F/L), retained-source A, entry wiring; A1/A2/A5 |
+| B-AUTH | op projection + budgets + resume | `wt/b-auth` / `.worktrees/bauth` / `ec02test_bauth` (+sentinel) | `schemas_evidence.py`, `experience.py` (ledger/campaign/acquire paths), `tests/test_bauth_evidence.py` (new) | B-MAP | Store-derived unions, durable campaign root, eligible-repair acquisition, preserved raw/bytes export; A6/A7/A8 |
+| B-INIT | AD01 packet + I/R + CLI | `wt/b-init` / `.worktrees/binit` / `ec02test_binit` | `ad01/trajectory.py` (packet/dispatch/resume), `ad01/cli.py`, `tests/test_binit_action.py` (new) | B-MAP | Operative actions, real packets, CLI run/resume; A3/A9 (+A5 CLI half) |
+| B-ACQ | AD01 construction + repertoire + use | `wt/b-acq` / `.worktrees/bacq` / `ec02test_bacq` | `ad01/trajectory.py` (construct/retain/use paths — COORDINATED with B-INIT, merged serially), `ad01/records.py`, `tests/test_bacq_method.py` (new) | B-MAP + representation profile (read-only) | Outside-menu construction, versioned repertoire, fresh-process use; A4 |
+| B-VERIF | independent C1 + challenges | `wt/b-verif` / `.worktrees/bverif` / `ec02test_bverif` | `tests/test_bverif_public.py` (new), `reports/workstreams/bverif.md` | merged B-EXEC+B-AUTH (+B-INIT/B-ACQ for cross checks) | A1–A10 on the integrated public path; frozen-study replay; receipt reconstruction |
+| B-SLOP x3+ | delete-first passes | coordinator post-merge | each merged diff | lane merge | net-negative-or-justified per lane |
+| B-BUG x3+ | falsification swarms | coordinator/reviewer | integrated tip | C1 merge; pre-C2; pre-handback | competing-hypothesis hunts per ECA/EAR/AD |
+
+Shared-file rule: `ad01/trajectory.py` has TWO writers (B-INIT packet/
+dispatch, B-ACQ construct/use) — split by function region, coordinator
+merges serially, second lane rebases on the first merge. `entry.py` sole
+B-EXEC; `schemas_evidence.py`/`experience.py` sole B-AUTH. No lane edits
+`reviews/probes/` (characterization evidence, never inverted), existing
+`tests/test_coord02_*` / `test_ad01_*` (preserved, never weakened), or
+another lane's paths.
+
+Gates: C1 (B-VERIF on merged B-EXEC+B-AUTH) → C2 authorized outcome
+(eligible repairs under existing authority OR one concrete blocked-
+remainder request; bounded honest fallback; NO new 96-cell panel, NO
+144 learned cells) → C3 (B-INIT+B-ACQ integrated, 6 trajectories + 72
+use records on labeled doubles) → C4 (separate allocation: 1 trace +
+review, then 3 paired worlds) → C5 (EC02/AD01 reports + PLAN + roadmap
++ review request, full EAR/ECA/AD/C matrix). Live-ask (single, this
+batch): C2 repair remainder (2 calls spent, 0 repairs run — request the
+finite repair/validation delta under the recorded grant) + C4 caps
+(input/output tokens, model calls, witness queries, sandbox/source
+work, wall time). No live spend on discovery alone.
+
+
+
+B-EXEC+B-INIT MERGED (`78864c5`): B-INIT `846a991` merged clean; B-EXEC
+`0c0245e` merged with ONE trajectory.py conflict — B-EXEC branched before
+B-INIT merged, so its stale copy would have reverted slice 1. Resolved by
+keeping the B-INIT side (verified `charter=charter` + `dispatch_admitted_child`
+both present post-merge). Post-merge gate: lane batteries 3/3 green;
+existing exec+traj 23 green with the 2 known stale-shape exec failures
+(`arm_child_factory` deleted API; proposal-shaped double now honestly
+refused) carried for B-VERIF to update, not worked around.
+
+B-AUTH+B-ACQ MERGED (`27400bf` over `5f1ff62`): both fast-forwarded clean
+(disjoint files). Post-merge gate: 4 lane batteries 5/5 green; neighbors
+74/75 with ONE pre-existing M2 failure
+(`test_m2_ec06_integration_join_and_failed_join` expects
+`join-failed-terminal`, gets `submit-refused`) — confirmed failing on the
+unmerged base too (stashed lanes, still red), so NOT a lane regression.
+Carried for B-VERIF: with the stamp channel deleted, inert-fixture cells
+now refuse at submit (honest) instead of joining failed trees.
+
+C1 GATE (`af74233`): 42-test core (5 lane + exec/state/M2) green; 90-test
+neighbor sweep (traj/env/M3/M4/verif, non-DB) green; 4 DB-backed green.
+VERIF follow-up repaired the 7 stale verif tests in place: repair-shaped
+doubles at the child seam, stamp-deletion locks replacing stamp-presence
+assertions, probe-deltas retired to a channel-deletion lock (the old
+characterization probe file stays byte-frozen, never inverted). C1 PASS:
+A1 (model bytes reach submitted+graded artifacts, comments-only negative
+control in B-EXEC), A2 (accepted target dispatched; stop/refusal zero
+dependent work), A5 (public CLI un-monkeypatched; doubles at the adapter
+seam), A6 unit (store-derived cost union), A3/A4/A9 (dispatch/retention/
+selection slices green).
+
+C2 DECISION (blocked remainder, one concrete request): the durable ledger
+(`ec02test_c2live6`) holds 2 live init ops, 0 repair ops — the eligible
+profile-failure repairs EAR-04 requires were never run. No live grant env
+is present in this session (`EC02_LIVE_GRANT_*`, gateway key/model all
+unset), so no further live construction can run without a new allocation,
+and the review grants no extra calls. Per §2 the remainder is preserved
+exactly, not spent around:
+REQUEST: a finite C2 repair allocation — 2 construction calls (the
+unspent repair half of the 2-lineage × init+repair ceiling, same model +
+endpoint as the recorded inits), plus validation-episode cover for
+revalidate-only work on the repaired bytes. No new lineages, no new
+campaign root, no eval/transfer panels (none-selection stands until a
+repair validates). C4 still needs its SEPARATE AD01 allocation (trajectory
+maximums in the cap sheet + aggregate token/wall/source/sandbox ceilings).
+Deterministic C3 work proceeds now; live C2/C4 run automatically when
+their allocations arrive.
+
+C3 STATUS (deterministic qualification, live C4 pending): the integrated
+trajectory now honors `stop` (zero-episode termination proven), routes
+accepted development targets (proven), threads the real charter (no more
+`{}`), and executes outside-menu retained bytes in use (A4). Default
+(no-propose) campaigns still walk the task loop with seeded diagnostics —
+that default is the deterministic qualification harness, NOT the autonomy
+claim; the claim rests on the propose-driven paths (B-INIT/B-ACQ batteries
++ causal controls). Remaining C3: 6 deterministic trajectories + 72 use
+records via the public CLI with labeled doubles demonstrating success /
+rejection / no-candidate / divergent I-vs-R decisions — queued next.
+
+C3 QUALIFIED (`73bb80c`): 6 deterministic trajectories (3 worlds × I/R)
+through the public entry with labeled recording doubles + 72 use records
+(12/world), all checker-clean, committed in `evidence-ad01/c3-trajectories/`
+with the driver `experiments/ad01/run_c3_qualification.py`. Coverage:
+success (retained), no-candidate (zero-budget boundary → explicit
+incumbent use), divergent I-vs-R dispatch (I reorders, R follows the
+frozen rotation). Benefit rule recomputed per arm (unchanged rule):
+no-benefit on doubles, as expected — the doubles prove the path, not a
+learning gain. Per-action `max_queries` threading added to `_run_boundary`
+(regression-clean). C4 (live) awaits its separate allocation.

@@ -146,3 +146,12 @@ These patterns have appeared in prior worker handoffs. They describe failure mod
 | One overall ACCEPT hides unrun mechanisms or an implementation gap is mistaken for a negative research result | Report implementation, mechanism execution, live acquisition, behavior change, benefit, transfer and operational qualification separately. A no-acquisition result says nothing about the usefulness of a procedure that never existed; a fixture test says nothing about a live arm not yet connected. |
 
 For each major requirement, the existing workstream report should identify its executable path, observed run/revision, dependency reality and rejecting countercheck. Independent reviewers examine those records and the actual path, rather than duplicating generic whole-repo passes. Prioritize errors that invalidate behavior, authority, persistence or conclusions; log unrelated polish and continue the assigned work. Once applicable checks pass, proceed to the next authorized phase without repeatedly asking the external design reviewer to approve ordinary implementation steps.
+
+### Completion-specific counterchecks from `23a3e68`
+
+- A byte or digest change is not evidence of a behavioral change. Comment stamping fails the latter obligation. Use a behavior-bearing intervention and a cosmetic negative control.
+- An authored seed chosen from a fixed registry remains authored. An acquisition claim needs model-produced executable bytes that survive checking, retention and later invocation.
+- Inspect the final decision consumer: logging `stop` while an outer loop continues, or recording one selected task while executing another, leaves the learner disconnected.
+- Check the persisted learning state, not only elapsed/spend totals: restart must recover observations, capability identities and pending operations. Invented nonempty operation names are not receipts.
+- The coordinator cannot accept a cross-lane dependency merely because another lane owns it. Explicitly open entry/accounting findings prevent unconditional integrated acceptance.
+- A named repair stage needs an actual repair attempt. Do not manufacture its row by revalidating the initial bytes. Phase caps remain separate even when an overall grant has headroom.

@@ -224,8 +224,8 @@ def check_evidence(evidence_root, freeze_path, dsn: str = "",
     for key in records:
         short = (key[0], key[2], key[3], key[4])
         by_pair.setdefault(short, set()).add(key[1])
-    for short, panels in by_pair.items():
-        if len(panels) > 1:
+    for short, seen in by_pair.items():
+        if len(seen) > 1:
             problems.append("cross-panel-collision %s-%s-r%s-%s" % short)
     present = {key[1] for key in records}
     for panel in panels:

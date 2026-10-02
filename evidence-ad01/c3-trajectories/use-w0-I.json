@@ -1,0 +1,805 @@
+[
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 14
+  },
+  "domain": "software",
+  "executed": "seed-sw-greedy",
+  "executed_source": "greedy",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.7,
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5301,
+   "task_id": "ad01-w0-within-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-within-sw-00",
+  "requested": "seed-sw-greedy",
+  "selected": "seed-sw-greedy",
+  "task_id": "ad01-w0-within-sw-00",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 16
+  },
+  "domain": "software",
+  "executed": "seed-sw-greedy",
+  "executed_source": "greedy",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.7692307692307693,
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "b",
+     "op": "get"
+    }
+   ],
+   "seed": 5302,
+   "task_id": "ad01-w0-within-sw-01",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-within-sw-01",
+  "requested": "seed-sw-greedy",
+  "selected": "seed-sw-greedy",
+  "task_id": "ad01-w0-within-sw-01",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 15
+  },
+  "domain": "software",
+  "executed": "seed-sw-greedy",
+  "executed_source": "greedy",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 11,
+  "normalized_reduction": 0.7272727272727273,
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    }
+   ],
+   "seed": 5303,
+   "task_id": "ad01-w0-within-sw-02",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v4"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v2"
+    }
+   }
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-within-sw-02",
+  "requested": "seed-sw-greedy",
+  "selected": "seed-sw-greedy",
+  "task_id": "ad01-w0-within-sw-02",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 12,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.0,
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     2,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5401,
+   "task_id": "ad01-w0-within-gr-00",
+   "template": "C5+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-within-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w0-within-gr-00",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 16,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.0,
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     5,
+     7
+    ]
+   ],
+   "family": "graph",
+   "seed": 5402,
+   "task_id": "ad01-w0-within-gr-01",
+   "template": "C7+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-within-gr-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w0-within-gr-01",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 19,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 19,
+  "normalized_reduction": 0.0,
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ]
+   ],
+   "family": "graph",
+   "seed": 5403,
+   "task_id": "ad01-w0-within-gr-02",
+   "template": "C5+shared-vertex",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-within-gr-02",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w0-within-gr-02",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 16
+  },
+  "domain": "software",
+  "executed": "seed-sw-greedy",
+  "executed_source": "greedy",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 14,
+  "normalized_reduction": 0.7857142857142857,
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    }
+   ],
+   "seed": 5301,
+   "task_id": "ad01-w0-transfer-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v4"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v2"
+    }
+   }
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-sw-00",
+  "requested": "seed-sw-greedy",
+  "selected": "seed-sw-greedy",
+  "task_id": "ad01-w0-transfer-sw-00",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 16
+  },
+  "domain": "software",
+  "executed": "seed-sw-greedy",
+  "executed_source": "greedy",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 14,
+  "normalized_reduction": 0.7857142857142857,
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o2",
+     "key": "c",
+     "op": "get"
+    }
+   ],
+   "seed": 5302,
+   "task_id": "ad01-w0-transfer-sw-01",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v2"
+    },
+    "observation": "o2",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-sw-01",
+  "requested": "seed-sw-greedy",
+  "selected": "seed-sw-greedy",
+  "task_id": "ad01-w0-transfer-sw-01",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 13
+  },
+  "domain": "software",
+  "executed": "seed-sw-greedy",
+  "executed_source": "greedy",
+  "fallback_reason": "",
+  "final_measure": 3,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 9,
+  "normalized_reduction": 0.6666666666666666,
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5303,
+   "task_id": "ad01-w0-transfer-sw-02",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v2"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-sw-02",
+  "requested": "seed-sw-greedy",
+  "selected": "seed-sw-greedy",
+  "task_id": "ad01-w0-transfer-sw-02",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 20,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.0,
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     6,
+     9
+    ]
+   ],
+   "family": "graph",
+   "seed": 5401,
+   "task_id": "ad01-w0-transfer-gr-00",
+   "template": "C9+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w0-transfer-gr-00",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 17,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 17,
+  "normalized_reduction": 0.0,
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     1,
+     7
+    ]
+   ],
+   "family": "graph",
+   "seed": 5402,
+   "task_id": "ad01-w0-transfer-gr-01",
+   "template": "C5+shared-edge",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-gr-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w0-transfer-gr-01",
+  "verdict": "preserved",
+  "world": 0
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 21,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 21,
+  "normalized_reduction": 0.0,
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     8,
+     9
+    ],
+    [
+     5,
+     9
+    ],
+    [
+     0,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5403,
+   "task_id": "ad01-w0-transfer-gr-02",
+   "template": "C5+joined-by-path",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-gr-02",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w0-transfer-gr-02",
+  "verdict": "preserved",
+  "world": 0
+ }
+]

@@ -1,0 +1,67 @@
+{
+  "family": "software",
+  "fault": "stale-read",
+  "ops": [
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v4"
+    },
+    {
+      "op": "clear"
+    },
+    {
+      "key": "c",
+      "op": "del"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "id": "o0",
+      "key": "a",
+      "op": "get"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v1"
+    }
+  ],
+  "seed": 5301,
+  "task_id": "ad01-w0-within-sw-00",
+  "template": "stale-read-2chain",
+  "witness": {
+    "faulty": {
+      "type": "str",
+      "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+      "type": "str",
+      "value": "v3"
+    }
+  }
+}
