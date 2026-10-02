@@ -930,11 +930,17 @@ class FrontierStore:
         return [dict(record) for record in
                 self._doc.get("accepted_revisions", [])]
 
-    def _source_anchor_path(self, operation_id: str) -> str:
-        key = _digest_text(operation_id)[:24]
-        return self.path + ".source-anchor-" + key + ".json"
+    def _validate_source_anchor(self, original: dict) -> dict:
+        """Bind the recorded raw model bytes to the record that cites them.
 
-    def _source_anchor_value(self, original: dict) -> dict:
+        The bytes used to live in a sibling file, which made the anchor a
+        second format with its own atomicity, its own temporary name and no
+        share of the document's lock. It was a copy of
+        `details.raw_payload`, which this record already holds, so a restart
+        that read both had to compare a value with its own source. The
+        original's raw bytes, its `input_digest` and its `result_digest`
+        already bind the same witness inside one durable format.
+        """
         details = original.get("details", {})
         payload = details.get("raw_payload")
         if not isinstance(details, dict) or (
@@ -947,6 +953,11 @@ class FrontierStore:
         raw_response = payload.get("raw_response")
         if not isinstance(raw_prompt, str) or not isinstance(raw_response, str):
             raise Refused("acquisition source anchor has incomplete raw bytes")
+        if (_digest_text(raw_prompt) != original.get("input_digest")
+                or _digest_text(raw_response) != original.get(
+                    "result_digest")):
+            raise Refused(
+                "acquisition source anchor no longer matches dispatch evidence")
         return {
             "version": SOURCE_ANCHOR_VERSION,
             "operation_id": original.get("operation_id"),
@@ -957,43 +968,6 @@ class FrontierStore:
             "raw_prompt": raw_prompt,
             "raw_response": raw_response,
         }
-
-    def _write_source_anchor(self, original: dict) -> None:
-        value = self._source_anchor_value(original)
-        path = self._source_anchor_path(value["operation_id"])
-        encoded = canonical(value) + "\n"
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as handle:
-                if handle.read() != encoded:
-                    raise Refused("acquisition source anchor conflicts with evidence")
-            return
-        temporary = path + ".tmp"
-        with open(temporary, "w", encoding="utf-8") as handle:
-            handle.write(encoded)
-        try:
-            os.link(temporary, path)
-        except FileExistsError:
-            with open(path, encoding="utf-8") as handle:
-                if handle.read() != encoded:
-                    raise Refused("acquisition source anchor conflicts with evidence")
-        finally:
-            try:
-                os.unlink(temporary)
-            except FileNotFoundError:
-                pass
-
-    def _validate_source_anchor(self, original: dict) -> dict:
-        path = self._source_anchor_path(original.get("operation_id"))
-        try:
-            with open(path, encoding="utf-8") as handle:
-                value = json.load(handle)
-        except (OSError, ValueError, TypeError) as exc:
-            raise Refused("acquisition source anchor is missing or unreadable") from exc
-        expected = self._source_anchor_value(original)
-        if canonical(value) != canonical(expected):
-            raise Refused(
-                "acquisition source anchor no longer matches dispatch evidence")
-        return value
 
     def _durable_acquisition(self, package: dict,
                              finalization: dict | None = None) -> dict | None:
@@ -1526,10 +1500,6 @@ class FrontierStore:
         existing = self._check_evidence_identity(evidence)
         if existing is not None:
             return existing
-        if (evidence.get("kind") == "gateway-dispatch"
-                and evidence.get("outcome") == "success"
-                and evidence.get("dispatch_evidence_digest") is None):
-            self._write_source_anchor(evidence)
         self._doc["evidence"].append(dict(evidence))
         self._doc["evidence_projection"].append({
             "evidence_digest": evidence["evidence_digest"],

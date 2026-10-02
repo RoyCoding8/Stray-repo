@@ -48,6 +48,53 @@ contended.
 have been conflated in earlier passes, and the difference decides whether a
 result may be described as a measurement.
 
+### Integration record — task 84, source-anchor deletion (A3 + review A11)
+
+Integrated on `codex/ab-closure-2026-10-02` from base `b1fca48`. Two uncommitted
+worktrees, one writer: A3's `experiments/ad01/frontier.py` (+16/−46) and its new
+`tests/test_a3_source_anchor.py` from `.worktrees/a3-anchor`, and A11's
+`tests/test_provenance_authority.py` (+35/−7) from `.worktrees/a11-review`. A11
+worked from `5349dab`; the only file that differs between that base and `b1fca48`
+is `reports/PLAN.md`, so the patch applies without drift.
+
+A3 removed the acquisition source-anchor sidecar — `_source_anchor_path`,
+`_source_anchor_value`, `_write_source_anchor`, and the pre-save call in
+`_append_evidence`. `_validate_source_anchor` keeps its name, both call sites
+(`:987`, `:1231`) and its refusal messages, and now binds the record's raw bytes
+to `input_digest`/`result_digest` in-document. A11 accepted the deletion and
+repaired the inherited test so both halves reseal `raw_payload_digest` and
+`evidence_digest`, modelling a competent forger rather than passing on stale
+digests.
+
+**Accepted risk — a real reduction in tamper-evidence, measured not asserted.**
+A tamperer who can rewrite the document and recompute every digest in it,
+including `input_digest` and `result_digest`, is **accepted at this layer**. On
+base that same document-only forgery was **refused**; on the repair it is
+accepted. The refusal the sidecar made here was real, and it is given up
+deliberately: the sidecar was a byte-copy of `details.raw_payload`, which the
+same transaction already writes into the document, so it defended only against a
+tamperer who cannot recompute a file that is a copy of the record's own field.
+The in-document binding catches the half-forgery (mutated bytes, stale
+`input_digest`/`result_digest`) and does **not** catch the fully resealed
+forgery. Base's other real refusals — anchor deleted or corrupt, "missing or
+unreadable" — are also given up. What is not given up: the fully consistent
+forgery is still refused one layer up by `package provenance does not match its
+digest` (`frontier.py:461`), which this change does not touch. Both results were
+measured on the merged tip and on base, not carried over from either lane's
+report.
+
+Gates, per file, per run, on the merged tip, never summed: `test_a3_source_anchor`
+6 passed; `test_provenance_authority` 81 passed (baseline 81);
+`test_final_provenance` 13; `test_binding_provenance` 12; `test_frontier_atomicity`
+29; `test_inv_a4b_lost_update` 5; `test_frontier_harden` 6.
+
+A11's `tests/test_a11_gate_review.py` was **deleted, not merged**. It is review
+instrumentation — it prints a forgery matrix and asserts nothing about the
+product — and its own docstring says "Not a deliverable; delete after the
+ruling." Its conclusion is the accepted risk recorded above, and the behaviour
+is covered by A3's six tests and A11's repaired test. The matrix was run once
+here to produce the two measurements above, then removed.
+
 ## Prior batch — 2026-10-01
 
 Integration: `codex/stage09-consolidation-2026-10-01`, from `70223fb` via the

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -541,6 +540,18 @@ def test_restart_refuses_mutated_original_acquisition_evidence(tmp_path):
 
 
 def test_restart_refuses_source_anchor_mutation_or_loss(tmp_path):
+    """The two refusals the anchor made, restated against the durable record.
+
+    Mutation and loss are properties of the recorded raw bytes, not of a
+    sibling file. The sidecar was a second file the transaction wrote with no
+    share of the document's lock; the record already held the same bytes, so
+    both halves now act on it.
+
+    The forged record is resealed everywhere a competent tamperer would
+    reseal -- `raw_payload_digest` and `evidence_digest` included -- which
+    leaves `input_digest` and `result_digest` as the only fields standing
+    between the raw bytes and a restart that believes them.
+    """
     store = _store(tmp_path)
     base = channel.make_control("low")
     store.bind_active(base)
@@ -550,16 +561,33 @@ def test_restart_refuses_source_anchor_mutation_or_loss(tmp_path):
         record for record in store._doc["evidence"]
         if record.get("evidence_digest") == package["provenance"][
             "dispatch_evidence_digest"])
-    anchor_path = store._source_anchor_path(original["operation_id"])
-    anchor = json.loads(open(anchor_path, encoding="utf-8").read())
-    anchor["raw_response"] = json.dumps({"entry": channel.IMPROVE_HIGH_SOURCE})
-    open(anchor_path, "w", encoding="utf-8").write(
-        frontier.canonical(anchor) + "\n")
+    live.restart_store(store.path)
+
+    def reseal():
+        original["evidence_digest"] = frontier._evidence_identity_digest(
+            original)
+        store._doc["evidence_projection"] = [
+            {"evidence_digest": record["evidence_digest"],
+             "receipt_identity": record["receipt_identity"]}
+            for record in store._doc["evidence"]]
+
+    payload = dict(original["details"]["raw_payload"])
+    payload["raw_response"] = json.dumps({"entry": channel.IMPROVE_HIGH_SOURCE})
+    original["details"] = dict(original["details"], raw_payload=payload)
+    original["raw_payload_digest"] = frontier.source_digest(
+        frontier.canonical(payload))
+    reseal()
+    store.save()
 
     with pytest.raises(frontier.Refused, match="source anchor"):
         live.restart_store(store.path)
 
-    Path(anchor_path).unlink()
+    del original["details"]["raw_payload"]
+    original["raw_payload_digest"] = frontier.source_digest(
+        frontier.canonical(None))
+    reseal()
+    store.save()
+
     with pytest.raises(frontier.Refused, match="source anchor"):
         live.restart_store(store.path)
 
