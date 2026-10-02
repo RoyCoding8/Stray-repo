@@ -28,15 +28,12 @@ fault, not an error, and that distinction is what the SWE side then applies
 to its own symptoms. A transfer that claimed more than this would be
 fabricated, because nothing in these two worlds makes it true.
 
-**The comparison is not powered on both sides, and this module says so per
-structure rather than once for the crossing.** `cluster_census` is measured
-from the instruments themselves, and the Boolean side publishes exactly one
-hypothesis class across every split and seed, so under the study's own
-cluster rule `(family, template)` it is a single cluster against the six a
-contrast needs at alpha 1/20. The SWE side offers nine templates and clears
-it. A crossing is therefore demonstrated on both sides and compared on one.
-Reporting that as a single verdict would be the error this lane exists to
-avoid.
+**The comparison's resolution and coverage are reported separately.**
+`cluster_census` measures the sign-flip p-value floor available from the
+instrument's families, the families available in each split, and the episodes
+the crossing actually assesses. The SWE union has nine templates, but the
+crossing uses only two dev episodes and one held-out episode. A family union
+does not turn that assessment into a powered comparison.
 
 **No acquisition runs here.** B12 measured zero acquired lineages on the SWE
 construction run and B17 measured the route answering in prose rather than
@@ -51,6 +48,7 @@ from __future__ import annotations
 import hashlib
 import json
 from copy import deepcopy
+from pathlib import Path
 from typing import Any
 
 from . import boolean_active
@@ -74,11 +72,27 @@ STRUCTURES = (BOOLEAN, SWE)
 # restated here, so a change to the rule moves the census with it.
 ALPHA = 1 / 20
 
+BOOLEAN_CROSSING_EPISODES = (("dev", 4), ("dev", 11), ("qual", 7))
+SWE_CROSSING_EPISODES = (("dev", 0), ("dev", 1), ("held_out", 2))
+
 
 def _digest(value: Any) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def _driver_source_digest() -> str:
+    """Digest the authored crossing driver, rather than a run transcript."""
+    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+
+
+def _active_program(crossing: dict) -> dict:
+    return {
+        "program_id": "two-domain-crossing",
+        "source_digest": _driver_source_digest(),
+        "transcript_digest": _digest(crossing),
+    }
 
 
 def _observation_id(instrument: str, task_id: str, x: int, value) -> str:
@@ -95,6 +109,17 @@ def _observation_id(instrument: str, task_id: str, x: int, value) -> str:
 # --- the census, measured rather than inherited -------------------------
 
 
+def _boolean_descriptors_by_split() -> dict[str, set[str]]:
+    descriptors = {split: set() for split in boolean_rule.SPLITS}
+    for split in boolean_rule.SPLITS:
+        for seed in range(24):
+            session = boolean_rule.RuleSession(
+                boolean_rule.make_task(split, seed))
+            descriptors[split].add(
+                _digest(session.public_view()["hypothesis_class"]))
+    return descriptors
+
+
 def _boolean_clusters() -> int:
     """Distinct hypothesis classes the Boolean structure can present.
 
@@ -106,14 +131,13 @@ def _boolean_clusters() -> int:
     a property of the instrument and a widened instrument would change the
     power claim.
     """
-    classes = set()
-    for split in boolean_rule.SPLITS:
-        for seed in range(24):
-            session = boolean_rule.RuleSession(
-                boolean_rule.make_task(split, seed))
-            descriptor = session.public_view()["hypothesis_class"]
-            classes.add(_digest(descriptor))
-    return len(classes)
+    return len({digest for values in _boolean_descriptors_by_split().values()
+                for digest in values})
+
+
+def _boolean_family_coverage() -> dict[str, int]:
+    return {split: len(values)
+            for split, values in _boolean_descriptors_by_split().items()}
 
 
 def _swe_clusters() -> int:
@@ -126,36 +150,89 @@ def _swe_clusters() -> int:
     return len(set(swe_tasks.DEV_TEMPLATES) | set(swe_tasks.HELD_OUT_TEMPLATES))
 
 
+def _swe_family_coverage() -> dict[str, int]:
+    return {
+        "dev": len(set(swe_tasks.DEV_TEMPLATES)),
+        "held_out": len(set(swe_tasks.HELD_OUT_TEMPLATES)),
+    }
+
+
+def _actual_assessment_counts(episodes: tuple[tuple[str, int], ...]) -> dict:
+    by_split: dict[str, int] = {}
+    for split, _seed in episodes:
+        by_split[split] = by_split.get(split, 0) + 1
+    return {"episodes": len(episodes), "by_split": by_split}
+
+
+def _actual_assessment_families(
+        instrument: str,
+        episodes: tuple[tuple[str, int], ...],
+    ) -> dict[str, int]:
+    """Count distinct family identities in the episodes actually assessed."""
+    by_split: dict[str, set[str]] = {}
+    for split, seed in episodes:
+        if instrument == BOOLEAN:
+            task = boolean_rule.make_task(split, seed)
+            identity = _digest(
+                boolean_rule.RuleSession(task).public_view()[
+                    "hypothesis_class"])
+        else:
+            identity = swe_tasks.instances_for_seed(split, seed)["template"]
+        by_split.setdefault(split, set()).add(identity)
+    return {split: len(families) for split, families in by_split.items()}
+
+
 def cluster_census() -> dict:
-    """Independent units per structure, against the protocol's requirement.
+    """Resolution, family coverage and actual assessment counts.
 
     Read the requirement from `s09_panel_inventory`, which is where the
     protocol computes it, so this cannot drift from the rule a later run
-    will actually apply. The Boolean side is reported as unpowered and the
-    SWE side as powered, and both numbers are named so a reader sees 1
-    against 6 rather than being handed a verdict to trust.
+    will actually apply. A minimum p-value floor is not statistical power,
+    and available families are not the episodes this crossing assessed.
     """
-    from .s09_panel_inventory import minimum_clusters_for_alpha
+    from .s09_panel_inventory import (minimum_clusters_for_alpha,
+                                      minimum_p_resolution)
 
     required = minimum_clusters_for_alpha(ALPHA)
     census = {"alpha": ALPHA, "required_clusters": required,
               "cluster_rule": "(family, template)"}
-    for instrument, clusters in ((BOOLEAN, _boolean_clusters()),
-                                 (SWE, _swe_clusters())):
-        census[instrument] = {"clusters": clusters,
-                              "required": required,
-                              "shortfall": max(0, required - clusters),
-                              "powered": clusters >= required}
-    # A crossing is demonstrated on both sides and compared on whichever
-    # sides are powered. Derived rather than asserted, because a hardcoded
-    # "not powered" would be a stale claim the day the Boolean instrument is
-    # widened, and the whole point of measuring it here is that the answer
-    # can move. A crossing needs both sides powered to be a two-domain
-    # result, so this is the conjunction and not a count of one.
-    powered = [instrument for instrument in STRUCTURES
-               if census[instrument]["powered"]]
-    census["powered_structures"] = powered
-    census["crossing_powered"] = len(powered) == len(STRUCTURES)
+    coverage = {
+        BOOLEAN: _boolean_family_coverage(),
+        SWE: _swe_family_coverage(),
+    }
+    available_clusters = {BOOLEAN: _boolean_clusters(), SWE: _swe_clusters()}
+    episodes = {BOOLEAN: BOOLEAN_CROSSING_EPISODES,
+                SWE: SWE_CROSSING_EPISODES}
+    for instrument in STRUCTURES:
+        actual = _actual_assessment_counts(episodes[instrument])
+        assessed_families = _actual_assessment_families(
+            instrument, episodes[instrument])
+        per_split = {
+            split: {
+                "available_families": count,
+                "assessed_families": assessed_families.get(split, 0),
+                "assessed_episodes": actual["by_split"].get(split, 0),
+                "meets_required_resolution": assessed_families.get(
+                    split, 0) >= required,
+            }
+            for split, count in coverage[instrument].items()
+        }
+        census[instrument] = {
+            "cluster_count": available_clusters[instrument],
+            "minimum_p_resolution": minimum_p_resolution(
+                available_clusters[instrument], ALPHA),
+            "available_family_coverage": coverage[instrument],
+            "actual_assessment_counts": actual,
+            "assessment_family_coverage": per_split,
+            "assessment_coverage_sufficient": all(
+                item["meets_required_resolution"]
+                for item in per_split.values()
+                if item["assessed_episodes"]
+            ),
+        }
+    census["crossing_coverage_sufficient"] = all(
+        census[instrument]["assessment_coverage_sufficient"]
+        for instrument in STRUCTURES)
     return census
 
 
@@ -336,7 +413,7 @@ def run_two_domain_crossing(dsn: str, investigation_id: str) -> dict:
     # The Boolean structure first: the SWE side spends what it produces, so
     # a crossing whose order is reversed would be spending nothing.
     boolean_runs = []
-    for split, seed in (("dev", 4), ("dev", 11), ("qual", 7)):
+    for split, seed in BOOLEAN_CROSSING_EPISODES:
         boolean_runs.append(_boolean_episode(split, seed))
 
     observations: list[dict] = []
@@ -345,15 +422,23 @@ def run_two_domain_crossing(dsn: str, investigation_id: str) -> dict:
     observations.sort(key=lambda item: item["observation_id"])
 
     swe_runs = []
-    for split, seed in (("dev", 0), ("dev", 1), ("held_out", 2)):
+    for split, seed in SWE_CROSSING_EPISODES:
         swe_runs.append(_swe_episode(split, seed, observations))
 
     crossing = {
         BOOLEAN: {
             "instrument": BOOLEAN,
             "entered": "first",
-            "clusters": census[BOOLEAN]["clusters"],
-            "powered": census[BOOLEAN]["powered"],
+            "cluster_count": census[BOOLEAN]["cluster_count"],
+            "minimum_p_resolution": census[BOOLEAN]["minimum_p_resolution"],
+            "available_family_coverage": census[BOOLEAN][
+                "available_family_coverage"],
+            "actual_assessment_counts": census[BOOLEAN][
+                "actual_assessment_counts"],
+            "assessment_family_coverage": census[BOOLEAN][
+                "assessment_family_coverage"],
+            "assessment_coverage_sufficient": census[BOOLEAN][
+                "assessment_coverage_sufficient"],
             "episodes": [
                 {"task_id": run["task_id"], "split": run["split"],
                  "seed": run["seed"], "turns": run["turns"],
@@ -364,8 +449,16 @@ def run_two_domain_crossing(dsn: str, investigation_id: str) -> dict:
         SWE: {
             "instrument": SWE,
             "entered": "second",
-            "clusters": census[SWE]["clusters"],
-            "powered": census[SWE]["powered"],
+            "cluster_count": census[SWE]["cluster_count"],
+            "minimum_p_resolution": census[SWE]["minimum_p_resolution"],
+            "available_family_coverage": census[SWE][
+                "available_family_coverage"],
+            "actual_assessment_counts": census[SWE][
+                "actual_assessment_counts"],
+            "assessment_family_coverage": census[SWE][
+                "assessment_family_coverage"],
+            "assessment_coverage_sufficient": census[SWE][
+                "assessment_coverage_sufficient"],
             "episodes": [
                 {"task_id": run["task_id"], "split": run["split"],
                  "seed": run["seed"], "turns": run["turns"],
@@ -388,16 +481,16 @@ def run_two_domain_crossing(dsn: str, investigation_id: str) -> dict:
         dsn, investigation_id,
         frontier={"crossing": crossing,
                   "acquisition": "not-attempted",
-                  "powered_structures": census["powered_structures"],
-                  "crossing_powered": census["crossing_powered"]},
+                  "crossing_coverage_sufficient": census[
+                      "crossing_coverage_sufficient"]},
         permitted_experience=permitted_experience,
         acquired_artifacts=[],
-        active_program={"program_id": "two-domain-crossing",
-                        "source_digest": _digest(crossing)},
+        active_program=_active_program(crossing),
         improvement_mode="operate")
 
     return {"boolean-episodes": boolean_runs,
             "software-episodes": swe_runs,
             "census": census,
-            "crossing_powered": census["crossing_powered"],
+            "crossing_coverage_sufficient": census[
+                "crossing_coverage_sufficient"],
             "acquisition": "not-attempted"}

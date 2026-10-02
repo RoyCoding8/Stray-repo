@@ -4,8 +4,11 @@ The current completion report for the consolidation batch
 `codex/stage09-consolidation-2026-10-01`, first integrated at `8a207ab` from
 `70223fb`, reviewed and repaired at `8cc1927` after an independent review
 overturned its mechanism verdict. The current source review is `a7c132c`,
-recorded in [PROJECT-LEDGER](PROJECT-LEDGER.md#coordinator-review-2026-10-02). The
-requirement-to-evidence map the assignment asked for.
+recorded in [PROJECT-LEDGER](PROJECT-LEDGER.md#coordinator-review-2026-10-02).
+Later surgical repairs are recorded in the ledger's current closure section;
+they do not change the acquisition, benefit, integration or stage dispositions.
+Canonical source is now `codex/agent-society`; original revisions are archived.
+This file maps requirements to inspected evidence.
 
 **Relationship to the other matrices.** This file does not replace
 [`STAGE-09-COMPLETION-MATRIX.md`](STAGE-09-COMPLETION-MATRIX.md), which is not

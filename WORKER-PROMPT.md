@@ -9,12 +9,14 @@ are useful. Do not search indefinitely for a positive result.
 ## Starting point and authority
 
 Work in D:/AI/Agent-Society-v2. Start from the latest review snapshot named in
-reports/PROJECT-LEDGER.md, then create your integration branch. The 2026-10-02
-snapshot is codex/consolidation-review-2026-10-02, reviewing source a7c132c.
+reports/PROJECT-LEDGER.md, then create your integration branch. The canonical
+branch is codex/agent-society. Its 2026-10-02 consolidation preserves the final
+source tree and archives the original histories; see docs/HISTORY.md.
 Milestones A-C below remain the acceptance scope; the consolidation worker did
 not complete their research and connected-mission requirements.
 Inspect local changes before switching or merging; do not reset an active checkout.
-The remote default and similarly named older branches are not the current source.
+The remote default is an alias of the canonical snapshot. Archived branch names
+and historical SHAs are recovery references, not current integration targets.
 Remote sync is a backup; local worktrees and stores hold current working state.
 
 The closure checks used WSL Ubuntu, PostgreSQL 18.6 and real POSIX child
@@ -43,6 +45,15 @@ route, model, effort, protocols, selectors and finite ceilings. A change creates
 a new freeze; it does not make the old and new runs comparable.
 
 ## A — consolidate the causal path
+
+Start with the remaining ownership migration. The coordinator repaired initial
+SQL mission admission and experiment reporting, but did not connect the live
+JSON FrontierStore path to the SQL investigation owner. This is substantial
+implementation work, not a missing status projection. Inventory private state,
+active source/version lineage, pending effects and continuation identity; give
+each one a single durable owner using the existing AD01 lifecycle. Migrate the
+public live entry and its callers, then retire duplicate production persistence.
+Preserve historical replay formats without making them another authority.
 
 Keep the existing AD01 trajectory as investigation owner. Reuse the broker,
 store, bounded executors, artifact bytes and binding machinery. Converge the

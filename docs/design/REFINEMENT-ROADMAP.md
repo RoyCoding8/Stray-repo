@@ -23,6 +23,12 @@ Stages are not a waterfall: an experiment may force a revision to the formal mod
 
 ## The current decision
 
+The [surgical closure](../../reports/PROJECT-LEDGER.md#surgical-closure-and-recoverable-history-2026-10-02)
+repairs initial mission admission, actual coverage reporting, source identity
+and limited-run lineage summaries. These fixes do not connect the two mission
+owners or demonstrate learning. The canonical branch is `codex/agent-society`;
+historical snapshots are recoverable from the separate archive.
+
 The [2026-10-02 coordinator review](../../reports/PROJECT-LEDGER.md#coordinator-review-2026-10-02)
 assessed source `a7c132c`. Keep the durable effect identity, mandatory execution
 authority, bounded program execution and the repaired behavioral scorer.

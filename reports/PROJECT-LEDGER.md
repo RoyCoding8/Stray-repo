@@ -1,5 +1,39 @@
 # Project ledger
 
+## Surgical closure and recoverable history, 2026-10-02
+
+Current source lives on `codex/agent-society`; the remote default is its snapshot
+alias. The human requested one-time consolidation, not another implementation
+campaign. Twenty milestone snapshots replace the active development graph; the
+full original histories and divergent refs remain in the independent archive
+branch and local bundle described in [HISTORY](../docs/HISTORY.md). Restore and
+tree-identity checks precede ref pruning. Original SHA references in historical
+reports are read in the recovered repository.
+
+The coordinator owned these bounded repairs, delegated implementation to Luna
+in isolated worktrees, reviewed production callers, and integrated serially:
+
+| Gap | Closed behavior | What this does not establish |
+|---|---|---|
+| Incomplete initial mission rows | Initial SQL admission refuses a missing objective or environments and leaves no row | The live JSON frontier is not migrated to this SQL owner |
+| Misleading experiment coverage | Available families, minimum p-value resolution and realized episode/family coverage are separate. The crossing assesses one SWE family in each split, not all nine available families | Statistical independence, power or broad transfer |
+| Misidentified active source | The authored crossing driver's source bytes have a source digest; crossing output has a separate transcript digest | Model-acquired operational policy or a release |
+| Limited-run lineage summaries | Summaries use lineages present in the result rather than all configured slots; digest diversity is separate from lineage identities | Independent model constructions or live acquisition |
+
+Independent review caught the available-versus-realized coverage error in the
+first repair and the configured-versus-executed lineage error in its caller.
+These were corrected before acceptance. Exact coordinator checks, including the
+extra interrupted SWE diagnostic, are in [VERIFICATION](VERIFICATION.md).
+No live inference, Jev calls or frozen evidence edits occurred in this batch.
+
+Stages 9 and 10 remain active. The next substantial worker assignment is the
+single-owner migration in [WORKER-PROMPT](../WORKER-PROMPT.md), followed by a
+program-selected, restart-safe mission and discriminating acquisition/use and
+descendant comparisons. Do not replace that architectural work with another
+open-ended minor-bug sweep. The three research priorities in the review below
+remain the decision order; bounded negatives are acceptable, unavailable arms
+are not benefit results.
+
 ## Coordinator review, 2026-10-02
 
 Reviewed source: `a7c132c`, branch `codex/stage09-consolidation-2026-10-01`.

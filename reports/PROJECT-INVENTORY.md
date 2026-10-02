@@ -1,5 +1,21 @@
 # Project inventory
 
+## Current source census, 2026-10-02
+
+The coordinator counted the integrated source before history consolidation:
+3,377 tracked files, 31 runtime Python modules, 411 experiment Python files,
+469 test Python files (384 outside the heavy archive, 85 archived), and 20 SQL
+migrations. These are source-presence counts, not collected test cases or
+qualified capabilities. The 15-area taxonomy below still describes the scope;
+the older exact census remains labeled by its revision.
+
+Initial mission admission, realized coverage, authored source identity and
+executed-lineage reporting were repaired. The live frontier and SQL mission
+still have separate owners, and the six learning/integration dispositions remain
+as recorded in [PROJECT-LEDGER](PROJECT-LEDGER.md). Stages 9 and 10 are active.
+
+## Baseline census, 2026-09-30
+
 Inspected 2026-09-30 at source tip `60964423455dcecb076745b3bcd85db0299dfbc5`. Three Luna reviewers independently covered runtime, cognitive call paths and committed campaign evidence. This report describes source presence and evidence separately. It does not report a full-suite, provider or deployment qualification performed by the researcher.
 
 This is the baseline census. Later closure repairs, current stage status and the

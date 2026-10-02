@@ -72,6 +72,22 @@ class Inventory:
     def family_cluster_count(self, family: str) -> int:
         return sum(cluster.family == family for cluster in self.clusters)
 
+    def available_family_coverage(self) -> dict[str, dict[str, Any]]:
+        """Describe the generation families available in this inventory.
+
+        A family count is coverage of the frozen panel. It does not say how
+        many of those families a particular assessment actually used.
+        """
+        coverage: dict[str, dict[str, Any]] = {}
+        for family in FAMILIES:
+            templates = sorted({cluster.template for cluster in self.clusters
+                                if cluster.family == family})
+            coverage[family] = {
+                "template_count": len(templates),
+                "templates": templates,
+            }
+        return coverage
+
     def decision(self, alpha: float = DEFAULT_ALPHA) -> dict[str, Any]:
         required = minimum_clusters_for_alpha(alpha)
         family_power = {
@@ -94,6 +110,14 @@ class Inventory:
             powered=self.cluster_count >= required,
             required_clusters=required,
         ))
+        resolution = {
+            "all": minimum_p_resolution(self.cluster_count, alpha),
+            **{
+                family: minimum_p_resolution(
+                    self.family_cluster_count(family), alpha)
+                for family in FAMILIES
+            },
+        }
         return {
             "alpha": alpha,
             "cluster_rule": CLUSTER_RULE,
@@ -101,6 +125,8 @@ class Inventory:
             "cell_count": self.cell_count,
             "cluster_count": self.cluster_count,
             "isomorphic_dev_within_pair_count": self.isomorphic_pair_count,
+            "minimum_p_resolution": resolution,
+            "available_family_coverage": self.available_family_coverage(),
             "verdict": "powered" if all(
                 result["powered"] for result in family_power.values()
             ) else "cannot_be_powered",
@@ -114,6 +140,20 @@ def minimum_sign_flip_p(cluster_count: int) -> float | None:
     if cluster_count == 0:
         return None
     return 2.0 ** (1 - cluster_count)
+
+
+def minimum_p_resolution(cluster_count: int,
+                         alpha: float = DEFAULT_ALPHA) -> dict[str, Any]:
+    """Return the sign-flip p-value floor without calling it statistical power."""
+    required = minimum_clusters_for_alpha(alpha)
+    minimum_p = minimum_sign_flip_p(cluster_count)
+    return {
+        "cluster_count": cluster_count,
+        "minimum_p": minimum_p,
+        "required_clusters": required,
+        "meets_alpha_resolution": (
+            minimum_p is not None and minimum_p <= alpha),
+    }
 
 
 def minimum_clusters_for_alpha(alpha: float) -> int:

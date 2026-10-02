@@ -215,6 +215,7 @@ def record_mission(dsn: str, investigation_id: str, *,
     if not isinstance(investigation_id, str) or not investigation_id.strip():
         raise MissionRefused("a mission needs an investigation id")
 
+    environment_value = _charter("environments", environments)
     columns = ["id", "revision", "objective", "origin"]
     values: list = [investigation_id, 1,
                     objective if objective is not None else "",
@@ -223,7 +224,7 @@ def record_mission(dsn: str, investigation_id: str, *,
     # the column is NOT NULL, but it is only an UPDATE when it was supplied.
     supplied = {"objective"} if objective is not None else set()
     merged = {"scope", "obligations"}
-    for name, value in (("scope", _charter("environments", environments)),
+    for name, value in (("scope", environment_value),
                         ("obligations", _charter_pair(constraints,
                                                       success_criteria))):
         if value is None:
@@ -251,6 +252,15 @@ def record_mission(dsn: str, investigation_id: str, *,
                        else "%s = EXCLUDED.%s" % (name, name))
 
     with connect(dsn) as conn:
+        existing = conn.execute(
+            "SELECT 1 FROM investigations WHERE id = %s FOR UPDATE",
+            (investigation_id,)).fetchone()
+        if existing is None and (
+                not isinstance(objective, str) or not objective.strip()
+                or not environment_value
+                or not environment_value["environments"]):
+            raise MissionRefused(
+                "an initial mission needs an objective and environments")
         conn.execute(
             "INSERT INTO investigations (%s) VALUES (%s)"
             " ON CONFLICT (id) DO UPDATE SET %s"

@@ -10,9 +10,9 @@ This lane answers it, and it answers two things that are easy to conflate:
 
 - that the CROSSING happens, on one row, across more than one episode in
   each structure, with permitted experience advancing across the boundary;
-- that the COMPARISON on each side is powered. It is not, and the reason is
-  measured rather than asserted: the Boolean/reducer instrument publishes
-  exactly ONE hypothesis class across every split and seed
+- that the COMPARISON on each side has sufficient family coverage. It does
+  not, and the reason is measured rather than asserted: the Boolean/reducer
+  instrument publishes exactly ONE hypothesis class across every split and seed
   (`boolean_rule`, 120 tasks, one distinct `hypothesis_class` descriptor),
   so under the study's own cluster rule `(family, template)` the whole
   Boolean side is a single cluster against the six a contrast needs at
@@ -286,9 +286,9 @@ def test_the_boolean_side_cannot_be_powered_and_the_mission_says_so():
     Boolean instrument publishes ONE hypothesis class across every split
     and seed, so its whole side is one cluster under `(family, template)`.
 
-    `run_two_domain_crossing` therefore returns `powered` per structure
-    rather than one verdict for the crossing, and this asserts the Boolean
-    side is unpowered and the SWE side is not.
+    `run_two_domain_crossing` therefore returns resolution, available family
+    coverage and actual assessment counts per structure rather than a
+    statistical-power verdict.
     """
     from experiments.ad01.s09_panel_inventory import (
         minimum_clusters_for_alpha, CLUSTER_RULE)
@@ -302,27 +302,33 @@ def test_the_boolean_side_cannot_be_powered_and_the_mission_says_so():
 
     census = twodomain.cluster_census()
 
-    assert census["boolean-rule-v1"]["clusters"] == 1, (
+    assert census["boolean-rule-v1"]["cluster_count"] == 1, (
         "the Boolean side now reports %d clusters; if the instrument "
         "changed, this lane's power claim is stale and must be re-derived"
-        % census["boolean-rule-v1"]["clusters"])
-    assert census["boolean-rule-v1"]["powered"] is False
-    assert census["software-fault-repair-v1"]["clusters"] == 9
-    assert census["software-fault-repair-v1"]["powered"] is True
+        % census["boolean-rule-v1"]["cluster_count"])
+    assert census["boolean-rule-v1"]["minimum_p_resolution"][
+        "meets_alpha_resolution"] is False
+    assert census["software-fault-repair-v1"]["cluster_count"] == 9
+    assert census["software-fault-repair-v1"]["minimum_p_resolution"][
+        "meets_alpha_resolution"] is True
 
     # The required count is named, so a reader can see 1-vs-6 rather than
     # being asked to trust a boolean.
     assert census["required_clusters"] == required
-    assert census["boolean-rule-v1"]["shortfall"] == required - 1
+    assert (census["boolean-rule-v1"]["minimum_p_resolution"][
+        "required_clusters"] - census["boolean-rule-v1"]["cluster_count"]
+            == required - 1)
 
-    # The conjunction is derived, not asserted, so widening the Boolean
-    # instrument would flip this rather than leave a stale "not powered"
-    # behind. Both halves are pinned: the crossing is not powered because
-    # one side is not, not because anything hardcoded it.
-    assert census["crossing_powered"] == all(
-        census[instrument]["powered"] for instrument in twodomain.STRUCTURES)
-    assert census["crossing_powered"] is False
-    assert census["powered_structures"] == ["software-fault-repair-v1"]
+    assert census["boolean-rule-v1"]["available_family_coverage"] == {
+        "dev": 1, "qual": 1, "audit": 1}
+    assert census["software-fault-repair-v1"][
+        "available_family_coverage"] == {"dev": 3, "held_out": 6}
+    assert census["boolean-rule-v1"]["actual_assessment_counts"] == {
+        "episodes": 3, "by_split": {"dev": 2, "qual": 1}}
+    assert census["software-fault-repair-v1"][
+        "actual_assessment_counts"] == {
+            "episodes": 3, "by_split": {"dev": 2, "held_out": 1}}
+    assert census["crossing_coverage_sufficient"] is False
 
 
 def test_a_failed_acquisition_stays_a_no_acquisition_row(store):

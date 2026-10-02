@@ -1,5 +1,46 @@
 # Verification
 
+## Surgical closure and history consolidation, 2026-10-02
+
+Integrated source checkpoint: `0ceb1e9`. The subsequent documentation snapshot
+and compact milestone history preserve its source and frozen evidence. No live
+inference, Jev calls, full-suite claim or historical exposure settlement occurred.
+
+The coordinator's final affected gate passed **21 tests, zero skips, in 121.46
+seconds**, on WSL Ubuntu Python 3.14.4 with disposable PostgreSQL stores:
+
+```sh
+S09ISO_DISABLE=1 PYTHONPATH="$PWD:$PWD/src" PYTHONUNBUFFERED=1 \
+/home/ubuntu/.venvs/as9/bin/python -u -m pytest -q -p no:cacheprovider \
+  -o faulthandler_timeout=60 \
+  tests/test_mission_join_repair.py \
+  tests/test_experiment_contract_repair.py \
+  tests/test_inv_c7_two_domain.py \
+  tests/test_mission_entry.py \
+  tests/test_s09_panel_inventory.py \
+  tests/test_s09_swe_experiment.py::test_two_lineages_sharing_a_name_are_kept_apart_in_the_ledger
+```
+
+This verifies mission admission/refusal, actual crossing coverage, source versus
+transcript identity, subset/empty-result reporting, and existing mission and
+inventory behavior. It does not qualify the whole repository, live learning,
+containment or the missing single-owner migration. The subset-payload regression
+uses a refused authored lineage and stubs expensive panel diagnostics; it tests
+the public evidence writer's accounting, not model construction.
+
+An additional two-case SWE run was interrupted after about six minutes in
+`test_the_experiment_runs_end_to_end_and_writes_machine_readable_evidence`.
+It emitted the other case's pass marker, but no suite summary; it is **incomplete**
+and contributes no accepted suite count. The known pytest process was terminated;
+no model calls were involved. Earlier smaller runs are superseded by the final
+affected gate rather than added to it.
+
+History checks: full `git bundle --all` archive, bundle verification, separate bare
+restore, `git fsck --full`, presence of every captured ref object, milestone
+ancestry order, and exact final Git tree identity. Remote publication uses an
+atomic transaction with expected-object leases; unrelated concurrent ref changes
+abort publication. [HISTORY](../docs/HISTORY.md) gives recovery instructions.
+
 ## Consolidation review, 2026-10-02
 
 Reviewed source: `a7c132c`. The review snapshot changes documentation only.

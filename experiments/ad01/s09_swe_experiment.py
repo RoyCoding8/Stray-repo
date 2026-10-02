@@ -45,9 +45,10 @@ Both are recorded as data in `s09_swe_ast.missing_cells()` and attached
 to the lineage, so a zero repair rate is not left to be misread as a
 broken arm.
 
-A lineage is one independently built policy artifact executed over the
-whole panel. Independence is the record digest, and every lineage is
-reported whether it repaired anything or not.
+A lineage is one built policy artifact executed over the whole panel. Every
+lineage is reported whether it repaired anything or not. Its record digest
+identifies the artifact bytes; it does not establish statistical independence
+between construction attempts.
 
 Two measured constraints decide how every repair rate below reads, and
 both are reported beside them rather than folded into it.
@@ -92,10 +93,10 @@ TYPED_AST = "typed-ast"
 ACTION_GRAPH = "action-graph"
 REPRESENTATIONS = (PYTHON_STEP, TYPED_AST, ACTION_GRAPH)
 
-# How many independently built artifacts each supported cell gets. The
-# handoff asks for at least four, and "independent" is the record digest
-# rather than a name: four lineages whose records hash alike would be one
-# lineage wearing four names.
+# How many built artifacts each supported cell gets. The handoff asks for at
+# least four. Names identify attempted slots; record digests identify artifact
+# diversity and expose duplicate records. Neither field establishes statistical
+# independence.
 LINEAGES_PER_CELL = 4
 
 OUTCOMES = ("repaired", "unrepaired", "crashed", "refused")
@@ -234,6 +235,7 @@ class PairedComparison:
 class MatrixResult:
     rows: list = field(default_factory=list)
     lineages_run: int = 0
+    scheduled_lineages: list = field(default_factory=list)
     missing_cells: list = field(default_factory=list)
     notes: list = field(default_factory=list)
 
@@ -1263,6 +1265,12 @@ def run_matrix(*, splits=("dev", "held_out"),
     """
     lineages = tuple(lineages) if lineages is not None else LINEAGES
     result = MatrixResult()
+    result.scheduled_lineages = [
+        {"identity": "%s:%s" % (lineage.representation_kind,
+                                  lineage.name),
+         "record_digest": lineage.digest}
+        for lineage in lineages
+    ]
     for split in splits:
         catalogue = tasks.enumerate_instances(split)
         for lineage in lineages:
@@ -1703,9 +1711,10 @@ def path_fork() -> dict:
 def _lineage_index(rows: list) -> dict:
     """One entry per distinct lineage, keyed by a short id.
 
-    The name, the digest and the representation repeat on every row,
-    and the digest is what says a lineage is independent, so the three
-    travel together once here rather than 468 times in the rows.
+    The name, the digest and the representation repeat on every row, so the
+    three travel together once here rather than 468 times in the rows. The
+    name identifies the attempted slot; the digest identifies its record
+    bytes and is not an independence claim.
     """
     index: dict = {}
     order: list = []
@@ -1717,6 +1726,31 @@ def _lineage_index(rows: list) -> dict:
     return {"ids": index,
             "entries": [{"id": index[key], "name": key[0], "digest": key[1],
                          "representation_kind": key[2]} for key in order]}
+
+
+def lineage_summary(result: MatrixResult) -> dict:
+    """Summarize scheduled slots separately from observed matrix rows."""
+    observed = _lineage_index(result.rows)["entries"]
+    observed_digests = [entry["digest"] for entry in observed]
+    scheduled = list(result.scheduled_lineages)
+    return {
+        "scheduled": {
+            "attempt_count": len(scheduled),
+            "attempt_identities": [entry["identity"] for entry in scheduled],
+        },
+        "observed": {
+            "attempt_count": len(observed),
+            "attempt_identities": [
+                "%s:%s" % (entry["representation_kind"], entry["name"])
+                for entry in observed],
+            "distinct_record_digests": len(set(observed_digests)),
+            "duplicate_record_count": (
+                len(observed_digests) - len(set(observed_digests))),
+        },
+        "model_construction": (
+            "record digests identify observed artifact bytes; statistical "
+            "independence is not inferred"),
+    }
 
 
 def _intern(value) -> str:
@@ -1848,6 +1882,7 @@ def result_payload(result: MatrixResult) -> dict:
         "template_version": tasks.TEMPLATE_VERSION,
         "representations": list(REPRESENTATIONS),
         "support": support(),
+        "lineage_summary": lineage_summary(result),
         "lineages": [entry.as_dict() for entry in lineage_ledger(result)],
         "lineage_index": lineage_index["entries"],
         "missing_cells": list(result.missing_cells),
