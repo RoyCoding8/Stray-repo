@@ -298,8 +298,10 @@ def test_durable_step_rechecks_source_after_receipt(monkeypatch):
     monkeypatch.setattr(method_exec.broker, "ensure_operation", ensure_operation)
     monkeypatch.setattr(method_exec.broker, "dispatch_operation", dispatch)
     source = ("def STEP(view, state):\n"
-              "    return {\"action\": {\"kind\": \"wait\"},"
-              " \"state\": {}}\n")
+              "    action = {\"kind\": \"stop\", \"target\": \"t\","
+              " \"inputs\": {}, \"evidence_refs\": [],"
+              " \"requested_resources\": {}}\n"
+              "    return {\"action\": action, \"state\": {}}\n")
     view = policy_step.materialize_view(
         task=worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-dev-sw-00"),
         observations=[], open_questions=[], last_result=None,
