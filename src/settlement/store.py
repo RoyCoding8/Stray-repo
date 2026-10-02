@@ -23,6 +23,7 @@ from psycopg.types.json import Json
 
 from . import db
 from .common import (
+    SUPERVISION_SCOPE,
     Command,
     CommandResult,
     ConflictPayload,
@@ -445,6 +446,10 @@ def acquire_work(dsn: str, cmd: Command) -> CommandResult:
             alloc = _get_alloc(cur, alloc_id)
             if int(alloc["occupancy"]) >= int(alloc["max_occupancy"]):
                 raise InsufficientResources(f"allocation {alloc_id} occupancy exhausted")
+            if str(alloc.get("owner_scope") or "") == SUPERVISION_SCOPE \
+                    and p.get("kind", "task") != "recovery":
+                raise InsufficientResources(
+                    f"allocation {alloc_id} is protected supervision capacity")
             cur.execute("UPDATE allocations SET occupancy = occupancy + 1 WHERE id = %s", (alloc_id,))
         cur.execute("SELECT COALESCE(MAX(ownership_generation), 0) AS g FROM attempts WHERE investigation_id = %s",
                     (inv["id"],))

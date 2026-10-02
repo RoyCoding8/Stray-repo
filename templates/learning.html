@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>learning</h1>
+{% if view.pending %}<p>learning slice pending: candidate and reference outcomes need the trial tables</p>{% endif %}
+<h2>demonstrated gains</h2><p>none recorded</p>
+<h2>experimental alternatives</h2><p>none recorded</p>
+<h2>unsupported hypotheses</h2>
+<ul>{% for h in view.hypotheses %}<li>{{ h.id }}: {{ h.result }} (untested, not a gain claim)</li>{% endfor %}</ul>
+{% endblock %}

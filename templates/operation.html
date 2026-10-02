@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>operation {{ op_id }}</h1>
+<p>dispatch {{ view.operation.dispatch_state }} | reconcile {{ view.operation.reconcile_state }} | cancel {{ view.operation.cancel_state }} | settled {{ view.operation.settled }}</p>
+<p>next decision: {{ view.next_decision }}</p>
+<p>receipt provenance: {{ view.operation.receipt_provenance }}</p>
+<h2>pending effects</h2>
+<ul>{% for i in view.pending_effects %}<li>{{ i.workflow_identity }} undelivered</li>{% endfor %}</ul>
+{% endblock %}

@@ -136,6 +136,21 @@ def node_index(comp: Composition) -> dict[str, Node]:
     return {node.node_id: node for node in _walk(comp.root)}
 
 
+def validate_composition(comp: Composition) -> Composition:
+    seen: set[str] = set()
+    for node in _walk(comp.root):
+        if node.node_id in seen:
+            raise InvalidComposition(f"duplicate node id {node.node_id!r}")
+        seen.add(node.node_id)
+    for node in _walk(comp.root):
+        if isinstance(node, JoinNode):
+            for obligation, target in node.needs.items():
+                if target not in seen:
+                    raise InvalidComposition(
+                        f"join {node.node_id} obligation {obligation!r} targets unknown node {target!r}")
+    return comp
+
+
 def referenced_ids(comp: Composition) -> set[str]:
     refs = set()
     for node in _walk(comp.root):
@@ -336,10 +351,10 @@ def revise(comp: Composition, proposal: dict[str, Any]) -> Composition:
                 validate_effect(node.effect, node.payload)
             except Exception as exc:
                 raise InvalidComposition(f"invoke {node.node_id}: {exc}") from exc
-    return Composition(version=comp.version, revision=comp.revision + 1, root=root,
-                       allocation_id=comp.allocation_id,
-                       authority_version=comp.authority_version, budget=dict(comp.budget),
-                       max_depth=comp.max_depth)
+    return validate_composition(Composition(
+        version=comp.version, revision=comp.revision + 1, root=root,
+        allocation_id=comp.allocation_id, authority_version=comp.authority_version,
+        budget=dict(comp.budget), max_depth=comp.max_depth))
 
 
 def _validate_node(proposal: dict[str, Any]) -> Node:
@@ -356,10 +371,9 @@ def check_eligibility(dsn: str, attempt_id: str, comp: Composition) -> dict[str,
     from psycopg.rows import dict_row  # noqa: PLC0415
 
     reasons: list[str] = []
+    authority = store.get_control(dsn)["authority_version"]
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT authority_version FROM control WHERE id = 1")
-            authority = cur.fetchone()["authority_version"]
             cur.execute("SELECT lifecycle, investigation_id FROM attempts WHERE id = %s",
                         (attempt_id,))
             attempt = cur.fetchone()
@@ -378,6 +392,17 @@ def check_eligibility(dsn: str, attempt_id: str, comp: Composition) -> dict[str,
         reasons.append(f"attempt is {attempt['lifecycle']}")
     if disposition in ("withdrawn", "fulfilled"):
         reasons.append(f"investigation is {disposition}")
+    from . import capabilities as _capabilities  # noqa: PLC0415
+
+    try:
+        quarantined = _capabilities.pinned_quarantines(dsn, attempt_id)
+    except Exception as exc:  # noqa: BLE001
+        if "42P01" not in str(exc) and "quarantine_registry" not in str(exc):
+            raise
+        quarantined = []
+    for hit in quarantined:
+        reasons.append(
+            f"quarantined capability {hit['version_id']}: {hit['reason']}")
     return {"eligible": not reasons, "reasons": reasons}
 
 

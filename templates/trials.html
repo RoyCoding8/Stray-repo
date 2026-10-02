@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>trials</h1>
+{% if view.pending %}<p>learning slice pending: trial tables are not installed yet (probed: {{ view.t5.tables }})</p>{% else %}
+<ul>{% for r in view.rows %}<li>{{ r }}</li>{% endfor %}</ul>
+{% endif %}
+{% endblock %}

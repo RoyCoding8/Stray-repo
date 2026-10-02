@@ -91,23 +91,54 @@ class LocalLauncher:
                 return {"outcome": "unknown", "parse": "stored-result-unreadable"}
         return None
 
+    def _pgid_dead(self, pgid: int) -> bool:
+        try:
+            os.killpg(pgid, 0)
+            return False
+        except (ProcessLookupError, PermissionError, OSError):
+            return True
+
     def stop(self, operation_id: str) -> bool:
-        stopped = False
+        targets = []
         for pid_file in self.run_dir.glob(f"{_sanitize(operation_id)}_*.pid"):
             try:
-                pgid = int(pid_file.read_text().strip())
+                targets.append(int(pid_file.read_text().strip()))
             except (ValueError, OSError):
                 continue
+        if not targets:
+            return self.read_result(operation_id) is not None
+        for pgid in targets:
             try:
                 os.killpg(pgid, signal.SIGTERM)
-                stopped = True
             except (ProcessLookupError, PermissionError, OSError):
                 continue
-        return stopped
+        deadline = time.monotonic() + self.grace_ms / 1000
+        pending = [pgid for pgid in targets if not self._pgid_dead(pgid)]
+        while pending and time.monotonic() < deadline:
+            time.sleep(0.05)
+            pending = [pgid for pgid in pending if not self._pgid_dead(pgid)]
+        for pgid in pending:
+            try:
+                os.killpg(pgid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                continue
+        return all(self._pgid_dead(pgid) for pgid in targets)
+
+    def _claim(self, pid_path: Path) -> bool:
+        try:
+            fd = os.open(pid_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+            os.close(fd)
+            return True
+        except FileExistsError:
+            return False
+        except OSError:
+            return False
 
     def dispatch(self, op: BrokerOp) -> LaunchOutcome:
         paths = self._paths(op.operation_id, op.execution_version)
-        if paths["pid"].exists() or paths["result"].exists():
+        if paths["result"].exists():
+            return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
+        if not self._claim(paths["pid"]):
             return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
         payload = op.payload
         timeout_ms = int(payload.get("timeout_ms", 30_000))
@@ -153,11 +184,11 @@ class LocalLauncher:
         content = _interpret(proc.returncode or 0, out.decode("utf-8", "replace"),
                              err.decode("utf-8", "replace"), out_cut or err_cut,
                              timed_out, wall_ms, argv)
+        paths["result"].write_text(json.dumps({"outcome": content["_verdict"], **content}))
         try:
             paths["pid"].unlink()
         except OSError:
             pass
-        paths["result"].write_text(json.dumps({"outcome": content["_verdict"], **content}))
         receipt = ReceiptProposal(
             receipt_identity=f"local:{paths['result'].stem}", content=content,
             outcome=content["_verdict"], provenance=self.launcher_id)

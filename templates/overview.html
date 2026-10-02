@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>overview</h1>
+<div id="status">obligations: {{ view.obligations }} | authority v{{ view.authority_version }} | evidence epoch {{ view.evidence_epoch }}</div>
+<h2>capacity</h2>
+<table><tr><th>scope</th><th>available</th><th>authorized</th><th>consumed</th><th>reserved</th><th>occupancy</th></tr>
+{% for scope, c in view.capacity.items() %}<tr><td>{{ scope }}</td><td>{{ c.available }}</td><td>{{ c.authorized }}</td><td>{{ c.consumed }}</td><td>{{ c.reserved }}</td><td>{{ c.occupancy }}/{{ c.max_occupancy }}</td></tr>{% endfor %}</table>
+<h2>attempts</h2>
+<table><tr><th>attempt</th><th>lifecycle</th><th>next decision</th></tr>
+{% for a in view.attempts %}<tr><td>{{ a.id }}</td><td>{{ a.lifecycle }}</td><td>{{ view.next_decisions[a.id] }}</td></tr>{% endfor %}</table>
+<h2>unresolved operations</h2>
+<table><tr><th>operation</th><th>dispatch</th><th>reconcile</th></tr>
+{% for o in view.unresolved_operations %}<tr><td><a href="/operations/{{ o.id }}">{{ o.id }}</a></td><td>{{ o.dispatch_state }}</td><td>{{ o.reconcile_state }}</td></tr>{% endfor %}</table>
+<h2>due deadlines</h2>
+<ul>{% for a in view.due %}<li>{{ a.id }} due {{ a.deadline }}</li>{% endfor %}</ul>
+<h2>commands</h2>
+<form method="post" action="/commands/admit"><input name="request_id" placeholder="request id"><input name="investigation_id" placeholder="investigation"><input name="objective" placeholder="objective"><button>admit</button></form>
+<form method="post" action="/commands/pause"><input name="request_id" placeholder="request id"><input name="attempt_id" placeholder="attempt"><button>pause</button></form>
+<form method="post" action="/commands/resume"><input name="request_id" placeholder="request id"><input name="attempt_id" placeholder="attempt"><button>resume</button></form>
+<form method="post" action="/commands/cancel"><input name="request_id" placeholder="request id"><input name="operation_id" placeholder="operation"><button>cancel</button></form>
+<form method="post" action="/commands/quarantine"><input name="request_id" placeholder="request id"><input name="subject" placeholder="subject"><button>quarantine</button></form>
+<form method="post" action="/commands/amend-allocation"><input name="request_id" placeholder="request id"><input name="allocation_id" placeholder="allocation"><input name="authorized" placeholder="authorized"><button>amend allocation</button></form>
+<form method="post" action="/commands/repair"><input name="request_id" placeholder="request id"><button>repair scan</button></form>
+{% endblock %}

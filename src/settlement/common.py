@@ -25,6 +25,9 @@ class ResultCode(str, Enum):
     OUTCOME_UNKNOWN = "outcome_unknown"
 
 
+SUPERVISION_SCOPE = "supervision"
+
+
 class SettlementError(Exception):
     code: ResultCode = ResultCode.INVALID_INPUT
 

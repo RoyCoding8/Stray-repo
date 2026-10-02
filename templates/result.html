@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>command {{ result.action }}: {% if result.outcome == "accepted" %}<span class="ok">accepted</span>{% else %}<span class="bad">refused</span>{% endif %}</h1>
+<p>code: {{ result.code }} | request: {{ result.request_id }}</p>
+<p>detail: {{ result.detail }}</p>
+{% if result.note %}<p>external outcome: {{ result.note }}</p>{% endif %}
+{% if result.data %}<p>data: {{ result.data }}</p>{% endif %}
+<p><a href="/">back to overview</a></p>
+{% endblock %}

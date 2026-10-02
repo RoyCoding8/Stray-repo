@@ -288,14 +288,16 @@ def _refusal(dsn: str, operation_id: str, result: CommandResult) -> DispatchStat
 
 
 def admit_launcher_receipt(dsn: str, operation_id: str, receipt: ReceiptProposal) -> CommandResult:
+    from .common import payload_digest  # noqa: PLC0415
+
     payload: dict[str, Any] = {"operation_id": operation_id,
                                "receipt_identity": receipt.receipt_identity,
                                "content": receipt.content, "outcome": receipt.outcome,
                                "provenance": receipt.provenance}
     if receipt.actual_cost is not None:
         payload["actual_cost"] = receipt.actual_cost
-    return store.admit_receipt(
-        dsn, Command(request_id=f"broker-rc-{receipt.receipt_identity}", payload=payload))
+    request_id = f"broker-rc-{receipt.receipt_identity}-{payload_digest(receipt.content)[:12]}"
+    return store.admit_receipt(dsn, Command(request_id=request_id, payload=payload))
 
 
 def _deliver(dsn: str, workflow_identity: str) -> None:
