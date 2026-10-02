@@ -1,6 +1,61 @@
 # Project ledger
 
-Current checkpoint: **2026-10-01, consolidation batch first integrated at
+## Coordinator review, 2026-10-02
+
+Reviewed source: `a7c132c`, branch `codex/stage09-consolidation-2026-10-01`.
+Local and remote equality were verified at that source tip. The review snapshot
+is on `codex/consolidation-review-2026-10-02`; its changes are documentation only.
+The worker's [report](CONSOLIDATION-BATCH-2026-10-01-REPORT.md) describes
+`0deff30`, so its remote warning and several source conclusions are historical.
+There are 142 commits and 58 merges from `70223fb` through the reviewed source;
+these counts measure work, not completion or learning.
+
+Two isolated Luna reviewers inspected current source and raw evidence. The
+coordinator independently checked the public mission callers, acquisition exports,
+remote equality, two DB-free census checks and two real-database scorer checks.
+The exact test commands and limits are in [VERIFICATION](VERIFICATION.md).
+
+| Question | Current assessment |
+|---|---|
+| Mechanism | Material identity, authority and scoring repairs exist. Targeted scorer behavior is qualified; the whole current tree is not newly qualified by this review. |
+| Acquisition | B12 recorded no acquisition in four scheduled lineages: five receipts contain one success, three failures and one unknown. Only one artifact returned; this does not estimate model capability. |
+| Utility | Unmeasured. There is no usable acquired arm in that comparison. |
+| Retention/transfer | Unmeasured benefit. B14's reachable terminal verdict was constant; this diagnoses its instrument, not the value of retention. |
+| Autonomous selection | Not established. `twodomain.run_two_domain_crossing` schedules fixed authored episodes and records acquisition as not attempted. |
+| Learner improvement | Unrun in the intended live C4 study. Source supports executable probe choice influencing descendants, but no revised-descendant benefit comparison was demonstrated. |
+
+Stages 9 and 10 remain incomplete. A valid negative can close a measured
+question; unavailable arms, degenerate measurements and unrun studies cannot.
+The earlier table's NEGATIVE labels below must not be read as evidence of absent
+utility, transfer or learner improvement.
+
+The three next priorities are:
+
+1. Converge the live JSON `FrontierStore` mission and SQL mission entry under
+   the selected AD01 owner, then exercise program-selected continuation,
+   acquisition, retained use and pending resume through one public entry.
+2. Establish usable live acquisition and discriminating quality/resource
+   measurements. Qualify constructor output on development tasks, then freeze
+   fresh comparisons. Do not reuse pre-authority scorer readings as current
+   behavioral evidence.
+3. Exercise inherited acquisition decisions and assess fresh descendants.
+   Define the experimental unit for each claim before effects. Digest uniqueness
+   measures diversity, not independence. The cluster sign-flip threshold is
+   minimum p-value resolution, not statistical power. Its family-level limits
+   do not prohibit a scoped within-family mechanism or task-quality comparison.
+   Do not raise alpha or invent families merely to pass a count threshold.
+
+The static frozen-write helper is not a live authority gate. Current host-owned
+grants and limits are absent from the child view; blindly wiring the unused lint
+is not the missing architectural repair. Local child execution remains bounded
+but uncontained, an existing operational qualification limit.
+
+Both review worktrees and their task branches were removed. No model calls,
+Jev calls or historical evidence edits occurred in this review.
+
+## Worker status snapshot, 2026-10-01
+
+Consolidation batch first integrated at
 `8a207ab`, reviewed and repaired at `8cc1927`, and standing at `5b7f1ca`.**
 An independent review overturned its mechanism verdict at `8cc1927`, and the
 seven lanes merged since changed no disposition. It superseded the 2026-09-30

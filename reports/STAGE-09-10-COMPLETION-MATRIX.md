@@ -3,7 +3,8 @@
 The current completion report for the consolidation batch
 `codex/stage09-consolidation-2026-10-01`, first integrated at `8a207ab` from
 `70223fb`, reviewed and repaired at `8cc1927` after an independent review
-overturned its mechanism verdict, and standing at `5b7f1ca`. The
+overturned its mechanism verdict. The current source review is `a7c132c`,
+recorded in [PROJECT-LEDGER](PROJECT-LEDGER.md#coordinator-review-2026-10-02). The
 requirement-to-evidence map the assignment asked for.
 
 **Relationship to the other matrices.** This file does not replace
@@ -31,17 +32,21 @@ not reach at all.
 
 ## 0. The six dispositions
 
+This section and the current ledger govern the 2026-10-02 assessment. Detailed
+rows below retain the worker's earlier scoped inventories and named revisions;
+this review did not rerun every gate or endorse every historical disposition.
+
 Each is the independent acceptance pass's own verdict. They are kept separate
 because the first does not license the rest.
 
 | # | Question | Disposition | One line of why |
 |---|---|---|---|
-| 1 | Mechanism | **CONFIRMED as to the durable chain; the freeze was OVER-CLAIMED, and both halves are now repaired — but only one of the two halves gates a live path** | Every arrow of the milestone-A chain resolved to a durable row and held under tamper, and authority is a type rather than a branch. An independent review overturned the first verdict to *too generous*: the freeze admitted a write made through a mapping method, and the dynamic comparison named as the second layer cannot fire. X3 repaired the freeze and X4b bound the effect identity to a settled operation. **The repair is not the same claim as coverage.** X4b's half is reached by `drive_improve_round` and `execute_operate_action`, which `run_live_improve_round` calls. X3's half is reached only by `learner_revision.acquire`, which has no production caller. The two halves are not on the same footing, and the earlier wording did not say so. |
-| 2 | Acquisition | **NEGATIVE** | B12 acquired 0 of 4 lineages; the retention leg found 0 of 3 members measurable. Nothing usable was acquired. |
-| 3 | Utility | **NEGATIVE, not measurable** | A failed acquisition is never promoted to an authored learned arm, so there is no learned arm to compare. The mechanism result is not a utility result. |
-| 4 | Transfer | **NEGATIVE** | 0 of 3 live-acquired members carry a varying verdict; the two-domain crossing transfers a predicate, not answers. An archive with no usable members is a no-acquisition result. |
-| 5 | Autonomous selection | **NOT ESTABLISHED** | The crossing runs a fixed three-then-three sequence written in `experiments/ad01/twodomain.py`. A script is not a program choosing from the admissible frontier. |
-| 6 | Learner improvement | **NEGATIVE** | No live revision attempt ran and no revised descendant cohort exists. The inheritable mechanism is real; nothing was attempted against it. |
+| 1 | Mechanism | **SCOPED QUALIFICATION** | Durable effect identity and mandatory execution authority are repaired. Two current real-database scorer checks pass. The unused static freeze is not a live authority boundary; SQL and JSON mission ownership remain separate. |
+| 2 | Acquisition | **OBSERVED NO ACQUISITION** | B12 acquired 0 of 4 scheduled lineages, with only one returned artifact among five operations. Transport failures do not measure model capability. |
+| 3 | Utility | **UNMEASURED** | No usable acquired arm exists in this comparison. No benefit verdict follows. |
+| 4 | Retention/transfer | **UNMEASURED BENEFIT** | B14 found a constant reachable terminal verdict. This diagnoses the instrument; it does not test whether retained competence can help. |
+| 5 | Autonomous selection | **NOT ESTABLISHED** | The two-domain crossing schedules fixed authored episodes. The public live mission and SQL mission entry are still separate. |
+| 6 | Learner improvement | **LIVE STUDY UNRUN** | Live C4 and its fresh-descendant comparison did not run. Executable probe selection can influence descendants, but benefit is unmeasured. |
 
 **The limit on disposition 1, corrected by the independent review and recorded
 here so it is not lost.** At `8a207ab` the gap was wider than a computed

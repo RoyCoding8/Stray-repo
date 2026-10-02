@@ -1,5 +1,43 @@
 # Verification
 
+## Consolidation review, 2026-10-02
+
+Reviewed source: `a7c132c`. The review snapshot changes documentation only.
+No live inference, Jev or full-suite run occurred. Two isolated Luna reviewers
+inspected source and archived evidence; their read-only findings are summarized
+in [PROJECT-LEDGER](PROJECT-LEDGER.md#coordinator-review-2026-10-02).
+
+The coordinator observed two separate test runs, not a combined suite:
+
+| Check | Result | Boundary |
+|---|---|---|
+| Two-domain contract and cluster census | 2 passed in 2.46 seconds | Windows Python 3.13.14; DB-free; verifies the implemented census rule, not its statistical interpretation |
+| Evidence changes real method behavior; inert planning receives no evidence credit | 2 passed in 17.00 seconds | WSL Ubuntu Python 3.14.4, disposable PostgreSQL store and real child execution; authored controls, not live acquisition |
+
+Run the first from the repository root with `S09ISO_DISABLE=1`:
+
+```sh
+uv run --no-sync python -m pytest -q -p no:cacheprovider \
+  tests/test_inv_c7_two_domain.py::test_both_structures_normalise_to_the_same_contract_field_count \
+  tests/test_inv_c7_two_domain.py::test_the_boolean_side_cannot_be_powered_and_the_mission_says_so
+```
+
+Run the second in WSL Ubuntu as `ubuntu`, from the repository root. Its module
+fixture creates and drops its own store under the existing isolation helper:
+
+```sh
+S09ISO_DISABLE=1 PYTHONPATH="$PWD:$PWD/src" PYTHONUNBUFFERED=1 \
+/home/ubuntu/.venvs/as9/bin/python -u -m pytest -q -p no:cacheprovider \
+  -o faulthandler_timeout=60 \
+  tests/test_s09_e2_scored.py::test_two_policies_differing_only_in_whether_they_read_score_differently \
+  tests/test_s09_e2_scored.py::test_a_read_that_never_reaches_the_world_scores_like_a_blind_policy
+```
+
+WSL reported failure to start the systemd user session; the selected test run
+completed with exit code zero. No system configuration was changed. Local and
+remote tips matched at `a7c132c` before the documentation snapshot. The older
+report's remote warning describes `0deff30`, not this observed state.
+
 ## Current closure checkpoint — 2026-09-30
 
 Environment: WSL Ubuntu, Python 3.12.14, PostgreSQL 18.6, real child

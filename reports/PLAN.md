@@ -9,8 +9,10 @@ read-only milestone inventories at `f03db5b`. Base checkpoint is the
 Read-only inventories, one per milestone, are
 [inv-a](workstreams/inv-a.md), [inv-b](workstreams/inv-b.md) and
 [inv-c](workstreams/inv-c.md). Each names owned paths, dependencies and a
-named pytest gate per lane, so integration can accept a lane without
-re-reading source.
+named pytest gate per lane, so each lane has an explicit verification scope.
+The coordinator still inspects source and evidence and reruns affected gates on
+the merged tip. The 2026-10-02 review and remaining priorities are recorded in
+[PROJECT-LEDGER](PROJECT-LEDGER.md#coordinator-review-2026-10-02).
 
 ### Runtime and route factors (both closed before any lane started)
 

@@ -8,8 +8,11 @@ are useful. Do not search indefinitely for a positive result.
 
 ## Starting point and authority
 
-Work in D:/AI/Agent-Society-v2. Start from the pushed
-codex/stage09-closure-checkpoint branch, then create your integration branch.
+Work in D:/AI/Agent-Society-v2. Start from the latest review snapshot named in
+reports/PROJECT-LEDGER.md, then create your integration branch. The 2026-10-02
+snapshot is codex/consolidation-review-2026-10-02, reviewing source a7c132c.
+Milestones A-C below remain the acceptance scope; the consolidation worker did
+not complete their research and connected-mission requirements.
 Inspect local changes before switching or merging; do not reset an active checkout.
 The remote default and similarly named older branches are not the current source.
 Remote sync is a backup; local worktrees and stores hold current working state.
