@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 from settlement import broker
 
-from . import method_exec, packet, policy_step, seeds
+from . import method_exec, packet, policy_step, seeds, worlds
 
 DEVELOPMENT = "development"
 ASSESSMENT = "assessment"
@@ -301,6 +301,176 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
                 "staged": staged, "bound": False}
     return _refused(profile, kind, "unknown policy action kind",
                     source_digest, scope)
+
+
+def _shared_assessment_arm(policy_record: dict, task_ids: list,
+                           rule: dict, session: str) -> dict:
+    from . import policy_assess
+    arm = policy_assess._empty_arm(len(task_ids))
+    reports = []
+    sequence = 0
+    digest = policy_step.verify_policy_record(policy_record)["source_digest"]
+    for task_id in task_ids:
+        task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+        state = {}
+        observations = []
+        last_result = None
+        task_report = None
+        for step_no in range(rule["max_steps"]):
+            view = policy_step.materialize_view(
+                task=task, observations=observations, open_questions=[],
+                last_result=last_result,
+                eligible_methods=[item["capability_id"] for item
+                                  in seeds.SEED_CAPABILITIES
+                                  if item["family"] == task["family"]],
+                remaining={"steps": rule["max_steps"] - step_no,
+                           "model_calls": 1, "queries": 16})
+            previous = dict(state)
+            started = time.perf_counter_ns()
+            try:
+                stepped = policy_step.run_policy_step(
+                    policy_record, view, state)
+            except Exception as exc:
+                arm["resources"]["step_calls"] += 1
+                arm["resources"]["child_wall_ms"] += _elapsed_ms(started)
+                arm["decisions"].append({
+                    "seq": sequence, "task_id": task_id,
+                    "kind": "step_error", "target": task_id,
+                    "state_digest": policy_assess._state_digest(previous)})
+                arm["effects"].append({
+                    "kind": "step_error", "accepted": False,
+                    "reason": str(exc), "owner": "policy_step"})
+                sequence += 1
+                break
+            arm["resources"]["step_calls"] += 1
+            arm["resources"]["child_wall_ms"] += _elapsed_ms(started)
+            action = dict(stepped["action"])
+            state = dict(stepped["state"])
+            arm["decisions"].append({
+                "seq": sequence, "task_id": task_id,
+                "kind": action["kind"], "target": task_id,
+                "state_digest": policy_assess._state_digest(state)})
+            context = make_ctx(
+                candidate_digest=digest,
+                scope={"family": task["family"], "task_ids": [task_id]},
+                session=session, remaining={"queries": 16, "model_calls": 1},
+                visible_observation_ids=tuple(
+                    observation["observation_id"]
+                    for observation in observations),
+                trusted=True)
+            effect = dispatch(
+                profile_name=ASSESSMENT, record=policy_record, task=task,
+                action=action, ctx=context)
+            arm["effects"].append(effect)
+            arm["resources"]["queries"] += int(effect["queries"])
+            arm["resources"]["model_calls"] += int(
+                effect["model_calls"]
+                + (action["kind"] == "request_model"
+                   and effect["accepted"]))
+            arm["resources"]["child_wall_ms"] += int(effect["wall_ms"])
+            sequence += 1
+            if effect["candidate"] is not None:
+                report = policy_assess.trajectory._check(
+                    task, effect["candidate"])
+                initial, final = policy_assess.trajectory._size(
+                    task, effect["candidate"])
+                task_report = {"report": report, "initial": initial,
+                               "final": final}
+                break
+            last_result = {"verdict": "unmeasured", "kind": action["kind"],
+                           "accepted": effect["accepted"]}
+            observations.append({
+                "observation_id": "panel-%s-%d" % (task_id, step_no),
+                "task_id": task_id, "verdict": "unmeasured",
+                "detail": {"accepted": effect["accepted"]}})
+            if action["kind"] == "stop":
+                break
+        reports.append(task_report)
+    preserved = 0
+    reduced = 0
+    for task_report in reports:
+        if task_report is None:
+            continue
+        report = task_report["report"]
+        if report.get("verdict") == "preserved":
+            preserved += 1
+            if task_report["final"] < task_report["initial"]:
+                reduced += 1
+    arm["quality"] = {
+        "tasks": len(task_ids), "preserved": preserved, "reduced": reduced,
+        "failed": len(task_ids) - preserved}
+    return arm
+
+
+def assess_policy(dsn: str, *, proposal_id: str, candidate_source: str,
+                  candidate_digest: str, candidate_artifact: dict,
+                  incumbent_source: str, incumbent_digest: str,
+                  incumbent_artifact: dict, panel: dict, rule: dict,
+                  scope: dict, protocol_id: str,
+                  evaluator_version: str) -> dict:
+    from . import policy_assess
+    frozen = policy_assess._read_journal(
+        dsn, policy_assess._protocol_request_id(proposal_id))
+    if frozen is None:
+        raise ValueError("policy protocol is not frozen for proposal %r"
+                         % proposal_id)
+    panel_digest = policy_assess._panel_digest(panel)
+    rule_identity = policy_assess._rule_identity(rule)
+    if (frozen.get("panel_digest") != panel_digest
+            or frozen.get("rule_id") != rule_identity["rule_id"]
+            or frozen.get("rule_digest") != policy_assess._rule_digest(
+                rule_identity)):
+        raise ValueError("policy exposure differs from frozen protocol")
+    if _source_digest(candidate_source) != candidate_digest:
+        raise ValueError("candidate source digest does not match candidate_digest")
+    candidate_unavailable = policy_assess._verify_candidate(
+        candidate_source, candidate_digest, candidate_artifact)
+    attempt_id = policy_assess.records.assessment_attempt_id(
+        proposal_id, candidate_digest)
+    if candidate_unavailable is not None:
+        empty = policy_assess._empty_arm(len(panel["task_ids"]))
+        record = {
+            "proposal_id": proposal_id, "attempt_id": attempt_id,
+            "outcome": "unavailable",
+            "reason": candidate_unavailable["reason"],
+            "protocol_id": protocol_id,
+            "evaluator_version": evaluator_version, "scope": dict(scope),
+            "candidate_digest": candidate_digest,
+            "panel": {"panel_id": panel.get("panel_id", ""),
+                      "task_ids": list(panel["task_ids"]),
+                      "panel_digest": panel_digest,
+                      "scope": dict(panel["scope"])},
+            "rule": rule_identity,
+            "arms": {"candidate": empty, "incumbent": empty}}
+        return policy_assess._persist_assessment(dsn, record)
+    policy_assess._verify_incumbent(
+        incumbent_source, incumbent_digest, incumbent_artifact)
+    stored = policy_assess._read_journal(dsn, attempt_id)
+    if stored is not None:
+        return stored
+    candidate_record = {"artifact": dict(candidate_artifact["artifact"]),
+                        "policy_source": candidate_source}
+    incumbent_record = {"artifact": dict(incumbent_artifact["artifact"]),
+                        "policy_source": incumbent_source}
+    candidate_arm = _shared_assessment_arm(
+        candidate_record, list(panel["task_ids"]), rule_identity,
+        proposal_id + "-candidate")
+    incumbent_arm = _shared_assessment_arm(
+        incumbent_record, list(panel["task_ids"]), rule_identity,
+        proposal_id + "-incumbent")
+    outcome, reason = policy_assess._decision(
+        candidate_arm, incumbent_arm, rule_identity)
+    record = {
+        "proposal_id": proposal_id, "attempt_id": attempt_id,
+        "outcome": outcome, "reason": reason, "protocol_id": protocol_id,
+        "evaluator_version": evaluator_version, "scope": dict(scope),
+        "candidate_digest": candidate_digest,
+        "panel": {"panel_id": panel.get("panel_id", ""),
+                  "task_ids": list(panel["task_ids"]),
+                  "panel_digest": panel_digest, "scope": dict(panel["scope"])},
+        "rule": rule_identity,
+        "arms": {"candidate": candidate_arm, "incumbent": incumbent_arm}}
+    return policy_assess._persist_assessment(dsn, record)
 
 
 def bind_revision(*, profile_name: str, staged: dict,

@@ -1,0 +1,16 @@
+{
+ "elapsed_s": 1.2,
+ "guard": {
+  "ceiling": 1,
+  "cost_blocked": null,
+  "dispatch_count": 1,
+  "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refusal_reason": "",
+  "version": "invl02-live-v1"
+ },
+ "probe": "text",
+ "read_ms": 60000,
+ "response_digest": "d91dc0011a55d5c5d334da0cc1ea1c2d448880119cf41565743e83f16e5596ef",
+ "stop_reason": "stop",
+ "text_chars": 15
+}

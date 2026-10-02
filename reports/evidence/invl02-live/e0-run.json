@@ -1,0 +1,94 @@
+{
+ "control": {
+  "boundaries": 1,
+  "campaign_id": "ad01-w0-I-71",
+  "model_calls": 0
+ },
+ "freeze_digest": "4db4625bbd41882597c101017e43ae9ceed9174340c3616f3f3a4a8033956199",
+ "guard": {
+  "ceiling": 12,
+  "cost_blocked": null,
+  "dispatch_count": 4,
+  "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refusal_reason": "",
+  "version": "invl02-live-v1"
+ },
+ "ledger": [
+  {
+   "attempt": 1,
+   "diagnosis": {
+    "kind": "GatewayErrorKind.TIMEOUT",
+    "reason": "gateway request timed out",
+    "retryable": true,
+    "stage": "transport",
+    "usage": {
+     "billed": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": "unknown",
+     "output_tokens": "unknown"
+    }
+   },
+   "operation_id": "ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "outcome": "error"
+  },
+  {
+   "attempt": 2,
+   "diagnosis": {
+    "kind": "GatewayErrorKind.TIMEOUT",
+    "reason": "gateway request timed out",
+    "retryable": true,
+    "stage": "transport",
+    "usage": {
+     "billed": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": "unknown",
+     "output_tokens": "unknown"
+    }
+   },
+   "operation_id": "ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "outcome": "error"
+  },
+  {
+   "attempt": 3,
+   "diagnosis": {
+    "kind": "GatewayErrorKind.TIMEOUT",
+    "reason": "gateway request timed out",
+    "retryable": true,
+    "stage": "transport",
+    "usage": {
+     "billed": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": "unknown",
+     "output_tokens": "unknown"
+    }
+   },
+   "operation_id": "ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "outcome": "error"
+  },
+  {
+   "attempt": 4,
+   "diagnosis": {
+    "kind": "GatewayErrorKind.TIMEOUT",
+    "reason": "gateway request timed out",
+    "retryable": true,
+    "stage": "transport",
+    "usage": {
+     "billed": "unknown",
+     "charge_units": "unknown",
+     "input_tokens": "unknown",
+     "output_tokens": "unknown"
+    }
+   },
+   "operation_id": "ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "outcome": "error"
+  }
+ ],
+ "live": {
+  "boundaries": 1,
+  "campaign_id": "ad01-w0-I-72",
+  "construction_calls": 1,
+  "model_calls": 1
+ },
+ "revision": "absent",
+ "study": "invl02-live-e0"
+}

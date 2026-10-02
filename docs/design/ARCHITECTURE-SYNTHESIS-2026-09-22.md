@@ -18,16 +18,18 @@ Foundation-model weights remain fixed in this phase. Code, procedures, context s
 
 This pass traced source and the committed live bundle. The previous reviewer turn independently reran the offline verifier and reproduced its seven failures. The worker's full focused test gate was not rerun during this design pass. No new discovery-model calls or runtime changes were made; Jev calls are design review only.
 
+The acquisition review changes one interpretation of the archived evidence. E0 proves that live model bytes reached retention only. It does not prove model acquisition, binding, inheritance, or utility. The final integrity implementation now requires a durable original dispatch record, linked finalization, exact package provenance, mandatory child receipt, and study-bound E3 evidence. The archived fixed-menu strategy is authored and control-derived, even though its package report uses `origin: "acquired"`. The output-shape preflight failed closed on exact route discovery before inference. Preserve the evidence and do not retry that study directory.
+
 | Area | What exists at the baseline | What it does not establish | Disposition |
 |---|---|---|---|
 | Effects, authority and recovery | `src/settlement/broker.py`: operation preparation, dispatch, receipts, reconciliation; durable store and child execution | Universal containment, failure-free recovery or fully attributable live exports | Keep the guarantees and reuse the implementation; fix attributable-outcome gaps |
 | Retained methods | `trajectory._use_retained_method`, frozen repertoire and subsequent-use path | Broadly useful live capability acquisition | Keep; expose through the common action executor |
 | Executable policy | `policy_step`, `DecisionConsumer`, persistent STEP continuation | A good policy or a self-improving improvement procedure | Keep the ABI shape and byte identity; extend purpose and assessment |
-| Revision lifecycle | `trajectory._construct_policy_revision` calls construction, freeze, assessment and binding; `_activate_bound_policy` installs a selected policy | Effective recursive improvement; shared semantics for all policy actions | Keep lifecycle and provenance, replace the narrow assessment boundary |
+| Revision lifecycle | `trajectory._construct_policy_revision` calls construction, freeze, assessment and binding; `_activate_bound_policy` installs a selected policy | Effective recursive improvement; shared semantics for all policy actions; a retained candidate is not bound merely because it was stored | Keep lifecycle and provenance, replace the narrow assessment boundary |
 | Agenda | `run_campaign` enumerates supplied task IDs; `select_tasks` uses supplied or fixed defaults | System ownership of the task stream or learning agenda | Replace runtime dependence on the study schedule with durable admissible work |
 | Policy assessment | `policy_assess._run_arm` executes STEP and measures method effects | Full learning behavior: its separate `_effect` refuses `request_model` and `propose_revision`, and initializes private state for each task | Retain as a restricted historical profile; do not use it to certify a general improver |
 | Experience and context | Observations, evidence references and selected context exist in the current and earlier prototypes | One coherent memory lifecycle across every prototype, calibrated beliefs or useful learned retrieval | Consolidate only the path consumed by investigations; test utility |
-| Live study | P0 has 8/8 preserved uses; P1/P2 unavailable; exported operations contain seven empty receipt sets | A complete comparison, a learning null or an isolated diagnosis of model incapability | Preserve bytes; classify the study as incomplete |
+| Live study | P0 has 8/8 preserved uses; P1/P2 unavailable; exact route preflight failed before model dispatch | A complete comparison, a learning null or an isolated diagnosis of model incapability; the output-shape study remains unrun | Preserve bytes and preflight failure; classify the study as incomplete |
 | Generality | Software and graph panels | Broad domain transfer: both current panels primarily test reduction behavior | Keep as regression instruments; add a different experimental task structure |
 
 Two earlier interpretations need correction. First, the live failure cannot yet be attributed solely to the free model. Transport, decoding, construction and accounting are confounded. Second, every dispatch must be attributable, but a timeout cannot truthfully produce a settled provider receipt. The proper requirement is durable attempt identity, available response/failure evidence and explicit unresolved liability. Reconciliation must not invent a result or mark unknown cost as zero.
@@ -69,7 +71,7 @@ On rejection, the policy receives a typed refusal. On an uncertain external resu
 
 An improvement program receives a target artifact or program, permitted experience and an improvement budget. Its output is a candidate plus evidence of the process that produced it. The same executable package can determine how to acquire experience, invoke constructors, test alternatives and stop. A revision can change this improvement behavior as well as operational behavior. A fixed host call to an unchanging constructor prompt is a useful baseline, not sufficient evidence of that recursion.
 
-Concretely, retain one STEP calling convention. Its permitted view names a purpose, `operate` or `improve`, the target artifact digest, accessible experience, remaining authority and available instruments. Improvement mode can read its own frozen source through the artifact reader, choose evidence and parents, choose constructor inputs, request checks, and submit candidate bytes. A model constructor is a leaf effect, not a host-owned sequence of research choices. Candidate manifests identify the source digest that implements both purposes. The host selects the externally requested purpose and enforces bounds; the program selects the improvement procedure. Version changes cannot alter that purpose or expand authority.
+Concretely, retain one STEP calling convention. Its permitted view names a purpose, `operate` or `improve`, the target artifact digest, accessible experience, remaining authority and available instruments. Improvement mode can read its own frozen source through the artifact reader, choose evidence and parents, choose constructor inputs, request checks, and submit candidate bytes. A model constructor is a leaf effect, not a host-owned sequence of research choices. Candidate manifests identify the source digest that implements both purposes. The host selects the externally requested purpose and enforces bounds; the program selects the improvement procedure. Version changes cannot alter that purpose or expand authority. An authored control remains authored even when the host selects it. An acquired treatment requires independent model-response provenance, checks, and the durable binding path.
 
 For a task distribution `D`, let `Q_D(x)` be externally measured task utility of configuration `x`. For an improver `m`, a starting configuration `x`, permitted history `E` and total budget `b`, define:
 
@@ -165,11 +167,13 @@ Technology choices remain provisional. Change a tool when a measured limitation 
 
 ## 10. Experiments that can change the decision
 
-### E0: interpret the current live failure
+### E0: interpret the current live failure and correct its disposition
 
 Trace the seven empty exported receipt sets through source operations, attempted dispatch, raw or hashed provider response, decoder disposition, receipt admission and outstanding reservation. Classify each as never sent, observed failure, lost/unknown response, receipt-admission failure, or export omission. Preserve old evidence. Add a reconciliation supplement rather than rewriting it. Resolve cost-guard error paths and restart accounting before further inference.
 
-Then perform one bounded construction preflight with the actual chosen provider: response bytes must reach parsing, ABI validation, executable behavior and the log. A basic known-good independently authored policy is the apparatus control; it never enters an acquired treatment arm. Do not infer model inability from an unobserved response.
+The archived E0 run is a retention observation. It proves that live model bytes reached retention only. It does not prove model acquisition, binding, inheritance, or utility. The run's `revision.disposition: "bound"` is a worker projection of `retained`, not evidence of a durable active package. The reported bound digest differs from the durable active digest, and the resumed round used the existing active package. Correct that projection in the source before treating any later E0 result as a binding or inheritance result.
+
+Then perform one bounded construction preflight with the actual chosen provider: response bytes must reach parsing, ABI validation, executable behavior and the log. A basic known-good independently authored policy is the apparatus control; it never enters an acquired treatment arm. Do not infer model inability from an unobserved response. This preflight is not E3 eligibility.
 
 ### E1: autonomous investigation and actual learning behavior
 
@@ -195,9 +199,18 @@ The trusted study coordinator owns split assignment and exposure records. Develo
 
 ### E3: did the improver improve?
 
-From an accepted development revision, extract the inherited improvement program. Compare old and revised improvers from the same starting solver, archive, permitted history, model and total resources on new problem instances. Freeze the improvers during this comparison. Score the successors they generate on private tasks. Separately demonstrate a second revision round under the inherited program to establish structural recursion.
+E3 is unavailable unless a genuinely eligible model revision exists. Eligibility is conjunctive. The revision must have all of the following evidence:
 
-If there is no eligible revised improver, E3 is unavailable and the batch ends with a causal diagnosis. Do not run empty panels. If both work but successor gains tie, report a meta-improvement null. A positive result establishes only the tested horizon and distributions.
+1. **Model-response provenance.** The executable bytes trace to the exact model response through the response digest, construction record, validation, and package manifest. An authored fixed-menu source or a system-selected authored strategy is not model provenance.
+2. **Exact-digest binding.** The candidate package digest and executable digest are bound to the same revision, and the durable active package digest equals that candidate digest. A retained package, a label such as `origin: "acquired"`, or a digest mismatch is insufficient.
+3. **Durable post-restart child citation.** After process replacement, an independently checked child invocation cites the same bound executable digest in durable evidence. A parent digest, an active marker, or a resume that only loads the package is insufficient.
+4. **Usable result.** The candidate produces a valid, executable result under the declared parsing, ABI, behavior, and assessment protocol. Retention without a usable result does not qualify.
+
+Retained-only, digest-mismatched, and authored or control-derived bytes are ineligible. A no-op candidate can be rejected honestly. Do not force a bind to satisfy the study. E3 remains unavailable until the four conditions are all evidenced.
+
+From an accepted eligible development revision, extract the inherited improvement program. Compare old and revised improvers from the same starting solver, archive, permitted history, model and total resources on new problem instances. Freeze the improvers during this comparison. Score the successors they generate on private tasks. Separately demonstrate a second revision round under the inherited program to establish structural recursion.
+
+If there is no eligible revised improver, do not run empty panels. Report the missing condition and end the bounded study with a causal diagnosis. If both work but successor gains tie, report a meta-improvement null. A positive result establishes only the tested horizon and distributions.
 
 Before a live claim, use two independent authored controls with identical operational behavior and different improvement behavior. From the same target and observations they must produce a known difference in a probe, constructor request or candidate choice, attributable to the improvement entry. Adopt one, restart, and observe that difference in the next descendant-producing round. This identifies the channel without claiming either control was learned or is generally better. The live comparison then follows acquired bytes through that same channel.
 
@@ -209,7 +222,7 @@ After the core comparison runs, choose an ablation from the dominant observed me
 
 The design role owns this conceptual model, alternatives, formal contracts, mechanism choices, evidence limits and study logic. The worker owns detailed module edits, storage mapping, executable checks, migration, bounded runs and delivery. It may challenge this design with a concrete counterexample; it may not quietly resolve a semantic ambiguity by weakening the experiment.
 
-The next implementation batch ends after E0-E2 and the feasible E3 branches have produced attributable, independently recomputable outcomes, with the connected deterministic controls complete. A live model failure can close the bounded study as unavailable; unresolved apparatus failures remain engineering gaps. No positive learning result is required to claim implementation completion. No negative or unavailable result is permission to claim effective RSI.
+The final implementation gate at `9e6c922` completed the evidence boundary. The authorized output-shape preflight performed `GET /models` only and failed closed before any model dispatch. The P1/P2 study remains unrun. A route-specific preflight failure is an unavailable result, not evidence of model inability or a learning null. The same study directory cannot be retried. No positive learning result is required to claim implementation completion. No negative or unavailable result is permission to claim effective RSI.
 
 Stage 9A-9D design is complete in this packet. Stage 9E execution and Stage 10 general integration remain open. Operational deployment qualification and release are later milestones. There is no requirement to rewrite functioning prototype code as a ritual final implementation.
 

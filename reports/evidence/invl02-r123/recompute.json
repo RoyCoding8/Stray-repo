@@ -1,0 +1,12 @@
+{
+ "problems": [],
+ "recomputed": {
+  "model_calls": 1,
+  "run_files": [
+   "e0-run.json"
+  ]
+ },
+ "scope": "E0-only-narrow-checks",
+ "status": "pass",
+ "trust": "E0-only narrow checks: freeze digest, run matching digest, counted dispatches and observed nonzero cost fields. E1/E2 require m4-bundle.json verified offline via offline_recompute.verify_bundle. Resource classes beyond recountable dispatches stay attested runtime measurements with unknown preserved."
+}

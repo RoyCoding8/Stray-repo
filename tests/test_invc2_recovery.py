@@ -305,7 +305,7 @@ def _propose(materialized, state):
 
 transition, _ = run_boundary(
     DSN, study_root=STUDY, allocation_id=STUDY, packet=_packet(),
-    propose=_propose, max_corrections=5)
+    propose=_propose, max_corrections=1)
 print(json.dumps({"admission": transition.admission,
                   "continuation": transition.continuation}))
 """
@@ -336,7 +336,7 @@ def test_correction_limit_survives_restart(tmp_path):
     assert json.loads(second.stdout)["admission"] == "refused:malformed-action"
     assert json.loads(second.stdout)["continuation"]["correction"] == \
         "correction-budget-exhausted"
-    assert len(marker.read_text().splitlines()) == 3
+    assert len(marker.read_text().splitlines()) == 2
     with db.connect(DSN) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT used FROM study_corrections"

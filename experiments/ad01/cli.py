@@ -34,6 +34,8 @@ def _refuse(exc: BaseException) -> int:
 
 
 def _gateway(model: str, recordings: str):
+    if model and recordings:
+        raise ValueError("live and recorded modes are mutually exclusive")
     if recordings:
         from .learner import RecordingGatewayAdapter
         scripts = json.loads(open(recordings).read())
@@ -64,10 +66,14 @@ def _campaign_kwargs(args, world: int, arm: str, cid: str):
             or "recorded-double", charter=CHARTER, world=world, arm=arm,
             allocation_id=seed["allocation_id"])
         constructor = "model"
+    execution_mode = ("live" if args.model else
+                      "recorded" if args.recordings else "doubled")
+    model = args.model or ("recorded-double" if args.recordings
+                           else "fake-harness")
     return {"propose": propose, "gateway": gateway,
-            "model": args.model or "recorded-double",
-            "constructor": constructor,
-            "policy_release": getattr(args, "policy_release", None)}
+            "model": model, "constructor": constructor,
+            "policy_release": getattr(args, "policy_release", None),
+            "execution_mode": execution_mode}
 
 
 def _resume_ids(campaign: str, parser) -> tuple:
@@ -83,6 +89,12 @@ def _resume_ids(campaign: str, parser) -> tuple:
     return world, parts[2]
 
 
+def _add_execution_modes(parser) -> None:
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--model", default="")
+    modes.add_argument("--recordings", default="")
+
+
 def main(argv: list | None = None) -> int:
     parser = argparse.ArgumentParser(prog="ad01-traj")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -94,8 +106,7 @@ def main(argv: list | None = None) -> int:
     run.add_argument("--max-boundaries", type=int, default=6)
     run.add_argument("--agenda-authorized", type=int)
     run.add_argument("--tasks", default="")
-    run.add_argument("--model", default="")
-    run.add_argument("--recordings", default="")
+    _add_execution_modes(run)
     run.add_argument("--export-out", default="")
     run.add_argument("--policy-release")
     cycle = sub.add_parser("cycle")
@@ -106,8 +117,7 @@ def main(argv: list | None = None) -> int:
     cycle.add_argument("--max-boundaries", type=int, default=6)
     cycle.add_argument("--agenda-authorized", type=int)
     cycle.add_argument("--tasks", default="")
-    cycle.add_argument("--model", default="")
-    cycle.add_argument("--recordings", default="")
+    _add_execution_modes(cycle)
     cycle.add_argument("--export-out", default="")
     cycle.add_argument("--policy-release")
     resume = sub.add_parser("resume")
@@ -116,8 +126,7 @@ def main(argv: list | None = None) -> int:
     resume.add_argument("--max-boundaries", type=int, default=6)
     resume.add_argument("--agenda-authorized", type=int)
     resume.add_argument("--tasks", default="")
-    resume.add_argument("--model", default="")
-    resume.add_argument("--recordings", default="")
+    _add_execution_modes(resume)
     resume.add_argument("--export-out", default="")
     resume.add_argument("--policy-release")
     use = sub.add_parser("use")
@@ -250,6 +259,7 @@ def main(argv: list | None = None) -> int:
                 trajectory.authorize_campaign(
                     args.dsn, cid, authorized=args.agenda_authorized)
             extra = _campaign_kwargs(args, args.world, args.arm, cid)
+            execution_mode = extra.pop("execution_mode", "unknown")
             out = trajectory.run_campaign(
                 args.world, args.arm, CHARTER, caps,
                 tasks=_tasks(args.tasks),
@@ -260,6 +270,7 @@ def main(argv: list | None = None) -> int:
                 parser.error("unknown --campaign %r, want world in %s"
                              % (args.campaign, list(worlds.WORLDS)))
             extra = _campaign_kwargs(args, world, arm, args.campaign)
+            execution_mode = extra.pop("execution_mode", "unknown")
             if args.agenda_authorized:
                 trajectory.authorize_campaign(
                     args.dsn, args.campaign,
@@ -267,6 +278,7 @@ def main(argv: list | None = None) -> int:
             out = trajectory.resume_campaign(
                 args.dsn, args.campaign, CHARTER, caps,
                 tasks=_tasks(args.tasks), **extra)
+        out["execution_mode"] = execution_mode
         out["accounting"] = trajectory.cost_union(out, [], dsn=args.dsn)
     except Exception as exc:
         return _refuse(exc)

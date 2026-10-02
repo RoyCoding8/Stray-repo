@@ -1,0 +1,20 @@
+{
+  "protocol": "invl02-output-shape-v1",
+  "study": "invl02-output-shape-final",
+  "stage": "preflight",
+  "status": "unavailable",
+  "dispatch_count": 0,
+  "reason": "model list does not contain the exact route",
+  "route": {
+    "endpoint": "http://localhost:4000/v1",
+    "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "nvidia",
+    "tier": "free"
+  },
+  "code_commit": "9e6c922",
+  "credentials_recorded": false,
+  "model_dispatch_started": false,
+  "repair_started": false,
+  "note": "The preflight command failed before writing preflight.json. No model request or study effect occurred."
+}

@@ -1,0 +1,15 @@
+{
+ "elapsed_s": 180.1,
+ "guard": {
+  "ceiling": 1,
+  "cost_blocked": null,
+  "dispatch_count": 1,
+  "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refusal_reason": "",
+  "version": "invl02-live-v1"
+ },
+ "kind": "GatewayErrorKind.TRANSPORT",
+ "probe": "error",
+ "read_ms": 180000,
+ "reason": "gateway request failed: http 502"
+}

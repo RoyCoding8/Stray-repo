@@ -7,7 +7,7 @@ import pytest
 from settlement import broker, store
 from settlement.broker import BrokerOp, DispatchStatus, LaunchOutcome, ReceiptProposal
 from settlement.exec_profile import STOP_SETTLE_S
-from settlement.common import Command, ResultCode
+from settlement.common import Command, CommandResult, ResultCode
 from settlement.gateway import FakeGatewayAdapter, GatewayError, GatewayErrorKind
 
 
@@ -82,6 +82,51 @@ def _ensure(dsn, op_id="op1", effect="sandbox-exec", payload=None, gen=None):
     return broker.ensure_operation(dsn, operation_id=op_id, effect=effect,
                                    payload=payload or _sandbox_payload(),
                                    allocation_id="a1", attempt_id="att1")
+
+
+def test_receipt_command_identity_routes_outcome_conflict_to_store(monkeypatch):
+    admitted = []
+
+    monkeypatch.setattr(
+        broker,
+        "read_operation",
+        lambda *args, **kwargs: {
+            "dispatch_state": "dispatching",
+            "payload": {"_dispatch_generation": 1},
+        },
+    )
+
+    def admit_receipt(_dsn, command):
+        admitted.append(command)
+        return CommandResult(
+            code=ResultCode.APPLIED,
+            request_id=command.request_id,
+            data={"operation_id": command.payload["operation_id"],
+                  "conflict": command.payload["outcome"] == "failure"},
+        )
+
+    monkeypatch.setattr(broker.store, "admit_receipt", admit_receipt)
+    content = {"status": "complete"}
+
+    def submit(outcome, provenance):
+        return broker.admit_launcher_receipt(
+            "unused",
+            "op-conflict",
+            ReceiptProposal(
+                receipt_identity="receipt-conflict",
+                content=content,
+                outcome=outcome,
+                provenance=provenance,
+            ),
+        )
+
+    first = submit("success", "source-a")
+    conflict = submit("failure", "source-b")
+    replay = submit("success", "source-a")
+
+    assert conflict.data["conflict"] is True
+    assert admitted[0].request_id == admitted[2].request_id
+    assert admitted[0].request_id != admitted[1].request_id
 
 
 def test_dispatch_sandbox_end_to_end_settles_once(migrated_db):

@@ -17,7 +17,7 @@ from typing import Any
 from psycopg.types.json import Json
 
 from . import broker, db, store
-from .common import Command, ConflictPayload, ResultCode, SettlementError
+from .common import Command, ConflictPayload, MissingEvidence, ResultCode, SettlementError
 
 KINDS = ("calibration", "development", "repair", "use")
 
@@ -73,9 +73,21 @@ def authorize_study(dsn: str, study_root: str, *, authorized: int,
     if isinstance(authorized, bool) or not isinstance(authorized, int) \
             or authorized <= 0:
         raise SettlementError("authorization carries finite positive authority")
-    if not isinstance(correction_budget, int) or correction_budget < 0:
+    if isinstance(correction_budget, bool) or not isinstance(correction_budget, int) \
+            or correction_budget < 0:
         raise SettlementError("correction budget is a non-negative integer")
     allocation_id = allocation_id or study_root
+    if ceilings is not None and not isinstance(ceilings, dict):
+        raise SettlementError("study ceilings must be an object")
+    for name, value in dict(ceilings or {}).items():
+        if not isinstance(name, str) or not name.strip():
+            raise SettlementError("study ceilings name a resource")
+        if name not in store.CEILING_COUNTERS:
+            raise SettlementError(f"unsupported study ceiling {name}")
+        if isinstance(value, dict):
+            value = value.get("max", value.get("limit"))
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise SettlementError(f"study ceiling {name} must be a non-negative integer")
     payload = {"study_root": study_root, "allocation_id": allocation_id,
                "authorized": authorized, "ceilings": dict(ceilings or {}),
                "correction_budget": correction_budget}
@@ -89,14 +101,24 @@ def authorize_study(dsn: str, study_root: str, *, authorized: int,
                     (study_root,))
         existing = cur.fetchone()
         if existing is not None:
-            if existing["allocation_id"] != allocation_id \
-                    or int(existing["authorized"]) != authorized:
+            immutable = (
+                existing["allocation_id"] == allocation_id
+                and int(existing["authorized"]) == authorized
+                and dict(existing.get("ceilings") or {}) == dict(ceilings or {})
+                and int(existing.get("correction_budget", 2)) == correction_budget
+            )
+            if not immutable:
                 raise ConflictPayload(
-                    f"study {study_root} already holds"
-                    f" {existing['authorized']} on {existing['allocation_id']};"
-                    " refusing to reseed")
+                    f"study {study_root} is already bound with different authority fields")
+            if str(existing.get("store_fingerprint") or "") != str(fingerprint):
+                raise MissingAuthority(
+                    f"study {study_root} is bound to another store; refusing to seed")
             return (ResultCode.APPLIED, f"study {study_root} already bound",
-                    {**payload, "store_fingerprint": str(fingerprint)}, [], [])
+                    {"study_root": study_root, "allocation_id": existing["allocation_id"],
+                     "authorized": int(existing["authorized"]),
+                     "ceilings": dict(existing.get("ceilings") or {}),
+                     "correction_budget": int(existing.get("correction_budget", 2)),
+                     "store_fingerprint": str(fingerprint)}, [], [])
         cur.execute("SELECT authorized FROM allocations WHERE id = %s",
                     (allocation_id,))
         allocation = cur.fetchone()
@@ -123,6 +145,8 @@ def authorize_study(dsn: str, study_root: str, *, authorized: int,
     result = store.transact(
         dsn, Command(request_id=f"authorize-{study_root}", payload=payload),
         _fn)
+    if result.code == ResultCode.UNAUTHORIZED:
+        raise MissingAuthority(result.detail)
     if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
         raise SettlementError(f"authorization refused: {result.detail}")
     data = dict(result.data)
@@ -145,18 +169,19 @@ def bind_study(dsn: str, study_root: str) -> StudyHandle:
                         (study_root,))
             row = cur.fetchone()
             try:
-                cur.execute(
-                    "SELECT fingerprint FROM store_identity WHERE id = 1")
+                cur.execute("SELECT fingerprint FROM store_identity WHERE id = 1")
                 identity = cur.fetchone()
-            except Exception:
-                identity = None
+            except Exception as exc:
+                conn.rollback()
+                raise MissingAuthority(
+                    f"store identity for study {study_root!r} is unreadable;"
+                    " refusing to bind") from exc
             conn.commit()
     if row is None:
         raise MissingAuthority(
             f"no authority for study {study_root!r} in this store;"
             " refusing to seed")
-    if identity is not None and str(identity["fingerprint"]) != str(
-            row["store_fingerprint"]):
+    if identity is None or str(identity["fingerprint"]) != str(row["store_fingerprint"]):
         raise MissingAuthority(
             f"study {study_root!r} is bound to another store;"
             " refusing to seed")
@@ -179,6 +204,9 @@ def admit_study_call(dsn: str, study_root: str, *, kind: str,
         return _loop.Refusal(reason="unknown-kind",
                              detail=f"kind {kind!r} is not one of"
                              f" {list(KINDS)}")
+    if isinstance(retries, bool) or not isinstance(retries, int) or retries < 0:
+        return _loop.Refusal(reason="invalid-retry",
+                             detail="retries must be a non-negative integer")
     try:
         handle = bind_study(dsn, study_root)
     except MissingAuthority as exc:
@@ -188,71 +216,45 @@ def admit_study_call(dsn: str, study_root: str, *, kind: str,
     except broker.InvalidEffect as exc:
         return _loop.Refusal(reason="malformed-action", detail=str(exc))
     exposure, budget_kind = broker.exposure_schedule(effect, clean, retries)
-    replayed = _existing_grant(
-        dsn, operation_id, effect, clean, retries, budget_kind, kind)
-    if replayed is not None:
-        return replayed
     child_id = f"{handle.allocation_id}/{kind}/{operation_id}"
-    provisioned = _provision_child(dsn, handle, child_id, exposure)
-    if isinstance(provisioned, _loop.Refusal):
-        return provisioned
-    return _loop.admit_effect(
-        dsn, allocation_id=child_id, operation_id=operation_id,
-        effect=effect, payload=clean, attempt_id=attempt_id,
-        execution_version=execution_version, retries=retries, kind=kind)
-
-
-def _existing_grant(dsn: str, operation_id: str, effect: str,
-                    clean: dict[str, Any], retries: int,
-                    budget_kind: str, kind: str):
-    from . import loop as _loop
-    from .common import payload_digest
-
-    existing = broker.read_operation(dsn, operation_id)
-    if existing is None:
-        return None
-    body = {"effect": effect, "payload": clean,
-            "retries": max(int(retries), 0), "budget_kind": budget_kind}
-    if existing.get("payload_digest") != payload_digest(body):
-        return _loop.Refusal(
-            reason="admission-refused",
-            detail=f"operation {operation_id} intent is immutable")
-    exposure, _ = broker.exposure_schedule(effect, clean, retries)
-    allocation_id = existing.get("allocation_id") or ""
-    return _loop.Grant(
-        allowance=_loop.Allowance(allowance_id=f"{allocation_id}:{operation_id}",
-                                  kind=kind or effect, amount=exposure),
-        operation_id=operation_id, exposure=exposure,
-        budget_kind=budget_kind, already=True)
-
-
-def _provision_child(dsn: str, handle: StudyHandle, child_id: str,
-                     exposure: int):
-    from . import loop as _loop
-    from psycopg.rows import dict_row
-
-    with db.read_connect(dsn) as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT authorized FROM allocations WHERE id = %s",
-                        (child_id,))
-            found = cur.fetchone()
-            conn.commit()
-    if found is not None:
-        if int(found["authorized"]) != int(exposure):
-            raise SettlementError(
-                f"child {child_id} already holds {found['authorized']},"
-                f" not {exposure}")
-        return {"child_id": child_id, "reused": True}
-    result = store.subdivide_allocation(
-        dsn, Command(request_id=f"auth-child-{child_id}",
-                     payload={"parent_id": handle.allocation_id,
-                              "child_id": child_id,
-                              "authorized": exposure, "domain": "study"}))
+    body = {
+        "effect": effect,
+        "payload": clean,
+        "retries": retries,
+        "budget_kind": budget_kind,
+        "study_root": study_root,
+        "kind": kind,
+        "allocation_id": child_id,
+    }
+    try:
+        result = store.admit_study_operation(
+            dsn, Command(
+                request_id=f"admit-study-{study_root}-{operation_id}",
+                payload={
+                    "study_root": study_root,
+                    "kind": kind,
+                    "operation_id": operation_id,
+                    "allocation_id": child_id,
+                    "reservation_id": f"res-{operation_id}",
+                    "exposure": exposure,
+                    "budget_kind": budget_kind,
+                    "body": body,
+                    "attempt_id": attempt_id,
+                    "execution_version": execution_version,
+                },
+            ))
+    except ConflictPayload as exc:
+        return _loop.Refusal(reason="admission-refused", detail=str(exc))
     if result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-        return {"child_id": child_id, "reused": False}
+        return _loop.Grant(
+            allowance=_loop.Allowance(
+                allowance_id=f"{child_id}:{operation_id}", kind=kind,
+                amount=exposure),
+            operation_id=operation_id, exposure=exposure,
+            budget_kind=budget_kind,
+            already=result.code == ResultCode.ALREADY_APPLIED)
     if result.code == ResultCode.INSUFFICIENT_RESOURCES:
-        return _loop.Refusal(reason="insufficient-authority",
-                             detail=result.detail)
+        return _loop.Refusal(reason="insufficient-authority", detail=result.detail)
     return _loop.Refusal(reason="admission-refused", detail=result.detail)
 
 
@@ -272,6 +274,58 @@ def _study_alloc_ids(dsn: str, allocation_id: str) -> list[str]:
     return rows
 
 
+def _summarize_receipts(receipts: list[dict[str, Any]]) -> dict[str, Any]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for receipt in receipts:
+        grouped.setdefault(str(receipt["operation_id"]), []).append(receipt)
+    measured = 0
+    expected_consumed = 0
+    pending = 0
+    unknown: list[str] = []
+    unknown_usage: list[str] = []
+    for operation_receipts in grouped.values():
+        terminal = operation_receipts[-1]
+        state = str(terminal.get("reconcile_state") or "none")
+        reserved_amount = int(terminal.get("reserved_amount") or 0)
+        reservation_state = str(terminal.get("reservation_state") or "")
+        if state in ("conflict", "unresolved"):
+            if reservation_state in ("reserved", "uncertain"):
+                pending += reserved_amount
+            unknown.extend(
+                str(receipt["receipt_identity"]) for receipt in operation_receipts
+                if receipt["outcome"] == "unknown")
+            continue
+        decided = [receipt for receipt in operation_receipts
+                   if receipt["outcome"] in ("success", "failure")]
+        if not decided:
+            unknown.extend(
+                str(receipt["receipt_identity"]) for receipt in operation_receipts
+                if receipt["outcome"] == "unknown")
+            if reservation_state in ("reserved", "uncertain"):
+                pending += reserved_amount
+            continue
+        receipt = decided[-1]
+        content = dict(receipt.get("content") or {})
+        usage = content.get("usage")
+        usage = dict(usage) if isinstance(usage, dict) else {}
+        cost = store.receipt_actual_cost({"content": content})
+        if cost is None:
+            if usage.get("billed") is not False:
+                unknown_usage.append(str(receipt["receipt_identity"]))
+            if reservation_state == "settled":
+                expected_consumed += reserved_amount
+        else:
+            measured += cost
+            expected_consumed += cost
+    return {
+        "measured": measured,
+        "expected_consumed": expected_consumed,
+        "pending": pending,
+        "unknown": sorted(unknown),
+        "unknown_usage": sorted(unknown_usage),
+    }
+
+
 def verify_ledger(dsn: str, study_root: str) -> dict[str, Any]:
     from psycopg.rows import dict_row
 
@@ -280,18 +334,19 @@ def verify_ledger(dsn: str, study_root: str) -> dict[str, Any]:
     with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                "SELECT r.receipt_identity, r.outcome,"
-                " COALESCE((r.content->'usage'->>'charge_units')::int, 0)"
-                " AS charge,"
-                " CASE WHEN r.content->'usage'->>'billed' = 'true'"
-                " THEN TRUE ELSE FALSE END AS billed,"
-                " COALESCE(res.amount, 0) AS reserved_amount,"
+                "SELECT r.receipt_identity, r.operation_id, r.outcome, r.content,"
+                " o.reconcile_state, COALESCE(res.amount, 0) AS reserved_amount,"
                 " COALESCE(res.state, '') AS reservation_state"
                 " FROM receipts r JOIN operations o ON o.id = r.operation_id"
                 " LEFT JOIN reservations res ON res.id = o.reservation_id"
                 " WHERE o.allocation_id = ANY(%s)"
-                " ORDER BY r.receipt_identity", (alloc_ids,))
+                " ORDER BY r.operation_id, r.created_at, r.receipt_identity", (alloc_ids,))
             receipts = [dict(r) for r in cur.fetchall()]
+            cur.execute(
+                "SELECT DISTINCT o.id FROM operations o"
+                " JOIN receipt_conflicts c ON c.operation_id = o.id"
+                " WHERE o.allocation_id = ANY(%s) ORDER BY o.id", (alloc_ids,))
+            conflicts = [row["id"] for row in cur.fetchall()]
             cur.execute(
                 "SELECT COALESCE(SUM(consumed), 0) AS consumed,"
                 " COALESCE(SUM(reserved), 0) AS reserved"
@@ -307,26 +362,24 @@ def verify_ledger(dsn: str, study_root: str) -> dict[str, Any]:
                 (alloc_ids,))
             unreceipted = [dict(r) for r in cur.fetchall()]
             conn.commit()
-    measured = sum(r["charge"] for r in receipts
-                   if r["outcome"] in ("success", "failure") and r["billed"])
-    unknown = sorted(r["receipt_identity"] for r in receipts
-                     if r["outcome"] == "unknown")
-    settled_unbilled = sum(
-        r["reserved_amount"] for r in receipts
-        if r["outcome"] in ("success", "failure") and not r["billed"]
-        and r["reservation_state"] == "settled")
-    expected_consumed = measured + settled_unbilled
-    pending = sum(r["reserved_amount"] for r in receipts
-                  if r["reservation_state"] in ("reserved", "uncertain"))
-    pending += sum(int(r["reserved_amount"]) for r in unreceipted)
+    summary = _summarize_receipts(receipts)
+    pending = summary["pending"] + sum(
+        int(row["reserved_amount"]) for row in unreceipted)
     consumed, reserved = int(totals["consumed"]), int(totals["reserved"])
-    return {"study_root": study_root, "measured": measured,
-            "expected_consumed": expected_consumed, "consumed": consumed,
-            "pending": pending, "reserved": reserved,
-            "unknown": unknown,
-            "unreceipted": sorted(r["id"] for r in unreceipted),
-            "match": consumed == expected_consumed
-            and reserved == pending}
+    return {
+        "study_root": study_root,
+        "measured": summary["measured"],
+        "expected_consumed": summary["expected_consumed"],
+        "consumed": consumed,
+        "pending": pending,
+        "reserved": reserved,
+        "unknown": summary["unknown"],
+        "unknown_usage": summary["unknown_usage"],
+        "conflicts": conflicts,
+        "unreceipted": sorted(row["id"] for row in unreceipted),
+        "match": not conflicts and consumed == summary["expected_consumed"]
+        and reserved == pending,
+    }
 
 
 def note_phase(dsn: str, study_root: str, decision_id: str, phase: str,
@@ -345,7 +398,7 @@ def note_phase(dsn: str, study_root: str, decision_id: str, phase: str,
                "ref_digest": ref_digest, "detail": dict(detail or {})}
 
     def _fn(cur, control):
-        cur.execute("SELECT allocation_id FROM operations WHERE id = %s",
+        cur.execute("SELECT allocation_id, reconcile_state FROM operations WHERE id = %s",
                     (operation_id,))
         operation = cur.fetchone()
         if operation is None:
@@ -353,6 +406,9 @@ def note_phase(dsn: str, study_root: str, decision_id: str, phase: str,
         if operation["allocation_id"] not in alloc_ids:
             raise SettlementError(
                 f"operation {operation_id} is not {study_root} work")
+        if operation.get("reconcile_state") in ("conflict", "unresolved"):
+            raise MissingEvidence(
+                f"operation {operation_id} is {operation['reconcile_state']}")
         cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s"
                     " AND outcome IN ('success', 'failure')", (operation_id,))
         if cur.fetchone() is None:
@@ -399,6 +455,7 @@ def correction_state(dsn: str, study_root: str,
                      decision_key: str) -> dict[str, Any]:
     from psycopg.rows import dict_row
 
+    bind_study(dsn, study_root)
     with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             try:
@@ -420,16 +477,14 @@ def correction_state(dsn: str, study_root: str,
 def corrections_total(dsn: str, study_root: str) -> int:
     from psycopg.rows import dict_row
 
-    try:
-        with db.read_connect(dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute("SELECT COALESCE(SUM(used), 0) AS used"
-                            " FROM study_corrections WHERE study_root = %s",
-                            (study_root,))
-                total = int(cur.fetchone()["used"])
-                conn.commit()
-    except Exception:
-        return 0
+    bind_study(dsn, study_root)
+    with db.read_connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT COALESCE(SUM(used), 0) AS used"
+                        " FROM study_corrections WHERE study_root = %s",
+                        (study_root,))
+            total = int(cur.fetchone()["used"])
+            conn.commit()
     return total
 
 

@@ -25,7 +25,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 
-from experiments.ad01 import policy_assess, policy_step, seeds, worlds
+from experiments.ad01 import (construct, policy_assess, policy_step, records,
+                                seeds, trajectory, worlds)
 from experiments.ad01.assessment_profile import (
     ASSESSMENT,
     ASSESSMENT_RESTRICTED,
@@ -239,6 +240,78 @@ def test_revision_staged_locally_only_trusted_bind():
                           scope=_scope(), trusted=True)
     assert bound["bound"] is True
     assert bound["candidate_digest"] == _digest(source)
+
+
+def test_production_revision_assessment_uses_shared_dispatcher(monkeypatch):
+    source = USE_SOURCE
+    candidate_digest = _digest(source)
+    incumbent = policy_step.make_policy_artifact(source, origin="authored-control")
+    panel = policy_assess.panel_for(scope={"family": "software"}, world=0,
+                                    seed="proposal-1")
+    rule = policy_assess.rule_for(resource_ceiling=16)
+    frozen = {"panel_digest": policy_assess._panel_digest(panel),
+              "rule_id": rule["rule_id"],
+              "rule_digest": policy_assess._rule_digest(
+                  policy_assess._rule_identity(rule))}
+    persisted = {}
+
+    def read_journal(_dsn, request_id):
+        if request_id == policy_assess._protocol_request_id("proposal-1"):
+            return frozen
+        return None
+
+    def persist_assessment(_dsn, record):
+        persisted.update(record)
+        return record
+
+    monkeypatch.setattr(policy_assess, "_read_journal", read_journal)
+    monkeypatch.setattr(policy_assess, "_persist_assessment", persist_assessment)
+    monkeypatch.setattr(
+        policy_assess, "assess_policy",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("production assessment used legacy dispatcher")))
+    monkeypatch.setattr(
+        policy_assess, "freeze_protocol", lambda *args, **kwargs: frozen)
+    monkeypatch.setattr(
+        records, "open_revision_proposal",
+        lambda *args, **kwargs: {"proposal_id": "proposal-1",
+                                "parent_digest": candidate_digest})
+    monkeypatch.setattr(
+        records, "freeze_candidate",
+        lambda *args, **kwargs: {"source": source,
+                                "candidate_digest": candidate_digest})
+    monkeypatch.setattr(
+        records, "load_assessment",
+        lambda *args, **kwargs: dict(persisted))
+    monkeypatch.setattr(
+        construct, "construct_policy",
+        lambda *args, **kwargs: {"policy_source": source,
+                                  "capability_id": "candidate-1",
+                                  "lineage": {"calls_made": 0}})
+    investigation = {
+        "basis_references": ["obs-real"],
+        "next_action": {"kind": "policy_revision", "task_id": TASK_ID},
+        "revision_proposal": {"parent_digest": candidate_digest,
+                              "scope": {"family": "software"}},
+    }
+    seen = {"observations": [{"observation_id": "obs-real",
+                              "task_id": TASK_ID,
+                              "verdict": "not_preserved"}],
+            "remaining": {"model_calls": 2}}
+    construction = {"dsn": "unused", "cid": "ad01-w0-I-00",
+                    "gateway": object(), "model": "model",
+                    "budget": {"max_output_tokens": 64},
+                    "study_root": "study", "world": 0,
+                    "incumbent_policy": incumbent}
+    observation, episode, spend = trajectory._construct_policy_revision(
+        investigation, seen,
+        {"observation_id": "seed", "task_id": TASK_ID}, construction,
+        {"construction_calls": 0, "model_calls": 0})
+    assert spend == 16
+    assert episode["assessment_status"] == "complete"
+    candidate_effect = episode["assessment"]["arms"]["candidate"]["effects"][0]
+    assert candidate_effect["owner"] == "seeds.run_seed"
+    assert observation["detail"]["kind"] == "policy_revision"
 
 
 def test_nested_qualification_bounded_and_audit_never_promotes():

@@ -2,13 +2,9 @@
 
 Deterministic only: no gateway, no database, no network. Quality is
 derived from frozen tasks plus observable behavior, never from runtime
-verdict labels. Resource use is a runtime attestation named by its
-declared source; unknown billing stays unknown, never zero.
-
-TDD log: every tamper test below failed before
-experiments/ad01/offline_recompute.py existed (collection error), then
-passed against the implemented verifier. Each tamper class fails under
-a distinct problem name so a masked check cannot hide behind another.
+verdict labels. Resource records name a source and a closed measurement
+status. Only measured records carry numeric values; unknown billing stays
+unknown, never zero.
 """
 
 from __future__ import annotations
@@ -20,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+from experiments.ad01 import frontier
 from experiments.ad01 import offline_recompute as M4
 
 P0_SRC = ("def STEP(view, state):\n"
@@ -45,10 +42,28 @@ def _action(kind: str) -> dict:
             "evidence_refs": [], "requested_resources": {}}
 
 
-def _op(op_id: str, settled: bool = True) -> dict:
-    outcome = "success" if settled else "unknown"
-    return {"receipts": [{"receipt_identity": "gw:%s" % op_id,
-                          "outcome": outcome}],
+def _receipt(op_id: str, *, arm: str, task_id: str,
+             source_digest: str, artifact_digest: str | None = None,
+             result: dict | None = None, receipt_identity: str | None = None) -> dict:
+    result = dict(result or {"status": "recorded"})
+    artifact_digest = artifact_digest or source_digest
+    return frontier.make_evidence_record(
+        "m4-observation", op_id, "success",
+        receipt_identity=receipt_identity,
+        arm=arm, task_id=task_id,
+        source_digest=source_digest, artifact_digest=artifact_digest,
+        input_digest=_digest("input:%s" % op_id),
+        result_digest=_digest(json.dumps(result, sort_keys=True,
+                                         separators=(",", ":"))),
+        details={"raw_payload": {"result": result}})
+
+
+def _op(op_id: str, *, arm: str = "P0", task_id: str | None = None,
+        source_digest: str = "0" * 64,
+        result: dict | None = None) -> dict:
+    receipt = _receipt(op_id, arm=arm, task_id=task_id or op_id,
+                       source_digest=source_digest, result=result)
+    return {"operation_id": op_id, "receipts": [receipt],
             "invocation": {"operation_id": op_id, "launcher": "test-double",
                            "attempt": 1}}
 
@@ -131,10 +146,14 @@ def demo_bundle() -> dict:
                for arm, source in (("P0", P0_SRC), ("P1", P1_SRC),
                                    ("P2", P2_SRC))}
     ops = {}
-    for op_id in ("op-d-sw-0", "op-d-gr-0", "op-a-0", "op-t-0",
-                  "op-construct-P1-init", "op-construct-P2-init",
-                  "op-construct-P2-repair"):
-        ops[op_id] = _op(op_id)
+    for op_id in ("op-d-sw-0", "op-d-gr-0", "op-a-0", "op-t-0"):
+        ops[op_id] = _op(op_id, arm="P0", task_id=op_id.removeprefix("op-"),
+                         source_digest=digests["P0"])
+    for arm, suffixes in (("P1", ("init",)), ("P2", ("init", "repair"))):
+        for suffix in suffixes:
+            op_id = "op-construct-%s-%s" % (arm, suffix)
+            ops[op_id] = _op(op_id, arm=arm, task_id="construct-%s" % arm,
+                             source_digest=digests[arm])
     observed = {
         ("P0", "u-sw-0"): "reduce-3", ("P0", "u-gr-0"): "other",
         ("P1", "u-sw-0"): "other", ("P1", "u-gr-0"): "other",
@@ -147,7 +166,9 @@ def demo_bundle() -> dict:
         rid = "a-%s-%s" % (arm, task) if task.startswith("u") else \
             "t-%s-%s" % (arm, task)
         op_id = "op-use-%s" % rid
-        ops[op_id] = _op(op_id)
+        ops[op_id] = _op(
+            op_id, arm=arm, task_id=task, source_digest=digests[arm],
+            result={"observed": output, "queries": 1})
         expected = freeze["tasks"][task]["expected"]
         records.append({
             "record_id": rid, "arm": arm, "task_id": task,
@@ -159,9 +180,115 @@ def demo_bundle() -> dict:
             "claimed_verdict": "preserved" if output == expected
                                else "failed",
             "costs": {"witness_queries": 1},
+            "input_digest": ops[op_id]["receipts"][0]["input_digest"],
+            "result_digest": ops[op_id]["receipts"][0]["result_digest"],
+            "receipt_identity": ops[op_id]["receipts"][0][
+                "receipt_identity"],
             "operation_ids": [op_id],
         })
     witness_use = len(records)
+    child_receipts = {
+        op_id: dict(row["receipts"][0])
+        for op_id, row in ops.items()
+    }
+    for record in records:
+        receipt = child_receipts[record["operation_ids"][0]]
+        record["child_result"] = receipt["details"]["raw_payload"]["result"]
+    candidates = []
+    for record in records:
+        if record["arm"] not in ("P1", "P2"):
+            continue
+        predictor = {"observed": record["observed"]}
+        predictor_digest = hashlib.sha256(json.dumps(
+            predictor, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        candidate = {
+            "arm": record["arm"], "task_id": record["task_id"],
+            "raw_response": record["observed"],
+            "raw_response_digest": hashlib.sha256(
+                record["observed"].encode()).hexdigest(),
+            "predictor": predictor, "predictor_digest": predictor_digest,
+            "operation_id": "op-candidate-%s" % record["record_id"],
+            "operation_ids": ["op-candidate-%s" % record["record_id"]],
+            "input_digest": record["input_digest"],
+            "prompt_digest": _digest("prompt:%s" % record["record_id"]),
+        }
+        candidates.append(candidate)
+        record["candidate_digest"] = predictor_digest
+        record["executed_source_digest"] = predictor_digest
+        op_id = record["operation_ids"][0]
+        result = {"observed": record["observed"], "queries": 1}
+        receipt = _receipt(op_id, arm=record["arm"],
+                           task_id=record["task_id"],
+                           source_digest=predictor_digest, result=result)
+        ops[op_id] = _op(op_id, arm=record["arm"],
+                         task_id=record["task_id"],
+                         source_digest=predictor_digest, result=result)
+        child_receipts[op_id] = receipt
+        record["child_result"] = result
+        record["result_digest"] = receipt["result_digest"]
+        record["receipt_identity"] = receipt["receipt_identity"]
+        candidate_op = candidate["operation_id"]
+        candidate_result = {"raw_response": candidate["raw_response"]}
+        ops[candidate_op] = _op(
+            candidate_op, arm=record["arm"], task_id=record["task_id"],
+            source_digest=predictor_digest, result=candidate_result)
+        child_receipts[candidate_op] = ops[candidate_op]["receipts"][0]
+    candidate_digests = {"P1": {}, "P2": {}}
+    input_bindings = {"P1": {}, "P2": {}}
+    prompt_bindings = {"P1": {}, "P2": {}}
+    for candidate in candidates:
+        arm = candidate["arm"]
+        candidate_digests[arm][candidate["task_id"]] = candidate[
+            "predictor_digest"]
+        input_bindings[arm][candidate["task_id"]] = candidate["input_digest"]
+        prompt_bindings[arm][candidate["task_id"]] = candidate["prompt_digest"]
+    for arm in ("P1", "P2"):
+        freeze["policy_identities"][arm]["candidate_digests"] = \
+            candidate_digests[arm]
+        freeze["method_repertoires"][arm] = {
+            "members": [{"method_source": json.dumps(
+                candidate["predictor"], sort_keys=True,
+                separators=(",", ":")),
+                "source_digest": candidate["predictor_digest"]}
+                for candidate in candidates if candidate["arm"] == arm],
+            "member_digests": sorted(set(candidate_digests[arm].values()))}
+    history_reference = {"P1": [], "P2": [{"task_id": "permitted"}]}
+    freeze["history_reference"] = history_reference
+    freeze["arm_contracts"] = {
+        "P0": {"kind": "fixed-incumbent", "source": P0_SRC,
+               "source_digest": _digest(P0_SRC)},
+        "P1": {"history": [], "history_digest": _digest("[]"),
+               "input_bindings": input_bindings["P1"],
+               "prompt_bindings": prompt_bindings["P1"]},
+        "P2": {"history": history_reference["P2"],
+               "history_digest": _digest(json.dumps(
+                   history_reference["P2"], sort_keys=True,
+                   separators=(",", ":"))),
+               "input_bindings": input_bindings["P2"],
+               "prompt_bindings": prompt_bindings["P2"]},
+    }
+    freeze["dispatch_ledger"] = [
+        {"dispatch_id": "dispatch-%d" % index, "operation_id": op_id,
+         "arm": arm, "task_id": task, "attempt": 1}
+        for index, (op_id, arm, task) in enumerate([
+            ("op-d-sw-0", "P0", "d-sw-0"),
+            ("op-d-gr-0", "P0", "d-gr-0"),
+            ("op-a-0", "P0", "a-0"),
+            ("op-t-0", "P0", "t-0"),
+            ("op-construct-P1-init", "P1", "construct-P1"),
+            ("op-construct-P2-init", "P2", "construct-P2"),
+            ("op-construct-P2-repair", "P2", "construct-P2")], start=1)]
+    freeze["dispatch_ledger"].extend([
+        {"dispatch_id": "dispatch-candidate-%s-%s" % (
+            candidate["arm"], candidate["task_id"]),
+         "operation_id": candidate["operation_id"],
+         "arm": candidate["arm"], "task_id": candidate["task_id"],
+         "attempt": 1}
+        for candidate in candidates])
+    for entry in freeze["dispatch_ledger"]:
+        entry["evidence_digest"] = child_receipts[entry["operation_id"]][
+            "evidence_digest"]
+    freeze["freeze_digest"] = M4.freeze_digest(freeze)
     bundle = {
         "freeze": freeze,
         "development": [_episode("d-sw-0", "P0", digests["P0"],
@@ -183,26 +310,34 @@ def demo_bundle() -> dict:
         "audit": [_episode("t-0", "P0", digests["P0"], "op-t-0")],
         "use_records": records,
         "operations": ops,
+        "dispatch_ledger": freeze["dispatch_ledger"],
+        "candidates": candidates,
+        "child_receipts": child_receipts,
         "accounting": {
             "model_dispatches": {
-                "measured": 7,
+                "measured": 13, "measurement_status": "measured",
                 "source": "runtime-attestation:test-builder"},
             "input_tokens": {"measured": "unknown",
+                             "measurement_status": "unknown",
                              "source": "unmeasured-offline"},
             "output_tokens": {"measured": "unknown",
+                              "measurement_status": "unknown",
                               "source": "unmeasured-offline"},
             "tool_queries": {
                 "measured": 8 + witness_use,
+                "measurement_status": "measured",
                 "source": "runtime-attestation:test-builder"},
             "child_compute_ms": {"measured": "unknown",
+                                 "measurement_status": "unknown",
                                  "source": "unmeasured-offline"},
             "billed_units": {"measured": "unknown",
+                             "measurement_status": "unresolved",
                              "source": "billing:unresolved-provider"},
             "unresolved_exposure": {
-                "measured": 0,
+                "measured": 0, "measurement_status": "measured",
                 "source": "runtime-attestation:test-builder"},
             "human_interventions": {
-                "measured": 0,
+                "measured": 0, "measurement_status": "measured",
                 "source": "runtime-attestation:test-builder"},
         },
         "claimed": {"winner": "P2",
@@ -220,7 +355,7 @@ def test_offline_recompute_passes_without_gateway_or_db(monkeypatch):
     result = M4.verify_bundle(bundle)
     assert result["status"] == "pass", result["problems"]
     recomputed = result["recomputed"]
-    assert recomputed["model_calls"] == 7
+    assert recomputed["model_calls"] == 13
     assert recomputed["history_tokens"] == 30 * 4 + 120 + 200
     assert recomputed["failed_attempts"] == 1
     assert recomputed["quality_by_arm"] == {"P0": 0.5, "P1": 0.0,
@@ -236,6 +371,21 @@ def test_offline_recompute_passes_without_gateway_or_db(monkeypatch):
                    for line in imports)
     assert "os.environ" not in source
     assert "SETTLEMENT_" not in source
+
+
+def test_unsettled_authoritative_operation_cannot_be_accounted_as_resolved():
+    bundle = demo_bundle()
+    bundle["operations"]["op-d-sw-0"]["settled"] = False
+    bundle["accounting"]["unresolved_exposure"] = {
+        "measured": 0, "measurement_status": "measured",
+        "source": "runtime-attestation:test-builder",
+    }
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert any("unresolved_exposure" in problem
+               for problem in result["problems"])
 
 
 def test_tamper_identity_fails():
@@ -302,6 +452,65 @@ def test_swapped_candidate_is_refused():
                for p in result["problems"])
 
 
+def test_wrong_arm_source_or_task_receipt_is_refused():
+    bundle = demo_bundle()
+    op_id = "op-use-a-P2-u-sw-0"
+    receipt = _receipt(
+        op_id, arm="P1", task_id="u-gr-0", source_digest=_digest(P1_SRC),
+        result={"observed": "reduce-3", "queries": 1})
+    bundle["child_receipts"][op_id] = receipt
+    bundle["operations"][op_id]["receipts"] = [receipt]
+    result = M4.verify_bundle(bundle)
+    assert result["status"] == "fail"
+    assert "receipt-lineage-mismatch %s" % op_id in result["problems"]
+
+
+def test_duplicate_receipt_identity_across_operations_is_refused():
+    bundle = demo_bundle()
+    first_op = "op-use-a-P0-u-sw-0"
+    second_op = "op-use-a-P1-u-sw-0"
+    first_receipt = bundle["operations"][first_op]["receipts"][0]
+    second = bundle["operations"][second_op]["receipts"][0]
+    duplicate = _receipt(
+        second_op, arm=second["arm"], task_id=second["task_id"],
+        source_digest=second["source_digest"],
+        artifact_digest=second["artifact_digest"],
+        result=second["details"]["raw_payload"]["result"],
+        receipt_identity=first_receipt["receipt_identity"])
+    bundle["operations"][second_op]["receipts"] = [duplicate]
+    bundle["child_receipts"][second_op] = duplicate
+    record = next(row for row in bundle["use_records"]
+                  if row["operation_ids"] == [second_op])
+    record["receipt_identity"] = duplicate["receipt_identity"]
+    result = M4.verify_bundle(bundle)
+    assert result["status"] == "fail"
+    assert "duplicate-receipt-identity %s" % first_receipt[
+        "receipt_identity"] in result["problems"]
+
+
+def test_child_receipt_with_reused_identity_and_wrong_lineage_is_refused():
+    bundle = demo_bundle()
+    op_id = "op-use-a-P2-u-sw-0"
+    authoritative = bundle["operations"][op_id]["receipts"][0]
+    result = {"observed": "reduce-3", "queries": 1}
+    substituted = frontier.make_evidence_record(
+        "m4-observation", op_id, "success",
+        receipt_identity=authoritative["receipt_identity"],
+        arm="P1", task_id="u-gr-0",
+        source_digest=_digest(P1_SRC), artifact_digest=_digest(P2_SRC),
+        input_digest=_digest("wrong-input"),
+        result_digest=_digest(json.dumps(result, sort_keys=True,
+                                         separators=(",", ":"))),
+        details={"raw_payload": {"result": result}})
+    frontier.validate_evidence_record(substituted)
+    bundle["child_receipts"][op_id] = substituted
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "missing-child-receipt %s" % op_id in result["problems"]
+
+
 def test_disconnected_artifact_is_refused():
     bundle = demo_bundle()
     record = next(r for r in bundle["use_records"]
@@ -354,8 +563,7 @@ def test_unavailable_arm_never_substituted():
     for record in bundle["use_records"]:
         if record["arm"] != "P1":
             continue
-        record.update({"executed": "incumbent", "observed": "baseline",
-                       "claimed_verdict": "failed"})
+        record.update({"executed": "incumbent", "claimed_verdict": "failed"})
         record.pop("policy_digest", None)
         record.pop("executed_source_digest", None)
     bundle["claimed"] = {"winner": "none",
@@ -379,16 +587,98 @@ def test_unavailable_arm_never_substituted():
                for p in refused["problems"])
 
 
-def test_unknown_billing_stays_unknown_not_zero():
+def test_m4_conflict_receipt_counts_unresolved_exposure():
     bundle = demo_bundle()
-    assert bundle["accounting"]["billed_units"]["measured"] == "unknown"
+    bundle["operations"]["op-d-sw-0"]["receipt_conflicts"] = [{
+        "receipt_identity": "conflict:op-d-sw-0",
+        "outcome": "failure",
+        "usage": {
+            "input_tokens": 3, "output_tokens": 0, "charge_units": 1,
+            "charge_scale": 7, "billed": True,
+        },
+        "unresolved_exposure": 11,
+    }]
+    result = M4.verify_bundle(bundle)
+    assert result["status"] == "fail"
+    assert "accounting-unresolved_exposure-mismatch reported=0 recomputed=1" in (
+        result["problems"])
+
+    bundle["accounting"]["unresolved_exposure"] = {
+        "measured": 1,
+        "measurement_status": "unresolved",
+        "source": "durable-receipt-conflict",
+    }
+    assert M4.verify_bundle(bundle)["status"] == "pass"
+
+
+    bundle = demo_bundle()
+    assert bundle["accounting"]["billed_units"] == {
+        "measured": "unknown",
+        "measurement_status": "unresolved",
+        "source": "billing:unresolved-provider",
+    }
     result = M4.verify_bundle(bundle)
     assert result["status"] == "pass", result["problems"]
-    scored = copy.deepcopy(bundle)
-    scored["accounting"]["billed_units"]["measured"] = 0
-    denied = M4.verify_bundle(scored)
+
+
+def test_measured_zero_billing_requires_status_and_source():
+    bundle = demo_bundle()
+    bundle["accounting"]["billed_units"] = {
+        "measured": 0,
+        "measurement_status": "measured",
+        "source": "provider-receipt:test",
+    }
+    assert M4.verify_bundle(bundle)["status"] == "pass"
+
+    missing_status = copy.deepcopy(bundle)
+    missing_status["accounting"]["billed_units"].pop("measurement_status")
+    denied = M4.verify_bundle(missing_status)
     assert denied["status"] == "fail"
+    assert "accounting-measurement-status-missing billed_units" in denied[
+        "problems"]
     assert "billed-unknown-scored-as-zero" in denied["problems"]
+
+    invalid_status = copy.deepcopy(bundle)
+    invalid_status["accounting"]["billed_units"][
+        "measurement_status"] = "attested"
+    denied = M4.verify_bundle(invalid_status)
+    assert denied["status"] == "fail"
+    assert any(problem.startswith(
+        "accounting-measurement-status-invalid billed_units")
+               for problem in denied["problems"])
+
+    missing_source = copy.deepcopy(bundle)
+    missing_source["accounting"]["billed_units"]["source"] = ""
+    denied = M4.verify_bundle(missing_source)
+    assert denied["status"] == "fail"
+    assert "accounting-source-missing billed_units" in denied["problems"]
+    assert "billed-unknown-scored-as-zero" in denied["problems"]
+
+
+@pytest.mark.parametrize("status", ["unknown", "unresolved"])
+def test_unmeasured_zero_billing_is_never_scored_as_zero(status):
+    bundle = demo_bundle()
+    bundle["accounting"]["billed_units"] = {
+        "measured": 0,
+        "measurement_status": status,
+        "source": "provider-attestation",
+    }
+    result = M4.verify_bundle(bundle)
+    assert result["status"] == "fail"
+    assert "accounting-unmeasured-value-invalid billed_units" in result[
+        "problems"]
+    assert "billed-unknown-scored-as-zero" in result["problems"]
+
+
+def test_nonzero_measured_billing_is_preserved():
+    bundle = demo_bundle()
+    bundle["accounting"]["billed_units"] = {
+        "measured": 17,
+        "measurement_status": "measured",
+        "source": "provider-receipt:test",
+    }
+    result = M4.verify_bundle(bundle)
+    assert result["status"] == "pass", result["problems"]
 
 
 def test_bundle_round_trips_through_json_file(tmp_path):
@@ -396,3 +686,144 @@ def test_bundle_round_trips_through_json_file(tmp_path):
     path = tmp_path / "m4-bundle.json"
     path.write_text(json.dumps(bundle, sort_keys=True) + "\n")
     assert M4.verify_bundle_file(str(path))["status"] == "pass"
+
+
+def test_multiple_terminal_receipts_for_one_operation_are_refused():
+    bundle = demo_bundle()
+    op_id = "op-use-a-P0-u-sw-0"
+    first = bundle["operations"][op_id]["receipts"][0]
+    second = _receipt(
+        op_id, arm=first["arm"], task_id=first["task_id"],
+        source_digest=first["source_digest"],
+        artifact_digest=first["artifact_digest"],
+        result=first["details"]["raw_payload"]["result"],
+        receipt_identity="gw:second-terminal")
+    bundle["operations"][op_id]["receipts"].append(second)
+    result = M4.verify_bundle(bundle)
+    assert result["status"] == "fail"
+    assert "multiple-terminal-receipts %s" % op_id in result["problems"]
+
+
+def test_operation_receipt_lineage_is_one_to_one():
+    bundle = demo_bundle()
+    extra = "op-unclaimed"
+    extra_row = _op(extra, arm="P1", task_id="unclaimed",
+                    source_digest="0" * 64)
+    bundle["operations"][extra] = extra_row
+    bundle["child_receipts"][extra] = extra_row["receipts"][0]
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "dispatch-operation-set-mismatch" in result["problems"]
+    assert "dispatch-operation-receipt-bijection" in result["problems"]
+
+
+def test_claimed_operation_cannot_be_reused():
+    bundle = demo_bundle()
+    bundle["assessment"][0]["operations"].append("op-use-a-P0-u-sw-0")
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "dispatch-operation-reused op-use-a-P0-u-sw-0" in result["problems"]
+
+
+def test_malformed_accounting_shape_fails_without_raising():
+    bundle = demo_bundle()
+    bundle["accounting"]["tool_queries"] = []
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "bundle-shape-invalid accounting.tool_queries" in result["problems"]
+
+
+def test_unknown_history_tokens_are_reported_as_unknown():
+    bundle = demo_bundle()
+    bundle["freeze"]["policy_identities"]["P1"]["history_tokens"] = "unknown"
+    bundle["freeze"]["freeze_digest"] = M4.freeze_digest(bundle["freeze"])
+    result = M4.verify_bundle(bundle)
+    assert result["status"] == "pass", result["problems"]
+    assert result["recomputed"]["history_tokens"] == "unknown"
+
+
+def test_m4_refuses_p2_history_substitution_and_stale_digest():
+    bundle = demo_bundle()
+    empty = []
+    bundle["freeze"]["history_reference"]["P2"] = empty
+    contract = bundle["freeze"]["arm_contracts"]["P2"]
+    contract["history"] = empty
+    contract["history_digest"] = _digest("stale-history")
+    bundle["freeze"]["freeze_digest"] = M4.freeze_digest(bundle["freeze"])
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "p2-history-not-permitted" in result["problems"]
+    assert "p2-history-digest-mismatch" in result["problems"]
+
+
+def test_m4_malformed_dispatch_rows_return_structured_failure():
+    bundle = demo_bundle()
+    bundle["dispatch_ledger"] = [None]
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "malformed-dispatch-ledger-entry" in result["problems"]
+
+
+def test_m4_malformed_use_rows_return_structured_failure():
+    bundle = demo_bundle()
+    bundle["use_records"] = [None]
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "malformed-use-record" in result["problems"]
+
+
+def test_m4_allows_retry_dispatches_with_one_terminal_receipt():
+    bundle = demo_bundle()
+    original = next(
+        entry for entry in bundle["dispatch_ledger"]
+        if entry["operation_id"].startswith("op-candidate-"))
+    retry = copy.deepcopy(original)
+    retry["dispatch_id"] = "dispatch-retry-before-terminal"
+    retry["evidence_digest"] = "f" * 64
+    bundle["dispatch_ledger"].append(retry)
+    bundle["freeze"]["freeze_digest"] = M4.freeze_digest(bundle["freeze"])
+    bundle["accounting"]["model_dispatches"]["measured"] = 14
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "pass", result["problems"]
+    assert result["recomputed"]["model_calls"] == 14
+
+
+def test_m4_tie_rule_is_derived_from_frozen_metric():
+    bundle = demo_bundle()
+    bundle["freeze"]["metric_rule"] = {
+        "kind": "mean-quality", "margin": 2.0, "tie": "none"}
+    bundle["freeze"]["freeze_digest"] = M4.freeze_digest(bundle["freeze"])
+    bundle["claimed"]["winner"] = "none"
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "pass", result["problems"]
+    assert result["recomputed"]["comparison"]["winner"] is None
+
+
+def test_m4_malformed_complete_schema_returns_specific_structured_failure():
+    bundle = demo_bundle()
+    bundle["protocol"] = []
+    bundle["authority"] = []
+    bundle["software"] = []
+
+    result = M4.verify_bundle(bundle)
+
+    assert result["status"] == "fail"
+    assert "bundle-shape-invalid protocol" in result["problems"]
+    assert "bundle-shape-invalid authority" in result["problems"]
+    assert "bundle-shape-invalid software" in result["problems"]

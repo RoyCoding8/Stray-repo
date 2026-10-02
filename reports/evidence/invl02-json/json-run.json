@@ -1,0 +1,554 @@
+{
+ "arms": {
+  "P0": {
+   "boolean": {
+    "failed_attempts": 0,
+    "history_entries": 0,
+    "history_input_chars": 0,
+    "history_tokens": 0,
+    "model_calls": 0,
+    "predictor_digest": "3d256ffd5eab6f51b87e646d7696f1668cd74556cc8bfb717bef7bfe96466b10",
+    "predictor_specs": [
+     {
+      "const": 0,
+      "mask": 8,
+      "pair": [
+       0,
+       3
+      ]
+     },
+     {
+      "const": 1,
+      "mask": 5,
+      "pair": [
+       1,
+       3
+      ]
+     },
+     {
+      "const": 0,
+      "mask": 9,
+      "pair": [
+       0,
+       3
+      ]
+     },
+     {
+      "const": 1,
+      "mask": 15,
+      "pair": null
+     }
+    ],
+    "predictor_tables": [
+     21760,
+     27045,
+     65450,
+     38505
+    ],
+    "queries": 8,
+    "score": {
+     "n_queried": 8,
+     "overall": 1.0,
+     "queried": 1.0,
+     "unqueried": 1.0
+    },
+    "seed": 11,
+    "split": "qual",
+    "target_tables": [
+     21760,
+     27045,
+     65450,
+     38505
+    ],
+    "task_id": "rule-qual-0011"
+   },
+   "booleans": [
+    {
+     "failed_attempts": 0,
+     "history_entries": 0,
+     "history_input_chars": 0,
+     "history_tokens": 0,
+     "model_calls": 0,
+     "predictor_digest": "3d256ffd5eab6f51b87e646d7696f1668cd74556cc8bfb717bef7bfe96466b10",
+     "predictor_specs": [
+      {
+       "const": 0,
+       "mask": 8,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 5,
+       "pair": [
+        1,
+        3
+       ]
+      },
+      {
+       "const": 0,
+       "mask": 9,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 15,
+       "pair": null
+      }
+     ],
+     "predictor_tables": [
+      21760,
+      27045,
+      65450,
+      38505
+     ],
+     "queries": 8,
+     "score": {
+      "n_queried": 8,
+      "overall": 1.0,
+      "queried": 1.0,
+      "unqueried": 1.0
+     },
+     "seed": 11,
+     "split": "qual",
+     "target_tables": [
+      21760,
+      27045,
+      65450,
+      38505
+     ],
+     "task_id": "rule-qual-0011"
+    },
+    {
+     "failed_attempts": 0,
+     "history_entries": 0,
+     "history_input_chars": 0,
+     "history_tokens": 0,
+     "model_calls": 0,
+     "predictor_digest": "5857c99c0b21aa0a35d23aceae291bcc48873b5bf5c7ac8ffe995ca8d2479bb1",
+     "predictor_specs": [
+      {
+       "const": 1,
+       "mask": 0,
+       "pair": null
+      },
+      {
+       "const": 0,
+       "mask": 2,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 0,
+       "mask": 1,
+       "pair": [
+        0,
+        2
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 13,
+       "pair": [
+        1,
+        3
+       ]
+      }
+     ],
+     "predictor_tables": [
+      65535,
+      26316,
+      2570,
+      38565
+     ],
+     "queries": 8,
+     "score": {
+      "n_queried": 8,
+      "overall": 0.75,
+      "queried": 1.0,
+      "unqueried": 0.5
+     },
+     "seed": 23,
+     "split": "audit",
+     "target_tables": [
+      53199,
+      26316,
+      2570,
+      38565
+     ],
+     "task_id": "rule-audit-0023"
+    }
+   ],
+   "campaign_id": "fixed-learner-P0",
+   "failed_attempts": 0,
+   "guard": {
+    "ceiling": 0,
+    "ceiling_reached": true,
+    "cost_blocked": null,
+    "dispatch_count": 0,
+    "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "refusal_kind": "",
+    "refusal_reason": "",
+    "version": "invl02-live-v1"
+   },
+   "history_tokens": 0,
+   "ledger": [],
+   "model_calls": 0,
+   "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "snapshot": {
+    "archive": [],
+    "arm": "P0",
+    "budget": {
+     "max_queries": 8,
+     "model_calls": 17,
+     "repairs": 3
+    },
+    "history": [],
+    "history_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "solver": {
+     "class_digest": "285113caf4ab",
+     "learner": "VersionSpaceLearner",
+     "seed": 11
+    }
+   },
+   "status": "available"
+  },
+  "P1": {
+   "failed_attempts": 5,
+   "guard": {
+    "ceiling": 20,
+    "ceiling_reached": false,
+    "cost_blocked": null,
+    "dispatch_count": 5,
+    "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "refusal_kind": "",
+    "refusal_reason": "",
+    "version": "invl02-live-v1"
+   },
+   "history_tokens": 0,
+   "ledger": [
+    {
+     "attempt": 1,
+     "diagnosis": {
+      "kind": "GatewayErrorKind.TIMEOUT",
+      "reason": "gateway request timed out",
+      "retryable": true,
+      "stage": "transport",
+      "usage": {
+       "billed": "unknown",
+       "charge_units": "unknown",
+       "input_tokens": "unknown",
+       "output_tokens": "unknown"
+      }
+     },
+     "operation_id": "invl02-bool-qual-11-0",
+     "outcome": "error"
+    },
+    {
+     "attempt": 2,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-0",
+     "outcome": "text",
+     "response_digest": "e1dbf5518295e917546f55fa06d1e08ae685d0043afeb13b797101f90617b694",
+     "stop_reason": "length",
+     "text_chars": 3213,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 331,
+      "output_tokens": 1024
+     }
+    },
+    {
+     "attempt": 1,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-1",
+     "outcome": "text",
+     "response_digest": "b64ffdf590db8de181a991a3c9de940b4098f75e10f9dcee0f493c452edeff31",
+     "stop_reason": "length",
+     "text_chars": 2669,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 359,
+      "output_tokens": 1024
+     }
+    },
+    {
+     "attempt": 1,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-2",
+     "outcome": "text",
+     "response_digest": "55f55a10e9ec5b0f5f4bfbf76828e301e84b916efa99924f775a8abc58f0bc09",
+     "stop_reason": "length",
+     "text_chars": 3505,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 359,
+      "output_tokens": 1024
+     }
+    },
+    {
+     "attempt": 1,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-3",
+     "outcome": "text",
+     "response_digest": "9c7ca3f908c7e78002e1d85bf7b404d5f9d7f8458683567ba5e6f206b9269c16",
+     "stop_reason": "length",
+     "text_chars": 2563,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 359,
+      "output_tokens": 1024
+     }
+    }
+   ],
+   "model_calls": 5,
+   "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "reason": "boolean payload invalid: boolean payload is not JSON: Expecting value: line 1 column 1 (char 0)",
+   "snapshot": {
+    "archive": [],
+    "arm": "P1",
+    "budget": {
+     "max_queries": 8,
+     "model_calls": 17,
+     "repairs": 3
+    },
+    "history": [],
+    "history_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "solver": {
+     "class_digest": "285113caf4ab",
+     "learner": "VersionSpaceLearner",
+     "seed": 11
+    }
+   },
+   "status": "unavailable"
+  },
+  "P2": {
+   "failed_attempts": 6,
+   "guard": {
+    "ceiling": 25,
+    "ceiling_reached": false,
+    "cost_blocked": null,
+    "dispatch_count": 11,
+    "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "refusal_kind": "",
+    "refusal_reason": "",
+    "version": "invl02-live-v1"
+   },
+   "history_tokens": 0,
+   "ledger": [
+    {
+     "attempt": 1,
+     "diagnosis": {
+      "kind": "GatewayErrorKind.TIMEOUT",
+      "reason": "gateway request timed out",
+      "retryable": true,
+      "stage": "transport",
+      "usage": {
+       "billed": "unknown",
+       "charge_units": "unknown",
+       "input_tokens": "unknown",
+       "output_tokens": "unknown"
+      }
+     },
+     "operation_id": "invl02-bool-qual-11-0",
+     "outcome": "error"
+    },
+    {
+     "attempt": 2,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-0",
+     "outcome": "text",
+     "response_digest": "14aee5c0284ffd1b6a180c485dda66c6d027d2fa2a2d7fa25b855d3e34cf3c7e",
+     "stop_reason": "length",
+     "text_chars": 3912,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 524,
+      "output_tokens": 1024
+     }
+    },
+    {
+     "attempt": 1,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-1",
+     "outcome": "text",
+     "response_digest": "0f8fac28219c67faed665592ae7ba0383146496da37757fb37f8204cd3748ea2",
+     "stop_reason": "length",
+     "text_chars": 3771,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 552,
+      "output_tokens": 1024
+     }
+    },
+    {
+     "attempt": 1,
+     "diagnosis": {
+      "kind": "GatewayErrorKind.TIMEOUT",
+      "reason": "gateway request timed out",
+      "retryable": true,
+      "stage": "transport",
+      "usage": {
+       "billed": "unknown",
+       "charge_units": "unknown",
+       "input_tokens": "unknown",
+       "output_tokens": "unknown"
+      }
+     },
+     "operation_id": "invl02-bool-qual-11-2",
+     "outcome": "error"
+    },
+    {
+     "attempt": 2,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-2",
+     "outcome": "text",
+     "response_digest": "569332b1e26c915404399d2e1de2fd239d6fc8b7715945948b26cfeabd34966a",
+     "stop_reason": "length",
+     "text_chars": 2329,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 552,
+      "output_tokens": 1024
+     }
+    },
+    {
+     "attempt": 1,
+     "cost_blocked": null,
+     "operation_id": "invl02-bool-qual-11-3",
+     "outcome": "text",
+     "response_digest": "dfbe65aef05f8b71cfa7c734f3c593b95b749c1394380cdfecaa3b2a36226ed4",
+     "stop_reason": "length",
+     "text_chars": 3835,
+     "usage": {
+      "billed": false,
+      "charge_units": 0,
+      "input_tokens": 552,
+      "output_tokens": 1024
+     }
+    }
+   ],
+   "model_calls": 6,
+   "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "reason": "boolean payload invalid: boolean payload is not JSON: Expecting value: line 1 column 1 (char 0)",
+   "snapshot": {
+    "archive": [],
+    "arm": "P2",
+    "budget": {
+     "max_queries": 8,
+     "model_calls": 17,
+     "repairs": 3
+    },
+    "history": [
+     {
+      "predictor_digest": "97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f",
+      "queries": 8,
+      "score_overall": 1.0,
+      "seed": 3,
+      "split": "dev",
+      "task_id": "rule-dev-0003"
+     },
+     {
+      "predictor_digest": "7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515",
+      "queries": 8,
+      "score_overall": 0.75,
+      "seed": 7,
+      "split": "dev",
+      "task_id": "rule-dev-0007"
+     }
+    ],
+    "history_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "solver": {
+     "class_digest": "285113caf4ab",
+     "learner": "VersionSpaceLearner",
+     "seed": 11
+    }
+   },
+   "status": "unavailable"
+  }
+ },
+ "freeze_digest": "ecfc915c4a05827256796f84f2d3c1bb8dfd275dcdf0cdab5b5c9b366a46d466",
+ "held": [
+  {
+   "seed": 11,
+   "split": "qual"
+  },
+  {
+   "seed": 23,
+   "split": "audit"
+  }
+ ],
+ "model_total": 11,
+ "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+ "snapshots": {
+  "P1": {
+   "archive": [],
+   "arm": "P1",
+   "budget": {
+    "max_queries": 8,
+    "model_calls": 17,
+    "repairs": 3
+   },
+   "history": [],
+   "history_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "solver": {
+    "class_digest": "285113caf4ab",
+    "learner": "VersionSpaceLearner",
+    "seed": 11
+   }
+  },
+  "P2": {
+   "archive": [],
+   "arm": "P2",
+   "budget": {
+    "max_queries": 8,
+    "model_calls": 17,
+    "repairs": 3
+   },
+   "history": [
+    {
+     "predictor_digest": "97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f",
+     "queries": 8,
+     "score_overall": 1.0,
+     "seed": 3,
+     "split": "dev",
+     "task_id": "rule-dev-0003"
+    },
+    {
+     "predictor_digest": "7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515",
+     "queries": 8,
+     "score_overall": 0.75,
+     "seed": 7,
+     "split": "dev",
+     "task_id": "rule-dev-0007"
+    }
+   ],
+   "history_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "solver": {
+    "class_digest": "285113caf4ab",
+    "learner": "VersionSpaceLearner",
+    "seed": 11
+   }
+  }
+ },
+ "study": "invl02-live-json"
+}

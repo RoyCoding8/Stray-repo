@@ -459,7 +459,11 @@ def operation_outcome(dsn: str, operation_id: str) -> dict[str, Any]:
         return {"found": False, "outcome": "unresolved", "dispatch_state": "unknown",
                 "receipts": []}
     outcomes = {r["outcome"] for r in receipts}
-    if "success" in outcomes and "failure" not in outcomes:
+    if row["reconcile_state"] == "conflict":
+        typed = "conflict"
+    elif row["dispatch_state"] == "unresolved" or row["reconcile_state"] == "unresolved":
+        typed = "unresolved"
+    elif "success" in outcomes and "failure" not in outcomes:
         typed = "success"
     elif "failure" in outcomes and "success" not in outcomes:
         typed = "failure"

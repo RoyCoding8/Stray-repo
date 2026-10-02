@@ -13,7 +13,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from . import broker, db, store
-from .common import Command, CommandResult, ResultCode, SettlementError
+from .common import Command, CommandResult, ResultCode, SettlementError, payload_digest
 
 OUTCOMES = ("success", "failure", "timeout", "invalid", "unavailable", "infra")
 CATEGORIES = ("construction", "retrieval", "evaluation", "coordination",
@@ -199,17 +199,51 @@ def record_result(dsn: str, cmd: Command, *, assignment_id: str, outcome: str,
 
 
 def record_expenditure(dsn: str, protocol_id: str, category: str,
-                       amount: int, note: str = "") -> dict:
+                       amount: int, note: str = "", *,
+                       operation_id: str = "") -> dict:
     if category not in CATEGORIES:
         raise SettlementError(f"unknown expenditure category {category!r}")
-    if int(amount) < 0:
+    if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
         raise SettlementError("expenditure must be a non-negative integer")
+    if not isinstance(operation_id, str) or not operation_id.strip():
+        raise SettlementError("expenditure requires a durable operation_id")
     _protocol(dsn, protocol_id)
-    with db.connect(dsn, autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO expenditure_ledger (protocol_id, category, amount, note)"
-                        " VALUES (%s, %s, %s, %s)", (protocol_id, category, int(amount), note))
-    return {"protocol_id": protocol_id, "category": category, "amount": int(amount)}
+    identity = payload_digest({
+        "protocol_id": protocol_id,
+        "operation_id": operation_id,
+    })
+    ledger_note = f"{note} [operation:{operation_id}]"
+
+    def _fn(cur, control):
+        cur.execute("SELECT id FROM operations WHERE id = %s FOR UPDATE", (operation_id,))
+        if cur.fetchone() is None:
+            raise SettlementError(f"unknown operation {operation_id}")
+        cur.execute(
+            "INSERT INTO expenditure_ledger (protocol_id, category, amount, note)"
+            " VALUES (%s, %s, %s, %s)",
+            (protocol_id, category, amount, ledger_note),
+        )
+        data = {"protocol_id": protocol_id, "category": category,
+                "amount": amount, "operation_id": operation_id}
+        return (ResultCode.APPLIED,
+                f"operation expenditure recorded: {operation_id}",
+                data,
+                [("trial.expenditure_recorded", data)], [])
+
+    result = store.transact(
+        dsn,
+        Command(request_id=f"trial-expenditure-{identity}", payload={
+            "protocol_id": protocol_id,
+            "operation_id": operation_id,
+            "category": category,
+            "amount": amount,
+            "note": note,
+        }),
+        _fn,
+    )
+    if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        raise SettlementError(result.detail)
+    return dict(result.data)
 
 
 def development_expenditure(dsn: str, protocol_id: str) -> dict:

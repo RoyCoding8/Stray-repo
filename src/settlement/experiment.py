@@ -86,10 +86,15 @@ def live_blocker() -> dict:
 def _sandbox_receipt(dsn: str, operation_id: str) -> dict | None:
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT dispatch_state, reconcile_state FROM operations"
+                        " WHERE id = %s", (operation_id,))
+            operation = cur.fetchone()
             cur.execute("SELECT outcome, content FROM receipts WHERE operation_id = %s"
                         " ORDER BY created_at", (operation_id,))
             rows = [dict(r) for r in cur.fetchall()]
             conn.commit()
+    if operation is None or operation["reconcile_state"] in ("conflict", "unresolved"):
+        return None
     return rows[-1] if rows else None
 
 
@@ -440,9 +445,33 @@ def _fresh_worker(dsn: str, *, tag: str, investigation_id: str,
     return attempt_id
 
 
+def _measured_charge(usage: dict, maximum: int | None = None) -> int | None:
+    charge = usage.get("charge_units")
+    if (usage.get("billed") is not True
+            or isinstance(charge, bool)
+            or not isinstance(charge, int)
+            or charge < 0
+            or maximum is not None and charge > maximum):
+        return None
+    return charge
+
+
+def _billing_state(usage: dict, maximum: int | None = None) -> tuple[bool | None, int | None]:
+    if usage.get("billed") is False:
+        return False, 0
+    charge = _measured_charge(usage, maximum)
+    return (True, charge) if charge is not None else (None, None)
+
+
+def _sum_optional(values: list[int | None]) -> int | None:
+    if not values:
+        return 0
+    return None if any(value is None for value in values) else sum(values)
+
+
 def _infer_via_broker(dsn: str, adapter: Any, *, operation_id: str, model: str,
                       prompt: str, allocation_id: str,
-                      attempt_id: str | None) -> tuple[str, str | None, int]:
+                      attempt_id: str | None) -> tuple[str, str | None, int | None]:
     from . import loop as _loop
 
     granted = _loop.admit_effect(
@@ -458,18 +487,17 @@ def _infer_via_broker(dsn: str, adapter: Any, *, operation_id: str, model: str,
     broker.dispatch_operation(dsn, operation_id, gateway=adapter)
     receipt = _sandbox_receipt(dsn, operation_id)
     if receipt is None:
-        return operation_id, None, 0
+        return operation_id, None, None
     content = dict(receipt.get("content") or {})
     usage = dict(content.get("usage") or {})
-    charge = usage.get("charge_units", 0)
-    return operation_id, content.get("text"), int(charge or 0)
+    return operation_id, content.get("text"), _measured_charge(usage)
 
 
 def _op_accounting(dsn: str, operation_id: str) -> dict:
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT dispatch_state, reservation_id FROM operations"
-                        " WHERE id = %s", (operation_id,))
+            cur.execute("SELECT dispatch_state, reconcile_state, reservation_id, payload"
+                        " FROM operations WHERE id = %s", (operation_id,))
             op = cur.fetchone()
             reservation = None
             if op is not None and op["reservation_id"]:
@@ -482,56 +510,64 @@ def _op_accounting(dsn: str, operation_id: str) -> dict:
             conn.commit()
     reserved = int(reservation["amount"]) if reservation else 0
     terminal = receipts[-1] if receipts else None
-    tokens = _receipt_tokens(terminal)
+    effect = str(dict((op or {}).get("payload") or {}).get("effect", ""))
+    model_inference = effect == broker.MODEL_INFERENCE if op is not None else None
+    tokens = _receipt_tokens(terminal, model_inference=model_inference)
+    terminal_content = dict((terminal or {}).get("content") or {})
+    terminal_usage = dict(terminal_content.get("usage") or {})
+    billing, provider_charge = _billing_state(terminal_usage, reserved)
+    base = {"operation_id": operation_id, "effect": effect,
+            "dispatch_state": (op or {}).get("dispatch_state", "missing"),
+            "reserved": reserved, "tokens": tokens,
+            "billed": billing, "provider_charge_units": provider_charge}
     if op is None:
-        return {"operation_id": operation_id, "dispatch_state": "missing",
-                "reserved": 0, "settled": 0, "unresolved": 0,
-                "outcome": "missing", "tokens": tokens,
-                "billed": False, "provider_charge_units": None}
+        return {**base, "settled": 0, "unresolved": 0, "outcome": "missing"}
+    if op["reconcile_state"] == "conflict":
+        return {**base, "settled": 0, "unresolved": reserved,
+                "outcome": "conflict"}
+    if op["dispatch_state"] == "unresolved" or op["reconcile_state"] == "unresolved":
+        return {**base, "settled": 0, "unresolved": reserved,
+                "outcome": "unresolved"}
+    if op["dispatch_state"] not in ("observed", "reconciled"):
+        return {**base, "settled": 0, "unresolved": reserved,
+                "outcome": "unresolved"}
     terms = [r for r in receipts if r["outcome"] in ("success", "failure")]
     if reservation is not None and reservation["state"] == "settled" and terms:
-        usage = dict((terms[-1].get("content") or {}).get("usage") or {})
-        raw_charge = usage.get("charge_units")
-        verified = (bool(usage.get("billed")) and isinstance(raw_charge, int)
-                    and not isinstance(raw_charge, bool)
-                    and 0 <= raw_charge <= reserved)
-        charge = raw_charge if verified else None
-        settled = charge if verified else reserved
-        if charge is None and usage.get("billed") is False:
-            inbound = usage.get("input_tokens")
-            outbound = usage.get("output_tokens")
-            if isinstance(inbound, int) and not isinstance(inbound, bool) \
-                    and isinstance(outbound, int) \
-                    and not isinstance(outbound, bool) \
-                    and inbound >= 0 and outbound >= 0:
-                settled = inbound + outbound
-        return {"operation_id": operation_id,
-                "dispatch_state": op["dispatch_state"], "reserved": reserved,
-                "settled": settled, "unresolved": 0, "outcome": terms[-1]["outcome"],
-                "tokens": _receipt_tokens(terms[-1]),
-                "billed": verified, "provider_charge_units": charge}
+        content = dict(terms[-1].get("content") or {})
+        usage = dict(content.get("usage") or {})
+        billing, charge = _billing_state(usage, reserved)
+        return {**base, "settled": charge if billing is True else reserved,
+                "unresolved": 0, "outcome": terms[-1]["outcome"],
+                "tokens": _receipt_tokens(
+                    terms[-1], model_inference=model_inference),
+                "billed": billing, "provider_charge_units": charge}
     outcome = receipts[-1]["outcome"] if receipts else op["dispatch_state"]
-    return {"operation_id": operation_id, "dispatch_state": op["dispatch_state"],
-            "reserved": reserved, "settled": 0, "unresolved": reserved,
-            "outcome": outcome, "tokens": tokens,
-            "billed": False, "provider_charge_units": None}
+    return {**base, "settled": 0, "unresolved": reserved, "outcome": outcome}
 
 
-def _receipt_tokens(receipt: dict | None) -> dict[str, int]:
+def _receipt_tokens(receipt: dict | None, *,
+                    model_inference: bool | None) -> dict[str, int | None]:
+    if model_inference is not True:
+        return {"input": 0 if model_inference is False else None,
+                "output": 0 if model_inference is False else None}
     usage = dict(((receipt or {}).get("content") or {}).get("usage") or {})
-    try:
-        return {"input": int(usage.get("input_tokens", 0) or 0),
-                "output": int(usage.get("output_tokens", 0) or 0)}
-    except (TypeError, ValueError):
-        return {"input": 0, "output": 0}
+
+    def count(name: str) -> int | None:
+        value = usage.get(name)
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            return None
+        return value
+
+    return {"input": count("input_tokens"), "output": count("output_tokens")}
 
 
 def _settle_costs(dsn: str, protocol_ids: list[str], operation_id: str,
                   category: str, note: str) -> dict:
     entry = _op_accounting(dsn, operation_id)
     for pid in set(protocol_ids):
-        trials.record_expenditure(dsn, pid, category, entry["settled"],
-                                  f"{note} [{operation_id}]")
+        trials.record_expenditure(
+            dsn, pid, category, entry["settled"], note,
+            operation_id=operation_id)
     return entry
 
 
@@ -852,6 +888,29 @@ def _maybe_release(dsn: str, *, artifacts_root: Path, allocation_id: str,
     return releases
 
 
+def _token_totals(entries: list[dict]) -> dict[str, int | None]:
+    return {name: _sum_optional([entry["tokens"][name] for entry in entries])
+            for name in ("input", "output")}
+
+
+def _provider_billing(entries: list[dict]) -> dict:
+    model = [entry for entry in entries
+             if entry.get("effect") == broker.MODEL_INFERENCE]
+    unknown = [entry["operation_id"] for entry in model
+               if entry.get("billed") is None]
+    unbilled = [entry["operation_id"] for entry in model
+                if entry.get("billed") is False]
+    measured = [entry["provider_charge_units"] for entry in model
+                if entry.get("billed") is True]
+    status = "not-applicable" if not model else "unknown" if unknown else "complete"
+    return {"unit": "charge_units", "status": status,
+            "total_units": None if unknown else sum(
+                value or 0 for value in measured),
+            "measured_units": sum(value or 0 for value in measured),
+            "unknown_operations": unknown,
+            "unbilled_operations": unbilled}
+
+
 def episode_cost_union(dsn: str, phases: dict[str, list[str]]) -> dict:
     claimed: dict[str, list[str]] = {}
     ordered: list[str] = []
@@ -863,25 +922,26 @@ def episode_cost_union(dsn: str, phases: dict[str, list[str]]) -> dict:
             if op not in ordered:
                 ordered.append(op)
     entries = {op: _op_accounting(dsn, op) for op in ordered}
-    totals = {key: sum(entry[key] for entry in entries.values())
+    ordered_entries = [entries[op] for op in ordered]
+    totals = {key: sum(entry[key] for entry in ordered_entries)
               for key in ("reserved", "settled", "unresolved")}
-    tokens = {"input": sum(entry["tokens"]["input"]
-                           for entry in entries.values()),
-              "output": sum(entry["tokens"]["output"]
-                            for entry in entries.values())}
+    tokens = _token_totals(ordered_entries)
     sums = {}
     for phase, ops in (phases or {}).items():
         unique = [op for op in dict.fromkeys(ops or []) if op]
+        phase_entries = [entries[op] for op in unique]
         sums[phase] = {
             "ops": unique,
-            "reserved": sum(entries[op]["reserved"] for op in unique),
-            "settled": sum(entries[op]["settled"] for op in unique),
-            "unresolved": sum(entries[op]["unresolved"] for op in unique)}
+            "reserved": sum(entry["reserved"] for entry in phase_entries),
+            "settled": sum(entry["settled"] for entry in phase_entries),
+            "unresolved": sum(entry["unresolved"] for entry in phase_entries),
+            "tokens": _token_totals(phase_entries)}
     return {"scope": "whole-episode-unique-operation-union",
             "unique_ops": ordered, "unique_op_count": len(ordered),
             "shared_ops": sorted(op for op, owners in claimed.items()
                                  if len(owners) > 1),
             "phases": sums, "totals": {**totals, "tokens": tokens},
+            "provider_billing": _provider_billing(ordered_entries),
             "unresolved_exposure": totals["unresolved"]}
 
 
@@ -1231,6 +1291,7 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
                 by_cat[cat] = by_cat.get(cat, 0) + amount
         arm_ops = [e for e in report["accounting"]["ops"].values()
                    if e["arm"] == arm]
+        arm_tokens = _token_totals(arm_ops)
         report["budgets"][arm] = {
             "ledger_by_category": by_cat,
             "unique_op_cost": sum(e["settled"] for e in arm_ops),
@@ -1238,18 +1299,16 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
             "settled_usage": sum(e["settled"] for e in arm_ops),
             "unresolved_exposure": sum(e["unresolved"] for e in arm_ops),
             "token_estimates": {
-                "input_tokens": sum(e["tokens"]["input"] for e in arm_ops),
-                "output_tokens": sum(e["tokens"]["output"] for e in arm_ops),
-                "basis": "token-length estimate; not a monetary ceiling"},
+                "input_tokens": arm_tokens["input"],
+                "output_tokens": arm_tokens["output"],
+                "basis": "provider receipt usage; not a billing measure"},
             "matched_caps": {"sandbox_ms": GRADER_TIMEOUT_MS,
                              "tokens": MODEL_TOKENS}}
-    totals = {k: sum(e[k] for e in report["accounting"]["ops"].values())
+    accounting_entries = list(report["accounting"]["ops"].values())
+    totals = {k: sum(e[k] for e in accounting_entries)
               for k in ("reserved", "settled", "unresolved")}
-    totals["tokens"] = {
-        "input": sum(e["tokens"]["input"]
-                     for e in report["accounting"]["ops"].values()),
-        "output": sum(e["tokens"]["output"]
-                      for e in report["accounting"]["ops"].values())}
+    totals["tokens"] = _token_totals(accounting_entries)
+    totals["provider_billing"] = _provider_billing(accounting_entries)
     report["accounting"]["totals"] = totals
     report["releases"] = _maybe_release(
         dsn, artifacts_root=roots, allocation_id=allocation_id,

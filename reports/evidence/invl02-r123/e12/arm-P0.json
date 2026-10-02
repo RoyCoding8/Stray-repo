@@ -1,0 +1,143 @@
+{
+ "booleans": [
+  {
+   "failed_attempts": 0,
+   "history_entries": 0,
+   "history_input_chars": 0,
+   "history_tokens": 0,
+   "model_calls": 0,
+   "predictor_digest": "3d256ffd5eab6f51b87e646d7696f1668cd74556cc8bfb717bef7bfe96466b10",
+   "predictor_specs": [
+    {
+     "const": 0,
+     "mask": 8,
+     "pair": [
+      0,
+      3
+     ]
+    },
+    {
+     "const": 1,
+     "mask": 5,
+     "pair": [
+      1,
+      3
+     ]
+    },
+    {
+     "const": 0,
+     "mask": 9,
+     "pair": [
+      0,
+      3
+     ]
+    },
+    {
+     "const": 1,
+     "mask": 15,
+     "pair": null
+    }
+   ],
+   "predictor_tables": [
+    21760,
+    27045,
+    65450,
+    38505
+   ],
+   "queries": 8,
+   "score": {
+    "n_queried": 8,
+    "overall": 1.0,
+    "queried": 1.0,
+    "unqueried": 1.0
+   },
+   "seed": 11,
+   "split": "qual",
+   "target_tables": [
+    21760,
+    27045,
+    65450,
+    38505
+   ],
+   "task_id": "rule-qual-0011"
+  },
+  {
+   "failed_attempts": 0,
+   "history_entries": 0,
+   "history_input_chars": 0,
+   "history_tokens": 0,
+   "model_calls": 0,
+   "predictor_digest": "5857c99c0b21aa0a35d23aceae291bcc48873b5bf5c7ac8ffe995ca8d2479bb1",
+   "predictor_specs": [
+    {
+     "const": 1,
+     "mask": 0,
+     "pair": null
+    },
+    {
+     "const": 0,
+     "mask": 2,
+     "pair": [
+      0,
+      3
+     ]
+    },
+    {
+     "const": 0,
+     "mask": 1,
+     "pair": [
+      0,
+      2
+     ]
+    },
+    {
+     "const": 1,
+     "mask": 13,
+     "pair": [
+      1,
+      3
+     ]
+    }
+   ],
+   "predictor_tables": [
+    65535,
+    26316,
+    2570,
+    38565
+   ],
+   "queries": 8,
+   "score": {
+    "n_queried": 8,
+    "overall": 0.75,
+    "queried": 1.0,
+    "unqueried": 0.5
+   },
+   "seed": 23,
+   "split": "audit",
+   "target_tables": [
+    53199,
+    26316,
+    2570,
+    38565
+   ],
+   "task_id": "rule-audit-0023"
+  }
+ ],
+ "snapshot": {
+  "archive": [],
+  "arm": "P0",
+  "budget": {
+   "max_queries": 8,
+   "model_calls": 18,
+   "repairs": 2
+  },
+  "history": [],
+  "history_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "solver": {
+   "class_digest": "285113caf4ab",
+   "learner": "VersionSpaceLearner",
+   "seed": 11
+  }
+ }
+}

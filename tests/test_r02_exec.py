@@ -18,9 +18,9 @@ import subprocess
 import sys
 import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import httpx
 import pytest
 
 from settlement import launcher_runsc
@@ -416,18 +416,18 @@ def _body(choices_text: str, usage: dict) -> bytes:
          "model": "probe-model", "usage": usage}).encode()
 
 
-def test_unknown_billing_decode_keeps_zero_unbilled():
+def test_unknown_billing_decode_keeps_charge_unknown():
     response = HttpGatewayAdapter("http://unused")._decode_body(
         _body("answer", {"prompt_tokens": 1000, "completion_tokens": 500}), "op")
     assert response.usage.input_tokens + response.usage.output_tokens == 1500
-    assert response.usage.charge_units == 0
-    assert response.usage.billed is False
+    assert response.usage.charge_units is None
+    assert response.usage.billed is None
 
 
 def test_explicit_priced_charge_decode_marks_billed():
     response = HttpGatewayAdapter("http://unused")._decode_body(
         _body("answer", {"prompt_tokens": 1000, "completion_tokens": 500,
-                         "charge_units": 7}),
+                         "charge_units": 7, "billed": True}),
         "op")
     assert response.usage.charge_units == 7
     assert response.usage.billed is True
@@ -449,51 +449,82 @@ def test_malformed_charge_decode_is_protocol_error():
         "op")
     assert result.kind == GatewayErrorKind.PROTOCOL
     assert result.retryable is False
+    assert result.usage is not None
+    assert result.usage.input_tokens == 1
+    assert result.usage.output_tokens == 1
+    assert result.usage.charge_units is None
+    assert result.usage.billed is None
 
 
 def test_header_wait_is_bounded_by_absolute_deadline():
-    class Handler(BaseHTTPRequestHandler):
-        def log_message(self, *args):
-            pass
+    def delayed_response(request):
+        time.sleep(0.4)
+        return httpx.Response(200, json={})
 
-        def do_POST(self):
-            self.rfile.read(int(self.headers.get("Content-Length", 0)))
-            self.wfile.write(b"HTTP/1.1 200 OK\r\nX-Probe: ")
-            self.wfile.flush()
-            for _ in range(40):
-                self.wfile.write(b"x")
-                self.wfile.flush()
-                time.sleep(0.025)
-            self.wfile.write(b"\r\nContent-Length: 2\r\n\r\n{}")
-            self.wfile.flush()
-
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
+    client = httpx.Client(transport=httpx.MockTransport(delayed_response))
+    adapter = HttpGatewayAdapter(
+        "http://unused", route_mode="paid", client=client)
     try:
-        adapter = HttpGatewayAdapter(f"http://127.0.0.1:{server.server_port}")
         started = time.monotonic()
-        result = adapter.infer(ModelRequest("probe", (), 1, 200,
-                                            operation_id="op-hdr"))
+        result = adapter.infer(ModelRequest(
+            "probe", (), 1, 200, operation_id="op-hdr"))
         elapsed = time.monotonic() - started
-        assert result.kind == GatewayErrorKind.TIMEOUT
-        assert result.retryable is True
-        assert elapsed < 0.8, f"header wait escaped the budget: {elapsed:.2f}s"
-        assert elapsed >= 0.1, "deadline returned before the budget elapsed"
     finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=2)
+        client.close()
+
+    assert result.kind == GatewayErrorKind.TIMEOUT
+    assert result.retryable is True
+    assert elapsed < 0.8, f"header wait escaped the budget: {elapsed:.2f}s"
+    assert elapsed >= 0.1, "deadline returned before the budget elapsed"
 
 
 def test_cancelled_inference_stays_distinct_from_timeout():
-    adapter = HttpGatewayAdapter(endpoint="http://127.0.0.1:1", api_key="x")
+    requested = HttpGatewayAdapter(
+        "http://unused", route_mode="paid")
     request = ModelRequest("m", ({"role": "user", "content": "hi"},),
-                           8, 10_000, operation_id="op-cancel")
-    adapter.cancel("op-cancel")
-    result = adapter.infer(request)
+                           8, 10_000, operation_id="op-cancel-requested")
+    assert requested.cancel(request.operation_id) is True
+    assert requested.cancel_status(request.operation_id) == "requested"
+    result = requested.infer(request)
     assert result.kind == GatewayErrorKind.CANCELLED
-    assert adapter.cancel_status("op-cancel") == "confirmed"
+    assert requested.cancel_status(request.operation_id) == "requested"
+
+    stream_started = threading.Event()
+    release_stream = threading.Event()
+
+    class WaitingBody(httpx.SyncByteStream):
+        def __iter__(self):
+            stream_started.set()
+            release_stream.wait(timeout=1)
+            yield b"{}"
+
+    def streaming_response(request):
+        return httpx.Response(200, stream=WaitingBody())
+
+    client = httpx.Client(transport=httpx.MockTransport(streaming_response))
+    stopped = HttpGatewayAdapter(
+        "http://unused", route_mode="paid", client=client)
+    active_request = ModelRequest(
+        "m", (), 8, 10_000, operation_id="op-cancel-stopped")
+    outcome = {}
+    infer = threading.Thread(
+        target=lambda: outcome.update(
+            result=stopped.infer(active_request)), daemon=True)
+    try:
+        infer.start()
+        assert stream_started.wait(timeout=1)
+        stopped.cancel(active_request.operation_id)
+        release_stream.set()
+        infer.join(timeout=1)
+    finally:
+        release_stream.set()
+        infer.join(timeout=1)
+        client.close()
+
+    assert not infer.is_alive()
+    assert outcome["result"].kind == GatewayErrorKind.CANCELLED
+    assert stopped.cancel_status(active_request.operation_id) == "worker_stopped"
+    assert stopped.cancel_status(active_request.operation_id) != "confirmed"
 
 
 def test_model_token_budget_defaults_without_env(monkeypatch):
@@ -560,7 +591,7 @@ def _accounting_cmd(payload):
 _accounting_cmd.seq = 0
 
 
-def _seed_unbilled_op(dsn):
+def _seed_unknown_usage_op(dsn):
     from settlement import store
 
     store.seed_allocation(
@@ -570,13 +601,13 @@ def _seed_unbilled_op(dsn):
         dsn, _accounting_cmd({"operation_id": "eng-acct-unbilled",
                               "allocation_id": "eng-acct-a",
                               "reservation_id": "res-eng-acct-unbilled",
-                              "exposure": 1000, "operation": {"kind": "model"}}))
+                              "exposure": 1000, "operation": {"effect": "model-inference"}}))
     store.admit_receipt(
         dsn, _accounting_cmd({"operation_id": "eng-acct-unbilled",
                               "receipt_identity": "rc-eng-acct-unbilled",
                               "content": {"text": "done", "usage": {
                                   "input_tokens": 10, "output_tokens": 20,
-                                  "charge_units": 0, "billed": False}},
+                                  "charge_units": None, "billed": None}},
                               "outcome": "success"}))
 
 
@@ -590,7 +621,7 @@ def _seed_billed_op(dsn):
         dsn, _accounting_cmd({"operation_id": "eng-acct-billed",
                               "allocation_id": "eng-acct-b",
                               "reservation_id": "res-eng-acct-billed",
-                              "exposure": 1000, "operation": {"kind": "model"}}))
+                              "exposure": 1000, "operation": {"effect": "model-inference"}}))
     store.admit_receipt(
         dsn, _accounting_cmd({"operation_id": "eng-acct-billed",
                               "receipt_identity": "rc-eng-acct-billed",
@@ -600,20 +631,166 @@ def _seed_billed_op(dsn):
                               "outcome": "success", "actual_cost": 42}))
 
 
-def test_unbilled_settlement_reports_measured_debit(migrated_db):
+def test_unknown_billing_settles_full_reservation(migrated_db):
     from settlement import experiment, store
 
     dsn = migrated_db
-    _seed_unbilled_op(dsn)
+    _seed_unknown_usage_op(dsn)
     status = store.allocation_status(dsn, "eng-acct-a")
-    assert (status["consumed"], status["reserved"]) == (30, 0)
+    assert (status["consumed"], status["reserved"]) == (1000, 0)
     entry = experiment._op_accounting(dsn, "eng-acct-unbilled")
     assert entry["reserved"] == 1000
-    assert entry["settled"] == status["consumed"] == 30
+    assert entry["settled"] == status["consumed"] == 1000
     assert entry["unresolved"] == 0
-    assert entry["billed"] is False
+    assert entry["billed"] is None
     assert entry["provider_charge_units"] is None
     assert entry["tokens"] == {"input": 10, "output": 20}
+
+
+def test_receipt_outcome_mismatch_is_not_an_ordinary_duplicate(monkeypatch):
+    from settlement import store
+    from settlement.common import Command, CommandResult, payload_digest
+
+    content = {"text": "done"}
+    seen = {
+        "operation_id": "op-conflict",
+        "content_digest": payload_digest(content),
+        "outcome": "success",
+    }
+
+    from unittest.mock import MagicMock
+
+    cursor = MagicMock()
+    cursor.fetchone.side_effect = [
+        {"id": "op-conflict", "settled": True},
+        seen,
+    ]
+
+    def transact(_dsn, command, handler):
+        code, detail, data, _events, _outbox = handler(cursor, {})
+        return CommandResult(
+            code=code,
+            request_id=command.request_id,
+            detail=detail,
+            data=data,
+        )
+
+    monkeypatch.setattr(store, "transact", transact)
+    result = store.admit_receipt(
+        "unused",
+        Command(
+            request_id="receipt-conflict",
+            payload={
+                "operation_id": "op-conflict",
+                "receipt_identity": "receipt-conflict",
+                "content": content,
+                "outcome": "failure",
+                "provenance": "later-provider",
+            },
+        ),
+    )
+
+    assert result.code.name == "APPLIED"
+    assert result.data["conflict"] is True
+    insert = next(
+        call for call in cursor.execute.call_args_list
+        if "INSERT INTO receipt_conflicts" in call.args[0]
+    )
+    assert insert.args[1][3].obj == {
+        "receipt_content": content,
+        "outcome": "failure",
+        "provenance": "later-provider",
+        "actual_cost": None,
+    }
+
+
+@pytest.mark.parametrize(
+    ("receipt", "expected_text", "expected_charge"),
+    [
+        ({"content": {"text": "answer", "usage": {
+            "charge_units": None, "billed": None}}}, "answer", None),
+        ({"content": {"text": "answer", "usage": {
+            "charge_units": 0, "billed": False}}}, "answer", None),
+        ({"content": {"text": "answer", "usage": {
+            "charge_units": 0, "billed": True}}}, "answer", 0),
+        (None, None, None),
+    ],
+)
+def test_infer_helper_preserves_charge_measurement(
+        monkeypatch, receipt, expected_text, expected_charge):
+    from settlement import broker, experiment, loop
+
+    monkeypatch.setattr(loop, "admit_effect", lambda *args, **kwargs: object())
+    monkeypatch.setattr(broker, "dispatch_operation", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        experiment, "_sandbox_receipt", lambda *args, **kwargs: receipt)
+
+    operation_id, text, charge = experiment._infer_via_broker(
+        "unused",
+        object(),
+        operation_id="op-unknown-charge",
+        model="probe",
+        prompt="probe",
+        allocation_id="allocation",
+        attempt_id=None,
+    )
+
+    assert operation_id == "op-unknown-charge"
+    assert text == expected_text
+    assert charge == expected_charge
+
+
+def test_receipt_outcome_conflict_is_preserved(migrated_db):
+    from psycopg.rows import dict_row
+    from settlement import db, store
+
+    dsn = migrated_db
+    _seed_unknown_usage_op(dsn)
+    content = {
+        "text": "done",
+        "usage": {
+            "input_tokens": 10,
+            "output_tokens": 20,
+            "charge_units": None,
+            "billed": False,
+        },
+    }
+
+    conflict = store.admit_receipt(
+        dsn,
+        _accounting_cmd({
+            "operation_id": "eng-acct-unbilled",
+            "receipt_identity": "rc-eng-acct-unbilled",
+            "content": content,
+            "outcome": "failure",
+            "provenance": "later-provider",
+        }),
+    )
+
+    assert conflict.code.name == "APPLIED"
+    assert conflict.data["conflict"] is True
+    assert store.operation_receipts(dsn, "eng-acct-unbilled") == [{
+        "receipt_identity": "rc-eng-acct-unbilled",
+        "outcome": "success",
+        "content": content,
+    }]
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT outcome, content FROM receipt_conflicts"
+                " WHERE receipt_identity = %s",
+                ("rc-eng-acct-unbilled",),
+            )
+            preserved = dict(cur.fetchone())
+            conn.commit()
+    assert preserved == {
+        "outcome": "failure",
+        "content": {
+            "receipt_content": content,
+            "outcome": "failure",
+            "provenance": "later-provider",
+        },
+    }
 
 
 def test_billed_settlement_reports_verified_charge(migrated_db):

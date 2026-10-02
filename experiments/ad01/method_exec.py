@@ -217,7 +217,140 @@ def _read_exact(link, size: int) -> bytes:
     return bytes(data)
 
 
-def _result(receipt: dict | None, member: dict, operation_id: str | None) -> dict:
+def _source_digest(source: str) -> str:
+    return hashlib.sha256(source.encode("utf-8")).hexdigest()
+
+
+def _canonical_input(data) -> bytes:
+    return json.dumps(data, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8")
+
+
+def _input_digest(data) -> str:
+    return hashlib.sha256(_canonical_input(data)).hexdigest()
+
+
+def _driver_digest(driver: str) -> str:
+    return _source_digest(driver)
+
+
+def _operation_provenance(source: str, driver: str, input_data,
+                          *, source_path: str, driver_path: str,
+                          input_path: str) -> dict:
+    source_value = _source_digest(source)
+    driver_value = _driver_digest(driver)
+    input_value = _input_digest(input_data)
+    return {
+        "source_digest": source_value,
+        "driver_digest": driver_value,
+        "input_digest": input_value,
+        "source_path": source_path,
+        "driver_path": driver_path,
+        "input_path": input_path,
+    }
+
+
+def _verify_operation_provenance(work: Path, provenance: dict) -> None:
+    _verified_source_digest(work / provenance["source_path"],
+                            provenance["source_digest"])
+    driver = work / provenance["driver_path"]
+    try:
+        actual_driver = hashlib.sha256(driver.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise MethodExecutionError("refused: staged driver is unreadable") from exc
+    if actual_driver != provenance["driver_digest"]:
+        raise MethodExecutionError("refused: staged driver digest mismatch")
+    input_path = work / provenance["input_path"]
+    try:
+        actual_input = hashlib.sha256(input_path.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise MethodExecutionError("refused: serialized input is unreadable") from exc
+    if actual_input != provenance["input_digest"]:
+        raise MethodExecutionError("refused: serialized input digest mismatch")
+
+
+def _verified_source_digest(path: Path, expected: str) -> str:
+    try:
+        staged = path.read_bytes()
+    except OSError as exc:
+        raise MethodExecutionError("refused: staged source is unreadable") from exc
+    actual = hashlib.sha256(staged).hexdigest()
+    if actual != expected:
+        raise MethodExecutionError("refused: staged source digest mismatch")
+    return actual
+
+
+def _stage_source(path: Path, source: str, expected: str, *,
+                  preserve: bool) -> None:
+    if preserve and path.exists():
+        _verified_source_digest(path, expected)
+        return
+    path.write_bytes(source.encode("utf-8"))
+
+
+def _durable_operation(dsn: str, operation_id: str) -> dict | None:
+    from settlement import db
+    with db.connect(dsn) as conn:
+        row = conn.execute(
+            "SELECT dispatch_state, reconcile_state, settled, payload"
+            " FROM operations WHERE id = %s",
+            (operation_id,)).fetchone()
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        state = row.get("dispatch_state")
+        reconcile = row.get("reconcile_state")
+        settled = row.get("settled")
+        payload = row.get("payload")
+    else:
+        state, reconcile, settled, payload = row
+    return {"dispatch_state": state, "reconcile_state": reconcile,
+            "settled": bool(settled), "payload": payload or {}}
+
+
+def _durable_receipt(dsn: str, operation_id: str) -> dict | None:
+    from settlement import db
+    operation = _durable_operation(dsn, operation_id)
+    if operation is not None and (
+            operation.get("reconcile_state") == "conflict"
+            or operation.get("dispatch_state") == "unresolved"
+            or (not operation.get("settled")
+                and operation.get("dispatch_state") != "prepared")):
+        raise MethodExecutionError(
+            "refused: durable child operation is conflicted or unresolved")
+    with db.connect(dsn) as conn:
+        cursor = conn.execute(
+            "SELECT receipt_identity, outcome, content, content_digest"
+            " FROM receipts WHERE operation_id = %s"
+            " ORDER BY created_at, receipt_identity",
+            (operation_id,))
+        rows = cursor.fetchall() if hasattr(cursor, "fetchall") else []
+        if not rows and hasattr(cursor, "fetchone"):
+            row = cursor.fetchone()
+            rows = [] if row is None else [row]
+    if not rows:
+        return None
+    identities = []
+    for row in rows:
+        identity = str(row[0])
+        content = row[2]
+        if any(identity == prior[0] and row[1] == prior[1]
+               and content == prior[2] for prior in identities):
+            continue
+        identities.append((identity, row[1], content))
+    if len(identities) != 1:
+        raise MethodExecutionError(
+            "refused: durable child operation has conflicting receipts")
+    identity, outcome, content = identities[0]
+    if outcome != "success":
+        raise MethodExecutionError(
+            "refused: durable child operation has no successful receipt")
+    return {**content, "outcome": outcome, "receipt_identity": identity,
+            "_operation": operation}
+
+
+def _result(receipt: dict | None, member: dict, operation_id: str | None,
+            source_digest: str) -> dict:
     data = (receipt or {}).get("data", {})
     if receipt is None or receipt.get("outcome") != "success":
         raise MethodExecutionError("%s: %s" % (
@@ -226,8 +359,38 @@ def _result(receipt: dict | None, member: dict, operation_id: str | None) -> dic
     if not isinstance(output.get("candidate"), dict):
         raise MethodExecutionError("member-failed: malformed-result")
     return {"candidate": output["candidate"], "queries": output.get("queries", 0),
-            "operation_id": operation_id, "operation_ids": [operation_id] if operation_id else [],
-            "capability_id": member.get("capability_id", "")}
+            "operation_id": operation_id,
+            "operation_ids": [operation_id] if operation_id else [],
+            "capability_id": member.get("capability_id", ""),
+            "source_digest": source_digest}
+
+
+def _verify_durable_payload(receipt: dict | None, expected: dict) -> None:
+    if receipt is None:
+        return
+    operation = receipt.get("_operation")
+    if not isinstance(operation, dict):
+        raise MethodExecutionError(
+            "refused: durable child operation anchor is missing")
+    stored = operation.get("payload") or {}
+    if isinstance(stored, dict) and isinstance(stored.get("payload"), dict):
+        stored = stored["payload"]
+    expected = broker.validate_effect(broker.SANDBOX_EXEC, expected)
+    if stored != expected:
+        raise MethodExecutionError(
+            "refused: durable child operation payload does not match staged bytes")
+
+
+def _result_provenance(source: str, input_data, payload: dict,
+                        provenance: dict) -> dict:
+    return {
+        "driver_digest": provenance["driver_digest"],
+        "input_digest": provenance["input_digest"],
+        "operation_payload_digest": _source_digest(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"))),
+        "source_bytes": source,
+        "serialized_input": _canonical_input(input_data).decode("utf-8"),
+    }
 
 
 def run_member_out_of_process(member: dict, task: dict, *,
@@ -240,6 +403,7 @@ def run_member_out_of_process(member: dict, task: dict, *,
     if dsn is not None and (not allocation_id or not operation_id):
         raise MethodExecutionError("refused: execution needs explicit authority and identity")
     operation_id = operation_id or "member"
+    requested_digest = _source_digest(member["method_source"])
     argc = next(len(n.args.args) for n in ast.parse(
         member["method_source"]).body
         if isinstance(n, ast.FunctionDef) and n.name == entry)
@@ -263,10 +427,19 @@ def run_member_out_of_process(member: dict, task: dict, *,
     with context as directory:
         work = Path(directory)
         work.mkdir(parents=True, exist_ok=True)
-        (work / "member.py").write_text(member["method_source"])
-        (work / "task.json").write_text(json.dumps({"task": task, "max_queries": max_queries}))
+        _stage_source(
+            work / "member.py", member["method_source"], requested_digest,
+            preserve=dsn is not None)
+        input_data = {"task": task, "max_queries": max_queries}
+        (work / "task.json").write_bytes(_canonical_input(input_data))
+        driver_source = _DRIVER % (entry, argc)
         driver = work / "driver.py"
-        driver.write_text(_DRIVER % (entry, argc))
+        driver.write_text(driver_source, encoding="utf-8")
+        provenance = _operation_provenance(
+            member["method_source"], driver_source, input_data,
+            source_path="member.py", driver_path="driver.py",
+            input_path="task.json")
+        _verify_operation_provenance(work, provenance)
         socket_path = "ad01-" + hashlib.sha256(str(work).encode()).hexdigest()
         launcher = LocalLauncher(work / "launcher")
         payload = {"profile": PROFILE, "argv": [sys.executable, str(driver), str(work),
@@ -277,13 +450,18 @@ def run_member_out_of_process(member: dict, task: dict, *,
                 payload=payload, allocation_id=allocation_id)
             if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
                 raise MethodExecutionError("refused: %s" % ensured.detail)
-            from settlement import db
-            with db.connect(dsn) as conn:
-                row = conn.execute(
-                    "SELECT outcome, content FROM receipts WHERE operation_id = %s"
-                    " ORDER BY receipt_identity LIMIT 1", (operation_id,)).fetchone()
-            if row is not None:
-                return _result({**row[1], "outcome": row[0]}, member, operation_id)
+            _verify_operation_provenance(work, provenance)
+            receipt = _durable_receipt(dsn, operation_id)
+            if receipt is not None:
+                _verify_durable_payload(receipt, payload)
+                executed_digest = _verified_source_digest(
+                    work / "member.py", requested_digest)
+                result = _result(
+                    receipt, member, operation_id, executed_digest)
+                result.update(_result_provenance(
+                    member["method_source"], input_data, payload, provenance))
+                return result
+            _verified_source_digest(work / "member.py", requested_digest)
         stopped = threading.Event()
         errors = []
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as server:
@@ -315,6 +493,7 @@ def run_member_out_of_process(member: dict, task: dict, *,
             host = threading.Thread(target=serve)
             host.start()
             try:
+                _verify_operation_provenance(work, provenance)
                 if dsn is None:
                     launcher.dispatch(broker.BrokerOp(
                         operation_id=operation_id, effect=broker.SANDBOX_EXEC, payload=payload))
@@ -323,11 +502,21 @@ def run_member_out_of_process(member: dict, task: dict, *,
             finally:
                 stopped.set()
                 host.join()
-        receipt = launcher.read_result(operation_id)
+        receipt = (_durable_receipt(dsn, operation_id)
+                   if dsn is not None else launcher.read_result(operation_id))
         if errors:
             raise MethodExecutionError("bad-frame: %s" % errors[0])
-        result = _result(receipt, member, operation_id if dsn else None)
-        result["queries"] = oracle.queries_used
+        _verify_operation_provenance(work, provenance)
+        executed_digest = _verified_source_digest(
+            work / "member.py", requested_digest)
+        if dsn is not None:
+            _verify_durable_payload(receipt, payload)
+        result = _result(
+            receipt, member, operation_id if dsn else None, executed_digest)
+        result.update(_result_provenance(
+            member["method_source"], input_data, payload, provenance))
+        if dsn is None:
+            result["queries"] = oracle.queries_used
         return result
 
 
@@ -413,7 +602,8 @@ except Exception as exc:
 '''
 
 
-def _step_result(receipt: dict | None, operation_id: str | None) -> dict:
+def _step_result(receipt: dict | None, operation_id: str | None, *,
+                 durable_operation_id: str | None = None) -> dict:
     from . import policy_step
     data = (receipt or {}).get("data", {})
     if receipt is None or receipt.get("outcome") != "success":
@@ -431,7 +621,38 @@ def _step_result(receipt: dict | None, operation_id: str | None) -> dict:
         raise MethodExecutionError("step-failed: refused: %s" % exc)
     return {"action": output["action"], "state": output["state"],
             "operation_id": operation_id,
-            "operation_ids": [operation_id] if operation_id else []}
+            "operation_ids": ([durable_operation_id]
+                              if durable_operation_id else [])}
+
+
+def _step_evidence(raw_receipt: dict, result: dict, *, operation_id: str,
+                   source_digest: str, source_bytes: str, view: dict,
+                   input_bytes: bytes, driver_digest: str,
+                   operation_payload: dict, receipt_identity: str,
+                   arm: str | None, task_id: str | None,
+                   artifact_digest: str | None,
+                   parent_digest: str | None,
+                   round_no: int | None) -> dict:
+    from . import frontier
+    payload = {"action": result["action"], "state": result["state"],
+               "launcher_receipt": {key: value for key, value in
+                                    raw_receipt.items() if key != "_operation"},
+               "source_bytes": source_bytes,
+               "serialized_input": input_bytes.decode("utf-8"),
+               "driver_digest": driver_digest,
+               "operation_payload": operation_payload}
+    return frontier.make_evidence_record(
+        "child-execution", operation_id, "success",
+        receipt_identity=receipt_identity, arm=arm, task_id=task_id,
+        source_digest=source_digest, artifact_digest=artifact_digest,
+        input_digest=_source_digest(input_bytes.decode("utf-8")),
+        driver_digest=driver_digest,
+        operation_payload_digest=_source_digest(
+            json.dumps(operation_payload, sort_keys=True, separators=(",", ":"))),
+        result_digest=frontier.source_digest(frontier.canonical({
+            "action": result["action"], "state": result["state"]})),
+        package_digest=artifact_digest, parent_digest=parent_digest,
+        round_no=round_no, details={"raw_payload": payload})
 
 
 def run_step_out_of_process(source: str, view: dict, state: dict, *,
@@ -442,7 +663,12 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
                             memory_bytes: int | None = None,
                             dsn: str | None = None,
                             allocation_id: str | None = None,
-                            operation_id: str | None = None) -> dict:
+                            operation_id: str | None = None,
+                            arm: str | None = None,
+                            task_id: str | None = None,
+                            artifact_digest: str | None = None,
+                            parent_digest: str | None = None,
+                            round_no: int | None = None) -> dict:
     from . import policy_step
     entry = verify_step_source(source, entry)
     policy_step.validate_view(view)
@@ -451,7 +677,7 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
         raise MethodExecutionError(
             "refused: execution needs explicit authority and identity")
     operation_id = operation_id or "step"
-    digest = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    requested_digest = _source_digest(source)
     root = str(Path(__file__).resolve().parent.parent.parent)
     generation = None
     if dsn is not None:
@@ -464,7 +690,7 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
             raise MethodExecutionError("refused: unknown allocation")
         generation = str(allocation[0])
     identity = hashlib.sha256(json.dumps(
-        [dsn, allocation_id, generation, operation_id, digest, view,
+        [dsn, allocation_id, generation, operation_id, requested_digest, view,
          state, timeout_ms, cpu_seconds, max_output_bytes, memory_bytes,
          _STEP_DRIVER],
         sort_keys=True).encode()).hexdigest()
@@ -473,35 +699,88 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
     with context as directory:
         work = Path(directory)
         work.mkdir(parents=True, exist_ok=True)
-        (work / "policy.py").write_text(source)
-        (work / "step.json").write_text(json.dumps(
-            {"view": view, "state": state}))
+        _stage_source(
+            work / "policy.py", source, requested_digest,
+            preserve=dsn is not None)
+        input_data = {"view": view, "state": state}
+        input_bytes = _canonical_input(input_data)
+        (work / "step.json").write_bytes(input_bytes)
+        driver_source = _STEP_DRIVER % (entry,)
         driver = work / "driver.py"
-        driver.write_text(_STEP_DRIVER % (entry,))
+        driver.write_text(driver_source, encoding="utf-8")
+        provenance = _operation_provenance(
+            source, driver_source, input_data, source_path="policy.py",
+            driver_path="driver.py", input_path="step.json")
+        _verify_operation_provenance(work, provenance)
         launcher = LocalLauncher(work / "launcher")
         payload = {"profile": PROFILE, "argv": [sys.executable, str(driver), str(work)],
                    "timeout_ms": timeout_ms,
                    "max_output_bytes": max_output_bytes,
                    "cpu_seconds": cpu_seconds,
                    "memory_bytes": memory_bytes}
+        receipt_identity = None
         if dsn is not None:
             ensured = broker.ensure_operation(
                 dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
                 payload=payload, allocation_id=allocation_id)
             if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
                 raise MethodExecutionError("refused: %s" % ensured.detail)
-            from settlement import db
-            with db.connect(dsn) as conn:
-                row = conn.execute(
-                    "SELECT outcome, content FROM receipts WHERE operation_id = %s"
-                    " ORDER BY receipt_identity LIMIT 1", (operation_id,)).fetchone()
-            if row is not None:
-                return {**_step_result({**row[1], "outcome": row[0]}, operation_id),
-                        "source_digest": digest}
+            _verify_operation_provenance(work, provenance)
+            raw_receipt = _durable_receipt(dsn, operation_id)
+            if raw_receipt is not None:
+                _verify_durable_payload(raw_receipt, payload)
+                receipt_identity = str(raw_receipt["receipt_identity"])
+                executed_digest = _verified_source_digest(
+                    work / "policy.py", requested_digest)
+                result = _step_result(
+                    raw_receipt, operation_id,
+                    durable_operation_id=operation_id)
+                return {
+                    **result,
+                    "source_digest": executed_digest,
+                    **_result_provenance(source, input_data, payload, provenance),
+                    "receipt": _step_evidence(
+                        raw_receipt, result, operation_id=operation_id,
+                        source_digest=executed_digest,
+                        source_bytes=source, view=view, input_bytes=input_bytes,
+                        driver_digest=provenance["driver_digest"],
+                        operation_payload=payload,
+                        receipt_identity=receipt_identity, arm=arm,
+                        task_id=task_id, artifact_digest=artifact_digest,
+                        parent_digest=parent_digest, round_no=round_no),
+                }
+            _verify_operation_provenance(work, provenance)
             broker.dispatch_operation(dsn, operation_id, launchers={PROFILE: launcher})
+            receipt = _durable_receipt(dsn, operation_id)
         else:
-            launcher.dispatch(broker.BrokerOp(
-                operation_id=operation_id, effect=broker.SANDBOX_EXEC, payload=payload))
-        receipt = launcher.read_result(operation_id)
-        return {**_step_result(receipt, operation_id if dsn else None),
-                "source_digest": digest}
+            _verify_operation_provenance(work, provenance)
+            launched = launcher.dispatch(broker.BrokerOp(
+                operation_id=operation_id, effect=broker.SANDBOX_EXEC,
+                payload=payload))
+            if launched.receipt is not None:
+                receipt_identity = launched.receipt.receipt_identity
+            receipt = launcher.read_result(operation_id)
+        _verify_operation_provenance(work, provenance)
+        executed_digest = _verified_source_digest(
+            work / "policy.py", requested_digest)
+        if dsn is not None:
+            _verify_durable_payload(receipt, payload)
+        if not receipt_identity and isinstance(receipt, dict):
+            receipt_identity = receipt.get("receipt_identity")
+        if not receipt_identity:
+            raise MethodExecutionError("refused: child receipt identity is missing")
+        result = _step_result(
+            receipt, operation_id,
+            durable_operation_id=operation_id if dsn is not None else None)
+        return {
+            **result,
+            "source_digest": executed_digest,
+            **_result_provenance(source, input_data, payload, provenance),
+            "receipt": _step_evidence(
+                receipt, result, operation_id=operation_id,
+                source_digest=executed_digest, source_bytes=source, view=view,
+                input_bytes=input_bytes, driver_digest=provenance["driver_digest"],
+                operation_payload=payload, receipt_identity=receipt_identity,
+                arm=arm, task_id=task_id, artifact_digest=artifact_digest,
+                parent_digest=parent_digest, round_no=round_no),
+        }

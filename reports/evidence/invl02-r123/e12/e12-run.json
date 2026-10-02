@@ -1,0 +1,411 @@
+{
+ "arms": {
+  "P0": {
+   "boolean": {
+    "failed_attempts": 0,
+    "history_entries": 0,
+    "history_input_chars": 0,
+    "history_tokens": 0,
+    "model_calls": 0,
+    "predictor_digest": "3d256ffd5eab6f51b87e646d7696f1668cd74556cc8bfb717bef7bfe96466b10",
+    "predictor_specs": [
+     {
+      "const": 0,
+      "mask": 8,
+      "pair": [
+       0,
+       3
+      ]
+     },
+     {
+      "const": 1,
+      "mask": 5,
+      "pair": [
+       1,
+       3
+      ]
+     },
+     {
+      "const": 0,
+      "mask": 9,
+      "pair": [
+       0,
+       3
+      ]
+     },
+     {
+      "const": 1,
+      "mask": 15,
+      "pair": null
+     }
+    ],
+    "predictor_tables": [
+     21760,
+     27045,
+     65450,
+     38505
+    ],
+    "queries": 8,
+    "score": {
+     "n_queried": 8,
+     "overall": 1.0,
+     "queried": 1.0,
+     "unqueried": 1.0
+    },
+    "seed": 11,
+    "split": "qual",
+    "target_tables": [
+     21760,
+     27045,
+     65450,
+     38505
+    ],
+    "task_id": "rule-qual-0011"
+   },
+   "booleans": [
+    {
+     "failed_attempts": 0,
+     "history_entries": 0,
+     "history_input_chars": 0,
+     "history_tokens": 0,
+     "model_calls": 0,
+     "predictor_digest": "3d256ffd5eab6f51b87e646d7696f1668cd74556cc8bfb717bef7bfe96466b10",
+     "predictor_specs": [
+      {
+       "const": 0,
+       "mask": 8,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 5,
+       "pair": [
+        1,
+        3
+       ]
+      },
+      {
+       "const": 0,
+       "mask": 9,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 15,
+       "pair": null
+      }
+     ],
+     "predictor_tables": [
+      21760,
+      27045,
+      65450,
+      38505
+     ],
+     "queries": 8,
+     "score": {
+      "n_queried": 8,
+      "overall": 1.0,
+      "queried": 1.0,
+      "unqueried": 1.0
+     },
+     "seed": 11,
+     "split": "qual",
+     "target_tables": [
+      21760,
+      27045,
+      65450,
+      38505
+     ],
+     "task_id": "rule-qual-0011"
+    },
+    {
+     "failed_attempts": 0,
+     "history_entries": 0,
+     "history_input_chars": 0,
+     "history_tokens": 0,
+     "model_calls": 0,
+     "predictor_digest": "5857c99c0b21aa0a35d23aceae291bcc48873b5bf5c7ac8ffe995ca8d2479bb1",
+     "predictor_specs": [
+      {
+       "const": 1,
+       "mask": 0,
+       "pair": null
+      },
+      {
+       "const": 0,
+       "mask": 2,
+       "pair": [
+        0,
+        3
+       ]
+      },
+      {
+       "const": 0,
+       "mask": 1,
+       "pair": [
+        0,
+        2
+       ]
+      },
+      {
+       "const": 1,
+       "mask": 13,
+       "pair": [
+        1,
+        3
+       ]
+      }
+     ],
+     "predictor_tables": [
+      65535,
+      26316,
+      2570,
+      38565
+     ],
+     "queries": 8,
+     "score": {
+      "n_queried": 8,
+      "overall": 0.75,
+      "queried": 1.0,
+      "unqueried": 0.5
+     },
+     "seed": 23,
+     "split": "audit",
+     "target_tables": [
+      53199,
+      26316,
+      2570,
+      38565
+     ],
+     "task_id": "rule-audit-0023"
+    }
+   ],
+   "campaign_id": "fixed-learner-P0",
+   "failed_attempts": 0,
+   "guard": {
+    "ceiling": 0,
+    "cost_blocked": null,
+    "dispatch_count": 0,
+    "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "refusal_reason": "",
+    "version": "invl02-live-v1"
+   },
+   "history_tokens": 0,
+   "model_calls": 0,
+   "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "revision": "absent",
+   "snapshot": {
+    "archive": [],
+    "arm": "P0",
+    "budget": {
+     "max_queries": 8,
+     "model_calls": 18,
+     "repairs": 2
+    },
+    "history": [],
+    "history_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "solver": {
+     "class_digest": "285113caf4ab",
+     "learner": "VersionSpaceLearner",
+     "seed": 11
+    }
+   },
+   "status": "available"
+  },
+  "P1": {
+   "failed_attempts": 2,
+   "guard": {
+    "ceiling": 20,
+    "cost_blocked": null,
+    "dispatch_count": 2,
+    "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "refusal_reason": "",
+    "version": "invl02-live-v1"
+   },
+   "history_tokens": 0,
+   "model_calls": 2,
+   "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "reason": "Expecting ',' delimiter: line 1 column 23 (char 22)",
+   "snapshot": {
+    "archive": [],
+    "arm": "P1",
+    "budget": {
+     "max_queries": 8,
+     "model_calls": 18,
+     "repairs": 2
+    },
+    "history": [],
+    "history_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "solver": {
+     "class_digest": "285113caf4ab",
+     "learner": "VersionSpaceLearner",
+     "seed": 11
+    }
+   },
+   "status": "unavailable"
+  },
+  "P2": {
+   "failed_attempts": 3,
+   "guard": {
+    "ceiling": 22,
+    "cost_blocked": null,
+    "dispatch_count": 5,
+    "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "refusal_reason": "",
+    "version": "invl02-live-v1"
+   },
+   "history_tokens": 0,
+   "model_calls": 3,
+   "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "reason": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+   "snapshot": {
+    "archive": [],
+    "arm": "P2",
+    "budget": {
+     "max_queries": 8,
+     "model_calls": 18,
+     "repairs": 2
+    },
+    "history": [
+     {
+      "predictor_digest": "97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f",
+      "queries": 8,
+      "score_overall": 1.0,
+      "seed": 3,
+      "split": "dev",
+      "task_id": "rule-dev-0003"
+     },
+     {
+      "predictor_digest": "7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515",
+      "queries": 8,
+      "score_overall": 0.75,
+      "seed": 7,
+      "split": "dev",
+      "task_id": "rule-dev-0007"
+     }
+    ],
+    "history_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+    "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+    "solver": {
+     "class_digest": "285113caf4ab",
+     "learner": "VersionSpaceLearner",
+     "seed": 11
+    }
+   },
+   "status": "unavailable"
+  }
+ },
+ "control": {
+  "acquisition": {
+   "status": "not-attempted"
+  },
+  "active_digest": "eb1e11c31aec209d2a22d9d9bcb492445dd03be173c934982fd6747df7c39d68",
+  "adopted": {
+   "control_id": "acquired-high-r1",
+   "package_digest": "26e14402dae6317d5cefca0745328e983ed787972fd32253b79f010baefc860c",
+   "status": "bound"
+  },
+  "choice_mismatch": "opp-followup",
+  "choice_preserved": "opp-first",
+  "effect": {
+   "observation_id": "obs-opp-rule-dev-4-x3",
+   "status": "observed",
+   "task": "opp-rule-dev-4",
+   "verdict": "observed",
+   "x": 3,
+   "y": [
+    1,
+    0,
+    0,
+    1
+   ]
+  },
+  "effects_settled": 0,
+  "executed_digest": "1251125b12fcc2eb8b198dc7ad9086e1c93559bc8b2b72f9177aa36fdadaa068",
+  "first_candidate": "acquired-high-r1",
+  "first_parent": "eb1e11c31aec209d2a22d9d9bcb492445dd03be173c934982fd6747df7c39d68",
+  "label": "control",
+  "observation_dependent": true,
+  "observations": 1,
+  "second_candidate": "acquired-high-r2",
+  "second_executed": "773875ae4a1aecf08e5f9752c6ec82d75684ca006717c284fd64131bcb1637a2",
+  "second_parent": "26e14402dae6317d5cefca0745328e983ed787972fd32253b79f010baefc860c",
+  "store_path": "reports/evidence/invl02-r123/e12/frontier-control-e12.json"
+ },
+ "control_boundaries": 0,
+ "freeze_digest": "1b833d68c87f8672b74157427963b494475f7c1cd596548a941a6830a46ee3bd",
+ "held": [
+  {
+   "seed": 11,
+   "split": "qual"
+  },
+  {
+   "seed": 23,
+   "split": "audit"
+  }
+ ],
+ "model_total": 5,
+ "permitted_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+ "snapshots": {
+  "P1": {
+   "archive": [],
+   "arm": "P1",
+   "budget": {
+    "max_queries": 8,
+    "model_calls": 18,
+    "repairs": 2
+   },
+   "history": [],
+   "history_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "solver": {
+    "class_digest": "285113caf4ab",
+    "learner": "VersionSpaceLearner",
+    "seed": 11
+   }
+  },
+  "P2": {
+   "archive": [],
+   "arm": "P2",
+   "budget": {
+    "max_queries": 8,
+    "model_calls": 18,
+    "repairs": 2
+   },
+   "history": [
+    {
+     "predictor_digest": "97ee94c2deaa3ba1f20971a31a9643b7246a95c1fccda1a0eb39040accf8607f",
+     "queries": 8,
+     "score_overall": 1.0,
+     "seed": 3,
+     "split": "dev",
+     "task_id": "rule-dev-0003"
+    },
+    {
+     "predictor_digest": "7d8ff56e9659f395dd5f3446275e3f04b88f7a11ca5d39315feb3b1e7083b515",
+     "queries": 8,
+     "score_overall": 0.75,
+     "seed": 7,
+     "split": "dev",
+     "task_id": "rule-dev-0007"
+    }
+   ],
+   "history_digest": "04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49",
+   "model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+   "solver": {
+    "class_digest": "285113caf4ab",
+    "learner": "VersionSpaceLearner",
+    "seed": 11
+   }
+  }
+ },
+ "study": "invl02-live-e12"
+}

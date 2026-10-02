@@ -256,11 +256,22 @@ def ensure_operation(
         return CommandResult(code=ResultCode.INVALID_INPUT,
                              request_id=f"broker-prep-{operation_id}",
                              detail="retries must be a non-negative integer", data={})
+    if retries != 0:
+        return CommandResult(
+            code=ResultCode.INVALID_INPUT,
+            request_id=f"broker-prep-{operation_id}",
+            detail="retries must be zero; use distinct operation identities",
+            data={},
+        )
     try:
         clean = validate_effect(effect, payload)
     except InvalidEffect as exc:
-        return CommandResult(code=ResultCode.INVALID_INPUT, request_id=f"broker-prep-{operation_id}",
-                             detail=str(exc), data={})
+        return CommandResult(
+            code=ResultCode.INVALID_INPUT,
+            request_id=f"broker-prep-{operation_id}",
+            detail=str(exc),
+            data={},
+        )
     exposure, budget_kind = exposure_schedule(effect, clean, retries)
     body = {"effect": effect, "payload": clean, "retries": max(int(retries), 0),
             "budget_kind": budget_kind}
@@ -292,6 +303,8 @@ def _status_of(dsn: str, operation_id: str, sent_this_call: bool = False,
 
 
 def _next_for(row: dict[str, Any]) -> str:
+    if row.get("reconcile_state") == "conflict":
+        return "needs-reconciliation"
     return {"prepared": "awaiting-dispatch", "dispatching": "awaiting-receipt",
             "sent": "awaiting-receipt", "observed": "terminal",
             "unresolved": "needs-reconciliation", "reconciled": "terminal",
@@ -335,6 +348,9 @@ def _revalidate(dsn: str, operation_id: str, launcher_id: str, provider_id: str,
 
 
 def _decided_receipt(dsn: str, operation_id: str) -> bool:
+    row = read_operation(dsn, operation_id)
+    if row is None or row.get("reconcile_state") == "conflict":
+        return False
     return any(r["outcome"] in ("success", "failure")
                for r in store.operation_receipts(dsn, operation_id))
 
@@ -362,7 +378,7 @@ def admit_launcher_receipt(dsn: str, operation_id: str, receipt: ReceiptProposal
                                "provenance": receipt.provenance}
     if receipt.actual_cost is not None:
         payload["actual_cost"] = receipt.actual_cost
-    request_id = f"broker-rc-{receipt.receipt_identity}-{payload_digest(receipt.content)[:12]}"
+    request_id = f"broker-rc-{receipt.receipt_identity}-{payload_digest(payload)[:12]}"
     return store.admit_receipt(dsn, Command(request_id=request_id, payload=payload))
 
 
@@ -394,12 +410,6 @@ def _resume_dispatching(dsn: str, row: dict[str, Any], operation_id: str,
     if launcher.read_result(operation_id) is not None:
         return _status_of(dsn, operation_id)
     if _is_live(launcher, operation_id):
-        return _status_of(dsn, operation_id)
-    prove = getattr(launcher, "prove_never_sent", None)
-    if prove is not None:
-        if not prove(operation_id):
-            return _status_of(dsn, operation_id)
-    elif launcher.prior_send(operation_id):
         return _status_of(dsn, operation_id)
     return redispatch_after_reset(
         dsn, operation_id, launchers or {},
@@ -486,6 +496,114 @@ def _send_sandbox(dsn: str, row: dict, op: BrokerOp, launchers: dict,
     return _finish_send(dsn, op.operation_id, outcome, generation)
 
 
+def _usage_content(usage: Any, model_calls: int | None = None) -> dict[str, Any]:
+    content = {
+        "input_tokens": getattr(usage, "input_tokens", None),
+        "output_tokens": getattr(usage, "output_tokens", None),
+        "charge_units": getattr(usage, "charge_units", None),
+        "charge_scale": getattr(usage, "charge_scale", None),
+        "billed": getattr(usage, "billed", None),
+    }
+    if model_calls is not None:
+        content["model_calls"] = model_calls
+    if usage is not None:
+        content["provider_enforced_ceiling"] = usage.provider_enforced_ceiling
+    return content
+
+
+def _billed_cost(usage: Any) -> int | None:
+    charge = getattr(usage, "charge_units", None)
+    if getattr(usage, "billed", None) is True and isinstance(charge, int) \
+            and not isinstance(charge, bool) and charge >= 0:
+        return charge
+    return None
+
+
+def _model_error_receipt(operation_id: str, error: Any) -> tuple[ReceiptProposal, bool]:
+    route_error = getattr(error, "route_error", None)
+    response_received = bool(getattr(error, "response_received", False))
+    content: dict[str, Any] = {
+        "operation_id": operation_id,
+        "response_operation_id": error.operation_id,
+        "error": error.message,
+        "error_kind": error.kind.value,
+        "retryable": error.retryable,
+        "response_received": response_received,
+        "response_status": error.response_status,
+        "response_digest": error.response_digest,
+        "route_error": route_error.value if route_error is not None else None,
+        "usage": _usage_content(error.usage),
+    }
+    if route_error is not None and not response_received:
+        response_class = "pre-send-route-refusal"
+        outcome = "failure"
+        actual_cost = 0
+        sent = False
+    elif response_received:
+        response_class = "observed-provider-failure"
+        outcome = "failure"
+        actual_cost = _billed_cost(error.usage)
+        sent = True
+    else:
+        response_class = "lost-response"
+        outcome = "unknown"
+        actual_cost = None
+        sent = True
+    content["response_class"] = response_class
+    return ReceiptProposal(
+        receipt_identity=f"gw:{operation_id}:{response_class}",
+        content=content,
+        outcome=outcome,
+        provenance="gateway",
+        actual_cost=actual_cost,
+    ), sent
+
+
+def _identity_failure_receipt(operation_id: str, response: Any) -> ReceiptProposal:
+    from .gateway import GatewayError, ModelResponse
+
+    content: dict[str, Any] = {
+        "operation_id": operation_id,
+        "response_operation_id": response.operation_id,
+        "response_class": "identity-failure",
+        "response_received": True,
+        "error": "response operation identity mismatch",
+    }
+    if isinstance(response, GatewayError):
+        content.update({
+            "error_kind": response.kind.value,
+            "retryable": response.retryable,
+            "response_status": response.response_status,
+            "response_digest": response.response_digest,
+            "usage": _usage_content(response.usage),
+        })
+    elif isinstance(response, ModelResponse):
+        content.update({
+            "text": response.text,
+            "model_meta": dict(response.model_meta),
+            "stop_reason": response.stop_reason,
+            "usage": _usage_content(response.usage, model_calls=1),
+        })
+    return ReceiptProposal(
+        receipt_identity=f"gw:{operation_id}:identity-failure",
+        content=content,
+        outcome="unknown",
+        provenance="gateway",
+        actual_cost=_billed_cost(getattr(response, "usage", None)),
+    )
+
+
+def _record_model_receipt(dsn: str, operation_id: str, receipt: ReceiptProposal,
+                          sent: bool) -> DispatchStatus:
+    admitted = admit_launcher_receipt(dsn, operation_id, receipt)
+    if _admitted(admitted):
+        _deliver(dsn, f"dispatch:{operation_id}")
+        return _status_of(dsn, operation_id, sent_this_call=sent)
+    return _status_of(
+        dsn, operation_id, sent_this_call=sent, decision="receipt-admission-refused"
+    )
+
+
 def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                 gateway: Any, ownership_generation: int | None,
                 grant_version: int | None, crash: bool) -> DispatchStatus:
@@ -504,7 +622,7 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
         return held
     if _decided_receipt(dsn, op.operation_id):
         return _park_decided(dsn, op.operation_id)
-    from .gateway import GatewayError, ModelRequest
+    from .gateway import GatewayError, ModelRequest, ModelResponse
 
     request = ModelRequest(model=op.payload["model"],
                            messages=tuple(op.payload["messages"]),
@@ -513,42 +631,64 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                            operation_id=op.operation_id,
                            dispatch_generation=generation,
                            reasoning_effort=op.payload.get("reasoning_effort"))
+    loss_detail = "lost-response"
     try:
         response = gateway.infer(request)
-    except Exception:
+    except Exception as exc:
         response = None
-    if response is None or isinstance(response, GatewayError):
-        err_usage = getattr(response, "usage", None)
-        content: dict[str, Any] = {"error": getattr(response, "message", "lost-response")}
-        content["usage"] = {"input_tokens": getattr(err_usage, "input_tokens", None),
-                            "output_tokens": getattr(err_usage, "output_tokens", None),
-                            "charge_units": getattr(err_usage, "charge_units", None),
-                            "billed": getattr(err_usage, "billed", None)}
-        admit_launcher_receipt(dsn, op.operation_id, ReceiptProposal(
-            receipt_identity=f"gw:{op.operation_id}:unknown",
-            content=content,
-            outcome="unknown", provenance="gateway"))
-        _deliver(dsn, f"dispatch:{op.operation_id}")
-        return _status_of(dsn, op.operation_id, sent_this_call=True)
+        loss_detail = f"{type(exc).__name__}: {exc}"[:500]
+    if (response is not None
+            and getattr(response, "operation_id", op.operation_id) != op.operation_id):
+        return _record_model_receipt(
+            dsn, op.operation_id, _identity_failure_receipt(op.operation_id, response), True
+        )
+    if response is None:
+        return _record_model_receipt(
+            dsn,
+            op.operation_id,
+            ReceiptProposal(
+                receipt_identity=f"gw:{op.operation_id}:lost-response",
+                content={"operation_id": op.operation_id,
+                         "response_class": "lost-response",
+                         "response_received": False,
+                         "error": loss_detail},
+                outcome="unknown",
+                provenance="gateway",
+            ),
+            True,
+        )
+    if isinstance(response, GatewayError):
+        receipt, sent = _model_error_receipt(op.operation_id, response)
+        return _record_model_receipt(dsn, op.operation_id, receipt, sent)
+    if not isinstance(response, ModelResponse):
+        return _record_model_receipt(
+            dsn,
+            op.operation_id,
+            ReceiptProposal(
+                receipt_identity=f"gw:{op.operation_id}:lost-response",
+                content={"operation_id": op.operation_id,
+                         "response_class": "lost-response",
+                         "response_received": False,
+                         "response_type": type(response).__name__,
+                         "error": "unsupported gateway response"},
+                outcome="unknown",
+                provenance="gateway",
+            ),
+            True,
+        )
     if crash:
         return _status_of(dsn, op.operation_id, sent_this_call=True)
     usage = response.usage
-    outcome = _finish_send(dsn, op.operation_id, LaunchOutcome(
+    return _finish_send(dsn, op.operation_id, LaunchOutcome(
         sent=True, receipt=ReceiptProposal(
             receipt_identity=f"gw:{op.operation_id}",
-            content={"text": response.text, "model_meta": dict(response.model_meta),
+            content={"operation_id": op.operation_id, "text": response.text,
+                     "model_meta": dict(response.model_meta),
                      "stop_reason": response.stop_reason,
-                     "usage": {"input_tokens": usage.input_tokens,
-                               "output_tokens": usage.output_tokens,
-                               "model_calls": 1,
-                               "charge_units": usage.charge_units,
-                               "billed": bool(usage.billed),
-                               "provider_enforced_ceiling": usage.provider_enforced_ceiling}},
+                     "usage": _usage_content(usage, model_calls=1)},
             outcome="success", provenance="gateway",
-            actual_cost=usage.charge_units if usage.billed else (
-                usage.input_tokens + usage.output_tokens))),
+            actual_cost=_billed_cost(usage))),
         generation)
-    return outcome
 
 
 def _send_adapter(dsn: str, row: dict, op: BrokerOp, launchers: dict,
@@ -615,21 +755,26 @@ def _run_inline(dsn: str, row: dict, op: BrokerOp, launchers: dict,
 
 
 def _admitted(result: Any) -> bool:
-    return getattr(result, "code", None) in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+    return (getattr(result, "code", None) in
+            (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+            and not (getattr(result, "data", None) or {}).get("conflict"))
 
 
 def _finish_send(dsn: str, operation_id: str, outcome: LaunchOutcome,
                  admitted_generation: int | None = None) -> DispatchStatus:
+    primary: CommandResult | None = None
+    if outcome.receipt is not None:
+        primary = admit_launcher_receipt(dsn, operation_id, outcome.receipt)
+    elif outcome.lost:
+        primary = admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
+            receipt_identity=f"lost:{operation_id}", content={"lost": True},
+            outcome="unknown", provenance="broker"))
+    if primary is not None and not _admitted(primary):
+        return _status_of(dsn, operation_id, decision="needs-reconciliation")
     if admitted_generation is not None:
         row = read_operation(dsn, operation_id)
         live = int((((row or {}).get("payload")) or {}).get("_dispatch_generation", 0))
         if row is None or live != int(admitted_generation):
-            if outcome.receipt is not None:
-                admit_launcher_receipt(dsn, operation_id, outcome.receipt)
-            elif outcome.lost:
-                admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
-                    receipt_identity=f"lost:{operation_id}", content={"lost": True},
-                    outcome="unknown", provenance="broker"))
             fence = admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
                 receipt_identity=f"fenced:{operation_id}:g{admitted_generation}",
                 content={"fenced": True, "admitted_generation": int(admitted_generation),
@@ -641,18 +786,8 @@ def _finish_send(dsn: str, operation_id: str, outcome: LaunchOutcome,
                 _deliver(dsn, f"dispatch:{operation_id}")
                 return _status_of(dsn, operation_id, sent_this_call=True)
             return _status_of(dsn, operation_id, decision="needs-reconciliation")
-    if outcome.receipt is not None:
-        admitted = admit_launcher_receipt(dsn, operation_id, outcome.receipt)
-    elif outcome.lost:
-        admitted = admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
-            receipt_identity=f"lost:{operation_id}", content={"lost": True},
-            outcome="unknown", provenance="broker"))
-    else:
-        admitted = None
-    if admitted is None or _admitted(admitted):
-        _deliver(dsn, f"dispatch:{operation_id}")
-        return _status_of(dsn, operation_id, sent_this_call=True)
-    return _status_of(dsn, operation_id, decision="needs-reconciliation")
+    _deliver(dsn, f"dispatch:{operation_id}")
+    return _status_of(dsn, operation_id, sent_this_call=True)
 
 
 def request_cancel(dsn: str, operation_id: str,
@@ -703,10 +838,14 @@ def note_worker_stopped(dsn: str, operation_id: str) -> CommandResult:
                                        payload={"operation_id": operation_id}), _fn)
 
 
-def confirm_cancel(dsn: str, operation_id: str) -> CommandResult:
+def confirm_cancel(dsn: str, operation_id: str,
+                   launchers: dict[str, Any] | None = None) -> CommandResult:
+    payload: dict[str, Any] = {"operation_id": operation_id}
+    if launchers is not None and not store.operation_receipts(dsn, operation_id) \
+            and not _never_sent_refusal(dsn, operation_id, launchers):
+        payload["never_sent_proof"] = True
     return store.confirm_cancellation(
-        dsn, Command(request_id=f"broker-confirm-{operation_id}",
-                     payload={"operation_id": operation_id}))
+        dsn, Command(request_id=f"broker-confirm-{operation_id}", payload=payload))
 
 
 class ReconcileDecision(BaseModel):
@@ -735,11 +874,34 @@ def _launcher_index(launchers: dict[str, Any]) -> dict[str, Any]:
     return index
 
 
+def _never_sent_refusal(dsn: str, operation_id: str,
+                        launchers: dict[str, Any]) -> str:
+    row = read_operation(dsn, operation_id)
+    if row is None:
+        return "refused-never-sent-proof-no-operation"
+    launcher = _launcher_index(launchers).get(row.get("launcher_id"))
+    if launcher is None:
+        return "refused-never-sent-proof-no-launcher"
+    prove = getattr(launcher, "prove_never_sent", None)
+    if not callable(prove):
+        return "refused-never-sent-proof-unavailable"
+    try:
+        proven = prove(operation_id)
+    except Exception:
+        return "refused-never-sent-proof"
+    return "" if proven is True else "refused-never-sent-proof"
+
+
 def reconcile(dsn: str, operation_id: str, launchers: dict[str, Any],
               supervision_left: int = 3) -> ReconcileDecision:
     row = read_operation(dsn, operation_id)
     if row is None:
         return ReconcileDecision(operation_id=operation_id, decision="not-found", next="ignore")
+    if row.get("reconcile_state") == "conflict":
+        return ReconcileDecision(operation_id=operation_id,
+                                 decision="unresolved-liability",
+                                 detail="receipt conflict; exposure retained",
+                                 next="retry-later")
     if row["dispatch_state"] in ("observed", "reconciled", "cancelled"):
         return ReconcileDecision(operation_id=operation_id, decision="already-terminal",
                                  detail=row["dispatch_state"], next="none")
@@ -754,10 +916,17 @@ def reconcile(dsn: str, operation_id: str, launchers: dict[str, Any],
         except Exception:
             found = None
         if found is not None:
-            admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
+            admitted = admit_launcher_receipt(dsn, operation_id, ReceiptProposal(
                 receipt_identity=f"reconciled:{operation_id}",
                 content={"recovered": found}, outcome=str(found.get("outcome", "unknown")),
                 provenance=f"{launcher.launcher_id}-recovery"))
+            if not _admitted(admitted):
+                return ReconcileDecision(
+                    operation_id=operation_id,
+                    decision="receipt-admission-refused",
+                    detail=admitted.detail or f"receipt admission returned {admitted.code.value}",
+                    next="retry-later",
+                )
             return ReconcileDecision(operation_id=operation_id, decision="receipt-admitted",
                                      detail="launcher result recovered", next="none")
         if _is_live(launcher, operation_id):
@@ -857,6 +1026,10 @@ def sweep(dsn: str, launchers: dict[str, Any], gateway: Any | None = None,
             if operation_id not in report.delivered:
                 report.delivered.append(operation_id)
             continue
+        if row["reconcile_state"] in ("conflict", "unresolved"):
+            claimed.add(operation_id)
+            reconcile(dsn, operation_id, launchers)
+            continue
         if row["payload"].get("effect") == MODEL_INFERENCE and row["dispatch_state"] in (
                 "prepared", "dispatching", "sent"):
             if operation_id not in report.deferred_model:
@@ -885,7 +1058,7 @@ def sweep(dsn: str, launchers: dict[str, Any], gateway: Any | None = None,
         before_receipts = len(store.operation_receipts(dsn, operation_id))
         decision = reconcile(dsn, operation_id, launchers)
         claimed.add(operation_id)
-        if decision.decision == "still-running":
+        if decision.decision in ("still-running", "receipt-admission-refused"):
             continue
         _deliver(dsn, identity)
         if operation_id not in report.delivered:
@@ -939,6 +1112,9 @@ def redispatch_after_reset(dsn: str, operation_id: str, launchers: dict[str, Any
                            expected_generation: int, gateway: Any | None = None,
                            ownership_generation: int | None = None,
                            grant_version: int | None = None) -> DispatchStatus:
+    refusal = _never_sent_refusal(dsn, operation_id, launchers)
+    if refusal:
+        return _status_of(dsn, operation_id, decision=refusal)
     reset = store.reset_dispatch(
         dsn, Command(request_id=f"broker-redispatch-{operation_id}-g{expected_generation}",
                      payload={"operation_id": operation_id,
@@ -1120,7 +1296,7 @@ def restore_workflow_resources(dsn: str, attempt_id: str,
             "execution_versions": versions}
 
 
-def wf_ensure_dispatch(dsn: str, op_args: dict[str, Any], retries: int,
+def wf_ensure_dispatch(dsn: str, op_args: dict[str, Any], _retries: int,
                        ownership_generation: int | None, node_id: str,
                        resources_key: str) -> dict[str, Any]:
     try:
@@ -1140,7 +1316,7 @@ def wf_ensure_dispatch(dsn: str, op_args: dict[str, Any], retries: int,
                                payload=op_args["payload"], allocation_id=op_args["allocation_id"],
                                attempt_id=op_args.get("attempt_id"),
                                execution_version=op_args.get("execution_version", ""),
-                               retries=retries)
+                               retries=0)
     if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
         return {"node_id": node_id, "operation_id": op_args["operation_id"],
                 "dispatch_state": prior["dispatch_state"] if prior["found"] else "unknown",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -25,6 +26,47 @@ class GatewayErrorKind(str, Enum):
     BILLING_UNKNOWN = "billing_unknown"
 
 
+class GatewayRouteError(str, Enum):
+    EXPECTED_ROUTE = "expected_route"
+    ENDPOINT = "endpoint"
+    REQUESTED_MODEL = "requested_model"
+    RESPONSE_METADATA = "response_metadata"
+
+
+@dataclass(frozen=True)
+class RouteContract:
+    endpoint: str
+    requested_model: str
+    resolved_model: str
+    provider: str
+    tier: str
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> "RouteContract":
+        if not isinstance(value, Mapping):
+            raise ValueError("expected route must be an object")
+        if any(not isinstance(value.get(key), str) or not value[key]
+               for key in ("endpoint", "requested_model", "resolved_model",
+                           "provider", "tier")):
+            raise ValueError("expected route is incomplete")
+        return cls(
+            endpoint=value["endpoint"],
+            requested_model=value["requested_model"],
+            resolved_model=value["resolved_model"],
+            provider=value["provider"],
+            tier=value["tier"],
+        )
+
+    def as_dict(self) -> dict[str, str]:
+        return {
+            "endpoint": self.endpoint,
+            "requested_model": self.requested_model,
+            "resolved_model": self.resolved_model,
+            "provider": self.provider,
+            "tier": self.tier,
+        }
+
+
 @dataclass(frozen=True)
 class ModelRequest:
     model: str
@@ -38,12 +80,12 @@ class ModelRequest:
 
 @dataclass(frozen=True)
 class Usage:
-    input_tokens: int = 0
-    output_tokens: int = 0
-    charge_units: int = 0
-    charge_scale: int = 1000
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    charge_units: int | None = None
+    charge_scale: int | None = None
     provider_enforced_ceiling: bool = False
-    billed: bool = False
+    billed: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -62,6 +104,10 @@ class GatewayError:
     retryable: bool
     operation_id: str
     usage: Usage | None = None
+    response_received: bool = False
+    response_status: int | None = None
+    response_digest: str | None = None
+    route_error: GatewayRouteError | None = None
 
 
 class GatewayAdapter(ABC):

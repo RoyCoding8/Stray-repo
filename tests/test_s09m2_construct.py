@@ -64,6 +64,12 @@ MODEL_ROUNDTRIP_SOURCE = (
     "              \"requested_resources\": {\"queries\": 1}}\n"
     "    return {\"action\": action, \"state\": {\"asked\": True}}\n"
 )
+MEMBER_RECEIPT_SOURCE = (
+    "def carried(task, oracle):\n"
+    "    report = oracle.query(task)\n"
+    "    return {\"candidate\": {\"source\": \"requested\","
+    " \"verdict\": report[\"verdict\"]}, \"queries\": 1}\n"
+)
 
 
 def _script(entry: str) -> dict:
@@ -100,6 +106,30 @@ def _setup(store, seq):
     trajectory.authorize_campaign(store, cid, authorized=100000)
     task = worlds.load_task(worlds.FROZEN_DIR, TASK)
     return cid, task
+
+
+def _tamper_launcher_results(monkeypatch) -> list:
+    original = method_exec.LocalLauncher.read_result
+    operation_ids = []
+
+    def read_result(launcher, operation_id):
+        operation_ids.append(operation_id)
+        receipt = original(launcher, operation_id)
+        if receipt is None or receipt.get("outcome") != "success":
+            return receipt
+        output = receipt["data"]["worker"]["data"]
+        if "action" in output:
+            output["action"] = {
+                "kind": "stop", "target": "tampered", "inputs": {},
+                "evidence_refs": [], "requested_resources": {}}
+            output["state"] = {"source": "tampered"}
+        else:
+            output["candidate"] = {"source": "tampered"}
+            output["queries"] = 99
+        return receipt
+
+    monkeypatch.setattr(method_exec.LocalLauncher, "read_result", read_result)
+    return operation_ids
 
 
 def test_model_constructor_returns_checked_bytes_with_repair(store):
@@ -334,3 +364,59 @@ def test_step_receipt_labels_bounded_child_execution(store):
     content = dict(receipt["content"])
     assert content["profile"] == "local-process"
     assert content["containment"] is False
+
+
+def test_durable_step_uses_admitted_receipt_after_dispatch_and_replay(
+        store, monkeypatch):
+    from experiments.ad01 import trajectory
+    cid, task = _setup(store, 75)
+    operation_id = "ad01-%s-policy-s0-k0" % cid
+    allocation_id = trajectory._alloc_id(cid)
+    view = policy_step.materialize_view(
+        task=task, observations=[], open_questions=[], last_result=None,
+        eligible_methods=[], remaining={"steps": 1})
+    read_operations = _tamper_launcher_results(monkeypatch)
+
+    dispatched = method_exec.run_step_out_of_process(
+        GOOD_SOURCE, view, {}, dsn=store, allocation_id=allocation_id,
+        operation_id=operation_id, arm="I", task_id=TASK)
+    replayed = method_exec.run_step_out_of_process(
+        GOOD_SOURCE, view, {}, dsn=store, allocation_id=allocation_id,
+        operation_id=operation_id, arm="I", task_id=TASK)
+
+    assert dispatched["action"] == replayed["action"]
+    assert dispatched["state"] == replayed["state"] == {"built": True}
+    assert dispatched["action"]["kind"] == "diagnose"
+    assert dispatched["action"]["target"] == TASK
+    assert dispatched["operation_ids"] == replayed["operation_ids"] == [
+        operation_id]
+    raw = dispatched["receipt"]["details"]["raw_payload"]
+    assert raw["action"] == dispatched["action"]
+    assert raw["state"] == dispatched["state"]
+    assert read_operations == [operation_id]
+
+
+def test_durable_member_uses_admitted_receipt_after_dispatch_and_replay(
+        store, monkeypatch):
+    from experiments.ad01 import trajectory
+    cid, task = _setup(store, 76)
+    operation_id = "ad01-%s-member-k0" % cid
+    allocation_id = trajectory._alloc_id(cid)
+    member = {"capability_id": "durable-receipt-member",
+              "method_source": MEMBER_RECEIPT_SOURCE, "entry": "carried"}
+    read_operations = _tamper_launcher_results(monkeypatch)
+
+    dispatched = method_exec.run_member_out_of_process(
+        member, task, dsn=store, allocation_id=allocation_id,
+        operation_id=operation_id)
+    replayed = method_exec.run_member_out_of_process(
+        member, task, dsn=store, allocation_id=allocation_id,
+        operation_id=operation_id)
+
+    expected = {"source": "requested", "verdict": "preserved"}
+    assert dispatched["candidate"] == replayed["candidate"] == expected
+    assert dispatched["queries"] == replayed["queries"] == 1
+    assert dispatched["operation_id"] == replayed["operation_id"] == operation_id
+    assert dispatched["operation_ids"] == replayed["operation_ids"] == [
+        operation_id]
+    assert read_operations == [operation_id]

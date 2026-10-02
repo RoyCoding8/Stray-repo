@@ -285,12 +285,12 @@ def test_ledger_independently_sums_receipts_and_liabilities(tmp_path):
             consumed, reserved = cur.fetchone()
             conn.commit()
     assert measured == 3
-    assert unknown == ["gw:study-ledger-dev:unknown"]
+    assert unknown == ["gw:study-ledger-dev:lost-response"]
     assert consumed == 3 + sandbox_exposure
     assert reserved == diag_exposure
     ledger = authority.verify_ledger(DSN, "study-ledger")
     assert ledger["measured"] == measured == 3
-    assert ledger["unknown"] == unknown == ["gw:study-ledger-dev:unknown"]
+    assert ledger["unknown"] == unknown == ["gw:study-ledger-dev:lost-response"]
     assert ledger["consumed"] == consumed == 3 + sandbox_exposure
     assert ledger["reserved"] == reserved == diag_exposure
     assert ledger["match"] is True

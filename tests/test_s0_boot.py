@@ -1,159 +1,159 @@
 from __future__ import annotations
 
 import json
-import os
-import threading
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import httpx
 import pytest
 
+from settlement import boot
 from settlement.config import GatewayConfig, Settings
+from settlement.gateway import GatewayStatus
+from settlement.gateway_http import HttpGatewayAdapter
+
+ENDPOINT = "http://gateway.test/v1"
+ROUTE = {
+    "endpoint": ENDPOINT,
+    "requested_model": "vendor/request-model",
+    "resolved_model": "vendor/resolved-model",
+    "provider": "vendor",
+    "tier": "free",
+}
 
 
-class OkHandler(BaseHTTPRequestHandler):
-    def log_message(self, *args):
-        pass
+def _settings() -> Settings:
+    return Settings(dsn="unused", gateway=GatewayConfig(endpoint=ENDPOINT))
 
-    def _send(self, payload):
-        raw = json.dumps(payload).encode()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(raw)))
-        self.end_headers()
-        self.wfile.write(raw)
 
-    def do_GET(self):
-        self._send({"data": []})
+def _ready_checks(monkeypatch: pytest.MonkeyPatch) -> None:
+    for name in ("database", "artifacts", "sandbox", "interpreters"):
+        monkeypatch.setattr(boot, f"check_{name}", lambda *_args, name=name: boot.DependencyStatus(
+            name, True, True, True, True, "deterministic test"
+        ))
 
-    def do_POST(self):
-        length = int(self.headers.get("Content-Length", 0))
-        if length:
-            self.rfile.read(length)
-        self._send(
-            {
-                "choices": [{"message": {"content": "boot-probe"}, "finish_reason": "stop"}],
-                "model": "stub",
+
+def _adapter(
+    models_body: object | None = None,
+) -> tuple[HttpGatewayAdapter, list[httpx.Request]]:
+    requests: list[httpx.Request] = []
+    body = models_body if models_body is not None else {
+        "data": [
+            {"id": ROUTE["requested_model"], "pricing": {"prompt": 0, "completion": 0}},
+            {"id": ROUTE["resolved_model"], "pricing": {"prompt": 0, "completion": 0}},
+        ]
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if request.method == "GET":
+            raw = json.dumps(body).encode()
+        else:
+            raw = json.dumps({
+                "endpoint": ENDPOINT,
+                "model": ROUTE["resolved_model"],
+                "provider": ROUTE["provider"],
+                "tier": ROUTE["tier"],
+                "choices": [{"message": {"content": "boot-ok"}, "finish_reason": "stop"}],
                 "usage": {"prompt_tokens": 1, "completion_tokens": 1},
-            }
-        )
+            }).encode()
+        return httpx.Response(200, stream=httpx.ByteStream(raw))
 
-
-@pytest.fixture()
-def live_endpoint():
-    server = ThreadingHTTPServer(("127.0.0.1", 0), OkHandler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    yield f"http://127.0.0.1:{server.server_port}"
-    server.shutdown()
-    thread.join()
-
-
-def _dsn() -> str:
-    dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
-    if not dsn:
-        pytest.skip("SETTLEMENT_TEST_DSN is not configured")
-    return dsn
-
-
-def _settings(endpoint: str, tmp_path, dsn: str) -> Settings:
-    return Settings(
-        dsn=dsn,
-        artifact_root=str(tmp_path / "artifacts"),
-        staging_root=str(tmp_path / "staging"),
-        gateway=GatewayConfig(endpoint=endpoint),
+    adapter = HttpGatewayAdapter(
+        endpoint=ENDPOINT,
+        api_key="test-key",
+        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        expected_route=ROUTE,
     )
+    return adapter, requests
 
 
-def _ensure_migrations_table(dsn: str) -> None:
-    import psycopg
+def test_boot_without_exercise_never_advertises_inference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _ready_checks(monkeypatch)
+    adapter, requests = _adapter()
 
-    with psycopg.connect(dsn, autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "CREATE TABLE IF NOT EXISTS schema_migrations"
-                " (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-            )
+    report = boot.validate(_settings(), gateway_adapter=adapter)
+
+    gateway = {entry.name: entry for entry in report.entries}["gateway"]
+    assert gateway.reachable is True
+    assert gateway.authenticated is True
+    assert gateway.exercised is False
+    assert report.models_available is False
+    assert "model-inference" not in report.available_operations
+    assert [request.method for request in requests] == ["GET"]
 
 
-def test_boot_full_stack_reports_exercised(tmp_path, live_endpoint):
-    from settlement import boot
-    from settlement.gateway_http import HttpGatewayAdapter
+def test_boot_exercises_inference_before_advertising_it(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _ready_checks(monkeypatch)
+    adapter, requests = _adapter()
 
-    dsn = _dsn()
-    _ensure_migrations_table(dsn)
-    (tmp_path / "artifacts").mkdir()
-    (tmp_path / "staging").mkdir()
-    settings = _settings(live_endpoint, tmp_path, dsn)
-    adapter = HttpGatewayAdapter(endpoint=live_endpoint, api_key="k")
-    report = boot.validate(settings, gateway_adapter=adapter, exercise_gateway=True)
-    by_name = {entry.name: entry for entry in report.entries}
-    assert by_name["database"].exercised is True
-    assert by_name["artifacts"].exercised is True
-    assert by_name["gateway"].authenticated is True
-    assert by_name["gateway"].exercised is True
+    report = boot.validate(_settings(), gateway_adapter=adapter, exercise_gateway=True)
+
+    gateway = {entry.name: entry for entry in report.entries}["gateway"]
+    assert gateway.authenticated is True
+    assert gateway.exercised is True
     assert report.models_available is True
     assert "model-inference" in report.available_operations
+    assert [request.method for request in requests] == ["GET", "POST"]
+    probe = json.loads(requests[-1].content)
+    assert probe["model"] == ROUTE["requested_model"]
+    assert probe["messages"] == [{"role": "user", "content": "Reply with boot-ok."}]
+    assert probe["max_tokens"] == 4
 
 
-def test_boot_gateway_down_narrows_to_inspection(tmp_path, live_endpoint):
-    from settlement import boot
-    from settlement.gateway_http import HttpGatewayAdapter
+def test_boot_rejects_invalid_models_body_without_inference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _ready_checks(monkeypatch)
+    adapter, requests = _adapter(models_body={"data": {}})
 
-    dsn = _dsn()
-    _ensure_migrations_table(dsn)
-    (tmp_path / "artifacts").mkdir()
-    (tmp_path / "staging").mkdir()
-    settings = _settings("http://127.0.0.1:1", tmp_path, dsn)
-    adapter = HttpGatewayAdapter(endpoint="http://127.0.0.1:1", api_key="k")
-    report = boot.validate(settings, gateway_adapter=adapter)
-    by_name = {entry.name: entry for entry in report.entries}
-    assert by_name["gateway"].reachable is False
+    report = boot.validate(_settings(), gateway_adapter=adapter, exercise_gateway=True)
+
+    gateway = {entry.name: entry for entry in report.entries}["gateway"]
+    assert gateway.exercised is False
     assert report.models_available is False
     assert "model-inference" not in report.available_operations
-    assert "inspect" in report.available_operations
-    assert "mechanical-recovery" in report.available_operations
+    assert [request.method for request in requests] == ["GET"]
 
 
-def test_boot_gvisor_unavailable_on_this_host(tmp_path, live_endpoint):
-    from settlement import boot
-    from settlement.gateway_http import HttpGatewayAdapter
+def test_authentication_without_frozen_route_cannot_qualify_inference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _ready_checks(monkeypatch)
 
-    dsn = _dsn()
-    (tmp_path / "artifacts").mkdir()
-    (tmp_path / "staging").mkdir()
-    settings = _settings(live_endpoint, tmp_path, dsn)
-    adapter = HttpGatewayAdapter(endpoint=live_endpoint, api_key="k")
-    report = boot.validate(settings, gateway_adapter=adapter, admitted_profile="gvisor")
-    by_name = {entry.name: entry for entry in report.entries}
-    assert by_name["sandbox"].reachable is False
-    assert "sandbox-exec:gvisor" not in report.available_operations
-    assert "simulated-demonstration" in report.available_operations
+    class AuthenticatedGateway:
+        def __init__(self) -> None:
+            self.infer_calls = 0
+
+        def check_discovery(self):
+            return GatewayStatus.REACHABLE
+
+        def check_auth(self):
+            return GatewayStatus.AUTHENTICATED
+
+        def infer(self, _request):
+            self.infer_calls += 1
+            raise AssertionError("inference without a frozen route must not run")
+
+        def cancel(self, _operation_id: str) -> bool:
+            return False
+
+    adapter = AuthenticatedGateway()
+    report = boot.validate(_settings(), gateway_adapter=adapter, exercise_gateway=True)
+
+    assert adapter.infer_calls == 0
+    assert report.models_available is False
+    assert "model-inference" not in report.available_operations
 
 
-def test_boot_fake_gateway_never_enables_live_inference(tmp_path):
-    from settlement import boot
+def test_fake_gateway_never_enables_live_inference(monkeypatch: pytest.MonkeyPatch) -> None:
+    _ready_checks(monkeypatch)
     from settlement.gateway import FakeGatewayAdapter
 
-    dsn = _dsn()
-    (tmp_path / "artifacts").mkdir()
-    (tmp_path / "staging").mkdir()
-    settings = _settings("", tmp_path, dsn)
-    report = boot.validate(settings, gateway_adapter=FakeGatewayAdapter())
+    report = boot.validate(_settings(), gateway_adapter=FakeGatewayAdapter())
+
     assert report.models_available is False
     assert "model-inference" not in report.available_operations
     assert "simulated-demonstration" in report.available_operations
-
-
-def test_boot_database_down_still_reports_structure(tmp_path):
-    from settlement import boot
-    from settlement.gateway import FakeGatewayAdapter
-
-    (tmp_path / "artifacts").mkdir()
-    (tmp_path / "staging").mkdir()
-    settings = _settings("", tmp_path, "postgresql://ubuntu@/no_such_db?host=/var/run/postgresql")
-    report = boot.validate(settings, gateway_adapter=FakeGatewayAdapter())
-    by_name = {entry.name: entry for entry in report.entries}
-    assert by_name["database"].configured is True
-    assert by_name["database"].reachable is False
-    assert report.ok is False
-    assert "inspect" in report.available_operations

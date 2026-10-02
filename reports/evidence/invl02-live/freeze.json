@@ -1,0 +1,31 @@
+{
+ "apparatus": "authored-control",
+ "bounds": {
+  "model_calls": 12,
+  "repairs": 2,
+  "retries_per_call": 3
+ },
+ "caps": {
+  "construction_tokens": 2048,
+  "diagnostic_queries": 16,
+  "max_boundaries": 3,
+  "model_calls": 6
+ },
+ "charter": {
+  "freeze_id": "ad01",
+  "objective": "smaller valid explanatory examples"
+ },
+ "comparison": "live-treatment-vs-apparatus",
+ "freeze_digest": "4db4625bbd41882597c101017e43ae9ceed9174340c3616f3f3a4a8033956199",
+ "model": "grant-pinned",
+ "stop_rule": "repeated empty responses trigger frozen repair or stop, never silent model switch",
+ "study": "invl02-live-e0",
+ "study_root": "invl02-live-e0",
+ "tasks": [
+  "ad01-w0-dev-sw-00",
+  "ad01-w0-dev-sw-01"
+ ],
+ "use_tasks": [
+  "ad01-w1-within-sw-00"
+ ]
+}

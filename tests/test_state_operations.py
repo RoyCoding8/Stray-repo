@@ -85,8 +85,9 @@ def test_receipt_duplicate_conflict_and_settle_once(migrated_db):
     assert [o["id"] for o in state["unfinished_operations"]] == ["op1"]
     assert state["unfinished_operations"][0]["reconcile_state"] == "conflict"
     resolved = store.reconcile_operation(dsn, _cmd({"operation_id": "op1", "resolution": "reconciled"}))
-    assert resolved.code == ResultCode.APPLIED
-    assert store.restart_reconciliation(dsn)["unfinished_operations"] == []
+    assert resolved.code == ResultCode.MISSING_EVIDENCE
+    unfinished = store.restart_reconciliation(dsn)["unfinished_operations"]
+    assert unfinished[0]["reconcile_state"] == "conflict"
 
 
 def test_unknown_outcome_retains_exposure_and_cancel_keeps_late_receipts(migrated_db):

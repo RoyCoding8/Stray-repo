@@ -8,7 +8,15 @@ from typing import Any
 
 from .common import ResultCode
 from .config import Settings
-from .gateway import FakeGatewayAdapter, GatewayAdapter, GatewayError, GatewayStatus, ModelRequest
+from .gateway import (
+    FakeGatewayAdapter,
+    GatewayAdapter,
+    GatewayError,
+    GatewayErrorKind,
+    GatewayStatus,
+    ModelRequest,
+    ModelResponse,
+)
 
 INSPECT_OPS = ("inspect", "mechanical-recovery")
 SIMULATED_OP = "simulated-demonstration"
@@ -129,24 +137,61 @@ def check_gateway(
         return _status(
             "gateway", True, True, False, False, "simulated adapter: live inference unavailable"
         )
+    route = getattr(adapter, "route_contract", None)
+    preflight = getattr(adapter, "preflight_route", None)
+    if route is not None and callable(preflight):
+        try:
+            preflight_result = preflight(route)
+        except Exception as exc:
+            return _status("gateway", True, False, False, False,
+                           f"model catalog preflight failed: {exc}")
+        if isinstance(preflight_result, GatewayError):
+            transport_failure = preflight_result.kind in (
+                GatewayErrorKind.TRANSPORT, GatewayErrorKind.TIMEOUT
+            )
+            return _status(
+                "gateway", True, not transport_failure, not transport_failure, False,
+                f"model catalog refused: {preflight_result.message}",
+            )
+        if not exercise:
+            return _status(
+                "gateway", True, True, True, False,
+                "model catalog validated; live inference not exercised",
+            )
+        operation_id = "boot-inference-probe"
+        try:
+            response = adapter.infer(ModelRequest(
+                model=preflight_result["requested_model"],
+                messages=({"role": "user", "content": "Reply with boot-ok."},),
+                max_output_tokens=4,
+                deadline_ms=30_000,
+                operation_id=operation_id,
+            ))
+        except Exception as exc:
+            return _status("gateway", True, True, True, False,
+                           f"inference probe failed: {type(exc).__name__}: {exc}"[:500])
+        if isinstance(response, ModelResponse) and response.operation_id == operation_id \
+                and response.text.strip():
+            return _status("gateway", True, True, True, True,
+                           "model catalog and inference probe passed")
+        detail = (response.message if isinstance(response, GatewayError)
+                  else "invalid probe response")
+        return _status("gateway", True, True, True, False, f"inference probe refused: {detail}")
     discovery = adapter.check_discovery()
-    reachable = discovery == GatewayStatus.REACHABLE
     if isinstance(discovery, GatewayError):
         return _status("gateway", bool(endpoint), False, False, False, discovery.message)
+    if discovery != GatewayStatus.REACHABLE:
+        return _status("gateway", bool(endpoint), False, False, False,
+                       f"gateway discovery status: {discovery}")
     auth = adapter.check_auth()
-    authenticated = auth == GatewayStatus.AUTHENTICATED
-    if not authenticated:
-        detail = auth.message if isinstance(auth, GatewayError) else str(auth)
-        return _status("gateway", True, True, False, False, detail)
-    if not exercise:
-        return _status("gateway", True, True, True, False, "authenticated; live inference not exercised")
-    probe = adapter.infer(
-        ModelRequest(model="boot-probe", messages=({"role": "user", "content": "boot"},),
-                     max_output_tokens=8, deadline_ms=30_000)
+    if isinstance(auth, GatewayError):
+        return _status("gateway", True, True, False, False, auth.message)
+    if auth != GatewayStatus.AUTHENTICATED:
+        return _status("gateway", True, True, False, False, f"gateway auth status: {auth}")
+    return _status(
+        "gateway", True, True, True, False,
+        "authenticated; frozen model route and models body not validated",
     )
-    if isinstance(probe, GatewayError):
-        return _status("gateway", True, True, True, False, f"probe inference failed: {probe.message}")
-    return _status("gateway", True, True, True, True, "probe inference succeeded")
 
 
 def check_interpreters() -> DependencyStatus:
@@ -190,10 +235,12 @@ def validate(
         check_interpreters(),
     )
     by_name = {entry.name: entry for entry in entries}
-    gateway_ok = by_name["gateway"].authenticated
+    gateway = by_name["gateway"]
+    gateway_ok = gateway.authenticated and (not exercise_gateway or gateway.exercised)
+    models_available = gateway.exercised
     sandbox_ok = by_name["sandbox"].reachable
     ops = list(INSPECT_OPS)
-    if gateway_ok:
+    if models_available:
         ops.append(MODEL_OP)
     if sandbox_ok:
         ops.append(f"sandbox-exec:{admitted_profile}")
@@ -209,13 +256,13 @@ def validate(
     )
     code = ResultCode.APPLIED if ok else ResultCode.UNAVAILABLE_DEPENDENCY
     summary = f"boot {code.value}: " + ", ".join(
-        f"{entry.name}={'ok' if entry.exercised or (entry.name in ('gateway', 'sandbox') and entry.authenticated) else 'limited'}"
+        f"{entry.name}={'ok' if entry.exercised else 'ready' if entry.reachable else 'limited'}"
         for entry in entries
     )
     return BootReport(
         ok=ok,
         entries=entries,
         available_operations=tuple(ops),
-        models_available=gateway_ok,
+        models_available=models_available,
         summary=summary,
     )

@@ -1,0 +1,11 @@
+{
+ "problems": [],
+ "recomputed": {
+  "model_calls": 1,
+  "run_files": [
+   "e0-run.json"
+  ]
+ },
+ "status": "pass",
+ "trust": "Re-execution witnesses behavior while record rewriting does not. This verifier re-derives digests and totals from committed bytes only. It trusts no runtime verdict label and builds no new security infrastructure. Resource classes beyond recountable dispatches stay attested runtime measurements with unknown preserved."
+}

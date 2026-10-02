@@ -1,19 +1,13 @@
 # M5 cap sheet Investigation Learning 02
 
-Status: blocked. No surviving grant verified in this worker environment. Do not launch.
+Status: superseded by reports/cap-sheets/invl02-live-grant.md. The human authorized live Nemotron testing on 2026-09-23 and retired the historical call limit. The placeholder command below is withdrawn. It never ran.
 
-Observed authority:
-VERCEL_API_KEY present. AI_GATEWAY_API_KEY absent. S09_M5_LIVE_GRANT absent. S09_STUDY_CALLS_ALREADY_SPENT absent. Historical 19 of 100 worker-reported in reports/STAGE-09-COMPLETION.md. Historical count is not remaining balance proof.
+Withdrawn placeholder. It used flags the entry point does not accept and a configuration file that does not exist.
 
-Required grant to unblock:
-Explicit human grant naming model scope, call ceiling, study root, and spend tracking vars. Example vars to set: S09_M5_LIVE_GRANT, S09_STUDY_CALLS_ALREADY_SPENT, SETTLEMENT_DSN.
+Real pilot syntax observed from scripts/s09_pilot.py main. Freeze with freeze --out DIR. Run with run --dsn DSN --out DIR with optional --mode doubles or live and optional --model ID. Live refuses without S09_M5_LIVE_GRANT and requires explicit --model. Gateway comes from SETTLEMENT_GATEWAY_ENDPOINT and SETTLEMENT_GATEWAY_KEY through Settings.
 
-Exact runnable next step when grant exists:
-S09_M5_LIVE_GRANT=<grant-id> S09_STUDY_CALLS_ALREADY_SPENT=<n> uv run python scripts/s09_pilot.py --config FROZEN-LIVE-CONFIG.md --study-root s09o_live_02 --cap 100 --endpoint https://ai-gateway.vercel.sh/v1 --model inclusionai/ling-3.0-flash-vl-free --no-paid-fallback
-Then: uv run python scripts/s09_verify.py --study-root s09o_live_02
+Live command shape actually supported:
+set -a plus source of the environment file outside Git plus set plus S09_STUDY_CALLS_ALREADY_SPENT equals 0. Then PYTHONPATH dot plus experiments uv run python scripts/s09_pilot.py run --dsn postgres template with DB name --out evidence dir --mode live --model request identifier.
+Then: PYTHONPATH dot plus experiments uv run python scripts/s09_verify.py bundle dir.
 
-Routing constraints:
-Configured endpoint and model only. No silent paid fallback. Discovery and price metadata are not billing proof. Preserve failed attempts and uncertainty. Empty responses trigger frozen repair or stop, not endless retries or unreported switch.
-
-Stop rule:
-E0 preflight first with independently authored apparatus control. Proceed to E1 E2 only if preflight permits. E3 only with eligible revised improver from identical start. Otherwise record unavailable.
+The new investigation driver command lands here after its first real run. No new live allocation beyond the recorded grant. Routing constraints and stop rule from the live grant apply.

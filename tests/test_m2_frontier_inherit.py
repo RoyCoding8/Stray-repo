@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / "experiments"))
 
 from experiments.ad01 import frontier
 from experiments.ad01 import improve_channel as channel
+from experiments.ad01 import live_construct as live
 from experiments.ad01 import boolean_rule as br
 
 FIXED_SEQUENCE = ("opp-first", "opp-followup", "opp-extra")
@@ -117,6 +118,8 @@ def test_frontier_choice_is_observation_dependent(tmp_path):
 def test_operate_probe_acquires_real_evidence_within_authority(tmp_path):
     store = _make_store(tmp_path)
     package = channel.make_control("low")
+    store.bind_active(package)
+    effect = store.accept("opp-first", package["package_digest"])
     task = br.make_task("dev", 4)
     action = {
         "kind": "probe",
@@ -125,9 +128,21 @@ def test_operate_probe_acquires_real_evidence_within_authority(tmp_path):
     }
     outcome = channel.execute_operate_action(store, action, task)
     expected = tuple((task["tables"][b] >> 3) & 1 for b in range(4))
+    assert outcome["status"] == "observed"
     assert tuple(outcome["y"]) == expected
-    assert outcome["observation_id"] in {
-        o["observation_id"] for o in store.observations}
+    assert outcome["observation_id"] == "obs-opp-first-x3"
+    observation = next(
+        o for o in store.observations
+        if o["observation_id"] == outcome["observation_id"])
+    assert effect["effect_id"] == "eff-opp-first-0"
+    assert effect["expected_identity"]["operation_id"] == "local:eff-opp-first-0"
+    assert observation["effect_id"] == effect["effect_id"]
+    assert observation["operation_id"] == effect["expected_identity"][
+        "operation_id"]
+    store.settle(effect["effect_id"], observation)
+    assert store.settled_effects[0]["effect_id"] == effect["effect_id"]
+    assert store.settled_effects[0]["observation_id"] == observation[
+        "observation_id"]
     before = dict(store.authority)
     refused = channel.execute_operate_action(
         store,
@@ -223,9 +238,9 @@ def test_adopt_at_quiescent_boundary_pins_history_and_resets_state(
         assert "quiescent" in str(exc)
     else:
         raise AssertionError("adoption admitted over pending effects")
-    store.settle(pending["effect_id"], {"observation_id": "obs-void",
-                                        "task": "rule-dev-0005",
-                                        "verdict": "preserved"})
+    store.observe({"observation_id": "obs-followup",
+                   "task": "opp-followup", "verdict": "preserved"})
+    store.settle(pending["effect_id"], store.observations[-1])
     store.adopt_revision(candidate)
     assert store.active_digest == candidate["package_digest"]
     assert store.private_state == {}
@@ -342,11 +357,12 @@ def test_controls_labeled_and_outside_treatment_arms(tmp_path):
     store.bind_active(channel.make_control("low"))
     task = br.make_task("dev", 4)
     candidate = channel.drive_improve_round(store, task)["candidate"]
-    assert candidate["origin"] == "acquired"
-    store.adopt_revision(candidate)
+    assert candidate["origin"] == "authored-control"
+    assert candidate["source_kind"] == "fixed-menu"
+    live.activate_control_revision(store, candidate)
     arm_digests = {c["package_digest"]
                    for c in store.treatment_arms["acquired"]}
-    assert candidate["package_digest"] in arm_digests
+    assert candidate["package_digest"] not in arm_digests
     for which in ("low", "high"):
         assert channel.make_control(which)["package_digest"] not in \
             arm_digests

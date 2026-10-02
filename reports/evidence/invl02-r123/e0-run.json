@@ -1,0 +1,131 @@
+{
+ "control": {
+  "boundaries": 0,
+  "campaign_id": "frontier-control",
+  "frontier": {
+   "acquisition": {
+    "status": "not-attempted"
+   },
+   "active_digest": "eb1e11c31aec209d2a22d9d9bcb492445dd03be173c934982fd6747df7c39d68",
+   "adopted": {
+    "control_id": "acquired-high-r1",
+    "package_digest": "26e14402dae6317d5cefca0745328e983ed787972fd32253b79f010baefc860c",
+    "status": "bound"
+   },
+   "choice_mismatch": "opp-followup",
+   "choice_preserved": "opp-first",
+   "effect": {
+    "observation_id": "obs-opp-rule-dev-4-x3",
+    "status": "observed",
+    "task": "opp-rule-dev-4",
+    "verdict": "observed",
+    "x": 3,
+    "y": [
+     1,
+     0,
+     0,
+     1
+    ]
+   },
+   "effects_settled": 0,
+   "executed_digest": "1251125b12fcc2eb8b198dc7ad9086e1c93559bc8b2b72f9177aa36fdadaa068",
+   "first_candidate": "acquired-high-r1",
+   "first_parent": "eb1e11c31aec209d2a22d9d9bcb492445dd03be173c934982fd6747df7c39d68",
+   "label": "control",
+   "observation_dependent": true,
+   "observations": 1,
+   "second_candidate": "acquired-high-r2",
+   "second_executed": "773875ae4a1aecf08e5f9752c6ec82d75684ca006717c284fd64131bcb1637a2",
+   "second_parent": "26e14402dae6317d5cefca0745328e983ed787972fd32253b79f010baefc860c",
+   "store_path": "reports/evidence/invl02-r123/frontier-control.json"
+  },
+  "model_calls": 0
+ },
+ "freeze_digest": "4db4625bbd41882597c101017e43ae9ceed9174340c3616f3f3a4a8033956199",
+ "frontier": {
+  "control_choice": "opp-followup",
+  "live_choice": "opp-followup",
+  "observation_dependent": true,
+  "second_round": "acquired-high-r2"
+ },
+ "guard": {
+  "ceiling": 12,
+  "cost_blocked": null,
+  "dispatch_count": 1,
+  "pinned_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+  "refusal_reason": "",
+  "version": "invl02-live-v1"
+ },
+ "ledger": [
+  {
+   "attempt": 1,
+   "cost_blocked": null,
+   "operation_id": "invl02-live-imp-live",
+   "outcome": "text",
+   "response_digest": "549321f51523651873ecd36acf967889e6642c22de55b94b852f1506f28dd003",
+   "stop_reason": "stop",
+   "text_chars": 84,
+   "usage": {
+    "billed": false,
+    "charge_units": 0,
+    "input_tokens": 63,
+    "output_tokens": 597
+   }
+  }
+ ],
+ "live": {
+  "boundaries": 0,
+  "campaign_id": "frontier-live",
+  "construction_calls": 1,
+  "frontier": {
+   "acquisition": {
+    "control_id": "acquired-live-live-r1",
+    "package_digest": "2af6f802758e1681a4c7e0714e5b7d8757e9a4080a0ead4eb64b4526e1e28128",
+    "parent_digest": "26e14402dae6317d5cefca0745328e983ed787972fd32253b79f010baefc860c",
+    "response_digest": "549321f51523651873ecd36acf967889e6642c22de55b94b852f1506f28dd003",
+    "status": "retained"
+   },
+   "active_digest": "eb1e11c31aec209d2a22d9d9bcb492445dd03be173c934982fd6747df7c39d68",
+   "adopted": {
+    "control_id": "acquired-high-r1",
+    "package_digest": "26e14402dae6317d5cefca0745328e983ed787972fd32253b79f010baefc860c",
+    "status": "bound"
+   },
+   "choice_mismatch": "opp-followup",
+   "choice_preserved": "opp-first",
+   "effect": {
+    "observation_id": "obs-opp-rule-dev-4-x3",
+    "status": "observed",
+    "task": "opp-rule-dev-4",
+    "verdict": "observed",
+    "x": 3,
+    "y": [
+     1,
+     0,
+     0,
+     1
+    ]
+   },
+   "effects_settled": 0,
+   "executed_digest": "1251125b12fcc2eb8b198dc7ad9086e1c93559bc8b2b72f9177aa36fdadaa068",
+   "first_candidate": "acquired-high-r1",
+   "first_parent": "eb1e11c31aec209d2a22d9d9bcb492445dd03be173c934982fd6747df7c39d68",
+   "label": "live",
+   "observation_dependent": true,
+   "observations": 1,
+   "second_candidate": "acquired-high-r2",
+   "second_executed": "773875ae4a1aecf08e5f9752c6ec82d75684ca006717c284fd64131bcb1637a2",
+   "second_parent": "26e14402dae6317d5cefca0745328e983ed787972fd32253b79f010baefc860c",
+   "store_path": "reports/evidence/invl02-r123/frontier-live.json"
+  },
+  "model_calls": 1
+ },
+ "revision": {
+  "bound_digest": "2af6f802758e1681a4c7e0714e5b7d8757e9a4080a0ead4eb64b4526e1e28128",
+  "construction_calls": 1,
+  "disposition": "bound",
+  "reason": "",
+  "release_id": "acquired-live-live-r1"
+ },
+ "study": "invl02-live-e0"
+}

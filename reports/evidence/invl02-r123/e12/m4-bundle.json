@@ -1,0 +1,545 @@
+{
+ "accounting": {
+  "billed_units": {
+   "measured": "unknown",
+   "source": "billing:unresolved-provider"
+  },
+  "child_compute_ms": {
+   "measured": "unknown",
+   "source": "unmeasured-offline"
+  },
+  "human_interventions": {
+   "measured": 0,
+   "source": "runtime-attestation:live-driver"
+  },
+  "input_tokens": {
+   "measured": "unknown",
+   "source": "unmeasured-offline"
+  },
+  "model_dispatches": {
+   "measured": 5,
+   "source": "runtime-attestation:live-driver"
+  },
+  "output_tokens": {
+   "measured": "unknown",
+   "source": "unmeasured-offline"
+  },
+  "tool_queries": {
+   "measured": 16,
+   "source": "runtime-attestation:live-driver"
+  },
+  "unresolved_exposure": {
+   "measured": 0,
+   "source": "runtime-attestation:live-driver"
+  }
+ },
+ "assessment": [
+  {
+   "arm": "P0",
+   "episode_id": "a-0",
+   "failed_attempts": 0,
+   "history_tokens": 0,
+   "model_calls": 0,
+   "operations": [
+    "op-a-0"
+   ],
+   "policy_actions": [
+    {
+     "evidence_refs": [],
+     "inputs": {},
+     "kind": "diagnose",
+     "requested_resources": {},
+     "target": "t"
+    }
+   ],
+   "policy_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "policy_steps": 1,
+   "witness_queries": 0
+  }
+ ],
+ "audit": [
+  {
+   "arm": "P0",
+   "episode_id": "t-0",
+   "failed_attempts": 0,
+   "history_tokens": 0,
+   "model_calls": 0,
+   "operations": [
+    "op-t-0"
+   ],
+   "policy_actions": [
+    {
+     "evidence_refs": [],
+     "inputs": {},
+     "kind": "diagnose",
+     "requested_resources": {},
+     "target": "t"
+    }
+   ],
+   "policy_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "policy_steps": 1,
+   "witness_queries": 0
+  }
+ ],
+ "claimed": {
+  "note": "offline recomputed means {\"P0\":0.5,\"P1\":null,\"P2\":null}",
+  "winner": "none"
+ },
+ "construction": {
+  "P1": {
+   "calls": 2,
+   "failed_attempts": 2,
+   "history_tokens": 0,
+   "operations": [
+    "op-construct-P1-init"
+   ],
+   "reason": "Expecting ',' delimiter: line 1 column 23 (char 22)",
+   "status": "unavailable"
+  },
+  "P2": {
+   "calls": 3,
+   "failed_attempts": 3,
+   "history_tokens": 0,
+   "operations": [
+    "op-construct-P2-init"
+   ],
+   "reason": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+   "status": "unavailable"
+  }
+ },
+ "development": [
+  {
+   "arm": "P0",
+   "episode_id": "d-sw-0",
+   "failed_attempts": 0,
+   "history_tokens": 0,
+   "model_calls": 0,
+   "operations": [
+    "op-d-sw-0"
+   ],
+   "policy_actions": [
+    {
+     "evidence_refs": [],
+     "inputs": {},
+     "kind": "diagnose",
+     "requested_resources": {},
+     "target": "t"
+    }
+   ],
+   "policy_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "policy_steps": 1,
+   "witness_queries": 0
+  },
+  {
+   "arm": "P0",
+   "episode_id": "d-sw-1",
+   "failed_attempts": 0,
+   "history_tokens": 0,
+   "model_calls": 0,
+   "operations": [
+    "op-d-sw-1"
+   ],
+   "policy_actions": [
+    {
+     "evidence_refs": [],
+     "inputs": {},
+     "kind": "diagnose",
+     "requested_resources": {},
+     "target": "t"
+    }
+   ],
+   "policy_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "policy_steps": 1,
+   "witness_queries": 0
+  }
+ ],
+ "freeze": {
+  "arms": [
+   "P0",
+   "P1",
+   "P2"
+  ],
+  "assessment": [
+   {
+    "episode_id": "a-0",
+    "use_tasks": [
+     "rule-qual-0011"
+    ]
+   }
+  ],
+  "audit": [
+   {
+    "episode_id": "t-0",
+    "use_tasks": [
+     "rule-audit-0023"
+    ]
+   }
+  ],
+  "caps": {
+   "diagnostic_queries_per_episode": 8,
+   "history_token_ceiling": 10000,
+   "per_episode": {
+    "model_calls": 4,
+    "policy_steps": 6
+   },
+   "study_model_calls": 56
+  },
+  "config": {
+   "abi": "ad01-policy-step-v1",
+   "artifact_kind": "learning-policy",
+   "instruments": [
+    "diagnostic",
+    "construct",
+    "use"
+   ],
+   "model": "grant-pinned"
+  },
+  "construction_allowance": {
+   "P1": {
+    "init": 18,
+    "repair": 2
+   },
+   "P2": {
+    "init": 18,
+    "repair": 2
+   }
+  },
+  "development": [
+   {
+    "episode_id": "d-sw-0",
+    "task_id": "ad01-w0-dev-sw-00"
+   },
+   {
+    "episode_id": "d-sw-1",
+    "task_id": "ad01-w0-dev-sw-01"
+   }
+  ],
+  "freeze_digest": "14d4a6bc216ee2ab5d27ef50445bf9a439394f553ad5817952b3bbbdd9adca79",
+  "method_repertoires": {
+   "P0": {
+    "member_digests": [
+     "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986"
+    ],
+    "members": [
+     {
+      "method_source": "{\"arm\":\"P0\",\"permitted\":\"04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49\",\"predictor\":[{\"const\":0,\"mask\":8,\"pair\":[0,3]},{\"const\":1,\"mask\":5,\"pair\":[1,3]},{\"const\":0,\"mask\":9,\"pair\":[0,3]},{\"const\":1,\"mask\":15,\"pair\":null}]}",
+      "source_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986"
+     }
+    ]
+   },
+   "P1": {
+    "member_digests": [],
+    "members": []
+   },
+   "P2": {
+    "member_digests": [],
+    "members": []
+   }
+  },
+  "metric_rule": {
+   "kind": "mean-quality",
+   "margin": 0.0,
+   "tie": "incumbent"
+  },
+  "order": [
+   "P1",
+   "P2"
+  ],
+  "policy_identities": {
+   "P0": {
+    "artifact": {
+     "abi": "ad01-policy-step-v1",
+     "kind": "learning-policy",
+     "source_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986"
+    },
+    "failed_attempts": 0,
+    "history_tokens": 0,
+    "source": "{\"arm\":\"P0\",\"permitted\":\"04100922c1ac04e5f8c79ae03966b1835b6f1cd34e759282e99ffdf84adc2f49\",\"predictor\":[{\"const\":0,\"mask\":8,\"pair\":[0,3]},{\"const\":1,\"mask\":5,\"pair\":[1,3]},{\"const\":0,\"mask\":9,\"pair\":[0,3]},{\"const\":1,\"mask\":15,\"pair\":null}]}",
+    "source_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+    "status": "available"
+   },
+   "P1": {
+    "failed_attempts": 2,
+    "history_tokens": 0,
+    "reason": "Expecting ',' delimiter: line 1 column 23 (char 22)",
+    "status": "unavailable"
+   },
+   "P2": {
+    "failed_attempts": 3,
+    "history_tokens": 0,
+    "reason": "Expecting property name enclosed in double quotes: line 1 column 2 (char 1)",
+    "status": "unavailable"
+   }
+  },
+  "resource_rule": {
+   "kind": "ceiling",
+   "note": "quality under common ceilings"
+  },
+  "study_id": "invl02-live-e12",
+  "study_root": "invl02-live-e12",
+  "tasks": {
+   "ad01-w0-dev-sw-00": {
+    "expected": "software-baseline"
+   },
+   "ad01-w0-dev-sw-01": {
+    "expected": "software-baseline"
+   },
+   "rule-audit-0023": {
+    "expected": "[53199,26316,2570,38565]"
+   },
+   "rule-qual-0011": {
+    "expected": "[21760,27045,65450,38505]"
+   }
+  }
+ },
+ "operations": {
+  "op-a-0": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-a-0"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-a-0"
+    }
+   ]
+  },
+  "op-construct-P1-init": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-construct-P1-init"
+   },
+   "receipts": [
+    {
+     "outcome": "failure",
+     "receipt_identity": "gw:op-construct-P1-init"
+    }
+   ]
+  },
+  "op-construct-P2-init": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-construct-P2-init"
+   },
+   "receipts": [
+    {
+     "outcome": "failure",
+     "receipt_identity": "gw:op-construct-P2-init"
+    }
+   ]
+  },
+  "op-d-sw-0": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-d-sw-0"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-d-sw-0"
+    }
+   ]
+  },
+  "op-d-sw-1": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-d-sw-1"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-d-sw-1"
+    }
+   ]
+  },
+  "op-t-0": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-t-0"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-t-0"
+    }
+   ]
+  },
+  "op-use-a-P0-rule-qual-0011": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-use-a-P0-rule-qual-0011"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-use-a-P0-rule-qual-0011"
+    }
+   ]
+  },
+  "op-use-a-P1-rule-qual-0011": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-use-a-P1-rule-qual-0011"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-use-a-P1-rule-qual-0011"
+    }
+   ]
+  },
+  "op-use-a-P2-rule-qual-0011": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-use-a-P2-rule-qual-0011"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-use-a-P2-rule-qual-0011"
+    }
+   ]
+  },
+  "op-use-t-P0-rule-audit-0023": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-use-t-P0-rule-audit-0023"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-use-t-P0-rule-audit-0023"
+    }
+   ]
+  },
+  "op-use-t-P1-rule-audit-0023": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-use-t-P1-rule-audit-0023"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-use-t-P1-rule-audit-0023"
+    }
+   ]
+  },
+  "op-use-t-P2-rule-audit-0023": {
+   "invocation": {
+    "attempt": 1,
+    "launcher": "live-driver",
+    "operation_id": "op-use-t-P2-rule-audit-0023"
+   },
+   "receipts": [
+    {
+     "outcome": "success",
+     "receipt_identity": "gw:op-use-t-P2-rule-audit-0023"
+    }
+   ]
+  }
+ },
+ "use_records": [
+  {
+   "arm": "P0",
+   "claimed_verdict": "preserved",
+   "costs": {
+    "witness_queries": 8
+   },
+   "executed": "candidate",
+   "executed_source_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "observed": "[21760,27045,65450,38505]",
+   "operation_ids": [
+    "op-use-a-P0-rule-qual-0011"
+   ],
+   "policy_artifact_kind": "learning-policy",
+   "policy_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "record_id": "a-P0-rule-qual-0011",
+   "task_id": "rule-qual-0011"
+  },
+  {
+   "arm": "P0",
+   "claimed_verdict": "failed",
+   "costs": {
+    "witness_queries": 8
+   },
+   "executed": "candidate",
+   "executed_source_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "observed": "[65535,26316,2570,38565]",
+   "operation_ids": [
+    "op-use-t-P0-rule-audit-0023"
+   ],
+   "policy_artifact_kind": "learning-policy",
+   "policy_digest": "139f026a205a2254cdedffbae616c80b6edab054c6357d5dc2a2b9cad4c09986",
+   "record_id": "t-P0-rule-audit-0023",
+   "task_id": "rule-audit-0023"
+  },
+  {
+   "arm": "P1",
+   "claimed_verdict": "failed",
+   "costs": {
+    "witness_queries": 0
+   },
+   "executed": "incumbent",
+   "observed": "baseline",
+   "operation_ids": [
+    "op-use-a-P1-rule-qual-0011"
+   ],
+   "record_id": "a-P1-rule-qual-0011",
+   "task_id": "rule-qual-0011"
+  },
+  {
+   "arm": "P1",
+   "claimed_verdict": "failed",
+   "costs": {
+    "witness_queries": 0
+   },
+   "executed": "incumbent",
+   "observed": "baseline",
+   "operation_ids": [
+    "op-use-t-P1-rule-audit-0023"
+   ],
+   "record_id": "t-P1-rule-audit-0023",
+   "task_id": "rule-audit-0023"
+  },
+  {
+   "arm": "P2",
+   "claimed_verdict": "failed",
+   "costs": {
+    "witness_queries": 0
+   },
+   "executed": "incumbent",
+   "observed": "baseline",
+   "operation_ids": [
+    "op-use-a-P2-rule-qual-0011"
+   ],
+   "record_id": "a-P2-rule-qual-0011",
+   "task_id": "rule-qual-0011"
+  },
+  {
+   "arm": "P2",
+   "claimed_verdict": "failed",
+   "costs": {
+    "witness_queries": 0
+   },
+   "executed": "incumbent",
+   "observed": "baseline",
+   "operation_ids": [
+    "op-use-t-P2-rule-audit-0023"
+   ],
+   "record_id": "t-P2-rule-audit-0023",
+   "task_id": "rule-audit-0023"
+  }
+ ]
+}

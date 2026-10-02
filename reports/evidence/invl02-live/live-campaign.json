@@ -1,0 +1,54 @@
+{
+ "arm": "I",
+ "boundaries": [
+  {
+   "decision": {
+    "basis_references": [],
+    "charter": "smaller valid explanatory examples",
+    "next_action": {
+     "diagnostic": "software",
+     "kind": "development",
+     "max_queries": 15,
+     "task_id": "ad01-w0-dev-sw-00"
+    },
+    "question": "policy step construct_method on ad01-w0-dev-sw-00",
+    "requested_resources": {
+     "queries": 16
+    },
+    "unknown": "policy step construct_method on ad01-w0-dev-sw-00"
+   },
+   "decision_id": "att-ad01-w0-I-72-0",
+   "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-00",
+   "seq": 0,
+   "spend": 1,
+   "task_id": "ad01-w0-dev-sw-00"
+  }
+ ],
+ "campaign_id": "ad01-w0-I-72",
+ "charter": "smaller valid explanatory examples",
+ "construction_calls": 1,
+ "dev_episodes": 1,
+ "episodes": [
+  {
+   "construction_calls": 1,
+   "disposition": "rejected",
+   "initial_size": 14,
+   "lineage": [
+    {
+     "authored": false,
+     "capability_id": "acquired-pending"
+    }
+   ],
+   "queries": 0,
+   "reason": "construction failed: construction call ad01-ad01-w0-I-72-b0-ad01-w0-dev-sw-00-construct-l1-init left no settled response",
+   "task_id": "ad01-w0-dev-sw-00"
+  }
+ ],
+ "model_calls": 1,
+ "queries": 1,
+ "stop": {
+  "reason": "learner stop"
+ },
+ "study_root": "invl02-live-e0",
+ "world": 0
+}

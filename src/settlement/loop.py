@@ -148,24 +148,58 @@ def _operation_row(dsn: str, operation_id: str) -> dict[str, Any] | None:
     return _broker.read_operation(dsn, operation_id)
 
 
+def _nonnegative_int(value: Any) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
+
+
+def _billing_from_usage(usage: dict[str, Any]) -> tuple[bool | None, int | None]:
+    billed = usage.get("billed")
+    if billed is False:
+        return False, 0
+    if billed is not True:
+        return None, None
+    charge = _nonnegative_int(usage.get("charge_units"))
+    return (True, charge) if charge is not None else (None, None)
+
+
+def _token_from_usage(usage: dict[str, Any], name: str) -> int | None:
+    return _nonnegative_int(usage.get(name))
+
+
 def read_measured_costs(dsn: str, operation_id: str) -> dict[str, Any]:
     row = _operation_row(dsn, operation_id)
     receipts = store.operation_receipts(dsn, operation_id)
-    measured = 0
-    unknown: list[str] = []
-    for receipt in receipts:
-        content = dict(receipt.get("content") or {})
-        usage = dict(content.get("usage") or {})
-        if receipt.get("outcome") in ("success", "failure") and usage.get("billed"):
-            try:
-                measured += int(usage.get("charge_units", 0) or 0)
-            except (TypeError, ValueError):
-                unknown.append(str(receipt.get("receipt_identity")))
-        elif receipt.get("outcome") == "unknown":
-            unknown.append(str(receipt.get("receipt_identity")))
+    effect = str(dict((row or {}).get("payload") or {}).get("effect", ""))
+    if row is not None and effect != "model-inference":
+        return {"operation_id": operation_id,
+                "dispatch_state": row.get("dispatch_state", "missing"),
+                "measured": 0, "provider_charge_units": None,
+                "billed": False, "tokens": {"input": 0, "output": 0},
+                "unknown": [],
+                "receipts": [str(r.get("receipt_identity")) for r in receipts]}
+    terminal = receipts[-1] if receipts else None
+    content = dict((terminal or {}).get("content") or {})
+    raw_usage = content.get("usage")
+    usage = dict(raw_usage) if isinstance(raw_usage, dict) else {}
+    if terminal is None:
+        billing, charge = None, None
+        unknown: list[str] = []
+    else:
+        billing, charge = _billing_from_usage(usage)
+        unknown = ([str(terminal.get("receipt_identity"))]
+                   if billing is None or terminal.get("outcome") not in
+                   ("success", "failure") else [])
+    tokens = {name: _token_from_usage(usage, field)
+              for name, field in (("input", "input_tokens"),
+                                  ("output", "output_tokens"))}
     return {"operation_id": operation_id,
             "dispatch_state": (row or {}).get("dispatch_state", "missing"),
-            "measured": measured,
+            "measured": charge or 0,
+            "provider_charge_units": charge,
+            "billed": billing,
+            "tokens": tokens,
             "unknown": unknown,
             "receipts": [str(r.get("receipt_identity")) for r in receipts]}
 
@@ -442,35 +476,39 @@ def run_boundary(dsn: str, *, study_root: str, allocation_id: str,
         transition.journal(dsn, study_root)
         return transition, own
     decision_key = materialized["packet_id"]
-    if own.last_failure is None:
-        prior = _authority.correction_state(
-            dsn, study_root, decision_key)["failure"]
-        if prior:
-            own.last_failure = dict(prior)
+    prior = _authority.correction_state(dsn, study_root, decision_key)
+    if prior["failure"]:
+        own.last_failure = dict(prior["failure"])
     corrections: list[dict[str, Any]] = []
-    raw = propose(materialized, own)
-    while True:
-        checked = validate_action(raw if isinstance(raw, dict) else {})
-        if checked["ok"]:
-            break
-        failure = {"reason": checked["reason"], "decision": decision_key}
-        if isinstance(raw, dict) and raw.get("target"):
-            failure["target"] = raw["target"]
-        corrections.append({"error": checked["reason"]})
-        if not _spend_correction(dsn, study_root, decision_key, failure,
-                                 own, max_corrections):
-            transition = ExperienceTransition(
-                packet_id=materialized["packet_id"],
-                packet_digest=materialized["packet_digest"],
-                proposal={"raw": raw, "error": checked["reason"],
-                          "corrections": corrections},
-                admission="refused:malformed-action",
-                continuation={"pending": list(own.pending),
-                              "correction": "correction-budget-exhausted"})
-            transition.journal(dsn, study_root)
-            return transition, own
-        own.last_failure = failure
+    if prior["failure"] and prior["used"] >= max_corrections:
+        raw = None
+        checked = {"ok": False, "reason": own.last_failure["reason"]}
+    else:
         raw = propose(materialized, own)
+        while True:
+            checked = validate_action(raw if isinstance(raw, dict) else {})
+            if checked["ok"]:
+                break
+            failure = {"reason": checked["reason"], "decision": decision_key}
+            if isinstance(raw, dict) and raw.get("target"):
+                failure["target"] = raw["target"]
+            corrections.append({"error": checked["reason"]})
+            if not _spend_correction(dsn, study_root, decision_key, failure,
+                                     own, max_corrections):
+                break
+            own.last_failure = failure
+            raw = propose(materialized, own)
+    if not checked["ok"]:
+        transition = ExperienceTransition(
+            packet_id=materialized["packet_id"],
+            packet_digest=materialized["packet_digest"],
+            proposal={"raw": raw, "error": checked["reason"],
+                      "corrections": corrections},
+            admission="refused:malformed-action",
+            continuation={"pending": list(own.pending),
+                          "correction": "correction-budget-exhausted"})
+        transition.journal(dsn, study_root)
+        return transition, own
     action = {"target": raw["target"], "instrument": raw["instrument"],
               "inputs": dict(raw.get("inputs", {})), "dependencies": list(raw.get("dependencies", [])),
               "requested": dict(raw.get("requested", {})),
@@ -518,7 +556,10 @@ def run_boundary(dsn: str, *, study_root: str, allocation_id: str,
         admission="admitted",
         operations=[operation_id],
         results=[str(r.get("receipt_identity")) for r in receipts],
-        costs_measured={"measured": costs["measured"]},
+        costs_measured={"measured": costs["measured"],
+                        "provider_charge_units": costs["provider_charge_units"],
+                        "input_tokens": costs["tokens"]["input"],
+                        "output_tokens": costs["tokens"]["output"]},
         costs_unknown=list(costs["unknown"]),
         continuation={"pending": list(pending),
                       "observations": observations,

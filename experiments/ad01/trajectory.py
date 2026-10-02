@@ -465,10 +465,20 @@ def _run_boundary(task_id: str, capability_id: str, caps: dict,
             from . import agenda_policy as _policy
             proposer = propose if propose is not None \
                 else _policy.scaffolding_proposer(task_id, seed_obs)
+            dsn = (journal or {}).get("dsn")
+            cid = (journal or {}).get("cid") or ""
+            if dsn and cid:
+                def admit(proposal, supplied, charter, boundary):
+                    return admit_investigation(
+                        proposal, supplied, charter, boundary,
+                        durable_observations=_durable_observations(dsn, cid),
+                        trusted_observation_ids=(seed_obs.get(
+                            "observation_id"),))
+            else:
+                admit = admit_investigation
             consumer = _policy.DecisionConsumer(
-                proposer=proposer, admit=admit_investigation,
-                dsn=(journal or {}).get("dsn"),
-                cid=(journal or {}).get("cid") or "",
+                proposer=proposer, admit=admit,
+                dsn=dsn, cid=cid,
                 policy_version=(
                     _policy.MODEL_POLICY_VERSION
                     if propose is not None
@@ -734,7 +744,8 @@ def _persist_policy_refusal(dsn: str, proposal_id: str, outcome: str,
 def _construct_policy_revision(investigation: dict, seen: dict, seed_obs: dict,
                                construction: dict | None, state: dict | None) -> tuple:
     import hashlib
-    from . import construct, policy_assess, policy_step, records, selection
+    from . import (assessment_profile, construct, policy_assess, policy_step,
+                   records, selection)
     target = investigation["next_action"]["task_id"]
     request = investigation["revision_proposal"]
     episode = {"kind": "policy_revision", "task_id": target, "queries": 0,
@@ -808,7 +819,7 @@ def _construct_policy_revision(investigation: dict, seen: dict, seed_obs: dict,
             incumbent_record = dict(incumbent)
             incumbent_digest = hashlib.sha256(
                 incumbent_source.encode("utf-8")).hexdigest()
-            assessment = policy_assess.assess_policy(
+            assessment = assessment_profile.assess_policy(
                 construction["dsn"], proposal_id=proposal["proposal_id"],
                 candidate_source=candidate_source,
                 candidate_digest=freeze["candidate_digest"],
@@ -1498,8 +1509,8 @@ def dev_episode(task_id: str, capability_id: str, max_queries: int = 16,
         refusal = _refuse_probe(max_queries)
         return {"disposition": "no-candidate",
                 "fallback": "incumbent",
-                "fallback_reason": "%s: %s" % (refusal.reason,
-                                               refusal.detail),
+                "fallback_reason": refusal.reason,
+                "fallback_detail": refusal.detail,
                 "task_id": task_id, "lineage": [],
                 "initial_size": initial, "queries": 0}
     if result is None:
@@ -1634,13 +1645,38 @@ def _target_refusal(target: object, *, world: int, arm: str,
     return None
 
 
+def _durable_observations(dsn: str, cid: str) -> dict:
+    settled, _pending = _read_campaign(dsn, cid)
+    return {row["observation"].get("observation_id"): row["observation"]
+            for row in settled.values()
+            if isinstance(row.get("observation"), dict)
+            and row["observation"].get("observation_id")}
+
+
 def admit_investigation(proposal: dict, experience: dict,
-                        charter: dict, boundary: dict | None = None) -> dict:
+                        charter: dict, boundary: dict | None = None,
+                        *, durable_observations: dict | None = None,
+                        trusted_observation_ids=()) -> dict:
     from .learner import LearnerRefused, validate_proposal
     try:
         validate_proposal(proposal)
     except LearnerRefused as exc:
         return {"decision": "refused", "reason": str(exc)}
+    if durable_observations is not None:
+        trusted = set(trusted_observation_ids)
+        forged = []
+        for observation in experience.get("observations") or []:
+            observation_id = observation.get("observation_id") \
+                if isinstance(observation, dict) else None
+            if observation_id in trusted:
+                continue
+            if not observation_id or durable_observations.get(
+                    observation_id) != observation:
+                forged.append(str(observation_id or "malformed"))
+        if forged:
+            return {"decision": "refused",
+                    "reason": "forged experience observations: %s"
+                              % ", ".join(sorted(forged))}
     refs = list(proposal.get("basis_references") or [])
     by_id = {o.get("observation_id"): o
              for o in experience.get("observations") or []}
