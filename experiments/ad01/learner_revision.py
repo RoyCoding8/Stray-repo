@@ -50,11 +50,27 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from experiments.ad01 import boolean_rule as _rules
+from experiments.ad01 import channel_controls as _controls
 from experiments.ad01 import frontier as _frontier
 from experiments.ad01 import improve_channel as channel
 from experiments.ad01 import method_exec as _method_exec
 
 RUN_VERSION = "invl02-e4-run-v1"
+
+# The reviewer's own revision, the no-op and the two disconnects are written
+# in `channel_controls`, which the reviewer owns. They were written here,
+# which meant the apparatus tested itself from its own table and one of the
+# four was unreachable through the channel's declared control entry. The
+# registry is re-exported so the run's own arm loop and the tests that name
+# `lr.build_control` keep one source of truth rather than two that can drift.
+CONTROL_BUILDERS = _controls.CONTROL_BUILDERS
+AUTHORED = _controls.AUTHORED
+REVIEWER_X = _controls.REVIEWER_X
+DISCONNECT_X = _controls.DISCONNECT_X
+
+
+def build_control(role: str) -> dict:
+    return _controls.build_control(role)
 
 
 def _route_execution_version(route: dict) -> str:
@@ -121,7 +137,6 @@ FROZEN = {
 # apart on purpose. `live_attributable` re-checks the route and the model on
 # the dispatch record before any report may claim the bytes are live.
 ACQUIRED = "model-acquired"
-AUTHORED = "reviewer-authored"
 NO_REPLY = "no-reply"
 UNUSABLE = "unusable-reply"
 
@@ -556,216 +571,6 @@ def acquire(store, source: str, views: list, *, arm: str = "revision",
 def _refused(reason: str, detail: str) -> dict:
     return {"eligibility": reason, "reason": detail,
             "decision": channel.DECISION}
-
-
-# --- the reviewer's own revision -------------------------------------------
-#
-# Every control here is the incumbent's own step source with one integer
-# changed and one view read added, so a control differs from the arm it is
-# compared with at exactly the decision under study and nowhere else.
-#
-# The view read is not decoration. `improve_channel._x_is_data_dependent`
-# refuses a revision whose probed input cannot vary with what the learner has
-# seen, and it reads the names the view itself carries rather than following
-# an indirection, so each control's `x` names a value derived from
-# `view["experience"]` directly. Every control is therefore a genuine
-# selector: it answers a different question of the same learner, and the
-# rule it applies is stated in the control's own record.
-
-
-REVIEWER_X = 8
-REVIEWER_WHY = (
-    "The reviewer read `reachable_descendant_means` in the qualified "
-    "headroom artifact, where %d is the highest of the sixteen inputs the "
-    "instrument accepts, and wrote a selector that names that input unless "
-    "the learner has already spent it. The effect is known before the arm is "
-    "run: on the first step the view carries no observation, so the control "
-    "names %d, the descendant it selects differs from the incumbent's, and "
-    "the size and direction of that difference are properties of the "
-    "substrate rather than of the reviewer." % (REVIEWER_X, REVIEWER_X))
-
-
-def _selector(imp_source: str, preferred: str, fallback: str) -> str:
-    """Bind the probed input to a value read out of the learner's experience.
-
-    The rule is one line and is the same shape for all three controls: name
-    the preferred input unless the learner has already probed it, and name
-    the fallback when it has. Only the two integers differ between them.
-
-    The view read is written at the point of use rather than bound to a name
-    on the line above. `improve_channel._probe_x_expression` resolves an
-    `x` through module-level assignments and then asks whether the resulting
-    expression reads the view, so an intermediate name turns a genuine
-    selector into a refusal. That is a property of the rule and the controls
-    are written to satisfy it rather than to work around it.
-    """
-    return imp_source.replace(
-        '"x": %s' % preferred,
-        '"x": %s if %s not in set(o.get("x") for o in view["experience"])'
-        ' else %s' % (preferred, preferred, fallback), 1)
-
-
-def reviewer_revision() -> dict:
-    """A revision a human wrote, with its effect stated in advance.
-
-    It exists to prove the apparatus can carry a known effect through to a
-    descendant measurement. It is labeled `reviewer-authored` and never
-    enters an acquired arm, and the label travels in the evidence rather
-    than in a comment, so a reader cannot mistake it for a model reply.
-    """
-    return {
-        "label": AUTHORED,
-        "control_id": "reviewer-authored-x%d" % REVIEWER_X,
-        "source": _selector(
-            channel._revision_source(str(REVIEWER_X)), str(REVIEWER_X), "3"),
-        "known_effect": REVIEWER_WHY,
-        "expects_changed_decision": True,
-        "x_under_incumbent": 3,
-        "x_under_revision": REVIEWER_X,
-    }
-
-
-def no_op_revision() -> dict:
-    """The control that must change nothing, and the only one that may not.
-
-    It names the incumbent's own input through the same view read the
-    known-effect control uses, so the two differ in the integers they name
-    and in nothing else. A revision that returned the incumbent's bytes
-    verbatim would be refused by the study's identity check before it could
-    be measured, which is correct for an acquired arm and useless for a
-    control whose whole purpose is to arrive at the measurement.
-    """
-    return {
-        "label": AUTHORED,
-        "control_id": "no-op-incumbent-x3",
-        "source": _selector(channel._revision_source("3"), "3", "8"),
-        "known_effect": (
-            "The incumbent's own input, 3, selected by the same view read "
-            "the known-effect control uses. On the first step nothing has "
-            "been spent, so it names 3, the descendant it builds is the "
-            "incumbent's descendant, and the paired difference is exactly "
-            "zero by construction rather than by a measurement that happened "
-            "to be small."),
-        "expects_changed_decision": False,
-        "x_under_incumbent": 3,
-        "x_under_revision": 3,
-    }
-
-
-def disconnect_revision() -> dict:
-    """A revision that reaches the boundary and cannot change anything.
-
-    The input it names is outside the instrument's own range, so the
-    instrument refuses it, the probe returns nothing, and the round has no
-    observation to turn into a descendant. This is the failure a no-op
-    cannot demonstrate: a no-op is wired correctly and decides correctly and
-    correctly chooses the same thing, while this is a decision that is spent
-    and arrives at nothing. Reporting both as a flat descendant would hide
-    the difference between a learner that learned and one that could not ask.
-
-    It is refused at the action validator, before the instrument sees it,
-    which is the earliest point at which the range of an input is known. The
-    run records the refusal rather than an exception, so the disconnect is a
-    recorded outcome of a real attempt.
-    """
-    out_of_range = _rules.N_STATES
-    return {
-        "label": AUTHORED,
-        "control_id": "disconnect-x%d" % out_of_range,
-        "source": _selector(
-            channel._revision_source(str(out_of_range)), str(out_of_range),
-            "3"),
-        "known_effect": (
-            "The decision is reached and the input is named, but the "
-            "instrument's own action validator refuses input %d because the "
-            "task exposes only inputs 0..%d. The probe returns no "
-            "observation, no descendant is built and the round ends without "
-            "a candidate. The difference from a no-op is the point: a no-op "
-            "learns what the incumbent learns, and this learns nothing at "
-            "all, and both would score flat under an evaluator that looked "
-            "only at the number." % (out_of_range, _rules.N_STATES - 1)),
-        "expects_changed_decision": True,
-        "x_under_incumbent": 3,
-        "x_under_revision": out_of_range,
-        "refused_by_instrument": True,
-    }
-
-
-# The C15 shape, kept under its own name. `disconnect` above is a decision
-# the instrument refuses; this is a decision the instrument accepts and that
-# still changes nothing, which is the shape that actually shipped once
-# already: bytes that differ, behaviour that does not.
-DISCONNECT_X = 7
-_C15_ANCHOR = '''    if step == 0:
-        inner = {"kind": "probe", "inputs": {"x": 3},
-                 "requested_resources": {"queries": 1, "steps": 1}}
-        state = {"step": 1}'''
-_C15_REPLACEMENT = '''    if step == 0:
-        inner = {"kind": "probe",
-                 "inputs": {"x": %d if view["experience"] else 3},
-                 "requested_resources": {"queries": 1, "steps": 1}}
-        state = {"step": 1}''' % DISCONNECT_X
-
-
-def disconnect_bytes_revision() -> dict:
-    """Bytes that differ, and a decision that does not.
-
-    The other two controls each fail loudly. This one passes every gate and
-    still does nothing, because the only branch that would change the probed
-    input is the branch the learner is never on: `view["experience"]` is
-    empty on the step where the probe is spent, so the `else 3` arm is the
-    one that runs and input 3 is the incumbent's own input.
-
-    It is admitted as eligible. `is_constant_x` passes because the bytes are
-    not the incumbent verbatim, and the channel's data-dependence rule passes
-    because the `x` expression does read the view. Both gates are right and
-    both are defeated by a branch no learner takes, which is the whole reason
-    this control is here: an eligibility rule cannot tell a revision that
-    chooses from one that merely contains a choice.
-
-    The integer is the ceiling's argmax on the audit cohort, so a reader can
-    see the rule is not trivial - the same integer, reached, would improve
-    the descendant. The control is the unreachability, not the integer.
-    """
-    source = channel.IMPROVE_LOW_SOURCE
-    if _C15_ANCHOR not in source:
-        raise _frontier.Refused("the incumbent step source no longer has the"
-                                " probe branch this control rewrites")
-    return {
-        "label": AUTHORED,
-        "control_id": "disconnect-bytes-x%d-unreachable" % DISCONNECT_X,
-        "source": source.replace(_C15_ANCHOR, _C15_REPLACEMENT, 1),
-        "known_effect": (
-            "The bytes differ from the incumbent and are admitted as "
-            "eligible, because the probed input is a view read and so is "
-            "not a constant. The decision does not change: on the step that "
-            "spends the probe, `view[\"experience\"]` is empty, so the "
-            "expression takes its `else 3` arm and the learner probes the "
-            "incumbent's own input. The descendant is therefore the "
-            "incumbent's descendant and the paired difference is exactly "
-            "zero, while the source digest is not the incumbent's digest. "
-            "This is the C15 shape: different bytes, same behaviour."),
-        "expects_changed_decision": False,
-        "x_under_incumbent": 3,
-        "x_under_revision": 3,
-        "decoy_x": DISCONNECT_X,
-        "shaped_like": "C15",
-    }
-
-
-CONTROL_BUILDERS = {
-    "known-effect": reviewer_revision,
-    "no-op": no_op_revision,
-    "disconnect": disconnect_revision,
-    "disconnect-bytes": disconnect_bytes_revision,
-}
-
-
-def build_control(role: str) -> dict:
-    try:
-        return CONTROL_BUILDERS[role]()
-    except KeyError:
-        raise _frontier.Refused("unknown E4 control role %r" % (role,))
 
 
 # --- driving one arm --------------------------------------------------------

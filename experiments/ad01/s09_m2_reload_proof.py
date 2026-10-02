@@ -8,12 +8,19 @@ subprocess with an empty environment contribution: it reads only committed
 bytes under `reports/evidence/`, rebuilds the method and the task from those
 bytes, and re-executes through the real bounded executor.
 
-It does not dispatch. `method_exec.run_member_out_of_process` is called with no
-`dsn`, which is the branch that runs the local launcher and reads the receipt
-back from it rather than going through `broker.dispatch_operation`. No
-`authority.admit_study_call`, no `broker.dispatch_operation`, no database, and
-no gateway. Line 53 also requires stores and namespaces separate from live, and
-opening none is the strictest way to satisfy that.
+It used to call the executor with no `dsn` and describe that as "no
+dispatch". That branch was removed, because a source file being local is not
+authority, and a diagnostic path that wants to execute policy source without
+a store is not a special case. So the reload now executes under real
+authority in a disposable database of its own, created and dropped around
+the subprocess. Line 53 asks for stores separate from live; a disposable
+store that never existed before this proof and is gone after it satisfies
+that as strictly as opening none did, and it satisfies it honestly rather
+than by declining to run the bytes at all.
+
+No `authority.admit_study_call`, no `broker.dispatch_operation` outside the
+executor, no gateway. Line 53 also requires stores and namespaces separate
+from live.
 
 Every figure is re-derived from the reloaded bytes and compared against the
 value the live run committed. A mismatch is a failure, not a note.
@@ -25,10 +32,12 @@ and exits non-zero if any check fails.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -56,7 +65,10 @@ for case in spec["cases"]:
     task = worlds.load_task(worlds.FROZEN_DIR, case["task_id"])
     entry = method_exec.verify_member(member)
     result = method_exec.run_member_out_of_process(
-        member, task, max_queries=case["max_queries"])
+        member, task, max_queries=case["max_queries"],
+        dsn=spec["authority"]["dsn"],
+        allocation_id=spec["authority"]["allocation_id"],
+        operation_id="reload-proof-%%s" %% case["capability_id"])
     candidate = result["candidate"]
     initial, final = reduce_size(task, candidate)
     report = (checkers.check_software(task, candidate)
@@ -124,12 +136,15 @@ def cases_from_committed() -> dict:
     return {"cases": cases}
 
 
-def run_fresh_process(spec_path: Path) -> dict:
+def run_fresh_process(spec_path: Path, authority: dict) -> dict:
     """Run the reload in an interpreter that shares nothing with this one.
 
     The subprocess gets a scrubbed environment: no inherited study or gateway
     variables, and `PYTHONPATH` set explicitly rather than appended to, so the
-    child resolves the repository from its own arguments.
+    child resolves the repository from its own arguments. The store and
+    allocation it executes under are named in the spec file rather than in
+    the environment, so the child gets exactly the authority this proof
+    chose and nothing it inherited.
     """
     env = {key: value for key, value in os.environ.items()
            if not key.startswith(("SETTLEMENT_", "S09_", "OPENROUTER_",
@@ -144,15 +159,42 @@ def run_fresh_process(spec_path: Path) -> dict:
     return json.loads(proc.stdout)
 
 
+@contextlib.contextmanager
+def reload_authority():
+    """A disposable store and allocation for the reload, and nothing else.
+
+    Created before the subprocess runs and dropped after, so the proof's
+    executions are durable and attributed while they run and leave nothing
+    behind afterwards. It is separate from any live store by construction:
+    it is created here, for this proof, and never existed before it.
+    """
+    from experiments.ad01 import s09_run_isolation as isolation
+    from settlement import authority as _authority
+
+    token = "m2-reload-proof-%s" % uuid.uuid4().hex[:8]
+    database = isolation.create_disposable_db(token,
+                                              admin_dsn=isolation.admin_dsn())
+    try:
+        handle = _authority.authorize_study(
+            database.dsn, isolation.study_root_for(token), authorized=100000,
+            allocation_id="m2-reload-proof-%s" % token)
+        yield {"dsn": database.dsn, "allocation_id": handle.allocation_id}
+    finally:
+        isolation.drop_disposable_db(database,
+                                     admin_dsn=isolation.admin_dsn())
+
+
 def build() -> dict:
     spec = cases_from_committed()
     if not spec["cases"]:
         raise SystemExit("no executed use record to reload")
     spec_path = EVIDENCE / "inv_r1_m2_join" / "reload_spec.json"
     spec_path.parent.mkdir(parents=True, exist_ok=True)
-    spec_path.write_text(json.dumps(spec, indent=1, sort_keys=True) + "\n",
-                         encoding="utf-8")
-    reloaded = run_fresh_process(spec_path)
+    with reload_authority() as authority:
+        spec = {**spec, "authority": authority}
+        spec_path.write_text(json.dumps(spec, indent=1, sort_keys=True) + "\n",
+                             encoding="utf-8")
+        reloaded = run_fresh_process(spec_path, authority)
     checks = []
     for case, got in zip(spec["cases"], reloaded["reloaded"]):
         for field, committed in case["committed"].items():
@@ -182,11 +224,12 @@ def build() -> dict:
             "inherits_no_gateway_or_study_variables": True,
             "reads_only_committed_bytes": True,
         },
-        "no_dispatch": {
-            "dsn_passed": False,
+        "authority": {
+            "dsn_passed": True,
+            "store": "disposable database created for this proof and"
+                     " dropped after it",
+            "separate_from_live_store": True,
             "authority_admit_study_call_called": False,
-            "broker_dispatch_operation_called": False,
-            "database_opened": False,
             "gateway_contacted": False,
         },
         "cases": len(spec["cases"]),

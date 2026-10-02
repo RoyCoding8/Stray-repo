@@ -1548,7 +1548,8 @@ def assess_frozen(dsn: str, *, proposal_id: str, tasks: list,
             raise ValueError("assessment request differs from stored attempt")
         return _verdict_view(stored)
     verdict = _execute_assessment(
-        proposal_id, list(tasks), baseline, freeze)
+        proposal_id, list(tasks), baseline, freeze, dsn=dsn,
+        allocation_id=str(proposal.get("allocation_id") or "") or None)
     record = {**verdict, "candidate_digest": digest,
               "scope": dict(proposal.get("scope") or {}),
               "evaluator_version": evaluator_version,
@@ -1573,18 +1574,33 @@ def assess_frozen(dsn: str, *, proposal_id: str, tasks: list,
 
 
 def _execute_assessment(proposal_id: str, tasks: list,
-                        baseline: str, freeze: dict) -> dict:
+                        baseline: str, freeze: dict, *,
+                        dsn: str, allocation_id: str | None) -> dict:
+    """Run the frozen bytes over the panel, under this proposal's authority.
+
+    The proposal already carries the allocation it was opened against, so
+    the executions are the proposal's own operations rather than a second
+    unnamed run of the same bytes. Without an allocation there is nothing
+    to execute under and the assessment records that, rather than treating
+    a missing authority as a failing method.
+    """
     from . import method_exec, worlds
     source = freeze.get("source", "")
     entry = freeze.get("entry", "")
+    attempt_id = assessment_attempt_id(
+        proposal_id, freeze.get("candidate_digest", ""))
     try:
         method_exec.verify_member(
             {"method_source": source, "entry": entry})
     except method_exec.MethodExecutionError as exc:
         return {"proposal_id": proposal_id, "outcome": "reject",
                 "reason": "frozen bytes invalid: %s" % exc,
-                "attempt_id": assessment_attempt_id(
-                    proposal_id, freeze.get("candidate_digest", ""))}
+                "attempt_id": attempt_id}
+    if not allocation_id:
+        return {"proposal_id": proposal_id, "outcome": "reject",
+                "reason": ("refused: assessment execution needs the"
+                           " proposal's allocation"),
+                "attempt_id": attempt_id}
     wins = 0
     checked = 0
     queries = 0
@@ -1597,14 +1613,14 @@ def _execute_assessment(proposal_id: str, tasks: list,
                   "authored": False}
         try:
             result = method_exec.run_member_out_of_process(
-                member, task, max_queries=4)
+                member, task, max_queries=4, dsn=dsn,
+                allocation_id=allocation_id,
+                operation_id="%s-%s" % (attempt_id, task_id))
         except method_exec.MethodExecutionError as exc:
             return {"proposal_id": proposal_id, "outcome": "reject",
                     "reason": "execution failed on %s: %s" % (
                         task_id, exc),
-                    "attempt_id": assessment_attempt_id(
-                        proposal_id, freeze.get(
-                            "candidate_digest", ""))}
+                    "attempt_id": attempt_id}
         from .trajectory import _check, _size
         report = _check(task, result["candidate"])
         queries += int(result.get("queries", 0))
@@ -1612,9 +1628,7 @@ def _execute_assessment(proposal_id: str, tasks: list,
             return {"proposal_id": proposal_id, "outcome": "reject",
                     "reason": "not preserved on %s: %s" % (
                         task_id, report.get("reason", "")),
-                    "attempt_id": assessment_attempt_id(
-                        proposal_id, freeze.get(
-                            "candidate_digest", "")),
+                    "attempt_id": attempt_id,
                     "queries": queries}
         checked += 1
         _, final = _size(task, result["candidate"])

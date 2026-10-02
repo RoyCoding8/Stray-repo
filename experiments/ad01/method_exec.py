@@ -22,7 +22,6 @@ import hashlib
 import json
 import socket
 import sys
-import tempfile
 import threading
 from contextlib import nullcontext
 from pathlib import Path
@@ -1118,9 +1117,9 @@ def run_member_out_of_process(member: dict, task: dict, *,
                               operation_id: str | None = None) -> dict:
     entry = verify_member(member)
     verify_child_contract()
-    if dsn is not None and (not allocation_id or not operation_id):
-        raise MethodExecutionError("refused: execution needs explicit authority and identity")
-    operation_id = operation_id or "member"
+    if not dsn or not allocation_id or not operation_id:
+        raise MethodExecutionError(
+            "refused: execution needs explicit authority and identity")
     requested_digest = _source_digest(member["method_source"])
     argc = next(len(n.args.args) for n in ast.parse(
         member["method_source"]).body
@@ -1128,26 +1127,23 @@ def run_member_out_of_process(member: dict, task: dict, *,
     oracle_type = checkers.GraphOracle if task.get("family") == "graph" else checkers.SoftwareOracle
     oracle = oracle_type(task, max_queries=max_queries)
     root = str(Path(__file__).resolve().parent.parent.parent)
-    generation = None
-    if dsn is not None:
-        from settlement import db
-        with db.connect(dsn) as conn:
-            allocation = conn.execute("SELECT created_at FROM allocations WHERE id = %s",
-                                      (allocation_id,)).fetchone()
-        if allocation is None:
-            raise MethodExecutionError("refused: unknown allocation")
-        generation = str(allocation[0])
+    from settlement import db
+    with db.connect(dsn) as conn:
+        allocation = conn.execute("SELECT created_at FROM allocations WHERE id = %s",
+                                  (allocation_id,)).fetchone()
+    if allocation is None:
+        raise MethodExecutionError("refused: unknown allocation")
+    generation = str(allocation[0])
     identity = hashlib.sha256(json.dumps(
         [dsn, allocation_id, generation, operation_id, member, task, max_queries, timeout_ms, _DRIVER],
         sort_keys=True).encode()).hexdigest()
     directory = Path(root) / ".ad01-runs" / identity
-    context = nullcontext(directory) if dsn else tempfile.TemporaryDirectory(prefix="ad01-")
-    with context as directory:
+    with nullcontext(directory) as directory:
         work = Path(directory)
         work.mkdir(parents=True, exist_ok=True)
         _stage_source(
             work / "member.py", member["method_source"], requested_digest,
-            preserve=dsn is not None)
+            preserve=True)
         input_data = {"task": task, "max_queries": max_queries}
         (work / "task.json").write_bytes(_canonical_input(input_data))
         driver_source = _DRIVER % (entry, argc)
@@ -1162,35 +1158,34 @@ def run_member_out_of_process(member: dict, task: dict, *,
         launcher = LocalLauncher(work / "launcher")
         payload = {"profile": PROFILE, "argv": [sys.executable, str(driver), str(work),
                    str(socket_path), root], "timeout_ms": timeout_ms}
-        if dsn is not None:
-            ensured = broker.ensure_operation(
-                dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
-                payload=payload, allocation_id=allocation_id)
-            if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-                raise MethodExecutionError(
-                    "refused: %s" % ensured.detail,
-                    operation_id=operation_id, operation_current=False)
-            _verify_operation_provenance(work, provenance)
-            receipt = _durable_receipt(
-                dsn, operation_id, expected_payload=payload,
-                allocation_id=allocation_id)
-            if receipt is not None:
-                _verify_durable_payload(receipt, payload)
-                executed_digest = _verified_source_digest(
-                    work / "member.py", requested_digest)
-                result = _result(
-                    receipt, member, operation_id, executed_digest)
-                result.update(_result_provenance(
-                    member["method_source"], input_data, payload, provenance))
-                # The member did not ask anything in this process. The
-                # receipt replays a settled operation, and a walk that was
-                # never walked here is not an empty walk, it is an absent
-                # one. `None` says that, where `[]` would say the member
-                # ran and asked nothing, which is a different claim and
-                # the one the gate must not mistake for a match.
-                result["query_trace"] = None
-                return result
-            _verified_source_digest(work / "member.py", requested_digest)
+        ensured = broker.ensure_operation(
+            dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
+            payload=payload, allocation_id=allocation_id)
+        if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+            raise MethodExecutionError(
+                "refused: %s" % ensured.detail,
+                operation_id=operation_id, operation_current=False)
+        _verify_operation_provenance(work, provenance)
+        receipt = _durable_receipt(
+            dsn, operation_id, expected_payload=payload,
+            allocation_id=allocation_id)
+        if receipt is not None:
+            _verify_durable_payload(receipt, payload)
+            executed_digest = _verified_source_digest(
+                work / "member.py", requested_digest)
+            result = _result(
+                receipt, member, operation_id, executed_digest)
+            result.update(_result_provenance(
+                member["method_source"], input_data, payload, provenance))
+            # The member did not ask anything in this process. The
+            # receipt replays a settled operation, and a walk that was
+            # never walked here is not an empty walk, it is an absent
+            # one. `None` says that, where `[]` would say the member
+            # ran and asked nothing, which is a different claim and
+            # the one the gate must not mistake for a match.
+            result["query_trace"] = None
+            return result
+        _verified_source_digest(work / "member.py", requested_digest)
         stopped = threading.Event()
         errors = []
         trace: list = []
@@ -1226,37 +1221,29 @@ def run_member_out_of_process(member: dict, task: dict, *,
             host.start()
             try:
                 _verify_operation_provenance(work, provenance)
-                if dsn is None:
-                    launcher.dispatch(broker.BrokerOp(
-                        operation_id=operation_id, effect=broker.SANDBOX_EXEC, payload=payload))
-                else:
-                    broker.dispatch_operation(dsn, operation_id, launchers={PROFILE: launcher})
+                broker.dispatch_operation(dsn, operation_id,
+                                          launchers={PROFILE: launcher})
             finally:
                 stopped.set()
                 host.join()
         receipt_status = {}
-        receipt = (_durable_receipt(
-                       dsn, operation_id, expected_payload=payload,
-                       allocation_id=allocation_id,
-                       current_out=receipt_status)
-                   if dsn is not None else launcher.read_result(operation_id))
+        receipt = _durable_receipt(
+            dsn, operation_id, expected_payload=payload,
+            allocation_id=allocation_id, current_out=receipt_status)
         if errors:
             raise MethodExecutionError(
                 "bad-frame: %s" % errors[0],
-                operation_id=operation_id if dsn is not None else None,
+                operation_id=operation_id,
                 operation_current=receipt_status.get("current", False))
         _verify_operation_provenance(work, provenance)
         executed_digest = _verified_source_digest(
             work / "member.py", requested_digest)
-        if dsn is not None:
-            _verify_durable_payload(receipt, payload)
+        _verify_durable_payload(receipt, payload)
         result = _result(
-            receipt, member, operation_id if dsn else None, executed_digest,
+            receipt, member, operation_id, executed_digest,
             operation_current=receipt_status.get("current", False))
         result.update(_result_provenance(
             member["method_source"], input_data, payload, provenance))
-        if dsn is None:
-            result["queries"] = oracle.queries_used
         result["query_trace"] = trace
         return result
 
@@ -1422,35 +1409,30 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
     entry = verify_step_source(source, entry)
     policy_step.validate_view(view)
     policy_step.validate_state(state)
-    if dsn is not None and (not allocation_id or not operation_id):
+    if not dsn or not allocation_id or not operation_id:
         raise MethodExecutionError(
             "refused: execution needs explicit authority and identity")
-    operation_id = operation_id or "step"
     requested_digest = _source_digest(source)
     root = str(Path(__file__).resolve().parent.parent.parent)
-    generation = None
-    if dsn is not None:
-        from settlement import db
-        with db.connect(dsn) as conn:
-            allocation = conn.execute(
-                "SELECT created_at FROM allocations WHERE id = %s",
-                (allocation_id,)).fetchone()
-        if allocation is None:
-            raise MethodExecutionError("refused: unknown allocation")
-        generation = str(allocation[0])
+    from settlement import db
+    with db.connect(dsn) as conn:
+        allocation = conn.execute(
+            "SELECT created_at FROM allocations WHERE id = %s",
+            (allocation_id,)).fetchone()
+    if allocation is None:
+        raise MethodExecutionError("refused: unknown allocation")
+    generation = str(allocation[0])
     identity = hashlib.sha256(json.dumps(
         [dsn, allocation_id, generation, operation_id, requested_digest, view,
          state, timeout_ms, cpu_seconds, max_output_bytes, memory_bytes,
          _STEP_DRIVER],
         sort_keys=True).encode()).hexdigest()
     directory = Path(root) / ".ad01-runs" / identity
-    context = nullcontext(directory) if dsn else tempfile.TemporaryDirectory(prefix="ad01-step-")
-    with context as directory:
+    with nullcontext(directory) as directory:
         work = Path(directory)
         work.mkdir(parents=True, exist_ok=True)
         _stage_source(
-            work / "policy.py", source, requested_digest,
-            preserve=dsn is not None)
+            work / "policy.py", source, requested_digest, preserve=True)
         input_data = {"view": view, "state": state}
         input_bytes = _canonical_input(input_data)
         (work / "step.json").write_bytes(input_bytes)
@@ -1468,69 +1450,57 @@ def run_step_out_of_process(source: str, view: dict, state: dict, *,
                    "cpu_seconds": cpu_seconds,
                    "memory_bytes": memory_bytes}
         receipt_identity = None
+        ensured = broker.ensure_operation(
+            dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
+            payload=payload, allocation_id=allocation_id)
+        if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+            raise MethodExecutionError(
+                "refused: %s" % ensured.detail,
+                operation_id=operation_id, operation_current=False)
+        _verify_operation_provenance(work, provenance)
+        raw_receipt = _durable_receipt(
+            dsn, operation_id, expected_payload=payload,
+            allocation_id=allocation_id)
+        if raw_receipt is not None:
+            _verify_durable_payload(raw_receipt, payload)
+            receipt_identity = str(raw_receipt["receipt_identity"])
+            executed_digest = _verified_source_digest(
+                work / "policy.py", requested_digest)
+            result = _step_result(raw_receipt, operation_id,
+                                  durable_operation_id=operation_id)
+            return {
+                **result,
+                "source_digest": executed_digest,
+                **_result_provenance(source, input_data, payload, provenance),
+                "receipt": _step_evidence(
+                    raw_receipt, result, operation_id=operation_id,
+                    source_digest=executed_digest,
+                    source_bytes=source, view=view, input_bytes=input_bytes,
+                    driver_digest=provenance["driver_digest"],
+                    operation_payload=payload,
+                    receipt_identity=receipt_identity, arm=arm,
+                    task_id=task_id, artifact_digest=artifact_digest,
+                    parent_digest=parent_digest, round_no=round_no),
+            }
+        _verify_operation_provenance(work, provenance)
+        broker.dispatch_operation(dsn, operation_id, launchers={PROFILE: launcher})
         receipt_status = {}
-        if dsn is not None:
-            ensured = broker.ensure_operation(
-                dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
-                payload=payload, allocation_id=allocation_id)
-            if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-                raise MethodExecutionError(
-                    "refused: %s" % ensured.detail,
-                    operation_id=operation_id, operation_current=False)
-            _verify_operation_provenance(work, provenance)
-            raw_receipt = _durable_receipt(
-                dsn, operation_id, expected_payload=payload,
-                allocation_id=allocation_id)
-            if raw_receipt is not None:
-                _verify_durable_payload(raw_receipt, payload)
-                receipt_identity = str(raw_receipt["receipt_identity"])
-                executed_digest = _verified_source_digest(
-                    work / "policy.py", requested_digest)
-                result = _step_result(
-                    raw_receipt, operation_id,
-                    durable_operation_id=operation_id)
-                return {
-                    **result,
-                    "source_digest": executed_digest,
-                    **_result_provenance(source, input_data, payload, provenance),
-                    "receipt": _step_evidence(
-                        raw_receipt, result, operation_id=operation_id,
-                        source_digest=executed_digest,
-                        source_bytes=source, view=view, input_bytes=input_bytes,
-                        driver_digest=provenance["driver_digest"],
-                        operation_payload=payload,
-                        receipt_identity=receipt_identity, arm=arm,
-                        task_id=task_id, artifact_digest=artifact_digest,
-                        parent_digest=parent_digest, round_no=round_no),
-                }
-            _verify_operation_provenance(work, provenance)
-            broker.dispatch_operation(dsn, operation_id, launchers={PROFILE: launcher})
-            receipt = _durable_receipt(
-                dsn, operation_id, expected_payload=payload,
-                allocation_id=allocation_id, current_out=receipt_status)
-        else:
-            _verify_operation_provenance(work, provenance)
-            launched = launcher.dispatch(broker.BrokerOp(
-                operation_id=operation_id, effect=broker.SANDBOX_EXEC,
-                payload=payload))
-            if launched.receipt is not None:
-                receipt_identity = launched.receipt.receipt_identity
-            receipt = launcher.read_result(operation_id)
+        receipt = _durable_receipt(
+            dsn, operation_id, expected_payload=payload,
+            allocation_id=allocation_id, current_out=receipt_status)
         _verify_operation_provenance(work, provenance)
         executed_digest = _verified_source_digest(
             work / "policy.py", requested_digest)
-        if dsn is not None:
-            _verify_durable_payload(receipt, payload)
+        _verify_durable_payload(receipt, payload)
         if not receipt_identity and isinstance(receipt, dict):
             receipt_identity = receipt.get("receipt_identity")
         if not receipt_identity:
             raise MethodExecutionError(
                 "refused: child receipt identity is missing",
-                operation_id=operation_id if dsn is not None else None,
+                operation_id=operation_id,
                 operation_current=receipt_status.get("current", False))
         result = _step_result(
-            receipt, operation_id,
-            durable_operation_id=operation_id if dsn is not None else None,
+            receipt, operation_id, durable_operation_id=operation_id,
             operation_current=receipt_status.get("current", False))
         return {
             **result,

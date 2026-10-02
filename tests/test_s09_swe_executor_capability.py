@@ -15,10 +15,13 @@ it actually splits:
   where all three capabilities live, and it is what the STEP cell and the
   graph cell both run through.
 * the **typed-AST node set** (`boolean_ast_policy`) publishes no view field
-  carrying the program and has no node that builds replacement source text, so
-  the representation cannot reach the program even though the world can serve
-  it. That is a limit of the frozen grammar, not of the executor, and the
-  frozen loader's own refusal is the witness.
+  carrying the program, so the representation cannot choose an edit line from
+  what it observed even though the world can serve it. That is a limit of the
+  frozen grammar's view, not of the executor, and the frozen loader's own
+  refusal is the witness. The node set does build replacement source text: a
+  document whose edit payload is assembled by `obj` and `list` nodes loads,
+  the SWE world admits the `use/code.repair` it produces, and the session runs
+  the edit. Only the reading half was ever a limit.
 * the **bounded child** cannot be spawned on a host with no POSIX `resource`
   module and no `preexec_fn`. That is a platform limit, and it is named by the
   code that makes it rather than by this file.
@@ -65,6 +68,31 @@ def _populated_view() -> dict:
         session.run_public_test(case["name"])
     session.localize(record["public_tests"][0]["name"])
     return session.policy_view()
+
+
+def _step_lineage_with_drifted_source():
+    """A real STEP lineage whose staged bytes no longer match its digest.
+
+    This is the host failure the three refusal tests below need, and it is
+    produced by the real path rather than by stubbing one. The STEP driver
+    calls `verify_policy_record` before it stages anything, so appending a
+    byte to the source makes the real driver refuse for the real reason:
+    the record's own bytes and the record's own digest disagree.
+
+    The alternative was to assert a refusal from a host that cannot spawn
+    the child, which is how these three tests came to be written in the
+    first place. That made them host-shaped: on a host that can spawn the
+    child there is no refusal to observe, so the tests asserted one and
+    failed against a perfectly working executor. The refusal is a property
+    of the executor, and it is driven here against a driver that ran.
+    """
+    lineage = matrix.supported_lineages()[0]
+    return matrix.Lineage(
+        name=lineage.name, representation_kind=lineage.representation_kind,
+        record=dict(lineage.record, policy_source=lineage.record[
+            "policy_source"] + "\n# drifted after the digest was taken\n"),
+        built_ok=True, build_error="",
+        policy_source=lineage.record["policy_source"])
 
 
 # --- (a) read a file ---------------------------------------------------
@@ -223,9 +251,15 @@ def test_every_swe_cell_records_an_executor_refusal_instead_of_a_bare_stop():
 
     The assertion is on the recorded text, so a cell that stops cleanly
     and a cell that cannot start are different rows.
+
+    This host can spawn the bounded child, so the STEP cell does not
+    refuse here and there is nothing to observe from the real lineage.
+    The property is driven against a driver that ran and refused for a
+    real reason instead, which is what makes it a property of the
+    executor rather than of the machine.
     """
-    lineage = matrix.supported_lineages()[0]
-    action = matrix.lineage_driver(lineage)(_populated_view())
+    action = matrix.lineage_driver(_step_lineage_with_drifted_source())(
+        _populated_view())
 
     assert action["kind"] == policy_action.STOP
     assert _refusal(action)["stage"] == "swe-step-policy-step"
@@ -249,8 +283,13 @@ def test_a_step_refusal_is_counted_as_a_refusal_on_its_own_row():
     The row is what the matrix counts and what `lineage_ledger` tallies.
     A driver that records a refusal and a row that drops it are the same
     lie in two places.
+
+    Driven against the same real refusal the trace test uses. The world
+    scores a program nobody proposed as `unrepaired`, so the outcome alone
+    would report a lineage that ran every episode and repaired nothing,
+    which is the exact lie the recorded refusal exists to prevent.
     """
-    lineage = matrix.supported_lineages()[0]
+    lineage = _step_lineage_with_drifted_source()
     record = tasks.instance("held_out", tasks.HELD_OUT_TEMPLATES[0],
                             tasks.HELD_OUT_MECHANISMS[0])
     episode = matrix.run_episode(matrix.lineage_driver(lineage),
@@ -263,6 +302,11 @@ def test_a_step_refusal_is_counted_as_a_refusal_on_its_own_row():
         "executor refusal; the matrix would report it as an unrepaired "
         "attempt")
     assert "swe-step-policy-step" in row.refused
+    # The world scored the episode, and scored it as unrepaired because
+    # no program was ever proposed. Both facts have to survive together.
+    assert row.outcome == "unrepaired", (
+        "an executor refusal must not be reported as a repair outcome, and "
+        "the refusal text is what keeps the two apart")
 
     result = matrix.MatrixResult()
     result.rows.append(row)
@@ -270,6 +314,8 @@ def test_a_step_refusal_is_counted_as_a_refusal_on_its_own_row():
     assert ledger[0].refusals == 1, (
         "a recorded refusal was not counted as one; the ledger reports a "
         "lineage that ran every episode cleanly")
+    assert ledger[0].repairs == 0, (
+        "a refusal was counted as a repair")
 
 
 # --- the cap sheet's own claim -----------------------------------------
@@ -349,16 +395,42 @@ def test_a_step_refusal_on_this_host_survives_the_round_trip_to_the_row():
     decide, so the assertion holds either way: a step that runs emits an
     action the world admits, and a step that cannot run emits a refusal
     that names itself. What must never happen is a bare `stop`.
+
+    Both halves are driven, because on a host that can spawn the child
+    only one of them happens. The first is the real lineage on the real
+    host, and it is asserted to be a real action the world admits, so a
+    "refusal" that a working executor produced would be caught here. The
+    second is the same driver refusing for a real reason, carried all the
+    way to the row.
     """
     lineage = matrix.supported_lineages()[0]
     episode = matrix.run_episode(matrix.lineage_driver(lineage),
                                  "held_out", 0)
 
-    action = episode["trace"][0]["action"]
+    # This host runs the child, so the first turn is a real action rather
+    # than a refusal. Asserted against the world, not against a count.
+    first = episode["trace"][0]["action"]
+    assert first["kind"] == policy_action.OBSERVE, (
+        "a host that can spawn the bounded child should produce a real "
+        "first action; a bare stop here means the executor refused and the "
+        "refusal test below is measuring the wrong thing")
+    assert not first["inputs"].get("bridge_refusal"), first
+
+    # And the refusing half, through the same driver and the same world.
+    refusing = matrix.supported_lineages()[0]
+    refused_episode = matrix.run_episode(
+        matrix.lineage_driver(_step_lineage_with_drifted_source()),
+        "held_out", 0)
+    action = refused_episode["trace"][0]["action"]
     assert action["kind"] == policy_action.STOP
     assert _refusal(action)["reason"], (
         "the STEP cell produced a stop with no reason on this host; either "
         "the child ran and returned an action, or the refusal must be named")
+
+    record = tasks.instance("held_out", tasks.HELD_OUT_TEMPLATES[0],
+                            tasks.HELD_OUT_MECHANISMS[0])
+    row = matrix._row(refusing, record, "held_out", refused_episode)
+    assert row.refused and "swe-step-policy-step" in row.refused, row
 
 
 # --- staging fidelity --------------------------------------------------

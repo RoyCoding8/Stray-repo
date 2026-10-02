@@ -1,0 +1,42 @@
+{
+ "dispatches_used_by_use_arm": 0,
+ "instances_per_lineage": 4,
+ "rows": [
+  {
+   "dispatches": 1,
+   "episodes": [],
+   "lineage": "python-step-live-L0",
+   "not_counted_as": "a live lineage. The route returned no artifact the loader admitted (defect 'already-spent'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance.",
+   "outcome": "no-acquisition",
+   "reason": "a live lineage. The route returned no artifact the loader admitted (defect 'already-spent'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance."
+  },
+  {
+   "dispatches": 1,
+   "episodes": [],
+   "lineage": "python-step-live-L1",
+   "not_counted_as": "a live lineage. The route returned no artifact the loader admitted (defect 'already-spent'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance.",
+   "outcome": "no-acquisition",
+   "reason": "a live lineage. The route returned no artifact the loader admitted (defect 'already-spent'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance."
+  },
+  {
+   "dispatches": 1,
+   "episodes": [],
+   "lineage": "python-step-live-L2",
+   "not_counted_as": "a live lineage. The route returned no artifact the loader admitted (defect 'already-spent'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance.",
+   "outcome": "no-acquisition",
+   "reason": "a live lineage. The route returned no artifact the loader admitted (defect 'already-spent'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance."
+  },
+  {
+   "dispatches": 2,
+   "episodes": [],
+   "lineage": "python-step-live-L3",
+   "not_counted_as": "a live lineage. The route returned no artifact the loader admitted (defect 'loader-refused'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance.",
+   "outcome": "no-acquisition",
+   "reason": "a live lineage. The route returned no artifact the loader admitted (defect 'loader-refused'), so this cell has no acquired lineage from it. It is NOT replaced by an authored arm, and no send is spent hunting for a positive past the repair allowance."
+  }
+ ],
+ "schema": "invr1b12-swe-use-v1",
+ "split": "held_out",
+ "study_root": "invr1b12-swe",
+ "written_at": "2026-10-01T09:33:55Z"
+}

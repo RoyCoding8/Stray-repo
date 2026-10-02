@@ -1,5 +1,73 @@
 # Implementation plan
 
+## Current consolidation batch — 2026-10-01
+
+Integration: `codex/stage09-consolidation-2026-10-01`, from `70223fb` via the
+read-only milestone inventories at `f03db5b`. Base checkpoint is the
+`codex/stage09-closure-checkpoint` work, not the remote default.
+
+Read-only inventories, one per milestone, are
+[inv-a](workstreams/inv-a.md), [inv-b](workstreams/inv-b.md) and
+[inv-c](workstreams/inv-c.md). Each names owned paths, dependencies and a
+named pytest gate per lane, so integration can accept a lane without
+re-reading source.
+
+### Runtime and route factors (both closed before any lane started)
+
+| Factor | Resolution | Evidence |
+|---|---|---|
+| RUNTIME | WSL2 Ubuntu, real PostgreSQL 18 on the socket, `PYTHONPATH=src` into `/home/ubuntu/.venvs/as9` (Python 3.14.4). The editable install is unavailable offline, so the source root is on the path instead. Must run as `ubuntu` or peer auth fails. | 13 disposable databases minted and dropped per run; `tests/test_s09_run_isolation.py` 23 passed |
+| Claim ledger | `/tmp/settlement-claims` was root-owned, so the `ubuntu` user could not append a claim and every out-of-process policy execution refused with `claim-not-durable`. Ownership corrected in the image. This is an environment defect, not a code defect. | `tests/test_s09_e2_scored.py` went from 22 failures to 30 passed |
+| ROUTE | `GET /v1/models` on the loopback gateway returns 219 models, 32 free-tier, and the pinned `nvidia/nemotron-3-ultra-550b-a55b:free` is present unprefixed. Discovery only; no inference call, no effect, no spend. | Live catalog read 2026-10-01 |
+
+One premise in the milestone-B inventory is stale and must not be chased.
+Its B11 lane records the pinned model id as absent from a 256-model catalog.
+Today's catalog has 219 entries and the id is present, so the "frozen model
+absent from catalog" finding no longer describes the route. B11's remaining
+question stands and is the real one: the recorded 502 tracks the requested
+output budget rather than the prompt, so the served budget must be established
+before any B dispatch. Establishing it is itself a dispatch, so the cap sheet
+is written first.
+
+Baseline before any lane: the two-token isolation test was red on the clean
+base because it minted 8-hex-digit tokens, which `_checked_token` refuses as
+belonging to the pytest sweep space. Fixed on the integration branch at
+`898b10c` so every lane gate measures only its own change.
+
+### Lane graph
+
+Disjoint paths, one writer per worktree under `.worktrees/`, serial `--no-ff`
+merge by the coordinator in the main checkout, gate before merge and re-run on
+the merged tip.
+
+| Lane | Milestone | Ownership | Depends on | State |
+|---|---|---|---|---|
+| a1-preflight | A1 | `live_construct.py`, `invl02_live.py`, campaign r2/r3, new durable-preflight test | — | running |
+| a2-nodsn | A2 | `method_exec.py`, `policy_step.py`, trajectory out-of-process call sites, new no-dsn test | — | running |
+| a3-action | A3 | `policy_action.py`, `policy_step.py`, `policy_assess.py`, `assessment_profile.py`, `s09_arm_parity.py`, new action-meaning test | — | running |
+| b1-sweharness | B1+B2 | `s09_swe_experiment.py` view contract, `s09_swe_ast.py` graph view read, new SWE view test | — | running |
+| b4-score | B4 | `agenda_policy.py` `_score_constant_rules`, new constant-score test | — | running |
+| b8-panel | B8 | `w2_retention_campaign.py` panel enumeration, new panel-power test, new census evidence dir | — | running |
+| a4-single-owner | A4 | `frontier.py` decision/authority projection onto the trajectory path | a1, a2, a3 | queued |
+| a5-chain | A5 | new chain test, reviewer-written counterexamples, reviewer source | a4 | queued |
+| b3-repertoire | B3 | open the closed repertoire so retention becomes measurable | b8 | queued |
+| b5-sealed-state | B5 | per-task policy state in sealed assessment | b1 | queued |
+| c1-mission | C1 | single durable mission entry, retire the partial owners | a4 | queued |
+| b10-cap | B10 | the B cap sheet, written from the complete matrix before any effect | b1, b3 | queued |
+| b11-probe | B11 | route re-probe establishing a served output budget | b10 | queued |
+| c2-channel | C2 | freeze enforcement and independently written channel controls | c1 | queued |
+| c3-construction | C3 | inheritable construction procedure, replacing the two-member menu | c2 | queued |
+| b12-live | B12 | SWE matrix live construction, 4 lineages per supported cell | b11 | queued, LIVE |
+| c4-live | C4 | bounded live revision attempt under its own freeze | c3, b11 | queued, LIVE |
+
+Review lanes (a separate agent from the author of their target) are queued
+behind each implementation group: R1 on the a1/a2 authority migration, R2 on
+a3 action meaning, R3 on the mission entry, and a final independent acceptance
+pass over the merged tip.
+
+Live lanes are frozen before any effect and gated on the written cap sheet. A
+missing cap sheet is setup work, not a reason to re-ask for authorization.
+
 ## Current closure checkpoint — 2026-09-30
 
 Integration: `codex/stage09-closure-checkpoint`, from `0c581ef`.

@@ -379,10 +379,49 @@ def prompt_delta() -> dict:
             "everything_else": "identical to the first namespace's prompt"}
 
 
-def eligible_for(target: Mapping[str, Any]) -> list:
+def eligible_for(target: Mapping[str, Any],
+                 repertoire: Any = None) -> list:
+    """The method ids a policy on `target` may name.
+
+    With no repertoire this is what it has always been: the two authored
+    controls belonging to the target's family, read through
+    `s09_e2_scored.control_candidates`, so `CONTROL_PREFIX` stays the
+    single reader of the family-to-prefix mapping. Every archived contrast
+    in this tree resolves its eligible sets through this call and every one
+    of them still resolves to the same two ids.
+
+    Given a repertoire the seeds come first and the arrived members follow,
+    and the seeds' order does not move. `control_arm`'s selector refuses a
+    member outside `eligible`, and `PROMPTED_SHAPE_READER` reads no further
+    than position one, so an arrived member has to be appended rather than
+    sorted in or it would silently re-point every policy measured on the
+    frozen panel.
+
+    A member refused by `Repertoire` is raised, not dropped. A silently
+    dropped member yields a closed eligible set that reads exactly like the
+    frozen one, which is the defect `RETENTION_BLOCKER` named and the one
+    this parameter exists to remove.
+    """
+    from . import assessment_profile as profile
     from .s09_e2_scored import control_candidates
 
-    return list(control_candidates()[str(target.get("family"))].values())
+    if repertoire is None:
+        return list(
+            control_candidates()[str(target.get("family"))].values())
+    if not isinstance(repertoire, profile.Repertoire):
+        raise profile.RepertoireRefused(
+            "a repertoire must be assessment_profile.Repertoire, got %r"
+            % (type(repertoire).__name__,))
+    # The gate decides, and it is asked before the eligible list is built.
+    # `Repertoire.eligible_for` alone would silently drop whatever the gate
+    # refused, and a dropped member leaves a closed eligible set that reads
+    # exactly like the frozen one. That silence is the defect this parameter
+    # exists to remove, so the gate runs strict and a refusal is raised
+    # rather than swallowed. The strict default is this call's choice and
+    # not the type's: a repertoire is the whole collection, and a study
+    # asking about a graph target while holding a software member should be
+    # told which member did not apply.
+    return repertoire.eligible_for(target, strict=True)
 
 
 # ---------------------------------------------------------------------------
@@ -430,6 +469,15 @@ READER_ACTORS = ("reader", "echoer")
 # it scores the same as a blind policy. A read that never reaches the world
 # earns nothing, which is the claim the evidence leg is now making on
 # purpose.
+#
+# It also reaches the method through `eligible_methods` rather than naming
+# one. That list is what `eligible_for` resolved through
+# `s09_e2_scored.control_candidates`, so the family-to-prefix mapping stays
+# single-sourced: `CONTROL_PREFIX` decides what a graph target is asked for
+# and this policy cannot disagree with it. And the plan it computes is the
+# family's own: `ops` carries software and `edges` carries graph, so a
+# policy that indexed `ops` unconditionally raised on a graph task and the
+# whole gate returned unscored rather than false.
 READS_THE_VERDICT = '''def _kept(view):
     kept = []
     for row in view["observations"]:
@@ -440,24 +488,36 @@ READS_THE_VERDICT = '''def _kept(view):
     return kept
 
 
+def _marker(unit):
+    if isinstance(unit, dict):
+        for key in ("id", "key"):
+            if key in unit:
+                return str(unit[key])
+        return ""
+    if isinstance(unit, (list, tuple)):
+        return "-".join(str(part) for part in unit)
+    return str(unit)
+
+
 def _witness(view, kept):
     if not kept:
         return -1
-    ops = view["task_content"]["ops"]
-    for index in range(len(ops)):
-        if ops[index].get("id") in kept:
+    units = view["task_content"].get("ops") or view["task_content"].get("edges")
+    for index in range(len(units)):
+        if _marker(units[index]) in kept:
             return index
     return -1
 
 
 def STEP(view, state):
-    ops = view["task_content"]["ops"]
+    units = view["task_content"].get("ops") or view["task_content"].get("edges")
     kept = _kept(view)
     witness = _witness(view, kept)
-    plan = [index for index in range(len(ops)) if index != witness]
+    plan = [index for index in range(len(units)) if index != witness]
     return {"action": {"kind": "use_method",
                        "target": view["task_content"]["task_id"],
-                       "inputs": {"method_id": "seed-sw-ddmin",
+                       "inputs": {"method_id": str(
+                           (view.get("eligible_methods") or [""])[0]),
                                   "max_queries": 8,
                                   "plan": plan, "witness": witness},
                        "evidence_refs": [],
@@ -474,13 +534,31 @@ IGNORES_THE_VERDICT = READS_THE_VERDICT.replace("kept = _kept(view)",
 # verdicts and changes the method it names, which is the most a policy
 # confined to the prompt's own action shape can do, and under the corrected
 # leg that read has a site: the candidate the world produced differs between
-# the two verdict exposures, so this policy scores 2.00 and an echoer
-# scoring the same 2.00 is now the defect rather than the result.
+# the two verdict exposures, so this policy scores above an echoer and an
+# echoer scoring the same is the defect rather than the result.
+#
+# The two methods it chooses between come from the view's own
+# `eligible_methods`, which `eligible_for` filled through
+# `s09_e2_scored.control_candidates`. Naming a `seed-gr-` or a `seed-sw-`
+# literal here is what made the gate refuse every graph target, so the
+# policy asks the family rather than asserting one.
+#
+# The predicate stays a membership test for a reason this lane did not
+# change. `panel_variation.COUNT_READS_THE_VERDICTS` counts losses instead,
+# because on a panel whose stream already holds both verdicts a membership
+# test is constant under either exposure and reads nothing. That is a
+# documented defect of this reader (`tests/test_ad01_panel_variation.py`,
+# `test_a_membership_reader_is_vacuous_on_a_panel_that_varies`), owned by
+# that module and not repaired here: the repair belongs with the record that
+# reports the panel, and a third copy of the policy in a qualification gate
+# would only add a reader to keep in step.
 PROMPTED_SHAPE_READER = '''def STEP(view, state):
     verdicts = [str(row.get("verdict", "")) for row in view["observations"]]
-    method_id = "seed-sw-ddmin"
-    if "not_preserved" in verdicts:
-        method_id = "seed-sw-greedy"
+    eligible = [str(m) for m in (view.get("eligible_methods") or [])]
+    method_id = eligible[0]
+    for name in eligible[1:]:
+        if "not_preserved" in verdicts:
+            method_id = name
     return {"action": {"kind": "use_method", "target": view["task_content"]["task_id"],
                        "inputs": {"method_id": method_id, "max_queries": 8},
                        "evidence_refs": [], "requested_resources": {"queries": 8}},
@@ -496,7 +574,9 @@ PROMPTED_SHAPE_READER = '''def STEP(view, state):
 ECHOES_WITHOUT_READING = '''def STEP(view, state):
     rows = ",".join([str(o.get("verdict", "")) for o in view.get("observations", [])])
     return {"action": {"kind": "use_method", "target": view["task_content"]["task_id"],
-                       "inputs": {"max_queries": 8, "method_id": "seed-sw-ddmin",
+                       "inputs": {"max_queries": 8,
+                                  "method_id": str(
+                                      (view.get("eligible_methods") or [""])[0]),
                                   "read_verdicts": rows},
                        "evidence_refs": [], "requested_resources": {"queries": 8}},
             "state": {}}
@@ -506,7 +586,9 @@ ECHOES_WITHOUT_READING = '''def STEP(view, state):
 # otherwise ignoring the view. Two authored controls, not model bytes.
 IGNORES_THE_VIEW = '''def STEP(view, state):
     return {"action": {"kind": "use_method", "target": view["task_content"]["task_id"],
-                       "inputs": {"max_queries": 8, "method_id": "seed-sw-ddmin"},
+                       "inputs": {"max_queries": 8,
+                                  "method_id": str(
+                                      (view.get("eligible_methods") or [""])[0])},
                        "evidence_refs": [], "requested_resources": {"queries": 8}},
             "state": {}}
 '''

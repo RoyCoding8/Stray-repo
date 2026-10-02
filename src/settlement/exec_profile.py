@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from . import child_limits
@@ -102,10 +103,37 @@ def probe_gvisor(
     )
 
 
+def package_search_path() -> str:
+    """The one directory a child needs on its import path.
+
+    `settlement` is a `src`-layout package, so `src/settlement` is where
+    it lives and the directory that contains it is `src/`. A child handed
+    the repository root instead finds no package there, dies with
+    `ModuleNotFoundError` before it has executed a line of its own, and
+    the receipt is then indistinguishable from a program that ran and
+    printed nothing. That conflation is what a caller reads as `no
+    receipt`.
+
+    The directory is `src/` and not the repository root, and the choice is
+    a containment decision rather than a convenience. The study keeps each
+    task's id key in `experiments/ad01/worlds.py`, so a child that could
+    import the study package tree would hold the key and could invert a
+    published opaque id back to its seed. `src/` publishes exactly one
+    package and does not publish that one. Measured rather than argued by
+    `test_the_launcher_publishes_the_package_directory_and_not_the_root`.
+
+    It is the parent package's own directory, read from this module's
+    location, so a checkout installed anywhere resolves the same way
+    without a configured path.
+    """
+    return str(Path(__file__).resolve().parent.parent)
+
+
 def scrub_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     base = {
         "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
         "LANG": os.environ.get("LANG", "C.UTF-8"),
+        "PYTHONPATH": package_search_path(),
     }
     if extra:
         for key, value in extra.items():
@@ -264,6 +292,12 @@ def build_gvisor_argv(
         cmd += ["-v", f"{host}:{container}:{'ro' if readonly else 'rw'}"]
     cmd.append(f"--name={name or _derived_name(image, argv)}")
     for key, value in scrub_env(extra_env).items():
+        if key == "PYTHONPATH":
+            # The host's `src/` is not a path inside the container, and a
+            # caller that mounts the package passes a container-side mount
+            # and sets its own path there. Carrying the host value forward
+            # would be a path that cannot resolve.
+            continue
         cmd += ["-e", f"{key}={value}"]
     return cmd + [image, *argv]
 

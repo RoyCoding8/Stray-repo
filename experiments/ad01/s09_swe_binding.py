@@ -76,15 +76,29 @@ def project_swe_view(public_state: dict) -> dict:
     what the world already shows. The hidden-table refusal is the
     Boolean projection's own, kept so a caller cannot widen the view by
     handing this one more than the policy view carries.
+
+    A caller that already publishes `observed` flat is re-indexed from
+    there. `s09_arm_parity.contract_view` projects the same
+    `symptom.observed` list to `observed` and `admit_shared_view` holds
+    the six contract fields exactly, so widening the contract to carry
+    `symptom` was never the open question: the field the guard reads was
+    already published under a key this projection ignored, its `.get`
+    default of `[]` was written over a populated list, and the guard
+    resolved `{}["0"]` and raised into the executor's refusal action.
+    Reading what the caller actually sent is the whole repair. The nested
+    path stays, because the SWE world publishes it that way and the raw
+    world view is the shape the executor is bound to.
     """
     if not isinstance(public_state, dict):
         raise swe.ActionRefused("public state must be an object")
     if "tables" in public_state:
         raise swe.ActionRefused("public state exposes hidden tables")
     view = dict(public_state)
+    observed = public_state.get("observed")
+    if observed is None:
+        observed = public_state.get("symptom", {}).get("observed", [])
     view["observed"] = {
-        str(index): item for index, item in
-        enumerate(public_state.get("symptom", {}).get("observed", []))}
+        str(index): item for index, item in enumerate(observed)}
     return view
 
 

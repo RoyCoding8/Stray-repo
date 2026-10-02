@@ -706,9 +706,17 @@ def test_the_recorded_ast_lineage_states_the_corrected_reason():
         "reader can see the refusal the loader produced")
     assert "node set refuses view.source" in lineage.build_error, \
         lineage.build_error
-    assert "not available in the Boolean world" in lineage.build_error, \
-        "the validator refusal is the world binding this cell supplies; " \
-        "dropping it from the record would hide that it was ever a limit"
+    # The witness used to carry a Boolean-validator clause quoting
+    # `frozen._validate_action` refusing a repair as "not available in the
+    # Boolean world". That validator is not on this arm's path:
+    # `s09_swe_ast._validate_action` delegates to `swe.admits`, and the SWE
+    # world admits `use/code.repair`. It was replaced by the loader clause
+    # that is on the path, which is the node set accepting a document that
+    # builds replacement source text. The reading limit is unchanged and is
+    # asserted above, so nothing was relaxed; the record stopped quoting a
+    # rule that does not govern this arm.
+    assert "node set accepts a document that builds replacement source text" \
+        in lineage.build_error, lineage.build_error
 
 
 def test_the_graph_cell_binds_to_a_swe_world_and_records_what_it_still_cannot_do():

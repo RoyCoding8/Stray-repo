@@ -321,19 +321,32 @@ def _pinned_selector(repertoire: dict) -> str:
     ]) + "\n"
 
 
-def _step_policy(source: str):
-    """A policy as the study's own ABI wants it, from authored bytes."""
+def _step_policy(source: str, *, dsn: str | None = None,
+                 allocation_id: str | None = None):
+    """A policy as the study's own ABI wants it, from authored bytes.
+
+    The step runs through the durable executor like every other policy
+    execution, so this needs the run's own store and allocation. The
+    operation id is derived from the policy bytes, which keeps a rerun of
+    the same arm reading back its own receipts rather than executing again.
+    """
     from . import method_exec, policy_step
 
     record = policy_step.make_policy_artifact(source,
                                               origin=arm.ORIGIN_AUTHORED)
+    execution = {}
+    if dsn and allocation_id:
+        execution = {"dsn": dsn, "allocation_id": allocation_id,
+                     "operation_id": "experience-axis-%s-step" % (
+                         record["artifact"]["source_digest"][:16])}
 
     def step(view: dict, state: dict) -> dict:
         stepped = method_exec.run_step_out_of_process(
             source, dict(view), dict(state), entry=policy_step.STEP_ENTRY,
             timeout_ms=policy_step.STEP_TIMEOUT_MS,
             cpu_seconds=policy_step.STEP_CPU_SECONDS,
-            max_output_bytes=policy_step.STEP_MAX_OUTPUT_BYTES)
+            max_output_bytes=policy_step.STEP_MAX_OUTPUT_BYTES,
+            **execution)
         return {"action": stepped["action"], "state": stepped["state"]}
 
     return record, step
@@ -375,7 +388,8 @@ def _use_split_answer(rows: list) -> dict:
 
 
 def run_arm(name: str, policy_source: str, world: int, tasks: list,
-            repertoire: dict) -> list:
+            repertoire: dict, *, dsn: str | None = None,
+            allocation_id: str | None = None) -> list:
     """One arm's use phase, through the campaign's own `run_use`.
 
     `run_use` resolves the freeze through `trajectory.worlds`, which is the
@@ -385,10 +399,12 @@ def run_arm(name: str, policy_source: str, world: int, tasks: list,
     that stamps `executed`, `executed_source`, `verdict` and `costs` onto a
     record is exactly the drift this lane is supposed to be measuring against.
     """
-    record, step = _step_policy(policy_source)
+    record, step = _step_policy(policy_source, dsn=dsn,
+                                allocation_id=allocation_id)
     with on_this_panel():
         return trajectory.run_use(repertoire, world, name, list(tasks),
-                                  dict(BASE_COSTS), policy=step)
+                                  dict(BASE_COSTS), policy=step, dsn=dsn,
+                                  allocation_id=allocation_id)
 
 
 @contextlib.contextmanager
@@ -636,6 +652,27 @@ def _markdown(summary: dict, control: list, pinned: list,
     return "\n".join(lines) + "\n"
 
 
+def _authorize(dsn: str, study_root: str) -> str:
+    """The allocation every execution in this run runs under.
+
+    The run creates its own disposable store, so it also has to authorize
+    against it. Without this the arms have bytes to execute and nowhere to
+    execute them, and every panel cell would record a refusal rather than
+    a decision. The id is derived from the study root's digest rather than
+    `hash()`, which varies per process and would mint a second allocation
+    for the same run.
+    """
+    import hashlib
+
+    from settlement import authority
+
+    tag = hashlib.sha256(study_root.encode("utf-8")).hexdigest()[:16]
+    handle = authority.authorize_study(
+        dsn, study_root, authorized=1000000,
+        allocation_id="experience-axis-%s" % tag)
+    return handle.allocation_id
+
+
 def main(argv: list) -> int:
     if len(argv) < 2 or argv[1] != "--dsn":
         print("usage: experience_axis_run.py --dsn <admin dsn>", file=sys.stderr)
@@ -650,6 +687,7 @@ def main(argv: list) -> int:
     print("STUDY_ROOT=%s" % study_root, flush=True)
     out = ROOT / "reports" / "evidence" / NAMESPACE
     try:
+        allocation_id = _authorize(database.dsn, study_root)
         policies = selector_policies()
         repertoire = arm.control_repertoire(NAMESPACE)
         records = []
@@ -660,7 +698,8 @@ def main(argv: list) -> int:
             for name, source in (("A", policies["arm"]),
                                  ("B", policies["pinned"])):
                 records.extend(run_arm(name, source, world, tasks,
-                                       repertoire))
+                                       repertoire, dsn=database.dsn,
+                                       allocation_id=allocation_id))
         cost = result.cost_currencies(dsn=database.dsn,
                                       study_root=study_root)
         summary = build(records, dest=out, cost=cost,

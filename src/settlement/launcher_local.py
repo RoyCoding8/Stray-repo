@@ -1063,6 +1063,20 @@ def _interpret(returncode: int, stdout: str, stderr: str, truncated: bool,
                 verdict = "success" if worker.status == "ok" else "failure"
         except (ValueError, TypeError):
             parse = "rejected"
+    elif not timed_out and returncode != 0:
+        # A child that exited nonzero produced no receipt, and so did a
+        # child that ran to completion and printed nothing. Those are
+        # different facts and every caller in the tree reads
+        # `data["worker"]`, so both arrived as `no receipt` -- a program
+        # that never executed, recorded as a program that executed and
+        # said nothing. The distinction this project exists to keep cannot
+        # rest on a `returncode` a caller has to know to look for.
+        #
+        # `child-failed` is not narrowed to import errors. A nonzero exit is
+        # a child that ran and did not finish, whatever the reason, and
+        # naming one cause would make the others (`assert`, `abort`) read as
+        # that cause. The stderr carries the reason; this carries the fact.
+        parse = "child-failed"
     content = _base(False, argv, data)
     content.update({"truncated": truncated, "parse": parse, "_verdict": verdict})
     return content

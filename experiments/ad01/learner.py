@@ -848,12 +848,19 @@ def observation_substitution_plan(task_ids: list, selected: list, *,
             "verdict_before": "not-preserved", "verdict_after": verdict}
 
 
-def _action_of(source: str, task: dict, observations: list) -> dict:
+def _action_of(source: str, task: dict, observations: list, *,
+               authority: dict | None = None) -> dict:
     """The action `source` produces, through the real child executor.
 
     The policy runs in a child process on the view it would actually be
     given, so the gate exercises the same bytes the study would execute
     rather than a local reimplementation of what it ought to do.
+
+    That is exactly why it needs authority. Executing the policy is
+    executing policy source, so it goes through the same store, allocation
+    and operation identity every other execution needs, and the comparison
+    names a different operation per side. Without it the gate cannot run
+    the policy at all, and a caller with no store has no action to compare.
     """
     from . import method_exec, policy_step
     record = policy_step.make_policy_artifact(
@@ -863,21 +870,41 @@ def _action_of(source: str, task: dict, observations: list) -> dict:
         open_questions=[], last_result=None, eligible_methods=[],
         remaining={"steps": 2, "model_calls": 1, "queries": 4})
     policy_step.verify_policy_record(record)
+    if not authority:
+        raise TreatmentRefused(
+            "substitution gate needs a durable store, an allocation and an"
+            " operation identity: it executes the policy source")
     return method_exec.run_step_out_of_process(
-        record["policy_source"], view, {})["action"]
+        record["policy_source"], view, {}, **authority)["action"]
 
 
 def substitution_changes_action(source: str, task: dict, original: list,
-                                substituted: list) -> bool:
+                                substituted: list, *,
+                                authority: dict | None = None) -> bool:
     """Whether the policy's action moved when its evidence did.
 
     The target is excluded from the comparison. A policy that changed only
     which task it named has not read the observation, and including the
     target in the equality would let one hide behind the other.
     """
-    before = _action_of(source, task, original)
-    after = _action_of(source, task, substituted)
+    before = _action_of(source, task, original, authority=_side(
+        authority, "original"))
+    after = _action_of(source, task, substituted, authority=_side(
+        authority, "substituted"))
     return _comparable(before) != _comparable(after)
+
+
+def _side(authority: dict | None, suffix: str) -> dict | None:
+    """One side's own operation, so the two runs are two operations.
+
+    Reusing a single operation id would make the second side replay the
+    first side's receipt and report the same action, which would read as
+    "the evidence did not move it" when nothing was executed twice.
+    """
+    if not authority:
+        return None
+    return {**authority, "operation_id": "%s-%s" % (
+        authority["operation_id"], suffix)}
 
 
 def _comparable(action: dict) -> str:
@@ -888,19 +915,25 @@ def _comparable(action: dict) -> str:
 
 
 def substitution_gate(source: str, task: dict, original: list,
-                      substituted: list) -> dict:
+                      substituted: list, *,
+                      authority: dict | None = None) -> dict:
     """Whether a policy's behaviour is driven by evidence.
 
     The verdict names which of the two failures it found, because a gate
     that only said no would leave a reader guessing whether the policy
     was blind to the evidence or merely unchanged by accident.
     """
-    moved = substitution_changes_action(source, task, original, substituted)
+    moved = substitution_changes_action(
+        source, task, original, substituted, authority=authority)
     return {"responds_to_evidence": moved,
             "verdict": ("responds-to-evidence" if moved
                         else "responds-only-to-identifier"),
-            "original_action": _action_of(source, task, original),
-            "substituted_action": _action_of(source, task, substituted)}
+            "original_action": _action_of(source, task, original,
+                                          authority=_side(authority,
+                                                          "original")),
+            "substituted_action": _action_of(source, task, substituted,
+                                             authority=_side(authority,
+                                                             "substituted"))}
 
 
 def _eligible_methods(arm: dict) -> list:

@@ -31,6 +31,18 @@ STOP = "stop"
 
 ACTION_KINDS = (PROBE, OBSERVE, CONSTRUCT, USE, CHECK, STOP)
 
+# `CHECK` is the shared gate and it did not become two kinds. Checking a
+# task result and proposing a learner revision are different acts, but the
+# contract admits one gate and the distinction that changes execution is
+# which profile is asking, not the kind. Every sealed profile refuses the
+# revision proposal, so the two old answers -- a refusal in one profile and
+# a stage in another -- were one act with two effects rather than two acts.
+#
+# The reason lives here so the profiles cannot drift apart on it. It is the
+# contract that says what a gate means under seal, and a second spelling in
+# a profile would be a second authority for the same sentence.
+REVISION_NOT_A_TASK_EFFECT = "revision proposal is not a panel task effect"
+
 
 class ActionRefused(Exception):
     pass

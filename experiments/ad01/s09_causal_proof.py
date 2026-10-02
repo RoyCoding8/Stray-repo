@@ -17,11 +17,16 @@ This module separates the two questions that were fused, and gives each a
 shape that answers only what it can.
 
     qualify_pre_launch   Can this apparatus produce a causal chain at all?
-                         Deterministic, no store, no gateway, no clock.
-                         Reads reviewer-authored policies in a namespace of
-                         their own. It qualifies launch. It establishes
-                         nothing about acquisition, and it never reads a
-                         use record, so a bundle cannot witness itself.
+                         Deterministic, no gateway, no clock, and it reads
+                         nothing a study would write. It executes the
+                         policies in its own store under its own
+                         allocation, because executing policy source
+                         requires authority and a check with none has
+                         proved nothing. Reads reviewer-authored policies
+                         in a namespace of their own. It qualifies launch.
+                         It establishes nothing about acquisition, and it
+                         never reads a use record, so a bundle cannot
+                         witness itself.
 
     join_post_effect     Did this policy's decision cause this operation?
                          Reads the persisted chain and recomputes every
@@ -217,6 +222,12 @@ class PolicyRun:
     a policy into the check is also the one that says what happened. There
     is no field on it for a digest a caller supplied, which is why a
     backfilled string cannot reach the launch path at all.
+
+    The authority is named here rather than left to the executor, because
+    executing these bytes is executing policy source and that requires a
+    store, an allocation and an operation identity. It is the
+    qualification's own operations, in its own namespace, never the study's
+    store: this check must not be able to read the run it is qualifying.
     """
 
     policy_source: str
@@ -225,6 +236,8 @@ class PolicyRun:
     state: dict = field(default_factory=dict)
     entry: str = policy_step.STEP_ENTRY
     limits: dict | None = None
+    dsn: str | None = None
+    allocation_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.policy_source.strip():
@@ -648,7 +661,31 @@ def _launch_chain(run: PolicyRun, decision: Mapping[str, Any],
         study_root=operation.study_root, persisted=False)
 
 
+def _authority(run: PolicyRun) -> dict:
+    """The qualification's own execution authority for one policy run.
+
+    Derived from the bytes, so a replay of the same policy and view reads
+    back the same receipt rather than executing again. Empty when the caller
+    named no store, and the executor then refuses before staging anything,
+    which the verdict reports as an unproven link rather than a decision.
+    """
+    if not (run.dsn and run.allocation_id):
+        return {}
+    digest = sha256_of("%s\n%s" % (run.policy_source, view_digest(run.view)))
+    return {"dsn": run.dsn, "allocation_id": run.allocation_id,
+            "operation_id": "qualify-pre-launch-%s" % digest[:24]}
+
+
 def _replay(run: PolicyRun) -> dict:
+    """Run one policy's own bytes through the study's own step boundary.
+
+    The operation identity is derived from the bytes and the view, so two
+    qualifications of the same policy and view replay the same operation
+    and read back the same receipt rather than executing twice. A run with
+    no store refuses here, which is the correct reading: this check proves
+    the apparatus turns a decision into an effect, and with no authority
+    named there is no effect to prove.
+    """
     from . import method_exec
     limits = dict(run.limits or policy_step.step_limits())
     return policy_step.validate_step_result(method_exec.run_step_out_of_process(
@@ -657,7 +694,8 @@ def _replay(run: PolicyRun) -> dict:
         cpu_seconds=int(limits.get("cpu_seconds",
                                     policy_step.STEP_CPU_SECONDS)),
         max_output_bytes=int(limits.get(
-            "max_output_bytes", policy_step.STEP_MAX_OUTPUT_BYTES))))
+            "max_output_bytes", policy_step.STEP_MAX_OUTPUT_BYTES)),
+        **_authority(run)))
 
 
 __all__ = [

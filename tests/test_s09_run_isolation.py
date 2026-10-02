@@ -124,7 +124,12 @@ def test_identity_op_id_is_determined_by_study_structure_not_mode(live_run):
 
 
 def test_two_tokens_mint_different_operation_ids():
-    tokens = ("a" * 8, "b" * 8)
+    # Text-prefixed tokens, not "a" * 8: an 8-hex-digit token is the pytest
+    # harness's own run-token space and `_checked_token` refuses it, because a
+    # store named after it would be reclaimable by the stale sweep with no lock
+    # to prove this run is live. The property under test is that two DIFFERENT
+    # tokens mint different ids, which a text prefix preserves.
+    tokens = ("toka", "tokb")
     identities = [iso.RunIdentity(
         token=t, study_root=iso.study_root_for(t),
         campaign_id=iso.campaign_for(t), allocation_id=iso.allocation_for(t),
@@ -132,9 +137,9 @@ def test_two_tokens_mint_different_operation_ids():
         for t in tokens]
     left, right = identities
     assert left.construction_operation_id(1, "init") == \
-        "s09iso-aaaaaaaa-w0-construct-l1-init"
+        "s09iso-toka-w0-construct-l1-init"
     assert right.construction_operation_id(1, "init") == \
-        "s09iso-bbbbbbbb-w0-construct-l1-init"
+        "s09iso-tokb-w0-construct-l1-init"
     assert left.study_root != right.study_root
     assert left.allocation_id != right.allocation_id
 

@@ -353,11 +353,12 @@ def test_the_action_graph_cannot_carry_a_read_value_into_an_action():
 def test_both_new_cells_repair_nothing_and_the_missing_cell_is_recorded():
     """A cell that runs and scores zero is a finding; a refusal is not.
 
-    The typed AST's node set has no field carrying the program under
-    repair and no way to synthesise replacement source text, so it can
-    observe and inspect but cannot repair. The record says so with the
-    refusal the frozen loader produced, rather than leaving the reader to
-    infer it from a zero.
+    The typed AST's node set publishes no view field carrying the program
+    under repair, so it cannot choose an edit line from what it observed. It
+    does build replacement source text — that half was measured and is no
+    longer a recorded limit — but the cells as built do not repair, and the
+    record says why with the refusal the frozen loader produced rather than
+    leaving the reader to infer it from a zero.
     """
     findings = swe_ast.expressivity()
     assert findings["can"], findings

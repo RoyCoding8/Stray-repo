@@ -22,10 +22,14 @@ input, so what the world published reaches an action. A program that
 committed a table it already had would emit the same name whatever the
 view showed.
 
-What the node set cannot do is recorded as data. `_VIEW_TYPES` has no
-field carrying the program under repair and no node builds replacement
-source text, so this arm can observe, localize and inspect but cannot
-repair. The frozen loader's own refusal is the witness, and
+What the node set cannot do is recorded as data. This used to be read as
+two limits — no view field carrying the program under repair, and no
+node building replacement source text — and the second was never true.
+The loader accepts a document whose edit payload is assembled by `obj`
+and `list` nodes, the SWE world admits the `use/code.repair` that
+document produces, and the session runs the edit. The cell can write
+source text. What it cannot do is read the program, so it cannot choose
+which line to edit from what it sees. That is the limit, and
 `expressivity()` reports it rather than leaving a reader to infer the
 limit from a zero repair rate.
 """
@@ -301,32 +305,49 @@ def ast_step(record: dict, public_state: dict, state: dict | None = None, **kw
 
 
 def missing_cells() -> dict:
-    """The two cells the representations cannot fill on this world.
+    """The cells these representations cannot fill on this world.
 
-    Both are limits of the notation rather than of the binding, and both
-    are reported with the refusal that produced them.
+    Both are reported with the refusal that produced them, and both are
+    limits of what the arm may read or say rather than of the binding.
+
+    The typed-AST cell was recorded here as unable to build replacement
+    source text. That was false and is not asserted by a test either: the
+    frozen loader accepts a document whose edit payload is assembled by
+    `obj` and `list` nodes, the SWE world admits the `use/code.repair` it
+    produces, and `SweSession.apply_action` runs the edit. What the cell
+    cannot do is read the program, so it cannot choose which line to edit
+    from what it sees. That is the whole of the remaining limit and it is
+    what the witness below reports.
     """
     return {
         "typed-ast": {
             "missing_cell": "no view field carrying the program under "
-                            "repair, and no node that builds replacement "
-                            "source text",
+                            "repair, so an edit line cannot be chosen from "
+                            "what the arm observed",
             "witness": _repair_attempt(),
-            "consequence": "the arm observes, localizes and inspects, and "
-                           "cannot repair; its repair rate is 0 and that 0 "
-                           "is about the node set",
+            "consequence": "the arm may repair at a line its record names, "
+                           "but it cannot localize that line from the "
+                           "program; the cell that remains unfillable is "
+                           "reading, not writing",
+            "builds_source_text": True,
         },
         "action-graph": {
-            "missing_cell": "a guard value cannot reach an action input",
-            "witness": "ordering_graph_policy._parse_action deep-copies the "
-                       "raw action node, so a graph that reads a test name "
-                       "out of the view still has to spell that name in the "
-                       "record; the value the evaluator just read is "
-                       "discarded. `code.localize` is worse still: the SWE "
-                       "world admits it only for a test it has already seen "
-                       "fail, and `World.static_view` is the load-time view "
-                       "in which nothing has failed, so a localize arm is "
-                       "refused at load before any guard is evaluated",
+            "missing_cell": "a guard value cannot reach an action input "
+                            "on the executor that runs this world",
+            "witness": "boolean_graph_policy._parse_action deep-copies "
+                       "the raw action node and that module publishes no "
+                       "FIELD_BINDING, so a graph that reads a test name "
+                       "out of the view still has to spell that name in "
+                       "the record; the value the evaluator just read is "
+                       "discarded. `ordering_graph_policy` is not in this "
+                       "state: it binds an input to a view field and "
+                       "resolves it at turn time, so the value reaches the "
+                       "action there and the record this file measures is "
+                       "the Boolean one. `code.localize` is refused at "
+                       "load on any executor, because the SWE world admits "
+                       "it only for a test it has already seen fail and "
+                       "`World.static_view` is the load-time view in which "
+                       "nothing has failed",
             "consequence": "a graph arm inspects and stops, and cannot "
                            "localize or repair; its repair rate is 0 and "
                            "that 0 is about the record shape, not the "
@@ -336,27 +357,24 @@ def missing_cells() -> dict:
 
 
 def _repair_attempt() -> str:
-    """Offer a repair to the frozen node set and record what it says.
+    """Offer both halves of a repair to the frozen node set and record what
+    it says about each, driven rather than asserted.
 
-    Two attempts, both driven rather than asserted. A `use` action is
-    refused by the frozen validator because the Boolean world has no such
-    kind; and a program that reads the program under repair is refused by
-    the loader because `_VIEW_TYPES` publishes no such field. The first is
-    a world binding this module supplies and the second is not, so the
-    second is the limit.
+    Writing the replacement text is offered as a document whose payload is
+    built from `obj` and `list` nodes. The loader accepts it and the SWE
+    world admits the action, so the old claim that no node builds
+    replacement source text is refuted here rather than merely dropped.
+    Reading the program is then offered, and the loader refuses it because
+    `_VIEW_TYPES` publishes no such field. That refusal is the limit.
     """
     parts = []
     try:
-        frozen._validate_action(
-            policy_action.parse_action({
-                "kind": "use", "target": "code.repair",
-                "inputs": {"edits": [{"line": 1, "op": "replace",
-                                      "text": "    total = 0"}]},
-                "evidence_refs": [], "requested_resources": {}}),
-            {"observed": [], "remaining": 0})
-        parts.append("frozen validator accepted a swe repair")
+        frozen._load(_record_for(_repair_document()))
+        parts.append("node set accepts a document that builds replacement "
+                     "source text from obj and list nodes")
     except Exception as exc:
-        parts.append("frozen validator refused a swe repair: %s" % exc)
+        parts.append("node set refuses a document that builds replacement "
+                     "source text: %s" % exc)
     for name in ("source", "symptom", "public_tests", "structure"):
         try:
             frozen._expr(_field("view", name), "p", frozen._Budget(), 1)
@@ -364,6 +382,33 @@ def _repair_attempt() -> str:
         except Exception as exc:
             parts.append("node set refuses view.%s: %s" % (name, exc))
     return " | ".join(parts)
+
+
+def _repair_document() -> dict:
+    """A document whose edit payload is assembled by nodes, not literals.
+
+    The line number, the operation and the replacement text are each built
+    by an expression node and the payload is an object over a list. A node
+    set that could not write source text would refuse this at the loader.
+    """
+    edit = {"op": "obj", "fields": {
+        "line": {"op": "const", "value": 1},
+        "op": {"op": "const", "value": "replace"},
+        "text": {"op": "const", "value": "    total = 0"}}}
+    return {"policy_id": "swe-repair-probe", "entry": {
+        "op": "return_action", "kind": "use", "target": "code.repair",
+        "inputs": {"op": "obj", "fields": {"edits": {"op": "list",
+                                                     "items": [edit]}}},
+        "evidence_refs": [], "requested_resources": {},
+        "state": {"op": "const", "value": {}}}}
+
+
+def _record_for(document: dict) -> dict:
+    return {"artifact": {
+        "kind": "learning-policy", "representation": "typed-ast",
+        "version": frozen._REPRESENTATION, "policy_id": document["policy_id"],
+        "ast_digest": hashlib.sha256(frozen._canonical(document)).hexdigest()},
+        "policy_ast": document}
 
 
 def expressivity() -> dict:
@@ -389,6 +434,9 @@ def expressivity() -> dict:
             "under the frozen loader, unchanged",
             "run it under the frozen interpreter in the bounded child, "
             "emitting only actions the SWE world admits",
+            "build replacement source text in the frozen node set, so a "
+            "`use/code.repair` payload is assembled by nodes rather than "
+            "spelled as raw JSON, and the SWE world runs the edit",
             "carry a value it read out of the view into an action input, so "
             "the arm is contingent on what the world published rather than "
             "on a schedule it already held",
@@ -396,10 +444,11 @@ def expressivity() -> dict:
             "one view function and one validator each",
         ],
         "cannot": [
-            {"behavior": "repair the program, by reading it and by writing "
-                         "replacement source text",
+            {"behavior": "choose which line to edit by reading the program "
+                         "under repair",
              "missing_cell": "no view field carrying the program under "
-                             "repair, and no node that builds source text",
+                             "repair, so an edit line cannot be chosen from "
+                             "what the arm observed",
              "witness": _repair_attempt()},
         ],
         "supersedes": {
@@ -407,10 +456,13 @@ def expressivity() -> dict:
                      "typed-AST cell as unbuilt because the frozen "
                      "validator refuses `use` and the node set exposes no "
                      "view field for the program",
-            "refined_to": "the validator refusal was a world binding, and "
-                          "this module supplies the world's own action rules "
-                          "as the ordering arm already did; the view-field "
-                          "refusal is not a binding and is recorded as the "
-                          "cell that remains unfillable",
+            "refined_to": "both of those were resolved: the validator "
+                          "refusal named a Boolean-world validator this arm "
+                          "never calls, and the SWE world admits "
+                          "`use/code.repair`; the loader accepts a document "
+                          "that builds replacement source text from obj and "
+                          "list nodes, so the cell writes edits and the "
+                          "limit that survives is reading the program to "
+                          "choose the line",
         },
     }

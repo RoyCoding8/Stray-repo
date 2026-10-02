@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import uuid
 from pathlib import Path
 
 import pytest
@@ -128,6 +129,43 @@ def _fresh_db():
     E.prepare_disposable_db(DSN, MIGRATIONS)
 
 
+@pytest.fixture(scope="module")
+def authority():
+    """Real store, real allocation, one fresh operation id per execution.
+
+    The envelope is a property of what the child does with the bytes, so the
+    bytes have to reach a child. Under the durable mandate that takes a
+    store, an allocation and an operation id; the fixture holds all three and
+    mints a new operation id per call so no test replays another's receipt.
+    """
+    from experiments.ad01 import method_exec, trajectory
+    from experiments.ad01.s09_run_isolation import create_disposable_db, \
+        drop_disposable_db
+
+    database = create_disposable_db("invc1-authority",
+                                    migrations_dir=MIGRATIONS)
+    try:
+        trajectory.set_namespace_token("")
+        campaign = "invc1-%s" % uuid.uuid4().hex[:8]
+        allocation = trajectory.authorize_campaign(
+            database.dsn, campaign, authorized=100000)
+        counter = {"n": 0}
+        last = {"operation_id": ""}
+
+        def run(member: dict, task: dict, **kwargs) -> dict:
+            counter["n"] += 1
+            last["operation_id"] = "%s-op%d" % (campaign, counter["n"])
+            return method_exec.run_member_out_of_process(
+                member, task, dsn=database.dsn,
+                allocation_id=allocation["allocation_id"],
+                operation_id=last["operation_id"], **kwargs)
+
+        yield {"run": run, "dsn": database.dsn,
+               "last_operation_id": last}
+    finally:
+        drop_disposable_db(database)
+
+
 def _member(source: str, entry: str, family: str) -> dict:
     return {"capability_id": "independent-probe",
             "method_source": source, "entry": entry,
@@ -157,11 +195,11 @@ def test_prompt_renders_envelope_rule_from_contract():
     assert '{"candidate"' in prompt
 
 
-def test_independent_software_method_through_child_process():
+def test_independent_software_method_through_child_process(authority):
     from experiments.ad01 import method_exec, trajectory
     task = trajectory.worlds.load_task(trajectory.worlds.FROZEN_DIR,
                                        SW0)
-    result = method_exec.run_member_out_of_process(
+    result = authority["run"](
         _member(ENVELOPE_SW_SOURCE, "independent_sweep", "software"),
         task, max_queries=16)
     report = trajectory._check(task, result["candidate"])
@@ -170,11 +208,11 @@ def test_independent_software_method_through_child_process():
     assert result["queries"] >= 1
 
 
-def test_independent_graph_method_through_child_process():
+def test_independent_graph_method_through_child_process(authority):
     from experiments.ad01 import method_exec, trajectory
     task = trajectory.worlds.load_task(trajectory.worlds.FROZEN_DIR,
                                        GR0)
-    result = method_exec.run_member_out_of_process(
+    result = authority["run"](
         _member(ENVELOPE_GR_SOURCE, "independent_graph_sweep",
                 "graph"),
         task, max_queries=16)
@@ -185,23 +223,40 @@ def test_independent_graph_method_through_child_process():
     assert result["queries"] >= 1
 
 
-def test_malformed_envelope_reports_structured_reason():
+def test_malformed_envelope_reports_structured_reason(authority):
+    """The structured reason now lives in the settled receipt, not the raise.
+
+    Under the durable mandate a member returning the bare task does not fail
+    at the parse step. It runs, records a typed child error and settles on
+    it, so the executor's own refusal is the generic "no successful
+    receipt". The structured reason is therefore read from the receipt the
+    operation actually left behind.
+    """
     from experiments.ad01 import method_exec, trajectory
+    from settlement import store
     task = trajectory.worlds.load_task(trajectory.worlds.FROZEN_DIR,
                                        SW0)
-    with pytest.raises(method_exec.MethodExecutionError,
-                       match="malformed-result-envelope"):
-        method_exec.run_member_out_of_process(
+
+    with pytest.raises(method_exec.MethodExecutionError) as excinfo:
+        authority["run"](
             _member(MALFORMED_DIRECT_SOURCE, "malformed_direct",
                     "software"),
             task, max_queries=16)
 
+    assert str(excinfo.value) == (
+        "refused: durable child operation has no successful receipt")
+    receipts = store.operation_receipts(
+        authority["dsn"], authority["last_operation_id"]["operation_id"])
+    assert len(receipts) == 1
+    error = receipts[0]["content"]["data"]["worker"]["error"]
+    assert error.startswith("malformed-result-envelope"), error
 
-def test_query_exhaustion_returns_unknown():
+
+def test_query_exhaustion_returns_unknown(authority):
     from experiments.ad01 import method_exec, trajectory
     task = trajectory.worlds.load_task(trajectory.worlds.FROZEN_DIR,
                                        SW0)
-    result = method_exec.run_member_out_of_process(
+    result = authority["run"](
         _member(EXHAUSTING_SOURCE, "exhausting_probe", "software"),
         task, max_queries=2)
     assert result["candidate"]["unknowns_seen"] == 3

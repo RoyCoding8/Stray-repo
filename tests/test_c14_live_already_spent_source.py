@@ -25,21 +25,23 @@ answer differs by site, and the difference is structural:
     same currency `_output_already_spent` (line 1310) already counts for the
     output study, and the same one `LiveGuard`'s own docstring names.
 
-  - `probe` (line 4111) is the exception. Its signature is
-    `probe(out, *, read_ms, max_tokens, api)` and its `probe` verb at line
-    4232 reads only `--out`, `--read-ms` and `--api`. It is handed a bare
+  - `probe` (line 4111) was the exception. It was handed a bare
     `HttpGatewayAdapter`, never a `_DurableBrokerOutput`, so no send on that
-    path creates an operation row to count. There is no store read to fall
-    back on without giving the verb a `--dsn` it has never had, which is a
-    change to the invocation contract rather than a repair.
+    path created an operation row to count. Lane A7 made the probe take the
+    same `--dsn` and `--allocation-id` pair the other two sites hold and
+    send through the durable gateway, so it is now the third derivation
+    rather than the third refusal. It refuses a caller who omits the dsn,
+    because a send with no store is a model call that leaves no trace.
 
-So the fix is two derivations and one refusal, and the refusal is the point:
-`probe` must not keep reading a number nobody writes.
+So the fix was two derivations and one refusal, and the refusal was the
+point: `probe` must not keep reading a number nobody writes. It now reads
+the store, and it refuses rather than guessing when it cannot.
 
 This file pins the reader census. The derivations themselves are in
-`scripts/invl02_live.py` and are exercised by the live paths, not here; what
-is testable offline is that the dead name is gone, that the derivation reads
-the store, and that the third path refuses instead of guessing.
+`scripts/invl02_live.py` and are exercised by the live paths and by
+`tests/test_inv_a7_probe_durable.py`, not here; what is testable offline is
+that the dead name is gone, that each derivation reads the store, and that
+the probe now takes the store it needs.
 """
 
 from __future__ import annotations
@@ -78,12 +80,17 @@ def test_the_dead_name_is_no_longer_a_reader_anywhere() -> None:
     `os.environ` lookup of the name, which is the only way a value could reach
     a ceiling.
 
-    `scripts/s09_pilot.py:1109` is such a reader, defaults it to `"2"` rather
+    `scripts/s09_pilot.py:1101` is such a reader, defaults it to `"2"` rather
     than zero, and is out of C14's scope, which named the e0, frontier and
     probe paths. It is a live-path guard seeded a dispatch count from a name
     nothing writes, so the same hole is open there with a worse default. It
     is recorded in the test rather than fixed, because fixing it is the same
     decision C14 is making and belongs in the same wave.
+
+    The scan skips `.worktrees/`. A lane worktree is a copy of this tree at
+    an earlier commit, so without the exclusion every live lane adds its own
+    stale reader to the list and the assertion below names copies rather
+    than the source of truth.
     """
     import re
 
@@ -94,6 +101,8 @@ def test_the_dead_name_is_no_longer_a_reader_anywhere() -> None:
     for path in sorted(ROOT.rglob("*.py")):
         if ".venv" in path.parts or ".git" in path.parts:
             continue
+        if ".worktrees" in path.parts:
+            continue
         if path.name in (Path(__file__).name,
                          "test_s09_c11_reported_spend.py"):
             continue
@@ -103,7 +112,7 @@ def test_the_dead_name_is_no_longer_a_reader_anywhere() -> None:
             if reader.search(line):
                 hits.append("%s:%d" % (path.relative_to(ROOT), number))
 
-    assert hits == ["scripts/s09_pilot.py:1109"], (
+    assert hits == ["scripts/s09_pilot.py:1101"], (
         "the live readers of the dead name moved: %r" % hits)
 
 
@@ -133,40 +142,70 @@ def test_the_authorization_binds_an_allocation_the_store_can_be_read_by() -> Non
         "dsn", "study_root", "authorized", "ceilings"]
 
 
-def test_the_probe_path_has_no_store_to_read() -> None:
-    """The reason the third site is a refusal rather than a derivation."""
+def test_the_probe_path_reads_its_count_from_the_store() -> None:
+    """The third site was the exception; it is a derivation now.
+
+    `probe` used to be handed a bare `HttpGatewayAdapter` and seeded
+    `already_spent=0`, so its ceiling was enforced against a number nothing
+    moved. Lane A7 made the probe send through `_DurableBrokerOutput`, which
+    is what admits the operation, so the probe now holds the same pair the
+    other two sites hold and reads the same store.
+    """
     from scripts import invl02_live as driver
 
     params = list(driver.probe.__code__.co_varnames
-                  [:driver.probe.__code__.co_argcount])
-    assert "dsn" not in params
+                  [:driver.probe.__code__.co_argcount
+                   + driver.probe.__code__.co_kwonlyargcount])
+    assert "dsn" in params
+    assert "allocation_id" in params
 
 
-def test_the_probe_verb_offers_no_dsn_flag() -> None:
+def test_the_probe_verb_refuses_a_caller_with_no_dsn() -> None:
     """Establishing the same fact at the invocation surface, where a caller
-    would actually look for the store."""
+    would actually look for the store.
+
+    This test used to read `assert "--dsn" not in block`, and that was a
+    statement about the defect rather than about the behavior: any probe
+    that had simply not been made durable satisfied it, and the bare send it
+    approved left no operation row behind. The durable version is a strictly
+    stronger claim. The verb now offers `--dsn`, and a caller who omits it
+    is refused rather than silently sending, which is what `probe` itself
+    raises on and what `tests/test_inv_a7_probe_durable.py` asserts against a
+    real store.
+    """
     import inspect
 
     from scripts import invl02_live as driver
 
     body = inspect.getsource(driver.main)
     block = body.split('if verb == "probe"')[1].split(
-        "return 0 if result.get")
-    assert "--dsn" not in block
+        "return 0 if result.get")[0]
+    assert "--dsn" in block
+    assert "--allocation-id" in block
+    assert "probe(out, read_ms=read_ms, api=api, dsn=dsn" in block
+    assert "PROBE_STORE_REFUSAL" in inspect.getsource(driver.probe)
 
 
-def test_probe_refuses_rather_than_seeding_a_ceiling_it_cannot_ground() -> None:
+def test_the_probe_ceiling_is_the_stores_count_and_not_a_seed() -> None:
     """A count nobody writes must not decide whether a probe may send.
 
-    `probe` builds its guard with `ceiling=_already_spent() + 1`. With no
-    durable count there is nothing to add to, so the ceiling has to come from
-    somewhere the probe can state, and it has to refuse when it cannot.
+    `probe` used to build its guard with `ceiling=1, already_spent=0`,
+    because there was no durable count to add to. That was the refusal C14
+    asked for while the send was bare. Lane A7 gave the probe a store, so
+    the probe now reads the store's count and adds the one send it is about
+    to make to it. The claim this test carries is unchanged and is about
+    the source of the number rather than about its absence: the ceiling is
+    built from a store read, and the guard is given that same read as its
+    `spend_reader` so it re-asks rather than trusting the seed.
     """
-    source = (ROOT / "scripts/invl02_live.py").read_text(encoding="utf-8")
-    start = source.index("def probe(")
-    block = source[start:source.index("\ndef ", start + 10)]
+    import inspect
 
-    assert "_already_spent(" not in block
+    from scripts import invl02_live as driver
+
+    source = inspect.getsource(driver.probe)
+    assert "already_spent = _already_spent(dsn, allocation_id)" in source
+    assert "ceiling=already_spent + 1" in source
+    assert "dsn=dsn, allocation_id=allocation_id)" in source
 
 
 DATABASE = "v3_c14_spend_source"

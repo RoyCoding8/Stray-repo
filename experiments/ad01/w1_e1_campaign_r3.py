@@ -505,7 +505,8 @@ def _build_exposure(manifest: dict, already_spent: int = 0,
 
 
 
-def _run(root: Path) -> dict:
+def _run(root: Path, *, dsn: str | None = None,
+         allocation_id: str | None = None) -> dict:
     from experiments.ad01 import live_construct as live
     from settlement.gateway_http import HttpGatewayAdapter
 
@@ -515,6 +516,11 @@ def _run(root: Path) -> dict:
         raise SystemExit("SETTLEMENT_GATEWAY_ENDPOINT and "
                          "SETTLEMENT_GATEWAY_KEY must be set; this lane never "
                          "accepts a credential on the command line")
+    if (dsn is None) != (allocation_id is None):
+        raise SystemExit(
+            "a dispatch is durable or it is not: --dsn and --allocation-id "
+            "are required together, because an operation admitted without an "
+            "allocation is a row the store cannot charge")
 
     manifest = _build_manifest()
     # A previous run of this campaign that faulted on a cell still spent the
@@ -541,12 +547,24 @@ def _run(root: Path) -> dict:
         expected_route=dict(live.OUTPUT_ROUTE),
         timeout_read_ms=DISPATCH_DEADLINE_MS - 10_000,
         timeout_total_ms=DISPATCH_DEADLINE_MS)
+    # A durable send is admitted and dispatched through the broker, so each
+    # cell carries an operation row, a reservation, a receipt and an
+    # exposure. The cap sheet's retry row reuses one operation identity per
+    # lineage, and identity is what makes that a retry rather than a second
+    # send: the store already holds the first. The ceiling reads the same
+    # count, so a resumed run continues from what the store records rather
+    # than from a number a file carried.
+    if dsn is not None:
+        gateway = live.preflight_dispatch_gateway(
+            dsn, gateway, allocation_id=allocation_id)
     guard = live.LiveGuard(
         gateway, pinned_model=live.OUTPUT_ROUTE["requested_model"],
         ceiling=MODEL_CALL_CEILING,
         automatic_retries=live.OUTPUT_LIMITS["automatic_retries"],
         expected_route=dict(live.OUTPUT_ROUTE),
-        already_spent=prior_spent)
+        already_spent=prior_spent,
+        spend_reader=(lambda: live.spent_dispatches(dsn, allocation_id))
+        if dsn is not None else None)
 
     for cell in exposure["attempts"]:
         arm, split, seed, attempt = (cell["arm"], cell["split"], cell["seed"],
@@ -761,7 +779,8 @@ def _independence(records: list) -> dict:
     }
 
 
-def _retry_transport_losses(root: Path) -> dict:
+def _retry_transport_losses(root: Path, *, dsn: str | None = None,
+                            allocation_id: str | None = None) -> dict:
     """Re-dispatch the cells whose only draw was a lost send.
 
     The cap sheet's retry row is explicit: "≤ 1 retry per operation identity,
@@ -787,6 +806,11 @@ def _retry_transport_losses(root: Path) -> dict:
     if not endpoint or not key:
         raise SystemExit("SETTLEMENT_GATEWAY_ENDPOINT and "
                          "SETTLEMENT_GATEWAY_KEY must be set")
+    if (dsn is None) != (allocation_id is None):
+        raise SystemExit(
+            "a retry is durable or it is not: --dsn and --allocation-id are "
+            "required together, because an operation admitted without an "
+            "allocation is a row the store cannot charge")
 
     exposure = _read_json(root / "exposure.json")
     manifest = _read_json(root / "campaign-manifest.json")
@@ -799,17 +823,23 @@ def _retry_transport_losses(root: Path) -> dict:
                                    % c["attempt"] for c in lost],
                "retried": [], "skipped": [], "dispatched": 0}
 
+    gateway = HttpGatewayAdapter(
+        endpoint=endpoint, api_key=key, api=GATEWAY_API,
+        expected_route=dict(live.OUTPUT_ROUTE),
+        timeout_read_ms=DISPATCH_DEADLINE_MS - 10_000,
+        timeout_total_ms=DISPATCH_DEADLINE_MS)
+    if dsn is not None:
+        gateway = live.preflight_dispatch_gateway(
+            dsn, gateway, allocation_id=allocation_id)
     guard = live.LiveGuard(
-        HttpGatewayAdapter(
-            endpoint=endpoint, api_key=key, api=GATEWAY_API,
-            expected_route=dict(live.OUTPUT_ROUTE),
-            timeout_read_ms=DISPATCH_DEADLINE_MS - 10_000,
-            timeout_total_ms=DISPATCH_DEADLINE_MS),
+        gateway,
         pinned_model=live.OUTPUT_ROUTE["requested_model"],
         ceiling=MODEL_CALL_CEILING,
         automatic_retries=live.OUTPUT_LIMITS["automatic_retries"],
         expected_route=dict(live.OUTPUT_ROUTE),
-        already_spent=int(exposure.get("dispatches_spent", 0)))
+        already_spent=int(exposure.get("dispatches_spent", 0)),
+        spend_reader=(lambda: live.spent_dispatches(dsn, allocation_id))
+        if dsn is not None else None)
 
     for cell in lost:
         arm, split = cell["arm"], cell["split"]
@@ -1407,13 +1437,19 @@ def main(argv=None) -> int:
                                             "verify", "manifest"))
     parser.add_argument("--root", default=str(REPO_ROOT / "reports" / "evidence"
                                               / CAMPAIGN_ID))
+    parser.add_argument("--dsn", default="")
+    parser.add_argument("--allocation-id", default="")
     args = parser.parse_args(argv)
     root = Path(args.root)
     if args.command == "run":
-        print(json.dumps(_run(root), sort_keys=True, indent=1))
+        print(json.dumps(_run(root, dsn=args.dsn or None,
+                              allocation_id=args.allocation_id or None),
+                         sort_keys=True, indent=1))
     elif args.command == "retry":
-        print(json.dumps(_retry_transport_losses(root), sort_keys=True,
-                         indent=1))
+        print(json.dumps(_retry_transport_losses(
+            root, dsn=args.dsn or None,
+            allocation_id=args.allocation_id or None),
+            sort_keys=True, indent=1))
     elif args.command == "summarize":
         print(json.dumps(summarize(root), sort_keys=True, indent=1))
     elif args.command == "manifest":

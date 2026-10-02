@@ -42,15 +42,18 @@ observable is `normalized_reduction` plus the decision vector
 (`method_id`, `max_queries`), the same pair the prior lane adopted.
 
 What a *retained method* would need is a repertoire wider than the four
-authored seed ids. It is not there. `assessment_profile.default_repertoire`
-returns exactly those four and `e2_replication.eligible_for(task)` returns
-the two belonging to the task's family, identically for every arm. No method
-acquired on one task can enter another task's repertoire, so "reuse a
-retained method" is not expressible as a difference in `method_id` here.
-That is `RETENTION_BLOCKER` below, it is asserted rather than described, and
-the retention leg is measured as what *is* expressible: a policy shown a
-retained method's prior observations against the same policy shown none,
-paired per task, on the splits where the ceiling is open.
+authored seed ids. **B3 opened it**, and the opening is described where it
+was made rather than here: `assessment_profile.Repertoire` carries acquired
+members beside the seeds, `AcquiredMember.admit` decides per task whether
+one may be named, and `e2_replication.eligible_for` derives the eligible
+set from the repertoire in hand. `default_repertoire()` still returns
+exactly the four ids and `eligible_for(task)` with no repertoire still
+returns exactly the two, so every archived run of this campaign reproduces.
+`retained_leg_verdict` below is the second half of what the blocker named:
+it executes a member on every frozen task in its family and reports the
+`method_id` leg measurable only when the verdicts differ, because admitting
+bytes into a repertoire whose members are all constant would leave the leg
+exactly as closed as it was.
 
 The accounting defect is inherited and is not this module's to repair. The
 route states price as `usage.cost`; `gateway_http._decode_usage` reads
@@ -68,6 +71,7 @@ from typing import Any, Mapping, Sequence
 from . import e2_contrast_campaign as experience
 from . import e2_replication as replica
 from . import learner
+from . import packet
 from . import worlds
 
 NAMESPACE = "invr1w2retention"
@@ -173,7 +177,48 @@ DECISION_FIELDS = experience.DECISION_FIELDS
 # The two defects in the frozen instrument that a retention claim would
 # otherwise be read through. Each is a constant, so neither can carry a
 # contrast, and both are named in the report rather than worked around.
+#
+# `RETENTION_BLOCKER` was one of them and B3 repaired it. It stays here as a
+# record rather than being deleted, because three archived reports read
+# their closure claim out of this constant and a reader comparing them
+# against the present source needs to find the sentence that described the
+# world they measured, not a silence. `repaired_by` names the change and
+# `archived_in` names every report whose description of the closure is now
+# historical. The block's own text is unedited, which is the point: it is a
+# quotation of the defect, and correcting it would leave no record of what
+# was corrected.
 RETENTION_BLOCKER = {
+    "status": "repaired by B3; the description below is of the world as it"
+              " stood at 35ba5e9 and is kept as the record of what was"
+              " repaired",
+    "repaired_by": {
+        "arrival_path": "assessment_profile.Repertoire carries acquired"
+                        " members beside the seeds and assessment_profile."
+                        "AcquiredMember.admit decides per task whether one"
+                        " may be named. e2_replication.eligible_for takes a"
+                        " repertoire and derives the eligible set from it.",
+        "varying_verdict": "retained_leg_verdict below measures a member's"
+                           " verdict on every frozen task in its family and"
+                           " reports the leg measurable only when more than"
+                           " one verdict appears.",
+        "what_did_not_change": "default_repertoire still returns exactly the"
+                               " four authored seed ids, and"
+                               " eligible_for(target) with no repertoire still"
+                               " returns exactly the two controls for the"
+                               " family. Every archived run reproduces.",
+    },
+    "archived_in": [
+        "reports/evidence/invr1w2retention/report.json",
+        "reports/evidence/invr1w2retentionr2/report.json",
+        "reports/evidence/invr1w2retention-census/report.json",
+        "reports/evidence/invr1b8-panel-census/census.json",
+    ],
+    "archived_note": "each of those four read repertoire_closed: true,"
+                     " distinct_eligible_sets of length 1, or"
+                     " retained_method_leg_measurable: false. Those are"
+                     " measurements of the world as it stood and are not"
+                     " restated here. The archived files are immutable"
+                     " history and were not edited by B3.",
     "what": "a policy cannot name a method it retained, so the retained-"
             "method-reuse leg has no lever on this instrument",
     "mechanism": "assessment_profile.default_repertoire returns the four"
@@ -213,8 +258,274 @@ TERMINAL_VERDICT_DEFECT = {
 }
 
 
+# ---------------------------------------------------------------------------
+# B8: the panel power census
+# ---------------------------------------------------------------------------
+#
+# **Two defects, and this region is about one of them.** `RETENTION_BLOCKER`
+# above is a closed repertoire: no difference in `method_id` can be a
+# retention effect on any panel, because the eligible set is identical for
+# every arm on every target. Choosing a different panel cannot move it by
+# one bit, and B3 opens the repertoire rather than anything here.
+#
+# What *is* a panel choice is the pair of properties that decide whether the
+# experience contrast can express a difference at all:
+#
+#   **the cluster count.** One cluster is one `(family, template)`
+#   (`panel_inventory.CLUSTER_RULE`). Six are required at alpha 1/20, because
+#   `2^(1-n) <= 1/20` first holds at n = 6. Both archived contrasts used the
+#   software panel, which offers four templates in the whole frozen world
+#   and two of them on the split they ran.
+#
+#   **the attainable positive ceiling.** `census()` below measures the
+#   benefit metric across the whole decision grid against a family-aware
+#   default. A panel with six clusters and a ceiling of zero is powered and
+#   blind, which is a different failure from being unpowered, and the two
+#   must not be reported with the same word.
+#
+# So this region enumerates every combination of splits the frozen world
+# offers, per family, and reports both properties per combination. It is a
+# census over source, computed with no model and no dispatch, and it is the
+# artifact a reader re-derives when they want to know which panel a third
+# contrast should run on.
+#
+# It is deliberately not a campaign. Building an E2 contrast on the panel
+# this finds is B13, and B13 is gated on route verification, which is not
+# this lane's work.
+
+CENSUS_NAMESPACE = "invr1b8-panel-census"
+
+CENSUS_SPLITS = ("dev", "within", "transfer")
+"""The splits the frozen world offers a family, in the world's own order.
+
+The census sweeps every non-empty subset of these, so a panel is a set of
+splits rather than a hardcoded pair. A hardcoded pair cannot answer "does
+any panel reach six", because the question is about the space and a pair is
+one point in it.
+"""
+
+CENSUS_ALPHA = "1/20"
+"""The alpha the protocol names, as a string.
+
+`s09_study_protocol.ALPHA` is `Fraction(1, 20)` and
+`panel_inventory.DEFAULT_ALPHA` is `0.05`. Both answer 6 for the required
+cluster count and the tests assert that they agree, so the census states
+one alpha rather than choosing between two spellings of it.
+"""
+
+POWER_CENSUS_DEFECT = {
+    "what": "the frozen panel is short of independent units, so the"
+            " experience contrast cannot express a positive result on it",
+    "mechanism": "the cluster rule is (family, template) and the generator"
+                 " reuses each pair across cells, worlds and splits"
+                 " (s09_panel_inventory.CLUSTER_RATIONALE). The software"
+                 " family offers four templates in the whole frozen world"
+                 " and two of them on any one split, against the six"
+                 " minimum_clusters_for_alpha(1/20) requires. Both archived"
+                 " contrasts ran that panel.",
+    "distinct_from_retention_closure": RETENTION_BLOCKER["mechanism"],
+    "reading": "the cluster count and the retention closure are different"
+               " defects. The first is a panel choice and this census"
+               " resolves it. The second is a closed repertoire, no panel"
+               " touches it, and nothing in this region repairs it.",
+}
+
+
 class W2Refused(Exception):
     """A campaign that may not run, named before anything was sent."""
+
+
+def _required_clusters() -> int:
+    """The independent units a contrast needs at alpha 1/20.
+
+    Read from the protocol rather than restated, and cross-checked against
+    the panel inventory's own float spelling inside `panel_power_verdict`,
+    because the two spellings of alpha live in two modules and a census
+    that silently picked one would report a number nobody agreed to.
+    """
+    from . import s09_study_protocol
+
+    return s09_study_protocol.minimum_clusters_for_alpha(
+        s09_study_protocol.ALPHA)
+
+
+def panel_combinations() -> list:
+    """Every panel the frozen world offers, with both of its properties.
+
+    A panel is a family and a non-empty subset of the splits. Each is
+    measured twice over, and both measurements are re-derived rather than
+    carried: the cluster count from the frozen tasks' own templates, and the
+    ceiling from `census` over the same targets this panel names.
+
+    The cluster count uses `panel_inventory.CLUSTER_RULE` semantics directly
+    rather than `s09_panel_inventory.build_inventory`, because that
+    function inventories a whole root and this enumerates a subset of it.
+    Counting a `(family, template)` pair over a subset is the same rule
+    applied to fewer cells, and `s09_study_protocol.compute_power` is what
+    the protocol will apply to whichever panel a run finally picks.
+
+    Cheap by construction: the ceiling is measured once per task and reused
+    across the combinations that contain it, so the fourteen panels cost six
+    per-family censuses rather than fourteen.
+    """
+    world = _world()
+    required = _required_clusters()
+    measured: dict = {}
+    for family in ("software", "graph"):
+        for split in CENSUS_SPLITS:
+            for task_id in world[split][family]:
+                measured.setdefault(
+                    task_id,
+                    (worlds.load_task(worlds.FROZEN_DIR, task_id)["template"],
+                     census([task_id], family=family)["rows"][0]))
+
+    panels = []
+    for family in ("software", "graph"):
+        for size in range(1, len(CENSUS_SPLITS) + 1):
+            for splits in _combinations(CENSUS_SPLITS, size):
+                task_ids = [task_id for split in splits
+                            for task_id in world[split][family]]
+                templates = sorted({measured[t][0] for t in task_ids})
+                rows = [measured[t][1] for t in task_ids]
+                ceilings = [r["attainable_positive_delta"] for r in rows
+                            if r["attainable_positive_delta"] is not None]
+                count = len(templates)
+                panels.append({
+                    "panel_id": "%s:%s" % (family, "+".join(splits)),
+                    "family": family,
+                    "splits": list(splits),
+                    "task_ids": task_ids,
+                    "templates": templates,
+                    "cluster_count": count,
+                    "required_clusters": required,
+                    "minimum_p": str(_minimum_p(count)),
+                    "powered": count >= required,
+                    "shortfall": max(0, required - count),
+                    "rows_measured": len(rows),
+                    "max_attainable_positive_delta": (
+                        max(ceilings) if ceilings else 0.0),
+                    "open_rows": sum(1 for c in ceilings if c > 0),
+                })
+    return panels
+
+
+def _combinations(items: Sequence[str], size: int) -> list:
+    """`size` subsets of `items`, in the order itertools yields them."""
+    import itertools
+
+    return [tuple(combo) for combo in itertools.combinations(items, size)]
+
+
+def _minimum_p(cluster_count: int):
+    """The smallest two-sided sign-sweep p-value `cluster_count` clusters allow.
+
+    A `None` at zero clusters is carried rather than coerced, so an empty
+    panel reports an absent floor instead of a p-value of one.
+    """
+    from . import s09_study_protocol
+
+    return s09_study_protocol.minimum_sign_flip_p(cluster_count)
+
+
+def panel_power_verdict() -> dict:
+    """Which panels reach six clusters with a non-zero ceiling, and which do not.
+
+    Four lists over the enumeration, because clusters and ceiling are two
+    independent axes and collapsing them into one verdict would lose the
+    distinction that matters. `powered_with_positive_ceiling` is the answer
+    to the question B8 asks. `powered_but_blind` is a panel with enough
+    independent units and nowhere to put a positive, which is a different
+    defect from being short of units. `unpowered` is the prior failure, and
+    `unpowered_but_positive` says which of those had a ceiling anyway, which
+    is what separates "too few units" from "nowhere to look".
+
+    The retention closure is carried through as a named separate defect, not
+    as a caveat on this verdict. Fixing the cluster count does not move
+    `RETENTION_BLOCKER`, and the field naming them apart is what stops the
+    next report reading this census as a retention repair.
+    """
+    from . import s09_panel_inventory
+    from fractions import Fraction
+
+    required = _required_clusters()
+    if s09_panel_inventory.minimum_clusters_for_alpha(
+            float(Fraction(1, 20))) != required:
+        raise W2Refused(
+            "the protocol and the panel inventory disagree on the cluster "
+            "requirement; a census that picked one would report a number "
+            "nobody agreed to")
+
+    panels = panel_combinations()
+    powered = [p for p in panels if p["powered"]]
+    return {
+        "required_clusters": required,
+        "alpha": CENSUS_ALPHA,
+        "cluster_rule": s09_panel_inventory.CLUSTER_RULE,
+        "powered_with_positive_ceiling": [
+            p["panel_id"] for p in powered
+            if p["max_attainable_positive_delta"] > 0],
+        "powered_but_blind": [
+            p["panel_id"] for p in powered
+            if p["max_attainable_positive_delta"] <= 0],
+        "unpowered": [p["panel_id"] for p in panels if not p["powered"]],
+        "unpowered_but_positive": [
+            p["panel_id"] for p in panels
+            if not p["powered"] and p["max_attainable_positive_delta"] > 0],
+        "disposition": (
+            "A panel exists that reaches the required clusters with a"
+            " non-zero ceiling, and it is graph. The software family is"
+            " short on every combination it offers, because the frozen"
+            " world contains four software templates in total and six are"
+            " required. This is a power repair: it names a panel a third"
+            " experience contrast could move. It is not a retention"
+            " repair."),
+        "not_claimed": (
+            "No retention effect is claimed, measured or enabled here. The"
+            " repertoire stays closed on every panel, including the powered"
+            " one, so method_id remains unmeasurable as a retention leg and"
+            " B14 stays gated on B3."),
+        "retention_closure": {
+            "mechanism": RETENTION_BLOCKER["mechanism"],
+            "distinct_from": POWER_CENSUS_DEFECT["mechanism"],
+        },
+    }
+
+
+def write_census(path: Any = None) -> dict:
+    """The census, derived from source and written as the artifact.
+
+    Written only to a directory this lane owns. Existing evidence is
+    immutable history and a census that overwrote one would destroy the
+    record of the null it is correcting.
+    """
+    verdict = panel_power_verdict()
+    body = {
+        "namespace": CENSUS_NAMESPACE,
+        "recomputed_by": (
+            "experiments.ad01.w2_retention_campaign.panel_power_verdict"),
+        "model_calls": 0,
+        "dispatches": 0,
+        "alpha": verdict["alpha"],
+        "required_clusters": verdict["required_clusters"],
+        "cluster_rule": verdict["cluster_rule"],
+        "default_resolution": (
+            "per family, via w2_retention_campaign.default_method, so a"
+            " graph row is measured against seed-gr-ddmin@8 and not against"
+            " the inherited hardcoded software default"),
+        "budgets": list(BUDGETS),
+        "defects_kept_apart": {
+            "panel_power": POWER_CENSUS_DEFECT,
+            "retention_closure": RETENTION_BLOCKER,
+        },
+        "verdict": verdict,
+        "panels": panel_combinations(),
+    }
+    target = Path(path) if path is not None else Path(__file__).resolve(
+    ).parents[2] / "reports" / "evidence" / CENSUS_NAMESPACE / "census.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n",
+                      encoding="utf-8")
+    return body
 
 
 # ---------------------------------------------------------------------------
@@ -333,19 +644,38 @@ def verify_contrast(frozen: Mapping[str, Any]) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def measure_repertoire_closure() -> dict:
+def measure_repertoire_closure(
+        repertoire: Any = None) -> dict:
     """Measure, on every panel target, whether a retained method is nameable.
 
-    This is the retention leg's first question and it is answerable with no
-    model and no dispatch. For each target it reports the repertoire the
-    frozen gate admits, the eligible methods the policy is shown, and
-    whether any method on the panel is eligible that the panel did not start
-    with. A repertoire with no arrival path is a closed one, and a contrast
-    whose lever is closed has no `method_id` difference to report.
+    With no repertoire this is what it was before B3, and it is still what
+    the authored seeds alone are: closed, frozen, and identical for every
+    arm. Three archived reports read that measurement off this call and the
+    number has not moved.
+
+    Given a repertoire it measures the opened case as well, and the two are
+    reported as two fields rather than as one flag that reads true or false
+    depending on who called it. `repertoire_closed` describes the repertoire
+    in hand; `default_repertoire_closed` is the frozen authored set and is
+    always true, so a reader who wants the old number has one named for it
+    and cannot mistake the new one for it.
+
+    `retained_method_nameable` was a count comparison against the two
+    authored controls, which cannot distinguish a third authored control
+    from a method that arrived. It is now whether any member of the
+    repertoire in hand is admitted on that target, which is the question the
+    leg actually needs answered.
+
+    A member refused on a panel target raises rather than being skipped: a
+    silently dropped member would leave a closed eligible set that reads
+    exactly like the frozen one, which is the defect this lane repairs.
     """
     from . import assessment_profile
 
-    repertoire = sorted(assessment_profile.default_repertoire())
+    seeds_only = assessment_profile.default_repertoire()
+    repertoire = repertoire if repertoire is not None \
+        else assessment_profile.Repertoire()
+    repertoire_ids = sorted(m.capability_id for m in repertoire.members)
     rows = []
     for panel in PANELS:
         splits = [panel["target_split"]]
@@ -354,35 +684,169 @@ def measure_repertoire_closure() -> dict:
         for split in splits:
             for task_id in panel_targets(panel, split=split):
                 task = worlds.load_task(worlds.FROZEN_DIR, task_id)
-                eligible = sorted(replica.eligible_for(task))
+                eligible = sorted(replica.eligible_for(task, repertoire))
                 rows.append({
                     "panel": panel["name"],
                     "split": split,
                     "task_id": task_id,
                     "family": str(task.get("family") or ""),
                     "eligible_methods": eligible,
-                    "repertoire": repertoire,
-                    "repertoire_size": len(repertoire),
+                    "repertoire": repertoire_ids,
+                    "repertoire_size": len(repertoire_ids),
                     "eligible_count": len(eligible),
-                    "retained_method_nameable": len(eligible) > 2,
+                    "retained_method_nameable": bool(
+                        any(m in eligible for m in repertoire_ids)),
                 })
+    default_rows = [dict(
+        row, retained_method_nameable=False,
+        eligible_methods=sorted(replica.eligible_for(
+            worlds.load_task(worlds.FROZEN_DIR, row["task_id"]))))
+        for row in rows]
+    sets = {tuple(r["eligible_methods"]) for r in rows}
     return {
         "rows": rows,
         "repertoire_closed": all(not r["retained_method_nameable"]
                                  for r in rows),
-        "distinct_eligible_sets": sorted(
-            {tuple(r["eligible_methods"]) for r in rows}),
-        "every_arm_sees_the_same_eligible_methods": len(
-            {tuple(r["eligible_methods"]) for r in rows}) == 1,
+        "default_repertoire_closed": all(
+            not r["retained_method_nameable"] for r in default_rows),
+        "authored_repertoire": sorted(seeds_only),
+        "repertoire": repertoire_ids,
+        "distinct_eligible_sets": sorted(sets),
+        "every_arm_sees_the_same_eligible_methods": len(sets) == 1,
         "mechanism": RETENTION_BLOCKER["mechanism"],
+        "status": RETENTION_BLOCKER["status"],
         "reading": "a retention contrast needs a policy to be able to name a"
-                   " method it retained. Every target here is shown the same"
-                   " two authored seeds and the gate admits exactly those"
-                   " four ids, so no acquired method can arrive. The"
-                   " method_id leg is therefore not measurable here, and the"
-                   " retention leg is measured on normalized_reduction"
-                   " instead.",
+                   " method it retained. With no member in hand every target"
+                   " here is shown the same two authored seeds, which is the"
+                   " frozen closure three archived reports recorded. Given a"
+                   " repertoire the eligible set is derived from the members"
+                   " it carries, so the measureability of the method_id leg"
+                   " is a property of that repertoire and not of this"
+                   " function. retained_leg_verdict is what decides it.",
     }
+
+
+def retained_leg_verdict(member: Any, *, authority: Mapping[str, Any] | None
+                          = None) -> dict:
+    """Whether carrying `member` makes the `method_id` leg measurable.
+
+    The repertoire arriving is necessary and not sufficient. A member that
+    returns its input is `preserved` on every task it is carried to, because
+    the incumbent is preserved by definition and nothing was searched, so a
+    repertoire holding it would be open and the leg would be exactly as
+    unmeasurable as it was before. Admitting bytes is not the repair.
+
+    So the member is executed on every frozen task in its own family and
+    the leg is called measurable only when the verdicts differ. It is
+    executed through `method_exec.run_member_out_of_process`, the same
+    brokered route an acquired method takes, and the candidate it returns
+    goes to the frozen checker. There is no host-side shortcut, because a
+    shortcut would answer a question about a reimplementation of the member
+    rather than about the member.
+
+    That route needs a store, an allocation and an operation identity, so
+    the census is a function of the caller holding authority rather than
+    something it manufactures. `retained_leg_verdict` without it refuses.
+    An offline lane that cannot execute has not measured the leg and must
+    not report it as measured.
+
+    It is also why the two necessary pieces are separable. The arrival path
+    is a type and an admission gate; this is the property that type was
+    added for. A report that names the first and not the second has not
+    closed the retention leg.
+    """
+    world = _world()
+    family = str(getattr(member, "family", "") or "")
+    tasks = [task_id for split in ("dev", "within", "transfer")
+             for task_id in world[split][family]]
+    if not authority or not all(authority.get(k) for k in
+                                ("dsn", "allocation_id")):
+        raise W2Refused(
+            "the retained-method leg is measured by executing the member's"
+            " own bytes on every task in its family, and"
+            " method_exec.run_member_out_of_process refuses any execution"
+            " without a store, an allocation and an operation identity."
+            " Pass authority= or measure it elsewhere; a leg reported"
+            " measurable without an execution was not measured.")
+    rows = []
+    for index, task_id in enumerate(tasks, start=1):
+        task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+        own = task_id == str(getattr(member, "acquired_on", ""))
+        if own:
+            rows.append({"task_id": task_id, "acquisition_task": True,
+                         "verdict": None, "reason":
+                             "the acquisition task itself; a member is"
+                             " refused there by AcquiredMember.admit",
+                         "normalized_reduction": None})
+            continue
+        report = _execute_member(member, task, authority)
+        rows.append({"task_id": task_id, "acquisition_task": False,
+                     "verdict": str(report["verdict"]),
+                     "reason": str(report["reason"]),
+                     "normalized_reduction": replica._normalized_reduction(
+                         {"scored": True, **report})})
+    verdicts = sorted({r["verdict"] for r in rows if r["verdict"]})
+    return {
+        "capability_id": str(getattr(member, "capability_id", "")),
+        "family": family,
+        "origin": str(getattr(member, "origin", "")),
+        "acquired_on": str(getattr(member, "acquired_on", "")),
+        "source_digest": str(getattr(member, "source_digest", "")),
+        "rows": rows,
+        "tasks_measured": len(rows),
+        "distinct_verdicts": verdicts,
+        "retained_method_leg_measurable": len(verdicts) > 1,
+        "arrival_path": "assessment_profile.Repertoire.eligible_for",
+        "executed_by": "method_exec.run_member_out_of_process",
+        "reading": "the retained-method leg is measurable when two arms"
+                   " holding different repertoires can differ in method_id"
+                   " in a way the world grades differently. That needs a"
+                   " member the repertoire admits AND a member whose verdict"
+                   " is a property of the task it is carried to. Admitting a"
+                   " member whose verdict is constant restores the defect"
+                   " this measurement was added to detect.",
+        "not_claimed": "no retention effect is measured here. This is the"
+                       " instrument's capacity to express one, computed by"
+                       " executing the member and grading with the frozen"
+                       " checker.",
+    }
+
+
+def _execute_member(member: Any, task: Mapping[str, Any],
+                    authority: Mapping[str, Any]) -> dict:
+    """One member on one task, through the executor and the frozen checker.
+
+    The member's own bytes, staged and run under the same oracle-on-a-socket
+    route every acquired method takes, and the candidate it returns graded
+    by `replica._grade`. `AcquiredMember.admit` is called first so a member
+    this census should not be measuring is refused here rather than
+    producing a number.
+
+    The operation identity carries the member id, the task and a
+    process-wide counter. The broker keys a durable operation by its id and
+    refuses the same id under a different payload, so two censuses of two
+    different members in one store would collide on a counter local to
+    either and the second would fail for a reason that has nothing to do
+    with the member.
+    """
+    from . import assessment_profile, method_exec
+
+    assessment_profile.AcquiredMember(
+        capability_id=member.capability_id, family=member.family,
+        entry=member.entry, method_source=member.method_source,
+        origin=member.origin, acquired_on=member.acquired_on).admit(task)
+    _LEG_RUNS["n"] += 1
+    result = method_exec.run_member_out_of_process(
+        member.as_executable(), packet.method_task_view(task),
+        max_queries=int(task.get("max_queries") or 8),
+        dsn=authority["dsn"], allocation_id=authority["allocation_id"],
+        operation_id="ad01-%s-b3-leg-%s-%s-%d"
+                     % (authority.get("cid", "leg"), member.capability_id,
+                        task["task_id"], _LEG_RUNS["n"]))
+    return replica._grade(task, result["candidate"])
+
+
+_LEG_RUNS = {"n": 0}
 
 
 # ---------------------------------------------------------------------------
@@ -977,14 +1441,40 @@ def build_report(bundle: Mapping[str, Any], *, namespace: str,
                                     " with the decision vector"
                                     " (method_id, max_queries) reported per"
                                     " task",
+            # This report carries no member in hand, because the campaign
+            # runs no acquisition. The leg is unmeasurable for THIS report
+            # for that reason, and the reason is now stated rather than
+            # inferred from a constant that is no longer constant. B3 proved
+            # the instrument can express the leg by measuring a member on
+            # every task in its family; `retained_leg_verdict` is that
+            # measurement and a report wanting the positive reading carries
+            # its verdict block beside this one.
             "retained_method_leg_measurable": False,
             "retained_method_leg_blocker": RETENTION_BLOCKER,
+            "retained_method_leg_status": {
+                "arrival_path": "assessment_profile.Repertoire and"
+                                " e2_replication.eligible_for(target,"
+                                " repertoire) admit a member acquired on a"
+                                " prior task. Both exist and both are"
+                                " measured in tests/test_inv_b3_repertoire.py",
+                "varying_verdict": "retained_leg_verdict(member,"
+                                   " authority=) executes the member on"
+                                   " every frozen task in its family and"
+                                   " reports the leg measurable only when the"
+                                   " verdicts differ",
+                "why_this_report_still_cannot": "no acquisition ran, so this"
+                                                " report holds no member. The"
+                                                " leg is a property of the"
+                                                " repertoire a run is handed"
+                                                " and not of the campaign.",
+            },
             "terminal_verdict_usable": False,
             "terminal_verdict_defect": TERMINAL_VERDICT_DEFECT,
             "note": "the terminal verdict is constant by construction, so no"
                     " claim in this report rests on it. The retained-method"
-                    " leg is unmeasurable on this instrument and is reported"
-                    " as such rather than approximated by a different arm.",
+                    " leg is unmeasurable for this report because it holds no"
+                    " repertoire with a member in it, and is reported as"
+                    " such rather than approximated by a different arm.",
         },
         "panels": panel_rows,
         "paired": bundle.get("paired"),

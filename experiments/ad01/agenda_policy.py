@@ -423,7 +423,26 @@ def constant_rule_search(budget: int, *, worlds=None,
 
 def _score_constant_rules(budget: int, worlds: tuple, depths: tuple,
                           objective: str) -> list:
-    """[(score, rule)] over the whole constant space, in a stable order."""
+    """[(mean score, rule)] over the whole constant space, in a stable order.
+
+    The aggregation is a mean over `worlds`, and it has to be. Every consumer
+    of this function reads the score beside a per-arm mean over the same
+    worlds: `e3_ladder._aggregate` divides by its cell count, and
+    `qualified_ladder` publishes `held_out_reduction_mean` next to the
+    yardstick this function produces. A sum there is three times the scale of
+    everything it is read against, and the consequence is not a scale
+    difference that cancels -- a sum grows with the length of `worlds`, so
+    the same rule scored differently on a three-world search and a one-world
+    search. `rules_beating_it` and `gap_to_best` are counted off these
+    numbers, so the handicap that qualifies every reported E3 arm was partly
+    a count of worlds.
+
+    A mean is invariant to how many times a value is folded in, which is the
+    property that lets two searches over different world sets be compared at
+    all. The mean is also what `held_out_reduction` already is on the
+    instrument: `selection.Yield` types it a rate in `[0, 1]`, so a score
+    above 1.0 is a sum and a score in range is a mean.
+    """
     from . import selection
     scores = []
     for sw_method in selection.METHODS:
@@ -437,7 +456,7 @@ def _score_constant_rules(budget: int, worlds: tuple, depths: tuple,
                             None, FixedPolicy(rule),
                             selection.Allocation(authorized=budget),
                             world=world).yield_.as_dict()[objective]
-                        for world in worlds), rule))
+                        for world in worlds) / len(worlds), rule))
     return scores
 
 

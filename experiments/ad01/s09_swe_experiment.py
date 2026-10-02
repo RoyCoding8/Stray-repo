@@ -32,7 +32,10 @@ The two cells still cannot repair, and the reasons are limits of the
 representations rather than of the study:
 
 * the typed AST's frozen `_VIEW_TYPES` publishes no field for the
-  program under repair and no node builds replacement source text;
+  program under repair, so it cannot choose an edit line from what it
+  observed. It does build replacement source text — a document whose
+  edit payload is assembled by `obj` and `list` nodes loads and the SWE
+  world runs the resulting repair — so only the reading half is a limit;
 * the action graph's `_parse_action` deep-copies the raw action node, so
   a value a guard just read never reaches an action input, and
   `code.localize` is admitted only for a test the world has already seen
@@ -1593,8 +1596,39 @@ def support() -> dict:
         "distinct_faulty_programs": len(
             {tasks.render_source(r["source"]) for r in held}),
         "lineages_per_cell": LINEAGES_PER_CELL,
-        "supported_representations": [PYTHON_STEP],
-        "missing_representations": [TYPED_AST, ACTION_GRAPH],
+        "supported_representations": [PYTHON_STEP, TYPED_AST, ACTION_GRAPH],
+        "missing_representations": [],
+        "comparable_through_compare_arms": False,
+        "why_not_comparable": (
+            "all three lineages build and each cell is bound to its own "
+            "real executor, but compare_arms does not reach a comparable "
+            "result on this world: the step driver factory takes no step "
+            "budget argument, and the typed AST emits a boolean stop target "
+            "the swe world refuses. The graph cell's observation view is "
+            "closed. The earlier diagnosis blamed the contract view for "
+            "carrying no symptom key, and that was wrong: the contract "
+            "already published the guarded observations as observed, and "
+            "the swe binding's projection read symptom instead and wrote "
+            "its empty default over them, so the guard on observed.0.kind "
+            "resolved {}['0'] and raised. That projection now re-indexes "
+            "the list it is handed, and the guard is decided. What still "
+            "holds the graph cell is the budget's shape, one layer below. "
+            "contract_view publishes remaining as the scalar the contract "
+            "requires by a declared read of ('remaining', 'test'), while "
+            "the swe world publishes a per-dimension mapping and its own "
+            "admits calls .get on it, so the turn the guard now reaches is "
+            "refused with 'int' object has no attribute 'get'. The map is "
+            "not recoverable from what the contract carries, because "
+            "action_schema.budget holds the ceiling and the live count is "
+            "already spent, and republishing a mapping under remaining "
+            "would be widening the contract rather than reading one. Named "
+            "with its refusals in tests/test_inv_b9_graph_driver.py, "
+            "tests/test_inv_b1_swe_view.py and "
+            "tests/test_inv_b18_view_contract.py"),
+        "repair_rate_note": (
+            "the three cells still repair nothing as built; that zero is "
+            "about the records and the harness, not about the world, which "
+            "admits use/code.repair"),
     }
 
 

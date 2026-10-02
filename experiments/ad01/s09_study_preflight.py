@@ -14,6 +14,7 @@ and an unknown blocks as loudly as a failure does.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
@@ -1094,6 +1095,13 @@ def qualification(config: StudyConfig) -> Any:
     These run in their own namespace against the deterministic qualification
     world, never against the study's store. A qualification that read the
     study's own bundle would be judging the experiment by its output.
+
+    They do execute policy source, so they need authority, and the
+    authority is their own. The study's own database is the wrong store to
+    take here: a launch qualification that wrote into the run it is about
+    to launch would be judging the experiment by its output, which is the
+    circularity this module exists to remove. So it takes a disposable
+    database of its own and an allocation authorized against that.
     """
     from experiments.ad01 import s09_causal_proof
     from experiments.ad01 import s09_instruments as instruments
@@ -1109,14 +1117,50 @@ def qualification(config: StudyConfig) -> Any:
     operations = [{"operation_id": "qualification-%s" % cell.task_id,
                    "effect": "probe",
                    "action": {"target": "schedule.compare"}}]
-    runs = tuple(
-        s09_causal_proof.PolicyRun(policy_source=source, view=view,
-                                   operations=("qualification-%s"
-                                               % cell.task_id,),
-                                   entry=policy_step.STEP_ENTRY)
-        for source in _reviewer_policy_sources())
-    return s09_causal_proof.qualify_pre_launch(
-        policies=runs, operations=operations)
+    with _qualification_authority() as authority:
+        runs = tuple(
+            s09_causal_proof.PolicyRun(
+                policy_source=source, view=view,
+                operations=("qualification-%s" % cell.task_id,),
+                entry=policy_step.STEP_ENTRY,
+                dsn=authority["dsn"] if authority else None,
+                allocation_id=authority["allocation_id"]
+                if authority else None)
+            for source in _reviewer_policy_sources())
+        return s09_causal_proof.qualify_pre_launch(
+            policies=runs, operations=operations)
+
+
+@contextlib.contextmanager
+def _qualification_authority():
+    """A disposable store and an allocation, for this qualification alone.
+
+    Created and dropped around the check. It exists so the policies can
+    execute under real authority without touching the study's database, and
+    it is dropped immediately so nothing it wrote can be mistaken for a
+    study record afterwards.
+    """
+    import uuid
+
+    from experiments.ad01 import s09_run_isolation as isolation
+    from settlement import authority as _authority
+
+    token = "preflight-qualify-%s" % uuid.uuid4().hex[:8]
+    database = isolation.create_disposable_db(token,
+                                              admin_dsn=isolation.admin_dsn())
+    try:
+        handle = _authority.authorize_study(
+            database.dsn, isolation.study_root_for(token), authorized=1000,
+            allocation_id="preflight-qualify-%s" % token)
+    except BaseException:
+        isolation.drop_disposable_db(database,
+                                     admin_dsn=isolation.admin_dsn())
+        raise
+    try:
+        yield {"dsn": database.dsn, "allocation_id": handle.allocation_id}
+    finally:
+        isolation.drop_disposable_db(database,
+                                     admin_dsn=isolation.admin_dsn())
 
 
 def _reviewer_policy_sources() -> tuple:

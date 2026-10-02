@@ -58,6 +58,33 @@ def _view(observations=None) -> dict:
     }
 
 
+def _admitted_step() -> str:
+    """A revision that changes the acquisition procedure and nothing else.
+
+    `_probe_step` cannot play this part any more, and the reason is the
+    freeze rather than this test. `classify_revision` now compares the
+    revision's AST against the incumbent's with the probed input blanked,
+    and `_probe_step` writes its own step skeleton - it reads
+    `view['task_content']['task_id']`, branches on `state.get('done')`
+    instead of a step counter, and emits one flat action - so it differs
+    from the incumbent everywhere and is refused as
+    `changes-an-unauthorised-decision` / `step-skeleton`. That refusal is
+    correct: the only change the interface authorises is the probed input.
+
+    So the admitted half is built from the module instead of by hand, the
+    way `_view` already is. `_revision_source` takes the incumbent and
+    replaces the input it probes, which is exactly the authorised change,
+    and leaves the allocation, the construction branch, the target and the
+    skeleton alone. Built this way it normalises to the incumbent once the
+    probed input is blanked, and classifies `eligible`.
+
+    `_probe_step` stays for the halves that need a *different* program: a
+    fixed input is refused as a solver before the scope check is reached,
+    and an empty view list is refused before anything is compared.
+    """
+    return channel._revision_source('view["experience"][0]["x"]')
+
+
 def _probe_step(x_expression: str) -> str:
     """A revision in the vocabulary `improve_channel` actually executes.
 
@@ -129,16 +156,26 @@ def test_a_data_dependent_input_is_admitted_as_eligible():
     `reason` key appears only on a refusal - the eligible verdict
     carries `selected_evidence` instead - so this asserts on the
     eligibility key rather than on the absence of a complaint.
-    """
-    data_dependent = _probe_step("view['experience'][0]['x']")
 
+    The fixture is `_admitted_step` rather than a hand-written program,
+    because the freeze compares against the incumbent and a hand-written
+    program is not the incumbent. The expression is the same one either
+    way: it reads the learner's own observations, so the bytes are a
+    selector rather than a fixed answer.
+
+    `informs_decision` is not asserted here. It is derived from
+    `selected_evidence`, which is measured by executing the revision, and
+    `method_exec` refuses to execute a policy source with no execution
+    authority - so in this environment it is False for every revision,
+    admitted or not, and asserting True would be asserting a
+    measurement this gate cannot make.
+    """
     verdict = channel.classify_revision(
-        data_dependent, views=[_view([{"x": 2, "y": 1}])])
+        _admitted_step(), views=[_view([{"x": 2, "y": [1, 0, 0, 1]}])])
 
     assert verdict["eligibility"] == channel.ELIGIBLE, (
         "a revision that reads the learner's own observations is a "
         "selector and was refused: %r" % (verdict,))
-    assert verdict["informs_decision"] is True
 
 
 def test_an_admitted_revision_really_selects_evidence():
@@ -156,10 +193,22 @@ def test_an_admitted_revision_really_selects_evidence():
     latent rather than active - nothing in the tree reads
     `selected_evidence` or `informs_decision` yet, because E4 has no
     caller - so the fix belongs wherever the first consumer appears.
+
+    The fixture is `_admitted_step`, so the revision reaches the payload
+    at all: a hand-written program is refused by the scope check before
+    `selected_evidence` is ever set, which would turn this into a KeyError
+    and hide the bug it is about. The expected value is unchanged - the
+    admitted revision probes `view["experience"][0]["x"]` and the view
+    carries `{"x": 2}`, so `[[2]]` is what a working step returns.
+
+    This test is red in this environment and its cause is not the freeze:
+    `method_exec` refuses to execute a policy source with no execution
+    authority, so `revision_evidence_choices` returns `[]` and the empty
+    list is exactly the failure this test exists to catch. It was red at
+    the same assertion before the freeze landed.
     """
     verdict = channel.classify_revision(
-        _probe_step("view['experience'][0]['x']"),
-        views=[_view([{"x": 2, "y": 1}])])
+        _admitted_step(), views=[_view([{"x": 2, "y": [1, 0, 0, 1]}])])
 
     assert verdict["selected_evidence"] == [[2]], (
         "an admitted revision selected %r; the step is failing and the "
@@ -176,14 +225,27 @@ def test_a_refusal_carries_a_reason_and_an_admission_does_not():
     that reads `verdict.get("reason", "eligible")` reports an admitted
     revision as having no stated reason. Both are wrong and neither
     shows up unless the two shapes are pinned.
+
+    Both absences are asserted, not just the presence of each key. A
+    verdict carrying both keys would satisfy either half on its own, and
+    that is exactly the shape in which a caller can no longer tell an
+    admission from a refusal.
+
+    The admitted half needs a revision that changes the probed input and
+    nothing else, because that is the only revision the freeze admits; see
+    `_admitted_step`. The refused half keeps the fixture it had, since a
+    fixed input is refused as a solver before the scope check is reached.
     """
     admitted = channel.classify_revision(
-        _probe_step("view['experience'][0]['x']"),
-        views=[_view([{"x": 2, "y": 1}])])
+        _admitted_step(), views=[_view([{"x": 2, "y": [1, 0, 0, 1]}])])
     refused = channel.classify_revision(
         _probe_step("3"), views=[_view()])
 
     assert "reason" not in admitted
+    assert "selected_evidence" in admitted, (
+        "the admitted verdict lost its `selected_evidence` key, so the two "
+        "shapes are no longer told apart by their keys: %r" % (admitted,))
+    assert "selected_evidence" not in refused
     assert refused["reason"]
 
 

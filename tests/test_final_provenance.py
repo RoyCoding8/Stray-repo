@@ -215,7 +215,12 @@ class _DurableCursor:
 
     def fetchone(self):
         if "FROM operations" in self.sql:
-            return (self.state, "none", False, {})
+            # Six columns, matching method_exec._durable_receipt's unpack:
+            # dispatch_state, reconcile_state, settled, allocation_id,
+            # payload_digest, payload. A narrower row here raises ValueError
+            # on unpack before the state under test is ever read, which is how
+            # this fake went stale without anybody noticing.
+            return (self.state, "none", False, "alloc-test", "digest-test", {})
         return None
 
     def fetchall(self):

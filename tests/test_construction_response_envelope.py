@@ -26,7 +26,10 @@ from __future__ import annotations
 
 import json
 import sys
+import uuid
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -35,6 +38,43 @@ sys.path.insert(0, str(ROOT / "src"))
 from experiments.ad01 import learner
 from experiments.ad01 import method_exec
 from experiments.ad01 import packet
+
+MIGRATIONS = ROOT / "migrations"
+
+
+@pytest.fixture(scope="module")
+def authority():
+    """Real store, real allocation, one fresh operation id per execution.
+
+    The prompt-to-action chain is proved by running the bytes a model would
+    have written through the real child. Under the durable mandate that
+    requires a store, an allocation and an operation id; without them the
+    executor refuses before the child runs and the test would be asserting
+    a refusal instead of a step.
+    """
+    from experiments.ad01 import trajectory
+    from experiments.ad01.s09_run_isolation import create_disposable_db, \
+        drop_disposable_db
+
+    database = create_disposable_db("construction-envelope",
+                                    migrations_dir=MIGRATIONS)
+    try:
+        trajectory.set_namespace_token("")
+        campaign = "construction-env-%s" % uuid.uuid4().hex[:8]
+        allocation = trajectory.authorize_campaign(
+            database.dsn, campaign, authorized=100000)
+        counter = {"n": 0}
+
+        def run(source: str, views: dict, state: dict, **kwargs) -> dict:
+            counter["n"] += 1
+            return method_exec.run_step_out_of_process(
+                source, views, state, dsn=database.dsn,
+                allocation_id=allocation["allocation_id"],
+                operation_id="%s-op%d" % (campaign, counter["n"]), **kwargs)
+
+        yield run
+    finally:
+        drop_disposable_db(database)
 
 
 def _task():
@@ -119,7 +159,7 @@ def test_the_prompt_names_the_methods_a_policy_may_select():
     assert "seed-sw-ddmin" in prompt
 
 
-def test_a_policy_that_selects_a_named_method_is_reachable():
+def test_a_policy_that_selects_a_named_method_is_reachable(authority):
     """The chain the scorer walks: prompt names a method, source uses it.
 
     This is the step that was broken three ways in sequence — the response
@@ -145,7 +185,7 @@ def test_a_policy_that_selects_a_named_method_is_reachable():
              "open_questions": [], "last_result": None,
              "eligible_methods": ["seed-sw-ddmin"],
              "remaining": {}, "contract_versions": {}}
-    result = method_exec.run_step_out_of_process(source, views, {})
+    result = authority(source, views, {})
 
     assert result["action"]["kind"] == "use_method"
     assert result["action"]["inputs"]["method_id"] == "seed-sw-ddmin"
@@ -232,7 +272,7 @@ def test_the_prompt_states_that_the_view_is_a_plain_dict():
     assert "view.eligible_methods" not in prompt.split("Prior observations")[0]
 
 
-def test_a_policy_written_to_the_stated_access_survives_the_step():
+def test_a_policy_written_to_the_stated_access_survives_the_step(authority):
     """End to end: prompt's access form, real view, real child."""
     import json as _json
     from experiments.ad01 import method_exec
@@ -261,8 +301,7 @@ def test_a_policy_written_to_the_stated_access_survives_the_step():
         "                     'evidence_refs': [],\n"
         "                     'requested_resources': {'queries': 8}},\n"
         "            'state': {}}\n")
-    result = method_exec.run_step_out_of_process(
-        source, views["scored"], {}, entry="STEP")
+    result = authority(source, views["scored"], {}, entry="STEP")
 
     assert result["action"]["kind"] == "use_method"
     assert result["action"]["inputs"]["method_id"] in methods

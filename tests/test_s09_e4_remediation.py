@@ -302,7 +302,7 @@ def test_a_non_empty_evidence_set_is_what_makes_the_admission_say_it_informed():
         "                     'requested_resources': {'queries': 1}},\n"
         "            'state': {'done': True}}\n",
         views=[{"frontier": [{"task": "t", "capability": "c"}],
-                "experience": [{"x": 2, "y": 1}],
+                "experience": [{"x": 2, "y": [1, 0, 0, 1]}],
                 "authority_remaining": {"queries": 8, "steps": 6}}])
 
     assert healthy["eligibility"] == channel.ELIGIBLE
@@ -324,7 +324,7 @@ def test_a_non_empty_evidence_set_is_what_makes_the_admission_say_it_informed():
         "                     'requested_resources': {}},\n"
         "            'state': state}\n",
         views=[{"frontier": [{"task": "t", "capability": "c"}],
-                "experience": [{"x": 2, "y": 1}],
+                "experience": [{"x": 2, "y": [1, 0, 0, 1]}],
                 "authority_remaining": {"queries": 8, "steps": 6}}])
 
     assert silent["eligibility"] == channel.ELIGIBLE, (

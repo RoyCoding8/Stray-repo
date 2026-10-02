@@ -36,14 +36,38 @@ WORLD_ACTION_RENAMES = {boolean_active.COMMIT: policy_action.CONSTRUCT}
 # raises: a silent fallback to the Boolean world would hand a study a clean
 # comparison against the first instrument and read it as evidence about
 # the second.
-# `swe` is registered for addressability, not because the harness can
-# normalise its view. `_run_arm` hands every arm `contract_view`, which
-# demands exactly eight public-state fields, and the SWE world publishes
-# twelve of its own; `test_a_swe_arm_is_refused_by_the_harness_view
-# _normaliser` records that refusal and the SWE matrix runs through the
-# world's own driver. Registering it is still the honest move: an
-# unrecognised name raises, and "does this representation work on the
-# software instrument" was unaskable rather than answered.
+# `swe` used to be described here as "registered for addressability, not
+# because the harness can normalise its view", on the grounds that
+# `contract_view` demands exactly eight public-state fields and the SWE world
+# publishes twelve of its own. That was true when it was written and it is
+# false now, so it is removed rather than softened. The contract publishes six
+# fields, and each world declares its OWN public-state field set against
+# `VIEW_CONTRACT_FIELDS` below: the Boolean and ordering worlds declare eight,
+# the SWE world twelve. The count is deliberately not the contract, so 8
+# against 12 is a per-world declaration rather than a refusal.
+#
+# Measured end to end on real views, which is what replaced the claim:
+#
+#   boolean_rule session -> `public_state`          -> 8 fields
+#                        -> `admit_world_view`       -> None (admitted)
+#                        -> `contract_view`          -> the six contract fields
+#                        -> `admit_shared_view`      -> None
+#   swe_tasks instance   -> `SweSession.policy_view` -> 12 fields
+#                        -> `admit_world_view`       -> None (admitted)
+#                        -> `contract_view`          -> the same six fields
+#                        -> `admit_shared_view`      -> None
+#
+# The test the old comment cited,
+# `test_a_swe_arm_is_refused_by_the_harness_view_normaliser`, no longer exists
+# on this tree. `tests/test_view_contract_swe.py` pins the admission, and
+# `tests/test_inv_c7_two_domain.py` pins that both structures normalise to one
+# contract at the field count read from the contract itself.
+#
+# Registering the world is still load-bearing, for a different reason and it
+# is a driver reason rather than a view reason: an arm emitting a
+# `boolean.task` stop target is refused by the SWE world. B18 measured
+# `compare_arms` still `incomparable` with `graph issues: []`, so the view is
+# no longer the blocker and the two driver factories are.
 _WORLDS = {
     "boolean": "boolean_active",
     "ordering": "second_active",

@@ -17,9 +17,16 @@ or schedulers.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import os
+
+try:
+    import fcntl
+except ImportError:  # Windows has no fcntl; msvcrt provides the same lock.
+    fcntl = None
+    import msvcrt
 
 FRONTIER_VERSION = "invl02-frontier-v2"
 NAMESPACE = "invl02_m2"
@@ -65,6 +72,23 @@ class Refused(Exception):
 
 def canonical(data) -> str:
     return json.dumps(data, sort_keys=True, separators=(",", ":"))
+
+
+def _document_digest(doc: dict) -> str:
+    return _digest_text(canonical(doc))
+
+
+def _read_document(path: str) -> dict:
+    try:
+        with open(path, encoding="utf-8") as handle:
+            doc = json.load(handle)
+    except (OSError, ValueError) as exc:
+        raise Refused("store %s is unreadable" % path) from exc
+    if not isinstance(doc, dict) or doc.get("namespace") != NAMESPACE:
+        raise Refused("store %s is outside namespace %s" % (path, NAMESPACE))
+    if doc.get("frontier_version") != FRONTIER_VERSION:
+        raise Refused("store %s uses an unknown frontier version" % path)
+    return doc
 
 
 def _digest_text(text: str) -> str:
@@ -721,15 +745,30 @@ def _check_opportunity(opportunity: dict) -> dict:
     return opportunity
 
 
-def _blank_doc(namespace: str, mission: dict, authority: dict) -> dict:
+def _blank_doc(namespace: str, environments: list, authority: dict,
+               mission: dict) -> dict:
+    """A new store's document.
+
+    `mission` is the declaration read from the durable mission entry
+    (`mission.read_declaration`), not a value the caller invented. It is
+    carried forward only so a STEP view can name the objective and so a
+    reopened store can still be recognised as the same mission; it is no
+    longer a second authority over the mission.
+
+    The previous version also wrote `mission` and a `mission_projection`
+    digest of it, and `_validate_document` refused the store if either had
+    been edited. Both are gone. A digest over a file nobody is obliged to
+    write guards nothing, and the six things a mission holds now live in one
+    row in Postgres, which is the only place a mission is allowed to live.
+    """
     return {
         "namespace": namespace,
         "frontier_version": FRONTIER_VERSION,
-        "mission": dict(mission),
-        "mission_projection": canonical(dict(mission)),
-        "environments": list(mission["environments"]),
-        "environment_digest": environment_digest(
-            mission["environments"]),
+        "mission": {
+            "objective": mission["objective"],
+            "environments": list(environments)},
+        "environments": list(environments),
+        "environment_digest": environment_digest(environments),
         "grant": {"queries": int(authority["queries"]),
                   "steps": int(authority["steps"])},
         "used": {"queries": 0, "steps": 0},
@@ -759,21 +798,54 @@ def _blank_doc(namespace: str, mission: dict, authority: dict) -> dict:
 class FrontierStore:
     def __init__(self, path) -> None:
         self.path = str(path)
-        try:
-            with open(self.path, encoding="utf-8") as handle:
-                doc = json.load(handle)
-        except (OSError, ValueError) as exc:
-            raise Refused("store %s is unreadable" % self.path) from exc
-        if not isinstance(doc, dict) or doc.get("namespace") != \
-                NAMESPACE:
-            raise Refused("store %s is outside namespace %s" % (
-                self.path, NAMESPACE))
-        if doc.get("frontier_version") != FRONTIER_VERSION:
-            raise Refused("store %s uses an unknown frontier version"
-                          % self.path)
+        doc = _read_document(self.path)
+        self._digest = _document_digest(doc)
         self._doc = doc
         self._validate_document()
         self._validate_active_package()
+
+    def _lock(self):
+        """Hold the store's exclusive lock for the length of one transaction.
+
+        The lock lives beside the document so it survives the atomic replace.
+        `os.replace` swaps the inode, so a lock held on the document itself
+        would not exclude a process that opened the old one.
+        """
+        handle = open(self.path + ".lock", "a+")
+        try:
+            if fcntl is not None:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            else:
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        except OSError:
+            handle.close()
+            raise
+        return handle
+
+    @contextlib.contextmanager
+    def _exclusive(self):
+        """Serialize one read-modify-write against every other process.
+
+        The document is re-read under the lock and the charge is recomputed
+        from it. A process that held a snapshot before another committed
+        would otherwise replace that commit with its own stale copy and
+        refund the other's charge without saying so.
+        """
+        handle = self._lock()
+        try:
+            yield self._reload_under_lock()
+        finally:
+            handle.close()
+
+    def _reload_under_lock(self) -> None:
+        doc = _read_document(self.path)
+        digest = _document_digest(doc)
+        if digest != self._digest:
+            self._doc = doc
+            self._digest = digest
+            self._validate_document()
+            self._validate_active_package()
 
     @property
     def authority(self) -> dict:
@@ -984,13 +1056,12 @@ class FrontierStore:
             raise Refused("removed round projection is present")
         mission = doc.get("mission")
         if (not isinstance(mission, dict)
+                or set(mission) != {"objective", "environments"}
                 or not isinstance(mission.get("objective"), str)
                 or not mission["objective"].strip()
                 or not isinstance(mission.get("environments"), list)
                 or not mission["environments"]):
             raise Refused("mission projection is invalid")
-        if doc.get("mission_projection") != canonical(mission):
-            raise Refused("mission projection changed")
         environments = doc.get("environments")
         if environments != mission["environments"]:
             raise Refused("mission environment projection changed")
@@ -1624,18 +1695,19 @@ class FrontierStore:
 
     def spend_round_command(self, round_no: int, step: int,
                             requested: dict) -> dict:
-        entry = self._round_entry(round_no, step)
-        if entry is None:
-            raise Refused("round command is not durably received")
-        if entry.get("charged"):
-            return self.authority
-        requested = _resource_delta(requested, require_charge=True)
-        self._check_spend(requested)
-        for key in ("queries", "steps"):
-            self._doc["used"][key] += requested.get(key, 0)
-        entry["charged"] = True
-        entry["charged_resources"] = dict(requested)
-        self.save()
+        with self._exclusive():
+            entry = self._round_entry(round_no, step)
+            if entry is None:
+                raise Refused("round command is not durably received")
+            if entry.get("charged"):
+                return self.authority
+            requested = _resource_delta(requested, require_charge=True)
+            self._check_spend(requested)
+            for key in ("queries", "steps"):
+                self._doc["used"][key] += requested.get(key, 0)
+            entry["charged"] = True
+            entry["charged_resources"] = dict(requested)
+            self.save()
         return self.authority
 
     def stage_round_candidate(self, round_no: int, step: int,
@@ -1656,6 +1728,7 @@ class FrontierStore:
         with open(tmp, "w", encoding="utf-8") as handle:
             handle.write(canonical(self._doc) + "\n")
         os.replace(tmp, self.path)
+        self._digest = _document_digest(self._doc)
 
     def propose(self, opportunity: dict) -> dict:
         admitted = _check_opportunity(opportunity)
@@ -1747,10 +1820,11 @@ class FrontierStore:
         self._check_spend(requested)
 
     def spend(self, requested: dict) -> dict:
-        self._check_spend(requested)
-        for key in ("queries", "steps"):
-            self._doc["used"][key] += int(requested.get(key, 0))
-        self.save()
+        with self._exclusive():
+            self._check_spend(requested)
+            for key in ("queries", "steps"):
+                self._doc["used"][key] += int(requested.get(key, 0))
+            self.save()
         return {"queries_remaining": self.authority[
             "queries_remaining"],
             "steps_remaining": self.authority["steps_remaining"]}
@@ -1767,6 +1841,14 @@ class FrontierStore:
                         requested: dict, *,
                         effect_identity: dict | None = None) -> dict:
         requested = _resource_delta(requested, require_charge=True)
+        with self._exclusive():
+            return self._admit_and_spend(
+                opportunity_id, program_digest, requested,
+                effect_identity=effect_identity)
+
+    def _admit_and_spend(self, opportunity_id: str, program_digest: str,
+                         requested: dict, *,
+                         effect_identity: dict | None = None) -> dict:
         active_package = self._validate_active_package()
         if active_package is None:
             raise Refused("effect needs a bound program")
@@ -2140,6 +2222,15 @@ class FrontierStore:
 
 def create_store(path, *, namespace: str, mission: dict,
                  authority: dict) -> FrontierStore:
+    """Open a new store over a mission declared elsewhere.
+
+    `mission` is the durable entry's declaration
+    (`mission.read_declaration`). The store keeps the objective and the
+    frozen environments only, because those are what a STEP view names and
+    what a reopened store is recognised by. It does not keep the six things a
+    mission holds, so there is no second copy to fall out of step with the
+    row that owns them.
+    """
     if namespace != NAMESPACE:
         raise Refused("lane stores live in namespace %s" % NAMESPACE)
     if not isinstance(mission, dict) or not mission.get("objective") \
@@ -2153,6 +2244,7 @@ def create_store(path, *, namespace: str, mission: dict,
         raise Refused("authority needs nonnegative query/step totals")
     store = FrontierStore.__new__(FrontierStore)
     store.path = str(path)
-    store._doc = _blank_doc(namespace, mission, authority)
+    store._doc = _blank_doc(namespace, mission["environments"], authority,
+                            mission)
     store.save()
     return store

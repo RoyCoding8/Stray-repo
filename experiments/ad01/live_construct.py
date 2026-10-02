@@ -436,29 +436,49 @@ def _unreached_entry(request, exc, attempt: int,
 class LiveGuard:
     """A ceiling on sends.
 
-    `ceiling` and `already_spent` are one currency: a send that reached the
-    gateway. The seed is what the caller has already spent, and the store
-    counts it the way the store counts it: `SELECT COUNT(*) FROM
-    operations`, and a prepare the store refused inserted no row. Counting
-    the guard's ledger instead would add the pre-gateway refusals the guard
-    deliberately exempts, which is a different number and a worse one.
+    `ceiling` and the spend it is checked against are one currency: a send
+    that reached the gateway. The store counts it the way the store counts
+    it: `SELECT COUNT(*) FROM operations`, and a prepare the store refused
+    inserted no row. Counting the guard's ledger instead would add the
+    pre-gateway refusals the guard deliberately exempts, which is a
+    different number and a worse one.
+
+    A guard bound to a store reads its position from that store on every
+    check, through `spend_reader`. It is not a cache of a number the
+    caller passed in, so it moves as sends happen and it survives a
+    resume: a process that never sent anything still sees the sends an
+    earlier process made, and a send admitted a moment ago is counted
+    without anyone incrementing anything here. That is what closes the
+    second counter, which was `is_ceiling_reached` reading an integer this
+    object maintained beside the broker's own.
+
+    `dispatch_count` remains, and it is not the ceiling. It is the length
+    of the attempt ledger, which `offline_recompute` reads as
+    `candidate_view["dispatch_count"] == len(dispatches)` and which counts
+    refused attempts as well as sends. Two counters of the send count was
+    the defect; one counter of the attempt count beside the store's counter
+    of the send count is two different facts.
     """
 
     def __init__(self, delegate, *, pinned_model: str, ceiling: int,
                  already_spent: int = 0,
                  automatic_retries: int = MAX_RETRIES,
-                 expected_route: dict | None = None) -> None:
+                 expected_route: dict | None = None,
+                 spend_reader=None) -> None:
         if not pinned_model:
             raise ValueError("pinned model is required")
         if ceiling < 0 or already_spent < 0:
             raise ValueError("ceiling and spent count must be nonnegative")
         if type(automatic_retries) is not int or automatic_retries < 0:
             raise ValueError("automatic retry limit must be nonnegative")
+        if spend_reader is not None and not callable(spend_reader):
+            raise ValueError("spend_reader must be a callable or omitted")
         self.delegate = delegate
         self.pinned_model = pinned_model
         self.ceiling = ceiling
         self.automatic_retries = automatic_retries
         self.expected_route = dict(expected_route) if expected_route else None
+        self.spend_reader = spend_reader
         self.dispatch_count = already_spent
         self.refunded_dispatches = 0
         self.refusal_reason = ""
@@ -469,13 +489,18 @@ class LiveGuard:
 
     @property
     def spent_dispatches(self) -> int:
-        """Attempts that were not exempted from the ceiling.
+        """Sends this study has made, in the currency the ceiling is in.
 
-        Derived rather than stored so that a caller restoring
-        ``dispatch_count`` for a replay (scripts/invl02_live.py) restores the
-        ceiling position with it; only a pre-gateway refusal moves the
-        refund.
+        With a store, that is the store's count and nothing else. The
+        store already excludes the refusals the guard exempts, because a
+        refused prepare wrote no row, so the refund arithmetic below does
+        not apply to it: subtracting it here would count the refusal a
+        second time. Without a store there is nothing to ask, so the
+        in-process count stands and the refund that keeps a pre-gateway
+        refusal off the ceiling still applies.
         """
+        if self.spend_reader is not None:
+            return int(self.spend_reader())
         return self.dispatch_count - self.refunded_dispatches
 
     def is_cost_blocked(self) -> bool:
@@ -1477,7 +1502,194 @@ def preflight_operation_id(arm: str, attempt: int) -> str:
                                attempt, round_run_id=PREFLIGHT_RUN_ID)
 
 
-def _preflight_dispatch(guard, *, arm: str, attempt: int) -> dict:
+class _DurablePreflightGateway:
+    """A gateway adapter whose sends are durable operations.
+
+    `preflight_run` used to hand a hand-built `ModelRequest` to
+    `LiveGuard.infer`, which called the wrapped adapter directly. The
+    operation id was minted by `preflight_operation_id` and never
+    admitted anywhere, so a preflight send had no operation row, no
+    reservation, no receipt and no exposure: it was a claim in a study
+    record with nothing behind it.
+
+    This is the adapter the preflight wraps instead. Every send goes
+    through `broker.ensure_operation` and `broker.dispatch_operation`,
+    which is the same pair `experiments/ad01/construct.py:_call` and
+    `experiments/ad01/learner_revision.py:_dispatch` make. The store
+    holds the identity and the allocation, and the broker writes the
+    receipt and settles the reservation.
+
+    Two properties fall out of that placement rather than out of any
+    bookkeeping here. A second dispatch of one operation id finds a
+    settled operation and returns the settled text without reaching the
+    gateway, so identity is what stops a second send. And the number of
+    sends is `COUNT(*) FROM operations` under the allocation, which is a
+    fact the store holds after a crash, a resume or another process.
+
+    The guard stays in place and stays the outer object. It owns the
+    route check, the cost block and the evidence ledger, all of which
+    are per-attempt observations of one send. What it no longer owns is
+    the send's admission.
+    """
+
+    def __init__(self, dsn: str, delegate, *, allocation_id: str) -> None:
+        self.dsn = dsn
+        self.delegate = delegate
+        self.allocation_id = allocation_id
+        self.replayed_operation_ids: set[str] = set()
+        self._refusal = PreGatewayRefusal
+
+    def infer(self, request):
+        from settlement import broker, store
+        from settlement.common import ResultCode
+
+        payload = {"model": request.model,
+                   "messages": list(request.messages),
+                   "max_output_tokens": request.max_output_tokens,
+                   "deadline_ms": request.deadline_ms}
+        ensured = broker.ensure_operation(
+            self.dsn, operation_id=request.operation_id,
+            effect=broker.MODEL_INFERENCE, payload=payload,
+            allocation_id=self.allocation_id, retries=0,
+            resource="construction_calls")
+        if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+            # The store refused before the wire. The guard exempts this
+            # marker from the ceiling, which is right: no send happened,
+            # so there is nothing to spend.
+            raise self._refusal(
+                "preflight operation %s not admitted: %s"
+                % (request.operation_id, ensured.detail))
+        receipts = list(store.operation_receipts(
+            self.dsn, request.operation_id) or [])
+        if len(receipts) == 1 and not store.operation_receipt_conflicts(
+                self.dsn, request.operation_id):
+            self.replayed_operation_ids.add(request.operation_id)
+            return _response_from_receipt(request.operation_id, receipts[0])
+        status = broker.dispatch_operation(
+            self.dsn, request.operation_id, gateway=self.delegate)
+        settled = broker.read_operation(self.dsn, request.operation_id) or {}
+        if settled.get("settled") is not True or status.dispatch_state in (
+                "conflict", "unresolved"):
+            raise self._refusal(
+                "preflight operation %s did not settle (state=%s, next=%s)"
+                % (request.operation_id, settled.get("dispatch_state"),
+                   status.next_decision))
+        receipts = list(store.operation_receipts(
+            self.dsn, request.operation_id) or [])
+        if len(receipts) != 1:
+            raise self._refusal(
+                "preflight operation %s holds %d receipts, so what came "
+                "back from it is not one answer"
+                % (request.operation_id, len(receipts)))
+        return _response_from_receipt(request.operation_id, receipts[0])
+
+    def check_discovery(self):
+        return self.delegate.check_discovery()
+
+    def check_auth(self):
+        return self.delegate.check_auth()
+
+    def cancel(self, operation_id):
+        return self.delegate.cancel(operation_id)
+
+
+def _response_from_receipt(operation_id: str, receipt: dict):
+    """The guard's response, rebuilt from what the store settled.
+
+    A durable send ends in a receipt rather than a return value, so the
+    guard needs one reconstructed before it can read the route out of it.
+    A `success` receipt carries the text; every other outcome is an error
+    the guard already classifies, and the fields it reads are the ones the
+    broker wrote into the receipt for exactly this reason.
+    """
+    from settlement.gateway import (
+        GatewayError,
+        GatewayErrorKind,
+        GatewayRouteError,
+        ModelResponse,
+        Usage,
+    )
+
+    content = receipt.get("content") or {}
+    raw_usage = content.get("usage")
+    raw_usage = raw_usage if isinstance(raw_usage, dict) else {}
+    usage = Usage(
+        input_tokens=raw_usage.get("input_tokens"),
+        output_tokens=raw_usage.get("output_tokens"),
+        charge_units=raw_usage.get("charge_units"),
+        charge_scale=raw_usage.get("charge_scale"),
+        provider_enforced_ceiling=raw_usage.get("provider_enforced_ceiling"),
+        billed=raw_usage.get("billed"))
+    if receipt.get("outcome") == "success":
+        return ModelResponse(
+            operation_id, str(content.get("text", "")),
+            dict(content.get("model_meta") or {}), usage,
+            str(content.get("stop_reason", "")))
+    route_error = content.get("route_error")
+    return GatewayError(
+        kind=_error_kind(content.get("error_kind")),
+        message=str(content.get("error") or content.get("response_class")
+                    or "the preflight send did not settle"),
+        retryable=bool(content.get("retryable")),
+        operation_id=operation_id,
+        usage=usage,
+        response_received=bool(content.get("response_received")),
+        response_status=content.get("response_status"),
+        response_digest=content.get("response_digest"),
+        route_error=(GatewayRouteError(route_error)
+                     if route_error else None))
+
+
+def _error_kind(value) -> GatewayErrorKind:
+    from settlement.gateway import GatewayErrorKind
+
+    try:
+        return GatewayErrorKind(str(value))
+    except ValueError:
+        return GatewayErrorKind.TRANSPORT
+
+
+def spent_dispatches(dsn: str, allocation_id: str) -> int:
+    """Sends the store holds under one allocation.
+
+    This is the currency the ceiling is enforced in: `SELECT COUNT(*)
+    FROM operations`, and a prepare the store refused inserted no row, so
+    it counts sends that reached the store rather than attempts. It is
+    the same read `scripts/invl02_live.py:_already_spent` makes and the
+    same one `s09_study_preflight.already_spent_in_store` made after
+    `9a1884d`.
+
+    An unreadable store raises rather than returning zero. A zero here
+    reads as "nothing spent", which is how a ceiling gets enforced against
+    a fiction: the guard would believe it had the whole allowance on a
+    store it had not been able to ask.
+    """
+    from psycopg.rows import dict_row
+    from settlement import db
+
+    try:
+        with db.read_connect(dsn) as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    "SELECT COUNT(*) AS spent FROM operations"
+                    " WHERE allocation_id = %s", (allocation_id,))
+                spent = cur.fetchone()["spent"]
+            conn.commit()
+    except Exception as exc:
+        raise LiveRefused(
+            "the spend count is the store's and the store was not "
+            "readable: %s: %s" % (type(exc).__name__, exc)) from exc
+    return int(spent)
+
+
+def preflight_dispatch_gateway(dsn: str, gateway, *, allocation_id: str):
+    """The durable adapter, built by the one constructor callers use."""
+    return _DurablePreflightGateway(dsn, gateway, allocation_id=allocation_id)
+
+
+def _preflight_dispatch(guard, *, arm: str, attempt: int,
+                        dsn: str | None = None,
+                        allocation_id: str | None = None) -> dict:
     """One dispatch through the shipped guard, prompt and parser.
 
     The response is not inspected here. Every branch of the taxonomy is
@@ -1486,7 +1698,18 @@ def _preflight_dispatch(guard, *, arm: str, attempt: int) -> dict:
     for a program that will not parse, and `RuleSession.score` for one
     that does. A preflight with its own transport, prompt or parser would
     be a second authority for construction.
+
+    `dsn` and `allocation_id` make the send durable. With them the guard
+    is handed an adapter that admits the operation and dispatches it
+    through the broker, so the send carries a row, a reservation and a
+    receipt, and a second call on one operation id settles nothing and
+    sends nothing. Both are required together, because an operation
+    admitted without an allocation is a row the store cannot charge.
     """
+    if (dsn is None) != (allocation_id is None):
+        raise ValueError(
+            "a preflight send is durable or it is not: dsn and "
+            "allocation_id are required together")
     from settlement.gateway import GatewayError, ModelRequest
     task, session = _preflight_task()
     history = [] if arm == "P1" else output_permitted_history()
@@ -1879,12 +2102,19 @@ def verify_preflight_record(record: dict) -> dict:
     return recomputed
 
 
-def preflight_run(out, gateway) -> dict:
+def preflight_run(out, gateway, *, dsn: str | None = None,
+                  allocation_id: str | None = None) -> dict:
     """Drive one live construction through the shipped path and keep it.
 
-    One dispatch, one Boolean task from the frozen worlds, no store and
-    no database. The run record written to `out` holds the raw prompt,
-    the raw response, the response digest, the route fields, the stop
+    One dispatch, one Boolean task from the frozen worlds. With a `dsn`
+    and an `allocation_id` the dispatch is a durable operation: the send
+    is admitted, allocated, dispatched through the broker and left with a
+    receipt and an exposure, and the ceiling is read from the store. With
+    neither it is the bare send this used to be, which is only honest on
+    a path that has no store to write to.
+
+    The run record written to `out` holds the raw prompt, the raw
+    response, the response digest, the route fields, the stop
     reason, the usage snapshot and the taxonomy value, which is what
     `verify_preflight_record` needs to reproduce the verdict offline.
     """
@@ -1911,10 +2141,16 @@ def preflight_run(out, gateway) -> dict:
         "score_floor": PREFLIGHT_SCORE_FLOOR,
         "attempts": [],
     }
-    guard = LiveGuard(gateway, pinned_model=OUTPUT_ROUTE["requested_model"],
-                      ceiling=1, automatic_retries=0,
-                      expected_route=dict(OUTPUT_ROUTE))
-    result = _preflight_dispatch(guard, arm=arm, attempt=attempt)
+    spent = spent_dispatches(dsn, allocation_id) if dsn else 0
+    guard = LiveGuard(preflight_dispatch_gateway(
+        dsn, gateway, allocation_id=allocation_id) if dsn else gateway,
+        pinned_model=OUTPUT_ROUTE["requested_model"],
+        ceiling=1 + spent, automatic_retries=0,
+        expected_route=dict(OUTPUT_ROUTE),
+        spend_reader=(lambda: spent_dispatches(dsn, allocation_id))
+        if dsn else None)
+    result = _preflight_dispatch(guard, arm=arm, attempt=attempt, dsn=dsn,
+                                 allocation_id=allocation_id)
     entry = {"arm": arm, "attempt": attempt,
              "operation_id": result["operation_id"],
              "outcome": result["outcome"], "reason": result["reason"],

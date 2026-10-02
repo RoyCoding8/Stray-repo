@@ -60,6 +60,71 @@ def _view() -> dict:
         eligible_methods=[], remaining={"steps": 1})
 
 
+def _check_attr_command(paths: list[str]) -> list[str]:
+    """`git check-attr` pointed at this worktree in a way any git can run.
+
+    A linked worktree's `.git` is a file holding a gitdir path. In a
+    checkout made on Windows that path is spelled `D:/...`, which git
+    running under WSL on `/mnt/d` cannot resolve: it is not a repository
+    there, and the check dies with exit 128 before it reads an attribute.
+    Rewriting the drive letter to its mount point names the same directory
+    in the running platform's syntax, so the command measures git's
+    attribute resolution rather than the caller's platform.
+    """
+    command = ["git"]
+    git_file = ROOT / ".git"
+    if git_file.is_file():
+        declared = git_file.read_text(encoding="utf-8").split(":", 1)[1].strip()
+        command += ["--git-dir", _local_path(declared),
+                    "--work-tree", str(ROOT)]
+    return command + ["check-attr", "--all", "--"] + paths
+
+
+def _local_path(declared: str) -> str:
+    """`D:/rest` under a POSIX host is `/mnt/d/rest`; anything else is itself."""
+    drive, separator, rest = declared.replace("\\", "/").partition("/")
+    if separator and len(drive.rstrip(":")) == 1 and drive[0].isalpha():
+        return "/mnt/%s/%s" % (drive[0].lower(), rest)
+    return declared
+
+
+@pytest.fixture(scope="module")
+def authority():
+    """A real store and allocation for the step executor to resolve.
+
+    Staging is host-side work that happens only after the executor accepts
+    its authority, so proving the staged bytes needs a store, an allocation
+    and an operation id that exist. The child itself is still replaced by
+    `_NoChild` inside the test that uses this; nothing executes here.
+    """
+    import uuid
+
+    from experiments.ad01 import trajectory
+    from experiments.ad01.s09_run_isolation import create_disposable_db, \
+        drop_disposable_db
+
+    database = create_disposable_db("staging-fidelity",
+                                    migrations_dir=ROOT / "migrations")
+    try:
+        trajectory.set_namespace_token("")
+        campaign = "staging-fidelity-%s" % uuid.uuid4().hex[:8]
+        allocation = trajectory.authorize_campaign(
+            database.dsn, campaign, authorized=100000)
+        counter = {"n": 0}
+
+        def run(source, view, state, **kwargs):
+            counter["n"] += 1
+            return method_exec.run_step_out_of_process(
+                source, view, state, dsn=database.dsn,
+                allocation_id=allocation["allocation_id"],
+                operation_id="%s-op%d" % (campaign, counter["n"]), **kwargs)
+
+        yield type("Authority", (), {"run": staticmethod(run),
+                                     "dsn": database.dsn})()
+    finally:
+        drop_disposable_db(database)
+
+
 class _NoChild:
     """Stands in for the child process, recording what was staged.
 
@@ -91,7 +156,8 @@ class _NoChild:
 # ---------------------------------------------------------------------------
 
 
-def test_staged_driver_bytes_equal_the_source_that_was_hashed(monkeypatch):
+def test_staged_driver_bytes_equal_the_source_that_was_hashed(
+        monkeypatch, authority):
     """The file `run_step_out_of_process` stages hashes to the in-memory
     driver digest. This is the literal assertion the defect violated: with a
     text-mode write the on-disk digest was `05ef7fa4...` where provenance
@@ -104,6 +170,12 @@ def test_staged_driver_bytes_equal_the_source_that_was_hashed(monkeypatch):
     and the test failed on a missing dict key while asserting nothing about
     staging. Reading at the writer makes the assertion depend on the write
     and not on the order of unrelated refusals.
+
+    The call holds real authority on purpose. Without it the executor
+    refuses before a byte is staged, so `child.staged` would be empty and
+    `assert "driver.py" in child.staged` would fail on a refusal rather than
+    on a staging defect. The child is still replaced by `_NoChild`, so no
+    candidate code runs here; what is measured is the host's own bytes.
     """
     child = _NoChild()
     real_stage = method_exec._stage_text
@@ -116,7 +188,7 @@ def test_staged_driver_bytes_equal_the_source_that_was_hashed(monkeypatch):
     monkeypatch.setattr(launcher_local.subprocess, "Popen", child)
 
     with pytest.raises((ValueError, method_exec.MethodExecutionError)):
-        method_exec.run_step_out_of_process(STEP_SOURCE, _view(), {})
+        authority.run(STEP_SOURCE, _view(), {})
 
     expected = hashlib.sha256(
         (method_exec._STEP_DRIVER % (policy_step.STEP_ENTRY,))
@@ -218,15 +290,23 @@ def test_frozen_manifest_bytes_carry_no_carriage_returns():
 def test_gitattributes_pins_every_content_hashed_tree_to_lf():
     """`.gitattributes` is the mechanism, and a rule that names a directory
     git does not attribute to is a rule that does not run. Read off the real
-    attributes git resolves, not off the file's text."""
+    attributes git resolves, not off the file's text.
+
+    The git directory is named explicitly. A linked worktree's `.git` file
+    carries a Windows path (`D:/...`), which git under WSL on `/mnt/d`
+    cannot resolve, so `git -C` there dies with "not a git repository" and
+    the test reported a git failure rather than an attribute failure. The
+    attributes this asserts are the same either way; only the way git is
+    pointed at them changed.
+    """
     freeze_dirs = sorted(
         str(p.relative_to(ROOT)).replace("\\", "/") + "/**"
         for p in ROOT.glob("experiments/*/**/manifest.sha256")
         for p in [p.parent]
     )
     attributes = subprocess.run(
-        ["git", "-C", str(ROOT), "check-attr", "--all", "--"] +
-        [d.replace("/**", "/manifest.json") for d in freeze_dirs],
+        _check_attr_command([d.replace("/**", "/manifest.json")
+                             for d in freeze_dirs]),
         capture_output=True, text=True, check=True).stdout
 
     resolved: dict[str, dict[str, str]] = {}

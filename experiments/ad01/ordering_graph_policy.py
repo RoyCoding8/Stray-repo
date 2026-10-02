@@ -35,6 +35,16 @@ The cursor seam — `at_cursor` in, `decide.s09_cursor()` out — is carried
 over unchanged and for the same reason. `s09_graph_budget` runs one graph
 turn per child process, so no closure outlives a turn. See
 `test_the_cursor_survives_a_fresh_executor_every_turn`.
+
+One arm can carry a value it read. `FIELD_BINDING` binds an action input to
+a view field instead of a literal, and the bound value is resolved at turn
+time. It used to be unreadable: `_parse_action` copied the raw action node,
+so the value `_evaluate_guard` had just read was discarded and the emitted
+action was the literal the record spelled. A graph arm could then only act
+on something it already knew, which is what made a zero repair rate a
+property of the record shape rather than of the binding. A bound field is
+gated by the same world field table a guard is, so a record cannot bind a
+field the guard grammar has never heard of.
 """
 
 from __future__ import annotations
@@ -223,6 +233,72 @@ def _require_node_id(value: Any, name: str) -> str:
     return value
 
 
+# A binding: an action input holding a field rather than a value.
+#
+# A guard already reads a field, and the value it read was thrown away --
+# `_parse_action` copied the raw node, so the emitted action was the
+# literal the record spelled and an arm could act on nothing it had seen.
+# This is the seam that carries the read value into the action.
+#
+# It resolves at turn time, not at load, because the load-time view is
+# `World.static_view` -- the view in which nothing has been observed. A
+# field bound to an observation has no value there, and a value invented
+# for the load-time check would be one the world never published. The cost
+# of that is that a bound action cannot be fully validated at load either,
+# and `_parse_action` names the check it defers rather than skipping it
+# quietly.
+#
+# The key is namespaced rather than a bare magic string so no literal the
+# record spells can be mistaken for a binding, and it is a key rather than
+# a second action grammar so a bound action is still the shared `Action`
+# every other representation emits.
+FIELD_BINDING = "$field"
+
+
+def _is_binding(value: Any) -> bool:
+    return (isinstance(value, dict) and set(value) == {FIELD_BINDING}
+            and isinstance(value[FIELD_BINDING], str))
+
+
+def _binds(action: policy_action.Action) -> bool:
+    return any(_is_binding(value) for value in action.inputs.values())
+
+
+def _bound_value(view: dict, state: dict, field: str,
+                 world: World = ORDERING_WORLD) -> str | int:
+    """The value a binding names, read the way a guard reads it.
+
+    A guard on an absent observation fails inside the evaluator, where the
+    path is already known. A binding fails here instead, so the refusal has
+    to name the field: an unbound action carrying `None` where a test name
+    belongs would be refused by the world with a message about a missing
+    value rather than about an unreadable field.
+    """
+    try:
+        return _field_value(view, state, field, world)
+    except (KeyError, IndexError, TypeError, GraphPolicyRefused) as exc:
+        raise GraphPolicyRefused(
+            "bound field %r is not readable from this view: %s"
+            % (field, exc)) from exc
+
+
+def _resolve_bindings(action: policy_action.Action, view: dict, state: dict,
+                      world: World = ORDERING_WORLD
+                      ) -> policy_action.Action:
+    """Carry the field's value into the action, for the inputs that asked.
+
+    Returns the action unchanged when it binds nothing, so every record
+    written in literals takes the path it took before.
+    """
+    bound = {
+        key: _bound_value(view, state, value[FIELD_BINDING], world)
+        for key, value in action.inputs.items() if _is_binding(value)
+    }
+    if not bound:
+        return action
+    return dataclasses.replace(action, inputs={**action.inputs, **bound})
+
+
 def _field_type(field: Any, name: str, world: World) -> str:
     if not isinstance(field, str) or not field:
         raise GraphPolicyRefused("%s field must be a non-empty string" % name)
@@ -258,16 +334,42 @@ def _parse_guard(raw: Any, name: str, world: World) -> dict:
     return deepcopy(guard)
 
 
+def _parse_bound_fields(action: policy_action.Action, name: str,
+                        world: World) -> None:
+    """Gate every bound field against the world's own field vocabulary.
+
+    A binding is a claim about a field, so it is refused by the same table
+    that refuses a guard naming one. Without this a record could bind
+    `private.tables`, which no guard may name, and the arm would resolve it
+    by walking the view -- the one path out of the declared contract.
+    """
+    for key, value in action.inputs.items():
+        if not _is_binding(value):
+            continue
+        field = value[FIELD_BINDING]
+        if world.field_type(field) is None:
+            raise GraphPolicyRefused(
+                "%s input %r references unknown field %r" % (name, key, field))
+
+
 def _parse_action(raw: Any, name: str, world: World) -> policy_action.Action:
     try:
         action = policy_action.parse_action(raw)
-        world.validate_action(action, view=world.static_view)
+        _parse_bound_fields(action, name, world)
+        if not _binds(action):
+            world.validate_action(action, view=world.static_view)
     except (policy_action.ActionRefused, ValueError) + world.refusals as exc:
         raise GraphPolicyRefused("%s: %s" % (name, exc)) from exc
     if action.kind not in world.allowed_kinds:
         raise GraphPolicyRefused(
             "%s action %r is not available in the %s world"
             % (name, action.kind, world.name))
+    # A bound action is not validated against `static_view` above. That view
+    # is the one in which nothing has been observed, so a field bound to an
+    # observation has no value there and the world's own rule would be asked
+    # about an input the record has not yet filled in. The claim about the
+    # field is gated by `_parse_bound_fields`; the resolved action is
+    # validated at turn time against the view that carries the value.
     return dataclasses.replace(
         action,
         inputs=deepcopy(action.inputs),
@@ -504,14 +606,30 @@ def choose_action(record: dict, *, world: World = ORDERING_WORLD,
                 candidate for candidate in node.arms
                 if _evaluate_guard(candidate.guard, view, state, world)
             )
-            world.validate_action(arm.action, view=view)
+            # Validate the action the world will actually see, and only
+            # once. A bound input is a placeholder until `_resolve_bindings`
+            # fills it, so validating before that hands the world's own
+            # admission check a dict where a test name belongs: the SWE
+            # world raises `cannot use 'dict' as a set element` from inside
+            # its `code.localize` gate, and the arm refuses for a typing
+            # accident rather than for anything about the world.
+            #
+            # Nothing is lost by dropping the earlier call. For a record
+            # that binds nothing `_resolve_bindings` returns the same
+            # action object, so the two calls were one call. The field a
+            # binding names is still gated at load by `_parse_bound_fields`
+            # against the same world table a guard is gated by, so a record
+            # still cannot bind a field the guard grammar has never heard
+            # of.
+            action = _resolve_bindings(arm.action, view, state, world)
+            world.validate_action(action, view=view)
             next_state = {
                 "at": arm.next,
                 "progress": state["progress"] + arm.progress,
             }
             policy_step.validate_state(next_state)
             state = next_state
-            return arm.action.as_dict()
+            return action.as_dict()
         except Exception as exc:
             return _refusal(exc, world)
 
@@ -567,6 +685,7 @@ def expressivity_limits() -> dict:
 
 __all__ = [
     "Arm",
+    "FIELD_BINDING",
     "FORMAT_POLICY_ID",
     "GraphPolicy",
     "GraphPolicyRefused",

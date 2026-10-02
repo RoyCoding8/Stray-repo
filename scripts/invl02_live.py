@@ -217,12 +217,28 @@ def _live_gateway(expected_route: dict | None = None):
 
 def _guard(gateway, *, pinned_model: str, ceiling: int,
            already_spent: int, expected_route: dict | None = None,
-           automatic_retries: int | None = None):
+           automatic_retries: int | None = None, dsn: str | None = None,
+           allocation_id: str | None = None):
+    """The output guard, with its ceiling answered by the store when it can be.
+
+    `ceiling` is an absolute position in the currency `COUNT(*) FROM
+    operations`, so the callers already add the prior spend to it rather
+    than expressing it as a remaining allowance. Given a dsn and an
+    allocation, the guard re-reads that count on every check instead of
+    trusting the seed it was handed. Every caller now passes both, so the
+    seed is a position rather than an authority.
+
+    Every send these paths make goes through `_DurableBrokerOutput`, which
+    calls `ensure_operation` with this allocation, so the store's count and
+    the guard's ceiling are the same number by construction.
+    """
     from experiments.ad01.live_construct import LiveGuard
     kwargs = {"pinned_model": pinned_model, "ceiling": ceiling,
               "already_spent": already_spent, "expected_route": expected_route}
     if automatic_retries is not None:
         kwargs["automatic_retries"] = automatic_retries
+    if dsn is not None and allocation_id is not None:
+        kwargs["spend_reader"] = lambda: _already_spent(dsn, allocation_id)
     return _OutputGuard(gateway, **kwargs)
 
 
@@ -1507,12 +1523,19 @@ def _run_output_locked(out: Path, *, gateway, model: str,
     already_spent = (
         _output_already_spent(freeze, dsn=spent_dsn)
         if spent_dsn else _output_evidence_spent(out, freeze))
+    # The ceiling is enforced against the store whenever this run has both a
+    # dsn and a durable gateway, because `_DurableBrokerOutput` is what admits
+    # every send here and its allocation is the one to count rows under. The
+    # evidence-file read stays for a caller that supplies neither, which is
+    # the `run_output` path without a store.
     guard = _OutputGuard(
         gateway, pinned_model=model,
         ceiling=freeze["limits"]["max_dispatches"],
         already_spent=already_spent,
         automatic_retries=freeze["limits"]["automatic_retries"],
-        expected_route=freeze["route"])
+        expected_route=freeze["route"],
+        spend_reader=(lambda: _output_already_spent(freeze, dsn=spent_dsn))
+        if spent_dsn and getattr(gateway, "allocation_id", None) else None)
     scores = list(private_p0_scores)
     arm_status = {"P0": True}
     study_route_refused = False
@@ -2128,7 +2151,8 @@ def run_e0(dsn: str, out) -> dict:
     guard = _guard(durable_gateway, pinned_model=model,
                    ceiling=freeze["bounds"]["model_calls"] + already_spent,
                    already_spent=already_spent,
-                   expected_route=freeze["route"])
+                   expected_route=freeze["route"],
+                   dsn=dsn, allocation_id=allocation_id)
     live = _run_frontier_investigation(
         out / "frontier-live.json", freeze, "live",
         guard=guard, model=model)
@@ -2606,7 +2630,8 @@ def run_e12(dsn: str, out) -> dict:
                        + per_arm[arm]["repair"] + spent,
                        already_spent=spent,
                        expected_route=freeze["route"],
-                       automatic_retries=0)
+                       automatic_retries=0,
+                       dsn=dsn, allocation_id=allocation_id)
         spent_before = int(spent)
         try:
             frontier = _run_frontier_investigation(
@@ -4169,42 +4194,70 @@ def _unknown_usage() -> dict:
             "charge_units": "unknown", "billed": "unknown"}
 
 
+#: The one refusal this path owes a caller that hands it no store. A probe
+#: that cannot be charged to a study is a send that leaves no trace, which is
+#: the defect this verb used to have, so it is refused rather than allowed
+#: because the caller forgot a flag.
+PROBE_STORE_REFUSAL = (
+    "a probe is durable or it is not: dsn and allocation_id are required "
+    "together, because a send with no store is a model call that leaves no "
+    "operation row, no receipt and no exposure")
+
+
 def probe(out, *, read_ms: int = 60000, max_tokens: int = 256,
-          api: str = "responses") -> dict:
+          api: str = "responses", dsn: str | None = None,
+          allocation_id: str | None = None, gateway=None) -> dict:
     import time
     from experiments.ad01 import live_construct as _live
-    from settlement.config import Settings
     from settlement.gateway import ModelRequest
-    from settlement.gateway_http import HttpGatewayAdapter
+
     _require_grant()
-    out = Path(out)
     model = _live_model()
-    settings = Settings.from_env()
-    adapter = HttpGatewayAdapter(
-        endpoint=settings.gateway.endpoint,
-        api_key=settings.gateway.api_key_env and __import__(
-            "os").environ.get(settings.gateway.api_key_env, ""),
-        timeout_read_ms=read_ms, api=api)
-    # A probe is one diagnostic send against a bare adapter. It is handed no
-    # dsn by the `probe` verb, so it creates no operation row and there is no
-    # store for a count to come from. The old reader took this from
-    # S09_STUDY_CALLS_ALREADY_SPENT, a name nothing writes, so the number was
-    # always 0 by accident. Stating it is the honest version of that: this
-    # path's spend is zero by construction, and a probe that must be counted
-    # against a study needs a --dsn it does not have.
-    guard = _guard(adapter, pinned_model=model, ceiling=1, already_spent=0)
+    out = Path(out)
+    route = _live_route()
+    # After the live-path gates and before anything is built. A probe given
+    # no store would otherwise send through a bare adapter and leave behind
+    # the absence of a trace that this verb exists to prevent. The grant
+    # check stays first: a probe without human authority is refused before
+    # anyone asks it about its store.
+    if dsn is None or allocation_id is None:
+        raise ValueError(PROBE_STORE_REFUSAL)
+    if gateway is None:
+        from settlement.config import Settings
+        from settlement.gateway_http import HttpGatewayAdapter
+        settings = Settings.from_env()
+        gateway = HttpGatewayAdapter(
+            endpoint=settings.gateway.endpoint,
+            api_key=settings.gateway.api_key_env and __import__(
+                "os").environ.get(settings.gateway.api_key_env, ""),
+            timeout_read_ms=read_ms, api=api)
+    # The same `_DurableBrokerOutput` every other live path in this file
+    # sends through, and the same object lane A1 gave the preflight. Wrapping
+    # it is what admits the operation, allocates it and settles a receipt, so
+    # identity and not this function is what stops a second send. The guard
+    # stays the outer object because the route check, the cost block and the
+    # evidence ledger are per-attempt observations of one send.
+    already_spent = _already_spent(dsn, allocation_id)
+    guard = _guard(
+        _DurableBrokerOutput(dsn, gateway, allocation_id=allocation_id,
+                             expected_route=route),
+        pinned_model=model, ceiling=already_spent + 1,
+        already_spent=already_spent, expected_route=route,
+        dsn=dsn, allocation_id=allocation_id)
     prompt = ("Reply with exactly one JSON object and nothing else,"
               " shaped {\"entry\": \"ok\"}.")
+    operation_id = "invl02-probe-%d" % read_ms
     started = time.monotonic()
     try:
         response = guard.infer(ModelRequest(
             model=model, messages=({"role": "user", "content": prompt},),
             max_output_tokens=max_tokens, deadline_ms=read_ms + 30000,
-            operation_id="invl02-probe-%d" % read_ms))
+            operation_id=operation_id))
     except Exception as exc:
         result = {"probe": "refused", "reason": str(exc),
                   "elapsed_s": round(time.monotonic() - started, 1),
-                  "read_ms": read_ms, "usage": _unknown_usage(),
+                  "read_ms": read_ms, "operation_id": operation_id,
+                  "usage": _unknown_usage(),
                   "guard": guard.guard_status()}
     else:
         from settlement.gateway import GatewayError
@@ -4212,21 +4265,22 @@ def probe(out, *, read_ms: int = 60000, max_tokens: int = 256,
             result = {"probe": "error", "kind": str(response.kind),
                       "reason": response.message,
                       "elapsed_s": round(time.monotonic() - started, 1),
-                      "read_ms": read_ms,
+                      "read_ms": read_ms, "operation_id": operation_id,
                       "usage": _live._usage_snapshot(response.usage),
                       "guard": guard.guard_status()}
         else:
             from experiments.ad01 import live_construct as _live_text
             result = {"probe": "text",
                       "elapsed_s": round(time.monotonic() - started, 1),
-                      "read_ms": read_ms, "text_chars": len(
-                          response.text or ""),
+                      "read_ms": read_ms, "operation_id": operation_id,
+                      "text_chars": len(response.text or ""),
                       "response_digest": hashlib.sha256(
                           (response.text or "").encode()).hexdigest(),
                       "stop_reason": str(response.stop_reason),
                       "usage": _live_text._usage_snapshot(response.usage),
                       "guard": guard.guard_status()}
     path = out / ("probe-%s-%d.json" % (api, read_ms))
+    out.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(result, sort_keys=True, indent=1) + "\n")
     return result
 
@@ -4314,11 +4368,15 @@ def main(argv: list | None = None) -> int:
                          and comparison.get("status") == "complete") else 1
         if verb == "probe":
             out = rest[rest.index("--out") + 1]
+            dsn = rest[rest.index("--dsn") + 1] if "--dsn" in rest else None
+            allocation_id = (rest[rest.index("--allocation-id") + 1]
+                             if "--allocation-id" in rest else None)
             read_ms = int(rest[rest.index("--read-ms") + 1]
                           if "--read-ms" in rest else 60000)
             api = rest[rest.index("--api") + 1] \
                 if "--api" in rest else "responses"
-            result = probe(out, read_ms=read_ms, api=api)
+            result = probe(out, read_ms=read_ms, api=api, dsn=dsn,
+                           allocation_id=allocation_id)
             print("probe %s elapsed=%s" % (
                 result["probe"], result.get("elapsed_s")))
             return 0 if result.get("probe") == "text" else 1

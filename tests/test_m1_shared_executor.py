@@ -26,7 +26,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 
-from experiments.ad01 import (construct, policy_assess, policy_step, records,
+from experiments.ad01 import (construct, policy_action, policy_assess,
+                                policy_step, records,
                                 seeds, trajectory, worlds)
 from experiments.ad01.assessment_profile import (
     ASSESSMENT,
@@ -362,15 +363,29 @@ def test_model_request_shares_broker_payload_until_declared_difference():
 
 
 def test_revision_staged_locally_only_trusted_bind():
+    """Staging moved to the one profile that could bind it.
+
+    A stage under `ASSESSMENT` was accepted and returned a `staged` payload
+    that no assessment profile could bind, so a sealed assessment admitted
+    a second effect class with no consumer while the legacy sealed profile
+    refused the same action outright. Sealed profiles now refuse the
+    revision proposal, and staging lives under `DEVELOPMENT`, which has the
+    binding rights that make a stage meaningful.
+    """
     source = USE_SOURCE
     record = _record(source)
     task = _task()
-    staged = dispatch(profile_name=ASSESSMENT, record=record, task=task,
+    sealed = dispatch(profile_name=ASSESSMENT, record=record, task=task,
                       action=_revision_action(),
                       ctx=_ctx(ASSESSMENT, _digest(source)))
+    assert sealed["accepted"] is False
+    assert "staged" not in sealed
+    assert sealed["reason"] == policy_action.REVISION_NOT_A_TASK_EFFECT
+    staged = dispatch(profile_name=DEVELOPMENT, record=record, task=task,
+                      action=_revision_action(),
+                      ctx=_ctx(DEVELOPMENT, _digest(source)))
     assert staged["accepted"] is True
     assert staged["bound"] is False
-    assert staged["destination"] == "assessment-local"
     assert staged["staged"]["parent_digest"] == _digest(source)
     untrusted = bind_revision(profile_name=ASSESSMENT,
                               staged=staged["staged"],
@@ -473,18 +488,21 @@ def test_nested_qualification_bounded_and_audit_never_promotes():
     nested = {"kind": "propose_revision", "target": TASK_ID,
               "inputs": {"request": "assessment", "motivation": "recurse"},
               "evidence_refs": [], "requested_resources": {}}
-    deep = dispatch(profile_name=ASSESSMENT, record=record, task=_task(),
+    # The depth bound is now reachable only under a profile that can bind,
+    # because a profile without binding rights refuses the proposal before
+    # it is ever considered for nesting.
+    deep = dispatch(profile_name=DEVELOPMENT, record=record, task=_task(),
                     action=nested,
-                    ctx=_ctx(ASSESSMENT, _digest(source), qualify_depth=1))
+                    ctx=_ctx(DEVELOPMENT, _digest(source), qualify_depth=1))
     assert deep["accepted"] is False
     assert "depth" in deep["reason"]
     audit = dispatch(profile_name=AUDIT, record=record, task=_task(),
                      action=nested,
                      ctx=_ctx(AUDIT, _digest(source)))
     assert audit["accepted"] is False
-    staged = dispatch(profile_name=ASSESSMENT, record=record, task=_task(),
+    staged = dispatch(profile_name=DEVELOPMENT, record=record, task=_task(),
                       action=_revision_action(),
-                      ctx=_ctx(ASSESSMENT, _digest(source)))
+                      ctx=_ctx(DEVELOPMENT, _digest(source)))
     audit_bind = bind_revision(profile_name=AUDIT, staged=staged["staged"],
                                candidate_source=source, scope=_scope(),
                                trusted=True)

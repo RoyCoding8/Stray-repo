@@ -153,15 +153,33 @@ def save_continuation(dsn: str, cmd: Command, artifacts_root: str | Path, invest
 
 
 def resume_package(dsn: str, investigation_id: str, caller_scope: str = "evaluator") -> dict:
+    """What a fresh worker needs to continue an investigation.
+
+    `in_flight` comes from the mission entry and nowhere else. Before the entry
+    existed this function answered the same question from `continuation_docs`,
+    which is a plan position: it records where a composition stopped and what it
+    intended next, not which program admitted an operation or under which
+    inputs. A continuation document could therefore name a different
+    `unresolved_ops` list than the operations actually in flight, and a resume
+    driven by it would restore work that was never admitted.
+
+    The two are not merged and neither replaces the other. `continuation` is
+    still the composition's position, because that is what it is for; it is
+    simply no longer the owner of in-flight identity, and it can no longer
+    overtake the entry when the two disagree.
+
+    A missing continuation is not a refusal here. A fresh worker resuming work
+    that never used a composition has in-flight operations and no document to
+    describe, and refusing to tell it about them would make the entry harder to
+    reach than the thing it replaced.
+    """
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT * FROM continuation_docs WHERE investigation_id = %s"
                         " ORDER BY created_at DESC LIMIT 1", (investigation_id,))
             row = cur.fetchone()
-            if row is None:
-                raise SettlementError(f"no continuation for {investigation_id}")
-            doc = {k: (dict(v) if isinstance(v, dict) else (list(v) if isinstance(v, list) else v))
-                   for k, v in dict(row).items()}
+            doc = ({k: (dict(v) if isinstance(v, dict) else (list(v) if isinstance(v, list) else v))
+                    for k, v in dict(row).items()} if row is not None else None)
             cur.execute("SELECT id FROM attempts WHERE investigation_id = %s"
                         " AND lifecycle NOT IN ('completed', 'failed', 'cancelled')", (investigation_id,))
             live = [r["id"] for r in cur.fetchall()]
@@ -173,10 +191,13 @@ def resume_package(dsn: str, investigation_id: str, caller_scope: str = "evaluat
                                "content": dict((r["content"] or {}).get("content", r["content"] or {}))}
                             for r in cur.fetchall()]
             conn.commit()
+    in_flight = mission_in_flight(dsn, investigation_id)
     reconciliation = store.restart_reconciliation(dsn)
+    unresolved = set(doc["unresolved_ops"]) if doc is not None else set()
     pending = [op for op in reconciliation["unfinished_operations"]
-               if op["id"] in set(doc["unresolved_ops"])
-               or (live and op.get("attempt_id") in live)]
+               if op["id"] in unresolved
+               or (live and op.get("attempt_id") in live)
+               or any(op["id"] == held["attempt_id"] for held in in_flight)]
     support = {row["id"]: evidence.current_support(dsn, row["id"]) for row in
                evidence.scoped_claims(dsn, caller_scope)}
     try:
@@ -186,8 +207,41 @@ def resume_package(dsn: str, investigation_id: str, caller_scope: str = "evaluat
     except _pg_errors.UndefinedTable:
         team_state = {"plans": [], "submissions": [], "joins": []}
     return {"continuation": doc, "live_attempts": live, "pending_operations": pending,
+            "in_flight": in_flight,
             "observations": observations, "support": support, "team": team_state,
             "reconciliation": {"execution_versions": reconciliation["execution_versions"]}}
+
+
+def mission_in_flight(dsn: str, investigation_id: str) -> list[dict]:
+    """The mission entry's in-flight operations, read here rather than imported.
+
+    `context` is the settlement layer and `experiments.ad01.mission` is an
+    experiment module, so this does not import it. That would invert the
+    layering `src/` has kept clean, and the read is two lines of SQL against a
+    column whose shape the migration states. The cost is that the shape is
+    stated twice, once in the migration and once in the reader that validates
+    it. Sorting here rather than trusting the stored order is deliberate: a
+    caller restoring an investigation should not depend on the order rows were
+    appended, and the order is not itself a record of anything.
+
+    A store not migrated past the mission entry has no such column, and the
+    package still answers rather than failing. The entry's absence is a schema
+    state, not a corruption of the work being resumed.
+    """
+    try:
+        with db.connect(dsn) as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute("SELECT in_flight FROM investigations WHERE id = %s",
+                            (investigation_id,))
+                found = cur.fetchone()
+                conn.commit()
+    except _pg_errors.UndefinedColumn:
+        return []
+    if found is None:
+        return []
+    return sorted((dict(raw) for raw in (found["in_flight"] or [])),
+                  key=lambda item: (int(item.get("seq", -1)),
+                                    str(item.get("attempt_id") or "")))
 
 
 POLICY_VERSION = "d02-seed-v1"
@@ -593,6 +647,16 @@ def _s_obligations(state: dict, spec: dict) -> dict:
 def _s_next_decision(state: dict, spec: dict) -> dict:
     nxt = dict((state["cont"] or {}).get("next_decision") or {})
     if not nxt:
+        # A mission that has work in flight but no continuation document still
+        # names the next decision, on its own entry. Reading the document alone
+        # reported such a mission as needing a continuation saved, which is how
+        # a second owner of "what happens next" survived the entry's arrival.
+        for held in mission_in_flight(state["dsn"], spec["investigation_id"]):
+            return {"next_decision": {"in_flight": held["attempt_id"],
+                                      "action": "reconcile admitted operation",
+                                      "program_digest": held["program_digest"],
+                                      "input_identity": held["input_identity"]},
+                    "composition_version": ""}
         raise _Need("no continuation next decision", "save a continuation first")
     return {"next_decision": _jsonable(nxt),
             "composition_version": (state["cont"] or {}).get("composition_version", "")}

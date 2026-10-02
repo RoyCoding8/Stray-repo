@@ -10,6 +10,11 @@ policy_assess._effect stays untouched as the labeled legacy sealed profile
 for frozen studies. New qualification uses dispatch in this module.
 Method owners receive the packet-stripped task, so sealed keys never reach
 child execution through the task route either.
+
+The two profiles agree on what a learner-revision proposal is. A stage only
+a binding profile could consume is a second effect class with no consumer,
+so every profile without binding rights refuses it, for the reason the
+contract states.
 """
 
 from __future__ import annotations
@@ -17,11 +22,13 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass
+from typing import Any, Mapping
 
 from settlement import broker
 from settlement.common import ResultCode
 
-from . import method_exec, packet, policy_step, seeds, worlds
+from . import (method_exec, packet, policy_action, policy_step, seeds,
+               worlds)
 
 DEVELOPMENT = "development"
 ASSESSMENT = "assessment"
@@ -35,9 +42,210 @@ ASSESSMENT_LOCAL = "assessment-local"
 
 _FAMILY_TAG = {"software": "sw", "graph": "gr"}
 
+# The sealed profiles and the one that may stage. Kept beside the profiles
+# rather than at the refusal site so the two places that have to agree about
+# it are both declarations you can read side by side.
+REVISION_REFUSAL_REASON = policy_action.REVISION_NOT_A_TASK_EFFECT
+
 
 def default_repertoire() -> tuple:
     return tuple(item["capability_id"] for item in seeds.SEED_CAPABILITIES)
+
+
+# ---------------------------------------------------------------------------
+# the repertoire, and the path an acquired method takes to arrive in one
+# ---------------------------------------------------------------------------
+#
+# `default_repertoire()` above is closed and stays closed. It is the four
+# authored seed ids, it is frozen, and every archived run of every campaign
+# in this tree reproduced its eligible sets from it. Nothing here changes
+# that value; what changes is that closure is no longer the only reachable
+# state.
+#
+# Before this region there was nowhere for a method acquired on one task to
+# be nameable on another. `RETENTION_BLOCKER` stated that in code
+# (`w2_retention_campaign.py:176-200`) and three archived reports read the
+# closure off it, so the defect was not a missing implementation but a
+# missing state: the type that would carry an arrived member did not exist,
+# and the admission gate that would decide whether it could was
+# `_resolve_method`'s single lookup in `seeds.SEED_CAPABILITIES`.
+#
+# So the shape comes first. A `Repertoire` is the authored seeds plus any
+# number of arrived members, and it is the *repertoire in hand* rather than
+# a constant that a caller could have grown that decides a task's eligible
+# set. Two refusals matter more than the admission and both are stated at
+# the type, not at a call site:
+#
+#   **a member is refused on the task it was acquired on.** Retention means
+#   a prior task. A member offered on its own acquisition task measures
+#   nothing about retention, and admitting it would let a contrast label a
+#   cold acquisition's own result as reuse of itself.
+#
+#   **a member must carry bytes that verify.** `method_exec.verify_member`
+#   is the executor's own gate and is called, not reimplemented, so a member
+#   the executor would refuse never reaches an eligible list. The digest is
+#   recomputed from the bytes rather than read from the member, for the
+#   reason `trajectory.load_repertoire` recomputes it: a digest that is not
+#   its bytes' digest is not a receipt for anything.
+#
+# The arrived member is executable through `method_source` and `entry`,
+# beside its id, because `_resolve_method` resolves a bare `method_id`
+# through the seed table alone and that function is not this lane's to
+# edit. This is the route `trajectory._use_retained_method` and every
+# `control_arm` member already take.
+
+RESERVED_ID_PREFIXES = ("seed-", "ctl-")
+"""Namespaces an arrived member may not claim.
+
+`seed-` is `seeds.SEED_CAPABILITIES`, and `_resolve_method` resolves a
+named id through it: a member claiming one would be two records for one
+dispatch, and `trajectory.load_repertoire` already refuses it for the
+stored repertoire. `ctl-` is `control_arm.ID_PREFIX`, which exists
+precisely so a control member cannot be confused with a seed; an arrived
+member in that namespace would be a third kind of record wearing a control
+arm's name.
+"""
+
+
+class RepertoireRefused(ValueError):
+    """A repertoire an eligible list may not be derived from.
+
+    A refusal rather than a skip. A member that is dropped silently
+    produces a closed eligible set that reads as the frozen one, which is
+    the defect this region exists to remove.
+    """
+
+
+@dataclass(frozen=True)
+class AcquiredMember:
+    """Bytes acquired on a prior task, offered to a later one.
+
+    `authored` is absent on purpose and there is no field that could stand
+    in for it. Every value in `seeds.SEED_CAPABILITIES` carries
+    `authored: True` because a later trajectory must never be able to
+    present the reducers' behaviour as acquired; an arrived member is what
+    its provenance says it is, and `origin` and `acquired_on` are the two
+    facts that make it so. `as_executable` writes `authored: False`, which
+    is the shape `trajectory._use_retained_method` and `load_repertoire`
+    read.
+    """
+    capability_id: str
+    family: str
+    entry: str
+    method_source: str
+    origin: str
+    acquired_on: str
+
+    @property
+    def source_digest(self) -> str:
+        return hashlib.sha256(self.method_source.encode("utf-8")).hexdigest()
+
+    def as_executable(self) -> dict:
+        """The member in the shape the method executor takes.
+
+        The same keys `construct._member` and `trajectory._use_retained_method`
+        read, so an arrived member and an acquired one are one record to
+        every consumer downstream and two records nowhere.
+        """
+        return {"capability_id": self.capability_id, "entry": self.entry,
+                "method_source": self.method_source,
+                "source_digest": self.source_digest, "authored": False,
+                "origin": self.origin, "qualified_on": self.acquired_on,
+                "scope": {"family": self.family}}
+
+    def admit(self, task: Mapping[str, Any]) -> str | None:
+        """Why this member may not be named on `task`, or nothing.
+
+        Every refusal carries the member's own id, so a caller that reports
+        one says which member it refused and not merely that something was
+        refused.
+
+        There is no digest check here and there was never going to be one
+        worth having. `source_digest` is a computed property of
+        `method_source` on a frozen dataclass, so comparing the two is a
+        tautology and a check that always passes is worse than no check: it
+        reads as a guarantee. The guarantee that actually holds is the
+        executor's, below, and it is enforced by calling the executor
+        rather than by reimplementing what it refuses.
+
+        The order is how badly a member failing each check would misread.
+        Identity, then bytes present, then the id namespaces, then the
+        acquisition task, then the family's executor gate.
+        """
+        task_id = str((task or {}).get("task_id") or "")
+        family = str((task or {}).get("family") or "")
+        if not isinstance(self.capability_id, str) or not self.capability_id:
+            return "a repertoire member needs a capability id"
+        if not isinstance(self.method_source, str) or not self.method_source:
+            return ("acquired member %r carries no executable bytes"
+                    % (self.capability_id,))
+        for prefix in RESERVED_ID_PREFIXES:
+            if self.capability_id.startswith(prefix):
+                return ("acquired member %r claims a reserved %r namespace"
+                        % (self.capability_id, prefix))
+        if self.acquired_on == task_id:
+            return ("acquired member %r is refused on the task it was"
+                    " acquired on" % (self.capability_id,))
+        if family != self.family:
+            return ("acquired member %r was acquired on a %s task and this"
+                    " task is %s" % (self.capability_id, self.family, family))
+        try:
+            method_exec.verify_member(self.as_executable())
+        except Exception as exc:
+            return ("acquired member %r is refused by the method executor:"
+                    " %s" % (self.capability_id, exc))
+        return None
+
+
+@dataclass(frozen=True)
+class Repertoire:
+    """The authored seeds plus whatever arrived, in one addressable set.
+
+    `members` is empty for the repertoire every frozen campaign used, and
+    the default is that empty case rather than a separate constant, so
+    there is exactly one place a repertoire is built and one place an
+    eligible set is derived from one.
+    """
+    members: tuple = ()
+
+    def eligible_for(self, task: Mapping[str, Any],
+                     *, strict: bool = True) -> list:
+        """The method ids a policy on `task` may name, in selection order.
+
+        The seeds come first and in their own order, so a policy that takes
+        `eligible[0]` or that reads no further than `eligible[1]` behaves
+        identically whether or not a member has arrived. That is the whole
+        of the compatibility argument, and it is a property of this order
+        rather than of any caller.
+
+        A member refused for another family is out of scope, not an error:
+        a repertoire holds every member acquired in a study, and asking a
+        software member whether it applies to a graph task is a question
+        with an answer rather than a malformed one. A member refused on its
+        own acquisition task IS an error, because it means the caller
+        believes that task is a prior one and it is not. So `admit` takes
+        `strict`: under it every refusal is raised, which is what the
+        `eligible_for` gate uses so that nothing is dropped silently.
+        """
+        strict = bool(strict)
+        family = str((task or {}).get("family") or "")
+        task_id = str((task or {}).get("task_id") or "")
+        arrived = []
+        for member in self.members:
+            refusal = member.admit(task)
+            if refusal is None:
+                arrived.append(member.capability_id)
+                continue
+            if strict:
+                raise RepertoireRefused(refusal)
+            if member.family == family and member.acquired_on == task_id:
+                raise RepertoireRefused(refusal)
+        return [item["capability_id"] for item in seeds.SEED_CAPABILITIES
+                if item["family"] == family] + arrived
+
+
+def repertoire_with(*members: AcquiredMember) -> Repertoire:
+    return Repertoire(tuple(members))
 
 
 @dataclass(frozen=True)
@@ -173,7 +381,36 @@ def build_model_operation(*, profile_name: str, action: dict, model: str,
             "profile": profile.name, "destination": profile.destination}
 
 
-def _resolve_method(task: dict, inputs: dict, kind: str = "use_method") -> tuple:
+def _step_authority(dsn: str | None, allocation_id: str | None, session: str,
+                    step_index: int) -> dict:
+    """Authority for the policy step of one panel cell, or an empty dict.
+
+    Empty is the honest answer for a panel with no store: the executor then
+    refuses before a byte is staged, and the arm records the refusal rather
+    than a decision the bytes never made. The step identity is distinct from
+    the member identity on the same session and step, so the policy's own
+    run and the method it chose are two operations rather than one.
+    """
+    if not (dsn and allocation_id):
+        return {}
+    return {"dsn": dsn, "allocation_id": allocation_id,
+            "operation_id": "%s-step-k%d" % (session, step_index)}
+
+
+def _execution_identity(profile: Profile, session: str, step_index: int,
+                        kind: str) -> str:
+    """The operation id a task effect runs under.
+
+    Deterministic, because the same arm replaying the same panel step must
+    land on the same operation and read back its own settled receipt rather
+    than dispatch a second time. It carries the profile, the session and the
+    step so two arms, two sessions and two steps never collide on one row.
+    """
+    return "%s-%s-%s-k%d" % (profile.op_prefix, session, kind, step_index)
+
+
+def _resolve_method(task: dict, inputs: dict, kind: str = "use_method", *,
+                    authority: dict | None = None) -> tuple:
     """Resolve the method an action names, and the walk it actually took.
 
     The walk comes back with the candidate. `method_exec.run_member_out_of_process`
@@ -185,6 +422,11 @@ def _resolve_method(task: dict, inputs: dict, kind: str = "use_method") -> tuple
     method that searched from one that was handed its answer. A run with no
     walk returns `None`, which says the walk was absent rather than empty,
     and the two are different claims.
+
+    An inline source is policy source, so it executes only under the same
+    authority every other execution needs. A panel step with no store is a
+    panel step whose method never ran, which is a different claim from one
+    that ran and produced nothing, and it is refused as such.
     """
     if "candidate" in inputs:
         return None, 0, 0, 0, None, "none", (
@@ -199,10 +441,16 @@ def _resolve_method(task: dict, inputs: dict, kind: str = "use_method") -> tuple
     if isinstance(source, str) and source:
         entry = inputs.get("entry", "ENTRY")
         member = {"method_source": source, "entry": entry}
+        if not (authority and authority.get("dsn")
+                and authority.get("allocation_id")
+                and authority.get("operation_id")):
+            return None, 0, 0, 0, None, "method_exec", (
+                "refused: a method executes only under a durable store, an"
+                " allocation and an operation identity"), None
         try:
             method_exec.verify_member(member)
             result = method_exec.run_member_out_of_process(
-                member, exposed, max_queries=max_queries)
+                member, exposed, max_queries=max_queries, **authority)
         except Exception as exc:
             return None, 0, 0, 0, None, "method_exec", str(exc), None
         identity = "inline:%s:%s" % (entry, _source_digest(source)[:12])
@@ -292,8 +540,13 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
         effect = _refused(profile, kind, "", source_digest, scope)
         return {**effect, "accepted": True, "reason": "no task effect"}
     if kind in ("construct_method", "use_method"):
+        authority = {"dsn": dsn, "allocation_id": allocation_id,
+                     "operation_id": _execution_identity(
+                         profile, ctx["session"], int(ctx["step_index"]),
+                         kind)}
         candidate, queries, _calls, wall_ms, identity, owner, failure, walk = \
-            _resolve_method(task, dict(action.get("inputs") or {}), kind)
+            _resolve_method(task, dict(action.get("inputs") or {}), kind,
+                            authority=authority)
         if failure is not None:
             return _refused(profile, kind, failure, source_digest, scope)
         return {"profile": profile.name, "kind": kind, "accepted": True,
@@ -368,6 +621,14 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
                 "accounting": "settled", "operation": operation,
                 "result": result}
     if kind == "propose_revision":
+        # A stage only a binding profile could ever consume is a second
+        # effect class with no consumer, not a permission. Every profile
+        # without binding rights refuses the revision proposal, and the
+        # reason is the contract's rather than a local spelling, so the
+        # legacy sealed profile at `policy_assess` answers identically.
+        if not profile.allow_revision_bind:
+            return _refused(profile, kind, REVISION_REFUSAL_REASON,
+                            source_digest, scope)
         inputs = dict(action.get("inputs") or {})
         if inputs.get("request") == "assessment":
             if not profile.allow_nested_qualify or \
@@ -426,7 +687,9 @@ def _shared_assessment_arm(policy_record: dict, task_ids: list,
             started = time.perf_counter_ns()
             try:
                 stepped = policy_step.run_policy_step(
-                    policy_record, view, state)
+                    policy_record, view, state,
+                    **_step_authority(dsn, allocation_id, session,
+                                      step_no))
             except Exception as exc:
                 arm["resources"]["step_calls"] += 1
                 arm["resources"]["child_wall_ms"] += _elapsed_ms(started)

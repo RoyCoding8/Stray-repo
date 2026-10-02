@@ -9,8 +9,9 @@ instruments. Menu selection and prompt advice are not involved.
 Two authored controls share their operational bytes and differ in their
 improvement bytes. Under matched inputs they request different real
 probes. Both stay labeled and never enter acquired treatment arms.
-Leaf construction maps a construct request to a revised package whose
-improvement source follows the requested strategy. Adoption binds at a
+Leaf construction builds the descendant from its parent's own improvement
+source with the construction decision substituted at the probed input, so
+what a revision chose is what its descendant runs. Adoption binds at a
 quiescent boundary with reset private state and explicit retained
 evidence plus obligations.
 
@@ -24,6 +25,7 @@ study can be told before it is run that the decision has no headroom.
 from __future__ import annotations
 
 import ast
+import contextlib
 import json
 import statistics
 import sys
@@ -74,6 +76,12 @@ SHARED_OPERATE_SOURCE = """def STEP(view, state):
                       "last_choice": target}}
 """
 
+# The two authored controls. Their bytes differ in the input each one
+# probes and in nothing else, and they stay that way: lane C2's fixtures
+# rewrite the construction binding in these exact sources, so the shape of
+# a control is a shared vocabulary rather than something this lane may
+# restate. What changed is not the controls but what the constructor does
+# with the decision they reach.
 IMPROVE_LOW_SOURCE = """def STEP(view, state):
     step = state.get("step", 0)
     if step == 0:
@@ -133,22 +141,19 @@ _CONTROLS = {
     "high": (CONTROL_HIGH_ID, IMPROVE_HIGH_SOURCE),
 }
 
-_STRATEGY_SOURCE = {"low": IMPROVE_LOW_SOURCE, "high": IMPROVE_HIGH_SOURCE}
-
 REVISION_VERSION = "invl02-revision-v1"
 
 
 def _revision_source(probe) -> str:
     """Build a revision around one evidence-selection rule.
 
-    Takes the authored control as the template and rewrites only the input
-    it probes, so a revision differs from the incumbent at exactly the
+    Takes an authored control as the template and rewrites the input it
+    probes, so a revision differs from the incumbent at exactly the
     decision under study and nowhere else. A difference in the descendant
     is then attributable to the evidence choice by construction.
 
-    Both authored inputs are offered, so a revision can select either one
-    of the two the control family uses, not just the one this template
-    happens to start from.
+    Both authored procedures are offered, so a revision can be written
+    against either one and a descendant inherits whichever its parent ran.
     """
     for template in (IMPROVE_LOW_SOURCE, IMPROVE_HIGH_SOURCE):
         for literal in ("3", "11"):
@@ -193,46 +198,68 @@ INELIGIBLE_NO_BOUNDARY = "no-boundary-action"
 INELIGIBLE_SOLVER = "task-solver-not-decision"
 INELIGIBLE_DELEGATION = "delegates-to-unchanged-reducer"
 INELIGIBLE_FROZEN_WRITE = "mutates-frozen-field"
+INELIGIBLE_OUT_OF_SCOPE = "changes-an-unauthorised-decision"
 INELIGIBILITY_REASONS = (
     INELIGIBLE_PROSE, INELIGIBLE_NO_BOUNDARY, INELIGIBLE_SOLVER,
-    INELIGIBLE_DELEGATION, INELIGIBLE_FROZEN_WRITE)
+    INELIGIBLE_DELEGATION, INELIGIBLE_FROZEN_WRITE, INELIGIBLE_OUT_OF_SCOPE)
 
 
-def revision_evidence_choices(source: str, view: dict) -> list:
+def revision_evidence_choices(source: str, view: dict, *,
+                              authority: dict | None = None,
+                              operation_id: str | None = None) -> list:
     """Execute revision bytes under one view and read back its choices.
 
     The revision is a STEP source, so the only honest way to know which
     evidence it selects is to execute it. Scanning the text for a literal
     would miss a computed x, and a computed x is exactly the case that
     decides the improvement.
+
+    The executions run under real authority, like every other execution of
+    policy source in this module. This used to catch a bare `Exception` and
+    break, which turned a refusal to execute into a revision that had been
+    executed and chosen nothing. The two are separated here. A child that ran
+    and returned a step it could not use means this revision chose nothing,
+    and the caller scores it on its own eligibility. A refusal to execute at
+    all, which is what a missing authority or an unsettled receipt produces,
+    propagates: a revision nobody executed has not chosen nothing, it has
+    not been looked at.
     """
     chosen: list = []
     state: dict = {}
     working = dict(view)
-    for _ in range(int(EXECUTION_LIMITS["max_policy_steps"])):
-        try:
-            stepped = _run_source(source, working, state)
-        except Exception:
-            break
-        action = stepped.get("action")
-        state = stepped.get("state") or {}
-        if not isinstance(action, dict):
-            break
-        inner = action
-        if isinstance(action.get("inputs"), dict) and "frontier_action" in \
-                action["inputs"]:
-            inner = action["inputs"]["frontier_action"]
-        if not isinstance(inner, dict):
-            break
-        kind = inner.get("kind")
-        if kind == "probe":
-            x = (inner.get("inputs") or {}).get("x")
-            if type(x) is int:
-                chosen.append(x)
-        if kind in ("construct", "select", "wait", "stop"):
-            break
-        working = dict(working)
-        working["experience"] = list(working.get("experience") or [])
+    digest = _frontier.source_digest(source)
+    with _execution_ledger(authority, "invl02-revision",
+                           operation_id) as held:
+        for index in range(int(EXECUTION_LIMITS["max_policy_steps"])):
+            try:
+                stepped = _run_source(
+                    source, working, state, authority=held,
+                    operation_id=held["operation_id"] if operation_id
+                    else "%s-%d" % (_derived_operation_id(
+                        {"package_digest": digest}, "rev", view), index))
+            except _method_exec.MethodExecutionError as exc:
+                if str(exc).startswith("step-failed"):
+                    break
+                raise
+            action = stepped.get("action")
+            state = stepped.get("state") or {}
+            if not isinstance(action, dict):
+                break
+            inner = action
+            if isinstance(action.get("inputs"), dict) and "frontier_action" in \
+                    action["inputs"]:
+                inner = action["inputs"]["frontier_action"]
+            if not isinstance(inner, dict):
+                break
+            kind = inner.get("kind")
+            if kind == "probe":
+                x = (inner.get("inputs") or {}).get("x")
+                if type(x) is int:
+                    chosen.append(x)
+            if kind in ("construct", "select", "wait", "stop"):
+                break
+            working = dict(working)
+            working["experience"] = list(working.get("experience") or [])
     return chosen
 
 
@@ -315,6 +342,133 @@ def _reads_names(node, names: frozenset) -> bool:
     return False
 
 
+# What a revision is allowed to change, and the decision each site of the
+# step belongs to. The refusal names the decision rather than reporting that
+# something differs, because "ineligible" alone cannot tell a reader which
+# boundary held.
+AUTHORISED_DECISION = "probe-input"
+
+_SHAPE_PROBE = "<authorised-change>"
+
+
+def unauthorised_change(incumbent: str, revision: str) -> dict:
+    """The decision a revision moved that it was not authorised to move.
+
+    Compares the two sources with the probed input blanked on both sides, so
+    the one change the interface names is invisible to the comparison and
+    only the remaining differences are left to account for. A revision that
+    rewrites the allocation, the construction choice, the action target or
+    the step's own action is a different program from the incumbent at
+    exactly one place a reviser does not own, and every such program is
+    caught. A revision that rewrites the probed input and nothing else
+    normalises to the incumbent exactly, so the one authorised change is
+    admitted.
+
+    Blanking rather than comparing similarity is what makes this an
+    interface check. There is no threshold and nothing to tune: the question
+    is whether the two programs are the same program once the authorised
+    change is taken away.
+    """
+    left, right = _program_shape(incumbent), _program_shape(revision)
+    if left is None or right is None:
+        raise _frontier.Refused("cannot compare unparseable revision bytes")
+    if _same(left, right):
+        return {}
+    site = _first_difference(left, right)
+    return {"decision": site,
+            "baseline_shape_digest": _frontier.source_digest(
+                ast.dump(left)),
+            "revision_shape_digest": _frontier.source_digest(
+                ast.dump(right))}
+
+
+def _program_shape(source: str):
+    """The parsed source with every probed input blanked.
+
+    The probed input is the value bound to a key `x` inside a frontier
+    action's inputs. Blanking it removes the authorised change from the
+    comparison, and blanking it at every site rather than the first is what
+    makes a revision that probes in two places comparable at all. The dict
+    is matched on the key alone rather than on the dict holding only that
+    key, because a revision may carry sibling inputs alongside `x` and
+    blanking those sites is what keeps such a revision admissible.
+
+    Returns None rather than raising, so the caller decides what an
+    unparseable source means.
+    """
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError, RecursionError):
+        return None
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        for index, key in enumerate(node.keys):
+            if isinstance(key, ast.Constant) and key.value == "x":
+                node.values[index] = ast.Constant(value=_SHAPE_PROBE)
+    return tree
+
+
+def _same(left, right) -> bool:
+    return ast.dump(left) == ast.dump(right)
+
+
+# Each site names the decision it belongs to. Both the strategy name and
+# the construction value are named rather than inferred from the construct
+# branch around them, because the choice of what a descendant probes is
+# made when that value is bound, not where the branch uses it. Anything
+# the map does not name is the step's own skeleton, which is the last name
+# because it is the catch-all rather than a claim.
+_SITES = {
+    "requested_resources": "probe-allocation",
+    "target": "probe-target",
+    "kind": "step-skeleton",
+    "strategy": "candidate-construction",
+    "construction": "candidate-construction",
+}
+
+
+def _first_difference(left, right) -> str:
+    """The decision the two shapes first differ at, named.
+
+    The walk is structural and in source order, so the reason names the first
+    thing a reader would meet reading the two programs side by side.
+    """
+    if type(left) is not type(right):
+        return _SITES["kind"]
+    if isinstance(left, ast.Dict):
+        if len(left.keys) != len(right.keys):
+            return _SITES["kind"]
+        for key, lvalue, rvalue in zip(left.keys, left.values,
+                                       right.values):
+            if isinstance(key, ast.Constant) and key.value in _SITES:
+                if not _same(lvalue, rvalue):
+                    return _SITES[key.value]
+                continue
+            found = _first_difference(lvalue, rvalue)
+            if found is not None:
+                return found
+        return None
+    if isinstance(left, ast.Assign):
+        for target in left.targets:
+            if isinstance(target, ast.Name) and target.id in _SITES:
+                if not _same(left.value, right.value):
+                    return _SITES[target.id]
+                return None
+        return _first_difference(left.value, right.value)
+    if isinstance(left, ast.Constant):
+        return None if _same(left, right) else _SITES["kind"]
+    children = [child for child in ast.iter_child_nodes(left)]
+    other = [child for child in ast.iter_child_nodes(right)]
+    if len(children) != len(other):
+        return _SITES["kind"]
+    for a, b in zip(children, other):
+        found = _first_difference(a, b)
+        if found is not None:
+            return found
+    return None if _same(left, right) else _SITES["kind"]
+
+
 def _incumbent_choices(view: dict) -> list:
     """What the unchanged frozen reducer chooses under the same view.
 
@@ -384,13 +538,28 @@ def delegates_to_frozen_reducer(source: str, view: dict) -> bool:
         x in _reducer_argmax(view) for x in choices)
 
 
-def classify_revision(source: str, views: list) -> dict:
+def classify_revision(source: str, views: list, *,
+                       incumbent: str = None) -> dict:
     """Decide whether revision bytes are an eligible intervention.
 
     Eligibility is a property of the bytes and the boundary they reach,
     decided before the revision is ever measured, so an ineligible
     revision is refused rather than scored. `views` is a list of
     genuinely different learner views.
+
+    The bytes must differ from the incumbent at the probed input and at
+    nothing else. `incumbent` is the improvement source the revision would
+    replace, and the channel's own default when a caller does not name one.
+    Without that comparison the declared interface is prose: an audit
+    measured six variants that rewrote the allocation, the construction or
+    the step skeleton and found every one of them eligible
+    (reports/workstreams/w4-e4-interface.md §4).
+
+    The scope check runs after the questions that do not need it and before
+    the ones that execute the revision. A revision that both moves another
+    decision and reproduces the frozen reducer's choice is reported for the
+    scope breach, because a scope breach is a property of the bytes while
+    the delegation is a property of what they do under these views.
 
     Eligibility is therefore not a claim that the bytes ran.
     `informs_decision` is that separate claim, and it is derived from
@@ -420,6 +589,13 @@ def classify_revision(source: str, views: list) -> dict:
                         "revision picks a fixed input whatever the learner"
                         " has seen, so it answers the task instead of"
                         " choosing what to observe")
+    baseline = IMPROVE_LOW_SOURCE if incumbent is None else incumbent
+    moved = unauthorised_change(baseline, source)
+    if moved:
+        return _refused(INELIGIBLE_OUT_OF_SCOPE,
+                        "revision changed the %s, and the only change it is"
+                        " authorised to make is the %s"
+                        % (moved["decision"], AUTHORISED_DECISION))
     if all(delegates_to_frozen_reducer(source, view) for view in views):
         return _refused(INELIGIBLE_DELEGATION,
                         "revision reproduces the frozen reducer's choice")
@@ -451,51 +627,194 @@ def frozen_state(store) -> dict:
 # from the reviser by construction: it takes the evidence a revision chose
 # and runs the frozen reducer over it on unseen tasks.
 #
-# The evidence a descendant actually runs is not the evidence the reviser
-# gathered. `leaf_construct` replaces the improvement source with a member
-# of the authored menu, so a descendant probes the menu's input, not the
-# one the revision selected. Scoring the reviser's evidence here would
-# measure an improvement no descendant ever receives.
+# What a descendant gathers is not the evidence the reviser gathered, and
+# it used not to be a property of the reviser either. `leaf_construct`
+# replaced the improvement source with a member of a two-entry authored
+# menu, so a descendant probed the menu's input however the revision
+# selected, and the set of inputs any revision could ever reach was those
+# two integers. The module said so itself. That is the fixed research
+# script the requirement forbids: "The model constructor is a leaf effect,
+# not the owner of a fixed research script."
+#
+# The construction is now a procedure rather than a table. A descendant
+# inherits its parent's improvement source and the decision is substituted
+# into the parent's own expression, so what a revision chooses is what its
+# descendant runs and the reachable set is a property of the program rather
+# than of a dict written beside it. The substitution is at the probed
+# input and nowhere else, which is the one decision the interface names,
+# so a revision that changes the procedure is still the authorised kind
+# and this is not a way around the freeze.
 
 GENERAL_POSITION = (0, 1, 2, 4, 8)
 
 
-def _menu_probe(source: str) -> int:
-    """The input a menu member probes, read out of its own bytes."""
+def _descendant_source(parent_source: str, construction: int) -> str:
+    """The improvement source a descendant runs, built from its parent's.
+
+    `construction` is the input the revision selected. It is substituted
+    into the parent's own probed-input expression, so the descendant is
+    the parent's procedure with one decision replaced rather than a member
+    of a table chosen beside it.
+
+    The substitution is at the parent's own probed input and nowhere
+    else. A parent that writes a literal has exactly those characters
+    replaced, so a descendant differs from its parent by one integer and
+    is otherwise the same bytes; a parent that computes its input has the
+    computed node rebound instead. Either way the result differs at
+    exactly the decision under study and at no other.
+
+    A construction naming the input the parent already probes returns the
+    parent's bytes rather than a reprint of them. `unparse` is faithful
+    but reformats, and a descendant differing from its parent in
+    formatting alone would read as a different procedure to anything
+    comparing the two as bytes.
+    """
+    value = int(construction)
+    literal = _literal_probe_span(parent_source)
+    if literal is not None:
+        start, end, current = literal
+        if current == value:
+            return parent_source
+        return parent_source[:start] + str(value) + parent_source[end:]
+    try:
+        tree = ast.parse(parent_source)
+    except (SyntaxError, ValueError, RecursionError):
+        raise _frontier.Refused("parent improvement source is unparseable")
+    substituted = 0
+    for probe_value in _probe_input_sites(tree):
+        _replace_node(tree, probe_value, ast.Constant(value=value))
+        substituted += 1
+    if not substituted:
+        raise _frontier.Refused("parent selects no probe input to replace")
+    return ast.unparse(ast.fix_missing_locations(tree))
+
+
+def _literal_probe_span(source: str):
+    """The character span of the probed input, when it is one literal.
+
+    A parent that writes its probed input as a literal gets its descendant
+    built by replacing exactly those characters rather than by reprinting
+    the program. `ast.unparse` is faithful but reformats, and a descendant
+    that differed from its parent in formatting alone would read as a
+    different procedure to anything comparing the two as bytes. Two
+    authored controls that differ only in that literal therefore stay
+    comparable as text, which is what inheritance has to mean here.
+
+    Offsets are the difference between this and a naive splice. `ast`
+    reports `col_offset` in UTF-8 bytes, so a source carrying any
+    non-ASCII before the literal would be cut in the wrong place and the
+    descendant would not parse. Decoding each line to characters before
+    indexing is what makes the span mean what it says.
+    """
     try:
         tree = ast.parse(source)
     except (SyntaxError, ValueError, RecursionError):
-        raise _frontier.Refused("menu source is unparseable")
+        return None
+    spans = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.Dict):
-            for key, value in zip(node.keys, node.values):
-                if isinstance(key, ast.Constant) and key.value == "x" \
-                        and isinstance(value, ast.Constant) \
-                        and type(value.value) is int:
-                    return value.value
-    raise _frontier.Refused("menu source selects no probe input")
+        if not isinstance(node, ast.Dict):
+            continue
+        for key, value in zip(node.keys, node.values):
+            if isinstance(key, ast.Constant) and key.value == "x" \
+                    and isinstance(value, ast.Constant) \
+                    and type(value.value) is int:
+                spans.append((value.lineno, value.col_offset,
+                              value.end_lineno, value.end_col_offset,
+                              int(value.value)))
+    if len(spans) != 1:
+        return None
+    lineno, start_col, end_lineno, end_col, current = spans[0]
+    if lineno != end_lineno:
+        return None
+    lines = source.splitlines(keepends=True)
+    line = lines[lineno - 1].encode("utf-8")
+    start = sum(len(item) for item in lines[:lineno - 1]) + \
+        len(line[:start_col].decode("utf-8"))
+    end = sum(len(item) for item in lines[:lineno - 1]) + \
+        len(line[:end_col].decode("utf-8"))
+    return start, end, current
 
 
-# The evidence each menu member gathers, parsed from the menu itself so
-# this cannot drift from what `leaf_construct` actually installs.
-_STRATEGY_EVIDENCE = {
-    "low": _menu_probe(_STRATEGY_SOURCE["low"]),
-    "high": _menu_probe(_STRATEGY_SOURCE["high"]),
-}
+def _probe_input_sites(tree) -> list:
+    """The nodes this tree binds to a probe's `x`, wherever they are bound.
 
-# What a descendant can run, derived from the menu rather than restated.
-# The development probe decides which member it gets, and nothing else
-# about the revision survives into the descendant.
-REACHABLE_EVIDENCE = tuple(
-    str(x) for x in sorted(set(_STRATEGY_EVIDENCE.values())))
+    Read off the tree that will be rewritten rather than off a second
+    parse of the same text, because the two parses produce different node
+    objects and an identity check between them never matches.
+    """
+    bound: dict = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    bound[target.id] = node.value
+    sites: list = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        for key, value in zip(node.keys, node.values):
+            if isinstance(key, ast.Constant) and key.value == "x":
+                sites.append(_resolve_bound(value, bound, set()))
+    return sites
 
-# The evidence the incumbent gathers, and the two inputs the authored
-# menu can install. Both were literals at the two places that used them;
-# they are named once so the estimator and the menu cannot disagree about
-# what the channel can reach.
+
+def _resolve_bound(expression, bound: dict, seen: set):
+    while isinstance(expression, ast.Name) and expression.id in bound \
+            and expression.id not in seen:
+        seen.add(expression.id)
+        expression = bound[expression.id]
+    return expression
+
+
+def _replace_node(tree, target, replacement) -> bool:
+    """Rebind every reference to `target`, in place."""
+    replaced = False
+    for parent in ast.walk(tree):
+        for field, value in ast.iter_fields(parent):
+            if value is target:
+                setattr(parent, field, replacement)
+                replaced = True
+            elif isinstance(value, list):
+                for index, item in enumerate(value):
+                    if item is target:
+                        value[index] = replacement
+                        replaced = True
+    return replaced
+
+
+def reachable_evidence(source: str) -> tuple:
+    """Every input a program can be made to probe, read out of its bytes.
+
+    What a descendant gathers is a property of the descendant's own
+    source, so this is a function of the program rather than a constant
+    published beside it. A revision whose construction is substitutable at
+    its probed input can therefore reach any input the instrument accepts,
+    and two revisions that name different inputs reach different sets.
+
+    A program that binds its probed input to something that is not a plain
+    integer expression has no fixed reachable set to report, and saying so
+    is more useful than reporting the one input a literal scan happened to
+    find in it. The instrument's range is the bound a caller needs.
+    """
+    nodes = _probe_x_expression(source)
+    inputs: set = set()
+    for expression in nodes:
+        try:
+            value = ast.literal_eval(expression)
+        except (ValueError, SyntaxError, TypeError, MemoryError,
+                RecursionError):
+            return tuple(str(x) for x in range(16))
+        if type(value) is int:
+            inputs.add(int(value))
+    if not inputs:
+        return ()
+    return tuple(str(x) for x in sorted(inputs))
+
+
+# The evidence the incumbent gathers. It was a literal at two places that
+# used it; it is named once so the estimator and the constructor cannot
+# disagree about what the incumbent ran.
 INCUMBENT_EVIDENCE = (3,)
-
-MENU_EVIDENCE = tuple(int(x) for x in REACHABLE_EVIDENCE)
 
 _N_INPUTS = 16
 
@@ -557,33 +876,66 @@ def evaluate_descendants(evidence: list, *, split: str,
     }
 
 
-def _strategy_descendant(strategy: str, split: str, seed: int) -> dict:
-    """Score the descendant one authored menu strategy builds.
+def construction_from_evidence(observations: list) -> int:
+    """The input a descendant probes, derived from what the round observed.
 
-    Split out from `lineage_descendant_score` so the evidence a strategy
-    produces is named separately from the bit that selects it. The
-    selection is the decision under study; what the menu then gathers is
-    the substrate, and the two have to be replaceable apart.
+    This is the whole of the inheritance. The descendant's construction is
+    a function of the evidence the revision gathered, so a revision that
+    selected a different input produces a descendant that probes a
+    different input, and the choice survives adoption instead of being
+    resolved against a table the reviser could not have changed.
+
+    It is the last input the round spent, because that is the input the
+    evidence is about: the observation was read back from it. The
+    strategy name the construct action still carries is a label, not a
+    selection, and is deliberately not read here.
     """
-    return descendant_score([_STRATEGY_EVIDENCE[strategy]], split, int(seed))
+    spent = [o for o in observations if isinstance(o, dict)
+             and type(o.get("x")) is int]
+    if not spent:
+        raise _frontier.Refused("round gathered no evidence to inherit")
+    return int(spent[-1]["x"]) % 16
+
+
+def construction_from_observation(development_probe: int, y) -> int:
+    """The construction a descendant of that probe reaches, for the metric.
+
+    Same function as `construction_from_evidence`, read off a probe rather
+    than off a list, so the descendant metric follows the path the code
+    builds rather than a restatement of it.
+
+    Reading the observation's first bit instead - which is what the menu
+    made equivalent, because the menu's two members corresponded to that
+    bit - would be measuring a construction the code does not perform.
+    """
+    return int(development_probe) % 16
+
+
+def _strategy_descendant(construction, split: str, seed: int) -> dict:
+    """Score the descendant one construction input builds.
+
+    Split out from `lineage_descendant_score` so the input a construction
+    produces is named separately from the development probe that selects
+    it. The selection is the decision under study; what the construction
+    then gathers is the substrate, and the two have to be replaceable
+    apart.
+    """
+    return descendant_score([int(construction)], split, int(seed))
 
 
 def lineage_descendant_score(development_probe: int, split: str,
                              seed: int) -> dict:
     """Score one descendant on the path the code actually builds.
 
-    `drive_improve_round` probes, reads output bit 0, and hands that bit to
-    `leaf_construct`, which swaps in a member of the authored menu. So the
-    descendant runs the menu's evidence, chosen by the development probe,
-    and the frozen reducer sees only what the descendant gathers. Scoring
-    the development probe's own evidence here would credit the descendant
-    with evidence it never received.
+    `drive_improve_round` probes, reads the observation back, and hands
+    the pair to `leaf_construct`, which substitutes the construction into
+    the parent's own probed input. So the descendant runs the input the
+    revision selected, and the frozen reducer sees only what the
+    descendant gathers. Scoring the development probe's own evidence here
+    would credit the descendant with evidence it never received.
     """
-    from . import boolean_rule as _rules
-    task = _rules.make_task(split, int(seed))
-    bit = (task["tables"][0] >> int(development_probe)) & 1
-    strategy = "high" if bit == 1 else "low"
-    return _strategy_descendant(strategy, split, int(seed))
+    construction = construction_from_observation(int(development_probe), ())
+    return _strategy_descendant(str(construction), split, int(seed))
 
 
 def evaluate_lineage(probes: list, *, split: str, seeds: list) -> dict:
@@ -664,10 +1016,10 @@ def channel_headroom(*, split: str, seeds: list,
     other, so a channel with any range at all is not reported as
     measurable by its own argmax. And the incumbent is the evidence the
     authored control gathers, which is what a revision is actually
-    compared against in an E4 round; the reachable pair of menu inputs
-    bounds the set of evidence the decision can express at all and is
-    reported as `menu_mean`. The ceiling over every input the instrument
-    accepts is a wider question, and `ceiling_over_inputs` answers it.
+    compared against in an E4 round. What the construction can install is
+    reported as `reachable_evidence`, read off the incumbent's own bytes.
+    The ceiling over every input the instrument accepts is a wider
+    question, and `ceiling_over_inputs` answers it.
 
     A flag that cannot be true is not a measurement either, so two
     guards here are required for `measurable` to be true: the best probe
@@ -679,13 +1031,13 @@ def channel_headroom(*, split: str, seeds: list,
     positive standard error, so the flag stays available to a planted
     one, which `tests/test_s09_e4_remediation.py` requires it to find.
 
-    A third guard was tried and removed. The incumbent is always a member
-    of the menu, so the best of the sixteen inputs is at least as good as
-    the menu, which is at least as good as the incumbent. A "must beat the
-    menu" condition is therefore unreachable by construction, and a guard
-    that cannot refuse is not a guard. The menu mean is reported anyway,
-    because it is the number a reader wants, but it does not gate
-    anything.
+    A third guard was tried and removed. The incumbent is itself one of
+    the inputs the construction can install, so the best of the sixteen
+    inputs is at least as good as the incumbent. A "must beat the
+    reachable set" condition is therefore unreachable by construction, and
+    a guard that cannot refuse is not a guard. The reachable set is
+    reported anyway, because it is the number a reader wants, but it does
+    not gate anything.
     """
     seeds = list(seeds)
     incumbent_evidence = list(INCUMBENT_EVIDENCE if incumbent_evidence is None
@@ -694,14 +1046,15 @@ def channel_headroom(*, split: str, seeds: list,
         return {"estimator": ESTIMATOR, "half_cohort_comparison": False,
                 "delta": None, "paired_se": None, "paired_sd": None,
                 "z": None, "measurable": False, "selection_biased": False,
-                "incumbent_mean": None, "menu_mean": None,
+                "incumbent_mean": None,
                 "incumbent_evidence": incumbent_evidence,
                 "best_probe": None, "best_mean": None,
                 "best_beats_incumbent": False,
                 "split_half": {"select": {"n": 0, "seeds": []},
                                "score": {"n": 0, "seeds": []}},
                 "split": split, "n": 0,
-                "reachable_evidence": list(REACHABLE_EVIDENCE)}
+                "reachable_evidence": list(
+                    reachable_evidence(IMPROVE_LOW_SOURCE))}
     select, score = seeds[0::2], seeds[1::2]
     select_means = {p: evaluate_lineage([p], split=split,
                                         seeds=select)["mean"]
@@ -719,13 +1072,15 @@ def channel_headroom(*, split: str, seeds: list,
     se = sd / n ** 0.5 if n else 0.0
     incumbent_mean = sum(s["unqueried"] for s in incumbent_scores) / n
     best_mean = sum(b["unqueried"] for b in best_scores) / n
-    # The mean over the two evidence sets the authored menu can install,
-    # which is the whole range the decision is able to express however the
-    # revision chose its probe. Reported because it is the number a reader
-    # wants next to the best-probe mean. It gates nothing; see the docstring
-    # for why a "must beat the menu" condition could not refuse anything.
-    menu = evaluate_lineage(list(MENU_EVIDENCE), split=split,
-                            seeds=seeds)["mean"]
+    # The inputs a construction can actually install, read off the
+    # incumbent's own bytes rather than off a published menu. Reported
+    # because it is the number a reader wants next to the best-probe mean:
+    # it is the range the decision is able to express however the revision
+    # chose its probe. It gates nothing. A "must beat the reachable set"
+    # condition is refused on principle, because the best of the sixteen
+    # inputs is a member of that set and so such a guard could never
+    # refuse anything.
+    reachable = reachable_evidence(IMPROVE_LOW_SOURCE)
     return {
         "estimator": ESTIMATOR,
         "half_cohort_comparison": False,
@@ -736,7 +1091,6 @@ def channel_headroom(*, split: str, seeds: list,
         "measurable": (delta > 0.0 and (se == 0.0 or abs(delta) > se)),
         "selection_biased": False,
         "incumbent_mean": incumbent_mean,
-        "menu_mean": menu,
         "incumbent_evidence": incumbent_evidence,
         "best_probe": best_probe,
         "best_mean": best_mean,
@@ -746,19 +1100,18 @@ def channel_headroom(*, split: str, seeds: list,
             "score": {"n": len(score), "seeds": score},
         },
         "split": split, "n": len(seeds),
-        "reachable_evidence": list(REACHABLE_EVIDENCE),
+        "reachable_evidence": list(reachable),
     }
 
 
 def ceiling_over_inputs(*, split: str, seeds: list) -> dict:
-    """The range over every input the instrument accepts, not the menu.
+    """The range over every input the instrument accepts.
 
-    `reachable_lineage_spread` bounds what a revision of this decision
-    can reach, because `leaf_construct` installs one of two authored
-    improvement sources. This bounds the substrate instead, so "the menu
-    is too narrow" and "the decision has no range" can be told apart. A
+    `reachable_lineage_spread` bounds what a revision of this decision can
+    reach. This bounds the substrate instead, so "the construction cannot
+    express it" and "the decision has no range" can be told apart. A
     revision's only lever is choosing a better probe, so this is the
-    ceiling on any revision, and on any wider menu, of the same decision.
+    ceiling on any revision of the same decision.
     """
     if not seeds:
         return {"spread": None, "best_probe": None, "worst_probe": None,
@@ -816,6 +1169,11 @@ def admit_revision_under_freeze(store, source: str, views: list) -> dict:
     to be an ineligible solver must be reported for the frozen write, or
     the report hides the attempt behind a cheaper verdict.
 
+    The scope check compares against the improvement source the store
+    actually has bound, not against a constant. A revision is judged against
+    the program it would replace, so a store bound to the high menu member is
+    not measured against the low one's bytes.
+
     The frozen state is captured before the revision is executed at all and
     compared after, so a write that slips past the static check is still
     caught by the comparison rather than by trust.
@@ -824,7 +1182,8 @@ def admit_revision_under_freeze(store, source: str, views: list) -> dict:
     if _attempts_frozen_write(source):
         return _refused(INELIGIBLE_FROZEN_WRITE,
                         "revision writes frozen authority state")
-    verdict = classify_revision(source, views)
+    verdict = classify_revision(source, views,
+                                incumbent=bound_improve_source(store))
     if verdict.get("eligibility") != ELIGIBLE:
         return verdict
     after = frozen_state(store)
@@ -833,6 +1192,20 @@ def admit_revision_under_freeze(store, source: str, views: list) -> dict:
     verdict["frozen_state_digest"] = _frontier.source_digest(
         _frontier.canonical(before))
     return verdict
+
+
+def bound_improve_source(store) -> str:
+    """The improvement source a revision would replace, read off the store.
+
+    Read from the store rather than assumed, because a revision's scope is
+    relative to the program it revises. A store with nothing bound falls back
+    to the low menu member, which is the program every authored control is
+    written against.
+    """
+    active = store.active_package
+    if isinstance(active, dict) and isinstance(active.get("imp_source"), str):
+        return active["imp_source"]
+    return IMPROVE_LOW_SOURCE
 
 
 def _attempts_frozen_write(source: str) -> bool:
@@ -887,12 +1260,28 @@ UNQUALIFIED = "apparatus-unqualified"
 
 CONTROL_ROLES = ("known-effect", "no-op", "disconnect")
 
+# Every control that is written, which is the assignment's three plus the one
+# the apparatus itself built. `channel_controls.CONTROL_BUILDERS` is the
+# registry and this is the channel's declaration of the same set; the two are
+# checked against each other in the tests rather than restated here as a
+# count, because a count passes when one control is renamed and another is
+# added. The fourth is `disconnect-bytes`, and it is the only control that
+# catches a reviser whose bytes differ and whose behaviour does not.
+WRITTEN_CONTROL_ROLES = ("known-effect", "no-op", "disconnect",
+                         "disconnect-bytes")
+
 
 def qualify_apparatus(controls: list) -> dict:
-    """The qualification verdict, from the three mandatory controls alone.
+    """The qualification verdict, from the mandatory controls alone.
 
     No run outcome is an input. A control that produced the wrong effect
     makes the apparatus untrustworthy regardless of how good any run was.
+
+    The three mandatory roles decide the verdict. A fourth control that was
+    driven is reported, and a fourth that reports the wrong effect unqualifies
+    the apparatus, but its absence does not: the committed E4 artifact
+    records three controls, and requiring four would misread that history as
+    an incomplete run.
     """
     by_role = {c.get("role"): c for c in controls}
     checks: dict = {}
@@ -905,11 +1294,25 @@ def qualify_apparatus(controls: list) -> dict:
                                else control.get("delta")),
         }
     passed = all(c["present"] and c["passed"] for c in checks.values())
-    return {"qualification": QUALIFIED if passed else UNQUALIFIED,
-            "qualified": passed,
-            "checks": checks,
-            "note": "qualification is a property of the machinery alone; it"
-                    " says nothing about any run outcome"}
+    extra: dict = {}
+    for role in WRITTEN_CONTROL_ROLES:
+        if role in CONTROL_ROLES:
+            continue
+        control = by_role.get(role)
+        if control is None:
+            continue
+        extra[role] = {"present": True,
+                       "passed": bool(control.get("as_expected")),
+                       "observed_delta": control.get("delta")}
+        passed = passed and bool(control.get("as_expected"))
+    verdict = {"qualification": QUALIFIED if passed else UNQUALIFIED,
+               "qualified": passed,
+               "checks": checks,
+               "note": "qualification is a property of the machinery alone; it"
+                       " says nothing about any run outcome"}
+    if extra:
+        verdict["additional_checks"] = extra
+    return verdict
 
 
 def benefit_outcome(delta: dict, acquisition: dict) -> dict:
@@ -978,9 +1381,14 @@ def validate_improve_action(action: dict) -> dict:
     if kind == "probe" and (not isinstance(inputs.get("x"), int)
                             or not 0 <= inputs["x"] < 16):
         raise _frontier.Refused("probe needs an input x in 0..15")
-    if kind == "construct" and inputs.get("strategy") not in (
-            "low", "high"):
-        raise _frontier.Refused("construct needs a known strategy")
+    if kind == "construct" and "strategy" not in inputs:
+        # A construct action still carries the strategy name, because the
+        # authored controls and lane C2's fixtures both rewrite that
+        # binding. It no longer selects anything: the descendant's
+        # construction is derived from the evidence the round gathered.
+        # What is required is that the action is a construct request at
+        # all, which is what this is.
+        raise _frontier.Refused("construct needs a strategy label")
     if kind == "select" and not isinstance(
             inputs.get("candidate_id"), str):
         raise _frontier.Refused("select needs a candidate_id")
@@ -1009,9 +1417,108 @@ def _step_view(view: dict) -> dict:
     return envelope
 
 
-def _run_source(source: str, view: dict, state: dict, **evidence) -> dict:
+def _run_source(source: str, view: dict, state: dict, *, authority: dict,
+                 operation_id: str, arm: str | None = None,
+                 task_id: str | None = None,
+                 artifact_digest: str | None = None,
+                 parent_digest: str | None = None,
+                 round_no: int | None = None) -> dict:
+    """Execute `source` as policy, under an authority the caller holds.
+
+    `authority` is the `{dsn, allocation_id}` the executor settles against
+    and `operation_id` names this one execution. Both are named here, and
+    every other keyword the executor accepts is named too, so nothing can
+    arrive through `**evidence` and slip past the check at this boundary.
+    """
+    if not isinstance(authority, dict) or not authority.get("dsn") \
+            or not authority.get("allocation_id") or not operation_id:
+        raise _frontier.Refused(
+            "refused: execution needs explicit authority and identity")
     return _method_exec.run_step_out_of_process(
-        source, _step_view(view), dict(state), **evidence)
+        source, _step_view(view), dict(state),
+        dsn=str(authority["dsn"]),
+        allocation_id=str(authority["allocation_id"]),
+        operation_id=str(operation_id), arm=arm, task_id=task_id,
+        artifact_digest=artifact_digest, parent_digest=parent_digest,
+        round_no=round_no)
+
+
+@contextlib.contextmanager
+def _disposable_authority(token: str):
+    """A disposable store and allocation for one execution, and nothing else.
+
+    The frontier world keeps its authority in its JSON document and has no
+    settlement ledger, so there is no store the invl02 world could ask for a
+    `dsn`. The executions still have to be attributable, so the honest
+    source of authority is the one that actually attributes it: a store
+    created here, for this execution, and dropped when it ends. It is
+    separate from any live store by construction, because it never existed
+    before the execution and does not exist after it, and the work it
+    carries was obtained by running the bytes rather than by declining to
+    run them.
+
+    Bounded in `sandbox_calls`, the resource a `sandbox-exec` operation
+    actually draws on, rather than in a number chosen to be large enough.
+    The frontier document remains the authority for how many queries and
+    steps a round may spend; this bounds what the executions behind those
+    decisions cost in the ledger.
+    """
+    from . import s09_run_isolation as _isolation
+    from settlement import authority as _authority
+
+    admin = _isolation.admin_dsn()
+    database = _isolation.create_disposable_db(token, admin_dsn=admin)
+    try:
+        handle = _authority.authorize_study(
+            database.dsn, _isolation.study_root_for(token),
+            authorized=1_000_000, allocation_id="%s-alloc" % token,
+            ceilings={"sandbox_calls": 1_000})
+        yield {"dsn": database.dsn, "allocation_id": handle.allocation_id}
+    finally:
+        _isolation.drop_disposable_db(database, admin_dsn=admin)
+
+
+def _derived_operation_id(package: dict, arm: str, view: dict) -> str:
+    """One execution's identity, derived rather than minted fresh.
+
+    Derived from what the execution actually is, so a re-entry runs the same
+    bytes against the same view under the same identity and a settled
+    receipt is read back instead of re-running. It has to carry the view as
+    well as the package and the arm, because `classify_revision` executes the
+    same revision once per learner view. An identity that omitted the view
+    would offer the broker one operation id with a different payload per
+    view, which it refuses as a request-identity conflict, and it refuses
+    correctly: those executions really are different work.
+    """
+    return "invl02-%s-%s-v%s" % (
+        arm, str(package.get("package_digest", ""))[:16],
+        _frontier.source_digest(_frontier.canonical(dict(view)))[:16])
+
+
+@contextlib.contextmanager
+def _execution_ledger(authority: dict | None, token: str,
+                      operation_id: str | None):
+    """The authority one execution runs under, and its identity.
+
+    A caller that already holds a study store passes it and the execution
+    joins that store's ledger. A caller that holds none gets a disposable
+    one for the length of the execution. There is no third case: the
+    executor refuses an execution with neither, and this is the boundary
+    that decides which of the two a caller gets, so the choice is made once
+    here rather than restated at each call site.
+
+    `operation_id` is optional only where the caller derives one per
+    execution; a caller that names one always has it validated here.
+    """
+    if authority is not None and (not authority.get("dsn")
+                                  or not authority.get("allocation_id")):
+        raise _frontier.Refused(
+            "refused: execution needs explicit authority and identity")
+    held = contextlib.nullcontext(authority) if authority is not None \
+        else _disposable_authority(token)
+    with held as store_authority:
+        yield store_authority if operation_id is None else {
+            **store_authority, "operation_id": str(operation_id)}
 
 
 def _unwrap(outer: dict) -> dict:
@@ -1022,25 +1529,45 @@ def _unwrap(outer: dict) -> dict:
     return dict(outer["inputs"]["frontier_action"])
 
 
-def run_operate_step(package: dict, view: dict, state: dict) -> dict:
+def run_operate_step(package: dict, view: dict, state: dict, *,
+                     authority: dict | None = None,
+                     operation_id: str | None = None) -> dict:
     _frontier.validate_view(view)
     if view["purpose"] != _frontier.OPERATE:
         raise _frontier.Refused("operate runner got a %s view" % (
             view.get("purpose"),))
-    stepped = _run_source(package["op_source"], view, state)
+    with _execution_ledger(authority, "invl02-operate",
+                           operation_id or _derived_operation_id(
+                               package, "op", view)) as held:
+        stepped = _run_source(package["op_source"], view, state,
+                              authority=held,
+                              operation_id=held["operation_id"])
     action = _frontier.validate_operate_action(_unwrap(
         stepped["action"]))
     return {"action": action, "state": stepped["state"],
             "executed_digest": stepped["source_digest"]}
 
 
-def run_improve_step(package: dict, view: dict, state: dict,
-                     *, receipt_sink=None, **evidence) -> dict:
+def run_improve_step(package: dict, view: dict, state: dict, *,
+                     authority: dict | None = None,
+                     operation_id: str | None = None,
+                     receipt_sink=None, arm: str | None = None,
+                     task_id: str | None = None,
+                     artifact_digest: str | None = None,
+                     parent_digest: str | None = None,
+                     round_no: int | None = None) -> dict:
     _frontier.validate_view(view)
     if view["purpose"] != _frontier.IMPROVE:
         raise _frontier.Refused("improve runner got a %s view" % (
             view.get("purpose"),))
-    stepped = _run_source(package["imp_source"], view, state, **evidence)
+    with _execution_ledger(authority, "invl02-improve",
+                           operation_id or _derived_operation_id(
+                               package, "imp", view)) as held:
+        stepped = _run_source(package["imp_source"], view, state,
+                              authority=held,
+                              operation_id=held["operation_id"], arm=arm,
+                              task_id=task_id, artifact_digest=artifact_digest,
+                              parent_digest=parent_digest, round_no=round_no)
     action = validate_improve_action(_unwrap(stepped["action"]))
     result = {"action": action, "state": stepped["state"],
               "executed_digest": stepped["source_digest"],
@@ -1193,18 +1720,41 @@ def execute_operate_action(store, action: dict, task=None) -> dict:
                       " construction stays outside this lane"}
 
 
-def leaf_construct(strategy: str, parent: dict, round_no: int) -> dict:
-    try:
-        imp_source = _STRATEGY_SOURCE[strategy]
-    except KeyError:
-        raise _frontier.Refused("unknown construct strategy %r" % (
-            strategy,))
+def leaf_construct(construction, parent: dict, round_no: int) -> dict:
+    """Build the descendant a construction decision names, from its parent.
+
+    `construction` is what the revision selected. It is substituted into
+    the parent's own improvement source at the parent's probed input, so
+    the descendant inherits its parent's procedure and runs the choice the
+    revision made. It used to resolve `_STRATEGY_SOURCE[strategy]`
+    instead, which meant a descendant ran a menu member's input however
+    the revision selected and the reachable set was a two-member dict
+    written at module scope.
+
+    Accepts a bare integer, which is what the caller derives, and refuses
+    the removed menu's `low`/`high` labels by name rather than resolving
+    them against a table that no longer exists. The pair shape it accepted
+    while the caller was mid-migration is gone with the migration.
+    """
+    if type(construction) is not int:
+        raise _frontier.Refused(
+            "the construction menu is gone; name the input the evidence"
+            " selected instead of %r" % (construction,))
+    if not 0 <= int(construction) < _N_INPUTS:
+        raise _frontier.Refused("construction input is outside the"
+                                " instrument's range")
+    imp_source = _descendant_source(parent["imp_source"], int(construction))
     op_source = parent["op_source"]
-    control_id = "control-%s-r%d" % (strategy, round_no)
+    control_id = "control-x%d-r%d" % (int(construction), round_no)
     version = int(parent.get("version", 0)) + 1
     return {
         "control_id": control_id,
         "origin": ORIGIN,
+        # `source_kind` is provenance, not a description of the selection,
+        # and `validate_package` owns it. It says the bytes were authored
+        # here rather than returned by a model, which is still true of a
+        # descendant built from an authored parent. The procedure it now
+        # inherits is carried by `imp_source` itself.
         "source_kind": "fixed-menu",
         "op_source": op_source,
         "imp_source": imp_source,
@@ -1226,7 +1776,8 @@ def leaf_construct(strategy: str, parent: dict, round_no: int) -> dict:
 
 def drive_improve_round(store, task, package=None,
                         round_no=None, arm: str | None = None,
-                        *, admit_probes: bool = False) -> dict:
+                        *, admit_probes: bool = False,
+                        authority: dict | None = None) -> dict:
     active = dict(package) if package is not None \
         else store.active_package
     if active is None:
@@ -1256,49 +1807,81 @@ def drive_improve_round(store, task, package=None,
     receipts: list = []
     state: dict = {}
     candidate = None
-    for step in range(3):
-        view = store.step_view(_frontier.IMPROVE, active)
-        view["experience"] = list(round_obs)
-        view["round"] = round_no
-        operation_id = "invl02-improve-%s-r%d-s%d" % (
-            active["package_digest"][:16], int(round_no), step)
-        command = store.round_command(int(round_no), step)
-        if command is not None:
-            if not isinstance(command.get("receipt"), dict):
-                raise _frontier.Refused("round command receipt is incomplete")
-            stepped = {
-                "action": dict(command["action"]),
-                "state": dict(command["state"]),
-                "executed_digest": command["executed_digest"],
-                "receipt": dict(command["receipt"]),
-            }
-        else:
-            stepped = run_improve_step(
-                active, view, state, operation_id=operation_id, arm=arm,
-                task_id=task.get("task_id"),
-                artifact_digest=active["package_digest"],
-                parent_digest=active.get("parent_digest"),
-                round_no=int(round_no),
-                receipt_sink=lambda result: store.record_round_command(
-                    int(round_no), step, action=result["action"],
-                    state=result["state"], receipt=result["receipt"],
-                    executed_digest=result["executed_digest"]))
-        receipt = stepped["receipt"]
-        receipts.append(receipt)
-        action = stepped["action"]
-        state = stepped["state"]
-        requested = dict(action.get("requested_resources") or {})
-        probe_opportunity_id = None
-        recovered = None
-        effect = None
-        try:
-            if action["kind"] == "probe" and admit_probes:
-                probe_opportunity_id = _improve_probe_opportunity(
-                    store, task, int(action["inputs"]["x"]), requested,
-                    active["package_digest"], int(round_no), step)
-                effect, recovered = _find_admitted_probe_effect(
-                    store, probe_opportunity_id, int(action["inputs"]["x"]),
-                    effect_identity={"operation_id": receipt["operation_id"]})
+    granted = authority
+    with contextlib.ExitStack() as ledger:
+        for step in range(3):
+            view = store.step_view(_frontier.IMPROVE, active)
+            view["experience"] = list(round_obs)
+            view["round"] = round_no
+            operation_id = "invl02-improve-%s-r%d-s%d" % (
+                active["package_digest"][:16], int(round_no), step)
+            command = store.round_command(int(round_no), step)
+            if command is not None:
+                if not isinstance(command.get("receipt"), dict):
+                    raise _frontier.Refused(
+                        "round command receipt is incomplete")
+                stepped = {
+                    "action": dict(command["action"]),
+                    "state": dict(command["state"]),
+                    "executed_digest": command["executed_digest"],
+                    "receipt": dict(command["receipt"]),
+                }
+            else:
+                if granted is None:
+                    # Entered here rather than above, because a round
+                    # resumed from its durable command records executes
+                    # nothing and so mints no authority, spends no
+                    # allocation and creates no store.
+                    granted = ledger.enter_context(
+                        _disposable_authority("invl02-improve"))
+                stepped = run_improve_step(
+                    active, view, state, authority=granted,
+                    operation_id=operation_id, arm=arm,
+                    task_id=task.get("task_id"),
+                    artifact_digest=active["package_digest"],
+                    parent_digest=active.get("parent_digest"),
+                    round_no=int(round_no),
+                    receipt_sink=lambda result: store.record_round_command(
+                        int(round_no), step, action=result["action"],
+                        state=result["state"], receipt=result["receipt"],
+                        executed_digest=result["executed_digest"]))
+            receipt = stepped["receipt"]
+            receipts.append(receipt)
+            action = stepped["action"]
+            state = stepped["state"]
+            requested = dict(action.get("requested_resources") or {})
+            probe_opportunity_id = None
+            recovered = None
+            effect = None
+            try:
+                if action["kind"] == "probe" and admit_probes:
+                    probe_opportunity_id = _improve_probe_opportunity(
+                        store, task, int(action["inputs"]["x"]), requested,
+                        active["package_digest"], int(round_no), step)
+                    effect, recovered = _find_admitted_probe_effect(
+                        store, probe_opportunity_id, int(action["inputs"]["x"]),
+                        effect_identity={"operation_id": receipt["operation_id"]})
+                    if recovered is not None:
+                        entry = {"x": int(action["inputs"]["x"]),
+                                 "y": list(recovered["y"])}
+                        round_obs.append(entry)
+                        log.append({"round": round_no, "step": step,
+                                    "action": "probe", "inputs": {"x": entry["x"]},
+                                    "executed_digest": stepped["executed_digest"],
+                                    "result": "observed"})
+                        continue
+                    effect = store.admit_and_spend(
+                        probe_opportunity_id, active["package_digest"], requested,
+                        effect_identity={"operation_id": receipt["operation_id"]})
+                else:
+                    store.spend_round_command(int(round_no), step, requested)
+            except _frontier.Refused as exc:
+                log.append({"round": round_no, "step": step,
+                            "action": action["kind"], "inputs": {},
+                            "executed_digest": stepped["executed_digest"],
+                            "result": "refused: %s" % exc})
+                break
+            if action["kind"] == "probe":
                 if recovered is not None:
                     entry = {"x": int(action["inputs"]["x"]),
                              "y": list(recovered["y"])}
@@ -1308,85 +1891,71 @@ def drive_improve_round(store, task, package=None,
                                 "executed_digest": stepped["executed_digest"],
                                 "result": "observed"})
                     continue
-                effect = store.admit_and_spend(
-                    probe_opportunity_id, active["package_digest"], requested,
-                    effect_identity={"operation_id": receipt["operation_id"]})
-            else:
-                store.spend_round_command(int(round_no), step, requested)
-        except _frontier.Refused as exc:
-            log.append({"round": round_no, "step": step,
-                        "action": action["kind"], "inputs": {},
-                        "executed_digest": stepped["executed_digest"],
-                        "result": "refused: %s" % exc})
-            break
-        if action["kind"] == "probe":
-            if recovered is not None:
+                found = session.query(int(action["inputs"]["x"]))
                 entry = {"x": int(action["inputs"]["x"]),
-                         "y": list(recovered["y"])}
+                         "y": list(found)}
+                if effect is not None:
+                    observation = {
+                        "observation_id": "obs-improve-r%d-s%d-x%d" % (
+                            int(round_no), step, entry["x"]),
+                        "task": probe_opportunity_id,
+                        "verdict": "observed",
+                        "x": entry["x"],
+                        "y": entry["y"],
+                        "effect_id": effect["effect_id"],
+                        **effect["expected_identity"],
+                    }
+                    store.complete_effect(
+                        effect["effect_id"], observation,
+                        action_key={"instrument": "boolean-rule-v1",
+                                    "inputs": {"x": entry["x"]},
+                                    "environment": store.environment_digest},
+                        outcome={"y": list(found)})
                 round_obs.append(entry)
                 log.append({"round": round_no, "step": step,
                             "action": "probe", "inputs": {"x": entry["x"]},
                             "executed_digest": stepped["executed_digest"],
                             "result": "observed"})
-                continue
-            found = session.query(int(action["inputs"]["x"]))
-            entry = {"x": int(action["inputs"]["x"]),
-                     "y": list(found)}
-            if effect is not None:
-                observation = {
-                    "observation_id": "obs-improve-r%d-s%d-x%d" % (
-                        int(round_no), step, entry["x"]),
-                    "task": probe_opportunity_id,
-                    "verdict": "observed",
-                    "x": entry["x"],
-                    "y": entry["y"],
-                    "effect_id": effect["effect_id"],
-                    **effect["expected_identity"],
-                }
-                store.complete_effect(
-                    effect["effect_id"], observation,
-                    action_key={"instrument": "boolean-rule-v1",
-                                "inputs": {"x": entry["x"]},
-                                "environment": store.environment_digest},
-                    outcome={"y": list(found)})
-            round_obs.append(entry)
-            log.append({"round": round_no, "step": step,
-                        "action": "probe", "inputs": {"x": entry["x"]},
-                        "executed_digest": stepped["executed_digest"],
-                        "result": "observed"})
-        elif action["kind"] == "construct":
-            candidate = leaf_construct(
-                action["inputs"]["strategy"], active, round_no)
-            candidate = store.stage_round_candidate(
-                int(round_no), step, candidate)
-            log.append({"round": round_no, "step": step,
-                        "action": "construct",
-                        "inputs": dict(action["inputs"]),
-                        "executed_digest": stepped["executed_digest"],
-                        "result": candidate["control_id"]})
-        elif action["kind"] == "select":
-            wanted = action["inputs"]["candidate_id"]
-            staged = store._doc["staged_candidate"] or {}
-            if staged.get("control_id") != wanted:
+            elif action["kind"] == "construct":
+                # The construct action names a strategy, which no longer
+                # selects anything. What selects the descendant is the
+                # evidence the revision actually gathered in this round,
+                # read here rather than resolved against a menu, so a
+                # revision that probed differently reaches a different
+                # descendant.
+                candidate = leaf_construct(
+                    construction_from_evidence(round_obs), active,
+                    round_no)
+                candidate = store.stage_round_candidate(
+                    int(round_no), step, candidate)
+                log.append({"round": round_no, "step": step,
+                            "action": "construct",
+                            "inputs": dict(action["inputs"]),
+                            "executed_digest": stepped["executed_digest"],
+                            "result": candidate["control_id"]})
+            elif action["kind"] == "select":
+                wanted = action["inputs"]["candidate_id"]
+                staged = store._doc["staged_candidate"] or {}
+                if staged.get("control_id") != wanted:
+                    log.append({"round": round_no, "step": step,
+                                "action": "select",
+                                "inputs": dict(action["inputs"]),
+                                "executed_digest": stepped[
+                                    "executed_digest"],
+                                "result": "unsupported: unknown candidate"})
+                    break
                 log.append({"round": round_no, "step": step,
                             "action": "select",
                             "inputs": dict(action["inputs"]),
-                            "executed_digest": stepped[
-                                "executed_digest"],
-                            "result": "unsupported: unknown candidate"})
+                            "executed_digest": stepped["executed_digest"],
+                            "result": "selected"})
+            else:
+                log.append({"round": round_no, "step": step,
+                            "action": action["kind"],
+                            "inputs": dict(action.get("inputs") or {}),
+                            "executed_digest": stepped["executed_digest"],
+                            "result": "round-ended"})
                 break
-            log.append({"round": round_no, "step": step,
-                        "action": "select",
-                        "inputs": dict(action["inputs"]),
-                        "executed_digest": stepped["executed_digest"],
-                        "result": "selected"})
-        else:
-            log.append({"round": round_no, "step": step,
-                        "action": action["kind"],
-                        "inputs": dict(action.get("inputs") or {}),
-                        "executed_digest": stepped["executed_digest"],
-                        "result": "round-ended"})
-            break
     if candidate is None:
         raise _frontier.Refused("improve round left no candidate")
     if admit_probes:

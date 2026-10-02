@@ -774,7 +774,8 @@ def _build_exposure(manifest: dict) -> dict:
     }
 
 
-def _run(root: Path) -> dict:
+def _run(root: Path, *, dsn: str | None = None,
+         allocation_id: str | None = None) -> dict:
     from experiments.ad01 import live_construct as live
     from settlement.gateway_http import HttpGatewayAdapter
 
@@ -784,6 +785,11 @@ def _run(root: Path) -> dict:
         raise SystemExit("SETTLEMENT_GATEWAY_ENDPOINT and "
                          "SETTLEMENT_GATEWAY_KEY must be set; this lane "
                          "never accepts a credential on the command line")
+    if (dsn is None) != (allocation_id is None):
+        raise SystemExit(
+            "a dispatch is durable or it is not: --dsn and --allocation-id "
+            "are required together, because an operation admitted without an "
+            "allocation is a row the store cannot charge")
 
     manifest = _build_manifest()
     exposure = _build_exposure(manifest)
@@ -796,10 +802,22 @@ def _run(root: Path) -> dict:
         expected_route=dict(live.OUTPUT_ROUTE),
         timeout_read_ms=DISPATCH_DEADLINE_MS - 10_000,
         timeout_total_ms=DISPATCH_DEADLINE_MS)
+    # A durable send is admitted and dispatched through the broker, so each
+    # attempt carries an operation row, a reservation, a receipt and an
+    # exposure, and a retry that reuses one operation identity settles
+    # rather than drawing the line again. The ceiling reads that same count,
+    # so it moves with the sends rather than with this process's memory of
+    # them. The guard stays outside it: it owns the route check and the
+    # evidence ledger, which are observations of one send.
+    if dsn is not None:
+        gateway = live.preflight_dispatch_gateway(
+            dsn, gateway, allocation_id=allocation_id)
     guard = live.LiveGuard(gateway, pinned_model=live.OUTPUT_ROUTE[
         "requested_model"], ceiling=MODEL_CALL_CEILING,
         automatic_retries=live.OUTPUT_LIMITS["automatic_retries"],
-        expected_route=dict(live.OUTPUT_ROUTE))
+        expected_route=dict(live.OUTPUT_ROUTE),
+        spend_reader=(lambda: live.spent_dispatches(dsn, allocation_id))
+        if dsn is not None else None)
 
     for attempt in exposure["attempts"]:
         task, session = _frozen_task()
@@ -1065,10 +1083,14 @@ def main(argv=None) -> int:
                                             "census"))
     parser.add_argument("--root", default=str(REPO_ROOT / "reports" / "evidence"
                                               / CAMPAIGN_ID))
+    parser.add_argument("--dsn", default="")
+    parser.add_argument("--allocation-id", default="")
     args = parser.parse_args(argv)
     root = Path(args.root)
     if args.command == "run":
-        print(json.dumps(_run(root), sort_keys=True, indent=1))
+        print(json.dumps(_run(root, dsn=args.dsn or None,
+                              allocation_id=args.allocation_id or None),
+                         sort_keys=True, indent=1))
     elif args.command == "summarize":
         print(json.dumps(summarize(root), sort_keys=True, indent=1))
     elif args.command == "census":

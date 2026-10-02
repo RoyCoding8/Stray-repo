@@ -1,0 +1,475 @@
+{
+  "alpha": "1/20",
+  "budgets": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "cluster_rule": "(family, template)",
+  "default_resolution": "per family, via w2_retention_campaign.default_method, so a graph row is measured against seed-gr-ddmin@8 and not against the inherited hardcoded software default",
+  "defects_kept_apart": {
+    "panel_power": {
+      "distinct_from_retention_closure": "assessment_profile.default_repertoire returns the four authored seed ids and e2_replication.eligible_for(task) returns the two belonging to the task's family. Both are closed, frozen and identical for every arm, so a method acquired on one task can never enter another task's repertoire and no difference in method_id can be a retention effect.",
+      "mechanism": "the cluster rule is (family, template) and the generator reuses each pair across cells, worlds and splits (s09_panel_inventory.CLUSTER_RATIONALE). The software family offers four templates in the whole frozen world and two of them on any one split, against the six minimum_clusters_for_alpha(1/20) requires. Both archived contrasts ran that panel.",
+      "reading": "the cluster count and the retention closure are different defects. The first is a panel choice and this census resolves it. The second is a closed repertoire, no panel touches it, and nothing in this region repairs it.",
+      "what": "the frozen panel is short of independent units, so the experience contrast cannot express a positive result on it"
+    },
+    "retention_closure": {
+      "mechanism": "assessment_profile.default_repertoire returns the four authored seed ids and e2_replication.eligible_for(task) returns the two belonging to the task's family. Both are closed, frozen and identical for every arm, so a method acquired on one task can never enter another task's repertoire and no difference in method_id can be a retention effect.",
+      "readable_observable": "normalized_reduction, plus the decision vector (method_id, max_queries), which is reported per task and never as the sole benefit metric",
+      "what": "a policy cannot name a method it retained, so the retained-method-reuse leg has no lever on this instrument",
+      "what_this_module_measures_instead": "the transfer-shaped leg of retention: a policy shown a retained method's prior observations against the same policy shown none, paired per task, on the panels whose ceiling is open",
+      "what_would_be_needed": "a repertoire that admits a method acquired on a prior task, and a reducer whose verdict can vary. Neither exists in the frozen instrument, and this campaign edits neither."
+    }
+  },
+  "dispatches": 0,
+  "model_calls": 0,
+  "namespace": "invr1b8-panel-census",
+  "panels": [
+    {
+      "cluster_count": 2,
+      "family": "software",
+      "max_attainable_positive_delta": 0.3125,
+      "minimum_p": "1/2",
+      "open_rows": 1,
+      "panel_id": "software:dev",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 3,
+      "shortfall": 4,
+      "splits": [
+        "dev"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-sw-00",
+        "ad01-w0-dev-sw-01",
+        "ad01-w0-dev-sw-02"
+      ],
+      "templates": [
+        "stale-clear-core",
+        "stale-read-2chain"
+      ]
+    },
+    {
+      "cluster_count": 2,
+      "family": "software",
+      "max_attainable_positive_delta": 0.0,
+      "minimum_p": "1/2",
+      "open_rows": 0,
+      "panel_id": "software:within",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 3,
+      "shortfall": 4,
+      "splits": [
+        "within"
+      ],
+      "task_ids": [
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ],
+      "templates": [
+        "stale-clear-core",
+        "stale-read-2chain"
+      ]
+    },
+    {
+      "cluster_count": 2,
+      "family": "software",
+      "max_attainable_positive_delta": 0.285714,
+      "minimum_p": "1/2",
+      "open_rows": 2,
+      "panel_id": "software:transfer",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 3,
+      "shortfall": 4,
+      "splits": [
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-transfer-sw-00",
+        "ad01-w0-transfer-sw-01",
+        "ad01-w0-transfer-sw-02"
+      ],
+      "templates": [
+        "stale-clear-del-core",
+        "stale-read-3chain"
+      ]
+    },
+    {
+      "cluster_count": 2,
+      "family": "software",
+      "max_attainable_positive_delta": 0.3125,
+      "minimum_p": "1/2",
+      "open_rows": 1,
+      "panel_id": "software:dev+within",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 6,
+      "shortfall": 4,
+      "splits": [
+        "dev",
+        "within"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-sw-00",
+        "ad01-w0-dev-sw-01",
+        "ad01-w0-dev-sw-02",
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02"
+      ],
+      "templates": [
+        "stale-clear-core",
+        "stale-read-2chain"
+      ]
+    },
+    {
+      "cluster_count": 4,
+      "family": "software",
+      "max_attainable_positive_delta": 0.3125,
+      "minimum_p": "1/8",
+      "open_rows": 3,
+      "panel_id": "software:dev+transfer",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 6,
+      "shortfall": 2,
+      "splits": [
+        "dev",
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-sw-00",
+        "ad01-w0-dev-sw-01",
+        "ad01-w0-dev-sw-02",
+        "ad01-w0-transfer-sw-00",
+        "ad01-w0-transfer-sw-01",
+        "ad01-w0-transfer-sw-02"
+      ],
+      "templates": [
+        "stale-clear-core",
+        "stale-clear-del-core",
+        "stale-read-2chain",
+        "stale-read-3chain"
+      ]
+    },
+    {
+      "cluster_count": 4,
+      "family": "software",
+      "max_attainable_positive_delta": 0.285714,
+      "minimum_p": "1/8",
+      "open_rows": 2,
+      "panel_id": "software:within+transfer",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 6,
+      "shortfall": 2,
+      "splits": [
+        "within",
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02",
+        "ad01-w0-transfer-sw-00",
+        "ad01-w0-transfer-sw-01",
+        "ad01-w0-transfer-sw-02"
+      ],
+      "templates": [
+        "stale-clear-core",
+        "stale-clear-del-core",
+        "stale-read-2chain",
+        "stale-read-3chain"
+      ]
+    },
+    {
+      "cluster_count": 4,
+      "family": "software",
+      "max_attainable_positive_delta": 0.3125,
+      "minimum_p": "1/8",
+      "open_rows": 3,
+      "panel_id": "software:dev+within+transfer",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 9,
+      "shortfall": 2,
+      "splits": [
+        "dev",
+        "within",
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-sw-00",
+        "ad01-w0-dev-sw-01",
+        "ad01-w0-dev-sw-02",
+        "ad01-w0-within-sw-00",
+        "ad01-w0-within-sw-01",
+        "ad01-w0-within-sw-02",
+        "ad01-w0-transfer-sw-00",
+        "ad01-w0-transfer-sw-01",
+        "ad01-w0-transfer-sw-02"
+      ],
+      "templates": [
+        "stale-clear-core",
+        "stale-clear-del-core",
+        "stale-read-2chain",
+        "stale-read-3chain"
+      ]
+    },
+    {
+      "cluster_count": 3,
+      "family": "graph",
+      "max_attainable_positive_delta": 0.263158,
+      "minimum_p": "1/4",
+      "open_rows": 3,
+      "panel_id": "graph:dev",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 3,
+      "shortfall": 3,
+      "splits": [
+        "dev"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-gr-00",
+        "ad01-w0-dev-gr-01",
+        "ad01-w0-dev-gr-02"
+      ],
+      "templates": [
+        "C5+shared-vertex",
+        "C5+tree",
+        "C7+tree"
+      ]
+    },
+    {
+      "cluster_count": 3,
+      "family": "graph",
+      "max_attainable_positive_delta": 0.263158,
+      "minimum_p": "1/4",
+      "open_rows": 3,
+      "panel_id": "graph:within",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 3,
+      "shortfall": 3,
+      "splits": [
+        "within"
+      ],
+      "task_ids": [
+        "ad01-w0-within-gr-00",
+        "ad01-w0-within-gr-01",
+        "ad01-w0-within-gr-02"
+      ],
+      "templates": [
+        "C5+shared-vertex",
+        "C5+tree",
+        "C7+tree"
+      ]
+    },
+    {
+      "cluster_count": 3,
+      "family": "graph",
+      "max_attainable_positive_delta": 0.285714,
+      "minimum_p": "1/4",
+      "open_rows": 3,
+      "panel_id": "graph:transfer",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 3,
+      "shortfall": 3,
+      "splits": [
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-transfer-gr-00",
+        "ad01-w0-transfer-gr-01",
+        "ad01-w0-transfer-gr-02"
+      ],
+      "templates": [
+        "C5+joined-by-path",
+        "C5+shared-edge",
+        "C9+tree"
+      ]
+    },
+    {
+      "cluster_count": 3,
+      "family": "graph",
+      "max_attainable_positive_delta": 0.263158,
+      "minimum_p": "1/4",
+      "open_rows": 6,
+      "panel_id": "graph:dev+within",
+      "powered": false,
+      "required_clusters": 6,
+      "rows_measured": 6,
+      "shortfall": 3,
+      "splits": [
+        "dev",
+        "within"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-gr-00",
+        "ad01-w0-dev-gr-01",
+        "ad01-w0-dev-gr-02",
+        "ad01-w0-within-gr-00",
+        "ad01-w0-within-gr-01",
+        "ad01-w0-within-gr-02"
+      ],
+      "templates": [
+        "C5+shared-vertex",
+        "C5+tree",
+        "C7+tree"
+      ]
+    },
+    {
+      "cluster_count": 6,
+      "family": "graph",
+      "max_attainable_positive_delta": 0.285714,
+      "minimum_p": "1/32",
+      "open_rows": 6,
+      "panel_id": "graph:dev+transfer",
+      "powered": true,
+      "required_clusters": 6,
+      "rows_measured": 6,
+      "shortfall": 0,
+      "splits": [
+        "dev",
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-gr-00",
+        "ad01-w0-dev-gr-01",
+        "ad01-w0-dev-gr-02",
+        "ad01-w0-transfer-gr-00",
+        "ad01-w0-transfer-gr-01",
+        "ad01-w0-transfer-gr-02"
+      ],
+      "templates": [
+        "C5+joined-by-path",
+        "C5+shared-edge",
+        "C5+shared-vertex",
+        "C5+tree",
+        "C7+tree",
+        "C9+tree"
+      ]
+    },
+    {
+      "cluster_count": 6,
+      "family": "graph",
+      "max_attainable_positive_delta": 0.285714,
+      "minimum_p": "1/32",
+      "open_rows": 6,
+      "panel_id": "graph:within+transfer",
+      "powered": true,
+      "required_clusters": 6,
+      "rows_measured": 6,
+      "shortfall": 0,
+      "splits": [
+        "within",
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-within-gr-00",
+        "ad01-w0-within-gr-01",
+        "ad01-w0-within-gr-02",
+        "ad01-w0-transfer-gr-00",
+        "ad01-w0-transfer-gr-01",
+        "ad01-w0-transfer-gr-02"
+      ],
+      "templates": [
+        "C5+joined-by-path",
+        "C5+shared-edge",
+        "C5+shared-vertex",
+        "C5+tree",
+        "C7+tree",
+        "C9+tree"
+      ]
+    },
+    {
+      "cluster_count": 6,
+      "family": "graph",
+      "max_attainable_positive_delta": 0.285714,
+      "minimum_p": "1/32",
+      "open_rows": 9,
+      "panel_id": "graph:dev+within+transfer",
+      "powered": true,
+      "required_clusters": 6,
+      "rows_measured": 9,
+      "shortfall": 0,
+      "splits": [
+        "dev",
+        "within",
+        "transfer"
+      ],
+      "task_ids": [
+        "ad01-w0-dev-gr-00",
+        "ad01-w0-dev-gr-01",
+        "ad01-w0-dev-gr-02",
+        "ad01-w0-within-gr-00",
+        "ad01-w0-within-gr-01",
+        "ad01-w0-within-gr-02",
+        "ad01-w0-transfer-gr-00",
+        "ad01-w0-transfer-gr-01",
+        "ad01-w0-transfer-gr-02"
+      ],
+      "templates": [
+        "C5+joined-by-path",
+        "C5+shared-edge",
+        "C5+shared-vertex",
+        "C5+tree",
+        "C7+tree",
+        "C9+tree"
+      ]
+    }
+  ],
+  "recomputed_by": "experiments.ad01.w2_retention_campaign.panel_power_verdict",
+  "required_clusters": 6,
+  "verdict": {
+    "alpha": "1/20",
+    "cluster_rule": "(family, template)",
+    "disposition": "A panel exists that reaches the required clusters with a non-zero ceiling, and it is graph. The software family is short on every combination it offers, because the frozen world contains four software templates in total and six are required. This is a power repair: it names a panel a third experience contrast could move. It is not a retention repair.",
+    "not_claimed": "No retention effect is claimed, measured or enabled here. The repertoire stays closed on every panel, including the powered one, so method_id remains unmeasurable as a retention leg and B14 stays gated on B3.",
+    "powered_but_blind": [],
+    "powered_with_positive_ceiling": [
+      "graph:dev+transfer",
+      "graph:within+transfer",
+      "graph:dev+within+transfer"
+    ],
+    "required_clusters": 6,
+    "retention_closure": {
+      "distinct_from": "the cluster rule is (family, template) and the generator reuses each pair across cells, worlds and splits (s09_panel_inventory.CLUSTER_RATIONALE). The software family offers four templates in the whole frozen world and two of them on any one split, against the six minimum_clusters_for_alpha(1/20) requires. Both archived contrasts ran that panel.",
+      "mechanism": "assessment_profile.default_repertoire returns the four authored seed ids and e2_replication.eligible_for(task) returns the two belonging to the task's family. Both are closed, frozen and identical for every arm, so a method acquired on one task can never enter another task's repertoire and no difference in method_id can be a retention effect."
+    },
+    "unpowered": [
+      "software:dev",
+      "software:within",
+      "software:transfer",
+      "software:dev+within",
+      "software:dev+transfer",
+      "software:within+transfer",
+      "software:dev+within+transfer",
+      "graph:dev",
+      "graph:within",
+      "graph:transfer",
+      "graph:dev+within"
+    ],
+    "unpowered_but_positive": [
+      "software:dev",
+      "software:transfer",
+      "software:dev+within",
+      "software:dev+transfer",
+      "software:within+transfer",
+      "software:dev+within+transfer",
+      "graph:dev",
+      "graph:within",
+      "graph:transfer",
+      "graph:dev+within"
+    ]
+  }
+}

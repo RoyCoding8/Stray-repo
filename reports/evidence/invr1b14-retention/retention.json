@@ -1,0 +1,1249 @@
+{
+  "accounting": {
+    "billed": null,
+    "carried_in_netted_against_this_allocation": false,
+    "carried_in_true_exposure": ">= 5563",
+    "carried_in_uncertain_units": 5563,
+    "charge_units": null,
+    "derivation": "1774 // 4 + 1 + 2048 at the frozen B request shape; the request count is 0 because this freeze authorises none",
+    "per_request_units": 2492,
+    "reading": "the route reports its price as usage.cost, which the adapter does not read, so both keys ride out absent. Unknown is recorded as unknown and never as zero.",
+    "requests": 0,
+    "total_units": 0,
+    "unit_kind": "estimated-budget"
+  },
+  "acquisition": {
+    "b12_lineages_acquired": 0,
+    "b12_lineages_attempted": 4,
+    "r4_live_acquisition_claim": "true",
+    "r4_summary_acquired": 3,
+    "r4_summary_arms": 6,
+    "reading": "r4 is the only live acquisition on this route whose bytes were kept, and it earned 3 of 6 arms. B12, the current construction run, earned 0 of 4 python-step lineages. Neither number is this lane's to improve on, and both are recorded because the ceiling of zero rests on the rate rather than on taste."
+  },
+  "budget": 16,
+  "cap_sheet_total_dispatch_cap": 0,
+  "dispatches": 0,
+  "freeze": "reports/cap-sheets/b14-retention-freeze.md",
+  "gateway_used": false,
+  "live_acquired_members": [
+    {
+      "acquired_from_provider": true,
+      "acquired_on": "ad01-w0-within-gr-00",
+      "arrival_path": "assessment_profile.Repertoire",
+      "capability_id": "acquired-gr-3df03ec1",
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "executed_by": "method_exec.run_member_out_of_process",
+      "family": "graph",
+      "kind": "live-acquired",
+      "operation_id": "ad01-r4acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init",
+      "origin": "acquired",
+      "receipt_identity": "gw:ad01-r4acq-t1-ad01-w0-within-gr-00-b0-ad01-w0-within-gr-00-construct-l1-init",
+      "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+      "retained_method_leg_measurable": false,
+      "rows": [
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.083333,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.083333,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.368421,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": true,
+          "normalized_reduction": null,
+          "reason": null,
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-00",
+          "verdict": null
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.368421,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.352941,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.352941,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.428571,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.428571,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-02",
+          "verdict": "preserved"
+        }
+      ],
+      "rows_compared_to_seed": 8,
+      "rows_identical_to_seed": 8,
+      "source_characters": 197,
+      "source_digest": "3df03ec1971d6c2ffd55508ea25a3697b4b4bf66eca8e2ef0dd4b0ba34e30672",
+      "tasks_measured": 9
+    },
+    {
+      "acquired_from_provider": true,
+      "acquired_on": "ad01-w1-within-sw-00",
+      "arrival_path": "assessment_profile.Repertoire",
+      "capability_id": "acquired-sw-c20f2724",
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "executed_by": "method_exec.run_member_out_of_process",
+      "family": "software",
+      "kind": "live-acquired",
+      "operation_id": "ad01-r4acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init",
+      "origin": "acquired",
+      "receipt_identity": "gw:ad01-r4acq-t2-ad01-w1-within-sw-00-b0-ad01-w1-within-sw-00-construct-l1-init",
+      "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+      "retained_method_leg_measurable": false,
+      "rows": [
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.785714,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.785714,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.75,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.75,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.7,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.7,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.7,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.7,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.769231,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.769231,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.727273,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.727273,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.785714,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.785714,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.714286,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.714286,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.666667,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.666667,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-02",
+          "verdict": "preserved"
+        }
+      ],
+      "rows_compared_to_seed": 9,
+      "rows_identical_to_seed": 9,
+      "source_characters": 200,
+      "source_digest": "c20f2724999ede96aa773de545bc12791da09ea15b063a97aa9406433286a56b",
+      "tasks_measured": 9
+    },
+    {
+      "acquired_from_provider": true,
+      "acquired_on": "ad01-w1-within-gr-00",
+      "arrival_path": "assessment_profile.Repertoire",
+      "capability_id": "acquired-gr-63d3d820",
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "executed_by": "method_exec.run_member_out_of_process",
+      "family": "graph",
+      "kind": "live-acquired",
+      "operation_id": "ad01-r4acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init",
+      "origin": "acquired",
+      "receipt_identity": "gw:ad01-r4acq-t3-ad01-w1-within-gr-00-b0-ad01-w1-within-gr-00-construct-l1-init",
+      "requested_model": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+      "retained_method_leg_measurable": false,
+      "rows": [
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.083333,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.083333,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.368421,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.083333,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.083333,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.368421,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.352941,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.352941,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.428571,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.428571,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-02",
+          "verdict": "preserved"
+        }
+      ],
+      "rows_compared_to_seed": 9,
+      "rows_identical_to_seed": 9,
+      "source_characters": 139,
+      "source_digest": "63d3d82087b30507a2f64b6ff00e1411571e99990284d0118633a8af9c993aa3",
+      "tasks_measured": 9
+    }
+  ],
+  "measured_live": false,
+  "model_calls": 0,
+  "namespace": "invr1b14-retention",
+  "offline_demonstration": {
+    "control": "the constant member returns its input and is graded preserved on every task, which is the negative control for this measurement",
+    "label": "OFFLINE DEMONSTRATION, NOT A LIVE ACQUISITION",
+    "rows": [
+      {
+        "acquired_from_provider": false,
+        "acquired_on": "ad01-w0-dev-sw-00",
+        "arrival_path": "assessment_profile.Repertoire",
+        "capability_id": "b14-control-constant",
+        "distinct_verdicts": [
+          "preserved"
+        ],
+        "executed_by": "method_exec.run_member_out_of_process",
+        "family": "software",
+        "imported_from": "tests/test_inv_b3_repertoire._member",
+        "member": "b3-fixture-member",
+        "origin": "strategy-probe",
+        "retained_method_leg_measurable": false,
+        "rows": [
+          {
+            "acquisition_task": true,
+            "normalized_reduction": null,
+            "reason": null,
+            "split": "dev",
+            "task_id": "ad01-w0-dev-sw-00",
+            "verdict": null
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "dev",
+            "task_id": "ad01-w0-dev-sw-01",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "dev",
+            "task_id": "ad01-w0-dev-sw-02",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "within",
+            "task_id": "ad01-w0-within-sw-00",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "within",
+            "task_id": "ad01-w0-within-sw-01",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "within",
+            "task_id": "ad01-w0-within-sw-02",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "transfer",
+            "task_id": "ad01-w0-transfer-sw-00",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "transfer",
+            "task_id": "ad01-w0-transfer-sw-01",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "transfer",
+            "task_id": "ad01-w0-transfer-sw-02",
+            "verdict": "preserved"
+          }
+        ],
+        "rows_compared_to_seed": 0,
+        "rows_identical_to_seed": 0,
+        "source_digest": "006a0328f6a86da35c152097725cd12352d9e61f37c66d1e57034211c3eaaeeb",
+        "tasks_measured": 9
+      },
+      {
+        "acquired_from_provider": false,
+        "acquired_on": "ad01-w0-dev-sw-00",
+        "arrival_path": "assessment_profile.Repertoire",
+        "capability_id": "acquired-sw-carried-keys",
+        "distinct_verdicts": [
+          "not_preserved",
+          "preserved"
+        ],
+        "executed_by": "method_exec.run_member_out_of_process",
+        "family": "software",
+        "imported_from": "tests.test_inv_b3_repertoire._member",
+        "member": "b3-fixture-member",
+        "origin": "fixture-stand-in",
+        "retained_method_leg_measurable": true,
+        "rows": [
+          {
+            "acquisition_task": true,
+            "normalized_reduction": null,
+            "reason": null,
+            "split": "dev",
+            "task_id": "ad01-w0-dev-sw-00",
+            "verdict": null
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "witness-lost-agree",
+            "split": "dev",
+            "task_id": "ad01-w0-dev-sw-01",
+            "verdict": "not_preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "witness-lost-agree",
+            "split": "dev",
+            "task_id": "ad01-w0-dev-sw-02",
+            "verdict": "not_preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "witness-lost-agree",
+            "split": "within",
+            "task_id": "ad01-w0-within-sw-00",
+            "verdict": "not_preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "observation-missing",
+            "split": "within",
+            "task_id": "ad01-w0-within-sw-01",
+            "verdict": "not_preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "ok-incumbent",
+            "split": "within",
+            "task_id": "ad01-w0-within-sw-02",
+            "verdict": "preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "witness-lost-agree",
+            "split": "transfer",
+            "task_id": "ad01-w0-transfer-sw-00",
+            "verdict": "not_preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "observation-missing",
+            "split": "transfer",
+            "task_id": "ad01-w0-transfer-sw-01",
+            "verdict": "not_preserved"
+          },
+          {
+            "acquisition_task": false,
+            "normalized_reduction": 0.0,
+            "reason": "observation-missing",
+            "split": "transfer",
+            "task_id": "ad01-w0-transfer-sw-02",
+            "verdict": "not_preserved"
+          }
+        ],
+        "rows_compared_to_seed": 0,
+        "rows_identical_to_seed": 0,
+        "source_digest": "5ffe89a1584b616212771e0ec6518945ec7a4c86ca3cc44f87543882674aa07a",
+        "tasks_measured": 9
+      }
+    ],
+    "what_this_is": "the retained-method leg measured on bytes that were written in a test, admitted through the same arrival path and executed through the same out-of-process route the live members took.",
+    "what_this_is_not": "not an acquisition. No provider wrote these bytes, no receipt names them, and neither member carries an origin claiming otherwise. This row demonstrates that the instrument can express the leg; it does not supply a member, and the study's live finding is that this route supplies none."
+  },
+  "panel": {
+    "alpha": "1/20",
+    "chosen": "graph:dev+transfer",
+    "cluster_rule": "(family, template)",
+    "frozen_retention_panel": {
+      "family": "software",
+      "readable_by_qualification_gate": false,
+      "reason": "w2_retention_campaign.qualification_census reads 0 rows; the gate's authored policies name a seed-sw- method and refuse a graph target",
+      "target_split": "transfer"
+    },
+    "powered_panels": [
+      {
+        "cluster_count": 6,
+        "family": "graph",
+        "max_attainable_positive_delta": 0.285714,
+        "minimum_p": "1/32",
+        "open_rows": 6,
+        "panel_id": "graph:dev+transfer",
+        "powered": true,
+        "required_clusters": 6,
+        "rows_measured": 6,
+        "shortfall": 0,
+        "splits": [
+          "dev",
+          "transfer"
+        ],
+        "task_ids": [
+          "ad01-w0-dev-gr-00",
+          "ad01-w0-dev-gr-01",
+          "ad01-w0-dev-gr-02",
+          "ad01-w0-transfer-gr-00",
+          "ad01-w0-transfer-gr-01",
+          "ad01-w0-transfer-gr-02"
+        ],
+        "templates": [
+          "C5+joined-by-path",
+          "C5+shared-edge",
+          "C5+shared-vertex",
+          "C5+tree",
+          "C7+tree",
+          "C9+tree"
+        ]
+      },
+      {
+        "cluster_count": 6,
+        "family": "graph",
+        "max_attainable_positive_delta": 0.285714,
+        "minimum_p": "1/32",
+        "open_rows": 6,
+        "panel_id": "graph:within+transfer",
+        "powered": true,
+        "required_clusters": 6,
+        "rows_measured": 6,
+        "shortfall": 0,
+        "splits": [
+          "within",
+          "transfer"
+        ],
+        "task_ids": [
+          "ad01-w0-within-gr-00",
+          "ad01-w0-within-gr-01",
+          "ad01-w0-within-gr-02",
+          "ad01-w0-transfer-gr-00",
+          "ad01-w0-transfer-gr-01",
+          "ad01-w0-transfer-gr-02"
+        ],
+        "templates": [
+          "C5+joined-by-path",
+          "C5+shared-edge",
+          "C5+shared-vertex",
+          "C5+tree",
+          "C7+tree",
+          "C9+tree"
+        ]
+      },
+      {
+        "cluster_count": 6,
+        "family": "graph",
+        "max_attainable_positive_delta": 0.285714,
+        "minimum_p": "1/32",
+        "open_rows": 9,
+        "panel_id": "graph:dev+within+transfer",
+        "powered": true,
+        "required_clusters": 6,
+        "rows_measured": 9,
+        "shortfall": 0,
+        "splits": [
+          "dev",
+          "within",
+          "transfer"
+        ],
+        "task_ids": [
+          "ad01-w0-dev-gr-00",
+          "ad01-w0-dev-gr-01",
+          "ad01-w0-dev-gr-02",
+          "ad01-w0-within-gr-00",
+          "ad01-w0-within-gr-01",
+          "ad01-w0-within-gr-02",
+          "ad01-w0-transfer-gr-00",
+          "ad01-w0-transfer-gr-01",
+          "ad01-w0-transfer-gr-02"
+        ],
+        "templates": [
+          "C5+joined-by-path",
+          "C5+shared-edge",
+          "C5+shared-vertex",
+          "C5+tree",
+          "C7+tree",
+          "C9+tree"
+        ]
+      }
+    ],
+    "reason": "the smallest combination reaching six clusters with a positive ceiling, as frozen by b-live-cap.md",
+    "required_clusters": 6
+  },
+  "recomputed_by": "experiments.ad01.invr1b14_retention.measure_all",
+  "schema": "s09-b14-retention-v1",
+  "strategy_probe_members": [
+    {
+      "acquired_from_provider": false,
+      "acquired_on": "ad01-w0-dev-sw-00",
+      "arrival_path": "assessment_profile.Repertoire",
+      "capability_id": "probe-software-ddmin",
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "executed_by": "method_exec.run_member_out_of_process",
+      "family": "software",
+      "kind": "strategy-probe",
+      "origin": "strategy-probe",
+      "retained_method_leg_measurable": false,
+      "rows": [
+        {
+          "acquisition_task": true,
+          "normalized_reduction": null,
+          "reason": null,
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-00",
+          "verdict": null
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.75,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.75,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.7,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.7,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.7,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.7,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.769231,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.769231,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.727273,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.727273,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.785714,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.785714,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.714286,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.714286,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.666667,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.666667,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-02",
+          "verdict": "preserved"
+        }
+      ],
+      "rows_compared_to_seed": 8,
+      "rows_identical_to_seed": 8,
+      "source_digest": "3106f7168fbe4ad77fdbe41ca9ab19b76fd583efc5d0f63deff82d483a9f1bb7",
+      "strategy": "ddmin",
+      "tasks_measured": 9
+    },
+    {
+      "acquired_from_provider": false,
+      "acquired_on": "ad01-w0-dev-sw-00",
+      "arrival_path": "assessment_profile.Repertoire",
+      "capability_id": "probe-software-greedy",
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "executed_by": "method_exec.run_member_out_of_process",
+      "family": "software",
+      "kind": "strategy-probe",
+      "origin": "strategy-probe",
+      "retained_method_leg_measurable": false,
+      "rows": [
+        {
+          "acquisition_task": true,
+          "normalized_reduction": null,
+          "reason": null,
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-00",
+          "verdict": null
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.8125,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.75,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.7,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.7,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.7,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.7,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.769231,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.769231,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.727273,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.727273,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-sw-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.785714,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.785714,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.785714,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.714286,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.666667,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.666667,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-sw-02",
+          "verdict": "preserved"
+        }
+      ],
+      "rows_compared_to_seed": 8,
+      "rows_identical_to_seed": 6,
+      "source_digest": "163d01ae003b998ead7a405b5b31bbf8819868e67c8d9c6eeff1435e455a31c2",
+      "strategy": "greedy",
+      "tasks_measured": 9
+    },
+    {
+      "acquired_from_provider": false,
+      "acquired_on": "ad01-w0-dev-gr-00",
+      "arrival_path": "assessment_profile.Repertoire",
+      "capability_id": "probe-graph-ddmin",
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "executed_by": "method_exec.run_member_out_of_process",
+      "family": "graph",
+      "kind": "strategy-probe",
+      "origin": "strategy-probe",
+      "retained_method_leg_measurable": false,
+      "rows": [
+        {
+          "acquisition_task": true,
+          "normalized_reduction": null,
+          "reason": null,
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-00",
+          "verdict": null
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.368421,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.083333,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.083333,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.368421,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.0,
+          "reason": "ok-incumbent",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.352941,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.352941,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.428571,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": true,
+          "seed_normalized_reduction": 0.428571,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-02",
+          "verdict": "preserved"
+        }
+      ],
+      "rows_compared_to_seed": 8,
+      "rows_identical_to_seed": 8,
+      "source_digest": "e9e46f93a31fd271518c609b5a776bf498e9e8860a61161d8661349ecd4316da",
+      "strategy": "ddmin",
+      "tasks_measured": 9
+    },
+    {
+      "acquired_from_provider": false,
+      "acquired_on": "ad01-w0-dev-gr-00",
+      "arrival_path": "assessment_profile.Repertoire",
+      "capability_id": "probe-graph-greedy",
+      "distinct_verdicts": [
+        "preserved"
+      ],
+      "executed_by": "method_exec.run_member_out_of_process",
+      "family": "graph",
+      "kind": "strategy-probe",
+      "origin": "strategy-probe",
+      "retained_method_leg_measurable": false,
+      "rows": [
+        {
+          "acquisition_task": true,
+          "normalized_reduction": null,
+          "reason": null,
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-00",
+          "verdict": null
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.125,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.473684,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "dev",
+          "task_id": "ad01-w0-dev-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.166667,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.083333,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.125,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.473684,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.368421,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "within",
+          "task_id": "ad01-w0-within-gr-02",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.1,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.0,
+          "seed_reason": "ok-incumbent",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-00",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.411765,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.352941,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-01",
+          "verdict": "preserved"
+        },
+        {
+          "acquisition_task": false,
+          "normalized_reduction": 0.52381,
+          "reason": "ok-preserved",
+          "same_reduction_as_seed": false,
+          "seed_normalized_reduction": 0.428571,
+          "seed_reason": "ok-preserved",
+          "seed_verdict": "preserved",
+          "split": "transfer",
+          "task_id": "ad01-w0-transfer-gr-02",
+          "verdict": "preserved"
+        }
+      ],
+      "rows_compared_to_seed": 8,
+      "rows_identical_to_seed": 0,
+      "source_digest": "550d2573e3b8a3c6409de35c2cba98310e0a64c9f376e5f41b575ffd89d8d0b2",
+      "strategy": "greedy",
+      "tasks_measured": 9
+    }
+  ],
+  "verdict": {
+    "dispatches": 0,
+    "live_acquired_measurable": 0,
+    "live_acquired_measured": 3,
+    "not_claimed": "no retention effect is measured, no member was acquired by this lane, and nothing here bounds what this route could return at a budget or framing nobody has tried. Four observations on a menu two values wide is a small sample of the route's behaviour.",
+    "routable": false,
+    "statement": "B14 cannot be run live at this acquisition rate and menu. 0 of 3 members this route acquired live carry a varying verdict and 0 of 4 strategy arms do, so the retained-method leg is closed behind a gate that is open.",
+    "strategy_measurable": 0,
+    "strategy_measured": 4
+  }
+}

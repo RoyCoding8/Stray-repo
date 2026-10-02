@@ -323,22 +323,100 @@ def _s09_mark_incorporated(dsn: str, cid: str, seq: int) -> None:
             " WHERE investigation_id = %s AND seq = %s",
             (cid, seq))
         conn.commit()
+    # An incorporated operation has run, so it is no longer in flight. Leaving
+    # it on the entry would make a later resume restore work that already
+    # happened, which is how a recovered crash becomes a double-counted effect.
+    from . import mission
+
+    mission.release_operation(dsn, cid, _attempt_id(cid, seq))
+
+
+def _decision_task_id(decision: dict) -> str:
+    """The task a decision names, or empty when it names none."""
+    action = dict(decision or {}).get("next_action")
+    return str(action.get("task_id") or "") if isinstance(action, dict) else ""
 
 
 def accept_action(dsn: str, cid: str, seq: int,
-                  decision: dict) -> str:
+                  decision: dict, *, program_digest: str = "",
+                  task_id: str = "", capability_id: str = "seed-sw-greedy"
+                  ) -> str:
+    """Admit one boundary's action and record the identity it was admitted under.
+
+    `program_digest` is what the admitting caller knows and nothing downstream
+    can recover: the bytes of the program that produced this decision. It is
+    recorded on the mission entry at the moment of admission, before any
+    effect runs, because a restart happens exactly when the effect has not run
+    and a record written at effect time would be absent at the moment it is
+    needed.
+
+    A caller that admits through the policy consumer passes the consumer's
+    digest. A caller that admits a decision directly and names no program is
+    recorded as the seed program's identity, which is the program that will
+    actually execute it -- see `_admitting_program_digest`. An unrecognised
+    digest is a refusal, because a digest that names no known program would be
+    recorded as authority it does not have.
+    """
+    from . import mission
+
+    program_digest = _admitting_program_digest(program_digest)
+    task_id = task_id or _decision_task_id(decision)
     existing = _s09_get(dsn, cid, seq)
     if existing is not None:
-        return existing["attempt_id"]
-    settled, pending = _read_campaign(dsn, cid)
-    if seq in settled:
-        raise ValueError("boundary %d already settled" % seq)
-    if seq in pending and pending[seq].get("decision") != decision:
-        raise ValueError("pending effect %d already accepted" % seq)
-    _s09_insert_accepted(dsn, cid, seq, decision, "s09-m1")
-    if seq not in pending:
-        record_decision(dsn, cid, seq, decision)
-    return _attempt_id(cid, seq)
+        attempt_id = existing["attempt_id"]
+    else:
+        settled, pending = _read_campaign(dsn, cid)
+        if seq in settled:
+            raise ValueError("boundary %d already settled" % seq)
+        if seq in pending and pending[seq].get("decision") != decision:
+            raise ValueError("pending effect %d already accepted" % seq)
+        _s09_insert_accepted(dsn, cid, seq, decision, "s09-m1")
+        if seq not in pending:
+            record_decision(dsn, cid, seq, decision)
+        attempt_id = _attempt_id(cid, seq)
+    mission.admit_operation(
+        dsn, cid, seq=seq, attempt_id=attempt_id, decision=decision,
+        program_digest=program_digest, task_id=task_id,
+        capability_id=_capability_for(task_id, capability_id)
+        if task_id else capability_id)
+    return attempt_id
+
+
+def _admitting_program_digest(named: str) -> str:
+    """The digest of the program a decision is admitted under.
+
+    A named digest must be a digest, which is all that can be checked here. A
+    stronger check -- that the digest names a program this repository holds --
+    would need a registry of programs that does not exist, and refusing an
+    authored STEP program for being absent from a seed list would be an
+    authority the caller does not have.
+
+    The fallback is the seed program, and that is not a convenience default:
+    `execute_pending` runs `seeds.run_seed` under `seed-sw-greedy` when no
+    program was attached to the campaign, so that is the program this decision
+    will actually run under whether or not the caller said so.
+    """
+    from . import mission
+
+    if not named:
+        return mission.seed_program_digest()
+    if len(named) != 64 or any(c not in "0123456789abcdef" for c in named):
+        raise mission.MissionRefused(
+            "program digest must be a sha256 hex digest, not %r" % named)
+    return named
+
+
+def _decision_task_id(decision: dict) -> str:
+    """The task a decision names, or empty when it names none."""
+    action = dict(decision or {}).get("next_action")
+    return str(action.get("task_id") or "") if isinstance(action, dict) else ""
+
+
+def mission_held(dsn: str, cid: str, seq: int):
+    """The mission entry's record of the operation at this seq, or None."""
+    from . import mission
+
+    return mission.held_operation(dsn, cid, _attempt_id(cid, seq))
 
 
 def execute_pending(dsn: str, cid: str, seq: int, *,
@@ -355,6 +433,7 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
         rec = dict(row["effect_record"])
         return (rec["observation"], rec["episode"],
                 int(rec["spend"]), rec["decision"])
+    admitted = mission_held(dsn, cid, seq)
     decision = dict(row["accepted_action"])
     journal = {"dsn": dsn, "cid": cid, "decision": decision}
     observation, episode, spend = _run_boundary(
@@ -364,6 +443,17 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
         journal=journal, study_root=study_root or cid)
     payload = {"observation": observation, "episode": episode,
                "spend": spend, "decision": decision}
+    if admitted is not None:
+        # The entry's record is released once the effect is recorded, so the
+        # identity the operation ran under is copied here. Without this,
+        # releasing the operation would erase the only record of which program
+        # produced the result, and a settled boundary could no longer say what
+        # it ran under.
+        payload["ran_under"] = {
+            "program_digest": admitted.program_digest,
+            "input_identity": admitted.input_identity,
+            "decision_digest": admitted.decision_digest,
+            "task_id": admitted.task_id, "capability_id": admitted.capability_id}
     with _read_conn(dsn) as conn:
         conn.execute(
             "UPDATE s09_policy_state SET effect_record = %s,"
@@ -717,7 +807,8 @@ def _run_boundary(task_id: str, capability_id: str, caps: dict,
         max_queries=int(action.get("max_queries",
                                    caps.get("diagnostic_queries", 16))),
         member=member,
-        result=(member or {}).get("validation", {}).get("result"))
+        result=(member or {}).get("validation", {}).get("result"),
+        authority=_dev_episode_authority(journal, boundary))
     episode["construction_calls"] = int(
         (member or {}).get("lineage", {}).get("calls_made", 0))
     episode["queries"] += observation["queries"]
@@ -1727,6 +1818,20 @@ def resume_campaign(dsn: str, cid: str, charter: dict, caps: dict,
                     constructor: str = "seed", consumer=None,
                     study_root: str | None = None,
                     policy_release: str | None = None) -> dict:
+    """Resume a campaign, restoring its held operations before anything runs.
+
+    The restore happens first and separately, because restoration is not
+    execution. `mission.resume_operation` reads back each admitted operation's
+    program digest and input identity and marks it restored; it runs nothing
+    and writes no effect record. `run_campaign` then executes the pending
+    boundary through `execute_pending`, which refuses if the task or capability
+    about to run is not the one the entry says was admitted.
+
+    The result reports what was restored under which program, so a caller can
+    see the identity a restart resumed with rather than inferring it. That
+    report is `resumed_in_flight`; it is the whole answer to "what did this
+    restart continue", and it comes from the one record that holds it.
+    """
     world, arm, seq, token = _parse_campaign_id(cid)
     if token:
         # The resumed run must be namespaced the same way the id it resumes
@@ -1735,6 +1840,14 @@ def resume_campaign(dsn: str, cid: str, charter: dict, caps: dict,
         # the resume. `campaign_id` has appended a token since this parser was
         # written, and without this the tokenized form was write-only.
         set_namespace_token(token)
+    from . import mission
+
+    # Read the settled set before the run, not after. `run_campaign`'s own
+    # incorporation would make every restored operation look settled, and the
+    # report would say nothing about what was still pending when the restart
+    # began -- which is the question the report exists to answer.
+    settled_attempts = _settled_attempts(dsn, cid)
+    restored = mission.resume_operation(dsn, cid)
     out = run_campaign(world, arm, charter, caps, tasks=tasks,
                        capability_id=capability_id,
                        campaign_seq=seq, dsn=dsn,
@@ -1745,12 +1858,59 @@ def resume_campaign(dsn: str, cid: str, charter: dict, caps: dict,
     if out["campaign_id"] != cid:
         raise ValueError("resumed unexpected campaign %r" % (
             out.get("campaign_id"),))
+    # Reported from what was restored, not from what `run_campaign` returns,
+    # so the report says what crossed the restart rather than what came back.
+    out["resumed_in_flight"] = [
+        {**item.as_json(), "restored": item.attempt_id in settled_attempts}
+        for item in restored]
     return out
+
+
+def _settled_attempts(dsn: str, cid: str) -> set:
+    """The attempts whose boundary has an effect record, by attempt id.
+
+    Read before the run rather than after, because the run's own incorporation
+    would make every restored operation look settled and the report would say
+    nothing about what was still pending when the restart began.
+    """
+    with _read_conn(dsn) as conn:
+        rows = conn.execute(
+            "SELECT attempt_id FROM s09_policy_state"
+            " WHERE investigation_id = %s AND effect_record IS NOT NULL",
+            (cid,)).fetchall()
+        conn.commit()
+    return {row["attempt_id"] for row in rows}
+
+
+def _dev_episode_authority(journal: dict | None,
+                           boundary: dict | None) -> dict:
+    """The authority a development episode's constructed member runs under.
+
+    Named per boundary, so each episode is its own operation on the
+    campaign's allocation. Empty without a journal, and the episode then
+    reports the executor's refusal as a rejection rather than a method that
+    ran and failed.
+    """
+    if not (journal and journal.get("dsn") and journal.get("cid")
+            and boundary is not None):
+        return {}
+    return {"dsn": journal["dsn"], "allocation_id": _alloc_id(journal["cid"]),
+            "operation_id": _attempt_id(journal["cid"],
+                                        boundary["seq"]) + "-dev"}
 
 
 def dev_episode(task_id: str, capability_id: str, max_queries: int = 16,
                 break_candidate: bool = False,
-                member: dict | None = None, result: dict | None = None) -> dict:
+                member: dict | None = None, result: dict | None = None,
+                *, authority: dict | None = None) -> dict:
+    """Run one development episode and report what it kept.
+
+    A seed capability runs host-side through `seeds.run_seed` and needs no
+    authority, because it is the host's own repertoire rather than authored
+    source. A constructed member is authored source, so it executes only
+    under the authority its caller supplies; without it the episode reports
+    the refusal as a rejection rather than pretending the method ran.
+    """
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
     initial, _ = _size(task, task)
     if member is None:
@@ -1780,9 +1940,20 @@ def dev_episode(task_id: str, capability_id: str, max_queries: int = 16,
                 "task_id": task_id, "lineage": [],
                 "initial_size": initial, "queries": 0}
     if result is None:
-        result = (seeds.run_seed(capability, task, max_queries=max_queries)
-                  if member is None else
-                  _run_member(member, task, max_queries=max_queries))
+        if member is None:
+            result = seeds.run_seed(capability, task,
+                                    max_queries=max_queries)
+        else:
+            from .method_exec import MethodExecutionError
+            try:
+                result = _run_member(member, task,
+                                     max_queries=max_queries,
+                                     **(authority or {}))
+            except MethodExecutionError as exc:
+                return {"disposition": "rejected",
+                        "reason": str(exc), "task_id": task_id,
+                        "lineage": lineage, "check": {},
+                        "initial_size": initial, "queries": 0}
     candidate = result["candidate"]
     if break_candidate:
         candidate = controls.break_candidate(task)

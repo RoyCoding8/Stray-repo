@@ -5,8 +5,12 @@ modifying them, classifies all ten construction attempts, and
 re-executes the four archived validation candidates through an injected
 execution path. The default path is the current tree's public
 method_exec child; pass another callable to rerun against a corrected
-executor (for example lane A1's fix at merge time). No model calls,
-no databases, no secrets.
+executor (for example lane A1's fix at merge time). No model calls and
+no secrets.
+
+The reruns are real child executions, so they need authority: a
+disposable database created for this diagnosis and dropped when it ends.
+`--no-rerun` classifies without executing anything.
 """
 
 from __future__ import annotations
@@ -17,6 +21,7 @@ import hashlib
 import json
 import os
 import sys
+import uuid
 
 TERMINALS = ("timeout-unknown-exposure", "output-truncation",
              "parse-failure", "execution-failure",
@@ -161,13 +166,22 @@ def classify_attempt(attempt: dict) -> dict:
 
 
 def current_tree_execute(member: dict, task: dict,
-                         max_queries: int = 16) -> dict:
+                         max_queries: int = 16,
+                         authority: dict | None = None) -> dict:
+    """Rerun a repaired candidate through the current tree's child executor.
+
+    The executor runs policy source only under a store, an allocation and an
+    operation identity, so this takes that authority rather than assuming
+    the bytes are trustworthy because they are on this disk. Without it the
+    rerun reports the refusal, which is the honest stage for a candidate
+    that was never admitted to execute.
+    """
     from experiments.ad01 import method_exec
     candidate = {"method_source": member["method_source"],
                  "entry": member["entry"]}
     try:
         result = method_exec.run_member_out_of_process(
-            candidate, task, max_queries=max_queries)
+            candidate, task, max_queries=max_queries, **(authority or {}))
     except method_exec.MethodExecutionError as exc:
         reason = str(exc)
         stage = "gate" if reason.startswith("refused:") else "execute"
@@ -176,11 +190,18 @@ def current_tree_execute(member: dict, task: dict,
 
 
 def run_candidate(candidate: dict, execute_fn=None,
-                  max_queries: int = 16) -> dict:
+                  max_queries: int = 16,
+                  authority: dict | None = None) -> dict:
     execute = execute_fn or current_tree_execute
     member = {"method_source": candidate["source"],
               "entry": candidate["entry"]}
-    outcome = execute(member, candidate["task"], max_queries)
+    try:
+        outcome = execute(member, candidate["task"], max_queries,
+                          authority=authority)
+    except TypeError:
+        # An injected rerunner predating the authority argument takes only
+        # the three positional arguments it has always taken.
+        outcome = execute(member, candidate["task"], max_queries)
     if outcome.get("ok"):
         return {"origin": candidate["origin"],
                 "digest": candidate["digest"],
@@ -222,7 +243,7 @@ def repair_priors(export_dir: str) -> list:
 
 
 def diagnose(export_dir: str, execute_fn=None,
-             max_queries: int = 16) -> dict:
+             max_queries: int = 16, authority: dict | None = None) -> dict:
     attempts = all_attempts(export_dir)
     classified = [classify_attempt(a) for a in attempts]
     counts = {name: sum(1 for c in classified
@@ -238,7 +259,7 @@ def diagnose(export_dir: str, execute_fn=None,
     }
     candidates = extract_candidates(export_dir)
     reruns = [run_candidate(c, execute_fn=execute_fn,
-                            max_queries=max_queries)
+                            max_queries=max_queries, authority=authority)
               for c in candidates]
     return {"attempts": len(attempts), "terminal_counts": counts,
             "settings": settings,
@@ -252,15 +273,59 @@ def diagnose(export_dir: str, execute_fn=None,
 
 
 def main(argv=None) -> int:
+    """Diagnose archived attempts, executing reruns under real authority.
+
+    The reruns are real child executions, so they need a store, an
+    allocation and an operation identity like any other. A disposable
+    database is created for this diagnosis and dropped when it ends, so the
+    archived exports are still only read and nothing is written into a live
+    store. `--no-rerun` classifies without executing anything at all.
+    """
     args = list(sys.argv[1:] if argv is None else argv)
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if root not in sys.path:
         sys.path.insert(0, root)
+    rerun = "--no-rerun" not in args
+    args = [a for a in args if a != "--no-rerun"]
     export_dir = args[0] if args else os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..",
         "evidence_inv01_live", "exports")
-    print(json.dumps(diagnose(export_dir), indent=1, sort_keys=True))
+    if not rerun:
+        print(json.dumps(diagnose(export_dir, execute_fn=_refuse_rerun),
+                         indent=1, sort_keys=True))
+        return 0
+    from settlement import authority as _authority
+    from experiments.ad01 import s09_run_isolation as isolation
+    token = "s89-diagnose-%s" % uuid.uuid4().hex[:8]
+    database = isolation.create_disposable_db(token,
+                                              admin_dsn=isolation.admin_dsn())
+    try:
+        handle = _authority.authorize_study(
+            database.dsn, isolation.study_root_for(token), authorized=100000,
+            allocation_id="s89-diagnose-%s" % token)
+        counter = {"n": 0}
+
+        def granted(member, task, max_queries):
+            counter["n"] += 1
+            return current_tree_execute(
+                member, task, max_queries,
+                authority={"dsn": database.dsn,
+                           "allocation_id": handle.allocation_id,
+                           "operation_id": "%s-op%d" % (token,
+                                                       counter["n"])})
+
+        print(json.dumps(diagnose(export_dir, execute_fn=granted),
+                         indent=1, sort_keys=True))
+    finally:
+        isolation.drop_disposable_db(database,
+                                     admin_dsn=isolation.admin_dsn())
     return 0
+
+
+def _refuse_rerun(member, task, max_queries, authority=None):
+    """Classify-only stand-in. Executes nothing and says why."""
+    return {"ok": False, "stage": "gate",
+            "reason": "refused: rerun disabled, no bytes executed"}
 
 
 if __name__ == "__main__":

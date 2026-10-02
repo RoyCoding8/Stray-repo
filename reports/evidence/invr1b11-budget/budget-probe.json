@@ -1,0 +1,725 @@
+{
+ "allocation_id": "invr1b11-budget-ladder",
+ "authorised_sends": 6,
+ "catalog": {
+  "free_tier_ids": 32,
+  "model_count": 203,
+  "pinned_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "pinned_present": true,
+  "reason": null,
+  "relevant_entries": [
+   {
+    "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "owned_by": "Kilo API"
+   }
+  ],
+  "requested_model_ends_free": true,
+  "status": 200,
+  "verdict": "accepted"
+ },
+ "deadline_ms": 300000,
+ "ladder": [
+  16,
+  64,
+  256,
+  1024,
+  2048,
+  4096
+ ],
+ "max_response_characters": 512,
+ "prompt_characters": 982,
+ "prompt_sha256": "defd000933b84e0001cd9af771a8edeb5c7cd392d41e51ce7c4274b648c33487",
+ "prompt_source": "live.render_output_prompt(session.output_model_input(), [], 1) over experiments.ad01.w1_e1_campaign_r3._build_session('qual', 11)",
+ "provider": "nvidia",
+ "reasoning_effort": "none-sent",
+ "rebuild_note": "the six sends completed and the artifact write failed on a datetime; this file is rebuilt from the same store rows, with no further dispatch. Every operation id is settled, so a re-dispatch would replay the settled receipt and reach no wire.",
+ "rebuilt_from_store": true,
+ "retries_per_rung": 0,
+ "route": {
+  "endpoint": "http://localhost:4000/v1",
+  "provider": "nvidia",
+  "requested_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "resolved_model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "tier": "free"
+ },
+ "rungs": [
+  {
+   "dispatch_state": "observed",
+   "exposure": null,
+   "kind": "text",
+   "max_output_tokens": 16,
+   "operation_id": "invr1b11-budget-16",
+   "reconcile_state": "none",
+   "response_digest": "3",
+   "returned_route": {
+    "adapter": "http",
+    "contract": "settlement-gateway/http-chat-completions-v1",
+    "endpoint": "http://127.0.0.1:4000/v1",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "Nvidia",
+    "request_endpoint": "http://127.0.0.1:4000/v1",
+    "response_received": true,
+    "returned_endpoint": null,
+    "tier": "free"
+   },
+   "rows": {
+    "operations": [
+     {
+      "allocation_id": "invr1b11-budget-ladder",
+      "attempt_id": null,
+      "cancel_state": "none",
+      "created_at": "2026-10-01T04:18:24.186206-04:00",
+      "dispatch_state": "observed",
+      "execution_version": "",
+      "id": "invr1b11-budget-16",
+      "launcher_id": "gateway",
+      "payload": {
+       "_admitted_launcher": "gateway",
+       "_authority_version": 1,
+       "_dispatch_generation": 1,
+       "_receipt_actual_cost": null,
+       "_receipt_provenance": "gateway",
+       "budget_kind": "estimated-budget",
+       "effect": "model-inference",
+       "payload": {
+        "deadline_ms": 300000,
+        "max_output_tokens": 16,
+        "messages": [
+         {
+          "content": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+          "role": "user"
+         }
+        ],
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "reasoning_effort": null
+       },
+       "retries": 0,
+       "study_root": "invr1b11-budget"
+      },
+      "payload_digest": "913659bd6ab9441e0a6d758cd07bbe7a0c6ea4b42aee505cea6c346aa7ce38fd",
+      "provider_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "receipt_provenance": "gateway",
+      "reconcile_state": "none",
+      "reservation_id": "res-invr1b11-budget-16",
+      "settled": true,
+      "updated_at": "2026-10-01T04:18:46.971665-04:00"
+     }
+    ],
+    "receipt_conflicts": [],
+    "receipts": [
+     {
+      "content": {
+       "model_meta": {
+        "adapter": "http",
+        "contract": "settlement-gateway/http-chat-completions-v1",
+        "endpoint": "http://127.0.0.1:4000/v1",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "provider": "Nvidia",
+        "request_endpoint": "http://127.0.0.1:4000/v1",
+        "response_received": true,
+        "returned_endpoint": null,
+        "tier": "free"
+       },
+       "operation_id": "invr1b11-budget-16",
+       "stop_reason": "length",
+       "text": "We are given a Boolean rule task. The hypothesis class: \"affine over",
+       "usage": {
+        "billed": null,
+        "charge_scale": null,
+        "charge_units": null,
+        "input_tokens": 370,
+        "model_calls": 1,
+        "output_tokens": 16,
+        "provider_enforced_ceiling": null
+       }
+      },
+      "outcome": "success",
+      "provenance": "gateway",
+      "receipt_identity": "gw:invr1b11-budget-16"
+     }
+    ],
+    "reservations": [
+     {
+      "amount": 262
+     }
+    ]
+   },
+   "settled": true,
+   "stop_reason": "length",
+   "text_characters": 64,
+   "units_estimated_budget": 262,
+   "usage": {
+    "billed": "unknown",
+    "charge_scale": "unknown",
+    "charge_units": "unknown",
+    "input_tokens": 370,
+    "output_tokens": 16,
+    "provider_enforced_ceiling": "unknown"
+   }
+  },
+  {
+   "dispatch_state": "observed",
+   "exposure": null,
+   "kind": "text",
+   "max_output_tokens": 64,
+   "operation_id": "invr1b11-budget-64",
+   "reconcile_state": "none",
+   "response_digest": "8",
+   "returned_route": {
+    "adapter": "http",
+    "contract": "settlement-gateway/http-chat-completions-v1",
+    "endpoint": "http://127.0.0.1:4000/v1",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "Nvidia",
+    "request_endpoint": "http://127.0.0.1:4000/v1",
+    "response_received": true,
+    "returned_endpoint": null,
+    "tier": "free"
+   },
+   "rows": {
+    "operations": [
+     {
+      "allocation_id": "invr1b11-budget-ladder",
+      "attempt_id": null,
+      "cancel_state": "none",
+      "created_at": "2026-10-01T04:18:48.027550-04:00",
+      "dispatch_state": "observed",
+      "execution_version": "",
+      "id": "invr1b11-budget-64",
+      "launcher_id": "gateway",
+      "payload": {
+       "_admitted_launcher": "gateway",
+       "_authority_version": 1,
+       "_dispatch_generation": 1,
+       "_receipt_actual_cost": null,
+       "_receipt_provenance": "gateway",
+       "budget_kind": "estimated-budget",
+       "effect": "model-inference",
+       "payload": {
+        "deadline_ms": 300000,
+        "max_output_tokens": 64,
+        "messages": [
+         {
+          "content": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+          "role": "user"
+         }
+        ],
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "reasoning_effort": null
+       },
+       "retries": 0,
+       "study_root": "invr1b11-budget"
+      },
+      "payload_digest": "fcf3ad1a526a0ca13d2d61f2b479ee319135a6562c2d3e5c4d31be37a68e7c58",
+      "provider_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "receipt_provenance": "gateway",
+      "reconcile_state": "none",
+      "reservation_id": "res-invr1b11-budget-64",
+      "settled": true,
+      "updated_at": "2026-10-01T04:18:51.855565-04:00"
+     }
+    ],
+    "receipt_conflicts": [],
+    "receipts": [
+     {
+      "content": {
+       "model_meta": {
+        "adapter": "http",
+        "contract": "settlement-gateway/http-chat-completions-v1",
+        "endpoint": "http://127.0.0.1:4000/v1",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "provider": "Nvidia",
+        "request_endpoint": "http://127.0.0.1:4000/v1",
+        "response_received": true,
+        "returned_endpoint": null,
+        "tier": "free"
+       },
+       "operation_id": "invr1b11-budget-64",
+       "stop_reason": "length",
+       "text": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (bits) and 4 outputs (bits). The hypothesis class size is 224. We have observed 8 input-output pairs (x",
+       "usage": {
+        "billed": null,
+        "charge_scale": null,
+        "charge_units": null,
+        "input_tokens": 370,
+        "model_calls": 1,
+        "output_tokens": 64,
+        "provider_enforced_ceiling": null
+       }
+      },
+      "outcome": "success",
+      "provenance": "gateway",
+      "receipt_identity": "gw:invr1b11-budget-64"
+     }
+    ],
+    "reservations": [
+     {
+      "amount": 310
+     }
+    ]
+   },
+   "settled": true,
+   "stop_reason": "length",
+   "text_characters": 64,
+   "units_estimated_budget": 310,
+   "usage": {
+    "billed": "unknown",
+    "charge_scale": "unknown",
+    "charge_units": "unknown",
+    "input_tokens": 370,
+    "output_tokens": 64,
+    "provider_enforced_ceiling": "unknown"
+   }
+  },
+  {
+   "dispatch_state": "observed",
+   "exposure": null,
+   "kind": "text",
+   "max_output_tokens": 256,
+   "operation_id": "invr1b11-budget-256",
+   "reconcile_state": "none",
+   "response_digest": "5",
+   "returned_route": {
+    "adapter": "http",
+    "contract": "settlement-gateway/http-chat-completions-v1",
+    "endpoint": "http://127.0.0.1:4000/v1",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "Nvidia",
+    "request_endpoint": "http://127.0.0.1:4000/v1",
+    "response_received": true,
+    "returned_endpoint": null,
+    "tier": "free"
+   },
+   "rows": {
+    "operations": [
+     {
+      "allocation_id": "invr1b11-budget-ladder",
+      "attempt_id": null,
+      "cancel_state": "none",
+      "created_at": "2026-10-01T04:18:52.880220-04:00",
+      "dispatch_state": "observed",
+      "execution_version": "",
+      "id": "invr1b11-budget-256",
+      "launcher_id": "gateway",
+      "payload": {
+       "_admitted_launcher": "gateway",
+       "_authority_version": 1,
+       "_dispatch_generation": 1,
+       "_receipt_actual_cost": null,
+       "_receipt_provenance": "gateway",
+       "budget_kind": "estimated-budget",
+       "effect": "model-inference",
+       "payload": {
+        "deadline_ms": 300000,
+        "max_output_tokens": 256,
+        "messages": [
+         {
+          "content": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+          "role": "user"
+         }
+        ],
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "reasoning_effort": null
+       },
+       "retries": 0,
+       "study_root": "invr1b11-budget"
+      },
+      "payload_digest": "a9d49914142f02c651f4487605e746e1c0c7da698842abb7886ead8d679b4d6c",
+      "provider_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "receipt_provenance": "gateway",
+      "reconcile_state": "none",
+      "reservation_id": "res-invr1b11-budget-256",
+      "settled": true,
+      "updated_at": "2026-10-01T04:19:04.135710-04:00"
+     }
+    ],
+    "receipt_conflicts": [],
+    "receipts": [
+     {
+      "content": {
+       "model_meta": {
+        "adapter": "http",
+        "contract": "settlement-gateway/http-chat-completions-v1",
+        "endpoint": "http://127.0.0.1:4000/v1",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "provider": "Nvidia",
+        "request_endpoint": "http://127.0.0.1:4000/v1",
+        "response_received": true,
+        "returned_endpoint": null,
+        "tier": "free"
+       },
+       "operation_id": "invr1b11-budget-256",
+       "stop_reason": "length",
+       "text": " We need to produce a predictor from the hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". The hypothesis class has 224 functions. We have 8 observed input-output pairs. We need to commit one executable predictor (i.e., a set of 4 output functions) that fits the observed data (or at least is a valid hypothesis). Since we have no more queries, we must choose a hypothesis consistent with the observed data.\n\nWe need to output JSON: {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}\n\nEach spec defines one output bit as: const XOR (mask & x parity?) Actually \"affine over four inputs, optionally XORed with one pairwise input product\". Let's parse: The hypothesis class: affine over four inputs (i.e., linear function over GF(2) plus constant), optionally XORed with one pairwise input product (i.e., AND of two inputs? Over GF(2), product is AND). So each output is of form: c XOR (a1*x1 XOR a2*x2 XOR a3*x3 XOR a",
+       "usage": {
+        "billed": null,
+        "charge_scale": null,
+        "charge_units": null,
+        "input_tokens": 370,
+        "model_calls": 1,
+        "output_tokens": 256,
+        "provider_enforced_ceiling": null
+       }
+      },
+      "outcome": "success",
+      "provenance": "gateway",
+      "receipt_identity": "gw:invr1b11-budget-256"
+     }
+    ],
+    "reservations": [
+     {
+      "amount": 502
+     }
+    ]
+   },
+   "settled": true,
+   "stop_reason": "length",
+   "text_characters": 64,
+   "units_estimated_budget": 502,
+   "usage": {
+    "billed": "unknown",
+    "charge_scale": "unknown",
+    "charge_units": "unknown",
+    "input_tokens": 370,
+    "output_tokens": 256,
+    "provider_enforced_ceiling": "unknown"
+   }
+  },
+  {
+   "dispatch_state": "observed",
+   "exposure": null,
+   "kind": "text",
+   "max_output_tokens": 1024,
+   "operation_id": "invr1b11-budget-1024",
+   "reconcile_state": "none",
+   "response_digest": "2",
+   "returned_route": {
+    "adapter": "http",
+    "contract": "settlement-gateway/http-chat-completions-v1",
+    "endpoint": "http://127.0.0.1:4000/v1",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "Nvidia",
+    "request_endpoint": "http://127.0.0.1:4000/v1",
+    "response_received": true,
+    "returned_endpoint": null,
+    "tier": "free"
+   },
+   "rows": {
+    "operations": [
+     {
+      "allocation_id": "invr1b11-budget-ladder",
+      "attempt_id": null,
+      "cancel_state": "none",
+      "created_at": "2026-10-01T04:19:05.427646-04:00",
+      "dispatch_state": "observed",
+      "execution_version": "",
+      "id": "invr1b11-budget-1024",
+      "launcher_id": "gateway",
+      "payload": {
+       "_admitted_launcher": "gateway",
+       "_authority_version": 1,
+       "_dispatch_generation": 1,
+       "_receipt_actual_cost": null,
+       "_receipt_provenance": "gateway",
+       "budget_kind": "estimated-budget",
+       "effect": "model-inference",
+       "payload": {
+        "deadline_ms": 300000,
+        "max_output_tokens": 1024,
+        "messages": [
+         {
+          "content": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+          "role": "user"
+         }
+        ],
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "reasoning_effort": null
+       },
+       "retries": 0,
+       "study_root": "invr1b11-budget"
+      },
+      "payload_digest": "b0ffdfd25392e47c4e68c45bbaa33696dde35840d923f8fd70e1c1585af29eac",
+      "provider_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "receipt_provenance": "gateway",
+      "reconcile_state": "none",
+      "reservation_id": "res-invr1b11-budget-1024",
+      "settled": true,
+      "updated_at": "2026-10-01T04:19:33.851588-04:00"
+     }
+    ],
+    "receipt_conflicts": [],
+    "receipts": [
+     {
+      "content": {
+       "model_meta": {
+        "adapter": "http",
+        "contract": "settlement-gateway/http-chat-completions-v1",
+        "endpoint": "http://127.0.0.1:4000/v1",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "provider": "Nvidia",
+        "request_endpoint": "http://127.0.0.1:4000/v1",
+        "response_received": true,
+        "returned_endpoint": null,
+        "tier": "free"
+       },
+       "operation_id": "invr1b11-budget-1024",
+       "stop_reason": "length",
+       "text": "We need to output a JSON object with \"specs\": an array of 4 specs, each spec is an object with \"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]. The hypothesis class: affine over four inputs, optionally XORed with one pairwise input product. There are 4 outputs. So each output is a function of 4 inputs (bits). The function form: affine (i.e., linear + constant) over four inputs, optionally XORed with one pairwise input product. That means each output can be expressed as: f(x) = c XOR (sum_{i in mask} x_i) XOR (x_i * x_j) where mask is a subset of {0,1,2,3} (4 bits), and pair is either null or a pair [i,j] with i<j. The mask is a 4-bit integer 0..15 representing which inputs are included in the linear part. The constant is const (0 or 1). The pair is either null or [i,j] (0-indexed? Probably 0..3). The hypothesis class size 224: 4 outputs each with 224 possibilities? Actually class_size 224 might be total number of functions in the class for a single output? Let's check: affine over 4 inputs: there are 2^5 = 32 affine functions (including constant). Optionally XOR with one pairwise product: there are C(4,2)=6 possible pairs. So total 32 * 7 = 224 (including the option of no pair). Yes.\n\nWe have observed 8 examples: each example gives x (0..15) and y (4 bits). x is an integer 0..15 representing the 4-bit input vector (bits? Probably x0 is LSB? Usually in these tasks, x is a 4-bit integer where bit0 is least significant? We need to infer. The examples: \nx=1 -> binary 0001 -> y=[0,0,1,0]\nx=4 -> 0100 -> y=[0,0,0,0]\nx=7 -> 0111 -> y=[0,1,1,0]\nx=8 -> 1000 -> y=[1,1,1,0]\nx=11 -> 1011 -> y=[0,1,1,0]\nx=13 -> 1101 -> y=[0,1,1,0]\nx=14 -> 1110 -> y=[1,1,1,0]\nx=15 -> 1111 -> y=[0,0,1,1]\n\nWe need to find for each output (0..3) a function of the form: const XOR (mask & x parity) XOR (x_i & x_j) that matches all 8 examples.\n\nWe have 4 outputs. Let's denote inputs as bits: x3 x2 x1 x0 (since x=8 is 1000, so bit3=1). Usually x=1 -> 0001 (bit0=1). So we'll assume bit0 is LSB.\n\nLet's list inputs as vector (x3,x2,x1,x0) for each x:\n\nx=1: 0001 -> (0,0,0,1)\nx=4: 0100 -> (0,1,0,0)\nx=7: 0111 -> (0,1,1,1)\nx=8: 1000 -> (1,0,0,0)\nx=11: 1011 -> (1,0,1,1)\nx=13: 1101 -> (1,1,0,1)\nx=14: 1110 -> (1,1,1,0)\nx=15: 1111 -> (1,1,1,1)\n\nOutputs y0,y1,y2,y3 (index 0..3). Let's list each output column:\n\nOutput 0 (first element):\nx=1:0\nx=4:0\nx=7:0\nx=8:1\nx=11:0\nx=13:0\nx=14:1\nx=15:0\n\nOutput 1:\nx=1:0\nx=4:0\nx=7:1\nx=8:1\nx=11:1\nx=13:1\nx=14:1\nx=15:0\n\nOutput 2:\nx=",
+       "usage": {
+        "billed": null,
+        "charge_scale": null,
+        "charge_units": null,
+        "input_tokens": 370,
+        "model_calls": 1,
+        "output_tokens": 1024,
+        "provider_enforced_ceiling": null
+       }
+      },
+      "outcome": "success",
+      "provenance": "gateway",
+      "receipt_identity": "gw:invr1b11-budget-1024"
+     }
+    ],
+    "reservations": [
+     {
+      "amount": 1270
+     }
+    ]
+   },
+   "settled": true,
+   "stop_reason": "length",
+   "text_characters": 64,
+   "units_estimated_budget": 1270,
+   "usage": {
+    "billed": "unknown",
+    "charge_scale": "unknown",
+    "charge_units": "unknown",
+    "input_tokens": 370,
+    "output_tokens": 1024,
+    "provider_enforced_ceiling": "unknown"
+   }
+  },
+  {
+   "dispatch_state": "observed",
+   "exposure": null,
+   "kind": "text",
+   "max_output_tokens": 2048,
+   "operation_id": "invr1b11-budget-2048",
+   "reconcile_state": "none",
+   "response_digest": "5",
+   "returned_route": {
+    "adapter": "http",
+    "contract": "settlement-gateway/http-chat-completions-v1",
+    "endpoint": "http://127.0.0.1:4000/v1",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "provider": "Nvidia",
+    "request_endpoint": "http://127.0.0.1:4000/v1",
+    "response_received": true,
+    "returned_endpoint": null,
+    "tier": "free"
+   },
+   "rows": {
+    "operations": [
+     {
+      "allocation_id": "invr1b11-budget-ladder",
+      "attempt_id": null,
+      "cancel_state": "none",
+      "created_at": "2026-10-01T04:19:35.102940-04:00",
+      "dispatch_state": "observed",
+      "execution_version": "",
+      "id": "invr1b11-budget-2048",
+      "launcher_id": "gateway",
+      "payload": {
+       "_admitted_launcher": "gateway",
+       "_authority_version": 1,
+       "_dispatch_generation": 1,
+       "_receipt_actual_cost": null,
+       "_receipt_provenance": "gateway",
+       "budget_kind": "estimated-budget",
+       "effect": "model-inference",
+       "payload": {
+        "deadline_ms": 300000,
+        "max_output_tokens": 2048,
+        "messages": [
+         {
+          "content": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+          "role": "user"
+         }
+        ],
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "reasoning_effort": null
+       },
+       "retries": 0,
+       "study_root": "invr1b11-budget"
+      },
+      "payload_digest": "3809d9e7c25bca4f2016cd13ae4af10bb14174008f63c129c1b837f4965e2c4e",
+      "provider_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "receipt_provenance": "gateway",
+      "reconcile_state": "none",
+      "reservation_id": "res-invr1b11-budget-2048",
+      "settled": true,
+      "updated_at": "2026-10-01T04:20:26.343295-04:00"
+     }
+    ],
+    "receipt_conflicts": [],
+    "receipts": [
+     {
+      "content": {
+       "model_meta": {
+        "adapter": "http",
+        "contract": "settlement-gateway/http-chat-completions-v1",
+        "endpoint": "http://127.0.0.1:4000/v1",
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "provider": "Nvidia",
+        "request_endpoint": "http://127.0.0.1:4000/v1",
+        "response_received": true,
+        "returned_endpoint": null,
+        "tier": "free"
+       },
+       "operation_id": "invr1b11-budget-2048",
+       "stop_reason": "length",
+       "text": "We are given a task: we have a hypothesis class: \"affine over four inputs, optionally XORed with one pairwise input product\". There are 4 inputs (n_inputs=4) and 4 outputs (n_outputs=4). We have observed 8 input-output pairs (x from 0 to 15, but only 8 given). We need to commit one executable predictor built only from the public hypothesis class. The predictor is represented as a list of 4 specs, one per output. Each spec is an object with fields: \"const\" (0 or 1), \"mask\" (0..15), \"pair\" (null or [i,j] with i,j indices of inputs? Probably indices 0-3). The hypothesis class: affine over four inputs, optionally XORed with one pairwise input product. That means each output is a Boolean function of the 4 input bits. The function is of the form: f(x) = c XOR (sum_{i in mask} x_i) XOR (x_i * x_j) where mask is a subset of {0,1,2,3} (represented as a 4-bit mask 0..15), and pair is either null (no product term) or a pair [i,j] (i<j) indicating the product term x_i * x_j (AND). The sum is XOR (since affine over GF(2)). So each output is an affine function plus possibly one quadratic term (a single AND of two inputs). We have 4 outputs, each can have its own const, mask, pair.\n\nWe have 8 observations. We need to find a set of 4 specs that fit all observations. Since the hypothesis class size is 224, it's small enough that we could brute force conceptually, but we need to reason manually.\n\nLet's denote inputs as bits x0, x1, x2, x3 (where x is given as integer 0-15, presumably binary representation: x0 is LSB? Usually in such tasks, x is integer 0-15, and bits are x0 (LSB), x1, x2, x3 (MSB). We'll assume that: x = x0 + 2*x1 + 4*x2 + 8*x3. So for each observation, we can compute the bits.\n\nObservations:\n1. x=1 -> binary 0001 -> x0=1, x1=0, x2=0, x3=0. y=[0,0,1,0]\n2. x=4 -> 0100 -> x0=0, x1=0, x2=1, x3=0. y=[0,0,0,0]\n3. x=7 -> 0111 -> x0=1, x1=1, x2=1, x3=0. y=[0,1,1,0]\n4. x=8 -> 1000 -> x0=0, x1=0, x2=0, x3=1. y=[1,1,1,0]\n5. x=11 -> 1011 -> x0=1, x1=1, x2=0, x3=1. y=[0,1,1,0]\n6. x=13 -> 1101 -> x0=1, x1=0, x2=1, x3=1. y=[0,1,1,0]\n7. x=14 -> 1110 -> x0=0, x1=1, x2=1, x3=1. y=[1,1,1,0]\n8. x=15 -> 1111 -> x0=1, x1=1, x2=1, x3=1. y=[0,0,1,1]\n\nWe need to find for each output k (0..3) a function f_k(x) = const_k XOR (mask_k dot x) XOR (x_i * x_j if pair_k not null).\n\nLet's list the outputs as columns:\n\nOutput 0 (y0): [0,0,0,1,0,0,1,0] for x=1,4,7,8,11,13,14,15.\nOutput 1 (y1): [0,0,1,1,1,1,1,0]\nOutput 2 (y2): [1,0,1,1,1,1,1,1]\nOutput 3 (y3): [0,0,0,0,0,0,0,1]\n\nWe need to find affine + one product term for each.\n\nLet's first see if any output is purely affine (pair=null). We can test linearity. For affine functions, the truth table is linear (plus constant). We can check if the function satisfies f(x) XOR f(y) XOR f(z) = f(x XOR y XOR z) for affine? Actually affine means f(x) = c + L(x) where L is linear. So f(x) + f(y) + f(z) + f(x+y+z) = 0? For linear L, L(x)+L(y)+L(z)+L(x+y+z)=0. For affine, f(x)=c+L(x), then f(x)+f(y)+f(z)+f(x+y+z) = 4c + L(x)+L(y)+L(z)+L(x+y+z) = 0 (since 4c=0 mod2). So affine functions satisfy that the sum over any 4 points that sum to zero is zero. But we have only 8 points, not all 16.\n\nAlternatively, we can try to fit each output by considering the possibility of a product term. Since the hypothesis class is small, we can attempt to deduce.\n\nLet's write the input bits for each observation:\n\nIndex: x, x0,x1,x2,x3, y0,y1,y2,y3\n1: 1 -> 1,0,0,0 -> 0,0,1,0\n2: 4 -> 0,0,1,0 -> 0,0,0,0\n3: 7 -> 1,1,1,0 -> 0,1,1,0\n4: 8 -> 0,0,0,1 -> 1,1,1,0\n5: 11-> 1,1,0,1 -> 0,1,1,0\n6: 13-> 1,0,1,1 -> 0,1,1,0\n7: 14-> 0,1,1,1 -> 1,1,1,0\n8: 15-> 1,1,1,1 -> 0,0,1,1\n\nWe can try to find patterns.\n\nNotice that y3 is 0 for all except x=15 where it's 1. So y3 = 1 only when all inputs are 1. That is exactly the AND of all four inputs? But the hypothesis class only allows a single pairwise product, not a 4-way product. However, the affine part can combine. But y3 is 0 for 7 observations, 1 for one. Could it be affine? An affine function that is 0 on 7 points and 1 on one point? Over GF(2), an affine function is either balanced (8 zeros, 8 ones) or constant. Since we have 8 observations, but the full domain is 16. The function could be affine on the whole domain but we only see 8 points. If it's affine, the number of ones on the whole domain is either 0,8,16. Here we see 1 one among 8 points. That's possible if the affine function has 8 ones total, and we happened to see only 1. But we need to check consistency with the observed points. Let's see if there is an affine function that matches these 8 points. We have 8 equations. An affine function has 5 parameters (const + 4 linear coefficients). So we can solve if the points are affinely independent? But we have 8 points, so it's overdetermined. Let's test if y3 can be affine. We can try to find const, mask such that for all observed x, y3 = const XOR (mask dot x). We have 8 equations. Let's list the mask dot x for each x. Mask is a 4-bit number. We can try to see if there's a solution.\n\nWe can set up linear equations over GF(2). Let const = c, mask bits = m0,m1,m2,m3. Then y = c + m0*x0 + m1*x1 + m2*x2 + m3*x3.\n\nWe have 8 equations. We can attempt to solve for c,m. Since we have 5 unknowns, we can pick 5 independent equations and see if the rest hold.\n\nLet's list the vectors (x0,x1,x2,x3) and y3:\n(1,0,0,0):0\n(0,0,1,0):0\n(1,1,1,0):0\n(0,0,0,1):0\n(1,1,0,1):0\n(1,0,1,1):0\n(0,1,1,1):",
+       "usage": {
+        "billed": null,
+        "charge_scale": null,
+        "charge_units": null,
+        "input_tokens": 370,
+        "model_calls": 1,
+        "output_tokens": 2048,
+        "provider_enforced_ceiling": null
+       }
+      },
+      "outcome": "success",
+      "provenance": "gateway",
+      "receipt_identity": "gw:invr1b11-budget-2048"
+     }
+    ],
+    "reservations": [
+     {
+      "amount": 2294
+     }
+    ]
+   },
+   "settled": true,
+   "stop_reason": "length",
+   "text_characters": 64,
+   "units_estimated_budget": 2294,
+   "usage": {
+    "billed": "unknown",
+    "charge_scale": "unknown",
+    "charge_units": "unknown",
+    "input_tokens": 370,
+    "output_tokens": 2048,
+    "provider_enforced_ceiling": "unknown"
+   }
+  },
+  {
+   "dispatch_state": "unresolved",
+   "exposure": null,
+   "kind": "lost-response",
+   "max_output_tokens": 4096,
+   "operation_id": "invr1b11-budget-4096",
+   "reason": "gateway read timed out",
+   "reconcile_state": "unresolved",
+   "rows": {
+    "operations": [
+     {
+      "allocation_id": "invr1b11-budget-ladder",
+      "attempt_id": null,
+      "cancel_state": "none",
+      "created_at": "2026-10-01T04:20:27.347424-04:00",
+      "dispatch_state": "unresolved",
+      "execution_version": "",
+      "id": "invr1b11-budget-4096",
+      "launcher_id": "gateway",
+      "payload": {
+       "_admitted_launcher": "gateway",
+       "_authority_version": 1,
+       "_dispatch_generation": 1,
+       "_receipt_actual_cost": null,
+       "_receipt_provenance": "gateway",
+       "budget_kind": "estimated-budget",
+       "effect": "model-inference",
+       "payload": {
+        "deadline_ms": 300000,
+        "max_output_tokens": 4096,
+        "messages": [
+         {
+          "content": "You are completing one finite Boolean-rule task. Public task input: {\"hypothesis_class\":{\"class_digest\":\"285113caf4ab\",\"class_size\":224,\"form\":\"affine over four inputs, optionally XORed with one pairwise input product\",\"n_inputs\":4,\"n_outputs\":4},\"instruction\":\"Commit one executable predictor built only from the public hypothesis class. The query budget is spent; no further probes are available.\",\"instrument\":\"boolean-rule-v1\",\"max_queries\":8,\"observed\":[{\"x\":1,\"y\":[0,0,1,0]},{\"x\":4,\"y\":[0,0,0,0]},{\"x\":7,\"y\":[0,1,1,0]},{\"x\":8,\"y\":[1,1,1,0]},{\"x\":11,\"y\":[0,1,1,0]},{\"x\":13,\"y\":[0,1,1,0]},{\"x\":14,\"y\":[1,1,1,0]},{\"x\":15,\"y\":[0,0,1,1]}],\"remaining\":0,\"split\":\"qual\",\"task_id\":\"rule-qual-194dba80c87f\"}. Permitted history: []. Attempt 1 of 2. Reply with exactly one JSON object and nothing else, shaped {\"specs\": [{\"const\": 0|1, \"mask\": 0..15, \"pair\": null|[i,j]} x4]}. Do not include targets, private answers, explanations, or code fences. Keep the response under 512 characters.",
+          "role": "user"
+         }
+        ],
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "reasoning_effort": null
+       },
+       "retries": 0,
+       "study_root": "invr1b11-budget"
+      },
+      "payload_digest": "98d205f7a63788802f57c3435de31aedb8ec5a77d9c643ffcfb403d5b18aaa52",
+      "provider_id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "receipt_provenance": "gateway",
+      "reconcile_state": "unresolved",
+      "reservation_id": "res-invr1b11-budget-4096",
+      "settled": false,
+      "updated_at": "2026-10-01T04:21:27.920364-04:00"
+     }
+    ],
+    "receipt_conflicts": [],
+    "receipts": [
+     {
+      "content": {
+       "error": "gateway read timed out",
+       "error_kind": "timeout",
+       "operation_id": "invr1b11-budget-4096",
+       "response_class": "lost-response",
+       "response_digest": null,
+       "response_operation_id": "invr1b11-budget-4096",
+       "response_received": false,
+       "response_status": null,
+       "retryable": true,
+       "route_error": null,
+       "usage": {
+        "billed": null,
+        "charge_scale": null,
+        "charge_units": null,
+        "input_tokens": null,
+        "output_tokens": null
+       }
+      },
+      "outcome": "unknown",
+      "provenance": "gateway",
+      "receipt_identity": "gw:invr1b11-budget-4096:lost-response"
+     }
+    ],
+    "reservations": [
+     {
+      "amount": 4342
+     }
+    ]
+   },
+   "settled": false,
+   "units_estimated_budget": 4342,
+   "usage": {
+    "billed": "unknown",
+    "charge_scale": "unknown",
+    "charge_units": "unknown",
+    "input_tokens": "unknown",
+    "output_tokens": "unknown",
+    "provider_enforced_ceiling": "unknown"
+   }
+  }
+ ],
+ "schema": "invr1b11-budget-probe-v1",
+ "sends_used": 6,
+ "study_root": "invr1b11-budget",
+ "tier": "free",
+ "units_per_rung": {
+  "1024": 1270,
+  "16": 262,
+  "2048": 2294,
+  "256": 502,
+  "4096": 4342,
+  "64": 310
+ },
+ "written_at": "2026-10-01T08:22:14Z"
+}

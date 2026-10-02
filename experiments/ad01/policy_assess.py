@@ -10,12 +10,20 @@ import time
 from settlement import db, store
 from settlement.common import Command, ConflictPayload, ResultCode
 
-from . import method_exec, packet, policy_step, records, seeds, trajectory, worlds
+from . import (method_exec, packet, policy_action, policy_step, records,
+               seeds, trajectory, worlds)
 
 
 PANEL_PROTOCOL = "s09-policy-assess-01"
 EVALUATOR_VERSION = "s09-policy-eval-01"
 _DEFAULT_MAX_STEPS = 6
+
+# Sealed panel assessment measures whether a policy preserved task results.
+# A learner-revision proposal is a governance event about the learner and
+# has no task effect, so it is refused here. `assessment_profile` refuses
+# the same act for the same reason, from the same constant, because one act
+# with two effects under one profile name is not a profile difference.
+REVISION_REFUSAL_REASON = policy_action.REVISION_NOT_A_TASK_EFFECT
 
 
 def _digest(value: object) -> str:
@@ -197,7 +205,8 @@ def _elapsed_ms(started: int) -> int:
     return max(1, int(math.ceil((time.perf_counter_ns() - started) / 1_000_000)))
 
 
-def _candidate_from_action(task: dict, action: dict) -> tuple[dict | None, int, int, int, str | None]:
+def _candidate_from_action(task: dict, action: dict,
+                           authority: dict | None = None) -> tuple[dict | None, int, int, int, str | None]:
     kind = action["kind"]
     inputs = dict(action.get("inputs") or {})
     if kind not in ("construct_method", "use_method"):
@@ -217,10 +226,16 @@ def _candidate_from_action(task: dict, action: dict) -> tuple[dict | None, int, 
     if isinstance(source, str) and source:
         entry = inputs.get("entry", "ENTRY")
         member = {"method_source": source, "entry": entry}
+        if not (authority and authority.get("dsn")
+                and authority.get("allocation_id")
+                and authority.get("operation_id")):
+            return None, 0, 0, 0, (
+                "refused: a method executes only under a durable store, an"
+                " allocation and an operation identity")
         try:
             method_exec.verify_member(member)
             result = method_exec.run_member_out_of_process(
-                member, exposed, max_queries=max_queries)
+                member, exposed, max_queries=max_queries, **authority)
         except Exception as exc:
             return None, 0, 0, _elapsed_ms(started), str(exc)
         return result.get("candidate"), int(result.get("queries", 0)), 0, \
@@ -242,7 +257,8 @@ def _candidate_from_action(task: dict, action: dict) -> tuple[dict | None, int, 
         _elapsed_ms(started), None
 
 
-def _effect(task: dict, action: dict) -> tuple[dict, dict | None, int, int, int]:
+def _effect(task: dict, action: dict,
+            authority: dict | None = None) -> tuple[dict, dict | None, int, int, int]:
     kind = action["kind"]
     if action.get("target") != task["task_id"]:
         return {"kind": kind, "accepted": False,
@@ -252,8 +268,9 @@ def _effect(task: dict, action: dict) -> tuple[dict, dict | None, int, int, int]
                 "reason": "model execution is unavailable in sealed assessment"}, None, 0, 0, 0
     if kind == "propose_revision":
         return {"kind": kind, "accepted": False,
-                "reason": "revision proposal is not a panel task effect"}, None, 0, 0, 0
-    candidate, queries, model_calls, wall_ms, failure = _candidate_from_action(task, action)
+                "reason": REVISION_REFUSAL_REASON}, None, 0, 0, 0
+    candidate, queries, model_calls, wall_ms, failure = _candidate_from_action(
+        task, action, authority)
     if failure:
         return {"kind": kind, "accepted": False, "reason": failure}, None, wall_ms, queries, model_calls
     if kind in ("diagnose", "stop"):
@@ -264,10 +281,43 @@ def _effect(task: dict, action: dict) -> tuple[dict, dict | None, int, int, int]
     return {"kind": kind, "accepted": True}, candidate, wall_ms, queries, model_calls
 
 
-def _run_arm(policy_record: dict, task_ids: list[str], rule: dict) -> dict:
+def policy_assess_attempt_id(policy_record: dict) -> str:
+    """A stable name for one arm of one assessment, from its own bytes.
+
+    Derived from the policy source digest, so the same arm run twice
+    addresses the same operations and the second run replays the first
+    run's receipts rather than dispatching again.
+    """
+    source = str((policy_record or {}).get("policy_source") or "")
+    return "policy-assess-%s" % _source_digest(source)[:16]
+
+
+def _authority(dsn: str | None, allocation_id: str | None, attempt: str,
+               task_id: str, step_index: int, role: str) -> dict:
+    """Authority for one cell of one arm, or an empty dict for a no-store arm."""
+    if not (dsn and allocation_id):
+        return {}
+    return {"dsn": dsn, "allocation_id": allocation_id,
+            "operation_id": "%s-%s-%s-k%d" % (attempt, task_id, role,
+                                             step_index)}
+
+
+def _run_arm(policy_record: dict, task_ids: list[str], rule: dict, *,
+             dsn: str | None = None,
+             allocation_id: str | None = None) -> dict:
+    """Run one policy over a panel, each cell under its own operations.
+
+    Authority is threaded rather than assumed. Every cell names its step and
+    its chosen method as two distinct operations, so a replay of the same
+    arm reads back its own settled receipts instead of executing again,
+    and the policy's decision is recorded separately from the effect it
+    authorized. Without a store there is no authority to name, so every cell
+    refuses and the arm reports refusals rather than decisions.
+    """
     arm = _empty_arm(len(task_ids))
     reports = []
     seq = 0
+    attempt = policy_assess_attempt_id(policy_record)
     for task_id in task_ids:
         task = worlds.load_task(worlds.FROZEN_DIR, task_id)
         state = {}
@@ -285,7 +335,10 @@ def _run_arm(policy_record: dict, task_ids: list[str], rule: dict) -> dict:
             previous = dict(state)
             started = time.perf_counter_ns()
             try:
-                stepped = policy_step.run_policy_step(policy_record, view, state)
+                stepped = policy_step.run_policy_step(
+                    policy_record, view, state,
+                    **_authority(dsn, allocation_id, attempt, task_id,
+                                 step_no, "step"))
             except Exception as exc:
                 elapsed = _elapsed_ms(started)
                 arm["resources"]["step_calls"] += 1
@@ -307,7 +360,10 @@ def _run_arm(policy_record: dict, task_ids: list[str], rule: dict) -> dict:
                                       "target": task_id if action["target"] != task_id
                                       else action["target"],
                                       "state_digest": _state_digest(state)})
-            effect, candidate, effect_ms, queries, model_calls = _effect(task, action)
+            effect, candidate, effect_ms, queries, model_calls = _effect(
+                task, action,
+                _authority(dsn, allocation_id, attempt, task_id, step_no,
+                           "method"))
             arm["effects"].append(effect)
             arm["resources"]["queries"] += queries
             arm["resources"]["model_calls"] += model_calls
@@ -414,7 +470,16 @@ def assess_policy(dsn: str, *, proposal_id: str, candidate_source: str,
                   incumbent_source: str, incumbent_digest: str,
                   incumbent_artifact: dict, panel: dict, rule: dict,
                   scope: dict, protocol_id: str,
-                  evaluator_version: str = EVALUATOR_VERSION) -> dict:
+                  evaluator_version: str = EVALUATOR_VERSION,
+                  allocation_id: str | None = None) -> dict:
+    """Assess a proposed policy against an incumbent on a frozen panel.
+
+    `allocation_id` is the authority the arms' executions run under. It is
+    explicit rather than derived here because this module is the legacy
+    sealed profile and a store alone is not an allocation; a caller that has
+    no allocation gets refusals recorded on the panel, which is the truth
+    for an assessment with nothing to execute under.
+    """
     frozen = _read_journal(dsn, _protocol_request_id(proposal_id))
     if frozen is None:
         raise ValueError("policy protocol is not frozen for proposal %r" % proposal_id)
@@ -452,8 +517,12 @@ def assess_policy(dsn: str, *, proposal_id: str, candidate_source: str,
                         "policy_source": candidate_source}
     incumbent_record = {"artifact": dict(incumbent_artifact["artifact"]),
                         "policy_source": incumbent_source}
-    candidate_arm = _run_arm(candidate_record, list(panel["task_ids"]), supplied_rule)
-    incumbent_arm = _run_arm(incumbent_record, list(panel["task_ids"]), supplied_rule)
+    candidate_arm = _run_arm(candidate_record, list(panel["task_ids"]),
+                            supplied_rule, dsn=dsn,
+                            allocation_id=allocation_id)
+    incumbent_arm = _run_arm(incumbent_record, list(panel["task_ids"]),
+                             supplied_rule, dsn=dsn,
+                             allocation_id=allocation_id)
     outcome, reason = _decision(candidate_arm, incumbent_arm, supplied_rule)
     record = {"proposal_id": proposal_id, "attempt_id": attempt_id,
               "outcome": outcome, "reason": reason,
