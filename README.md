@@ -10,6 +10,8 @@ Clone `the configured repository` and attach [WORKER-PROMPT.md](WORKER-PROMPT.md
 
 The initial assignment is **S0-S3**, ending with a reviewable first learning system and a matched-resource comparison of ordinary baseline behavior, retained textual lessons and retained executable methods. S4-S7 remain specified future slices rather than part of this first assignment.
 
+Parallel subagents and Git worktrees are authorized. [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) defines a coordinator-led process with contract-first task decomposition, exclusive file ownership, isolated test resources, independent review and sequential integration. It also describes the assignment's difficulty: demanding systems engineering with bounded design discretion, plus an empirical learning experiment.
+
 ## Complete design packet
 
 | File | Role |

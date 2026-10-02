@@ -6,7 +6,7 @@
 - The human's current assignment takes precedence over historical design notes. The first assignment is `WORKER-PROMPT.md`: S0-S3, followed by review.
 - Commit and push to the assigned branch on `the configured repository` are authorized. No force-push, history rewriting, unrelated checkout edits, or automatic merge into another agent's branch.
 - The design/review role evaluates results and records findings; it does not take over implementation unless the human requests that change of role.
-- Ask before spawning subagents. Review available skills and project context, but do not require uncommitted local skills or memories to understand the assignment.
+- Parallel subagents and Git worktrees are authorized for the S0-S3 assignment. Follow `IMPLEMENTATION-WORKFLOW.md`; do not ask again for that permission. Each delegation must name its worktree, owned paths, requirement IDs and exact skills/design sections to load. Review available skills and project context, but do not require uncommitted local skills or memories to understand the assignment.
 
 ## Work quality
 
@@ -19,4 +19,4 @@
 
 ## Collaboration
 
-Read `COLLABORATION.md` before pulling another agent's changes or sending work for review. Inspect status first, preserve uncommitted work, use fast-forward-only pulls on your own branch, and never overwrite the other role's branch. Apply review fixes as new commits with the finding IDs they address.
+Read `IMPLEMENTATION-WORKFLOW.md` for team execution and `COLLABORATION.md` for external handoffs. The coordinator alone writes the integration branch; specialists use separate task branches and worktrees. Inspect status first, preserve uncommitted work, use fast-forward-only pulls on your own branch, and never overwrite another owner's branch. Integrate approved task commits with explicit merges and rerun affected checks. Apply review fixes as new commits with the finding IDs they address.

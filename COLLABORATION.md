@@ -8,9 +8,12 @@ The remote is `the configured repository`. Git carries the specification, implem
 |---|---|
 | `codex/architecture-handoff` | Initial design/review handoff. Contains the complete seed specification and worker assignment. |
 | `codex/implementation-s0-s3` | Implementation agent. Starts from the seed; receives implementation and review-fix commits. |
+| `codex/task-<task-id>` | One implementation specialist per task. Created in its own worktree; integrated only by the coordinator. |
 | `codex/review-s0-s3-01` | First reviewer branch, created from the exact implementation commit being reviewed. Contains review findings and any justified design clarifications. |
 
 Increment the review suffix for subsequent passes. The review branch is not a second implementation line. Do not let two agents concurrently write the same branch.
+
+The human authorizes parallel implementation specialists. [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) defines task contracts, worktrees, isolated test resources, shared-file ownership, internal review and integration gates. This document governs the external implementation/reviewer exchange. The integration coordinator remains responsible for the complete result produced by its specialists.
 
 Before work, inspect the current branch, status and origin, then fetch. On an existing local branch, use a fast-forward-only pull. Divergence is a condition to inspect, not permission for a reset or force-push. Keep commits additive and preserve their provenance.
 
@@ -18,6 +21,7 @@ Before work, inspect the current branch, status and origin, then fetch. On an ex
 
 The implementation agent maintains these files:
 
+- `reports/PLAN.md`: coordinator-owned task graph, ownership, requirement IDs, base commits, branches/worktrees and gates. Specialists use separate `reports/workstreams/<task-id>.md` files.
 - `reports/IMPLEMENTATION-STATUS.md`: S0-S3 status, implemented paths, entry points, setup/run commands, remaining work, and environment limitations.
 - `reports/VERIFICATION.md`: requirement-to-check map, exact commands, tested source revision, real/fake dependencies, results, reproduction instructions, and experiment method/results. Link bounded evidence files rather than pasting unlimited logs.
 - `reports/DECISIONS.md`: material deviations or resolved ambiguities, each with an identifier, affected requirement, reason, evidence and consequence. Record “None” when there are none.

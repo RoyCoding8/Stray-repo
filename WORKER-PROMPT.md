@@ -8,7 +8,7 @@ Implement the assignment below, verify it, make coherent commits, and push your 
 
 ## 1. Start here
 
-Read `AGENTS.md` and `COLLABORATION.md`. Confirm the checkout's origin and inspect its status before changing anything. Fetch origin. The seed design is on `origin/codex/architecture-handoff`. For the first implementation, create `codex/implementation-s0-s3` from that seed. If that implementation branch already exists, inspect and continue it rather than replacing its history. Preserve any existing work; never reset, clean, or force-push to make the checkout match your expectations.
+Read `AGENTS.md`, `IMPLEMENTATION-WORKFLOW.md` and `COLLABORATION.md`. Confirm the checkout's origin and inspect its status before changing anything. Fetch origin. The seed design is on `origin/codex/architecture-handoff`. For the first implementation, create `codex/implementation-s0-s3` from that seed. If that implementation branch already exists, inspect and continue it rather than replacing its history; deliberately merge applicable new handoff instructions after reviewing the diff. Preserve any existing work; never reset, clean, or force-push to make the checkout match your expectations.
 
 All required design documents are committed under `docs/design/`. Read them in this order:
 
@@ -43,13 +43,19 @@ Do not downgrade generated execution to an unrestricted subprocess when a sandbo
 
 ## 4. How to work
 
-Maintain a task list and implement coherent vertical slices. Make routine implementation choices yourself. Use compact functions and meaningful database constraints. Avoid inline comments, duplicated logic, generic wrapper layers, unused extension points, and tests that merely repeat implementation expressions. Keep operator wording truthful and specific.
+Act as the implementation coordinator. The human authorizes parallel subagents and Git worktrees, and token expenditure is not a limiting consideration for this implementation assignment. Follow `IMPLEMENTATION-WORKFLOW.md`: establish common contracts, construct a dependency graph, delegate bounded tasks into separate worktrees, and integrate them through explicit review and test gates. Do not request subagent permission again for this assignment.
+
+Keep `reports/PLAN.md` with task ownership, requirement IDs, dependencies, base commits, branches/worktrees, file ownership and acceptance checks. Reserve the integration branch and shared contracts/configuration for the coordinator. Give every specialist the exact design sections and available skills to read. Specialists commit to their own branches and write separate task reports; the coordinator owns the consolidated reports and final integrated verification.
+
+Parallelize independent engineering and adversarial review; sequence shared contract decisions, migrations and integration. Provide isolated test databases/namespaces, ports, runtime state and workspaces. A Git worktree does not isolate these resources by itself. Start with a coordinator, two or three implementation specialists and a validation/review specialist where supported, then adjust the team to ready work and actual machine capacity.
+
+This is bounded engineering design, not a fully enumerated coding recipe: the semantics and technology direction are selected, while concrete schemas, interfaces, compatibility, fixtures, UI and experimental implementation still require judgment. Make routine choices yourself. Use compact functions and meaningful database constraints. Avoid inline comments, duplicated logic, generic wrapper layers, unused extension points, and tests that merely repeat implementation expressions. Keep operator wording truthful and specific.
 
 Follow the substantive design unless a concrete contradiction, dependency incompatibility, or measured failure requires a change. Record such a change with the affected requirement, evidence, selected alternative and consequence in `reports/DECISIONS.md`. Do not silently rewrite a requirement to make a failing test pass. For an unresolved material conflict, finish independent work and leave a precise question in the review request.
 
 Check primary documentation for the actual locked dependency versions. Do not assume every API in current online documentation exists in an older package pin. Commit the tested lock, runtime/image metadata, and reproducible setup instructions. Do not copy source code or development databases from the old project.
 
-Subagents require the human's permission first. They are not necessary to complete this assignment. An unavailable optional plugin or skill is not a reason to abandon otherwise feasible implementation; use the committed specification directly.
+An unavailable optional plugin or skill is not a reason to abandon otherwise feasible implementation; use the committed specification directly. If the environment cannot run subagents, preserve the dependency-aware workflow and execute it serially, with the limitation reported.
 
 ## 5. Gateway, resources and unavailable infrastructure
 
