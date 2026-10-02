@@ -1,0 +1,162 @@
+{
+  "acquired": {
+    "artifact_digest": "0c0ba90f2c54684f5684e45b585a0468a0a3761f4a1450824a1bc6fc1ef434c6",
+    "response_digest": "9897261f5cac393197e1af524dfd26edfae59e57aedf763b156ebc249b719e28",
+    "retention_digest": "5038393bc99e7a42e23e13e968ab79a4a08eb38576ee74d13fff99ab7c8d32ce",
+    "selected": 1
+  },
+  "arm": "A",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "artifact_digest": "0c0ba90f2c54684f5684e45b585a0468a0a3761f4a1450824a1bc6fc1ef434c6",
+    "directive_source": "fallback-frozen-selector",
+    "native": true,
+    "procedure": "greedy",
+    "reason": "first-parseable-lessons",
+    "response_digest": "9897261f5cac393197e1af524dfd26edfae59e57aedf763b156ebc249b719e28",
+    "selector": {
+      "mean_u": 0.712662,
+      "method": "greedy"
+    }
+  },
+  "costs": {
+    "elapsed_s": 0.001,
+    "invocations_used": 0,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 16,
+    "validation_used": 0
+  },
+  "family": "software",
+  "initial": {
+    "measure": 13
+  },
+  "inputs_digest": {
+    "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+    "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+    "directive_artifact": "0c0ba90f2c54684f5684e45b585a0468a0a3761f4a1450824a1bc6fc1ef434c6",
+    "fixture": "9c0cfdbc7eafa3ab6c422302b01afdf7d39cc6703a59a08ef801011df526b759"
+  },
+  "invocations": [],
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "native_detail": {
+    "accepted": 10,
+    "final_verdict": {
+      "initial_measure": 13,
+      "measure": 3,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    }
+  },
+  "operator": null,
+  "oracle_queries": [
+    {
+      "measure": 13,
+      "reason": "ok-incumbent",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 12,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 11,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 10,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 9,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 8,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 7,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 6,
+      "reason": "witness-lost-agree",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 6,
+      "reason": "witness-lost-agree",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 6,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 5,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 4,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 3,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 2,
+      "reason": "observation-missing",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 2,
+      "reason": "witness-lost-agree",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 2,
+      "reason": "witness-lost-agree",
+      "verdict": "not_preserved"
+    }
+  ],
+  "result": {
+    "best_measure": 3,
+    "delivered_digest": "12e39bb25ced4f784385bb7ad53e524f0270cd0d4c253225f6aa79f582eb52a8",
+    "disposition": "improved",
+    "improvement_u": 0.769231,
+    "reason": "budget-exhausted",
+    "verified": true
+  },
+  "stage": "evaluation",
+  "task_id": "sw-eva-02",
+  "trial": [
+    {
+      "assignment_id": "rpr-acq-B-live3:reference:sw-eva-02",
+      "invocation_ref": "",
+      "outcome": "success",
+      "protocol_id": "rpr-acq-B-live3"
+    },
+    {
+      "assignment_id": "rpr-acq-C-live3:reference:sw-eva-02",
+      "invocation_ref": "",
+      "outcome": "success",
+      "protocol_id": "rpr-acq-C-live3"
+    }
+  ],
+  "trial_group": "protected-eval"
+}

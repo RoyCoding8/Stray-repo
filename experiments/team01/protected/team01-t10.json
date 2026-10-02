@@ -1,0 +1,84 @@
+[
+ {
+  "input": {
+   "code": 116,
+   "vals": [
+    105,
+    112,
+    -20
+   ]
+  },
+  "expected": {
+   "mode": "b",
+   "result": 112
+  }
+ },
+ {
+  "input": {
+   "code": 155,
+   "vals": [
+    42
+   ]
+  },
+  "expected": {
+   "mode": "b",
+   "result": 42
+  }
+ },
+ {
+  "input": {
+   "code": 31,
+   "vals": [
+    42,
+    88,
+    -6
+   ]
+  },
+  "expected": {
+   "mode": "a",
+   "result": -6
+  }
+ },
+ {
+  "input": {
+   "code": 81,
+   "vals": [
+    -15,
+    120,
+    157,
+    147,
+    16
+   ]
+  },
+  "expected": {
+   "mode": "a",
+   "result": -15
+  }
+ },
+ {
+  "input": {
+   "code": 72,
+   "vals": [
+    143,
+    200,
+    -19
+   ]
+  },
+  "expected": {
+   "mode": "a",
+   "result": -19
+  }
+ },
+ {
+  "input": {
+   "code": 183,
+   "vals": [
+    107
+   ]
+  },
+  "expected": {
+   "mode": "b",
+   "result": 107
+  }
+ }
+]

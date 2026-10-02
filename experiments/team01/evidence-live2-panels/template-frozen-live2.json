@@ -1,0 +1,27 @@
+{
+  "template": "live2-build-1",
+  "version": "coordination-template/2",
+  "directive": "For spec with units cm=10,m=1000,mm=1 as in team01-t05, repair solo as single worker: single and alternatives both reached 4/4 success with 0 repairs. For spec with op window_sum as in team01-t13, repair solo: single and alternatives both reached 4/4 success with 0 repairs. Do not decompose these tasks: decompose on the units task still ended success but workers produced interface misses of 0.45,1.79 vs 447.0,17.89 and 125.9,36.4 vs 125900.0,364.0 and 447000000 vs 447.0. For spec with list_keys a:xs,b:ys ops a:sum,b:prod rule key flag as in team01-t09, treat as high-risk in any organization: alternatives failed 0/4 with 1 repair, single failed despite 4/4 with 1 repair, decompose failed despite 4/4 with 1 repair. Before submitting each worker must verify: convert both directions want=m and want=cm on readings like m 447 + cm 1789 and m 1259 + cm 364; confirm window_sum output 4/4; confirm flag true selects mode b with prod of ys e.g. 31122000 and 352206292, and missing flag selects mode a with sum of xs e.g. 317; confirm no mode swap to a when b expected and no result swap to 36,100,376. Avoid interface mistakes seen: dividing/multiplying by 1000 or 100 instead of using cm 10,m 1000,mm 1; returning meters value for cm request and cm value for m request; returning sum for prod lists and single-element value for full-list prod; returning mode a for flag true inputs.",
+  "digest": "e14149f5bcb7f2c4c37021c45ac9f519eb914c3235551854769cedfbfc788db5",
+  "applies_when": "Applies when tasks match team01-t05 units, team01-t13 window_sum, or team01-t09 flag-keyed sum/prod patterns.",
+  "builds_attempted": [
+    "build-1"
+  ],
+  "source": "dev-evidence-only",
+  "supporting_tasks": [
+    "team01-t01",
+    "team01-t05",
+    "team01-t09",
+    "team01-t13"
+  ],
+  "trial": "live2-warm-T-team01-t05-r1-template-validation",
+  "trial_public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "selection": "dev-trial public score, ties to earlier build",
+  "isolation": "eval tasks ['team01-t02', 'team01-t03', 'team01-t06', 'team01-t07', 'team01-t10', 'team01-t11', 'team01-t14', 'team01-t15'] and transfer tasks ['team01-t04', 'team01-t08', 'team01-t12', 'team01-t16'] were untouched before this freeze",
+  "at": "2026-09-12T22:01:08Z"
+}

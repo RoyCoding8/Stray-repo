@@ -1,0 +1,151 @@
+{
+  "arm": "A",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "native": true,
+    "procedure": "greedy",
+    "selector": {
+      "mean_u": 0.274671,
+      "method": "greedy"
+    }
+  },
+  "costs": {
+    "elapsed_s": 0.002,
+    "invocations_used": 0,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 16,
+    "validation_used": 0
+  },
+  "family": "graph",
+  "initial": {
+    "measure": 18
+  },
+  "inputs_digest": {
+    "checker": "1e98cf51e93e4ddfb977192d6bdd93431348ecf2c518322d1a9d639642728966",
+    "context": "6fd3e9c9a7bdf31a2e3be976f56f9436b5071162fa1c386a45c3301c0ccec1d9",
+    "fixture": "d7c755570aafe76086a881975114ac2beb0be1237b649242842ffe172da953bd"
+  },
+  "invocations": [],
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "native_detail": {
+    "accepted": 5,
+    "final_verdict": {
+      "initial_measure": 18,
+      "measure": 10,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    }
+  },
+  "operator": null,
+  "oracle_queries": [
+    {
+      "measure": 18,
+      "reason": "ok-incumbent",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 15,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 15,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 15,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 15,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 15,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 15,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 13,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 11,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 10,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 9,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 9,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 9,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 9,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 9,
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 10,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    }
+  ],
+  "result": {
+    "best_measure": 10,
+    "delivered_digest": "bef404d782c236fe216340840c300ea8c235765841ece222e8c9cedd3a6f99c9",
+    "disposition": "improved",
+    "improvement_u": 0.444444,
+    "reason": "budget-exhausted",
+    "verified": true
+  },
+  "stage": "mechanics",
+  "task_id": "gr-eva-06",
+  "trial": [
+    {
+      "assignment_id": "rpr-acq-B:reference:gr-eva-06",
+      "invocation_ref": "",
+      "outcome": "success",
+      "protocol_id": "rpr-acq-B"
+    },
+    {
+      "assignment_id": "rpr-acq-C:reference:gr-eva-06",
+      "invocation_ref": "",
+      "outcome": "success",
+      "protocol_id": "rpr-acq-C"
+    }
+  ],
+  "trial_group": "protected-eval"
+}

@@ -1,0 +1,426 @@
+{
+  "episode_id": "eval-P-team01-t06-r2",
+  "panel": "eval",
+  "arm": "P",
+  "task_id": "team01-t06",
+  "repeat": 2,
+  "family": "fam-cpl",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-576c87f714e142d68db5096d77220e05",
+  "revision": 1,
+  "shape": "alternatives",
+  "snapshot_digest": "a41621897d90b1a29d5c18fb686eb0fec3b8a8379f3aee0f75bf4d41f8be9e58",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "failure",
+  "public": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "failures": [
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 437,
+              "u": "kg"
+            },
+            {
+              "v": 1786,
+              "u": "g"
+            },
+            {
+              "v": 1863,
+              "u": "mg"
+            },
+            {
+              "v": 1495,
+              "u": "g"
+            }
+          ],
+          "want": "mg"
+        },
+        "expected": {
+          "values": [
+            437000000.0,
+            1786000.0,
+            1863.0,
+            1495000.0
+          ]
+        },
+        "got": {
+          "values": [
+            437,
+            1786,
+            1863,
+            1495
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 1995,
+              "u": "kg"
+            },
+            {
+              "v": 1503,
+              "u": "kg"
+            },
+            {
+              "v": 329,
+              "u": "mg"
+            }
+          ],
+          "want": "g"
+        },
+        "expected": {
+          "values": [
+            1995000.0,
+            1503000.0,
+            0.33
+          ]
+        },
+        "got": {
+          "values": [
+            1995000,
+            1503000,
+            329000
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 1468,
+              "u": "mg"
+            },
+            {
+              "v": 1143,
+              "u": "g"
+            },
+            {
+              "v": 776,
+              "u": "kg"
+            }
+          ],
+          "want": "kg"
+        },
+        "expected": {
+          "values": [
+            0.0,
+            1.14,
+            776.0
+          ]
+        },
+        "got": {
+          "values": [
+            1468000000,
+            1143000000,
+            776000000
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 1581,
+              "u": "g"
+            },
+            {
+              "v": 575,
+              "u": "g"
+            }
+          ],
+          "want": "mg"
+        },
+        "expected": {
+          "values": [
+            1581000.0,
+            575000.0
+          ]
+        },
+        "got": {
+          "values": [
+            1581,
+            575
+          ]
+        },
+        "error": ""
+      }
+    ]
+  },
+  "protected": {
+    "passed": 0,
+    "failed": 6,
+    "total": 6,
+    "failures": [
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 1654,
+              "u": "mg"
+            },
+            {
+              "v": 1069,
+              "u": "kg"
+            },
+            {
+              "v": 925,
+              "u": "kg"
+            }
+          ],
+          "want": "mg"
+        },
+        "expected": {
+          "values": [
+            1654.0,
+            1069000000.0,
+            925000000.0
+          ]
+        },
+        "got": {
+          "values": [
+            1654,
+            1069,
+            925
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 1221,
+              "u": "g"
+            },
+            {
+              "v": 1855,
+              "u": "g"
+            },
+            {
+              "v": 757,
+              "u": "kg"
+            },
+            {
+              "v": 81,
+              "u": "kg"
+            }
+          ],
+          "want": "g"
+        },
+        "expected": {
+          "values": [
+            1221.0,
+            1855.0,
+            757000.0,
+            81000.0
+          ]
+        },
+        "got": {
+          "values": [
+            1221000,
+            1855000,
+            757000,
+            81000
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 895,
+              "u": "mg"
+            },
+            {
+              "v": 1406,
+              "u": "g"
+            },
+            {
+              "v": 784,
+              "u": "mg"
+            }
+          ],
+          "want": "g"
+        },
+        "expected": {
+          "values": [
+            0.9,
+            1406.0,
+            0.78
+          ]
+        },
+        "got": {
+          "values": [
+            895000,
+            1406000,
+            784000
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 1983,
+              "u": "kg"
+            },
+            {
+              "v": 46,
+              "u": "mg"
+            }
+          ],
+          "want": "mg"
+        },
+        "expected": {
+          "values": [
+            1983000000.0,
+            46.0
+          ]
+        },
+        "got": {
+          "values": [
+            1983,
+            46
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 849,
+              "u": "g"
+            },
+            {
+              "v": 749,
+              "u": "g"
+            },
+            {
+              "v": 1256,
+              "u": "mg"
+            }
+          ],
+          "want": "mg"
+        },
+        "expected": {
+          "values": [
+            849000.0,
+            749000.0,
+            1256.0
+          ]
+        },
+        "got": {
+          "values": [
+            849,
+            749,
+            1256
+          ]
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "readings": [
+            {
+              "v": 462,
+              "u": "kg"
+            },
+            {
+              "v": 739,
+              "u": "g"
+            },
+            {
+              "v": 211,
+              "u": "g"
+            },
+            {
+              "v": 1846,
+              "u": "g"
+            }
+          ],
+          "want": "kg"
+        },
+        "expected": {
+          "values": [
+            462.0,
+            0.74,
+            0.21,
+            1.85
+          ]
+        },
+        "got": {
+          "values": [
+            462000000,
+            739000000,
+            211000000,
+            1846000000
+          ]
+        },
+        "error": ""
+      }
+    ]
+  },
+  "join": {
+    "passed": false,
+    "join_receipt": "local:plan_team01-576c87f714e142d68db5096d77220e05_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-576c87f714e142d68db5096d77220e05:r1:check",
+    "candidate_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "frozen_digest": null,
+  "receipts": {
+    "w1": [
+      "local:plan_team01-576c87f714e142d68db5096d77220e05_r1_w1_work_team-work_1.result"
+    ],
+    "w2": [
+      "local:plan_team01-576c87f714e142d68db5096d77220e05_r1_w2_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 4.842
+  },
+  "live": {
+    "planner_operations": [
+      "tlive01-eval-plan-P-team01-t06-r2-21"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive01-eval-plan-P-team01-t06-r2-21",
+        "arm": "P",
+        "task_id": "team01-t06",
+        "repeat": 2,
+        "probe": null,
+        "exposure": 648,
+        "usage": {
+          "in": 0,
+          "out": 0
+        },
+        "outcome": "fallback-empty-output",
+        "stop_reason": "",
+        "shape": "alternatives",
+        "text_chars": 0
+      }
+    ]
+  }
+}

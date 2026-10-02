@@ -220,7 +220,15 @@ class HttpGatewayAdapter(GatewayAdapter):
                 "input": _responses_input(request.messages),
                 "max_output_tokens": request.max_output_tokens,
             }
+            if request.reasoning_effort is not None:
+                payload["reasoning"] = {"effort": request.reasoning_effort}
         else:
+            if request.reasoning_effort is not None:
+                return _error(
+                    GatewayErrorKind.PROTOCOL,
+                    "reasoning_effort needs the responses api", False,
+                    request.operation_id,
+                )
             url = f"{self.endpoint}/chat/completions"
             payload = {
                 "model": request.model,

@@ -1,0 +1,1 @@
+{"shape": "decompose", "rationale": "There are two independent defects in separate modules: textops implements the wrong text transform and numops implements the wrong aggregation, so each module needs its own fix."}

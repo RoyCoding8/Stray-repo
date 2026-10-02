@@ -36,6 +36,20 @@ This changes the first experiment: include tested generic deletion and domain-aw
 
 ## Questions this research does not answer
 
+### Team 01 reference check, 2026-09-12
+
+These are references and counterpressure for the selected design, not evidence that Settlement already benefits from it.
+
+- [Towards a Science of Scaling Agent Systems, v1](https://arxiv.org/html/2512.08296v1): the controlled study reports task-dependent coordination gains and overhead, with limitations on the architectures, model diversity and prompt optimization explored. Design implication: retain task-level comparisons and strong single-worker execution; do not import its empirical thresholds as our routing policy.
+- [Rethinking the Value of Multi-Agent Workflow, v1](https://arxiv.org/abs/2601.12307v1), abstract inspected: reports that single-agent execution can match homogeneous workflows across its evaluated benchmarks. Design implication: S can plan, change roles and self-review. Separate contexts and additional agents must earn their overhead. The abstract is not a replication or a universal equivalence theorem.
+- [Verification-Aware Planning for Multi-Agent Systems, v1](https://arxiv.org/html/2510.17109v1), method and verification-error discussion inspected: integrates planned checks with execution, but its generated verifiers still make false-positive and false-negative errors. Design implication: generated local checks are useful feedback; retain a separately specified final task oracle. Neither this paper nor our local tests certify arbitrary parent obligations.
+- [Meta-Agent: From Task Descriptions to Verified Multi-Agent Systems, v1](https://arxiv.org/abs/2605.25233v1), abstract inspected: explicitly combines task graphs, input/output contracts, verification and recovery. This directly limits novelty claims about our work-graph proposal. Our design emphasis is its integration with persistent experimental templates, bounded authority and measured later use; that combination is also a hypothesis, not an established novelty result.
+- [Why Do Multi-Agent LLM Systems Fail?, v3](https://arxiv.org/abs/2503.13657v3), abstract inspected: distinguishes system-design failures, inter-agent misalignment and verification failures. Design implication: trace the actual composed outcome and its information flow instead of equating individual completion reports with system success. Its taxonomy does not establish causal responsibility for our incidents.
+
+Our additional synthesis is to make a failed integration a candidate source of a future executable diagnostic or coordination template. Test that candidate on changed inputs, with cold/warm controls and its acquisition cost exposed. The [team refinement](TEMPORARY-TEAMS.md) states this proposal; [Team 01](TEAM-01-IMPLEMENTATION.md) supplies a rejecting pilot. No claim that this is globally optimal, unprecedented, or equivalent to parameter training is made.
+
+### Remaining questions
+
 - Which representation family our actual experience corpus can support without an expensive custom synthesizer.
 - Whether current construction, grading, billing and context paths preserve enough information to measure acquisition and transfer.
 - What reuse horizons justify consolidation or which team decompositions our workload contains.

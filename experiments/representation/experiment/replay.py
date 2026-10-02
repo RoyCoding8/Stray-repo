@@ -32,6 +32,7 @@ def main(argv):
     parser.add_argument("--staging-root", default="/tmp/rpr-acq-staging")
     parser.add_argument("--runs-root", default="/tmp/rpr-acq-runs")
     parser.add_argument("--evidence-root", default=str(REP / "evidence"))
+    parser.add_argument("--manifest-file", default="manifest.json")
     args = parser.parse_args(argv)
     import os
     problems = freeze.verify_committed()
@@ -39,7 +40,8 @@ def main(argv):
         print(json.dumps({"refused": problems}, indent=2))
         return 1
     if args.mode == "check":
-        report = checker.check_all(Path(args.evidence_root))
+        report = checker.check_all(Path(args.evidence_root),
+                                   manifest_name=args.manifest_file)
         print(json.dumps({"clean": report["clean"],
                           "problems": report["problems"],
                           "records": report["records"],
@@ -53,7 +55,8 @@ def main(argv):
         dsn, tag=args.tag, artifacts_root=Path(args.artifacts_root),
         staging_root=Path(args.staging_root), runs_root=Path(args.runs_root),
         evidence_root=Path(args.evidence_root))
-    report = checker.check_all(Path(args.evidence_root), dsn=dsn)
+    report = checker.check_all(Path(args.evidence_root), dsn=dsn,
+                               manifest_name=args.manifest_file)
     print(json.dumps({"pairs": index["pairs"], "clean": report["clean"],
                       "problems": report["problems"],
                       "pilot_rule": report["pilot_rule"]}, indent=2))

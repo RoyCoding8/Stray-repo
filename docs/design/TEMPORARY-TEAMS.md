@@ -102,4 +102,46 @@ Exact live panels and budgets await an interpretable solver and resource profile
 - DTT-03: preserve evidence ancestry and distinguish isolated proposal from informed critique; agreement alone does not establish truth.
 - DTT-04: compare complete selection policies at matched total resources, including harmful delegation and integration cost.
 
-Ready now: team semantics, selection hypotheses, join rules and rejecting comparisons. Needs worker results: composition/ownership/recovery contracts, actual materialized inputs, dispatch/cancellation accounting and baseline cost/latency. Those determine the smallest implementation and credible experiment. No adaptive-team runtime is assigned yet.
+The first concrete slice is now selected in [Team 01](TEAM-01-IMPLEMENTATION.md), against `cb8a62a`. It reuses the existing composition algebra and work substrate, with a bounded three-shape policy and independent task checks. Exact executable budget mapping and development calibration belong to the worker. Broad adaptive organization remains a research question.
+
+## 8. From temporary organization to persistent competence
+
+The architectural object worth retaining is the relationship between a problem structure, an organization of work and the conditions under which the resulting pieces fit. Keeping a roster preserves identities. Keeping only the final patch preserves one answer. A parameterized coordination template can preserve a way to produce and check new answers.
+
+Let the durable state relevant here be `X = (Gamma, E, F)`: the repertoire of executable methods and compositions, attributable evidence, and the current frontier of unresolved obligations. A temporary plan `P` maps a parent obligation and visible state to bounded work. Executing it produces artifacts `A`, observations `O` and cost/liability `C`. Checking the combined result produces either scoped support for the parent or a residual obligation `R`.
+
+`R` must identify what remains unresolved: missing contribution, incompatible assumption, failed combined behavior or insufficient evidence. It is not a scalar confidence score or necessarily a blame assignment. For example, two correct local implementations may use different meanings of an empty interval; the integration counterexample identifies the mismatch without establishing that either agent was uniquely at fault.
+
+There are then two different developmental moves:
+
+- **Repair this work:** change the present artifact or organization under its remaining allocation, then recheck the affected parent result.
+- **Improve future work:** propose a parameterized plan or diagnostic that would prevent or expose the same class of mismatch on new inputs. Compare its subsequent behavior through a separate bounded development episode.
+
+The second move is the architectural bridge from a swarm to a learning system. A coordination template is a versioned composition with parameters, applicability conditions, check dependencies and scoped evidence. It can instantiate a single worker, two independent attempts or complementary workers. Its worth does not depend on how many agents it creates.
+
+An example is a producer/consumer repair. One episode discovers that two locally passing patches disagree about interval endpoints. A proposed template makes both workers bind the interval contract first, then executes a generated boundary probe through the assembled pipeline. On a later repository it must bind that repository's actual interfaces and generate/check new work. Retaining the old expected answer is not transfer. If the new problem uses unordered sets rather than intervals, an unmet applicability condition should cause refusal or a new investigation.
+
+This yields an important separation of responsibilities:
+
+| Responsibility | Concrete role in the continuing society |
+|---|---|
+| Context | Deliver the particular source, interfaces, assumptions and opposing evidence needed by the next node |
+| Team policy | Choose who works on which unresolved obligation and how outputs combine |
+| Evidence/memory | Preserve artifacts, checked results, failures and exact conditions of use |
+| Development/consolidation | Construct, specialize or retire candidate methods and coordination templates |
+| Agenda | Decide whether an unresolved pattern warrants more investigation under the current purpose and budget |
+
+Background consolidation can inspect repeated integration counterexamples and propose a reusable diagnostic. That is a bounded development job with an input corpus and a rejecting evaluation, not a free-running reflection prompt. It should wake because new evidence or an admitted opportunity exists; elapsed time may trigger a scan, but it does not supply a reason for unlimited inference. Existing agenda and development machinery already provide the relevant boundaries.
+
+### What we deliberately do not infer
+
+One successful plan does not establish that its decomposition caused success. An integration failure does not establish a general precondition. Reusing a template can improve organization, worsen model conditioning, or merely save planning tokens. These effects need separate observations, including a cold policy with the same resources and task information.
+
+We also cannot certify an arbitrary decomposition merely by attaching contracts to nodes. In Team 01, local checks guide work and an independent whole-task evaluator measures the result. In open scientific discovery the parent may remain an explicitly unresolved hypothesis even when every planned experiment completed. Completion of planned work must never imply truth of the original hypothesis.
+
+### Decisions added by this refinement
+
+- DTT-05: retain parameterized compositions and integration counterexamples; do not make agent identities or transcripts the unit of cumulative competence.
+- DTT-06: distinguish fixing the current plan from learning a better future plan. A later checked use is the first behavioral evidence for the latter.
+- DTT-07: choose bounded multi-module repair as the first team measurement environment. Generality is a property to demonstrate on subsequent domains, not a property conferred by an abstract interface.
+- DTT-08: keep the first template experimental and immutable during held-out use. Delay learned global team selection and learner revision until an observed bottleneck gives them a target.

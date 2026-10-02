@@ -1,0 +1,75 @@
+{
+  "episode_id": "transfer-warm-T-team01-t16-r2",
+  "panel": "transfer",
+  "arm": "warm-T",
+  "task_id": "team01-t16",
+  "repeat": 2,
+  "family": "fam-sng",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-7aa6a8f7697f4314a4705984afb667b4",
+  "revision": 1,
+  "shape": "single",
+  "snapshot_digest": "a39a39c0db574156c1bf5009a4005baf65b17be8216d13031ccbd8d972bba147",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": "4f5e7e79651624a539bfeaf9dbc6e5d0a330e7e1c27b092c56158876ae7b20ec",
+  "template_changed_decision": false,
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-7aa6a8f7697f4314a4705984afb667b4_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-7aa6a8f7697f4314a4705984afb667b4:r1:check",
+    "candidate_digest": "4da93a0b1832a10e069f7a9d43930e494b3a0e5e0669511c6399cad5692a53c4"
+  },
+  "frozen_digest": "4da93a0b1832a10e069f7a9d43930e494b3a0e5e0669511c6399cad5692a53c4",
+  "receipts": {
+    "w1": [
+      "local:plan_team01-7aa6a8f7697f4314a4705984afb667b4_r1_w1_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 3.46
+  },
+  "live": {
+    "planner_operations": [
+      "tlive02-xfer-plan-warm-T-team01-t16-r2-23"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive02-xfer-plan-warm-T-team01-t16-r2-23",
+        "arm": "warm-T",
+        "task_id": "team01-t16",
+        "repeat": 2,
+        "probe": null,
+        "exposure": 685,
+        "usage": {
+          "in": 0,
+          "out": 0
+        },
+        "outcome": "fallback-empty-output",
+        "stop_reason": "",
+        "shape": "single",
+        "text_chars": 0
+      }
+    ]
+  }
+}

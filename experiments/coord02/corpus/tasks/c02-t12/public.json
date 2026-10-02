@@ -1,0 +1,52 @@
+[
+  {
+    "input": {
+      "code": 3,
+      "vals": [
+        2,
+        5
+      ]
+    },
+    "expected": {
+      "mode": "a",
+      "result": 7
+    }
+  },
+  {
+    "input": {
+      "code": 9,
+      "vals": [
+        2,
+        5
+      ]
+    },
+    "expected": {
+      "mode": "b",
+      "result": 10
+    }
+  },
+  {
+    "input": {
+      "code": 0,
+      "vals": []
+    },
+    "expected": {
+      "mode": "a",
+      "result": 0
+    }
+  },
+  {
+    "input": {
+      "code": 5,
+      "vals": [
+        1,
+        1,
+        1
+      ]
+    },
+    "expected": {
+      "mode": "b",
+      "result": 1
+    }
+  }
+]

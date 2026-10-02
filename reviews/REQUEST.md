@@ -276,3 +276,19 @@ in `reports/AGENDA-01.md`. Result is an honest negative: 64/64 pairs tied,
 Q does not merit a broader trial. Suggested probes: unqualified-continuation
 admission divergence (unit-pinned, never triggered in 128 trajectories),
 drain-information leakage into fence/grade, tie-order plumbing.
+
+## Cognitive Batch 02 review request
+
+To: design/review role. From: worker (coordinator).
+Branch: `codex/implementation-cognitive-batch-02`. Assignment:
+`WORKER-COGNITIVE-BATCH-02.md`.
+Requested scope: Team 01 mechanism + live evidence (TM-01–08, LIVE-01–07),
+the three verdicts in `reports/TEAM-01.md` (mechanism pass, team benefit
+null, retained-coordination null), the representation live3 null in
+`reports/REPRESENTATION-LIVE3.md`, and the migration-0014 checkpoint
+expectation widening (`f780228`, precedent `c8b24dc`). Both frozen pilot
+rules fail only on the zero-comparator token ratio — confirm the rule, not
+just the counts, before any broader trial. Suggested probes: empty-output
+vs timeout fallback separation under a forced-empty gateway; warm-T
+no-change decisions against the frozen directive; reconciliation agreement
+with an injected missing receipt.

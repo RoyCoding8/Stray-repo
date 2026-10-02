@@ -1,0 +1,184 @@
+{
+  "arm_task_records": 48,
+  "attribution_records": 2,
+  "checker_version": "rpr-checker/1",
+  "control_records": 12,
+  "controls_pass": {
+    "ctrl-gr-bipartite:A": true,
+    "ctrl-gr-bipartite:B": true,
+    "ctrl-gr-bipartite:C": true,
+    "ctrl-gr-triangle:A": true,
+    "ctrl-gr-triangle:B": true,
+    "ctrl-gr-triangle:C": true,
+    "ctrl-sw-invalid:A": true,
+    "ctrl-sw-invalid:B": true,
+    "ctrl-sw-invalid:C": true,
+    "ctrl-sw-wrong-obs:A": true,
+    "ctrl-sw-wrong-obs:B": true,
+    "ctrl-sw-wrong-obs:C": true
+  },
+  "costs_by_arm": {
+    "A": {
+      "elapsed_s": 0.021,
+      "invocations": 0,
+      "queries": 247
+    },
+    "B": {
+      "elapsed_s": 0.0,
+      "invocations": 0,
+      "queries": 0
+    },
+    "C": {
+      "elapsed_s": 0.0,
+      "invocations": 0,
+      "queries": 0
+    }
+  },
+  "horizons": {
+    "arm-A": {
+      "deployment": {
+        "elapsed_s": 0.0,
+        "invocations": 0,
+        "queries": 289
+      },
+      "hypothetical": {
+        "1": {
+          "elapsed_s": 0.021,
+          "invocations": 0,
+          "queries": 536
+        },
+        "10": {
+          "elapsed_s": 0.21,
+          "invocations": 0,
+          "queries": 2759
+        },
+        "100": {
+          "elapsed_s": 2.1,
+          "invocations": 0,
+          "queries": 24989
+        }
+      },
+      "panel": {
+        "elapsed_s": 0.021,
+        "invocations": 0,
+        "queries": 247
+      }
+    },
+    "arm-B": {
+      "deployment": {
+        "elapsed_s": 0.0,
+        "invocations": 0,
+        "queries": 289
+      },
+      "hypothetical": {
+        "1": {
+          "elapsed_s": 0.0,
+          "invocations": 0,
+          "queries": 289
+        },
+        "10": {
+          "elapsed_s": 0.0,
+          "invocations": 0,
+          "queries": 289
+        },
+        "100": {
+          "elapsed_s": 0.0,
+          "invocations": 0,
+          "queries": 289
+        }
+      },
+      "panel": {
+        "elapsed_s": 0.0,
+        "invocations": 0,
+        "queries": 0
+      }
+    },
+    "arm-C": {
+      "deployment": {
+        "elapsed_s": 0.0,
+        "invocations": 0,
+        "queries": 289
+      },
+      "hypothetical": {
+        "1": {
+          "elapsed_s": 0.0,
+          "invocations": 0,
+          "queries": 289
+        },
+        "10": {
+          "elapsed_s": 0.0,
+          "invocations": 0,
+          "queries": 289
+        },
+        "100": {
+          "elapsed_s": 0.0,
+          "invocations": 0,
+          "queries": 289
+        }
+      },
+      "panel": {
+        "elapsed_s": 0.0,
+        "invocations": 0,
+        "queries": 0
+      }
+    }
+  },
+  "live": "blocked: see live_blocker.json",
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "means": {
+    "A-graph": 0.299312,
+    "A-software": 0.731506,
+    "B-graph": 0.0,
+    "B-software": 0.0,
+    "C-graph": 0.0,
+    "C-software": 0.0
+  },
+  "pairs": {
+    "ran": 62,
+    "skipped": 0
+  },
+  "panel_version": "RPR-ACQ/2",
+  "physical_operation_union": 8,
+  "release": "none",
+  "tag": "live3",
+  "trial_verdicts": {
+    "rpr-acq-B": {
+      "candidate_successes": 0,
+      "groups": {
+        "protected-eval": {
+          "candidate": 0,
+          "reference": 16
+        }
+      },
+      "label": "regression",
+      "protocol_id": "rpr-acq-B-live3",
+      "reference_successes": 16,
+      "regressed_groups": [
+        "protected-eval"
+      ]
+    },
+    "rpr-acq-C": {
+      "candidate_successes": 0,
+      "groups": {
+        "protected-eval": {
+          "candidate": 0,
+          "reference": 16
+        }
+      },
+      "label": "regression",
+      "protocol_id": "rpr-acq-C-live3",
+      "reference_successes": 16,
+      "regressed_groups": [
+        "protected-eval"
+      ]
+    }
+  },
+  "unchanged_core": {
+    "equal": true,
+    "source": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "transfer": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46"
+  },
+  "use_records": 0,
+  "use_selected": {},
+  "wall_s": 4.535
+}

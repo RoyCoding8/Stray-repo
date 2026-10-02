@@ -1,0 +1,423 @@
+{
+  "episode_id": "live2-T-team01-t01-r1",
+  "panel": "dev",
+  "arm": "T",
+  "task_id": "team01-t01",
+  "repeat": 1,
+  "probe": null,
+  "panel_version": "team01-panel/2-live-solver",
+  "plan_id": "plan_team01-solver-44dcf838dde846cf9e0dc659729932c0",
+  "revision": 1,
+  "shape": "decompose",
+  "template_digest": null,
+  "snapshot_digest": "0f0186cdfe56a7813baf28878b2d9126eb5115ca1db0490bc9a717e0428e3644",
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-solver-44dcf838dde846cf9e0dc659729932c0_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-solver-44dcf838dde846cf9e0dc659729932c0:r1:check",
+    "candidate_digest": "21486806c25b0c6303c9f11e2546be45fbdb0c454677e590a4ce3eb741590f7e",
+    "assemble_code": "ResultCode.APPLIED",
+    "assemble_detail": "join passed for plan_team01-solver-44dcf838dde846cf9e0dc659729932c0 r1",
+    "assembly_note": "assembled"
+  },
+  "frozen_digest": "21486806c25b0c6303c9f11e2546be45fbdb0c454677e590a4ce3eb741590f7e",
+  "submitted_digests": {
+    "w1": "beda08cba2d6684e036af93eddae58d2e4a420b3de076672f61f66c950901c58",
+    "w2": "a5e0655da08201ea522e90d82b6577b1ca12ca5a7d9f70304647b15c777c8fd5"
+  },
+  "nonce": "8be1e80e",
+  "allocation_id": "live2-live2-T-team01-t01-r1-root",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "receipts": [
+    "gw:live2-live2-T-team01-t01-r1-8be1e80e-ctor-w1-live2-live2-T-team01-t01-r1-8be1e80e-1",
+    "gw:live2-live2-T-team01-t01-r1-8be1e80e-ctor-w2-live2-live2-T-team01-t01-r1-8be1e80e-3",
+    "gw:live2-live2-T-team01-t01-r1-8be1e80e-plan-live2-live2-T-team01-t01-r1-8be1e80e-0",
+    "local:plan_team01-solver-44dcf838dde846cf9e0dc659729932c0_r1_check_team-work_1.result",
+    "local:tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-2_exec-default.result",
+    "local:tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-4_exec-default.result"
+  ],
+  "solver": {
+    "rationale": "Defects are in two separate modules: textops maps strip_lower to the wrong body and numops maps sum to the wrong body, so each module needs its own fix.",
+    "plan_source": "model"
+  },
+  "join_attempts": [
+    {
+      "revision": 1,
+      "passed": true,
+      "check_operation": "plan_team01-solver-44dcf838dde846cf9e0dc659729932c0:r1:check",
+      "assemble_code": "ResultCode.APPLIED",
+      "assemble_detail": "join passed for plan_team01-solver-44dcf838dde846cf9e0dc659729932c0 r1"
+    }
+  ],
+  "controls": {
+    "substituted": {},
+    "disconnected": [],
+    "authored": {}
+  },
+  "repairs": 0,
+  "constructor_ops": [
+    {
+      "kind": "plan",
+      "op_id": "live2-live2-T-team01-t01-r1-8be1e80e-plan-live2-live2-T-team01-t01-r1-8be1e80e-0",
+      "prompt": "see file",
+      "text": "{\"shape\": \"decompose\", \"rationale\": \"Defects are in two separate modules: textops maps strip_lower to the wrong body and numops maps sum to the wrong body, so each module needs its own fix.\"}",
+      "usage": {
+        "in": 562,
+        "out": 863
+      },
+      "outcome": "model-text",
+      "error": "",
+      "shape": "decompose",
+      "rationale": "Defects are in two separate modules: textops maps strip_lower to the wrong body and numops maps sum to the wrong body, so each module needs its own fix.",
+      "source": "model",
+      "directive_digest": null,
+      "receipts": [
+        "gw:live2-live2-T-team01-t01-r1-8be1e80e-plan-live2-live2-T-team01-t01-r1-8be1e80e-0"
+      ]
+    },
+    {
+      "kind": "ctor",
+      "node": "w1",
+      "op_id": "live2-live2-T-team01-t01-r1-8be1e80e-ctor-w1-live2-live2-T-team01-t01-r1-8be1e80e-1",
+      "prompt": "TASK team01-t01\nSPECIFICATION:\n# Task team01-t01\n\nProgram ABI: read one JSON object from the request file given as the first command-line argument, write one JSON object to the response file given as the second argument.\n\nInput object: Texts holds a list of strings, Numbers a list of numbers.\n\nThe program must strip surrounding whitespace from each string, then lowercase it, in order, and place the result under Texts. It must add all numbers, and place the result under Numbers.\n\nBoth halves are required: a correct answer transforms the texts and aggregates the numbers together.\nSPEC PARAMS: {\"num_op\": \"sum\", \"text_op\": \"strip_lower\"}\nOWNED PATHS (repair exactly these files): src/numops.py\n--- src/numops.py ---\ndef summarize(op, numbers):\n    if op == \"sum\":\n        return (max(numbers) - min(numbers)) if numbers else 0\n    if op == \"span\":\n        return round(sum(numbers, 0) / len(numbers), 2) if numbers else 0\n    if op == \"rmean\":\n        return sum(1 for n in numbers if n > 0)\n    if op == \"count_pos\":\n        return sum(numbers, 0)\n    raise ValueError(op)\n\nVISIBLE CHECKS (4; hidden checks differ, do not overfit):\ncheck 0: input={\"texts\": [\" CHARLIE   \", \"Golf\"], \"numbers\": [13, 20, -7, -1]} expected={\"texts\": [\"charlie\", \"golf\"], \"numbers\": 25}\ncheck 1: input={\"texts\": [\"  BRAVO  \", \" ALPHA   \", \"lima\"], \"numbers\": [26, 19, 15, 5, 2, 14.0]} expected={\"texts\": [\"bravo\", \"alpha\", \"lima\"], \"numbers\": 81.0}\ncheck 2: input={\"texts\": [\"  juliet  \", \"  Golf   \"], \"numbers\": [6, 0, 14, -9, 12.3]} expected={\"texts\": [\"juliet\", \"golf\"], \"numbers\": 23.3}\ncheck 3: input={\"texts\": [\"  juliet \", \" Kilo \"], \"numbers\": [25, 19, 27, 9, 23]} expected={\"texts\": [\"juliet\", \"kilo\"], \"numbers\": 103}\nSITUATION: team repair: organization=decompose; your obligation: repair src/numops.py\nTOOL FEEDBACK FROM VISIBLE CHECKS: none yet\nBUDGET: 1 model calls and 2 tool runs left including this one.\nRepair the owned files so the program meets the specification on the visible checks and, above all, on unseen cases for the same specification. Keep every public entry point and call signature used by the rest of the program exactly as-is.\nReply with exactly one JSON object and nothing else, shaped {\"files\": { \"<owned relpath>\": \"<complete file content>\" }, \"notes\": \"<one or two sentences about the repair>\"}. Include an entry for every owned path, even if unchanged. Do not add, rename or omit paths. Full file contents, not diffs.",
+      "text": "{\"files\": {\"src/numops.py\": \"def summarize(op, numbers):\\n    if op == \\\"sum\\\":\\n        return sum(numbers, 0) if numbers else 0\\n    if op == \\\"span\\\":\\n        return (max(numbers) - min(numbers)) if numbers else 0\\n    if op == \\\"rmean\\\":\\n        return round(sum(numbers, 0) / len(numbers), 2) if numbers else 0\\n    if op == \\\"count_pos\\\":\\n        return sum(1 for n in numbers if n > 0)\\n    raise ValueError(op)\\n\"}, \"notes\": \"Fixed rotated op implementations so sum aggregates correctly while restoring span, rmean and count_pos semantics.\"}",
+      "usage": {
+        "in": 688,
+        "out": 483
+      },
+      "stop": "stop",
+      "outcome": "model-text",
+      "error": "",
+      "parse_error": "",
+      "notes": "Fixed rotated op implementations so sum aggregates correctly while restoring span, rmean and count_pos semantics.",
+      "files_digest": "beda08cba2d6684e036af93eddae58d2e4a420b3de076672f61f66c950901c58",
+      "receipts": [
+        "gw:live2-live2-T-team01-t01-r1-8be1e80e-ctor-w1-live2-live2-T-team01-t01-r1-8be1e80e-1"
+      ]
+    },
+    {
+      "kind": "ctor",
+      "node": "w2",
+      "op_id": "live2-live2-T-team01-t01-r1-8be1e80e-ctor-w2-live2-live2-T-team01-t01-r1-8be1e80e-3",
+      "prompt": "TASK team01-t01\nSPECIFICATION:\n# Task team01-t01\n\nProgram ABI: read one JSON object from the request file given as the first command-line argument, write one JSON object to the response file given as the second argument.\n\nInput object: Texts holds a list of strings, Numbers a list of numbers.\n\nThe program must strip surrounding whitespace from each string, then lowercase it, in order, and place the result under Texts. It must add all numbers, and place the result under Numbers.\n\nBoth halves are required: a correct answer transforms the texts and aggregates the numbers together.\nSPEC PARAMS: {\"num_op\": \"sum\", \"text_op\": \"strip_lower\"}\nOWNED PATHS (repair exactly these files): src/textops.py\n--- src/textops.py ---\ndef transform(op, texts):\n    if op == \"strip_lower\":\n        return [t.upper() for t in texts]\n    if op == \"dedup_sort\":\n        return [t[::-1] for t in texts]\n    if op == \"reverse\":\n        return [t.strip().lower() for t in texts]\n    if op == \"upper\":\n        return sorted(set(texts))\n    raise ValueError(op)\n\nVISIBLE CHECKS (4; hidden checks differ, do not overfit):\ncheck 0: input={\"texts\": [\" CHARLIE   \", \"Golf\"], \"numbers\": [13, 20, -7, -1]} expected={\"texts\": [\"charlie\", \"golf\"], \"numbers\": 25}\ncheck 1: input={\"texts\": [\"  BRAVO  \", \" ALPHA   \", \"lima\"], \"numbers\": [26, 19, 15, 5, 2, 14.0]} expected={\"texts\": [\"bravo\", \"alpha\", \"lima\"], \"numbers\": 81.0}\ncheck 2: input={\"texts\": [\"  juliet  \", \"  Golf   \"], \"numbers\": [6, 0, 14, -9, 12.3]} expected={\"texts\": [\"juliet\", \"golf\"], \"numbers\": 23.3}\ncheck 3: input={\"texts\": [\"  juliet \", \" Kilo \"], \"numbers\": [25, 19, 27, 9, 23]} expected={\"texts\": [\"juliet\", \"kilo\"], \"numbers\": 103}\nSITUATION: team repair: organization=decompose; your obligation: repair src/textops.py\nTOOL FEEDBACK FROM VISIBLE CHECKS: none yet\nBUDGET: 1 model calls and 2 tool runs left including this one.\nRepair the owned files so the program meets the specification on the visible checks and, above all, on unseen cases for the same specification. Keep every public entry point and call signature used by the rest of the program exactly as-is.\nReply with exactly one JSON object and nothing else, shaped {\"files\": { \"<owned relpath>\": \"<complete file content>\" }, \"notes\": \"<one or two sentences about the repair>\"}. Include an entry for every owned path, even if unchanged. Do not add, rename or omit paths. Full file contents, not diffs.",
+      "text": "{\"files\": {\"src/textops.py\": \"def transform(op, texts):\\n    if op == \\\"strip_lower\\\":\\n        return [t.strip().lower() for t in texts]\\n    if op == \\\"dedup_sort\\\":\\n        return sorted(set(texts))\\n    if op == \\\"reverse\\\":\\n        return [t[::-1] for t in texts]\\n    if op == \\\"upper\\\":\\n        return [t.upper() for t in texts]\\n    raise ValueError(op)\\n\"}, \"notes\": \"Fixed strip_lower to strip and lowercase and restored correct mapping for other ops.\"}",
+      "usage": {
+        "in": 668,
+        "out": 649
+      },
+      "stop": "stop",
+      "outcome": "model-text",
+      "error": "",
+      "parse_error": "",
+      "notes": "Fixed strip_lower to strip and lowercase and restored correct mapping for other ops.",
+      "files_digest": "a5e0655da08201ea522e90d82b6577b1ca12ca5a7d9f70304647b15c777c8fd5",
+      "receipts": [
+        "gw:live2-live2-T-team01-t01-r1-8be1e80e-ctor-w2-live2-live2-T-team01-t01-r1-8be1e80e-3"
+      ]
+    }
+  ],
+  "tool_ops": [
+    {
+      "kind": "tool",
+      "op_id": "tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-2",
+      "summary": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "failures": [
+          {
+            "got": {
+              "texts": [
+                " CHARLIE   ",
+                "GOLF"
+              ],
+              "numbers": 25
+            },
+            "input": {
+              "texts": [
+                " CHARLIE   ",
+                "Golf"
+              ],
+              "numbers": [
+                13,
+                20,
+                -7,
+                -1
+              ]
+            },
+            "expected": {
+              "texts": [
+                "charlie",
+                "golf"
+              ],
+              "numbers": 25
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "  BRAVO  ",
+                " ALPHA   ",
+                "LIMA"
+              ],
+              "numbers": 81.0
+            },
+            "input": {
+              "texts": [
+                "  BRAVO  ",
+                " ALPHA   ",
+                "lima"
+              ],
+              "numbers": [
+                26,
+                19,
+                15,
+                5,
+                2,
+                14.0
+              ]
+            },
+            "expected": {
+              "texts": [
+                "bravo",
+                "alpha",
+                "lima"
+              ],
+              "numbers": 81.0
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "  JULIET  ",
+                "  GOLF   "
+              ],
+              "numbers": 23.3
+            },
+            "input": {
+              "texts": [
+                "  juliet  ",
+                "  Golf   "
+              ],
+              "numbers": [
+                6,
+                0,
+                14,
+                -9,
+                12.3
+              ]
+            },
+            "expected": {
+              "texts": [
+                "juliet",
+                "golf"
+              ],
+              "numbers": 23.3
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "  JULIET ",
+                " KILO "
+              ],
+              "numbers": 103
+            },
+            "input": {
+              "texts": [
+                "  juliet ",
+                " Kilo "
+              ],
+              "numbers": [
+                25,
+                19,
+                27,
+                9,
+                23
+              ]
+            },
+            "expected": {
+              "texts": [
+                "juliet",
+                "kilo"
+              ],
+              "numbers": 103
+            }
+          }
+        ],
+        "error": "",
+        "op_id": "tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-2"
+      },
+      "receipts": [
+        "local:tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-2_exec-default.result"
+      ],
+      "node_observation": "0/4 visible checks pass; miss input={\"texts\": [\" CHARLIE   \", \"Golf\"], \"numbers\": [13, 20, -7, -1]} expected={\"texts\": [\"charlie\", \"golf\"], \"numbers\": 25} got={\"texts\": [\" CHARLIE   \", \"GOLF\"], \"numbers\": 25}; miss input={\"texts\": [\"  BRAVO  \", \" ALPHA   \", \"lima\"], \"numbers\": [26, 19, 15, 5, 2, 14.0]} expected={\"texts\": [\"bravo\", \"alpha\", \"lima\"], \"numbers\": 81.0} got={\"texts\": [\"  BRAVO  \", \" ALPHA   \", \"LIMA\"], \"numbers\": 81.0}; miss input={\"texts\": [\"  juliet  \", \"  Golf   \"], \"numbers\": [6, 0, 14, -9, 12.3]} expected={\"texts\": [\"juliet\", \"golf\"], \"numbers\": 23.3} got={\"texts\": [\"  JULIET  \", \"  GOLF   \"], \"numbers\": 23.3}"
+    },
+    {
+      "kind": "tool",
+      "op_id": "tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-4",
+      "summary": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "failures": [
+          {
+            "got": {
+              "texts": [
+                "charlie",
+                "golf"
+              ],
+              "numbers": 27
+            },
+            "input": {
+              "texts": [
+                " CHARLIE   ",
+                "Golf"
+              ],
+              "numbers": [
+                13,
+                20,
+                -7,
+                -1
+              ]
+            },
+            "expected": {
+              "texts": [
+                "charlie",
+                "golf"
+              ],
+              "numbers": 25
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "bravo",
+                "alpha",
+                "lima"
+              ],
+              "numbers": 24
+            },
+            "input": {
+              "texts": [
+                "  BRAVO  ",
+                " ALPHA   ",
+                "lima"
+              ],
+              "numbers": [
+                26,
+                19,
+                15,
+                5,
+                2,
+                14.0
+              ]
+            },
+            "expected": {
+              "texts": [
+                "bravo",
+                "alpha",
+                "lima"
+              ],
+              "numbers": 81.0
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "juliet",
+                "golf"
+              ],
+              "numbers": 23
+            },
+            "input": {
+              "texts": [
+                "  juliet  ",
+                "  Golf   "
+              ],
+              "numbers": [
+                6,
+                0,
+                14,
+                -9,
+                12.3
+              ]
+            },
+            "expected": {
+              "texts": [
+                "juliet",
+                "golf"
+              ],
+              "numbers": 23.3
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "juliet",
+                "kilo"
+              ],
+              "numbers": 18
+            },
+            "input": {
+              "texts": [
+                "  juliet ",
+                " Kilo "
+              ],
+              "numbers": [
+                25,
+                19,
+                27,
+                9,
+                23
+              ]
+            },
+            "expected": {
+              "texts": [
+                "juliet",
+                "kilo"
+              ],
+              "numbers": 103
+            }
+          }
+        ],
+        "error": "",
+        "op_id": "tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-4"
+      },
+      "receipts": [
+        "local:tool-live2-live2-T-team01-t01-r1-8be1e80e-live2-live2-T-team01-t01-r1-8be1e80e-4_exec-default.result"
+      ],
+      "node_observation": "0/4 visible checks pass; miss input={\"texts\": [\" CHARLIE   \", \"Golf\"], \"numbers\": [13, 20, -7, -1]} expected={\"texts\": [\"charlie\", \"golf\"], \"numbers\": 25} got={\"texts\": [\"charlie\", \"golf\"], \"numbers\": 27}; miss input={\"texts\": [\"  BRAVO  \", \" ALPHA   \", \"lima\"], \"numbers\": [26, 19, 15, 5, 2, 14.0]} expected={\"texts\": [\"bravo\", \"alpha\", \"lima\"], \"numbers\": 81.0} got={\"texts\": [\"bravo\", \"alpha\", \"lima\"], \"numbers\": 24}; miss input={\"texts\": [\"  juliet  \", \"  Golf   \"], \"numbers\": [6, 0, 14, -9, 12.3]} expected={\"texts\": [\"juliet\", \"golf\"], \"numbers\": 23.3} got={\"texts\": [\"juliet\", \"golf\"], \"numbers\": 23}"
+    }
+  ],
+  "model_calls": 3,
+  "tool_calls": 2,
+  "usage": {
+    "in": 1918,
+    "out": 1995
+  },
+  "costs": {
+    "model_invocations": 3,
+    "model_tokens": {
+      "in": 1918,
+      "out": 1995
+    },
+    "tool_executions": 2
+  },
+  "simulated": false,
+  "live_source": "model-repair",
+  "wall_s": 15.395
+}

@@ -56,10 +56,10 @@ def test_transfer_pair_fixed_budget(migrated_db, tmp_path):
     dsn = migrated_db
     ctx = _ctx(dsn, tmp_path, "t06xfer")
     for arm in ("A", "B", "C"):
-        result = panel_run.run_benefit_pair(dsn, ctx, arm, "gr-che-00")
+        result = panel_run.run_benefit_pair(dsn, ctx, arm, "gr-eva-00")
         assert result["skipped"] is False
         record = result["record"]
-        assert record["stage"] == "transfer"
+        assert record["stage"] == "evaluation"
         assert record["family"] == "graph"
         assert record["costs"]["queries_used"] <= panel.BUDGETS["witness_queries"]
         assert record["costs"]["invocations_used"] <= \
@@ -69,7 +69,7 @@ def test_transfer_pair_fixed_budget(migrated_db, tmp_path):
             ({"rpr-acq-B-t06xfer", "rpr-acq-C-t06xfer"} if arm == "A"
              else {"rpr-acq-%s-t06xfer" % arm})
     by_arm = {arm: json.loads(
-        (ctx["evidence_root"] / EVIDENCE_SUB / ("%s-gr-che-00.json" % arm))
+        (ctx["evidence_root"] / EVIDENCE_SUB / ("%s-gr-eva-00.json" % arm))
         .read_bytes()) for arm in panel.ARMS}
     assert by_arm["C"]["composition"]["core_digest"] == \
         by_arm["C"]["inputs_digest"]["core"]
@@ -80,9 +80,9 @@ def test_transfer_pair_fixed_budget(migrated_db, tmp_path):
 def test_acceptance_is_byte_identical_incumbent(migrated_db, tmp_path):
     dsn = migrated_db
     ctx = _ctx(dsn, tmp_path, "t06acc")
-    result = panel_run.run_benefit_pair(dsn, ctx, "C", "gr-che-00")
+    result = panel_run.run_benefit_pair(dsn, ctx, "C", "gr-eva-00")
     record = result["record"]
-    task, _ = panel_run.load_task("gr-che-00")
+    task, _ = panel_run.load_task("gr-eva-00")
     incumbent, _ = panel_run.incumbent_of(task)
     if record["result"]["improvement_u"] == 0.0:
         assert record["result"]["delivered_digest"] == panel_run._digest(

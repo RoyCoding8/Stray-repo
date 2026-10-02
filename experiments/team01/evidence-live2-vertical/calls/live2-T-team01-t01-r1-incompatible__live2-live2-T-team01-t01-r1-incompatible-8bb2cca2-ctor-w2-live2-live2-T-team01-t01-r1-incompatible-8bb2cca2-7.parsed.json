@@ -1,0 +1,18 @@
+{
+  "kind": "ctor",
+  "node": "w2",
+  "op_id": "live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-ctor-w2-live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-7",
+  "usage": {
+    "in": 691,
+    "out": 567
+  },
+  "stop": "stop",
+  "outcome": "model-text",
+  "error": "",
+  "parse_error": "",
+  "notes": "Fixed rotated op mapping so strip_lower strips and lowercases; also corrected dedup_sort, reverse, and upper for unseen cases.",
+  "files_digest": "748541b207313b8b3ef038e7458812e3d8eb999fab08dfba751e9e88fcc7373f",
+  "receipts": [
+    "gw:live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-ctor-w2-live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-7"
+  ]
+}

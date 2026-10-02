@@ -1,0 +1,167 @@
+{
+  "episode_id": "transfer-S-team01-t12-r1",
+  "panel": "transfer",
+  "arm": "S",
+  "task_id": "team01-t12",
+  "repeat": 1,
+  "family": "fam-seq",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-2bf898d626534bd489f6e9fff9a4343b",
+  "revision": 1,
+  "shape": "single",
+  "snapshot_digest": "4047816c430093bbdf07ada0b7f4b8ea18a45f26f8edfce4b8588b6e7b41f538",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "failure",
+  "public": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "failures": [
+      {
+        "input": {
+          "items": {
+            "k0": 83
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 83
+        },
+        "got": {
+          "mode": "a",
+          "result": "k0"
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 61
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 61
+        },
+        "got": {
+          "mode": "a",
+          "result": "k0"
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 141,
+            "k1": 151
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 292
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/operate.py\", line 15, in apply\n    return __import__(\"math\").prod(values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: can't multiply sequence by non-int of type 'str'\n"
+      }
+    ]
+  },
+  "protected": {
+    "passed": 3,
+    "failed": 3,
+    "total": 6,
+    "failures": [
+      {
+        "input": {
+          "items": {
+            "k0": 11,
+            "k1": 193
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 204
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/operate.py\", line 15, in apply\n    return __import__(\"math\").prod(values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: can't multiply sequence by non-int of type 'str'\n"
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 22,
+            "k1": 82,
+            "k2": 113
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 217
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/operate.py\", line 15, in apply\n    return __import__(\"math\").prod(values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: can't multiply sequence by non-int of type 'str'\n"
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 63,
+            "k1": 106,
+            "k2": 62
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 231
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-usvaj2_j/tree/src/operate.py\", line 15, in apply\n    return __import__(\"math\").prod(values)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: can't multiply sequence by non-int of type 'str'\n"
+      }
+    ]
+  },
+  "join": {
+    "passed": false,
+    "join_receipt": "local:plan_team01-2bf898d626534bd489f6e9fff9a4343b_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-2bf898d626534bd489f6e9fff9a4343b:r1:check",
+    "candidate_digest": "c7b6da7f37365340b7b44ef8f42ce17c6c8fe9917b7761ad6b551838861367df"
+  },
+  "frozen_digest": null,
+  "receipts": {
+    "w1": [
+      "local:plan_team01-2bf898d626534bd489f6e9fff9a4343b_r1_w1_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_executions": 0,
+    "model_invocations": 0,
+    "wall_s": 0.853
+  },
+  "live": {
+    "planner_operations": [
+      ""
+    ],
+    "calls": [
+      {
+        "operation_id": "",
+        "arm": "S",
+        "task_id": "team01-t12",
+        "repeat": 1,
+        "probe": null,
+        "exposure": 0,
+        "usage": {
+          "in": 0,
+          "out": 0
+        },
+        "outcome": "forced-single",
+        "stop_reason": "",
+        "shape": "single",
+        "text_chars": 0
+      }
+    ]
+  }
+}

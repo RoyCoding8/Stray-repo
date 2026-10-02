@@ -1,0 +1,78 @@
+{
+  "episode_id": "transfer-warm-T-team01-t08-r1",
+  "panel": "transfer",
+  "arm": "warm-T",
+  "task_id": "team01-t08",
+  "repeat": 1,
+  "family": "fam-cpl",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-9ddcf3b373ca4ec890ce02d2c4cbde80",
+  "revision": 1,
+  "shape": "alternatives",
+  "snapshot_digest": "65f31b693fed4c64e69d23699aacbede1935741d2861e1224407c39adc54c231",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": "4f5e7e79651624a539bfeaf9dbc6e5d0a330e7e1c27b092c56158876ae7b20ec",
+  "template_changed_decision": false,
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-9ddcf3b373ca4ec890ce02d2c4cbde80_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-9ddcf3b373ca4ec890ce02d2c4cbde80:r1:check",
+    "candidate_digest": "4a11012ca928cd97af6286ca8b9a1e6f2bde774e9a77d8f580d5673d36cbe479"
+  },
+  "frozen_digest": "4a11012ca928cd97af6286ca8b9a1e6f2bde774e9a77d8f580d5673d36cbe479",
+  "receipts": {
+    "w1": [
+      "local:plan_team01-9ddcf3b373ca4ec890ce02d2c4cbde80_r1_w1_work_team-work_1.result"
+    ],
+    "w2": [
+      "local:plan_team01-9ddcf3b373ca4ec890ce02d2c4cbde80_r1_w2_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 4.28
+  },
+  "live": {
+    "planner_operations": [
+      "tlive01-xfer-plan-warm-T-team01-t08-r1-18"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive01-xfer-plan-warm-T-team01-t08-r1-18",
+        "arm": "warm-T",
+        "task_id": "team01-t08",
+        "repeat": 1,
+        "probe": null,
+        "exposure": 687,
+        "usage": {
+          "in": 0,
+          "out": 0
+        },
+        "outcome": "fallback-empty-output",
+        "stop_reason": "",
+        "shape": "alternatives",
+        "text_chars": 0
+      }
+    ]
+  }
+}

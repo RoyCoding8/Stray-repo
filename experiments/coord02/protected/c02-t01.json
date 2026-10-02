@@ -1,0 +1,146 @@
+[
+  {
+    "input": {
+      "names": [],
+      "scores": [],
+      "tags": [],
+      "values": []
+    },
+    "expected": {
+      "names": [],
+      "scores": [],
+      "tags": [],
+      "stat": 0
+    }
+  },
+  {
+    "input": {
+      "names": [
+        "KILO  ",
+        "  lima"
+      ],
+      "scores": [
+        0,
+        100,
+        -1,
+        101
+      ],
+      "tags": [
+        "solo"
+      ],
+      "values": [
+        1,
+        2,
+        2
+      ]
+    },
+    "expected": {
+      "names": [
+        "kilo",
+        "lima"
+      ],
+      "scores": [
+        0,
+        100,
+        0,
+        100
+      ],
+      "tags": [
+        "solo"
+      ],
+      "stat": 1.67
+    }
+  },
+  {
+    "input": {
+      "names": [
+        "  DUP "
+      ],
+      "scores": [
+        5
+      ],
+      "tags": [
+        "b",
+        "a",
+        "b",
+        "A"
+      ],
+      "values": [
+        9
+      ]
+    },
+    "expected": {
+      "names": [
+        "dup"
+      ],
+      "scores": [
+        5
+      ],
+      "tags": [
+        "A",
+        "a",
+        "b"
+      ],
+      "stat": 9.0
+    }
+  },
+  {
+    "input": {
+      "names": [
+        "  oscar  ",
+        "PAPA"
+      ],
+      "scores": [
+        1
+      ],
+      "tags": [],
+      "values": [
+        2,
+        2,
+        2,
+        2
+      ]
+    },
+    "expected": {
+      "names": [
+        "oscar",
+        "papa"
+      ],
+      "scores": [
+        1
+      ],
+      "tags": [],
+      "stat": 2.0
+    }
+  },
+  {
+    "input": {
+      "names": [
+        " x "
+      ],
+      "scores": [
+        100
+      ],
+      "tags": [
+        "q",
+        "q"
+      ],
+      "values": [
+        0.5,
+        1.5
+      ]
+    },
+    "expected": {
+      "names": [
+        "x"
+      ],
+      "scores": [
+        100
+      ],
+      "tags": [
+        "q"
+      ],
+      "stat": 1.0
+    }
+  }
+]

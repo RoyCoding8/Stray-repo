@@ -1,0 +1,765 @@
+{
+  "ceilings": {
+    "input_tokens": 96000,
+    "model_invocations": 8,
+    "output_tokens": 24000,
+    "plan_revisions": 1,
+    "simultaneous_children": 2,
+    "tool_executions": 16,
+    "wall_seconds": 900
+  },
+  "evaluator": {
+    "code_digest": "f21b316da364b7a78b9cc8134d8b13a6918857d9904bd6c4d5262b9ab693f392",
+    "id": "team01-oracle",
+    "version": "1.0.0"
+  },
+  "files": [
+    {
+      "bytes": 3958,
+      "digest": "df139e2e5870a69b11521c297341baacdc9559b9a21ef46b901a873f34376ceb",
+      "path": "experiments/team01/barrier.py"
+    },
+    {
+      "bytes": 4572,
+      "digest": "0614579f9312f8dad6d788dfb1ccebb233313a17d878ffb550ac1cb657adf1fc",
+      "path": "experiments/team01/freeze.py"
+    },
+    {
+      "bytes": 9165,
+      "digest": "f21b316da364b7a78b9cc8134d8b13a6918857d9904bd6c4d5262b9ab693f392",
+      "path": "experiments/team01/oracle.py"
+    },
+    {
+      "bytes": 1368,
+      "digest": "ae0e6155b80048f77f6c68f3c82b0532055acd29c291ade93e106e412c4bf530",
+      "path": "experiments/team01/protected/team01-t01.json"
+    },
+    {
+      "bytes": 1486,
+      "digest": "c9389acd1f8f0e393b64239803b63b5f41da1141691ea42af153a0566f833ddc",
+      "path": "experiments/team01/protected/team01-t02.json"
+    },
+    {
+      "bytes": 1441,
+      "digest": "4e3e7618c09f001e53bdc2c9817b53f24edb44b7313810a08df9565a0b16751a",
+      "path": "experiments/team01/protected/team01-t03.json"
+    },
+    {
+      "bytes": 1473,
+      "digest": "6bcb09bc12f0b5fc9929eca2789ba35d9720549334017f0287dd517a0bee3024",
+      "path": "experiments/team01/protected/team01-t04.json"
+    },
+    {
+      "bytes": 1765,
+      "digest": "55003896de8c73a65c75124827c0fc311dc142d174cb5e85af9a56f35d08656b",
+      "path": "experiments/team01/protected/team01-t05.json"
+    },
+    {
+      "bytes": 1666,
+      "digest": "6f190e2c607a4802cc8e8fe3921401bf77d1bfb1271a4f023894da962232aa5d",
+      "path": "experiments/team01/protected/team01-t06.json"
+    },
+    {
+      "bytes": 1595,
+      "digest": "091f5719ad2fd53762e498944d7291f36908bb2a4b7c1dd37b5ec6f514a793e0",
+      "path": "experiments/team01/protected/team01-t07.json"
+    },
+    {
+      "bytes": 1667,
+      "digest": "cc4274a073eb236c62e8d430d8ce811ab8fc24346c0551cde02234b24af1c8a1",
+      "path": "experiments/team01/protected/team01-t08.json"
+    },
+    {
+      "bytes": 989,
+      "digest": "3200796f6be05181bee89103b0a08fb5d1a1f99d34096a1c29bae74c5922d12a",
+      "path": "experiments/team01/protected/team01-t09.json"
+    },
+    {
+      "bytes": 803,
+      "digest": "3be3c29e6af3c8fe320fa8f8f6c19cf8b8c7a94a3e700d98789916e6fb8f426d",
+      "path": "experiments/team01/protected/team01-t10.json"
+    },
+    {
+      "bytes": 862,
+      "digest": "3da269c83097d97f1983cc7246c738f143bf43f4ba03e5ae217dc31381b74220",
+      "path": "experiments/team01/protected/team01-t11.json"
+    },
+    {
+      "bytes": 800,
+      "digest": "426a6345e60cdf36cde6c895241c9c70663fdd6623d7f65cdf602696282d5273",
+      "path": "experiments/team01/protected/team01-t12.json"
+    },
+    {
+      "bytes": 775,
+      "digest": "f9909d0b9adfedab2013ca3b954e82e90ebc213028add1d52fc45f12efd5c5c8",
+      "path": "experiments/team01/protected/team01-t13.json"
+    },
+    {
+      "bytes": 1158,
+      "digest": "4940fef50c13be376c2a5ac444feed908525ba68c7369f0235b7a3083217689e",
+      "path": "experiments/team01/protected/team01-t14.json"
+    },
+    {
+      "bytes": 996,
+      "digest": "f541c0faf965b566f55ac634e8a2bf89f7828284ebf04c7e4ec724563f6aa0c6",
+      "path": "experiments/team01/protected/team01-t15.json"
+    },
+    {
+      "bytes": 701,
+      "digest": "c90de2abba47df11fd2cfe3b3d43771bcd2be1bbbc486864ab0938cb423f0f44",
+      "path": "experiments/team01/protected/team01-t16.json"
+    },
+    {
+      "bytes": 68,
+      "digest": "207eb1995aa3209ee8eabc79e4a4d5cc6bcb511eae9aef866f0286109956522e",
+      "path": "experiments/team01/reference/fam-cpl/invalid/consumer.py"
+    },
+    {
+      "bytes": 270,
+      "digest": "bc78437bfd433cce946fe1b822ff85658a4e97907a97447c483e0f9a506958c3",
+      "path": "experiments/team01/reference/fam-cpl/invalid/local_consumer_base.py"
+    },
+    {
+      "bytes": 50,
+      "digest": "dd1f24668d59a1e91a32a5532ca77f70a4d9471592c339a6aefa94a4d75574be",
+      "path": "experiments/team01/reference/fam-cpl/invalid/producer.py"
+    },
+    {
+      "bytes": 68,
+      "digest": "207eb1995aa3209ee8eabc79e4a4d5cc6bcb511eae9aef866f0286109956522e",
+      "path": "experiments/team01/reference/fam-cpl/valid/consumer.py"
+    },
+    {
+      "bytes": 50,
+      "digest": "74a936b7ba710579312bdbd0ca3b40b078aaac0e2c7937a623cf670b7ab9fda0",
+      "path": "experiments/team01/reference/fam-cpl/valid/producer.py"
+    },
+    {
+      "bytes": 203,
+      "digest": "9df9c07b0942e1696c22d56ca1d9fc90435c2a870b12cc6bc32fcc132ba711bb",
+      "path": "experiments/team01/reference/fam-ind/invalid/local_sum_nonneg.py"
+    },
+    {
+      "bytes": 376,
+      "digest": "70491519816959a0f402b241ae10a3b3c5c0e28246099d1bb46e3d26569e4d35",
+      "path": "experiments/team01/reference/fam-ind/invalid/numops.py"
+    },
+    {
+      "bytes": 318,
+      "digest": "3b913919860146704b291d37855be3ea8220d103a2aa068ef3db2def5489dba2",
+      "path": "experiments/team01/reference/fam-ind/invalid/textops.py"
+    },
+    {
+      "bytes": 358,
+      "digest": "77ee45aedec75a176775847ae50ce101f0e8d078ae5b630caaaa0379abf196b4",
+      "path": "experiments/team01/reference/fam-ind/valid/numops.py"
+    },
+    {
+      "bytes": 318,
+      "digest": "3b913919860146704b291d37855be3ea8220d103a2aa068ef3db2def5489dba2",
+      "path": "experiments/team01/reference/fam-ind/valid/textops.py"
+    },
+    {
+      "bytes": 46,
+      "digest": "5c8f2097b1b2f3a0fe30c83aa5bed83218979b6cc477c80a37367658d7d6af1f",
+      "path": "experiments/team01/reference/fam-seq/invalid/detect.py"
+    },
+    {
+      "bytes": 314,
+      "digest": "00654aded8b01c541a18260e74bb430c0bdd7e53b6a5a92ee2ddbc89a3187871",
+      "path": "experiments/team01/reference/fam-seq/invalid/local_detect_a.py"
+    },
+    {
+      "bytes": 601,
+      "digest": "d95468469607c85e322730be567445d8f753fc85fa1e1f75b83e03bc56338e6d",
+      "path": "experiments/team01/reference/fam-seq/invalid/operate.py"
+    },
+    {
+      "bytes": 436,
+      "digest": "4b47e7a8fb71a6ba63e737682a21eaaa5122ffa25140ff272a2a9669e34975e1",
+      "path": "experiments/team01/reference/fam-seq/valid/detect.py"
+    },
+    {
+      "bytes": 601,
+      "digest": "d95468469607c85e322730be567445d8f753fc85fa1e1f75b83e03bc56338e6d",
+      "path": "experiments/team01/reference/fam-seq/valid/operate.py"
+    },
+    {
+      "bytes": 499,
+      "digest": "e67bbf636c9709d1253af2c506fcb37cb8e9bf19d8cd8fbea9be3f64bfaab621",
+      "path": "experiments/team01/reference/fam-sng/invalid/compute.py"
+    },
+    {
+      "bytes": 295,
+      "digest": "feb2096283f773686d2a8e9fff19af187cc595ea9e354f8a72e40ff771e68e26",
+      "path": "experiments/team01/reference/fam-sng/invalid/local_window_full.py"
+    },
+    {
+      "bytes": 577,
+      "digest": "eb0fa9db03c333ef55407de082909865bbc723e65d8899f27a5cdc375b8e6460",
+      "path": "experiments/team01/reference/fam-sng/valid/compute.py"
+    },
+    {
+      "bytes": 3030,
+      "digest": "6dc6b7b3794661414170cbca43eb1413cba572ebd597eaca67a28ce339571e97",
+      "path": "experiments/team01/register.py"
+    },
+    {
+      "bytes": 907,
+      "digest": "f5423f86a246198c06759bf78f6d7eef11c8f94a8ec28da48a68de01bd3e159e",
+      "path": "experiments/team01/tasks/team01-t01/public.json"
+    },
+    {
+      "bytes": 44,
+      "digest": "849c69aa9eb39881e0ba42fd343a96234300acc54419e4582a01382682d435b6",
+      "path": "experiments/team01/tasks/team01-t01/spec.json"
+    },
+    {
+      "bytes": 554,
+      "digest": "04de2e740e6960c8432ef4b5b05e1650521a960527f7af3f54138e9b21639da0",
+      "path": "experiments/team01/tasks/team01-t01/spec.md"
+    },
+    {
+      "bytes": 565,
+      "digest": "0407a8cbd8ae4ec6650df6387b69ddd653eac93e4adb4291b1538c54b7dd14a5",
+      "path": "experiments/team01/tasks/team01-t01/src/app.py"
+    },
+    {
+      "bytes": 358,
+      "digest": "5cfc99464093d54e5dd64fb2b133a5792eb7dda39432c361292e1441078a64b4",
+      "path": "experiments/team01/tasks/team01-t01/src/numops.py"
+    },
+    {
+      "bytes": 318,
+      "digest": "e205ebe278ddef748abbfcf14679db9b183b26a6346fc31f6badc8acc0919db0",
+      "path": "experiments/team01/tasks/team01-t01/src/textops.py"
+    },
+    {
+      "bytes": 969,
+      "digest": "53eb8048f0767c14db9a3610b967516d79ae01436b32fd767bd4a15a29ea4eb6",
+      "path": "experiments/team01/tasks/team01-t02/public.json"
+    },
+    {
+      "bytes": 44,
+      "digest": "ae334ba89e99706fcaac286e499d48677b3309d82219d6f1a00b9d2bb93a7e48",
+      "path": "experiments/team01/tasks/team01-t02/spec.json"
+    },
+    {
+      "bytes": 589,
+      "digest": "b0b3264c375c4c7a04069df1815eb815adab7b833f163f981d510014d975f36e",
+      "path": "experiments/team01/tasks/team01-t02/spec.md"
+    },
+    {
+      "bytes": 565,
+      "digest": "0407a8cbd8ae4ec6650df6387b69ddd653eac93e4adb4291b1538c54b7dd14a5",
+      "path": "experiments/team01/tasks/team01-t02/src/app.py"
+    },
+    {
+      "bytes": 358,
+      "digest": "5cfc99464093d54e5dd64fb2b133a5792eb7dda39432c361292e1441078a64b4",
+      "path": "experiments/team01/tasks/team01-t02/src/numops.py"
+    },
+    {
+      "bytes": 318,
+      "digest": "e205ebe278ddef748abbfcf14679db9b183b26a6346fc31f6badc8acc0919db0",
+      "path": "experiments/team01/tasks/team01-t02/src/textops.py"
+    },
+    {
+      "bytes": 982,
+      "digest": "de8df822ebeb3da0d652882432ee4cabcfa6a0db1e5a999b4bcebae393b3c83c",
+      "path": "experiments/team01/tasks/team01-t03/public.json"
+    },
+    {
+      "bytes": 42,
+      "digest": "c0365a0dba5f7f3fd3daddbd47b11befd3312965fa34edec7dcb01a552f7598c",
+      "path": "experiments/team01/tasks/team01-t03/spec.json"
+    },
+    {
+      "bytes": 571,
+      "digest": "f4f560120e0a3fea1b6fcad042764028f67b1822229e959671cb41fae11ceca2",
+      "path": "experiments/team01/tasks/team01-t03/spec.md"
+    },
+    {
+      "bytes": 565,
+      "digest": "0407a8cbd8ae4ec6650df6387b69ddd653eac93e4adb4291b1538c54b7dd14a5",
+      "path": "experiments/team01/tasks/team01-t03/src/app.py"
+    },
+    {
+      "bytes": 358,
+      "digest": "5cfc99464093d54e5dd64fb2b133a5792eb7dda39432c361292e1441078a64b4",
+      "path": "experiments/team01/tasks/team01-t03/src/numops.py"
+    },
+    {
+      "bytes": 318,
+      "digest": "e205ebe278ddef748abbfcf14679db9b183b26a6346fc31f6badc8acc0919db0",
+      "path": "experiments/team01/tasks/team01-t03/src/textops.py"
+    },
+    {
+      "bytes": 992,
+      "digest": "be27ac6a3e4355530e848ea1894f3074d93137e525cb87b951c3582a2ba20383",
+      "path": "experiments/team01/tasks/team01-t04/public.json"
+    },
+    {
+      "bytes": 44,
+      "digest": "605c78debfe19b97070f42dd1ed14cf41c2acb4e722f2ec8a81abc4b2e43b041",
+      "path": "experiments/team01/tasks/team01-t04/spec.json"
+    },
+    {
+      "bytes": 531,
+      "digest": "3d1b34868a89f2594bf53d166ea1d47906ea807e58a2ecd757b144b634f49b03",
+      "path": "experiments/team01/tasks/team01-t04/spec.md"
+    },
+    {
+      "bytes": 565,
+      "digest": "0407a8cbd8ae4ec6650df6387b69ddd653eac93e4adb4291b1538c54b7dd14a5",
+      "path": "experiments/team01/tasks/team01-t04/src/app.py"
+    },
+    {
+      "bytes": 358,
+      "digest": "5cfc99464093d54e5dd64fb2b133a5792eb7dda39432c361292e1441078a64b4",
+      "path": "experiments/team01/tasks/team01-t04/src/numops.py"
+    },
+    {
+      "bytes": 318,
+      "digest": "e205ebe278ddef748abbfcf14679db9b183b26a6346fc31f6badc8acc0919db0",
+      "path": "experiments/team01/tasks/team01-t04/src/textops.py"
+    },
+    {
+      "bytes": 952,
+      "digest": "924b2066f221be8d46c68ccbead5c1ea0a5ef4aca50dc2b891fe33f16b8d32d6",
+      "path": "experiments/team01/tasks/team01-t05/public.json"
+    },
+    {
+      "bytes": 42,
+      "digest": "2c319e8db39fc7f5211b569ca0d6397fb1afb18c0f16235c2355a0b41ebbe048",
+      "path": "experiments/team01/tasks/team01-t05/spec.json"
+    },
+    {
+      "bytes": 626,
+      "digest": "c3540d4831c60b5002c5f8b8ce397f6360d8c775a3dc6e0f182c9d725bddd03c",
+      "path": "experiments/team01/tasks/team01-t05/spec.md"
+    },
+    {
+      "bytes": 644,
+      "digest": "3e5cfe9e223fbf79cb5790553a460dbd9a735ccc1b379d0277c1c244e082deac",
+      "path": "experiments/team01/tasks/team01-t05/src/app.py"
+    },
+    {
+      "bytes": 68,
+      "digest": "1f2af66e0c9a799b44baab2473f63f07c0f548720564c68fceeb7095690a499f",
+      "path": "experiments/team01/tasks/team01-t05/src/consumer.py"
+    },
+    {
+      "bytes": 39,
+      "digest": "e7ee14f377a90a5ee0e9386c986ef27ce2ab851cd231f1069b9e47688637b36e",
+      "path": "experiments/team01/tasks/team01-t05/src/producer.py"
+    },
+    {
+      "bytes": 1087,
+      "digest": "18e958cb138bfd43c383cea1aaa7a2db3789bd74542c1aea4d5d1382b6a17bb7",
+      "path": "experiments/team01/tasks/team01-t06/public.json"
+    },
+    {
+      "bytes": 47,
+      "digest": "ac1aef99de8339f17e64b65decb6e586e0725908e925e8ddf58edd57067eeff3",
+      "path": "experiments/team01/tasks/team01-t06/spec.json"
+    },
+    {
+      "bytes": 631,
+      "digest": "1cb6326e59882bf5dbfccb44a6ffdc70905c9a6352971c29d3baed7ecd95e4c1",
+      "path": "experiments/team01/tasks/team01-t06/spec.md"
+    },
+    {
+      "bytes": 644,
+      "digest": "3e5cfe9e223fbf79cb5790553a460dbd9a735ccc1b379d0277c1c244e082deac",
+      "path": "experiments/team01/tasks/team01-t06/src/app.py"
+    },
+    {
+      "bytes": 68,
+      "digest": "1f2af66e0c9a799b44baab2473f63f07c0f548720564c68fceeb7095690a499f",
+      "path": "experiments/team01/tasks/team01-t06/src/consumer.py"
+    },
+    {
+      "bytes": 39,
+      "digest": "e7ee14f377a90a5ee0e9386c986ef27ce2ab851cd231f1069b9e47688637b36e",
+      "path": "experiments/team01/tasks/team01-t06/src/producer.py"
+    },
+    {
+      "bytes": 996,
+      "digest": "8fea5173f87faa2d713696541014f254788870e1d5f67ea291249effcec514db",
+      "path": "experiments/team01/tasks/team01-t07/public.json"
+    },
+    {
+      "bytes": 46,
+      "digest": "37afef15d6aef3b654d669bc95a8f4ac554efde611c04a040bbf7f9bedcf4d09",
+      "path": "experiments/team01/tasks/team01-t07/spec.json"
+    },
+    {
+      "bytes": 630,
+      "digest": "8316d8ba4666c78cd6f5c7bd2aba47b5ff431288535bc9512501d77d879bb911",
+      "path": "experiments/team01/tasks/team01-t07/spec.md"
+    },
+    {
+      "bytes": 644,
+      "digest": "3e5cfe9e223fbf79cb5790553a460dbd9a735ccc1b379d0277c1c244e082deac",
+      "path": "experiments/team01/tasks/team01-t07/src/app.py"
+    },
+    {
+      "bytes": 68,
+      "digest": "1f2af66e0c9a799b44baab2473f63f07c0f548720564c68fceeb7095690a499f",
+      "path": "experiments/team01/tasks/team01-t07/src/consumer.py"
+    },
+    {
+      "bytes": 39,
+      "digest": "e7ee14f377a90a5ee0e9386c986ef27ce2ab851cd231f1069b9e47688637b36e",
+      "path": "experiments/team01/tasks/team01-t07/src/producer.py"
+    },
+    {
+      "bytes": 903,
+      "digest": "1259a5f08f9425065be6b74b39f0deeb02ac71dcee11870960cd960c340fae6e",
+      "path": "experiments/team01/tasks/team01-t08/public.json"
+    },
+    {
+      "bytes": 42,
+      "digest": "10cdec4e16976d4556ea190a873153546fdf9471aa1ddea0c1c3ee675ffc77af",
+      "path": "experiments/team01/tasks/team01-t08/spec.json"
+    },
+    {
+      "bytes": 626,
+      "digest": "2188bb6c4d6df998596b767fa24d10ea7ec35080d27af0ae4c7c522ac9b3d3d1",
+      "path": "experiments/team01/tasks/team01-t08/spec.md"
+    },
+    {
+      "bytes": 644,
+      "digest": "3e5cfe9e223fbf79cb5790553a460dbd9a735ccc1b379d0277c1c244e082deac",
+      "path": "experiments/team01/tasks/team01-t08/src/app.py"
+    },
+    {
+      "bytes": 68,
+      "digest": "1f2af66e0c9a799b44baab2473f63f07c0f548720564c68fceeb7095690a499f",
+      "path": "experiments/team01/tasks/team01-t08/src/consumer.py"
+    },
+    {
+      "bytes": 39,
+      "digest": "e7ee14f377a90a5ee0e9386c986ef27ce2ab851cd231f1069b9e47688637b36e",
+      "path": "experiments/team01/tasks/team01-t08/src/producer.py"
+    },
+    {
+      "bytes": 642,
+      "digest": "09c3773335242d74164f69794baaca633544d89ab40e99f0840c22f4f74c04ea",
+      "path": "experiments/team01/tasks/team01-t09/public.json"
+    },
+    {
+      "bytes": 112,
+      "digest": "b7e1fff09a6457dbc1e807eb5609b93734d9d71da70216aa035e4f0260a83e5a",
+      "path": "experiments/team01/tasks/team01-t09/spec.json"
+    },
+    {
+      "bytes": 627,
+      "digest": "8bf28d81d9e3494809c030f66075c01e595594cd1da611b3284103c8ffd22180",
+      "path": "experiments/team01/tasks/team01-t09/spec.md"
+    },
+    {
+      "bytes": 609,
+      "digest": "7d3b9e0c997294802af709ee13d64d38767b478470f49267391d56c600ee1917",
+      "path": "experiments/team01/tasks/team01-t09/src/app.py"
+    },
+    {
+      "bytes": 46,
+      "digest": "5c8f2097b1b2f3a0fe30c83aa5bed83218979b6cc477c80a37367658d7d6af1f",
+      "path": "experiments/team01/tasks/team01-t09/src/detect.py"
+    },
+    {
+      "bytes": 601,
+      "digest": "03752c49b328ad8e3f7374dd29f90ec2c89a2721c74c85cce6b16e3e7ff859e8",
+      "path": "experiments/team01/tasks/team01-t09/src/operate.py"
+    },
+    {
+      "bytes": 541,
+      "digest": "1e43a7a8f2f9f737108e73ea0210bb0d5c52e3df09724fd6ff45efb36fbc1501",
+      "path": "experiments/team01/tasks/team01-t10/public.json"
+    },
+    {
+      "bytes": 76,
+      "digest": "1da3dcac62569681db3bd9dfc5afc0ee01169011e3c77cbb8d722e87f1c67264",
+      "path": "experiments/team01/tasks/team01-t10/spec.json"
+    },
+    {
+      "bytes": 627,
+      "digest": "97571ed661272fbcdc980bfdbf833b5c278b69eef5e03eedfd14e9584c6d29f9",
+      "path": "experiments/team01/tasks/team01-t10/spec.md"
+    },
+    {
+      "bytes": 609,
+      "digest": "7d3b9e0c997294802af709ee13d64d38767b478470f49267391d56c600ee1917",
+      "path": "experiments/team01/tasks/team01-t10/src/app.py"
+    },
+    {
+      "bytes": 46,
+      "digest": "5c8f2097b1b2f3a0fe30c83aa5bed83218979b6cc477c80a37367658d7d6af1f",
+      "path": "experiments/team01/tasks/team01-t10/src/detect.py"
+    },
+    {
+      "bytes": 601,
+      "digest": "03752c49b328ad8e3f7374dd29f90ec2c89a2721c74c85cce6b16e3e7ff859e8",
+      "path": "experiments/team01/tasks/team01-t10/src/operate.py"
+    },
+    {
+      "bytes": 519,
+      "digest": "e15b8d6a6871898a1d7389b9b418335aaf36e04c3d983f0072adfd4f972204c9",
+      "path": "experiments/team01/tasks/team01-t11/public.json"
+    },
+    {
+      "bytes": 79,
+      "digest": "501c11ae5c513a0def4d000662718910e7625782313cc018285d95095869b5c1",
+      "path": "experiments/team01/tasks/team01-t11/spec.json"
+    },
+    {
+      "bytes": 638,
+      "digest": "114f68d1dd110adc35a56aa6bc66772e61807ae3e306dbd17c44c9d84dcb58c0",
+      "path": "experiments/team01/tasks/team01-t11/spec.md"
+    },
+    {
+      "bytes": 609,
+      "digest": "7d3b9e0c997294802af709ee13d64d38767b478470f49267391d56c600ee1917",
+      "path": "experiments/team01/tasks/team01-t11/src/app.py"
+    },
+    {
+      "bytes": 46,
+      "digest": "5c8f2097b1b2f3a0fe30c83aa5bed83218979b6cc477c80a37367658d7d6af1f",
+      "path": "experiments/team01/tasks/team01-t11/src/detect.py"
+    },
+    {
+      "bytes": 601,
+      "digest": "03752c49b328ad8e3f7374dd29f90ec2c89a2721c74c85cce6b16e3e7ff859e8",
+      "path": "experiments/team01/tasks/team01-t11/src/operate.py"
+    },
+    {
+      "bytes": 452,
+      "digest": "dcdeb48dfc860895db6de1db40abcc4c37feb5b35cb767057275881a3d5d5648",
+      "path": "experiments/team01/tasks/team01-t12/public.json"
+    },
+    {
+      "bytes": 62,
+      "digest": "c6f6137c5dda023fd709e0d64928d9b8502d8674c3680b32b70ec687c95f8980",
+      "path": "experiments/team01/tasks/team01-t12/spec.json"
+    },
+    {
+      "bytes": 594,
+      "digest": "1ce4289294eafe69cfb136c9ae4e57609ae141dc5028fedf89965e3686ffbe76",
+      "path": "experiments/team01/tasks/team01-t12/spec.md"
+    },
+    {
+      "bytes": 609,
+      "digest": "7d3b9e0c997294802af709ee13d64d38767b478470f49267391d56c600ee1917",
+      "path": "experiments/team01/tasks/team01-t12/src/app.py"
+    },
+    {
+      "bytes": 46,
+      "digest": "5c8f2097b1b2f3a0fe30c83aa5bed83218979b6cc477c80a37367658d7d6af1f",
+      "path": "experiments/team01/tasks/team01-t12/src/detect.py"
+    },
+    {
+      "bytes": 601,
+      "digest": "03752c49b328ad8e3f7374dd29f90ec2c89a2721c74c85cce6b16e3e7ff859e8",
+      "path": "experiments/team01/tasks/team01-t12/src/operate.py"
+    },
+    {
+      "bytes": 489,
+      "digest": "ee8c88f7efdb5ed6ff5e9e3fb4bfae9f42d33c36d0740a66a06b96f883ad45c7",
+      "path": "experiments/team01/tasks/team01-t13/public.json"
+    },
+    {
+      "bytes": 21,
+      "digest": "c7dd66c4a4953eb27e1c82e877fa038f9a3adc400a9f09cc33ed261ac71737a6",
+      "path": "experiments/team01/tasks/team01-t13/spec.json"
+    },
+    {
+      "bytes": 379,
+      "digest": "76cc8c59ace7b8343214d316ba42f798cb1481a2f6a8ffc70dfef80871205369",
+      "path": "experiments/team01/tasks/team01-t13/spec.md"
+    },
+    {
+      "bytes": 492,
+      "digest": "1cbf2bbaab0552dbc8b4a0d355d1b261a2017df7a4b9bcfc9300f58c41c94948",
+      "path": "experiments/team01/tasks/team01-t13/src/app.py"
+    },
+    {
+      "bytes": 433,
+      "digest": "bec9e038c574fb886790d8a4e423c3504b8ebf2338aa4f436149537f378f14b4",
+      "path": "experiments/team01/tasks/team01-t13/src/compute.py"
+    },
+    {
+      "bytes": 774,
+      "digest": "2da64a3ff79f3d978a8e5d2ad7dbb63fc95c874b610235679a1518a42cce134f",
+      "path": "experiments/team01/tasks/team01-t13/src/validate.py"
+    },
+    {
+      "bytes": 771,
+      "digest": "ca01753eba16ffb225149ef38e92802e9ab2939f39b7c38bcf486354796531a2",
+      "path": "experiments/team01/tasks/team01-t14/public.json"
+    },
+    {
+      "bytes": 19,
+      "digest": "9a8393505af05a1e7d4224f090e15f05cd65dbe4f3873a476b5141ee374c8318",
+      "path": "experiments/team01/tasks/team01-t14/spec.json"
+    },
+    {
+      "bytes": 382,
+      "digest": "eedbd647e9950840d6d5a353b8c42446910f18ca75361f49c45965c9670e91ea",
+      "path": "experiments/team01/tasks/team01-t14/spec.md"
+    },
+    {
+      "bytes": 492,
+      "digest": "1cbf2bbaab0552dbc8b4a0d355d1b261a2017df7a4b9bcfc9300f58c41c94948",
+      "path": "experiments/team01/tasks/team01-t14/src/app.py"
+    },
+    {
+      "bytes": 433,
+      "digest": "bec9e038c574fb886790d8a4e423c3504b8ebf2338aa4f436149537f378f14b4",
+      "path": "experiments/team01/tasks/team01-t14/src/compute.py"
+    },
+    {
+      "bytes": 774,
+      "digest": "2da64a3ff79f3d978a8e5d2ad7dbb63fc95c874b610235679a1518a42cce134f",
+      "path": "experiments/team01/tasks/team01-t14/src/validate.py"
+    },
+    {
+      "bytes": 659,
+      "digest": "eee7914b9590054303d9c22b9011bcd45a7f6dd6d0544b4d8d29f3e7d4d91625",
+      "path": "experiments/team01/tasks/team01-t15/public.json"
+    },
+    {
+      "bytes": 44,
+      "digest": "9a256fa091d25930d11f8427f36e886f3a78f2d0ae6e2bd8e6405d87ac602a8d",
+      "path": "experiments/team01/tasks/team01-t15/spec.json"
+    },
+    {
+      "bytes": 382,
+      "digest": "95594aabb5c2d7b727d67ec0837b043fb2f2319c736f19e152954a55858ef5ad",
+      "path": "experiments/team01/tasks/team01-t15/spec.md"
+    },
+    {
+      "bytes": 492,
+      "digest": "1cbf2bbaab0552dbc8b4a0d355d1b261a2017df7a4b9bcfc9300f58c41c94948",
+      "path": "experiments/team01/tasks/team01-t15/src/app.py"
+    },
+    {
+      "bytes": 433,
+      "digest": "bec9e038c574fb886790d8a4e423c3504b8ebf2338aa4f436149537f378f14b4",
+      "path": "experiments/team01/tasks/team01-t15/src/compute.py"
+    },
+    {
+      "bytes": 774,
+      "digest": "2da64a3ff79f3d978a8e5d2ad7dbb63fc95c874b610235679a1518a42cce134f",
+      "path": "experiments/team01/tasks/team01-t15/src/validate.py"
+    },
+    {
+      "bytes": 453,
+      "digest": "f89301f78c7c1454d5980c40b0b972abcf767bb74c8e6d742f635c4e9746d94f",
+      "path": "experiments/team01/tasks/team01-t16/public.json"
+    },
+    {
+      "bytes": 34,
+      "digest": "6768c5ee5b6b5d353e2d4d6054a7602f00c5dbba1d841634220bada7922938c3",
+      "path": "experiments/team01/tasks/team01-t16/spec.json"
+    },
+    {
+      "bytes": 340,
+      "digest": "44013547dcad7ca7bf457fd954e4fe2a9343c2f24038561c6f915e96fa608f09",
+      "path": "experiments/team01/tasks/team01-t16/spec.md"
+    },
+    {
+      "bytes": 492,
+      "digest": "1cbf2bbaab0552dbc8b4a0d355d1b261a2017df7a4b9bcfc9300f58c41c94948",
+      "path": "experiments/team01/tasks/team01-t16/src/app.py"
+    },
+    {
+      "bytes": 433,
+      "digest": "bec9e038c574fb886790d8a4e423c3504b8ebf2338aa4f436149537f378f14b4",
+      "path": "experiments/team01/tasks/team01-t16/src/compute.py"
+    },
+    {
+      "bytes": 774,
+      "digest": "2da64a3ff79f3d978a8e5d2ad7dbb63fc95c874b610235679a1518a42cce134f",
+      "path": "experiments/team01/tasks/team01-t16/src/validate.py"
+    }
+  ],
+  "membership": {
+    "team01-t01": "fam-ind",
+    "team01-t02": "fam-ind",
+    "team01-t03": "fam-ind",
+    "team01-t04": "fam-ind",
+    "team01-t05": "fam-cpl",
+    "team01-t06": "fam-cpl",
+    "team01-t07": "fam-cpl",
+    "team01-t08": "fam-cpl",
+    "team01-t09": "fam-seq",
+    "team01-t10": "fam-seq",
+    "team01-t11": "fam-seq",
+    "team01-t12": "fam-seq",
+    "team01-t13": "fam-sng",
+    "team01-t14": "fam-sng",
+    "team01-t15": "fam-sng",
+    "team01-t16": "fam-sng"
+  },
+  "policy_versions": {
+    "evaluator": "1.0.0",
+    "profile": "team-work/1",
+    "selector": "team-select/1",
+    "template": "coordination-template/1"
+  },
+  "protocols": [
+    "team01-dev-v1",
+    "team01-eval-v1"
+  ],
+  "ranking": {
+    "pilot_rule": "T strictly more protected solves than S and P with model tokens and tool executions each at most 1.25x that comparator, and no family losing more than one solved episode against either comparator",
+    "primary_outcome": "protected pass count of the frozen artifact",
+    "selection": "fewest public failures, then lowest task id"
+  },
+  "sampling_offset": 16,
+  "seeds": {
+    "team01-t01": 101,
+    "team01-t02": 102,
+    "team01-t03": 103,
+    "team01-t04": 104,
+    "team01-t05": 105,
+    "team01-t06": 106,
+    "team01-t07": 107,
+    "team01-t08": 108,
+    "team01-t09": 109,
+    "team01-t10": 110,
+    "team01-t11": 111,
+    "team01-t12": 112,
+    "team01-t13": 113,
+    "team01-t14": 114,
+    "team01-t15": 115,
+    "team01-t16": 116
+  },
+  "splits": {
+    "development": [
+      "team01-t01",
+      "team01-t05",
+      "team01-t09",
+      "team01-t13"
+    ],
+    "evaluation": [
+      "team01-t02",
+      "team01-t03",
+      "team01-t06",
+      "team01-t07",
+      "team01-t10",
+      "team01-t11",
+      "team01-t14",
+      "team01-t15"
+    ],
+    "transfer": [
+      "team01-t04",
+      "team01-t08",
+      "team01-t12",
+      "team01-t16"
+    ]
+  },
+  "version": "team01-corpus/1"
+}

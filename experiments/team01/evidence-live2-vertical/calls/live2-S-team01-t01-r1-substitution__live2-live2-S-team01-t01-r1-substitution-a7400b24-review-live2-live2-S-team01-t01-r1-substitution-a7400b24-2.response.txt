@@ -1,0 +1,1 @@
+{"verdict": "keep", "notes": "Checked strip_lower preserves order, strips then lowers, handles empty list; sum with start 0 handles empty->0, ints/floats, negative; app uses lowercase texts/numbers keys and returns both halves together matching visible checks."}

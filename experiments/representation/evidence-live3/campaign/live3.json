@@ -1,0 +1,644 @@
+{
+  "acquired": false,
+  "blocked": false,
+  "budget": {
+    "input_tokens_per_call": 16384,
+    "model_calls": 12,
+    "output_tokens_per_call": 8192,
+    "per_arm": {
+      "source_calls": 2,
+      "transfer_calls": 2
+    },
+    "retries": 0,
+    "unused_capacity_transfer": false
+  },
+  "campaign_allocation": "rpr-camp-live3",
+  "disposition": "complete",
+  "equal_opportunity": "2 source + 2 transfer calls per arm; unused capacity never transferred",
+  "foundation_allocation": "rpr-acq-alloc-live3",
+  "frozen_core_digest": null,
+  "grant_units": 171948,
+  "model": "muse-spark-1.3-contributor-free",
+  "model_output": "acquired bytes staged, published and executed where parsed; all failures retained",
+  "plan": [
+    {
+      "arm": "A",
+      "exposure": 12411,
+      "input_tokens": 4219,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-source-s1",
+      "slot": 1,
+      "stage": "source"
+    },
+    {
+      "arm": "A",
+      "exposure": 12411,
+      "input_tokens": 4219,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-source-s2",
+      "slot": 2,
+      "stage": "source"
+    },
+    {
+      "arm": "B",
+      "exposure": 12416,
+      "input_tokens": 4224,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-source-s1",
+      "slot": 1,
+      "stage": "source"
+    },
+    {
+      "arm": "B",
+      "exposure": 12416,
+      "input_tokens": 4224,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-source-s2",
+      "slot": 2,
+      "stage": "source"
+    },
+    {
+      "arm": "C",
+      "exposure": 12425,
+      "input_tokens": 4233,
+      "kind": "core",
+      "operation_id": "rpr-camp-live3-C-source-s1",
+      "slot": 1,
+      "stage": "source"
+    },
+    {
+      "arm": "C",
+      "exposure": 12425,
+      "input_tokens": 4233,
+      "kind": "core",
+      "operation_id": "rpr-camp-live3-C-source-s2",
+      "slot": 2,
+      "stage": "source"
+    },
+    {
+      "arm": "A",
+      "exposure": 11829,
+      "input_tokens": 3637,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-transfer-s1",
+      "slot": 1,
+      "stage": "transfer"
+    },
+    {
+      "arm": "A",
+      "exposure": 11829,
+      "input_tokens": 3637,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-transfer-s2",
+      "slot": 2,
+      "stage": "transfer"
+    },
+    {
+      "arm": "B",
+      "exposure": 11834,
+      "input_tokens": 3642,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-transfer-s1",
+      "slot": 1,
+      "stage": "transfer"
+    },
+    {
+      "arm": "B",
+      "exposure": 11834,
+      "input_tokens": 3642,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-transfer-s2",
+      "slot": 2,
+      "stage": "transfer"
+    },
+    {
+      "arm": "C",
+      "exposure": 11841,
+      "input_tokens": 3649,
+      "kind": "adapter",
+      "operation_id": "rpr-camp-live3-C-transfer-s1",
+      "slot": 1,
+      "stage": "transfer"
+    },
+    {
+      "arm": "C",
+      "exposure": 11841,
+      "input_tokens": 3649,
+      "kind": "adapter",
+      "operation_id": "rpr-camp-live3-C-transfer-s2",
+      "slot": 2,
+      "stage": "transfer"
+    }
+  ],
+  "protocol": "rpr-acq-C",
+  "reasoning_effort": "low",
+  "required_exposure": 171948,
+  "retention": {
+    "A-source": {
+      "applicability": {
+        "families": [
+          "software"
+        ],
+        "stage": "source"
+      },
+      "arm": "A",
+      "budget": {
+        "exposure": 24822,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 11250,
+          "model_calls": 2,
+          "output_tokens": 2388
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "directive": {
+        "directive": {
+          "graph": "greedy",
+          "software": "greedy"
+        },
+        "reason": "no valid software,graph method lines; froze arm-A selectors",
+        "source": "fallback-frozen-selector"
+      },
+      "identities": {
+        "artifact_digest": "0c0ba90f2c54684f5684e45b585a0468a0a3761f4a1450824a1bc6fc1ef434c6",
+        "file_digest": "dac634ba40961f61bd5d45f4563380bfd3f91032eb1c39a952d5a7cbb34c9773"
+      },
+      "kind": "lessons",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "6baedee072ba9a8bfa36444cbcc0d26fd1e0a72355378b1b2329b293475cc153",
+        "response_digest": "9897261f5cac393197e1af524dfd26edfae59e57aedf763b156ebc249b719e28",
+        "selection_task": "sw-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "reason": "first-parseable-lessons",
+      "selected": 1,
+      "stage": "source"
+    },
+    "A-transfer": {
+      "applicability": {
+        "families": [
+          "graph"
+        ],
+        "stage": "transfer"
+      },
+      "arm": "A",
+      "budget": {
+        "exposure": 23658,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 9900,
+          "model_calls": 2,
+          "output_tokens": 2631
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "directive": {
+        "directive": {
+          "graph": "greedy",
+          "software": "greedy"
+        },
+        "reason": "no valid software,graph method lines; froze arm-A selectors",
+        "source": "fallback-frozen-selector"
+      },
+      "identities": {
+        "artifact_digest": "ca1c69c5065c6d003da69496ab4507bf4456cb4bbe1f207d63081fb10ef816d2",
+        "file_digest": "7a7a7776f4060f9bbbac908c1c226d9b82b0f2b50e5ccb43a28c426bcb904c51"
+      },
+      "kind": "lessons",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "53145e0005fbdf3403eedfec689bca1860910b4204d116cc1e9e1012bc37de95",
+        "response_digest": "bf57c7a8252bd8ff69383d9cb496614338e95c793dde1a281e2a87e3eb086a39",
+        "selection_task": "gr-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "reason": "first-parseable-lessons",
+      "selected": 1,
+      "stage": "transfer"
+    },
+    "B-source": {
+      "applicability": {
+        "families": [
+          "software"
+        ],
+        "stage": "source"
+      },
+      "arm": "B",
+      "budget": {
+        "exposure": 24832,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 11250,
+          "model_calls": 2,
+          "output_tokens": 6426
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "artifact_digest": "5292a093a27e0a7dc8db525fbc005ac57ed1b0b6e9ba44c1585df515cb7827a5",
+        "file_digest": "cdd9bb27b037da303cddeaf670901a8db2a77f61dbe424c4201fbedc1ac7160b"
+      },
+      "kind": "procedure",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "665ce3caee7f72c783b72a1dee698f559a2fb994a0402dd768515205afab2989",
+        "response_digest": "fb06e9f5fb95c842a7288e3f475d4e6bfd8a5f12db3bc1f42243a779bf5d43b8",
+        "selection_task": "sw-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "procedure": {
+        "format": "rpr-procedure/1",
+        "reason": "missing-select-entry",
+        "status": "refused"
+      },
+      "reason": "first-parseable-procedure",
+      "selected": 1,
+      "stage": "source"
+    },
+    "B-transfer": {
+      "applicability": {
+        "families": [
+          "graph"
+        ],
+        "stage": "transfer"
+      },
+      "arm": "B",
+      "budget": {
+        "exposure": 23668,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 9900,
+          "model_calls": 2,
+          "output_tokens": 10514
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "artifact_digest": "157b50b9e4fd4f09099508e40c41eff4e43543fe792ca0ba76e9f2e30b66163f",
+        "file_digest": "9cc1749b566f2831d9ee44188c2eccfd88bb72f025d4147a6c756131b638da4d"
+      },
+      "kind": "procedure",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "6dcbcb0c42d5cf0c0d9d9c4b80fb4f60a34e22651206c8a12bca42e8c0cd1e18",
+        "response_digest": "ee63421ae188dce9ab48aba5db79a29f09ba9334185825619e68de6435c763f0",
+        "selection_task": "gr-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "procedure": {
+        "format": "rpr-procedure/1",
+        "reason": "missing-select-entry",
+        "status": "refused"
+      },
+      "reason": "first-parseable-procedure",
+      "selected": 1,
+      "stage": "transfer"
+    },
+    "C-source": {
+      "applicability": {
+        "families": [
+          "software"
+        ],
+        "stage": "source"
+      },
+      "arm": "C",
+      "budget": {
+        "exposure": 24850,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 11272,
+          "model_calls": 2,
+          "output_tokens": 11375
+        }
+      },
+      "core": {
+        "adaptation": null,
+        "core_adapted": false
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "adapter_digest": null,
+        "composition_id": null,
+        "core_digest": null,
+        "package_digest": null
+      },
+      "kind": "core",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": null,
+        "response_digest": null,
+        "selection_task": "sw-dev-00",
+        "verdict": "no-candidate",
+        "verified": false
+      },
+      "reason": "no-candidate: not-json,timeout",
+      "selected": null,
+      "stage": "source"
+    },
+    "C-transfer": {
+      "applicability": {
+        "families": [
+          "graph"
+        ],
+        "stage": "transfer"
+      },
+      "arm": "C",
+      "budget": {
+        "exposure": 23682,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 9926,
+          "model_calls": 2,
+          "output_tokens": 9616
+        }
+      },
+      "core": {
+        "adaptation": null,
+        "core_adapted": false
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "adapter_digest": null,
+        "composition_id": null,
+        "core_digest": null,
+        "package_digest": null
+      },
+      "kind": "adapter",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": null,
+        "response_digest": null,
+        "selection_task": "gr-dev-00",
+        "verdict": "no-candidate",
+        "verified": false
+      },
+      "reason": "no-candidate: no-frozen-core",
+      "selected": null,
+      "stage": "transfer"
+    }
+  },
+  "retention_path": "campaign/retention-live3.json",
+  "slots": [
+    {
+      "arm": "A",
+      "artifact_digest": "0c0ba90f2c54684f5684e45b585a0468a0a3761f4a1450824a1bc6fc1ef434c6",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 12411,
+      "file_digest": "dac634ba40961f61bd5d45f4563380bfd3f91032eb1c39a952d5a7cbb34c9773",
+      "grant_units": 0,
+      "input_tokens": 5625,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-source-s1",
+      "output_tokens": 1376,
+      "prompt_digest": "6baedee072ba9a8bfa36444cbcc0d26fd1e0a72355378b1b2329b293475cc153",
+      "reason": "parsed",
+      "response_digest": "9897261f5cac393197e1af524dfd26edfae59e57aedf763b156ebc249b719e28",
+      "slot": 1,
+      "stage": "source",
+      "status": "retained"
+    },
+    {
+      "arm": "A",
+      "artifact_digest": "ad7d85d9b011e9c0214554156055403cc54bcf1500dec8808a50e5a7954ebd89",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 12411,
+      "file_digest": "cfd83065f3839eb74032fc725f799b5a2d3b780865913739f36780f7f41cfc03",
+      "grant_units": 0,
+      "input_tokens": 5625,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-source-s2",
+      "output_tokens": 1012,
+      "prompt_digest": "d54f9e91932799e2c354880a03d397cc05e780d9a0cddfc682b5e2ee5bb3467f",
+      "reason": "parsed",
+      "response_digest": "fd7e167e405aa4da3fa84b2a1219e3657a419c6d31a925fe2767a99db78e4665",
+      "slot": 2,
+      "stage": "source",
+      "status": "retained"
+    },
+    {
+      "arm": "B",
+      "artifact_digest": "5292a093a27e0a7dc8db525fbc005ac57ed1b0b6e9ba44c1585df515cb7827a5",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 12416,
+      "file_digest": "cdd9bb27b037da303cddeaf670901a8db2a77f61dbe424c4201fbedc1ac7160b",
+      "grant_units": 0,
+      "input_tokens": 5625,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-source-s1",
+      "output_tokens": 3332,
+      "prompt_digest": "665ce3caee7f72c783b72a1dee698f559a2fb994a0402dd768515205afab2989",
+      "reason": "parsed",
+      "response_digest": "fb06e9f5fb95c842a7288e3f475d4e6bfd8a5f12db3bc1f42243a779bf5d43b8",
+      "slot": 1,
+      "stage": "source",
+      "status": "retained"
+    },
+    {
+      "arm": "B",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 12416,
+      "grant_units": 0,
+      "input_tokens": 5625,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-source-s2",
+      "output_tokens": 3094,
+      "prompt_digest": "fa86074c14d6271e0ea21bbcb1e8544cccb295626638dfd00036a1e1cd744ab8",
+      "reason": "unparseable-python",
+      "response_digest": "e1524b37eb29aebb79bbd570183c4f8b75e02c520ccc21888fa35f39c2ccc7fc",
+      "slot": 2,
+      "stage": "source",
+      "status": "ignored"
+    },
+    {
+      "adaptation": null,
+      "adapter_digest": "ca1a98edd7be81fba279016cf0485172e5b91b2c52848d09761ef3128999e604",
+      "arm": "C",
+      "composition_id": "rpr-C-source-live3-s1",
+      "core_adapted": false,
+      "core_change_refused": false,
+      "core_digest": "a880761f956205344536845f78f32404c9e235170614af12324d562e7767bcf9",
+      "dispatch_state": "observed",
+      "execution": {
+        "best_measure": 15,
+        "delivered_digest": "eeb9ecd232a89387ae52be6dc7319b96edbe902b243c27c942a611f7fba6c969",
+        "disposition": "refused",
+        "executed": true,
+        "improvement_u": 0.0,
+        "invocations_used": 1,
+        "queries_used": 0,
+        "reason": "timeout",
+        "verified": true
+      },
+      "exposure": 12425,
+      "frozen_core_digest": null,
+      "grant_units": 0,
+      "input_tokens": 5636,
+      "kind": "core",
+      "operation_id": "rpr-camp-live3-C-source-s1",
+      "output_tokens": 6883,
+      "package_digest": "ec75babbd745bb30d3f3631d02b14294e0efda34472419c7a0eaf209532fa4fd",
+      "prompt_digest": "053408dd3862e74c44af285b9a38d41b7487c6a981c4d73d7c3cc1c006390052",
+      "reason": "parsed",
+      "response_digest": "05f377c9337485c544e7fa08fc8997f73b571c59be0e6207998a375cbf51e411",
+      "slot": 1,
+      "stage": "source",
+      "status": "retained"
+    },
+    {
+      "arm": "C",
+      "dispatch_state": "observed",
+      "exposure": 12425,
+      "grant_units": 0,
+      "input_tokens": 5636,
+      "kind": "core",
+      "operation_id": "rpr-camp-live3-C-source-s2",
+      "output_tokens": 4492,
+      "prompt_digest": "71443cb6175a15694e5ad0c202466a949b9f8b515f13be5f0ceb57e81af4f796",
+      "reason": "not-json",
+      "response_digest": "4f10b83ecb824c6b61d340e5edb26effe0bd3b9765402596787a53ac4af90019",
+      "slot": 2,
+      "stage": "source",
+      "status": "ignored"
+    },
+    {
+      "arm": "A",
+      "artifact_digest": "ca1c69c5065c6d003da69496ab4507bf4456cb4bbe1f207d63081fb10ef816d2",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 11829,
+      "file_digest": "7a7a7776f4060f9bbbac908c1c226d9b82b0f2b50e5ccb43a28c426bcb904c51",
+      "grant_units": 0,
+      "input_tokens": 4950,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-transfer-s1",
+      "output_tokens": 1158,
+      "prompt_digest": "53145e0005fbdf3403eedfec689bca1860910b4204d116cc1e9e1012bc37de95",
+      "reason": "parsed",
+      "response_digest": "bf57c7a8252bd8ff69383d9cb496614338e95c793dde1a281e2a87e3eb086a39",
+      "slot": 1,
+      "stage": "transfer",
+      "status": "retained"
+    },
+    {
+      "arm": "A",
+      "artifact_digest": "adf384ae8821a029966fbca92c247bb0d68a219fe9bf1d537c5537e3020571d5",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 11829,
+      "file_digest": "f98352e54d5ac820315491a5294bec36eb2c78c090e5de730026df096a73e3c1",
+      "grant_units": 0,
+      "input_tokens": 4950,
+      "kind": "lessons",
+      "operation_id": "rpr-camp-live3-A-transfer-s2",
+      "output_tokens": 1473,
+      "prompt_digest": "3dc94f2d9177a127e47f732ed755971475069feccf8b20dc3932404f30a7298f",
+      "reason": "parsed",
+      "response_digest": "f8036a7ec5f4d68417361a81b23d31d1634503cbed52ac20717b4aa550e91a95",
+      "slot": 2,
+      "stage": "transfer",
+      "status": "retained"
+    },
+    {
+      "arm": "B",
+      "artifact_digest": "157b50b9e4fd4f09099508e40c41eff4e43543fe792ca0ba76e9f2e30b66163f",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 11834,
+      "file_digest": "9cc1749b566f2831d9ee44188c2eccfd88bb72f025d4147a6c756131b638da4d",
+      "grant_units": 0,
+      "input_tokens": 4950,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-transfer-s1",
+      "output_tokens": 4505,
+      "prompt_digest": "6dcbcb0c42d5cf0c0d9d9c4b80fb4f60a34e22651206c8a12bca42e8c0cd1e18",
+      "reason": "parsed",
+      "response_digest": "ee63421ae188dce9ab48aba5db79a29f09ba9334185825619e68de6435c763f0",
+      "slot": 1,
+      "stage": "transfer",
+      "status": "retained"
+    },
+    {
+      "arm": "B",
+      "artifact_digest": "f81056d35ca5a8d93a8acae62304394984c75a28cd2b566c97e598e5ed1348ac",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 11834,
+      "file_digest": "0653300d6465adda969c577ceb986561260112d450d505688b08702e832e2ba5",
+      "grant_units": 0,
+      "input_tokens": 4950,
+      "kind": "procedure",
+      "operation_id": "rpr-camp-live3-B-transfer-s2",
+      "output_tokens": 6009,
+      "prompt_digest": "979b938f056921cca1e65baec46e9068646be022edadad7ef1c9f26b3148e1fa",
+      "reason": "parsed",
+      "response_digest": "68048bdac4f8968413b580c91d353c5d4d019c6fb7dacde39f18257ae105a6ea",
+      "slot": 2,
+      "stage": "transfer",
+      "status": "retained"
+    },
+    {
+      "arm": "C",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 11841,
+      "grant_units": 0,
+      "input_tokens": 4963,
+      "kind": "adapter",
+      "operation_id": "rpr-camp-live3-C-transfer-s1",
+      "output_tokens": 4731,
+      "prompt_digest": "c24a54b22691b3ddd0f85107e98cdf95201e4cc31c58ad48ec3b54afdbed6228",
+      "reason": "no-frozen-core",
+      "response_digest": "8c3d97f2e211e2c0e22562355f40dad234b8c7dbf6bf5241e20ac1c824a6fdbe",
+      "slot": 1,
+      "stage": "transfer",
+      "status": "error"
+    },
+    {
+      "arm": "C",
+      "core_change_refused": false,
+      "dispatch_state": "observed",
+      "exposure": 11841,
+      "grant_units": 0,
+      "input_tokens": 4963,
+      "kind": "adapter",
+      "operation_id": "rpr-camp-live3-C-transfer-s2",
+      "output_tokens": 4885,
+      "prompt_digest": "77c7c4cb54db38cfb4e7c04be0e22f7baffed9f64d1b58c920dcbfcfedd81c20",
+      "reason": "no-frozen-core",
+      "response_digest": "ea6cdb9d2224178e584e97e6c5071d6e3fb9dab8de87dfd3ef652beb09e164b1",
+      "slot": 2,
+      "stage": "transfer",
+      "status": "error"
+    }
+  ],
+  "spent": {
+    "grant_units": 0,
+    "input_tokens": 63498,
+    "model_calls": 12,
+    "output_tokens": 42950
+  },
+  "tag": "live3",
+  "transfer_enrichment_reserve": 26436
+}

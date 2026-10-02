@@ -492,3 +492,341 @@ ends without a verification section; the coordinator's merged-source
 rerun (39 passed) stands as its evidence. Contract readings confirmed:
 graph witness identity is task plus three-way conjunction, equal-measure
 acceptance is the byte-identical incumbent only (B and D concur).
+
+## COMPLETION (assessment `origin/codex/cognitive-batch-01-assessment`,
+prompt `WORKER-REPRESENTATION-01-COMPLETION.md`, base `f91654c`)
+
+Agenda v3 accepted as scoped prototype; representation apparatus
+accepted as progress; acquisition/held-out transfer incomplete.
+Discipline: skill `git-worktree-discipline` (`.worktrees/<job>`,
+`wt/<job>`, disjoint ownership, gate-before-merge, serial merge,
+teardown). Main checkout is the orchestrator's; workers never touch it.
+
+Phase 0 obligation map (caller/consumer traced, not name-matched):
+
+| ID | Obligation | Implementation path | Owner | Acceptance observation | Evidence boundary |
+|---|---|---|---|---|---|
+| CBR-01 | Real acquisition orchestration | `acquire/live_campaign.py:40-83` (always refuses; `--grant` never reaches `preflight`) → real path: config precedence → grant admission → broker model op → response parse → candidate publish → staged invocation via `representation.run_task` → verdict; retention A/B/C; 2+2 calls/arm, caps; abstention explicit | wt/cbr01 | Configured run with deterministic constructor double reaches broker dispatch, persists returned bytes, executes them as selected candidate; always-refusing entry / ignored response / authored replacement fails the completion check | Deterministic doubles prove the path, never live acquisition; no model bytes in repo |
+| CBR-02 | Held-out evaluation phase | `acquire/panel.py:20-31,109-113` (7 dev + 2 check, 0 held-out) → add 8 sw + 8 gr held-out benefit + 4 controls × A/B/C = 60 records; `RPR-ACQ/1` mechanics preserved frozen; graph exposure after core freeze; changed core = adaptation result | wt/cbr02 | Exact 60-record membership; selectors see development only; transfer leakage/changed-core relabeling challenged | Held-out never influences selection; no full-panel rerun of the losing fixture |
+| CBR-03 | Full decision predicate | `experiment/checker.py:223-247` (`pilot_rule` = 4 quality clauses) vs frozen `verdict_rule` text (validity + quality + 1.25x resource + zero-denominator) → implement full conjunction + efficiency alternative + unknown/invalid/missing measurement handling + native costs + op unions | wt/cbr02 | Resource counterexample (1e6x elapsed) returns non-promising; quality-passing over-budget and unknown-measurement cases get no favorable result; existing negative stays negative | Reference recomputation independent of `pilot_rule` |
+| RPR-01..08 | Prior apparatus preserved | Lane B/C/D paths unchanged except at CBR seams | coordinator | Full suite + replay/freeze checks stay green | v1/v2/agenda evidence untouched |
+| EXT | Live campaign | Gateway/grant absent | external | Exact blocker + runnable command retained | Zero spend |
+
+Windows path-spelling: normalize serialized relative paths at any
+touched context/manifest seam (Owner 2); never re-freeze historical
+bytes for portability. Owners: wt/cbr01 = acquisition/profile
+consumption; wt/cbr02 = held-out manifest/checker/decision.
+Coordinator owns shared APIs, migrations, integration, PLAN ledger.
+
+Phase 1 dispositions (confirm/rebut with evidence, then finish together):
+
+- CBR-01 CONFIRMED and closed (`d9d85ce`, merged `7f8d069`): the
+  unconditional preflight block is replaced by configured acquisition
+  (config precedence, durable-grant admission, broker-routed
+  construction ops, strict response parsing, staging/publication,
+  staged invocation of returned bytes, verdict recording, A/B/C
+  retention). Gate `tests/test_rpr10_campaign.py` 11 passed in-worktree
+  and on merged state. Second defect found in passing (durable control
+  authority defaulted to 1) and fixed at the source with its own test.
+- CBR-02 CONFIRMED and closed (`ee0e282`, merged `58bdeec`): 16
+  held-out benefit tasks (Lane B evaluation fixtures) + 4 controls ×
+  A/B/C = 60 arm-task records under separate freeze RPR-ACQ/2
+  (`455c777a`); selectors from development only; graph exposure after
+  core freeze. Gate `tests/test_rpr11_heldout.py` 14 passed in-worktree
+  and on merged state; committed `evidence-heldout/` strict-clean
+  (48 records).
+- CBR-03 CONFIRMED and closed (same commit): `pilot_rule` is the full
+  frozen conjunction (validity/control + quality + 1.25x resource
+  bounds with zero-denominator handling) plus efficiency alternative,
+  unknown/invalid/missing measurements blocking favorable claims,
+  release eligibility separated. Gate: resource counterexample,
+  over-budget quality-passer, unknown-measurement, and preserved
+  negative all behave as required; reference recomputation independent.
+- Phase 3 triage (coordinator repair `7f61be4`, all verified green):
+  (a) RPR-ACQ/1 freeze bytes preserved as `manifest_acq1.*` with
+  manifest selection in checker/freeze/replay — `evidence/` (27) and
+  `evidence-heldout/` (48) both strict-clean; (b) transfer tests
+  retargeted at held-out `gr-eva-00` with honest `evaluation` stage
+  (also admitted to the `benefit` filter — the relabel initially
+  emptied means/costs, caught by the gate); (c) rpr07 fresh-db failure
+  claim REBUTTED — passes on merged state. Default replay check root
+  stays `evidence/` (documented `--evidence-root`); cpu/exposure
+  remain unmeasured in production records (blocking direction:
+  unknown never certifies a win) — runner-owner follow-up, not a
+  release claim.
+- Phase 4 final acceptance (ACCEPT, qualified completion): fresh
+  read-only reviewer at `8a4e3e2` re-derived every verdict number from
+  committed bytes (freeze SHAs `455c777a`/`4674f918`, 38/31 input
+  files, 60 held-out + 27 mechanics records, held-out means, costs,
+  full pilot_rule recomputation → promising False, release none) —
+  all MATCH. Gate files 34/34 on isolated DB `agenda01_accept`
+  (shared-DB contention during review was environmental, not a
+  product defect). One LOW robustness finding: `operator_view`
+  rpr-check receipt lookup lacked the sibling's None-guard
+  (AttributeError only if a receipt vanishes mid-read); fixed at the
+  source (`fc56df6`) with a race-simulating regression test that
+  fails on the old code. Live campaign stays implemented but
+  externally unverified (no gateway/grant, zero spend) — the
+  assignment's prescribed qualified outcome; no favorable capability
+  claim is made.
+
+End-to-end connection (WORKER-REPRESENTATION-01-END-TO-END.md, this
+assignment): constructor output → retained behavior → frozen held-out
+comparison → disposition → fresh-process use. Task/coverage list:
+
+- E2E-1 carry forward: freeze the actual A/B/C retained artifact and
+  selector identities, lineage, applicability, dependencies and
+  budget policy after selection; evaluation consumes that record;
+  explicit authored-fixture mode preserved, never silent.
+  Owner wt/e2e-a. Gate `tests/test_rpr12_retention.py` +
+  `tests/test_rpr10_campaign.py`.
+- E2E-2 operational arms: A's lessons drive a declared method
+  directive; B's procedure executes through a bounded checked path;
+  C's retained composition runs; missing/rejected → recorded
+  incumbent/fallback with honest cost. Owner wt/e2e-a (contracts +
+  retention) for the constructor side.
+- E2E-3 evaluate exact identities: 16 held-out + 4 controls × A/B/C
+  bound to retained artifacts before execution; full rule from
+  actual outputs/costs; same C core bytes or labeled adaptation.
+  Owner wt/e2e-b. Gate `tests/test_rpr13_endtoend.py` +
+  `tests/test_rpr11_heldout.py`.
+- E2E-4 disposition to use: load retained result + trial/release
+  status from durable state in a new process; selected use where
+  authorized or persistent fallback; no forced positives, no
+  eligibility bypass. Owner wt/e2e-b, incl. phase-naming public
+  entry. Decisive check: behavioral (not cosmetic) sensitivity on a
+  fixed diagnostic, disconnect-negative, no-candidate path.
+  Independent reviewer follows digests on e2e_review DB after merge.
+- E2E complete, ACCEPT (`9b96f8b`): wt/e2e-a froze `rpr-retention/1`
+  + constructor contracts (`72c50f3`, gate 19); wt/e2e-b bound
+  retained evaluation/disposition/use (`01233fa`, gate 20; first
+  run lost to infra, finished from preserved worktree state);
+  merged-tip revalidation 44 green on fresh DB; independent
+  reviewer with own double confirmed digest-following (authored
+  core in 0/48 arm-task + 0/4 use records), behavioral
+  sensitivity (B gr-eva-00 ddmin 0.0/no_improvement vs greedy
+  0.1/improved; cosmetic change flips nothing),
+  disconnect-negative, no-candidate path, freeze preservation,
+  fresh-process use. One INFO note ledgered (eval index quotes
+  authored core digest as provenance label; suggest rename
+  later). Live: implemented, externally unverified (no gateway).
+
+Batch 02 (WORKER-COGNITIVE-BATCH-02.md, stage 8.6): Team 01
+checked collaboration + retained coordination (TM-01-08), live
+representation campaign + live team learning (LIVE-01-07).
+Gateway live via repo adapter (endpoint .../v1, api responses,
+model muse-spark-1.3-contributor-free; discovery REACHABLE, auth
+AUTHENTICATED, real inference text+usage). Python for all lanes:
+`/tmp/asv2-agenda01/.venv/bin/python` (no per-worktree venv).
+Coordinator owns shared contracts + integration branch.
+
+Shared contracts (frozen before dependent lanes; owner T-RUNTIME):
+`team.py` workload ABI — `propose_team_plan`,
+`submit_child`, `assemble_and_join`, `freeze_candidate`;
+`team_plans` + `team_submissions(plan_revision,node_id,
+input_digests,ownership_generation,output_digest,receipt_refs)`
+tables; `team` packet kind (never the `construct` slot);
+S/P/T arm vocabulary (never candidate/reference reuse, never the
+TM-§5-incompatible verdict rules); budget mapping onto
+allocations/reservations/`expenditure_ledger` with checker+cleanup
+reserve; public entries `run_team_panel` + campaign entry, status
+names highest phase completed (representation `experiment.py`
+pattern). Evidence idioms: Command in / CommandResult out,
+hex-sha256 digests, committed checker, CLI-addressable replay.
+
+Lane map (one writer per checkout, isolated DBs):
+
+- T-RUNTIME (TM-01-04 + shared schema): `src/settlement/team.py`
+  (new), `run.py` (shape validation/compilation boundary only),
+  `context.py` (`team` packet kind + sandbox-exec binding only),
+  `store.py` (team tables), migrations. Gate:
+  `tests/test_team_runtime.py` (shape refusal, real-policy plan,
+  incompatible local-greens fail join, corrected combo passes,
+  1-revision fence, same-DB resume after completed child).
+- T-WORLD (TM-05 + oracle/control TM-08): `experiments/team01/`
+  fixtures (4 families x dev/eval-x2/transfer) + manifest,
+  evaluator registration, authored valid + plausible-invalid
+  solutions (outside participant inputs). Gate:
+  `tests/test_team_world.py` (freeze/membership/barrier/oracle
+  independence). Independent against the ABI.
+- T-EXPERIMENT (TM-06-08, after skeleton): public entry,
+  S/P/T runner, template acquisition/selection/freeze,
+  48-episode + 24-episode runners, team checker/replay +
+  operator view, TM-§5 finite-panel rule implementation.
+  Gate: `tests/test_team_experiment.py` (doubled mechanisms).
+- R-LIVE (LIVE-01/02 representation; coordinator): existing
+  `experiment.py:run_experiment` + configured HttpGatewayAdapter,
+  DB `rpr_live`, finite grant v1. live1: 4/12 real responses
+  (A lessons staged+verified), 8 transient gateway timeouts;
+  live2 retry declared. No-candidate/fallback preserved.
+- T-LIVE (LIVE-03-07; after integrated runtime/world/
+  experiment gates): <=24 dev episodes, <=2 template builds,
+  48 S/P/T + 24 transfer live episodes, continuity probe,
+  cost reconciliation. Own campaign state/evidence, DB `t_live`.
+
+LIVE rows: 01 real inference via broker path (adapter proven);
+02 representation full path on live bytes; 03 live team
+development + diagnostic/incompatible probes; 04 model-built
+template (<=1, dev-evidence only); 05 frozen 48 + 24 panels;
+06 fresh-process template use + episode restart after real
+child; 07 reconciled ops/receipts/usage/settlement. Verdicts:
+mechanism, team benefit, retained-coordination benefit
+separately; representation live disposition separately.
+
+## EC02 — Executable Coordination 02 (base `997ffa1`, branch `codex/implementation-executable-coordination-02`)
+
+Design: `docs/design/EXECUTABLE-COORDINATION-02.md`. New study, new
+artifacts/identity/freezes; Team 01 panels are historical (lane D only).
+
+### Settled contract baseline (G0)
+
+- Policy `step` transport: `python <entry> <request.json> <response.json>`
+  through the broker sandbox-exec path. Request carries unique decision
+  identity, package digest, source/observation digest, expected plan
+  revision, phase and allowed-action set; response echoes identities and
+  carries one proposal (`probe|plan|rework|stop|unsupported`) plus new
+  bounded state (<=16 KiB). Strict parse per
+  `src/settlement/representation.py` identity-echo/validate precedent;
+  unknown actions and extra effect-bearing fields are errors.
+- Causal order on the new path: policy step -> controller validates ->
+  `team.propose_team_plan` admits concrete plan -> admitted child
+  ownership -> model-generated child repair bytes -> `submit_child` ->
+  `assemble_and_join` -> independent freeze/grade. Admission precedes
+  child inference (reversal of the old solver order). Operation ids
+  `step_op_id`-style `(freeze, panel, task, repeat, arm)`-keyed.
+- Controller owns phase (derived from accepted state, never from
+  procedure memory), allowed-action sets per phase, binding checks,
+  allocation subdivision, revalidation on input/byte/support change,
+  and restart-from-recorded-decisions. Procedure state `m_t` is
+  untrusted and carries no authority.
+- Retention/publication: `capabilities.publish_candidate` (digest-bound
+  bytes, verified execution op with receipts, applicability/evidence/
+  scope/dependencies/budget fields) + `artifacts.stage_package`
+  manifest format. No new registry. Quarantine/release commands stay
+  authoritative for blocking new uses.
+- Critical-seam decision (DEC-EC02-01): reuse `representation.py`
+  file-invocation/identity-echo helpers + `capabilities` retention +
+  `team.py` admission, with one thin study controller in
+  `experiments/coord02/`. No duplicate scheduler, plugin framework, or
+  per-arm solver clones. Rejected alternative: a new `coordproc`
+  runtime module reimplementing transport/admission.
+- Shared trial/record schema, cost union (correctness; model in/out
+  tokens + calls; source/tool invocations; all sandbox ops incl. policy
+  exec and protected checks; CPU/wall; elapsed; abandoned work;
+  liabilities; internal accounting; external billing unknown-not-zero),
+  freeze contents (package bytes, deps, input contract, exposure
+  manifest, model/config, selector, baselines) and checker interface
+  are owned by lane E against this baseline; lanes request changes via
+  coordinator. Provenance fields: source SHA, config, package digest,
+  freeze id on every live record.
+- Migrations owner: lane R (`migrations/0015_*` if the operation
+  ledger needs new columns; reuse is preferred, new tables need
+  coordinator approval).
+
+### Cap sheet (design §11; coordinator-recorded before spending)
+
+Dev 48 (24 S/F calibration, 12 candidate validation, 6 A validation,
+6 controls/continuity) + construction 4 broker-routed calls (2
+lineages x init+repair) + eval 96 + transfer 48 + interventions 12 =
+<=204 live episodes + 4 construction calls. Per-episode ceilings: 12
+model calls, 128k in / 48k out tokens, 20 source/tool invocations, 64
+sandbox ops, 8 policy steps, 2 children, 1 probe batch (<=4 source
+invocations), 1 rework round, 900 s. Gateway/grant preflight required
+before any live spend.
+
+### Lanes (one branch + worktree + test DB each; coordinator merges serially)
+
+| Lane | Branch / worktree / DB | Owned paths | Depends on | Status |
+|---|---|---|---|---|
+| D historical delivery | `ec02-lane-D` / `/tmp/asv2-ec02/.worktrees/lane-D` / `ec02test_d` | `experiments/team01/acquire2.py`, `reconcile2.py`, `run_live2.py` recovery + corrected derived analysis + closure dispositions | none | MERGED `994991c` (lane tip `da9ddad`): derived corrections + closure tests green; acquire2/reconcile2 verdict UNRECOVERABLE, see F-EC02-D01 |
+| R runtime | `ec02-lane-R` / `/tmp/asv2-ec02/.worktrees/lane-R` / `ec02test_r` | `experiments/coord02/controller.py`, policy-executor seam, `migrations/0015_*` (if needed), `tests/test_coord02_runtime.py` | G0 contract | MERGED `4a19366` (lane tip `0ae9d4b`): 15 tests green on real PG post-merge; no migration needed (ledger reuse); seams for L/W/E in `reports/workstreams/ec02-R.md` |
+| W workload/checker | `ec02-lane-W` / `/tmp/asv2-ec02/.worktrees/lane-W` / `ec02test_w` | `experiments/coord02/corpus/`, oracle, freeze + offline checker, `tests/test_coord02_workload.py` | G0 contract | MERGED `7bd316b` (lane tip `8ee510f`, writer-failed-takeover): 17 workload tests green; combined R+W gate 32 passed on merged tree; add/add `__init__` conflict resolved by union re-export; F-EC02-W01 stale-oracle-pin fixed via single read |
+| L learning | `ec02-lane-L` / `/tmp/asv2-ec02/.worktrees/lane-L` / `ec02test_l` | experience packet, construction/selection/none path, `tests/test_coord02_learning.py` | G0 + R/W interfaces | MERGED `e0b7378` (lane tip `76b011a`): REAL-episode acquisition, 4-call ceiling ledger (0 live/4 authorized, DOUBLED), strict gate, select/none, 9 tests green post-merge |
+| E experiment/operator | `ec02-lane-E` / `/tmp/asv2-ec02/.worktrees/lane-E` / `ec02test_e` | four-arm entry, evidence/accounting, operator projection, `tests/test_coord02_experiment.py` | R/W/L interfaces | EARLY MERGED `25e2e3f` (lane tip `f0b74e9`): trial schema, cost union, freeze assembly, promising rule, preflight — 26 contract tests green post-merge; full four-arm entry after R/W/L |
+
+Gates: G0 contract+delivery; G1 integrated mechanics (EC-01–10
+behavior evidence, real PG + subprocesses); G2 live vertical +
+acquisition (reviewed trace before panels); G3 frozen 96+48 (+12
+interventions); G4 independent validation (4 passes) + delivery.
+Skills substitution: no environment skills named by the design are
+present; applying AGENTS/WORKFLOW principles directly, reported here.
+
+### Fresh-chat recovery status (coordinator, post-`322c1e5` merge)
+
+- Prior chat: fetched assessment branch, committed G0 baseline
+  (`e9edbea`), created `ec02-lane-D` + worktrees `integ`/`lane-D`.
+  Both worktrees clean at `e9edbea`; no writer processes running;
+  lane-D worktree free for takeover without stand-down.
+- Operation state observed: gateway `http://localhost:6446/v1` up with
+  `muse-spark-1.3-contributor-free`; PostgreSQL up; historical DBs
+  (`live2camp`, `live2test`, `ec02test_d`) intact; live2 evidence
+  bundle committed under `experiments/team01/`.
+- Assessment tip `322c1e5` merged additively (WORKER recovery
+  clarification only); G0 baseline preserved, no work discarded.
+- Old-writer spend: no new model/DB effects observed from the prior
+  chat beyond the committed G0 file change; campaign accounting
+  starts from the live2 ledger plus preflights recorded below.
+- Next: spawn lanes D/R/W against this base; L after R/W interfaces;
+  E against shared contracts early, full entry after R/W/L.
+- DONE: lane D merged (`994991c`). Post-merge gate: closure tests
+  10 passed; generator reproduce byte-identical; raw evidence bytes
+  untouched; team solver+experiment 7 passed + 16 skipped (DSN-gated)
+  without DSN, and 22 passed + 1 pre-existing failure with
+  `SETTLEMENT_TEST_DSN` set (see F-EC02-D01).
+- F-EC02-D01 (known pre-existing failure, diagnosed per
+  diagnosing-bugs loop, NOT a regression): tight loop
+  `SETTLEMENT_TEST_DSN=<dsn> .venv/bin/python -m pytest
+  tests/test_team_solver.py::test_build_returns_none_on_empty_replies -q`
+  goes red in <1s with `ImportError: cannot import name 'acquire2'`;
+  differential old-vs-new (base `6d5f4f7` vs merged `994991c`)
+  gives identical failure; `git log --all` proves the module never
+  existed on any branch. No correct fix seam exists: fabricating
+  the module would misrepresent historical provenance (forbidden by
+  the closure assignment), and weakening/deleting the test would
+  hide the open delivery obligation. Disposition: test kept as-is
+  as the standing probe (goes green only on legitimate recovery);
+  prevention lesson: executing workers must commit campaign modules
+  before their environment is recycled.
+- Integration acceptance includes a slop-reduction pass over each
+  lane's new code before the gate is declared: one source of truth
+  per behavior, delete-first, net-negative diff, lane's committed
+  tests as the preservation oracle.
+- LIVE GRANT BLOCKER (coordinator preflight): gateway reachable and
+  model `muse-spark-1.3-contributor-free` listed, but inference
+  requires a key and no campaign grant is present in this fresh chat
+  (`TEAM01_LIVE_API_KEY` and `SETTLEMENT_GATEWAY_KEY` absent;
+  unauthenticated `/v1/responses` returns `Invalid API key`). No
+  other key will be spent as a substitute. Consequence: G2/G3 live
+  acquisition and panels cannot run until the human provides the
+  grant; all live-independent work (G0/G1, lane D, corpus, runtime,
+  construction/selection code with doubles, harness with fake
+  gateway) proceeds meanwhile. Runnable remaining command once the
+  grant exists: `TEAM01_LIVE_API_KEY=<grant> <lane-E entry>` (exact
+  entry path to be fixed by lane E).
+
+### Completion correction (base `2fd203e`, review `d2d8924`)
+
+Review disposition: useful fixture apparatus, incomplete live
+implementation (ECR2-01–05). M0–M5 per
+`WORKER-COORDINATION-02-COMPLETION-CORRECTION.md`.
+
+| Lane | Branch / worktree / DB | Owned paths | Status |
+|---|---|---|---|
+| exec (ECR2-01/05) | `wt/ecr2-exec` / `.worktrees/exec` / `ec02test_exec` | `experiments/coord02/entry.py`, `tests/test_coord02_ecr201_205.py` | active |
+| learn (ECR2-03/04) | `wt/ecr2-learn` / `.worktrees/learn` / `ec02test_learn` (+`ec02test_sentinel`) | `experiments/coord02/experience.py`, `tests/test_coord02_learning.py` | active |
+| evid (ECR2-02/05) | `wt/ecr2-evid` / `.worktrees/evid` / `ec02test_evid` | `experiments/coord02/schemas_evidence.py`, `tests/test_coord02_ecr202.py` | queued |
+
+Coordinator-owned: evidence inventory + 20/24 reconciliation
+(done, in `evidence-live/NO-ACQUISITION.md`); serial merges +
+post-merge gates; live campaign launch/resume; M2 battery; M3–M5.
+Rule (standing): live-evidence DBs never equal a test default
+(`ec02test_live` isolated after the `ec02test_l` TRUNCATE
+incident).
+- M0 DONE: review merged additively (`2fd203e` over `0b47dcf`);
+  probes reproduce all five findings on the merged tip; surviving
+  live records exported (`ec02test_live`: 16 receipt rows);
+  count reconciled 24 admitted = 20 explained + 4 records-lost.
+- Grant ledger: design 4 construction calls spent many times over
+  across 6 uncoordinated rounds (no durable campaign counter —
+  ECR2-04 fix in flight); episode grant 0/204 spent; no further
+  live construction until durable caps land (correction §3).

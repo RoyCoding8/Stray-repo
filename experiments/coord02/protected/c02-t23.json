@@ -1,0 +1,71 @@
+[
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1007
+        }
+      ]
+    },
+    "expected": {
+      "total": 1007
+    }
+  },
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1000
+        }
+      ]
+    },
+    "expected": {
+      "total": 1000
+    }
+  },
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1002
+        },
+        {
+          "n": 1002
+        }
+      ]
+    },
+    "expected": {
+      "total": 2004
+    }
+  },
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1010
+        },
+        {
+          "n": 1020
+        },
+        {
+          "n": 1030
+        }
+      ]
+    },
+    "expected": {
+      "total": 3060
+    }
+  },
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1004
+        }
+      ]
+    },
+    "expected": {
+      "total": 1004
+    }
+  }
+]

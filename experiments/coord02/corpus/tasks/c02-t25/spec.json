@@ -1,0 +1,14 @@
+{
+  "deps": {
+    "emit.py": [
+      "convention.json"
+    ],
+    "render.py": [
+      "convention.json",
+      "emit.py"
+    ]
+  },
+  "discount": 0.1,
+  "notes": true,
+  "semantics": "discounted"
+}

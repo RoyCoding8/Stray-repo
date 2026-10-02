@@ -1,0 +1,62 @@
+[
+  {
+    "input": {
+      "code": 2,
+      "xs": [
+        2,
+        3
+      ],
+      "zs": [
+        9
+      ]
+    },
+    "expected": {
+      "mode": "a",
+      "result": 6
+    }
+  },
+  {
+    "input": {
+      "code": 8,
+      "xs": [
+        2
+      ],
+      "zs": [
+        4,
+        5
+      ]
+    },
+    "expected": {
+      "mode": "b",
+      "result": 9
+    }
+  },
+  {
+    "input": {
+      "code": 5,
+      "xs": [
+        1
+      ],
+      "zs": []
+    },
+    "expected": {
+      "mode": "b",
+      "result": 0
+    }
+  },
+  {
+    "input": {
+      "code": 0,
+      "xs": [
+        6
+      ],
+      "zs": [
+        2
+      ]
+    },
+    "expected": {
+      "mode": "a",
+      "result": 6
+    }
+  }
+]

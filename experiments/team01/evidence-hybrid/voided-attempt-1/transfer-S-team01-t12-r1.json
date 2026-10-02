@@ -1,0 +1,220 @@
+{
+  "episode_id": "transfer-S-team01-t12-r1",
+  "panel": "transfer",
+  "arm": "S",
+  "task_id": "team01-t12",
+  "repeat": 1,
+  "family": "fam-seq",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-3ef49326b2f248c8b788ed1675a2a6b4",
+  "revision": 1,
+  "shape": "alternatives",
+  "snapshot_digest": "4047816c430093bbdf07ada0b7f4b8ea18a45f26f8edfce4b8588b6e7b41f538",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "failure",
+  "public": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "failures": [
+      {
+        "input": {
+          "items": {
+            "k0": 83
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 83
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/operate.py\", line 15, in apply\n    return sum(values, 0)\n           ^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for +: 'int' and 'str'\n"
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 61
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 61
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/operate.py\", line 15, in apply\n    return sum(values, 0)\n           ^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for +: 'int' and 'str'\n"
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 141,
+            "k1": 151
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 292
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/operate.py\", line 15, in apply\n    return sum(values, 0)\n           ^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for +: 'int' and 'str'\n"
+      }
+    ]
+  },
+  "protected": {
+    "passed": 0,
+    "failed": 6,
+    "total": 6,
+    "failures": [
+      {
+        "input": {
+          "items": [
+            56,
+            -3,
+            178,
+            8
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": -239232
+        },
+        "got": {
+          "mode": "a",
+          "result": 239
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 11,
+            "k1": 193
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 204
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/operate.py\", line 15, in apply\n    return sum(values, 0)\n           ^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for +: 'int' and 'str'\n"
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 22,
+            "k1": 82,
+            "k2": 113
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 217
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/operate.py\", line 15, in apply\n    return sum(values, 0)\n           ^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for +: 'int' and 'str'\n"
+      },
+      {
+        "input": {
+          "items": {
+            "k0": 63,
+            "k1": 106,
+            "k2": 62
+          }
+        },
+        "expected": {
+          "mode": "b",
+          "result": 231
+        },
+        "got": null,
+        "error": "candidate exit 1: Traceback (most recent call last):\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 23, in <module>\n    raise SystemExit(main(sys.argv))\n                     ^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/app.py\", line 17, in main\n    out = {\"mode\": mode, \"result\": operate.apply(spec[\"ops\"][mode], values)}\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/team01-eval-tbu1aqo_/tree/src/operate.py\", line 15, in apply\n    return sum(values, 0)\n           ^^^^^^^^^^^^^^\nTypeError: unsupported operand type(s) for +: 'int' and 'str'\n"
+      },
+      {
+        "input": {
+          "items": [
+            153,
+            58,
+            195
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": 1730430
+        },
+        "got": {
+          "mode": "a",
+          "result": 406
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "items": [
+            194,
+            -20,
+            16,
+            124
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": -7697920
+        },
+        "got": {
+          "mode": "a",
+          "result": 314
+        },
+        "error": ""
+      }
+    ]
+  },
+  "join": {
+    "passed": false,
+    "join_receipt": "local:plan_team01-3ef49326b2f248c8b788ed1675a2a6b4_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-3ef49326b2f248c8b788ed1675a2a6b4:r1:check",
+    "candidate_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "frozen_digest": null,
+  "receipts": {
+    "w1": [
+      "local:plan_team01-3ef49326b2f248c8b788ed1675a2a6b4_r1_w1_work_team-work_1.result"
+    ],
+    "w2": [
+      "local:plan_team01-3ef49326b2f248c8b788ed1675a2a6b4_r1_w2_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 151,
+      "out": 441
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 3.722
+  },
+  "live": {
+    "planner_operations": [
+      "tlive01-xfer-plan-S-team01-t12-r1-4"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive01-xfer-plan-S-team01-t12-r1-4",
+        "arm": "S",
+        "task_id": "team01-t12",
+        "repeat": 1,
+        "probe": null,
+        "exposure": 647,
+        "usage": {
+          "in": 151,
+          "out": 441
+        },
+        "outcome": "model-shape",
+        "stop_reason": "stop",
+        "shape": "alternatives",
+        "text_chars": 156
+      }
+    ]
+  }
+}

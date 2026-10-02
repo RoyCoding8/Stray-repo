@@ -1,0 +1,12 @@
+{
+  "bounds": [
+    0,
+    10
+  ],
+  "layout": [
+    "names",
+    "scores",
+    "tags",
+    "stats"
+  ]
+}

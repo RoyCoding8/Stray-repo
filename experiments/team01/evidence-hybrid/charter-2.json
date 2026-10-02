@@ -1,0 +1,27 @@
+{
+  "charter": "LIVE-03-07 Team 01 live campaign",
+  "tag": "tlive02",
+  "allocation_id": "tlive02-live-root",
+  "model": "muse-spark-1.3-contributor-free",
+  "endpoint": "http://localhost:6446/v1",
+  "api": "responses",
+  "envelope": {
+    "caps": {
+      "dev_episodes": 0,
+      "template_builds": 0,
+      "eval_episodes": 48,
+      "transfer_episodes": 24,
+      "probe_calls": 0
+    },
+    "planner_calls": 72,
+    "per_call_exposure": 648,
+    "grant_authorized": 46656,
+    "retries": 0,
+    "model": "muse-spark-1.3-contributor-free",
+    "max_output_tokens": 512,
+    "reasoning_effort": "low",
+    "reason": "attempt-2 re-run of voided attempt-1 panels with forced S/P shapes; dev/template/continuity stand"
+  },
+  "note": "planner model-inference reserves against this root; per-episode child work uses per-episode roots",
+  "at": "2026-09-12T18:34:47Z"
+}

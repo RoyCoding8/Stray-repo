@@ -1,0 +1,10 @@
+{
+  "interface": {
+    "id": "cellsum/1",
+    "keys": [
+      "cells",
+      "factor"
+    ],
+    "version": 1
+  }
+}

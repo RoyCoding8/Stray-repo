@@ -1,0 +1,55 @@
+[
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1052
+        },
+        {
+          "n": 1053
+        }
+      ]
+    },
+    "expected": {
+      "total": 2105
+    }
+  },
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1055
+        }
+      ]
+    },
+    "expected": {
+      "total": 1055
+    }
+  },
+  {
+    "input": {
+      "deliveries": [
+        {
+          "n": 1051
+        },
+        {
+          "n": 1054
+        },
+        {
+          "n": 1056
+        }
+      ]
+    },
+    "expected": {
+      "total": 3161
+    }
+  },
+  {
+    "input": {
+      "deliveries": []
+    },
+    "expected": {
+      "total": 0
+    }
+  }
+]

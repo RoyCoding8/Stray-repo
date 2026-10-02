@@ -47,7 +47,13 @@ VERDICT_RULE = (
     " 0.10; C software mean trails neither by more than 0.05; measured"
     " execution CPU, elapsed time, oracle queries, model tokens and accounted"
     " exposure each at most 1.25x each comparator total over the same benefit"
-    " tasks (zero denominator requires C also zero)."
+    " tasks (zero denominator requires C also zero). A secondary efficiency"
+    " outcome requires identical per-task improvements with no greater"
+    " resource component and at least one strict reduction against both"
+    " comparators. Unknown or missing measurements cannot certify a resource"
+    " win: missing CPU/exposure values block a resource-based favorable"
+    " claim. A promising pilot warrants a broader frozen trial; it does not"
+    " authorize a general learned-capability release."
 )
 
 
@@ -194,24 +200,26 @@ def write_manifest() -> dict:
     return manifest
 
 
-def verify_committed() -> list:
+def verify_committed(name: str = "manifest.json",
+                     regenerate: bool = True) -> list:
     problems = []
     try:
-        manifest_raw = (REP / "manifest.json").read_bytes()
+        manifest_raw = (REP / name).read_bytes()
     except OSError:
         return ["missing-manifest"]
     try:
-        pinned = (REP / "manifest.sha256").read_text().strip()
+        pinned = (REP / (Path(name).stem + ".sha256")).read_text().strip()
     except OSError:
         return ["missing-manifest-hash"]
     if _digest(manifest_raw) != pinned:
         return ["manifest-hash-mismatch"]
-    try:
-        fresh = build_manifest()
-    except (ValueError, KeyError) as exc:
-        return ["regeneration-failed %s" % exc]
-    if json.loads(manifest_raw) != fresh:
-        problems.append("manifest-content-mismatch")
+    if regenerate:
+        try:
+            fresh = build_manifest()
+        except (ValueError, KeyError) as exc:
+            return ["regeneration-failed %s" % exc]
+        if json.loads(manifest_raw) != fresh:
+            problems.append("manifest-content-mismatch")
     manifest = json.loads(manifest_raw)
     seen = set()
     for entry in manifest.get("files", []):
@@ -242,9 +250,12 @@ def main(argv):
         print(json.dumps(write_bundles(), indent=2))
         return 0
     if "--check" in argv:
-        problems = verify_committed()
+        problems = {"manifest.json": verify_committed(),
+                    "manifest_acq1.json":
+                        verify_committed("manifest_acq1.json",
+                                         regenerate=False)}
         print(json.dumps({"problems": problems}, indent=2))
-        return 1 if problems else 0
+        return 1 if any(problems.values()) else 0
     manifest = write_manifest()
     print(json.dumps({"wrote": "manifest.json",
                       "files": len(manifest["files"]),

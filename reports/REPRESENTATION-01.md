@@ -27,7 +27,8 @@ transcripts, authored lessons), the shared atom core with its software
 and graph adapters plus a no-search core for attribution, frozen arm
 selectors derived from development transcripts only, the `RPR-ACQ/1`
 freeze manifest with deterministic checker bundles, two trial protocols
-with assignments and outcomes, 45 evidence records, the strict checker,
+with assignments and outcomes, 45 mechanics evidence records (plus the
+66-record held-out tree under the RPR-ACQ/2 freeze, §8), the strict checker,
 and the replay CLI. The live model campaign is not constructed: no
 gateway is configured, and the exact blocker is recorded instead. No
 model output of any kind appears in this study; every constructed
@@ -59,9 +60,10 @@ with the frozen A fallback on refusal.
 ## 3. Mechanics verdict (authored fixtures)
 
 The authored packages traverse real invocation, checking, persistence,
-and later-use paths on 4 software plus 3 graph development tasks. Arm C
-improves over the raw input on all 7 (verified, u 0.06-0.47) but loses
-to the frozen baseline incumbent on all 7, by 0.29-0.55 on software and
+and later-use paths on 5 software plus 4 graph benefit tasks
+(development seeds plus the 2+2 acquisition tasks). Arm C
+improves over the raw input on all 9 (verified, u 0.06-0.47) but loses
+to the frozen baseline incumbent on all 9, by 0.29-0.55 on software and
 0.06-0.21 on graphs. The apparatus is negative-capable: the gaps are
 large, consistent, and computed live through the checker, not staged.
 The four scope/validity controls (wrong observation, invalid sequence,
@@ -91,7 +93,9 @@ verified improvement exists; no non-pilot acceptance occurred, so the
 exact-oracle plus tiny-bytes plus construction-proof gate stands
 untriggered and recorded. Trial success counts tie 9-9 under both
 protocols (`inconclusive`); mean improvements lose everywhere, so the
-preregistered promising-pilot rule fails and the disposition is
+promising-pilot rule — the full frozen conjunction of valid delivery,
+passing controls, quality gains, and 1.25x resource bounds, with
+release eligibility separated — fails and the disposition is
 no release with persistent fallback: subsequent use selects the A
 fallback on supported tasks (C stays trial-only even where it improved)
 and the byte-identical incumbent on out-of-scope tasks. Acquisition
@@ -111,11 +115,16 @@ tokens each, 2 source + 2 transfer calls per arm, no retries, no
 capacity transfer) has spent nothing and produced nothing. Exact
 runnable command:
 
-`SETTLEMENT_TEST_DSN=$SETTLEMENT_TEST_DSN .venv/bin/python experiments/representation/acquire/live_campaign.py --protocol rpr-acq-C --grant $SETTLEMENT_GRANT_UNITS --artifacts-root $ARTIFACT_ROOT`
+`SETTLEMENT_TEST_DSN=$SETTLEMENT_TEST_DSN .venv/bin/python experiments/representation/acquire/live_campaign.py --protocol rpr-acq-C --grant $SETTLEMENT_GRANT_UNITS --model $SETTLEMENT_MODEL --dsn $SETTLEMENT_TEST_DSN --artifacts-root $ARTIFACT_ROOT`
 
-which today exits 2 with the missing-inputs record. No model output
+which today exits 2 with the missing-inputs record (the configured
+acquisition path itself is implemented and abstains explicitly; only
+the gateway inputs are absent). No model output
 was faked, stubbed, or simulated; the deterministic results above do
-not depend on the live phase.
+not depend on the live phase. The connected acquisition→use path
+is implemented and proven with controlled doubles (§9); with a real
+gateway the same `run_experiment` phases would execute acquired
+bytes instead. Status: implemented, live externally unverified.
 
 ## 6. Limitations
 
@@ -126,9 +135,11 @@ adapters lose to greedy baselines here. The transfer is finite-family
 joined-by-path patterns appear only in evaluation, which this pilot
 does not consume). The oracle's `ok-preserved` does not enforce strict
 decrease on non-incumbent candidates; all proposers here only shrink,
-so reported `u` is unaffected. CPU time is not measured separately
-from elapsed time; the resource clauses of the pilot rule are reported
-from elapsed time, oracle queries, invocations, and zero model tokens.
+so reported `u` is unaffected. CPU time and exposure units are not
+measured in production records; under the full rule an unknown
+measurement never certifies a resource win, so the missing components
+block rather than silently pass the resource clause (elapsed 52.3 s
+for C versus 0.02 s for A/B fails the 1.25x bound on its own).
 Released-representation use is unexercised (nothing earned release).
 The live campaign is fully blocked, so no claim about model
 constructibility is made.
@@ -144,10 +155,95 @@ Full rerun from committed inputs: `SETTLEMENT_TEST_DSN=...`
 `.venv/bin/python experiments/representation/experiment/replay.py
 --mode run --tag <fresh-tag> --artifacts-root /tmp/... --staging-root
 /tmp/... --runs-root /tmp/... --evidence-root /tmp/...` followed by the
-checker with `--dsn`. Lane tests: the five `tests/test_rpr0[3468]_*.py`
-files, 28 tests, on `settlement_cb01acq`. Manifest
-`experiments/representation/experiment/manifest.json` (sha
-`4674f918...`) pins all 31 input files, 4 compositions, selectors,
-panel, budgets, and protocols; evidence carries per-arm-task
-composition digests, invocation receipts, oracle queries, costs, trial
-refs, and dispositions.
+checker with `--dsn`. Lane tests: `tests/test_rpr0[3468]_*.py`
+(28 tests) plus `tests/test_rpr10_campaign.py` (11),
+`tests/test_rpr11_heldout.py` (14),
+`tests/test_rpr12_retention.py` (8) and
+`tests/test_rpr13_endtoend.py` (6). Connected-path CLI (evaluation
+onward from a frozen retention file):
+`SETTLEMENT_TEST_DSN=... .venv/bin/python
+experiments/representation/acquire/experiment.py --tag <tag>
+--evidence-root <eval-parent> --artifacts-root <a> --staging-root
+<s> --runs-root <r> --phases evaluation,disposition,use`.
+Two freezes: RPR-ACQ/1
+(`experiments/representation/experiment/manifest_acq1.json`, sha
+`4674f918...`, 31 input files) for the mechanics `evidence/` tree
+(27 arm-task records), and RPR-ACQ/2
+(`experiments/representation/experiment/manifest.json`, sha
+`455c777a...`, 38 input files) for the held-out
+`evidence-heldout/` tree (48 arm-task records); verify each tree
+against its own manifest
+(`replay.py --mode check --evidence-root ... --manifest-file ...`).
+Evidence carries per-arm-task composition digests, invocation
+receipts, oracle queries, costs, trial refs, and dispositions.
+
+## 8. Held-out gate (RPR-ACQ/2)
+
+The benefit panel holds 16 held-out tasks (Lane B evaluation
+fixtures: 8 software + 8 graph) plus 4 controls, each run on arms
+A/B/C: 60 records (48 arm-task + 12 controls), selectors derived
+from development transcripts only, graph exposure after the core
+freeze, changed core bytes yielding an adaptation result rather than
+unchanged-core transfer. The full frozen rule decides: valid
+delivery and passing controls hold; all four quality clauses fail
+(C transfer mean 0.153 versus A/B 0.299; C software mean 0.369
+versus A 0.732 / B 0.720); the 1.25x resource bound fails
+(elapsed C 52.3 s versus 0.02 s; cpu/exposure unknown and therefore
+blocking, never zeroed); the efficiency alternative fails.
+`promising: false`, `release_eligible: false`, reasons recorded per
+clause. The committed `evidence-heldout/` tree is strict-clean
+under its freeze; the RPR-ACQ/1 mechanics tree stays strict-clean
+under its own. Disposition unchanged: no release with persistent
+fallback.
+
+## 9. Connected end-to-end run (acquired behavior to use)
+
+`run_campaign` now freezes its selection to `rpr-retention/1`
+(`campaign/retention-<tag>.json`): per-(arm,stage) identities
+(artifact/file digests for lessons/procedure;
+composition/package/core/adapter digests for C), lineage
+(selection task, verdicts, improvement_u, response digests),
+applicability, dependencies (frozen core digest on transfer
+entries), budget, and explicit fallback reasons; C transfer staged
+against the frozen source core bytes with a `core_adapted` label.
+`retention.load_retention` validates format, manifest sha,
+artifact/composition presence and digest agreement, raising
+`RetentionError` — never a silent substitution. Transfer
+constructors receive a versioned `rpr-core-interface/1` contract
+plus the frozen core bytes inside the existing token caps.
+A's lessons parse to a closed-vocabulary method directive per
+family (fallback: frozen selector + reason); B's procedure must
+satisfy `rpr-procedure/1` (`select(measure) -> ddmin|greedy`,
+no imports/IO, wall-clock bounded) and is executed, not stored;
+C runs its retained compositions. Missing/rejected candidates
+follow the recorded incumbent/fallback policy with honest cost.
+
+Evaluation binds these identities before executing: `run_panel`
+defaults to `authored-fixture` (byte-identical to §8 evidence)
+and takes an explicit `mode="retained"` with a retention path.
+The public entry `experiment.run_experiment` (CLI
+`experiments/representation/acquire/experiment.py --tag ... --evidence-root ... --phases acquisition,evaluation,disposition,use`;
+acquisition phases need a gateway object, so the CLI runs
+evaluation onward from the frozen file) records
+`phase_completed` naming the highest phase actually reached.
+The use phase reloads retention, campaign record, index and
+disposition from disk in a new process — no gateway, no new
+model calls — and demonstrates selected use or persistent
+fallback without eligibility bypass.
+
+Decisive acceptance (independent reviewer, own double, isolated
+DB): `tests/test_rpr13_endtoend.py` 6 passed. Acquired
+`response_digest`/`artifact_digest`/`composition_id` quoted back
+in held-out and use records (e.g. C-transfer package
+`d0026c07...`, core `6a47c8d7...` in `C-gr-eva-00` and
+`use-gr-supported`); authored core `3185f9dd...` in 0 of 48
+arm-task and 0 of 4 use records. Behavioral sensitivity on fixed
+diagnostic `gr-eva-00` arm B: ddmin procedure → (0.0,
+no_improvement), greedy procedure → (0.1, improved);
+cosmetic-only bytes change keeps the verdict. Disconnect:
+deleted retention fails acceptance (`RetentionError`),
+authored-only evidence fails on content. All-abstain double:
+`acquired=False`, all four phases complete, `promising=False`,
+fallbacks recorded, no crash, no authored impersonation.
+Outcome: connected path implemented and deterministically
+proven; live campaign still externally unverified (§5).

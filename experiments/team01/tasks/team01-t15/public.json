@@ -1,0 +1,54 @@
+[
+ {
+  "input": {
+   "m": {
+    "turing9": "v13",
+    "noether63": "v14",
+    "grace96": "v15"
+   },
+   "key": "turing9"
+  },
+  "expected": {
+   "value": "v13"
+  }
+ },
+ {
+  "input": {
+   "m": {
+    "noether50": "v26",
+    "hopper58": "v27",
+    "linn35": "v28"
+   },
+   "key": "hopper58"
+  },
+  "expected": {
+   "value": "v27"
+  }
+ },
+ {
+  "input": {
+   "m": {
+    "linn33": "v39",
+    "grace90": "v40",
+    "darwin7": "v41",
+    "tesla4": "v42"
+   },
+   "key": "linn33"
+  },
+  "expected": {
+   "value": "v39"
+  }
+ },
+ {
+  "input": {
+   "m": {
+    "curie58": "v52",
+    "linn58": "v53"
+   },
+   "key": "linn58"
+  },
+  "expected": {
+   "value": "v53"
+  }
+ }
+]

@@ -1,0 +1,355 @@
+{
+  "budget": {
+    "input_tokens_per_call": 16384,
+    "model_calls": 12,
+    "output_tokens_per_call": 8192,
+    "per_arm": {
+      "source_calls": 2,
+      "transfer_calls": 2
+    },
+    "retries": 0,
+    "unused_capacity_transfer": false
+  },
+  "campaign_allocation": "rpr-camp-live3",
+  "entries": {
+    "A-source": {
+      "applicability": {
+        "families": [
+          "software"
+        ],
+        "stage": "source"
+      },
+      "arm": "A",
+      "budget": {
+        "exposure": 24822,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 11250,
+          "model_calls": 2,
+          "output_tokens": 2388
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "directive": {
+        "directive": {
+          "graph": "greedy",
+          "software": "greedy"
+        },
+        "reason": "no valid software,graph method lines; froze arm-A selectors",
+        "source": "fallback-frozen-selector"
+      },
+      "identities": {
+        "artifact_digest": "0c0ba90f2c54684f5684e45b585a0468a0a3761f4a1450824a1bc6fc1ef434c6",
+        "file_digest": "dac634ba40961f61bd5d45f4563380bfd3f91032eb1c39a952d5a7cbb34c9773"
+      },
+      "kind": "lessons",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "6baedee072ba9a8bfa36444cbcc0d26fd1e0a72355378b1b2329b293475cc153",
+        "response_digest": "9897261f5cac393197e1af524dfd26edfae59e57aedf763b156ebc249b719e28",
+        "selection_task": "sw-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "reason": "first-parseable-lessons",
+      "selected": 1,
+      "stage": "source"
+    },
+    "A-transfer": {
+      "applicability": {
+        "families": [
+          "graph"
+        ],
+        "stage": "transfer"
+      },
+      "arm": "A",
+      "budget": {
+        "exposure": 23658,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 9900,
+          "model_calls": 2,
+          "output_tokens": 2631
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "directive": {
+        "directive": {
+          "graph": "greedy",
+          "software": "greedy"
+        },
+        "reason": "no valid software,graph method lines; froze arm-A selectors",
+        "source": "fallback-frozen-selector"
+      },
+      "identities": {
+        "artifact_digest": "ca1c69c5065c6d003da69496ab4507bf4456cb4bbe1f207d63081fb10ef816d2",
+        "file_digest": "7a7a7776f4060f9bbbac908c1c226d9b82b0f2b50e5ccb43a28c426bcb904c51"
+      },
+      "kind": "lessons",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "53145e0005fbdf3403eedfec689bca1860910b4204d116cc1e9e1012bc37de95",
+        "response_digest": "bf57c7a8252bd8ff69383d9cb496614338e95c793dde1a281e2a87e3eb086a39",
+        "selection_task": "gr-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "reason": "first-parseable-lessons",
+      "selected": 1,
+      "stage": "transfer"
+    },
+    "B-source": {
+      "applicability": {
+        "families": [
+          "software"
+        ],
+        "stage": "source"
+      },
+      "arm": "B",
+      "budget": {
+        "exposure": 24832,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 11250,
+          "model_calls": 2,
+          "output_tokens": 6426
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "artifact_digest": "5292a093a27e0a7dc8db525fbc005ac57ed1b0b6e9ba44c1585df515cb7827a5",
+        "file_digest": "cdd9bb27b037da303cddeaf670901a8db2a77f61dbe424c4201fbedc1ac7160b"
+      },
+      "kind": "procedure",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "665ce3caee7f72c783b72a1dee698f559a2fb994a0402dd768515205afab2989",
+        "response_digest": "fb06e9f5fb95c842a7288e3f475d4e6bfd8a5f12db3bc1f42243a779bf5d43b8",
+        "selection_task": "sw-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "procedure": {
+        "format": "rpr-procedure/1",
+        "reason": "missing-select-entry",
+        "status": "refused"
+      },
+      "reason": "first-parseable-procedure",
+      "selected": 1,
+      "stage": "source"
+    },
+    "B-transfer": {
+      "applicability": {
+        "families": [
+          "graph"
+        ],
+        "stage": "transfer"
+      },
+      "arm": "B",
+      "budget": {
+        "exposure": 23668,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 9900,
+          "model_calls": 2,
+          "output_tokens": 10514
+        }
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "artifact_digest": "157b50b9e4fd4f09099508e40c41eff4e43543fe792ca0ba76e9f2e30b66163f",
+        "file_digest": "9cc1749b566f2831d9ee44188c2eccfd88bb72f025d4147a6c756131b638da4d"
+      },
+      "kind": "procedure",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": "6dcbcb0c42d5cf0c0d9d9c4b80fb4f60a34e22651206c8a12bca42e8c0cd1e18",
+        "response_digest": "ee63421ae188dce9ab48aba5db79a29f09ba9334185825619e68de6435c763f0",
+        "selection_task": "gr-dev-00",
+        "verdict": "stored-unexecuted",
+        "verified": false
+      },
+      "procedure": {
+        "format": "rpr-procedure/1",
+        "reason": "missing-select-entry",
+        "status": "refused"
+      },
+      "reason": "first-parseable-procedure",
+      "selected": 1,
+      "stage": "transfer"
+    },
+    "C-source": {
+      "applicability": {
+        "families": [
+          "software"
+        ],
+        "stage": "source"
+      },
+      "arm": "C",
+      "budget": {
+        "exposure": 24850,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 11272,
+          "model_calls": 2,
+          "output_tokens": 11375
+        }
+      },
+      "core": {
+        "adaptation": null,
+        "core_adapted": false
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "adapter_digest": null,
+        "composition_id": null,
+        "core_digest": null,
+        "package_digest": null
+      },
+      "kind": "core",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": null,
+        "response_digest": null,
+        "selection_task": "sw-dev-00",
+        "verdict": "no-candidate",
+        "verified": false
+      },
+      "reason": "no-candidate: not-json,timeout",
+      "selected": null,
+      "stage": "source"
+    },
+    "C-transfer": {
+      "applicability": {
+        "families": [
+          "graph"
+        ],
+        "stage": "transfer"
+      },
+      "arm": "C",
+      "budget": {
+        "exposure": 23682,
+        "spent": {
+          "grant_units": 0,
+          "input_tokens": 9926,
+          "model_calls": 2,
+          "output_tokens": 9616
+        }
+      },
+      "core": {
+        "adaptation": null,
+        "core_adapted": false
+      },
+      "dependencies": {
+        "frozen_core_digest": null
+      },
+      "identities": {
+        "adapter_digest": null,
+        "composition_id": null,
+        "core_digest": null,
+        "package_digest": null
+      },
+      "kind": "adapter",
+      "lineage": {
+        "improvement_u": null,
+        "prompt_digest": null,
+        "response_digest": null,
+        "selection_task": "gr-dev-00",
+        "verdict": "no-candidate",
+        "verified": false
+      },
+      "reason": "no-candidate: no-frozen-core",
+      "selected": null,
+      "stage": "transfer"
+    }
+  },
+  "equal_opportunity": "2 source + 2 transfer calls per arm; unused capacity never transferred",
+  "format": "rpr-retention/1",
+  "foundation_allocation": "rpr-acq-alloc-live3",
+  "frozen_core_digest": null,
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "model": "muse-spark-1.3-contributor-free",
+  "reasoning_effort": "low",
+  "selectors": {
+    "arm-A": {
+      "graph": {
+        "mean_u": 0.274671,
+        "method": "greedy"
+      },
+      "software": {
+        "mean_u": 0.712662,
+        "method": "greedy"
+      }
+    },
+    "arm-B": {
+      "graph": {
+        "buckets": {
+          "large": {
+            "mean_u": 0.299342,
+            "method": "greedy",
+            "queries": 32,
+            "runner_up": {
+              "mean_u": 0.18421,
+              "method": "ddmin",
+              "queries": 32
+            }
+          },
+          "small": {
+            "mean_u": 0.25,
+            "method": "greedy",
+            "queries": 32,
+            "runner_up": {
+              "mean_u": 0.175,
+              "method": "ddmin",
+              "queries": 32
+            }
+          }
+        },
+        "threshold": 15.5
+      },
+      "software": {
+        "buckets": {
+          "large": {
+            "mean_u": 0.775,
+            "method": "greedy",
+            "queries": 32,
+            "runner_up": {
+              "mean_u": 0.733334,
+              "method": "ddmin",
+              "queries": 26
+            }
+          },
+          "small": {
+            "mean_u": 0.681494,
+            "method": "ddmin",
+            "queries": 48,
+            "runner_up": {
+              "mean_u": 0.681494,
+              "method": "greedy",
+              "queries": 55
+            }
+          }
+        },
+        "threshold": 11.0
+      }
+    }
+  },
+  "spent": {
+    "grant_units": 0,
+    "input_tokens": 63498,
+    "model_calls": 12,
+    "output_tokens": 42950
+  },
+  "tag": "live3",
+  "transfer_enrichment_reserve": 26436
+}

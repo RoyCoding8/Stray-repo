@@ -1,10 +1,10 @@
 # Settlement: philosophy to final implementation
 
-Updated 2026-09-11. This is the maintained project map and design task list. The product is infrastructure for a persistent, general, autonomous society; the early work determines the behavior that infrastructure must support.
+Updated 2026-09-12. This is the maintained project map and design task list. The product is infrastructure for a persistent, general, autonomous society; the early work determines the behavior that infrastructure must support.
 
-**We are at stage 8 of 12: cognitive architecture prototypes and experiments.** Worker tip `051811f` adds real agenda operations/receipts and a working R/Q behavioral split; independent v2 totals are 284 correct tasks per arm, exploration R 2,144 / Q 2,128. The [correction assessment](../../reviews/AGENDA-01-CORRECTION-ASSESSMENT.md) accepts useful progress but leaves three specific resume, decision-time/accounting and freeze/checker gates with the worker. They limit acceptance of the experiment, not all further architectural reasoning. Useful acquired competence is still unproven; stage 12 remains the final supported infrastructure release.
+**Stage 8.6 has a real-repair prototype and completed live panels at a qualified scope; stage 9 architecture consolidation has begun.** Worker `5864740` delivers non-promising real S/P/T and warm/cold results. The design role independently recomputed their arithmetic and confirmed that correcting the known refusal usage does not change either decision. The retained artifact is advisory prose, so executable coordination-template acquisition remains open. [The final assessment](../../reviews/COGNITIVE-BATCH-02-FINAL-ASSESSMENT.md) records what this supports and what remains unmet.
 
-**Two tracks in one worker batch:** complete [three agenda acceptance gates](../../WORKER-AGENDA-01-THREE-GATES.md) and build the newly specified [Representation 01](REPRESENTATION-01-IMPLEMENTATION.md). The [combined assignment](../../WORKER-COGNITIVE-BATCH-01.md) gives parallel ownership and integration dependencies. Stage 8.5 now has a concrete software-to-finite-mathematics acquisition/transfer pilot, not merely a draft awaiting agenda results. Its architectural question is how a constructed executable abstraction preserves relevant distinctions, exposes useful operations and earns reuse on new tasks. It runs as explicitly admitted work; agenda corrections do not block independent design or implementation. Do not turn every prototype acceptance issue into another global architecture pause or whole-repository audit.
+**Current worker assignment:** [Executable Coordination 02](../../WORKER-EXECUTABLE-COORDINATION-02.md), including the pending historical delivery corrections as one independent lane. The [selected design](EXECUTABLE-COORDINATION-02.md) specifies acquired decision programs for binding, diagnostics, ownership and selective rework; four comparison arms; six workload families; causal controls, live acquisition and fresh-process transfer. This is a new informative study, not a rerun or retrofit of Team 01. General learner revision and final infrastructure release remain later milestones.
 
 ## The mental model
 
@@ -25,8 +25,8 @@ This sequence has feedback. We revisit an earlier decision when evidence challen
 | 5. Representation and technology | State, executable packages, interfaces and supporting tools; R5-R6 | **Done: provisional choices** | [Representation design](REPRESENTATION-DESIGN.md) and [technology decisions](TECHNOLOGY-DECISIONS.md). Experiment-driven revision remains possible. |
 | 6. Practical specification | Builder protocols, requirements and acceptance conditions; R7 | **Done: baseline specified** | [Practical specification](PRACTICAL-SPECIFICATION.md). Later cognitive mechanisms still need policy-level refinement. |
 | 7. Foundation prototype | S0-S3: bounded execution, persistence, evidence, continuity, candidate/trial/release machinery | **Built; validation partial** | Worker report at `be1730d`: R03 fixes merged, 456 tests passed; its verification section identifies tested code `42caa1e`. The design role has not independently rerun that suite. Live gates and empirical learning remain open. |
-| 8. Learning and cognitive policy refinement | Specify and test acquired competence, memory, background development, agenda and teams | **Ongoing: current stage** | Scoped live baseline and deterministic mechanisms accepted. Memory/context integration is partial; Agenda 01 has working components and three acceptance gates. Representation 01 is specified for implementation. No useful learning gain demonstrated. |
-| 9. Evidence-driven architecture consolidation | Confirm, narrow, replace or remove mechanisms; revisit R2-R7 | **Not started as a synthesis milestone** | Record what experiments support and which representation/stack decisions consequently change. No automatic rewrite. |
+| 8. Learning and cognitive policy refinement | Specify and test acquired competence, memory, background development, agenda and teams | **Ongoing: current stage** | Scoped agenda prototype accepted; memory/context integration remains partial. Representation acquisition-to-use mechanics are connected; their live empirical result remains open. Temporary teams now have a buildable contract. No useful learning gain demonstrated. |
+| 9. Evidence-driven architecture consolidation | Confirm, narrow, replace or remove mechanisms; revisit R2-R7 | **Started: scoped synthesis, not complete** | [Team 01 final assessment](../../reviews/COGNITIVE-BATCH-02-FINAL-ASSESSMENT.md): retain checked work and conservative single-worker baseline; distinguish advisory memory from executable retained behavior; no stack rewrite or general learner selected. |
 | 10. Complete system prototype | S4-S6: representations/transfer, autonomous agenda/teams, learner revision/consolidation | **Not completed** | Each slice needs its own end-to-end demonstration. Scaffolding does not complete it. Stage 8 can deliver portions incrementally. |
 | 11. Operational qualification | S7: real profiles, recovery, controls and supported deployment | **Partial groundwork; qualification not done** | Verify real components and the declared failure model for the chosen deployment. Explicit stack revisions can replace earlier targets. |
 | 12. Final implementation and release | Consolidate the validated architecture into a supported infrastructure product | **Not started as a release milestone** | Complete chosen scope, migrations, installation, documentation, lifecycle UI and release evidence. Retain sound prototype code; “final” does not mean replacing everything or ending research. |
@@ -38,12 +38,47 @@ This sequence has feedback. We revisit an earlier decision when evidence challen
 | 8.1 | Acquired competence and development episodes | **Selected for the first experiment** | [Learning model](LEARNING-MODEL.md): method/representation/policy distinctions, transitions, evidence and failure cases. |
 | 8.2 | First complete development episode | **Live rejection/fallback exercised; baseline solver path corrected; competence gain open** | Historical four-episode campaign remains confounded, with zero releases. New clean-source live baseline solves a visible regression task with reconciled internal cost. It does not retroactively validate the historical comparison or exercise learned-method transfer. |
 | 8.3 | Memory and decision context | **Integrated prototype; validation remains scoped** | Experience, opposition, packet delivery/binding and stale-state contracts have deterministic evidence in the refreshed [compatibility mapping](../../reviews/COGNITIVE-DESIGN-COMPATIBILITY.md). The whole runtime suite is worker-reported 590 green. Universal context sufficiency and live semantic benefit are unproven. |
-| 8.4 | Background development and autonomous agenda | **Working components and treatment split; three acceptance gates open** | Worker `051811f`: 614 runtime operations across the v2 traces, equal grades, 16-unit Q saving. Real resume, correct paid decision/time semantics and verified freeze/checker remain worker-owned gates. Preserve the limited result; architectural design can advance independently. |
-| 8.5 | Representation invention and transfer | **First implementation contract ready; worker batch commissioned** | [Representation 01](REPRESENTATION-01-IMPLEMENTATION.md): executable interpretation/core boundary, software reduction acquisition, unchanged-core finite-graph transfer, independent source checks and strong comparators. Constructs an explicitly authored starting corpus; actual acquisition and benefit remain unproven. E2/E6. |
-| 8.6 | Temporary teams and collective reasoning | **First semantic and study draft complete; adaptive runtime pending** | [Temporary teams](TEMPORARY-TEAMS.md): obligation-based work graphs, evidence joins, exposure/correlation, revision and matched-resource comparisons. S5/E5 implementation and empirical selection remain pending. |
+| 8.4 | Background development and autonomous agenda | **Scoped prototype experiment accepted; operational limitation retained** | Worker `324174f`: v3 stored traces and source freeze independently checked, grades 288–288, 16-unit Q saving in family 1. Same-DB resume path inspected; real-PG tests remain worker-reported. Claimed/partially receipted mid-send recovery is not qualified. |
+| 8.5 | Representation invention and transfer | **Connected prototype; live unsuccessful acquisition observed** | Worker `6942fa2` publishes live3: 48 held-out records and 12 controls; means/clauses independently recompute. C produced no usable source candidate and therefore no transfer core. The scoped no-acquisition/fallback result is accepted; successful acquired C transfer and useful learning remain unproven. |
+| 8.6 | Temporary teams and collective reasoning | **Live repair/advisory pilot accepted; executable procedure design selected, implementation pending** | `5864740`: eval 16/15/16, transfer 8/8/8; neither rule promising, even with corrected refusal usage. [Coordination 02](EXECUTABLE-COORDINATION-02.md) now tests actual executable acquisition, applicability, probes, partitions, rework and transfer. Historical delivery fixes are included; old panels are not repeated. |
 | 8.7 | Learner revision and consolidation | **First semantic and study draft complete; working mechanism pending** | [Learner revision](LEARNER-REVISION.md): whole trajectories, bounded self-revision, consolidation, evaluator corrections/epochs and rollback. S6/E7 implementation and empirical qualification remain pending. |
 
-The order expresses dependencies, not a demand to finish each part globally. Agenda 01 tests scheduling without waiting for a learned-method release; Representation 01 tests a narrow mathematical transfer without waiting for autonomous scheduling. They remain separate experiments within one engineering batch. Adaptive teams and learner revision remain later slices. The [checkpoint](COGNITIVE-DESIGN-CHECKPOINT.md) records this progression; it does not authorize building every cognitive draft at once.
+The order expresses dependencies, not a demand to finish each part globally. Agenda 01 tested scheduling without waiting for a learned-method release; Representation 01 tested narrow mathematical transfer without waiting for autonomous scheduling. Coordination 02 follows the scoped Team 01 findings. Learner revision remains deferred until an observed development bottleneck identifies a useful intervention. The [checkpoint](COGNITIVE-DESIGN-CHECKPOINT.md) records this progression; it does not authorize building every cognitive draft at once.
+
+## Current synthesis and closure tasks
+
+- [x] Recompute the 48-cell evaluation and 24-cell transfer results from committed records.
+- [x] Check refusal usage sensitivity: the non-promising decisions survive correction.
+- [x] Classify prompt advice separately from executable retained coordination.
+- [x] Begin scoped architecture consolidation; preserve working substrate without a stack rewrite.
+- [ ] Worker publishes missing executed modules and corrected derived accounting/reporting.
+- [x] Refine executable memory into a specific decision-program interface, with binding, diagnostics, ownership, selective rework and bounded failure.
+- [x] Select an informative four-arm study, transfer and intervention panel, primary-source precedents and decision rules for the next architecture turn.
+- [x] Prepare one combined worker assignment with explicit contract-first parallel workflow and independent integrated verification.
+- [ ] Worker completes Coordination 02 mechanics, actual model acquisition or honest none, frozen live comparison, diagnostics and replayable delivery.
+- [ ] Interpret execution, acquisition, conditional behavior, benefit and transfer separately; choose the next measured bottleneck.
+
+## Cognitive Batch 02 completion task list (historical progression)
+
+- [x] Fetch `6942fa2`, inspect model-to-artifact and template paths, and execute bounded reproductions.
+- [x] Independently recompute representation live3 decision arithmetic and retain its scoped unsuccessful result.
+- [x] Check published Team evidence availability and record CB2-01–03, without expanding to small defects.
+- [x] Worker demonstrates actual live S/P/T repair on one task at `44de83e`, including wrong-response and disconnected-output controls; the design role accepts this scoped gate.
+- [x] Worker constructs/validates a live template or freezes `none`; publishes corrected frozen panels and complete replayable evidence.
+- [ ] Interpret the corrected result before selecting stage 8.7's first learner intervention.
+
+## Cognitive Batch 02 original task list
+
+- [x] Fetch `cb8a62a` into a separate design worktree and inspect the acquisition -> retained evaluation/use source connection.
+- [x] Accept the scoped implementation milestone without reopening minor review items or claiming live benefit.
+- [x] Refine how temporary organization becomes persistent executable coordination, with applicability and opposing evidence.
+- [x] Check primary research for precedents, strong baselines and verification limitations.
+- [x] Select Team 01 semantics, finite workload, comparison/retention rules, reuse map and acceptance conditions.
+- [x] Prepare independent runtime, workload, integrated-experiment and representation-live worker lanes.
+- [ ] Worker resolves shared interfaces and executable budget reservations, then builds the connected path.
+- [ ] Worker completes LIVE-01–07: outstanding live representation, live team development and template acquisition, frozen evaluation/transfer, fresh-process continuity and reconciled live costs. Verified external blockers remain open obligations; complete live negatives are valid results.
+- [ ] Interpret team benefit, retained-coordination benefit and representation benefit separately.
+- [ ] Choose the first learner revision from observed bottlenecks; perform stage 9 synthesis when these results exist.
 
 ## Current packet checklist
 
@@ -78,14 +113,17 @@ The order expresses dependencies, not a demand to finish each part globally. Age
 - [x] Reconcile agenda records with audited interfaces and write its bounded implementation contract and attachable worker assignment.
 - [x] Worker delivers agenda components, a frozen authored panel and 128 recorded trajectories at `29496a0`; delivery is not full contract acceptance.
 - [x] Independently assess the result: 27 policy tests pass, original ties reproduce, and focused probes expose checker/qualification gaps. Record six bounded findings and the correction assignment.
-- [ ] Complete or rebut AGR1-01 through AGR1-06 with integrated runtime/evidence, policy separation, true process resume and reliable freeze/checker evidence.
+- [x] Complete the scoped AGR1/AGR2 prototype correction sequence through `324174f`; real-PG execution is worker-reported and the v3 trace/source acceptance is independently checked. Broader operational recovery remains qualified.
 - [x] Inspect the correction at `051811f`; independently run 28 policy tests and reproduce three remaining acceptance failures with scoped probes. Retain substrate/treatment progress.
-- [ ] Worker closes AGR2-01 through AGR2-03 before claiming Agenda 01 fully accepted; this is not another broad audit.
+- [x] Worker delivers AGR2-01 through AGR2-03 with v3 evidence; accept the scoped experiment and retain the disclosed mid-send recovery limitation.
 - [x] Design role refines representation invention and transfer into a bounded contract, independently of the agenda correction timeline: Representation 01, with explicit package boundary, finite tasks/budgets and separate acquisition/transfer/benefit verdicts.
 - [x] Prepare one combined worker assignment with shared-contract ownership and independent agenda/instrument/execution/acquisition lanes.
-- [ ] Worker implements RPR-01 through RPR-08 and produces authored-fixture evidence plus the bounded live campaign when its prerequisites are available.
+- [x] Worker delivers source instruments, representation execution/profile and authored-fixture evidence at `324174f`; this is partial RPR-01–08 completion.
+- [x] Worker delivers configured acquisition dispatch/staging, the specified held-out fixture panel and full decision rule at `646e154`. The unconditional preflight blocker is removed; this does not yet complete the joined experiment.
+- [x] Connected campaign-selected A/B/C artifacts and behavior to the frozen held-out comparison and fresh-process disposition/use at `9b96f8b` (retention freeze, retained-mode evaluation, phase-naming entry; independent behavioral + disconnect acceptance). Live campaign remains externally unverified.
+- [ ] Execute the bounded actual campaign when a valid gateway/grant/profile exists; preserve an external-blocker status separately from implementation completion.
 - [ ] Interpret unchanged-core transfer, adapter contribution, acquisition-inclusive costs and complete source outcomes; a passing runner does not complete this obligation.
-- [ ] Validate treatment sensitivity on separate controls, freeze and run the corrected comparison, then interpret its result without requiring Q to win.
+- [x] Validate agenda treatment sensitivity, freeze and run v3, and retain its limited equal-grade/lower-exploration result. This does not establish a general scheduler advantage.
 
 ## Acceptance from here
 

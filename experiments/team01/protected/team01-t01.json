@@ -1,0 +1,136 @@
+[
+ {
+  "input": {
+   "texts": [
+    "   bravo  ",
+    "   ECHO  "
+   ],
+   "numbers": [
+    -9,
+    3,
+    7,
+    27
+   ]
+  },
+  "expected": {
+   "texts": [
+    "bravo",
+    "echo"
+   ],
+   "numbers": 28
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "delta",
+    "   lima   ",
+    "  lima  "
+   ],
+   "numbers": [
+    9,
+    20
+   ]
+  },
+  "expected": {
+   "texts": [
+    "delta",
+    "lima",
+    "lima"
+   ],
+   "numbers": 29
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "   FOXTROT ",
+    "   LIMA   ",
+    "BRAVO",
+    "  hotel "
+   ],
+   "numbers": [
+    30,
+    13,
+    20,
+    7
+   ]
+  },
+  "expected": {
+   "texts": [
+    "foxtrot",
+    "lima",
+    "bravo",
+    "hotel"
+   ],
+   "numbers": 70
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "   delta ",
+    "  ALPHA  "
+   ],
+   "numbers": [
+    30,
+    23,
+    -9,
+    3,
+    22
+   ]
+  },
+  "expected": {
+   "texts": [
+    "delta",
+    "alpha"
+   ],
+   "numbers": 69
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "   delta ",
+    "  echo "
+   ],
+   "numbers": [
+    8,
+    30,
+    3,
+    23,
+    21,
+    14.8
+   ]
+  },
+  "expected": {
+   "texts": [
+    "delta",
+    "echo"
+   ],
+   "numbers": 99.8
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "  alpha  ",
+    "alpha"
+   ],
+   "numbers": [
+    10,
+    -7,
+    29,
+    30,
+    21.2
+   ]
+  },
+  "expected": {
+   "texts": [
+    "alpha",
+    "alpha"
+   ],
+   "numbers": 83.2
+  }
+ }
+]

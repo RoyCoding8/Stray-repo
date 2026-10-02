@@ -1,0 +1,61 @@
+{
+  "acquired": {
+    "artifact_digest": null,
+    "response_digest": null,
+    "retention_digest": "5038393bc99e7a42e23e13e968ab79a4a08eb38576ee74d13fff99ab7c8d32ce",
+    "selected": null
+  },
+  "arm": "B",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "artifact_digest": null,
+    "directive_source": "refused-no-candidate",
+    "native": true,
+    "procedure": "refused-no-candidate",
+    "reason": "rejected-procedure: missing-select-entry",
+    "response_digest": null
+  },
+  "costs": {
+    "elapsed_s": 0.0,
+    "invocations_used": 0,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 0,
+    "validation_used": 0
+  },
+  "family": "software",
+  "initial": {
+    "measure": 14
+  },
+  "inputs_digest": {
+    "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+    "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+    "fixture": "1cb8b4bf9f6300325db3216e6f4e4aa7e54d1dfc13d5bdec722bdc6e686ff323"
+  },
+  "invocations": [],
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "operator": null,
+  "oracle_queries": [],
+  "result": {
+    "best_measure": 14,
+    "delivered_digest": "69fcca0d6fd5d1972e8553e4999d3e6a0ea85726a95e29077c8ee5f94f46d626",
+    "disposition": "refused",
+    "improvement_u": 0.0,
+    "reason": "rejected-procedure: missing-select-entry",
+    "verified": false
+  },
+  "stage": "evaluation",
+  "task_id": "sw-eva-03",
+  "trial": [
+    {
+      "assignment_id": "rpr-acq-B-live3:candidate:sw-eva-03",
+      "invocation_ref": "",
+      "outcome": "failure",
+      "protocol_id": "rpr-acq-B-live3"
+    }
+  ],
+  "trial_group": "protected-eval"
+}

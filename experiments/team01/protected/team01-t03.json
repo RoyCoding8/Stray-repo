@@ -1,0 +1,137 @@
+[
+ {
+  "input": {
+   "texts": [
+    "  foxtrot   ",
+    "  bravo "
+   ],
+   "numbers": [
+    2,
+    -7,
+    26,
+    6
+   ]
+  },
+  "expected": {
+   "texts": [
+    "   tortxof  ",
+    " ovarb  "
+   ],
+   "numbers": 6.75
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "KILO",
+    "CHARLIE",
+    " juliet ",
+    "delta"
+   ],
+   "numbers": [
+    -9,
+    20,
+    13,
+    28,
+    30
+   ]
+  },
+  "expected": {
+   "texts": [
+    "OLIK",
+    "EILRAHC",
+    " teiluj ",
+    "atled"
+   ],
+   "numbers": 16.4
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "   charlie   ",
+    "DELTA",
+    " LIMA ",
+    "  hotel "
+   ],
+   "numbers": [
+    -2,
+    14,
+    -9,
+    24,
+    -3.0
+   ]
+  },
+  "expected": {
+   "texts": [
+    "   eilrahc   ",
+    "ATLED",
+    " AMIL ",
+    " letoh  "
+   ],
+   "numbers": 4.8
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "juliet",
+    " Golf  ",
+    "charlie"
+   ],
+   "numbers": [
+    24,
+    -6
+   ]
+  },
+  "expected": {
+   "texts": [
+    "teiluj",
+    "  floG ",
+    "eilrahc"
+   ],
+   "numbers": 9.0
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "lima",
+    "  hotel   "
+   ],
+   "numbers": [
+    13,
+    -7,
+    21,
+    -8,
+    -6.7
+   ]
+  },
+  "expected": {
+   "texts": [
+    "amil",
+    "   letoh  "
+   ],
+   "numbers": 2.46
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "  kilo ",
+    " alpha  "
+   ],
+   "numbers": [
+    26,
+    24
+   ]
+  },
+  "expected": {
+   "texts": [
+    " olik  ",
+    "  ahpla "
+   ],
+   "numbers": 25.0
+  }
+ }
+]

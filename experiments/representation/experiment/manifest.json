@@ -146,70 +146,112 @@
       "task_id": "ctrl-sw-wrong-obs"
     },
     {
-      "bytes": 399,
-      "digest": "1580f1bcffaf6b2fedbdd9a355cbf8f4cc84eedaaad6e716d6706a5d6b88fe4d",
-      "path": "experiments/representation/fixtures/graphs/check/gr-che-00.json",
-      "task_id": "gr-che-00"
-    },
-    {
-      "bytes": 325,
-      "digest": "500bcd105555e0a284ae333a50fd0b8c418b8041ca321519af6cde44cf033686",
-      "path": "experiments/representation/fixtures/graphs/development/gr-dev-00.json",
-      "task_id": "gr-dev-00"
-    },
-    {
-      "bytes": 399,
-      "digest": "4864793ec12f84fd297f17feabac433e03b5cead145cad073ea92b3a9006e7b7",
-      "path": "experiments/representation/fixtures/graphs/development/gr-dev-01.json",
-      "task_id": "gr-dev-01"
-    },
-    {
-      "bytes": 466,
-      "digest": "39b314d6b703566aa72045d1e78693b550e441991b599d6d50022eaede105aec",
-      "path": "experiments/representation/fixtures/graphs/development/gr-dev-02.json",
-      "task_id": "gr-dev-02"
-    },
-    {
       "bytes": 369,
       "digest": "dc6749c9dad0ff5c7acb56dc5d200018fa10986947d6c01e7a036b35d8ac0078",
       "path": "experiments/representation/fixtures/graphs/development/gr-dev-03.json",
       "task_id": "gr-dev-03"
     },
     {
-      "bytes": 1010,
-      "digest": "5aff20b295d56ec4d5b47895da8cd2e756981949c68700fbcd9d0e34aa3b0e3f",
-      "path": "experiments/representation/fixtures/software/check/sw-che-00.json",
-      "task_id": "sw-che-00"
+      "bytes": 473,
+      "digest": "ac1291d014326d7e57ee2f16476683da64667b155c7ad6b391a092ba13707bd5",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-00.json",
+      "task_id": "gr-eva-00"
     },
     {
-      "bytes": 1255,
-      "digest": "f8b539f48bd5a657cc5086a34dbabc8f421a3c4ab255e54689a1ab44a080f2eb",
-      "path": "experiments/representation/fixtures/software/development/sw-dev-00.json",
-      "task_id": "sw-dev-00"
+      "bytes": 443,
+      "digest": "f763170fbb981e4c99d0a23479c719e88403aec280c4ffb2346b67f9495f5f0c",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-01.json",
+      "task_id": "gr-eva-01"
     },
     {
-      "bytes": 1032,
-      "digest": "501e4a4de0363520e1d92e67e390b82e9c8c139bc83a090a62da4a23802ec4cc",
-      "path": "experiments/representation/fixtures/software/development/sw-dev-01.json",
-      "task_id": "sw-dev-01"
+      "bytes": 429,
+      "digest": "8a5cd0a96722bc1fa10e7e2f3f4f6a009cfb1bce8d37872df5ceeb1cf5e576f1",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-02.json",
+      "task_id": "gr-eva-02"
     },
     {
-      "bytes": 720,
-      "digest": "2b78dc9b8533c057fa1c0202df4a05155705920da9f59e04889c2cf0dcff15c5",
-      "path": "experiments/representation/fixtures/software/development/sw-dev-02.json",
-      "task_id": "sw-dev-02"
+      "bytes": 466,
+      "digest": "01ab8f403722554c27c858c116d4f812fc7d7206d2786b53e0409881dbb629a7",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-03.json",
+      "task_id": "gr-eva-03"
     },
     {
-      "bytes": 869,
-      "digest": "7a6eac72979dc3c57abcdb2fe30ec5e481e4973aa1d849445fde06c40b6f277e",
-      "path": "experiments/representation/fixtures/software/development/sw-dev-03.json",
-      "task_id": "sw-dev-03"
+      "bytes": 503,
+      "digest": "a2a1c6c916662179a2ee70e6990a74b02932e95cb4c512d08d7bbaa7c9c032d9",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-04.json",
+      "task_id": "gr-eva-04"
+    },
+    {
+      "bytes": 399,
+      "digest": "49ad6b506e6d6b3086fd585b3c7d57efa054d5515d5a215e8c49b9c75c29ebca",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-05.json",
+      "task_id": "gr-eva-05"
+    },
+    {
+      "bytes": 436,
+      "digest": "d7c755570aafe76086a881975114ac2beb0be1237b649242842ffe172da953bd",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-06.json",
+      "task_id": "gr-eva-06"
+    },
+    {
+      "bytes": 443,
+      "digest": "3bd10a3aa4d5f00a321b6bb1905397e1e25ed9fa0d1dd180bb5d86b0749ad85c",
+      "path": "experiments/representation/fixtures/graphs/evaluation/gr-eva-07.json",
+      "task_id": "gr-eva-07"
     },
     {
       "bytes": 1012,
       "digest": "e48f3142fc1777c6aa498e654f1edc8a065b44eabe3a0138feecc903ceaa19e1",
       "path": "experiments/representation/fixtures/software/development/sw-dev-04.json",
       "task_id": "sw-dev-04"
+    },
+    {
+      "bytes": 722,
+      "digest": "ef583fa8aaed9d0d4fee586e5f3c50232ff008dc72a26073f25dde64b096aec3",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-00.json",
+      "task_id": "sw-eva-00"
+    },
+    {
+      "bytes": 976,
+      "digest": "5c092884f789df8a75a33f2971e3fae622452a2fc4fcbc7dbefc1e37c370e446",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-01.json",
+      "task_id": "sw-eva-01"
+    },
+    {
+      "bytes": 1116,
+      "digest": "9c0cfdbc7eafa3ab6c422302b01afdf7d39cc6703a59a08ef801011df526b759",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-02.json",
+      "task_id": "sw-eva-02"
+    },
+    {
+      "bytes": 1177,
+      "digest": "1cb8b4bf9f6300325db3216e6f4e4aa7e54d1dfc13d5bdec722bdc6e686ff323",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-03.json",
+      "task_id": "sw-eva-03"
+    },
+    {
+      "bytes": 993,
+      "digest": "35718cdd3f1f5c6643c8660b13f7668b33690983316f99703aa99beb03d7e202",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-04.json",
+      "task_id": "sw-eva-04"
+    },
+    {
+      "bytes": 1296,
+      "digest": "08744959079cf211225f82606e3bc239bd25559b068f630baa519a15880851e8",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-05.json",
+      "task_id": "sw-eva-05"
+    },
+    {
+      "bytes": 854,
+      "digest": "a0b918241b37236a0d224d85e6dc0f280769dbd98124bb2fcac77e9011bdbbe6",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-06.json",
+      "task_id": "sw-eva-06"
+    },
+    {
+      "bytes": 1039,
+      "digest": "f7d2677e8ee660fd26808ee323921f925e8cc2b9211ee77986272dfbbb869a99",
+      "path": "experiments/representation/fixtures/software/evaluation/sw-eva-07.json",
+      "task_id": "sw-eva-07"
     },
     {
       "bytes": 469,
@@ -252,17 +294,24 @@
       }
     ],
     "benefit_gr": [
-      "gr-dev-00",
-      "gr-dev-01",
-      "gr-dev-02",
-      "gr-che-00"
+      "gr-eva-00",
+      "gr-eva-01",
+      "gr-eva-02",
+      "gr-eva-03",
+      "gr-eva-04",
+      "gr-eva-05",
+      "gr-eva-06",
+      "gr-eva-07"
     ],
     "benefit_sw": [
-      "sw-dev-00",
-      "sw-dev-01",
-      "sw-dev-02",
-      "sw-dev-03",
-      "sw-che-00"
+      "sw-eva-00",
+      "sw-eva-01",
+      "sw-eva-02",
+      "sw-eva-03",
+      "sw-eva-04",
+      "sw-eva-05",
+      "sw-eva-06",
+      "sw-eva-07"
     ],
     "controls": [
       "ctrl-sw-wrong-obs",
@@ -345,6 +394,6 @@
       }
     }
   },
-  "verdict_rule": "promising-pilot: no invalid delivered result or incorrect control handling; C transfer mean improvement exceeds both A and B by at least 0.10; C software mean trails neither by more than 0.05; measured execution CPU, elapsed time, oracle queries, model tokens and accounted exposure each at most 1.25x each comparator total over the same benefit tasks (zero denominator requires C also zero).",
-  "version": "RPR-ACQ/1"
+  "verdict_rule": "promising-pilot: no invalid delivered result or incorrect control handling; C transfer mean improvement exceeds both A and B by at least 0.10; C software mean trails neither by more than 0.05; measured execution CPU, elapsed time, oracle queries, model tokens and accounted exposure each at most 1.25x each comparator total over the same benefit tasks (zero denominator requires C also zero). A secondary efficiency outcome requires identical per-task improvements with no greater resource component and at least one strict reduction against both comparators. Unknown or missing measurements cannot certify a resource win: missing CPU/exposure values block a resource-based favorable claim. A promising pilot warrants a broader frozen trial; it does not authorize a general learned-capability release.",
+  "version": "RPR-ACQ/2"
 }

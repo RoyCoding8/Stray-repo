@@ -3,6 +3,13 @@
 Single source of truth imported by the freeze script, the runner, the
 checker and the replay CLI, so the three can never disagree about panel
 membership. Selectors are derived from development transcripts only.
+
+RPR-ACQ/2 is the held-out evaluation freeze: sixteen benefit tasks (eight
+software, eight graph) drawn from the lane B evaluation split, whose
+seeds and structural patterns never entered development, check, context
+or selector construction. The RPR-ACQ/1 authored-mechanics membership
+(MECHANICS_*/ACQUIRE_*) is retained below for provenance; it is no
+longer the benefit panel.
 """
 
 from __future__ import annotations
@@ -14,15 +21,17 @@ from statistics import median
 ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-PANEL_VERSION = "RPR-ACQ/1"
+PANEL_VERSION = "RPR-ACQ/2"
 CHECKER_VERSION = "rpr-checker/1"
 
 MECHANICS_SW = ["sw-dev-%02d" % i for i in range(4)]
 MECHANICS_GR = ["gr-dev-%02d" % i for i in range(3)]
 ACQUIRE_SW = ["sw-che-00"]
 ACQUIRE_GR = ["gr-che-00"]
-BENEFIT_SW = MECHANICS_SW + ACQUIRE_SW
-BENEFIT_GR = MECHANICS_GR + ACQUIRE_GR
+HELDOUT_SW = ["sw-eva-%02d" % i for i in range(8)]
+HELDOUT_GR = ["gr-eva-%02d" % i for i in range(8)]
+BENEFIT_SW = list(HELDOUT_SW)
+BENEFIT_GR = list(HELDOUT_GR)
 CONTROLS = ["ctrl-sw-wrong-obs", "ctrl-sw-invalid", "ctrl-gr-triangle",
             "ctrl-gr-bipartite"]
 USE = ["use-sw-supported", "use-gr-supported", "use-sw-out-of-scope",
@@ -109,4 +118,6 @@ def control_pairs() -> list:
 def trial_group(task_id: str) -> str:
     if task_id in MECHANICS_SW + MECHANICS_GR:
         return "development"
+    if task_id in HELDOUT_SW + HELDOUT_GR:
+        return "protected-eval"
     return "check"

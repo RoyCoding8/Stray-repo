@@ -1,0 +1,18 @@
+{
+  "kind": "ctor",
+  "node": "w1",
+  "op_id": "live2-live2-T-team01-t01-r1-f66b8320-ctor-w1-live2-live2-T-team01-t01-r1-f66b8320-1",
+  "usage": {
+    "in": 688,
+    "out": 826
+  },
+  "stop": "stop",
+  "outcome": "model-text",
+  "error": "",
+  "parse_error": "",
+  "notes": "Fixed rotated operations in summarize so sum returns sum, span returns max-min, rmean returns rounded mean, and count_pos counts positives.",
+  "files_digest": "781eb024cbe6d8bd6f1082ed7613321d5340e99ed911f843aaf86de8be8b0c10",
+  "receipts": [
+    "gw:live2-live2-T-team01-t01-r1-f66b8320-ctor-w1-live2-live2-T-team01-t01-r1-f66b8320-1"
+  ]
+}

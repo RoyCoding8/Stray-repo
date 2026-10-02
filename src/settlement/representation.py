@@ -861,10 +861,10 @@ def operator_view(dsn: str, run_id: str, task_id: str) -> dict:
             composition_id = request.get("composition_id", "")
             domain_spec = (request.get("payload") or {}).get("domain_spec")
         if entry.get("kind") == "rpr-check":
-            found = _find_receipt(_receipts(dsn, entry["op_id"]),
-                                  f"rpr-check:{entry['op_id']}")
-            checker_id = (dict(found.get("content") or {})
-                          .get("checker_id", ""))
+            checker_id = (((_find_receipt(
+                _receipts(dsn, entry["op_id"]),
+                f"rpr-check:{entry['op_id']}") or {}).get("content") or {})
+                .get("checker_id", ""))
     composition: dict = {}
     if composition_id:
         row = get_composition(dsn, composition_id)

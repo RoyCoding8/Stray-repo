@@ -1,0 +1,84 @@
+[
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 1500,
+          "u": "cm"
+        }
+      ],
+      "want": "m"
+    },
+    "expected": {
+      "values": [
+        15.0
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 250,
+          "u": "cm"
+        },
+        {
+          "v": 2,
+          "u": "m"
+        }
+      ],
+      "want": "m"
+    },
+    "expected": {
+      "values": [
+        2.5,
+        2.0
+      ],
+      "flags": [
+        "ok",
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 0,
+          "u": "mm"
+        }
+      ],
+      "want": "m"
+    },
+    "expected": {
+      "values": [
+        0.0
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 3200,
+          "u": "mm"
+        }
+      ],
+      "want": "m"
+    },
+    "expected": {
+      "values": [
+        3.2
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  }
+]

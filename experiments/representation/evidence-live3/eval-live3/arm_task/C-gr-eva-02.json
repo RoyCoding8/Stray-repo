@@ -1,0 +1,61 @@
+{
+  "acquired": {
+    "artifact_digest": null,
+    "response_digest": null,
+    "retention_digest": "5038393bc99e7a42e23e13e968ab79a4a08eb38576ee74d13fff99ab7c8d32ce",
+    "selected": null
+  },
+  "arm": "C",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "artifact_digest": null,
+    "directive_source": "refused-no-candidate",
+    "native": true,
+    "procedure": "refused-no-candidate",
+    "reason": "no-candidate: no-frozen-core",
+    "response_digest": null
+  },
+  "costs": {
+    "elapsed_s": 0.0,
+    "invocations_used": 0,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 0,
+    "validation_used": 0
+  },
+  "family": "graph",
+  "initial": {
+    "measure": 17
+  },
+  "inputs_digest": {
+    "checker": "1e98cf51e93e4ddfb977192d6bdd93431348ecf2c518322d1a9d639642728966",
+    "context": "6fd3e9c9a7bdf31a2e3be976f56f9436b5071162fa1c386a45c3301c0ccec1d9",
+    "fixture": "8a5cd0a96722bc1fa10e7e2f3f4f6a009cfb1bce8d37872df5ceeb1cf5e576f1"
+  },
+  "invocations": [],
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "operator": null,
+  "oracle_queries": [],
+  "result": {
+    "best_measure": 17,
+    "delivered_digest": "95f8f5dc47f11ae00a305860dcabe19e83d1c3f693baab82d581e80fcb5c8b87",
+    "disposition": "refused",
+    "improvement_u": 0.0,
+    "reason": "no-candidate: no-frozen-core",
+    "verified": false
+  },
+  "stage": "evaluation",
+  "task_id": "gr-eva-02",
+  "trial": [
+    {
+      "assignment_id": "rpr-acq-C-live3:candidate:gr-eva-02",
+      "invocation_ref": "",
+      "outcome": "failure",
+      "protocol_id": "rpr-acq-C-live3"
+    }
+  ],
+  "trial_group": "protected-eval"
+}

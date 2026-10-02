@@ -1,0 +1,12 @@
+{
+  "boundary": "inclusive",
+  "bounds": [
+    0,
+    10
+  ],
+  "rounding": "half-up",
+  "units": {
+    "g": 1,
+    "kg": 1000
+  }
+}

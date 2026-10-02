@@ -1,0 +1,22 @@
+{
+  "boundary": "inclusive",
+  "bounds": [
+    0,
+    2
+  ],
+  "interface": {
+    "id": "cellchain/1",
+    "keys": [
+      "parcels",
+      "want"
+    ],
+    "version": 1
+  },
+  "kind": "chain",
+  "rounding": "half-up",
+  "topology": "renamed-chain",
+  "units": {
+    "p": 40,
+    "q": 1
+  }
+}

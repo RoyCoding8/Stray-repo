@@ -208,3 +208,15 @@ def test_pilot_rule_honest_negative():
     rule = checker.pilot_rule(records)
     assert rule["promising"] is False
     assert rule["clauses"]["transfer-gain-0.10-vs-A"] is False
+
+
+def test_both_freezes_verify_independently():
+    from experiments.representation.experiment import freeze
+    assert freeze.verify_committed() == []
+    assert freeze.verify_committed("manifest_acq1.json",
+                                   regenerate=False) == []
+    acq1 = json.loads((EXPERIMENT / "manifest_acq1.json").read_bytes())
+    current = json.loads((EXPERIMENT / "manifest.json").read_bytes())
+    assert acq1["version"] == "RPR-ACQ/1"
+    assert current["version"] == "RPR-ACQ/2"
+    assert acq1 != current

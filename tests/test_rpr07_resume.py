@@ -379,3 +379,38 @@ def test_unsupported_scope_falls_back_to_incumbent(migrated_db, tmp_roots,
     assert result["validation_used"] == 1
     view = R.operator_view(dsn, "run-unsupported", "t1")
     assert view["disposition"] == "unsupported"
+
+
+def test_operator_view_tolerates_missing_check_receipt(migrated_db, tmp_roots,
+                                                       tmp_path,
+                                                       monkeypatch):
+    dsn = migrated_db
+    alloc, att = _setup(dsn, "opview-noreceipt")
+    comp = _compose(dsn, tmp_roots, "comp-opview-noreceipt")
+    launcher = LocalLauncher(str(tmp_path / "runs"))
+    done = R.run_task(dsn, launcher, tmp_roots["artifacts"],
+                      **_params("run-opview-noreceipt", comp, alloc, att))
+    assert done["disposition"] == "improved"
+    out = R.run_checker(dsn, launcher, run_id="run-opview-noreceipt",
+                        task_id="t1", seq=99, checker_bytes=CHECKER.encode(),
+                        checker_id="chk-1",
+                        candidate_doc={"candidate": {"items": [5, 1]}},
+                        allocation_id=alloc, attempt_id=att)
+    assert out["op_id"].split(":")[-2] == "check"
+    real_receipts = R._receipts
+    real_task_steps = R._task_steps
+
+    def raced_task_steps(dsn, run_id, task_id):
+        steps = real_task_steps(dsn, run_id, task_id)
+        assert any(s.get("kind") == "rpr-check" for s in steps)
+        monkeypatch.setattr(
+            R, "_receipts",
+            lambda d, o: [r for r in real_receipts(d, o)
+                          if not (r.get("receipt_identity") or "")
+                          .startswith("rpr-check:")])
+        return steps
+
+    monkeypatch.setattr(R, "_task_steps", raced_task_steps)
+    view = R.operator_view(dsn, "run-opview-noreceipt", "t1")
+    assert view["disposition"] == "complete"
+    assert view["witness"]["checker_id"] == ""

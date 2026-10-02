@@ -56,6 +56,10 @@ _Avoid_: Capability tier when referring to demonstrated competence.
 
 **Evidence join**: The justified combination of partial results into support for a parent obligation, respecting assumptions, dependencies and the declared composition rule.
 
+**Coordination template**: A retained, parameterized team plan with explicit applicability conditions, input bindings, checks and evidence of previous use. Successful replay on its original task does not establish transfer.
+
+**Integration counterexample**: A concrete case in which proposed contributions fail to satisfy their parent obligation when combined. It challenges the combination and its assumptions; it does not by itself identify a uniquely responsible participant.
+
 **Commitment**: An accepted obligation with an owner, conditions of fulfillment, resource allocation, and rules for amendment or withdrawal.
 
 **Observation**: A recorded result from an identified interaction or measurement, together with its provenance and conditions. It does not automatically establish the truth of an interpretation.

@@ -1,0 +1,428 @@
+{
+  "episode_id": "live2-T-team01-t02-r2",
+  "panel": "eval",
+  "arm": "T",
+  "task_id": "team01-t02",
+  "repeat": 2,
+  "probe": null,
+  "panel_version": "team01-panel/2-live-solver",
+  "plan_id": "plan_team01-solver-584f4df1303e45869049b0bd9ae07ce3",
+  "revision": 1,
+  "shape": "decompose",
+  "template_digest": null,
+  "snapshot_digest": "7c21e759750054ffc6adf867cd263b5018acef1714d9b66486bb03f91cc78c8b",
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-solver-584f4df1303e45869049b0bd9ae07ce3_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-solver-584f4df1303e45869049b0bd9ae07ce3:r1:check",
+    "candidate_digest": "aed6da5aba285832684d3a7490c4238d75973bbff296a92a64e03cba67a7a5d1",
+    "assemble_code": "ResultCode.APPLIED",
+    "assemble_detail": "join passed for plan_team01-solver-584f4df1303e45869049b0bd9ae07ce3 r1",
+    "assembly_note": "assembled"
+  },
+  "frozen_digest": "aed6da5aba285832684d3a7490c4238d75973bbff296a92a64e03cba67a7a5d1",
+  "submitted_digests": {
+    "w1": "781eb024cbe6d8bd6f1082ed7613321d5340e99ed911f843aaf86de8be8b0c10",
+    "w2": "a5e0655da08201ea522e90d82b6577b1ca12ca5a7d9f70304647b15c777c8fd5"
+  },
+  "nonce": "8bd575ca",
+  "allocation_id": "live2-live2-T-team01-t02-r2-root",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "receipts": [
+    "gw:live2-live2-T-team01-t02-r2-8bd575ca-ctor-w1-live2-live2-T-team01-t02-r2-8bd575ca-1",
+    "gw:live2-live2-T-team01-t02-r2-8bd575ca-ctor-w2-live2-live2-T-team01-t02-r2-8bd575ca-3",
+    "gw:live2-live2-T-team01-t02-r2-8bd575ca-plan-live2-live2-T-team01-t02-r2-8bd575ca-0",
+    "local:plan_team01-solver-584f4df1303e45869049b0bd9ae07ce3_r1_check_team-work_1.result",
+    "local:tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-2_exec-default.result",
+    "local:tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-4_exec-default.result"
+  ],
+  "solver": {
+    "rationale": "Defects are split across two independent modules: textops.py and numops.py both have scrambled operation bodies, so each needs its own module-scoped fix.",
+    "plan_source": "model"
+  },
+  "join_attempts": [
+    {
+      "revision": 1,
+      "passed": true,
+      "check_operation": "plan_team01-solver-584f4df1303e45869049b0bd9ae07ce3:r1:check",
+      "assemble_code": "ResultCode.APPLIED",
+      "assemble_detail": "join passed for plan_team01-solver-584f4df1303e45869049b0bd9ae07ce3 r1"
+    }
+  ],
+  "controls": {
+    "substituted": {},
+    "disconnected": [],
+    "authored": {}
+  },
+  "repairs": 0,
+  "constructor_ops": [
+    {
+      "kind": "plan",
+      "op_id": "live2-live2-T-team01-t02-r2-8bd575ca-plan-live2-live2-T-team01-t02-r2-8bd575ca-0",
+      "prompt": "see file",
+      "text": "{\"shape\": \"decompose\", \"rationale\": \"Defects are split across two independent modules: textops.py and numops.py both have scrambled operation bodies, so each needs its own module-scoped fix.\"}",
+      "usage": {
+        "in": 570,
+        "out": 1807
+      },
+      "outcome": "model-text",
+      "error": "",
+      "shape": "decompose",
+      "rationale": "Defects are split across two independent modules: textops.py and numops.py both have scrambled operation bodies, so each needs its own module-scoped fix.",
+      "source": "model",
+      "directive_digest": null,
+      "receipts": [
+        "gw:live2-live2-T-team01-t02-r2-8bd575ca-plan-live2-live2-T-team01-t02-r2-8bd575ca-0"
+      ]
+    },
+    {
+      "kind": "ctor",
+      "node": "w1",
+      "op_id": "live2-live2-T-team01-t02-r2-8bd575ca-ctor-w1-live2-live2-T-team01-t02-r2-8bd575ca-1",
+      "prompt": "TASK team01-t02\nSPECIFICATION:\n# Task team01-t02\n\nProgram ABI: read one JSON object from the request file given as the first command-line argument, write one JSON object to the response file given as the second argument.\n\nInput object: Texts holds a list of strings, Numbers a list of numbers.\n\nThe program must drop duplicate strings, then sort the survivors, in order, and place the result under Texts. It must subtract the smallest number from the largest (0 for an empty list), and place the result under Numbers.\n\nBoth halves are required: a correct answer transforms the texts and aggregates the numbers together.\nSPEC PARAMS: {\"num_op\": \"span\", \"text_op\": \"dedup_sort\"}\nOWNED PATHS (repair exactly these files): src/numops.py\n--- src/numops.py ---\ndef summarize(op, numbers):\n    if op == \"sum\":\n        return (max(numbers) - min(numbers)) if numbers else 0\n    if op == \"span\":\n        return round(sum(numbers, 0) / len(numbers), 2) if numbers else 0\n    if op == \"rmean\":\n        return sum(1 for n in numbers if n > 0)\n    if op == \"count_pos\":\n        return sum(numbers, 0)\n    raise ValueError(op)\n\nVISIBLE CHECKS (4; hidden checks differ, do not overfit):\ncheck 0: input={\"texts\": [\"  KILO  \", \"alpha\", \"juliet\", \"   foxtrot   \"], \"numbers\": [4, 27, 25.3]} expected={\"texts\": [\"   foxtrot   \", \"  KILO  \", \"alpha\", \"juliet\"], \"numbers\": 23}\ncheck 1: input={\"texts\": [\" ECHO   \", \"   kilo  \", \"   GOLF   \"], \"numbers\": [21, -4]} expected={\"texts\": [\"   GOLF   \", \"   kilo  \", \" ECHO   \"], \"numbers\": 25}\ncheck 2: input={\"texts\": [\" Charlie \", \" Charlie \"], \"numbers\": [23, 2, 4, -2]} expected={\"texts\": [\" Charlie \"], \"numbers\": 25}\ncheck 3: input={\"texts\": [\"India\", \"   India  \", \"HOTEL\", \"Golf\"], \"numbers\": [-1, -2, 0]} expected={\"texts\": [\"   India  \", \"Golf\", \"HOTEL\", \"India\"], \"numbers\": 2}\nSITUATION: team repair: organization=decompose; your obligation: repair src/numops.py\nTOOL FEEDBACK FROM VISIBLE CHECKS: none yet\nBUDGET: 1 model calls and 2 tool runs left including this one.\nRepair the owned files so the program meets the specification on the visible checks and, above all, on unseen cases for the same specification. Keep every public entry point and call signature used by the rest of the program exactly as-is.\nReply with exactly one JSON object and nothing else, shaped {\"files\": { \"<owned relpath>\": \"<complete file content>\" }, \"notes\": \"<one or two sentences about the repair>\"}. Include an entry for every owned path, even if unchanged. Do not add, rename or omit paths. Full file contents, not diffs.",
+      "text": "{\"files\": {\"src/numops.py\": \"def summarize(op, numbers):\\n    if op == \\\"sum\\\":\\n        return sum(numbers, 0)\\n    if op == \\\"span\\\":\\n        return (max(numbers) - min(numbers)) if numbers else 0\\n    if op == \\\"rmean\\\":\\n        return round(sum(numbers, 0) / len(numbers), 2) if numbers else 0\\n    if op == \\\"count_pos\\\":\\n        return sum(1 for n in numbers if n > 0)\\n    raise ValueError(op)\\n\"}, \"notes\": \"Fixed rotated op mapping so span returns max-min and other ops return their correct aggregates.\"}",
+      "usage": {
+        "in": 705,
+        "out": 525
+      },
+      "stop": "stop",
+      "outcome": "model-text",
+      "error": "",
+      "parse_error": "",
+      "notes": "Fixed rotated op mapping so span returns max-min and other ops return their correct aggregates.",
+      "files_digest": "781eb024cbe6d8bd6f1082ed7613321d5340e99ed911f843aaf86de8be8b0c10",
+      "receipts": [
+        "gw:live2-live2-T-team01-t02-r2-8bd575ca-ctor-w1-live2-live2-T-team01-t02-r2-8bd575ca-1"
+      ]
+    },
+    {
+      "kind": "ctor",
+      "node": "w2",
+      "op_id": "live2-live2-T-team01-t02-r2-8bd575ca-ctor-w2-live2-live2-T-team01-t02-r2-8bd575ca-3",
+      "prompt": "TASK team01-t02\nSPECIFICATION:\n# Task team01-t02\n\nProgram ABI: read one JSON object from the request file given as the first command-line argument, write one JSON object to the response file given as the second argument.\n\nInput object: Texts holds a list of strings, Numbers a list of numbers.\n\nThe program must drop duplicate strings, then sort the survivors, in order, and place the result under Texts. It must subtract the smallest number from the largest (0 for an empty list), and place the result under Numbers.\n\nBoth halves are required: a correct answer transforms the texts and aggregates the numbers together.\nSPEC PARAMS: {\"num_op\": \"span\", \"text_op\": \"dedup_sort\"}\nOWNED PATHS (repair exactly these files): src/textops.py\n--- src/textops.py ---\ndef transform(op, texts):\n    if op == \"strip_lower\":\n        return [t.upper() for t in texts]\n    if op == \"dedup_sort\":\n        return [t[::-1] for t in texts]\n    if op == \"reverse\":\n        return [t.strip().lower() for t in texts]\n    if op == \"upper\":\n        return sorted(set(texts))\n    raise ValueError(op)\n\nVISIBLE CHECKS (4; hidden checks differ, do not overfit):\ncheck 0: input={\"texts\": [\"  KILO  \", \"alpha\", \"juliet\", \"   foxtrot   \"], \"numbers\": [4, 27, 25.3]} expected={\"texts\": [\"   foxtrot   \", \"  KILO  \", \"alpha\", \"juliet\"], \"numbers\": 23}\ncheck 1: input={\"texts\": [\" ECHO   \", \"   kilo  \", \"   GOLF   \"], \"numbers\": [21, -4]} expected={\"texts\": [\"   GOLF   \", \"   kilo  \", \" ECHO   \"], \"numbers\": 25}\ncheck 2: input={\"texts\": [\" Charlie \", \" Charlie \"], \"numbers\": [23, 2, 4, -2]} expected={\"texts\": [\" Charlie \"], \"numbers\": 25}\ncheck 3: input={\"texts\": [\"India\", \"   India  \", \"HOTEL\", \"Golf\"], \"numbers\": [-1, -2, 0]} expected={\"texts\": [\"   India  \", \"Golf\", \"HOTEL\", \"India\"], \"numbers\": 2}\nSITUATION: team repair: organization=decompose; your obligation: repair src/textops.py\nTOOL FEEDBACK FROM VISIBLE CHECKS: none yet\nBUDGET: 1 model calls and 2 tool runs left including this one.\nRepair the owned files so the program meets the specification on the visible checks and, above all, on unseen cases for the same specification. Keep every public entry point and call signature used by the rest of the program exactly as-is.\nReply with exactly one JSON object and nothing else, shaped {\"files\": { \"<owned relpath>\": \"<complete file content>\" }, \"notes\": \"<one or two sentences about the repair>\"}. Include an entry for every owned path, even if unchanged. Do not add, rename or omit paths. Full file contents, not diffs.",
+      "text": "{\"files\": {\"src/textops.py\": \"def transform(op, texts):\\n    if op == \\\"strip_lower\\\":\\n        return [t.strip().lower() for t in texts]\\n    if op == \\\"dedup_sort\\\":\\n        return sorted(set(texts))\\n    if op == \\\"reverse\\\":\\n        return [t[::-1] for t in texts]\\n    if op == \\\"upper\\\":\\n        return [t.upper() for t in texts]\\n    raise ValueError(op)\\n\"}, \"notes\": \"Fixed rotated op implementations so dedup_sort returns sorted(set(texts)) and other ops map correctly.\"}",
+      "usage": {
+        "in": 685,
+        "out": 442
+      },
+      "stop": "stop",
+      "outcome": "model-text",
+      "error": "",
+      "parse_error": "",
+      "notes": "Fixed rotated op implementations so dedup_sort returns sorted(set(texts)) and other ops map correctly.",
+      "files_digest": "a5e0655da08201ea522e90d82b6577b1ca12ca5a7d9f70304647b15c777c8fd5",
+      "receipts": [
+        "gw:live2-live2-T-team01-t02-r2-8bd575ca-ctor-w2-live2-live2-T-team01-t02-r2-8bd575ca-3"
+      ]
+    }
+  ],
+  "tool_ops": [
+    {
+      "kind": "tool",
+      "op_id": "tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-2",
+      "summary": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "failures": [
+          {
+            "got": {
+              "texts": [
+                "  OLIK  ",
+                "ahpla",
+                "teiluj",
+                "   tortxof   "
+              ],
+              "numbers": 23
+            },
+            "input": {
+              "texts": [
+                "  KILO  ",
+                "alpha",
+                "juliet",
+                "   foxtrot   "
+              ],
+              "numbers": [
+                4,
+                27,
+                25.3
+              ]
+            },
+            "expected": {
+              "texts": [
+                "   foxtrot   ",
+                "  KILO  ",
+                "alpha",
+                "juliet"
+              ],
+              "numbers": 23
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "   OHCE ",
+                "  olik   ",
+                "   FLOG   "
+              ],
+              "numbers": 25
+            },
+            "input": {
+              "texts": [
+                " ECHO   ",
+                "   kilo  ",
+                "   GOLF   "
+              ],
+              "numbers": [
+                21,
+                -4
+              ]
+            },
+            "expected": {
+              "texts": [
+                "   GOLF   ",
+                "   kilo  ",
+                " ECHO   "
+              ],
+              "numbers": 25
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                " eilrahC ",
+                " eilrahC "
+              ],
+              "numbers": 25
+            },
+            "input": {
+              "texts": [
+                " Charlie ",
+                " Charlie "
+              ],
+              "numbers": [
+                23,
+                2,
+                4,
+                -2
+              ]
+            },
+            "expected": {
+              "texts": [
+                " Charlie "
+              ],
+              "numbers": 25
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "aidnI",
+                "  aidnI   ",
+                "LETOH",
+                "floG"
+              ],
+              "numbers": 2
+            },
+            "input": {
+              "texts": [
+                "India",
+                "   India  ",
+                "HOTEL",
+                "Golf"
+              ],
+              "numbers": [
+                -1,
+                -2,
+                0
+              ]
+            },
+            "expected": {
+              "texts": [
+                "   India  ",
+                "Golf",
+                "HOTEL",
+                "India"
+              ],
+              "numbers": 2
+            }
+          }
+        ],
+        "error": "",
+        "op_id": "tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-2"
+      },
+      "receipts": [
+        "local:tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-2_exec-default.result"
+      ],
+      "node_observation": "0/4 visible checks pass; miss input={\"texts\": [\"  KILO  \", \"alpha\", \"juliet\", \"   foxtrot   \"], \"numbers\": [4, 27, 25.3]} expected={\"texts\": [\"   foxtrot   \", \"  KILO  \", \"alpha\", \"juliet\"], \"numbers\": 23} got={\"texts\": [\"  OLIK  \", \"ahpla\", \"teiluj\", \"   tortxof   \"], \"numbers\": 23}; miss input={\"texts\": [\" ECHO   \", \"   kilo  \", \"   GOLF   \"], \"numbers\": [21, -4]} expected={\"texts\": [\"   GOLF   \", \"   kilo  \", \" ECHO   \"], \"numbers\": 25} got={\"texts\": [\"   OHCE \", \"  olik   \", \"   FLOG   \"], \"numbers\": 25}; miss input={\"texts\": [\" Charlie \", \" Charlie \"], \"numbers\": [23, 2, 4, -2]} expected={\"texts\": [\" Charlie \"], \"numbers\": 25} got={\"texts\": [\" eilrahC \", \" eilrahC \"], \"numbers\": 25}"
+    },
+    {
+      "kind": "tool",
+      "op_id": "tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-4",
+      "summary": {
+        "passed": 0,
+        "failed": 4,
+        "total": 4,
+        "failures": [
+          {
+            "got": {
+              "texts": [
+                "   foxtrot   ",
+                "  KILO  ",
+                "alpha",
+                "juliet"
+              ],
+              "numbers": 18.77
+            },
+            "input": {
+              "texts": [
+                "  KILO  ",
+                "alpha",
+                "juliet",
+                "   foxtrot   "
+              ],
+              "numbers": [
+                4,
+                27,
+                25.3
+              ]
+            },
+            "expected": {
+              "texts": [
+                "   foxtrot   ",
+                "  KILO  ",
+                "alpha",
+                "juliet"
+              ],
+              "numbers": 23
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "   GOLF   ",
+                "   kilo  ",
+                " ECHO   "
+              ],
+              "numbers": 8.5
+            },
+            "input": {
+              "texts": [
+                " ECHO   ",
+                "   kilo  ",
+                "   GOLF   "
+              ],
+              "numbers": [
+                21,
+                -4
+              ]
+            },
+            "expected": {
+              "texts": [
+                "   GOLF   ",
+                "   kilo  ",
+                " ECHO   "
+              ],
+              "numbers": 25
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                " Charlie "
+              ],
+              "numbers": 6.75
+            },
+            "input": {
+              "texts": [
+                " Charlie ",
+                " Charlie "
+              ],
+              "numbers": [
+                23,
+                2,
+                4,
+                -2
+              ]
+            },
+            "expected": {
+              "texts": [
+                " Charlie "
+              ],
+              "numbers": 25
+            }
+          },
+          {
+            "got": {
+              "texts": [
+                "   India  ",
+                "Golf",
+                "HOTEL",
+                "India"
+              ],
+              "numbers": -1.0
+            },
+            "input": {
+              "texts": [
+                "India",
+                "   India  ",
+                "HOTEL",
+                "Golf"
+              ],
+              "numbers": [
+                -1,
+                -2,
+                0
+              ]
+            },
+            "expected": {
+              "texts": [
+                "   India  ",
+                "Golf",
+                "HOTEL",
+                "India"
+              ],
+              "numbers": 2
+            }
+          }
+        ],
+        "error": "",
+        "op_id": "tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-4"
+      },
+      "receipts": [
+        "local:tool-live2-live2-T-team01-t02-r2-8bd575ca-live2-live2-T-team01-t02-r2-8bd575ca-4_exec-default.result"
+      ],
+      "node_observation": "0/4 visible checks pass; miss input={\"texts\": [\"  KILO  \", \"alpha\", \"juliet\", \"   foxtrot   \"], \"numbers\": [4, 27, 25.3]} expected={\"texts\": [\"   foxtrot   \", \"  KILO  \", \"alpha\", \"juliet\"], \"numbers\": 23} got={\"texts\": [\"   foxtrot   \", \"  KILO  \", \"alpha\", \"juliet\"], \"numbers\": 18.77}; miss input={\"texts\": [\" ECHO   \", \"   kilo  \", \"   GOLF   \"], \"numbers\": [21, -4]} expected={\"texts\": [\"   GOLF   \", \"   kilo  \", \" ECHO   \"], \"numbers\": 25} got={\"texts\": [\"   GOLF   \", \"   kilo  \", \" ECHO   \"], \"numbers\": 8.5}; miss input={\"texts\": [\" Charlie \", \" Charlie \"], \"numbers\": [23, 2, 4, -2]} expected={\"texts\": [\" Charlie \"], \"numbers\": 25} got={\"texts\": [\" Charlie \"], \"numbers\": 6.75}"
+    }
+  ],
+  "model_calls": 3,
+  "tool_calls": 2,
+  "usage": {
+    "in": 1960,
+    "out": 2774
+  },
+  "costs": {
+    "model_invocations": 3,
+    "model_tokens": {
+      "in": 1960,
+      "out": 2774
+    },
+    "tool_executions": 2
+  },
+  "simulated": false,
+  "live_source": "model-repair",
+  "wall_s": 27.95
+}

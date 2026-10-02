@@ -1,0 +1,37 @@
+{
+  "episode_id": "continuity-T-team01-t05",
+  "panel": "continuity",
+  "arm": "T",
+  "task_id": "team01-t05",
+  "repeat": 1,
+  "family": "fam-cpl",
+  "probe": "continuity",
+  "plan_id": "plan_team01-0093b705850043efb3561a90eaa56b32",
+  "revision": 1,
+  "shape": "decompose",
+  "snapshot_digest": "c46eeb1abac48b2c2d26b9260463a480f7753ca9d12e53cf6a6f5bc2a65881b3",
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-0093b705850043efb3561a90eaa56b32_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-0093b705850043efb3561a90eaa56b32:r1:check",
+    "candidate_digest": "1c5956a428dc8e08d5266f2989c712653f5fef0794c33021a780b7afffd28937"
+  },
+  "frozen_digest": "1c5956a428dc8e08d5266f2989c712653f5fef0794c33021a780b7afffd28937",
+  "resumed": true,
+  "resubmitted": [],
+  "simulated": false,
+  "at": "2026-09-12T18:29:41Z"
+}

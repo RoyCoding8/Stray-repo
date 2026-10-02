@@ -1,0 +1,61 @@
+{
+  "acquired": {
+    "artifact_digest": null,
+    "response_digest": null,
+    "retention_digest": "5038393bc99e7a42e23e13e968ab79a4a08eb38576ee74d13fff99ab7c8d32ce",
+    "selected": null
+  },
+  "arm": "C",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "artifact_digest": null,
+    "directive_source": "refused-no-candidate",
+    "native": true,
+    "procedure": "refused-no-candidate",
+    "reason": "no-candidate: not-json,timeout",
+    "response_digest": null
+  },
+  "costs": {
+    "elapsed_s": 0.0,
+    "invocations_used": 0,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 0,
+    "validation_used": 0
+  },
+  "family": "software",
+  "initial": {
+    "measure": 13
+  },
+  "inputs_digest": {
+    "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+    "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+    "fixture": "f7d2677e8ee660fd26808ee323921f925e8cc2b9211ee77986272dfbbb869a99"
+  },
+  "invocations": [],
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "operator": null,
+  "oracle_queries": [],
+  "result": {
+    "best_measure": 13,
+    "delivered_digest": "763b68ed7addcfd42a3673c4d21aaae6494c62a719bb25b04118a59e66eaba68",
+    "disposition": "refused",
+    "improvement_u": 0.0,
+    "reason": "no-candidate: not-json,timeout",
+    "verified": false
+  },
+  "stage": "evaluation",
+  "task_id": "sw-eva-07",
+  "trial": [
+    {
+      "assignment_id": "rpr-acq-C-live3:candidate:sw-eva-07",
+      "invocation_ref": "",
+      "outcome": "failure",
+      "protocol_id": "rpr-acq-C-live3"
+    }
+  ],
+  "trial_group": "protected-eval"
+}

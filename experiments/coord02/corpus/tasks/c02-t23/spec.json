@@ -1,0 +1,11 @@
+{
+  "deps": {
+    "emit.py": [
+      "convention.json"
+    ],
+    "render.py": [
+      "convention.json",
+      "emit.py"
+    ]
+  }
+}

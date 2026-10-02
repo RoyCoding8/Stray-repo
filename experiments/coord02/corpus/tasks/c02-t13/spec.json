@@ -1,0 +1,10 @@
+{
+  "ops": {
+    "a": "min",
+    "b": "max"
+  },
+  "rule": {
+    "kind": "prefix",
+    "prefix": "beta"
+  }
+}

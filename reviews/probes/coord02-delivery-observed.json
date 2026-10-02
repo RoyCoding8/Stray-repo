@@ -1,0 +1,61 @@
+{
+  "reviewed_tip": "0b47dcf",
+  "external_access": "none; authored baseline subprocesses only",
+  "arms_requesting_protected_reference_overlay": [
+    "S",
+    "A",
+    "F",
+    "L"
+  ],
+  "S_and_A_same_proposal": true,
+  "costs_one_step": {
+    "model_tokens_in": 100,
+    "model_tokens_out": 20,
+    "model_calls": 1,
+    "tool_invocations": 0,
+    "sandbox_ops": 2,
+    "policy_exec_ops": 1,
+    "protected_check_ops": 1,
+    "cpu_seconds": 0,
+    "wall_seconds": 0,
+    "elapsed_seconds": 0,
+    "abandoned_ops": 0
+  },
+  "costs_fifty_steps": {
+    "model_tokens_in": 100,
+    "model_tokens_out": 20,
+    "model_calls": 1,
+    "tool_invocations": 4,
+    "sandbox_ops": 55,
+    "policy_exec_ops": 50,
+    "protected_check_ops": 1,
+    "cpu_seconds": 0,
+    "wall_seconds": 0,
+    "elapsed_seconds": 0,
+    "abandoned_ops": 0
+  },
+  "construction_prompt_contains_observation": true,
+  "construction_prompt_omits": [
+    "PLAN_SENTINEL",
+    "JOIN_SENTINEL",
+    "SOURCE_SENTINEL",
+    "FAILURE_SENTINEL"
+  ],
+  "over_input_token_cap_problems": [],
+  "frozen_arm_order": [
+    "L",
+    "F",
+    "A",
+    "S"
+  ],
+  "executed_arm_order": [
+    "S",
+    "A",
+    "F",
+    "L"
+  ],
+  "fresh_ledger_with_same_allocation_remaining": [
+    4,
+    4
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "episode_id": "live2-T-team01-t15-r1",
+  "panel": "eval",
+  "arm": "T",
+  "task_id": "team01-t15",
+  "repeat": 1,
+  "probe": null,
+  "panel_version": "team01-panel/2-live-solver",
+  "plan_id": "plan_team01-solver-bcbc6b44d8c24da5b7c0b315c803a55e",
+  "revision": 1,
+  "shape": "single",
+  "template_digest": null,
+  "snapshot_digest": "8991cfd409b2a1935897d943e7aeb24be2fe646a64b96164b42963c0bd78d46f",
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-solver-bcbc6b44d8c24da5b7c0b315c803a55e_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-solver-bcbc6b44d8c24da5b7c0b315c803a55e:r1:check",
+    "candidate_digest": "a867abcdef02a3c849a1f345c0323d694e145c2f580fdfc8e3b22f5e21320111",
+    "assemble_code": "ResultCode.APPLIED",
+    "assemble_detail": "join passed for plan_team01-solver-bcbc6b44d8c24da5b7c0b315c803a55e r1",
+    "assembly_note": "assembled"
+  },
+  "frozen_digest": "a867abcdef02a3c849a1f345c0323d694e145c2f580fdfc8e3b22f5e21320111",
+  "submitted_digests": {
+    "w1": "7d805caed48513ebac8098e1a9d5d7ddc84aeca5ecfcec997a4651d8754f3b2b"
+  },
+  "nonce": "b0bcd71e",
+  "allocation_id": "live2-live2-T-team01-t15-r1-root",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "receipts": [
+    "gw:live2-live2-T-team01-t15-r1-b0bcd71e-ctor-w1-live2-live2-T-team01-t15-r1-b0bcd71e-1",
+    "gw:live2-live2-T-team01-t15-r1-b0bcd71e-plan-live2-live2-T-team01-t15-r1-b0bcd71e-0",
+    "local:plan_team01-solver-bcbc6b44d8c24da5b7c0b315c803a55e_r1_check_team-work_1.result",
+    "local:tool-live2-live2-T-team01-t15-r1-b0bcd71e-live2-live2-T-team01-t15-r1-b0bcd71e-2_exec-default.result"
+  ],
+  "solver": {
+    "rationale": "The required lookup (M/Key to Value or unknown) is owned by one small routine for get_default in compute.py, so a single localized fix suffices.",
+    "plan_source": "model"
+  },
+  "join_attempts": [
+    {
+      "revision": 1,
+      "passed": true,
+      "check_operation": "plan_team01-solver-bcbc6b44d8c24da5b7c0b315c803a55e:r1:check",
+      "assemble_code": "ResultCode.APPLIED",
+      "assemble_detail": "join passed for plan_team01-solver-bcbc6b44d8c24da5b7c0b315c803a55e r1"
+    }
+  ],
+  "controls": {
+    "substituted": {},
+    "disconnected": [],
+    "authored": {}
+  },
+  "repairs": 0,
+  "constructor_ops": [
+    {
+      "kind": "plan",
+      "op_id": "live2-live2-T-team01-t15-r1-b0bcd71e-plan-live2-live2-T-team01-t15-r1-b0bcd71e-0",
+      "prompt": "see file",
+      "text": "{\"shape\": \"single\", \"rationale\": \"The required lookup (M/Key to Value or unknown) is owned by one small routine for get_default in compute.py, so a single localized fix suffices.\"}",
+      "usage": {
+        "in": 612,
+        "out": 925
+      },
+      "outcome": "model-text",
+      "error": "",
+      "shape": "single",
+      "rationale": "The required lookup (M/Key to Value or unknown) is owned by one small routine for get_default in compute.py, so a single localized fix suffices.",
+      "source": "model",
+      "directive_digest": null,
+      "receipts": [
+        "gw:live2-live2-T-team01-t15-r1-b0bcd71e-plan-live2-live2-T-team01-t15-r1-b0bcd71e-0"
+      ]
+    },
+    {
+      "kind": "ctor",
+      "node": "w1",
+      "op_id": "live2-live2-T-team01-t15-r1-b0bcd71e-ctor-w1-live2-live2-T-team01-t15-r1-b0bcd71e-1",
+      "prompt": "TASK team01-t15\nSPECIFICATION:\n# Task team01-t15\n\nProgram ABI: read one JSON object from the request file given as the first command-line argument, write one JSON object to the response file given as the second argument.\n\nInput object: M holds a string map and Key one string.\n\nThe program must return the mapped value under Value, or the word unknown when Key is absent. One small routine owns this computation.\nSPEC PARAMS: {\"default\": \"unknown\", \"op\": \"get_default\"}\nOWNED PATHS (repair exactly these files): src/app.py, src/compute.py, src/validate.py\n--- src/app.py ---\nfrom __future__ import annotations\n\nimport json\nimport sys\nfrom pathlib import Path\n\nimport validate\nimport compute\n\n\ndef main(argv):\n    here = Path(__file__).resolve().parent\n    spec = json.loads((here.parent / \"spec.json\").read_text())\n    payload = json.loads(Path(argv[1]).read_text())\n    validate.check(spec, payload)\n    out = compute.compute(spec, payload)\n    Path(argv[2]).write_text(json.dumps(out))\n    return 0\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main(sys.argv))\n\n--- src/compute.py ---\ndef compute(spec, payload):\n    op = spec[\"op\"]\n    if op == \"window_sum\":\n        return {\"total\": sum(payload[\"nums\"], 0)}\n    if op == \"gt_count\":\n        return {\"count\": sum(1 for n in payload[\"nums\"]\n                             if n < payload[\"threshold\"])}\n    if op == \"get_default\":\n        return {\"value\": spec[\"default\"]}\n    if op == \"format_pair\":\n        return {\"text\": \"%s\" % payload[\"a\"]}\n    raise ValueError(op)\n\n--- src/validate.py ---\ndef check(spec, payload):\n    op = spec[\"op\"]\n    if op == \"window_sum\":\n        nums, k = payload[\"nums\"], payload[\"k\"]\n        if not isinstance(nums, list) or not isinstance(k, int):\n            raise ValueError(\"bad window payload\")\n        if k < 0 or k > len(nums):\n            raise ValueError(\"window out of range\")\n    elif op == \"gt_count\":\n        if not isinstance(payload[\"nums\"], list):\n            raise ValueError(\"bad count payload\")\n    elif op == \"get_default\":\n        if not isinstance(payload[\"m\"], dict) or \"key\" not in payload:\n            raise ValueError(\"bad lookup payload\")\n    elif op == \"format_pair\":\n        if \"a\" not in payload or \"b\" not in payload:\n            raise ValueError(\"bad pair payload\")\n    else:\n        raise ValueError(op)\n\nVISIBLE CHECKS (4; hidden checks differ, do not overfit):\ncheck 0: input={\"m\": {\"turing9\": \"v13\", \"noether63\": \"v14\", \"grace96\": \"v15\"}, \"key\": \"turing9\"} expected={\"value\": \"v13\"}\ncheck 1: input={\"m\": {\"noether50\": \"v26\", \"hopper58\": \"v27\", \"linn35\": \"v28\"}, \"key\": \"hopper58\"} expected={\"value\": \"v27\"}\ncheck 2: input={\"m\": {\"linn33\": \"v39\", \"grace90\": \"v40\", \"darwin7\": \"v41\", \"tesla4\": \"v42\"}, \"key\": \"linn33\"} expected={\"value\": \"v39\"}\ncheck 3: input={\"m\": {\"curie58\": \"v52\", \"linn58\": \"v53\"}, \"key\": \"linn58\"} expected={\"value\": \"v53\"}\nSITUATION: team repair: organization=single; your obligation: repair the whole task tree\nTOOL FEEDBACK FROM VISIBLE CHECKS: none yet\nBUDGET: 1 model calls and 2 tool runs left including this one.\nRepair the owned files so the program meets the specification on the visible checks and, above all, on unseen cases for the same specification. Keep every public entry point and call signature used by the rest of the program exactly as-is.\nReply with exactly one JSON object and nothing else, shaped {\"files\": { \"<owned relpath>\": \"<complete file content>\" }, \"notes\": \"<one or two sentences about the repair>\"}. Include an entry for every owned path, even if unchanged. Do not add, rename or omit paths. Full file contents, not diffs.",
+      "text": "{\"files\": {\"src/app.py\": \"from __future__ import annotations\\n\\nimport json\\nimport sys\\nfrom pathlib import Path\\n\\nimport validate\\nimport compute\\n\\n\\ndef main(argv):\\n    here = Path(__file__).resolve().parent\\n    spec = json.loads((here.parent / \\\"spec.json\\\").read_text())\\n    payload = json.loads(Path(argv[1]).read_text())\\n    validate.check(spec, payload)\\n    out = compute.compute(spec, payload)\\n    Path(argv[2]).write_text(json.dumps(out))\\n    return 0\\n\\n\\nif __name__ == \\\"__main__\\\":\\n    raise SystemExit(main(sys.argv))\\n\", \"src/compute.py\": \"def compute(spec, payload):\\n    op = spec[\\\"op\\\"]\\n    if op == \\\"window_sum\\\":\\n        return {\\\"total\\\": sum(payload[\\\"nums\\\"], 0)}\\n    if op == \\\"gt_count\\\":\\n        return {\\\"count\\\": sum(1 for n in payload[\\\"nums\\\"]\\n                             if n < payload[\\\"threshold\\\"])}\\n    if op == \\\"get_default\\\":\\n        m = payload.get(\\\"m\\\", {})\\n        key = payload.get(\\\"key\\\")\\n        if isinstance(m, dict) and key in m:\\n            return {\\\"value\\\": m[key]}\\n        return {\\\"value\\\": spec.get(\\\"default\\\", \\\"unknown\\\")}\\n    if op == \\\"format_pair\\\":\\n        return {\\\"text\\\": \\\"%s\\\" % payload[\\\"a\\\"]}\\n    raise ValueError(op)\\n\", \"src/validate.py\": \"def check(spec, payload):\\n    op = spec[\\\"op\\\"]\\n    if op == \\\"window_sum\\\":\\n        nums, k = payload[\\\"nums\\\"], payload[\\\"k\\\"]\\n        if not isinstance(nums, list) or not isinstance(k, int):\\n            raise ValueError(\\\"bad window payload\\\")\\n        if k < 0 or k > len(nums):\\n            raise ValueError(\\\"window out of range\\\")\\n    elif op == \\\"gt_count\\\":\\n        if not isinstance(payload[\\\"nums\\\"], list):\\n            raise ValueError(\\\"bad count payload\\\")\\n    elif op == \\\"get_default\\\":\\n        if not isinstance(payload[\\\"m\\\"], dict) or \\\"key\\\" not in payload:\\n            raise ValueError(\\\"bad lookup payload\\\")\\n    elif op == \\\"format_pair\\\":\\n        if \\\"a\\\" not in payload or \\\"b\\\" not in payload:\\n            raise ValueError(\\\"bad pair payload\\\")\\n    else:\\n        raise ValueError(op)\\n\"}, \"notes\": \"Fixed get_default in compute.py to return m[key] when present else spec default unknown.\"}",
+      "usage": {
+        "in": 949,
+        "out": 1207
+      },
+      "stop": "stop",
+      "outcome": "model-text",
+      "error": "",
+      "parse_error": "",
+      "notes": "Fixed get_default in compute.py to return m[key] when present else spec default unknown.",
+      "files_digest": "7d805caed48513ebac8098e1a9d5d7ddc84aeca5ecfcec997a4651d8754f3b2b",
+      "receipts": [
+        "gw:live2-live2-T-team01-t15-r1-b0bcd71e-ctor-w1-live2-live2-T-team01-t15-r1-b0bcd71e-1"
+      ]
+    }
+  ],
+  "tool_ops": [
+    {
+      "kind": "tool",
+      "op_id": "tool-live2-live2-T-team01-t15-r1-b0bcd71e-live2-live2-T-team01-t15-r1-b0bcd71e-2",
+      "summary": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "failures": [],
+        "error": "",
+        "op_id": "tool-live2-live2-T-team01-t15-r1-b0bcd71e-live2-live2-T-team01-t15-r1-b0bcd71e-2"
+      },
+      "receipts": [
+        "local:tool-live2-live2-T-team01-t15-r1-b0bcd71e-live2-live2-T-team01-t15-r1-b0bcd71e-2_exec-default.result"
+      ],
+      "node_observation": "4/4 visible checks pass"
+    }
+  ],
+  "model_calls": 2,
+  "tool_calls": 1,
+  "usage": {
+    "in": 1561,
+    "out": 2132
+  },
+  "costs": {
+    "model_invocations": 2,
+    "model_tokens": {
+      "in": 1561,
+      "out": 2132
+    },
+    "tool_executions": 1
+  },
+  "simulated": false,
+  "live_source": "model-repair",
+  "wall_s": 13.231
+}

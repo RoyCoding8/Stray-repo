@@ -1,0 +1,94 @@
+[
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 2675,
+          "u": "g"
+        }
+      ],
+      "want": "kg"
+    },
+    "expected": {
+      "values": [
+        2.68
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 10000,
+          "u": "g"
+        }
+      ],
+      "want": "kg"
+    },
+    "expected": {
+      "values": [
+        10.0
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 500,
+          "u": "g"
+        }
+      ],
+      "want": "kg"
+    },
+    "expected": {
+      "values": [
+        0.5
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [],
+      "want": "kg"
+    },
+    "expected": {
+      "values": [],
+      "flags": []
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 3,
+          "u": "kg"
+        },
+        {
+          "v": 13,
+          "u": "g"
+        }
+      ],
+      "want": "kg"
+    },
+    "expected": {
+      "values": [
+        3.0,
+        0.01
+      ],
+      "flags": [
+        "ok",
+        "ok"
+      ]
+    }
+  }
+]

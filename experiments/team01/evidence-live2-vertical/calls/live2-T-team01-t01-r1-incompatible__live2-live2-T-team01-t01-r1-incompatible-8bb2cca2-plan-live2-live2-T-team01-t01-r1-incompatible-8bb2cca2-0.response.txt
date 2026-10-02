@@ -1,0 +1,1 @@
+{"shape": "decompose", "rationale": "Defects span two modules: textops misimplements strip_lower and numops misimplements sum, so each module needs its own fix."}

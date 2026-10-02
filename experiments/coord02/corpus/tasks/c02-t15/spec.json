@@ -1,0 +1,24 @@
+{
+  "convention": "v2",
+  "deps": {
+    "detect.py": [
+      "spec:rule"
+    ],
+    "operate.py": [
+      "spec:rule",
+      "spec:list_keys"
+    ]
+  },
+  "list_keys": {
+    "a": "xs",
+    "b": "zs"
+  },
+  "ops": {
+    "a": "prod",
+    "b": "sum"
+  },
+  "rule": {
+    "at": 5,
+    "kind": "threshold"
+  }
+}

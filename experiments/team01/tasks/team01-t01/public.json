@@ -1,0 +1,92 @@
+[
+ {
+  "input": {
+   "texts": [
+    " CHARLIE   ",
+    "Golf"
+   ],
+   "numbers": [
+    13,
+    20,
+    -7,
+    -1
+   ]
+  },
+  "expected": {
+   "texts": [
+    "charlie",
+    "golf"
+   ],
+   "numbers": 25
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "  BRAVO  ",
+    " ALPHA   ",
+    "lima"
+   ],
+   "numbers": [
+    26,
+    19,
+    15,
+    5,
+    2,
+    14.0
+   ]
+  },
+  "expected": {
+   "texts": [
+    "bravo",
+    "alpha",
+    "lima"
+   ],
+   "numbers": 81.0
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "  juliet  ",
+    "  Golf   "
+   ],
+   "numbers": [
+    6,
+    0,
+    14,
+    -9,
+    12.3
+   ]
+  },
+  "expected": {
+   "texts": [
+    "juliet",
+    "golf"
+   ],
+   "numbers": 23.3
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "  juliet ",
+    " Kilo "
+   ],
+   "numbers": [
+    25,
+    19,
+    27,
+    9,
+    23
+   ]
+  },
+  "expected": {
+   "texts": [
+    "juliet",
+    "kilo"
+   ],
+   "numbers": 103
+  }
+ }
+]

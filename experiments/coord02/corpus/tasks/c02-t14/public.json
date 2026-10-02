@@ -1,0 +1,46 @@
+[
+  {
+    "input": {
+      "items": [
+        2,
+        3
+      ]
+    },
+    "expected": {
+      "mode": "a",
+      "result": 5
+    }
+  },
+  {
+    "input": {
+      "items": {
+        "p": 2,
+        "q": 3
+      }
+    },
+    "expected": {
+      "mode": "b",
+      "result": 6
+    }
+  },
+  {
+    "input": {
+      "items": []
+    },
+    "expected": {
+      "mode": "a",
+      "result": 0
+    }
+  },
+  {
+    "input": {
+      "items": {
+        "z": 5
+      }
+    },
+    "expected": {
+      "mode": "b",
+      "result": 5
+    }
+  }
+]

@@ -1,0 +1,350 @@
+{
+  "budgets": {
+    "component_invocations": 64,
+    "elapsed_s": 120,
+    "max_advances": 8,
+    "message_bytes": 65536,
+    "model_calls": 0,
+    "per_invocation_ms": 2000,
+    "validation_queries": 2,
+    "witness_queries": 16
+  },
+  "checker_version": "rpr-checker/1",
+  "compositions": [
+    {
+      "adapter": "sw_adapter",
+      "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "composition_id": "rpr-C-source-v1",
+      "core": "core",
+      "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "description": "acquire/descriptions/source.md",
+      "role": "source"
+    },
+    {
+      "adapter": "gr_adapter",
+      "adapter_digest": "e6add5a4a3c344f517a2e435c368df006138c07f835fd07e232f608363c9279a",
+      "composition_id": "rpr-C-transfer-v1",
+      "core": "core",
+      "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "description": "acquire/descriptions/transfer.md",
+      "role": "transfer"
+    },
+    {
+      "adapter": "sw_adapter",
+      "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "composition_id": "rpr-CTRL-nullsw-v1",
+      "core": "null_core",
+      "core_digest": "7d6e24965d8cdd8233a7488c99ee5a8fa2e9f1d17a2cee3e3e739378bfe0994a",
+      "description": "acquire/descriptions/nullsw.md",
+      "role": "source"
+    },
+    {
+      "adapter": "gr_adapter",
+      "adapter_digest": "e6add5a4a3c344f517a2e435c368df006138c07f835fd07e232f608363c9279a",
+      "composition_id": "rpr-CTRL-nullgr-v1",
+      "core": "null_core",
+      "core_digest": "7d6e24965d8cdd8233a7488c99ee5a8fa2e9f1d17a2cee3e3e739378bfe0994a",
+      "description": "acquire/descriptions/nullgr.md",
+      "role": "transfer"
+    }
+  ],
+  "files": [
+    {
+      "bytes": 4575,
+      "component": "core",
+      "digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "path": "experiments/representation/acquire/atom_core.py"
+    },
+    {
+      "bytes": 322,
+      "description_for": "rpr-CTRL-nullgr-v1",
+      "digest": "b3b408f5501e9a1d59b711a54af16d717573c8ba13e311de17ed603163c822a2",
+      "path": "experiments/representation/acquire/descriptions/nullgr.md"
+    },
+    {
+      "bytes": 328,
+      "description_for": "rpr-CTRL-nullsw-v1",
+      "digest": "0b16835dccc0e64dfda4e139bade8cdf7a5071cf662e901b66c5d3446f6e66c4",
+      "path": "experiments/representation/acquire/descriptions/nullsw.md"
+    },
+    {
+      "bytes": 804,
+      "description_for": "rpr-C-source-v1",
+      "digest": "104011b6d21ed790866c5ca1246ae283555592eee3ab896bf8c7d08a470035fe",
+      "path": "experiments/representation/acquire/descriptions/source.md"
+    },
+    {
+      "bytes": 780,
+      "description_for": "rpr-C-transfer-v1",
+      "digest": "0c1cb229ea7925a35a948c992169b8ac74f2072818ef8c6732b51389f4f92d45",
+      "path": "experiments/representation/acquire/descriptions/transfer.md"
+    },
+    {
+      "bytes": 5407,
+      "component": "gr_adapter",
+      "digest": "e6add5a4a3c344f517a2e435c368df006138c07f835fd07e232f608363c9279a",
+      "path": "experiments/representation/acquire/gr_adapter.py"
+    },
+    {
+      "bytes": 1560,
+      "component": "null_core",
+      "digest": "7d6e24965d8cdd8233a7488c99ee5a8fa2e9f1d17a2cee3e3e739378bfe0994a",
+      "path": "experiments/representation/acquire/null_core.py"
+    },
+    {
+      "bytes": 27265,
+      "component": "source_context",
+      "digest": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+      "path": "experiments/representation/acquire/source_context.json"
+    },
+    {
+      "bytes": 4726,
+      "component": "sw_adapter",
+      "digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "path": "experiments/representation/acquire/sw_adapter.py"
+    },
+    {
+      "bytes": 23024,
+      "component": "transfer_context",
+      "digest": "6fd3e9c9a7bdf31a2e3be976f56f9436b5071162fa1c386a45c3301c0ccec1d9",
+      "path": "experiments/representation/acquire/transfer_context.json"
+    },
+    {
+      "bytes": 12363,
+      "component": "gr_checker",
+      "digest": "1e98cf51e93e4ddfb977192d6bdd93431348ecf2c518322d1a9d639642728966",
+      "path": "experiments/representation/experiment/bundle_gr_checker.py"
+    },
+    {
+      "bytes": 15394,
+      "component": "sw_checker",
+      "digest": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+      "path": "experiments/representation/experiment/bundle_sw_checker.py"
+    },
+    {
+      "bytes": 333,
+      "digest": "1d52eed2ef750cc39867add310e9883c35294c74ae72f64c7b80c12167a02b5c",
+      "path": "experiments/representation/fixtures/controls/ctrl-gr-bipartite.json",
+      "task_id": "ctrl-gr-bipartite"
+    },
+    {
+      "bytes": 258,
+      "digest": "3d2cd110c411199b38aa552d954ef6e794e8069e91532445fe5a5bed8d1bff82",
+      "path": "experiments/representation/fixtures/controls/ctrl-gr-triangle.json",
+      "task_id": "ctrl-gr-triangle"
+    },
+    {
+      "bytes": 1314,
+      "digest": "9bbbc960e340bd6f9861c620acc2be5308cc0c8ee3cfb31fe510ac8aadc54b4a",
+      "path": "experiments/representation/fixtures/controls/ctrl-sw-invalid.json",
+      "task_id": "ctrl-sw-invalid"
+    },
+    {
+      "bytes": 1271,
+      "digest": "87d075f89f75112a3fe36acb1e3b85722f3e2203d516447892c5d80d9cb4fe73",
+      "path": "experiments/representation/fixtures/controls/ctrl-sw-wrong-obs.json",
+      "task_id": "ctrl-sw-wrong-obs"
+    },
+    {
+      "bytes": 399,
+      "digest": "1580f1bcffaf6b2fedbdd9a355cbf8f4cc84eedaaad6e716d6706a5d6b88fe4d",
+      "path": "experiments/representation/fixtures/graphs/check/gr-che-00.json",
+      "task_id": "gr-che-00"
+    },
+    {
+      "bytes": 325,
+      "digest": "500bcd105555e0a284ae333a50fd0b8c418b8041ca321519af6cde44cf033686",
+      "path": "experiments/representation/fixtures/graphs/development/gr-dev-00.json",
+      "task_id": "gr-dev-00"
+    },
+    {
+      "bytes": 399,
+      "digest": "4864793ec12f84fd297f17feabac433e03b5cead145cad073ea92b3a9006e7b7",
+      "path": "experiments/representation/fixtures/graphs/development/gr-dev-01.json",
+      "task_id": "gr-dev-01"
+    },
+    {
+      "bytes": 466,
+      "digest": "39b314d6b703566aa72045d1e78693b550e441991b599d6d50022eaede105aec",
+      "path": "experiments/representation/fixtures/graphs/development/gr-dev-02.json",
+      "task_id": "gr-dev-02"
+    },
+    {
+      "bytes": 369,
+      "digest": "dc6749c9dad0ff5c7acb56dc5d200018fa10986947d6c01e7a036b35d8ac0078",
+      "path": "experiments/representation/fixtures/graphs/development/gr-dev-03.json",
+      "task_id": "gr-dev-03"
+    },
+    {
+      "bytes": 1010,
+      "digest": "5aff20b295d56ec4d5b47895da8cd2e756981949c68700fbcd9d0e34aa3b0e3f",
+      "path": "experiments/representation/fixtures/software/check/sw-che-00.json",
+      "task_id": "sw-che-00"
+    },
+    {
+      "bytes": 1255,
+      "digest": "f8b539f48bd5a657cc5086a34dbabc8f421a3c4ab255e54689a1ab44a080f2eb",
+      "path": "experiments/representation/fixtures/software/development/sw-dev-00.json",
+      "task_id": "sw-dev-00"
+    },
+    {
+      "bytes": 1032,
+      "digest": "501e4a4de0363520e1d92e67e390b82e9c8c139bc83a090a62da4a23802ec4cc",
+      "path": "experiments/representation/fixtures/software/development/sw-dev-01.json",
+      "task_id": "sw-dev-01"
+    },
+    {
+      "bytes": 720,
+      "digest": "2b78dc9b8533c057fa1c0202df4a05155705920da9f59e04889c2cf0dcff15c5",
+      "path": "experiments/representation/fixtures/software/development/sw-dev-02.json",
+      "task_id": "sw-dev-02"
+    },
+    {
+      "bytes": 869,
+      "digest": "7a6eac72979dc3c57abcdb2fe30ec5e481e4973aa1d849445fde06c40b6f277e",
+      "path": "experiments/representation/fixtures/software/development/sw-dev-03.json",
+      "task_id": "sw-dev-03"
+    },
+    {
+      "bytes": 1012,
+      "digest": "e48f3142fc1777c6aa498e654f1edc8a065b44eabe3a0138feecc903ceaa19e1",
+      "path": "experiments/representation/fixtures/software/development/sw-dev-04.json",
+      "task_id": "sw-dev-04"
+    },
+    {
+      "bytes": 469,
+      "digest": "ed2fbb6dab9efe1fb913fd9f4e69799fe5377771919ab231463ead2aee3f6080",
+      "path": "experiments/representation/fixtures/use/use-gr-out-of-scope.json",
+      "task_id": "use-gr-out-of-scope"
+    },
+    {
+      "bytes": 480,
+      "digest": "e52ebd611d6bc25df54c187688af112b6502e2c34536af3cfaf7b0f8298a6c21",
+      "path": "experiments/representation/fixtures/use/use-gr-supported.json",
+      "task_id": "use-gr-supported"
+    },
+    {
+      "bytes": 1896,
+      "digest": "bdc0b552bf6586c0baa6d6bdfe192dc3043884f849a7dd6dffc9cc5acf0e330c",
+      "path": "experiments/representation/fixtures/use/use-sw-out-of-scope.json",
+      "task_id": "use-sw-out-of-scope"
+    },
+    {
+      "bytes": 729,
+      "digest": "b5cbc3d58e75a9aaf9ea801635206cb209061340b2bb9e5ef547d9f1f7ef201a",
+      "path": "experiments/representation/fixtures/use/use-sw-supported.json",
+      "task_id": "use-sw-supported"
+    }
+  ],
+  "lane_b": {
+    "manifest_digest": "54ae7c4a11061bc240064a75a4f04ee10332ad3a990ebc3c69e6e5a3b0a53c6f",
+    "version": "RPR-01/1"
+  },
+  "panel": {
+    "attribution": [
+      {
+        "family": "software",
+        "task_id": "sw-dev-04"
+      },
+      {
+        "family": "graph",
+        "task_id": "gr-dev-03"
+      }
+    ],
+    "benefit_gr": [
+      "gr-dev-00",
+      "gr-dev-01",
+      "gr-dev-02",
+      "gr-che-00"
+    ],
+    "benefit_sw": [
+      "sw-dev-00",
+      "sw-dev-01",
+      "sw-dev-02",
+      "sw-dev-03",
+      "sw-che-00"
+    ],
+    "controls": [
+      "ctrl-sw-wrong-obs",
+      "ctrl-sw-invalid",
+      "ctrl-gr-triangle",
+      "ctrl-gr-bipartite"
+    ],
+    "use": [
+      "use-sw-supported",
+      "use-gr-supported",
+      "use-sw-out-of-scope",
+      "use-gr-out-of-scope"
+    ]
+  },
+  "protocols": [
+    "rpr-acq-B",
+    "rpr-acq-C"
+  ],
+  "selectors": {
+    "arm-A": {
+      "graph": {
+        "mean_u": 0.274671,
+        "method": "greedy"
+      },
+      "software": {
+        "mean_u": 0.712662,
+        "method": "greedy"
+      }
+    },
+    "arm-B": {
+      "graph": {
+        "buckets": {
+          "large": {
+            "mean_u": 0.299342,
+            "method": "greedy",
+            "queries": 32,
+            "runner_up": {
+              "mean_u": 0.18421,
+              "method": "ddmin",
+              "queries": 32
+            }
+          },
+          "small": {
+            "mean_u": 0.25,
+            "method": "greedy",
+            "queries": 32,
+            "runner_up": {
+              "mean_u": 0.175,
+              "method": "ddmin",
+              "queries": 32
+            }
+          }
+        },
+        "threshold": 15.5
+      },
+      "software": {
+        "buckets": {
+          "large": {
+            "mean_u": 0.775,
+            "method": "greedy",
+            "queries": 32,
+            "runner_up": {
+              "mean_u": 0.733334,
+              "method": "ddmin",
+              "queries": 26
+            }
+          },
+          "small": {
+            "mean_u": 0.681494,
+            "method": "ddmin",
+            "queries": 48,
+            "runner_up": {
+              "mean_u": 0.681494,
+              "method": "greedy",
+              "queries": 55
+            }
+          }
+        },
+        "threshold": 11.0
+      }
+    }
+  },
+  "verdict_rule": "promising-pilot: no invalid delivered result or incorrect control handling; C transfer mean improvement exceeds both A and B by at least 0.10; C software mean trails neither by more than 0.05; measured execution CPU, elapsed time, oracle queries, model tokens and accounted exposure each at most 1.25x each comparator total over the same benefit tasks (zero denominator requires C also zero).",
+  "version": "RPR-ACQ/1"
+}

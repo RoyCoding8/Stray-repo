@@ -1,0 +1,7 @@
+{
+  "dev_episodes": 12,
+  "template_builds": 2,
+  "eval_episodes": 48,
+  "transfer_episodes": 24,
+  "probe_calls": 2
+}

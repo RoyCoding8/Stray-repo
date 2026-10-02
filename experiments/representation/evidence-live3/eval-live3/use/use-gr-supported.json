@@ -1,0 +1,54 @@
+{
+  "acquired": {
+    "campaign_tag": "live3",
+    "disposition_digest": "3f05677a7929c3cb253a92b9f5ad56ee7263cf98930cfc38cde052821c013837",
+    "retention_digest": "5038393bc99e7a42e23e13e968ab79a4a08eb38576ee74d13fff99ab7c8d32ce",
+    "selected": null
+  },
+  "c_attempt": {
+    "composition_id": null,
+    "costs": {
+      "elapsed_s": 0.0,
+      "invocations_used": 0,
+      "model_calls": 0,
+      "model_tokens": {
+        "in": 0,
+        "out": 0
+      },
+      "queries_used": 0,
+      "validation_used": 0
+    },
+    "disposition": "refused",
+    "invocations": [],
+    "queries": [],
+    "reason": "no-candidate: no-frozen-core",
+    "trial_only": true,
+    "u": 0.0,
+    "verified": false
+  },
+  "checker_version": "rpr-checker/1",
+  "fallback": {
+    "artifact_digest": "ca1c69c5065c6d003da69496ab4507bf4456cb4bbe1f207d63081fb10ef816d2",
+    "delivered_digest": "b6ddc77d8541af280c69a3329979d766400e6c5fade5c4d521c1091a8365504c",
+    "directive_source": "fallback-frozen-selector",
+    "procedure": "greedy",
+    "queries": 16,
+    "response_digest": "bf57c7a8252bd8ff69383d9cb496614338e95c793dde1a281e2a87e3eb086a39",
+    "u": 0.1
+  },
+  "family": "graph",
+  "inputs_digest": {
+    "checker": "1e98cf51e93e4ddfb977192d6bdd93431348ecf2c518322d1a9d639642728966",
+    "context": "6fd3e9c9a7bdf31a2e3be976f56f9436b5071162fa1c386a45c3301c0ccec1d9",
+    "fixture": "e52ebd611d6bc25df54c187688af112b6502e2c34536af3cfaf7b0f8298a6c21"
+  },
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "release": "none: representation unreleased",
+  "selected": {
+    "delivered_digest": "b6ddc77d8541af280c69a3329979d766400e6c5fade5c4d521c1091a8365504c",
+    "reason": "no-release-trial-only",
+    "route": "A-fallback"
+  },
+  "stage": "subsequent-use",
+  "task_id": "use-gr-supported"
+}

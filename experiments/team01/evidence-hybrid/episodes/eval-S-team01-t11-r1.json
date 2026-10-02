@@ -1,0 +1,209 @@
+{
+  "episode_id": "eval-S-team01-t11-r1",
+  "panel": "eval",
+  "arm": "S",
+  "task_id": "team01-t11",
+  "repeat": 1,
+  "family": "fam-seq",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-77739c1deca84fadaf3fe4425d286fb3",
+  "revision": 1,
+  "shape": "single",
+  "snapshot_digest": "9ce58b68f181771d5cc2413b9e85cfc113c0f8658b3a2ba6f7eef626dcfa681b",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "failure",
+  "public": {
+    "passed": 1,
+    "failed": 3,
+    "total": 4,
+    "failures": [
+      {
+        "input": {
+          "kind": "errx",
+          "vals": []
+        },
+        "expected": {
+          "mode": "b",
+          "result": 0
+        },
+        "got": {
+          "mode": "a",
+          "result": 0
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "err",
+          "vals": [
+            124,
+            190,
+            5,
+            -14
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": -14
+        },
+        "got": {
+          "mode": "a",
+          "result": 190
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "error",
+          "vals": [
+            31,
+            84
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 31
+        },
+        "got": {
+          "mode": "a",
+          "result": 84
+        },
+        "error": ""
+      }
+    ]
+  },
+  "protected": {
+    "passed": 2,
+    "failed": 4,
+    "total": 6,
+    "failures": [
+      {
+        "input": {
+          "kind": "errx",
+          "vals": [
+            -5,
+            60,
+            55
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": -5
+        },
+        "got": {
+          "mode": "a",
+          "result": 60
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "err",
+          "vals": [
+            191,
+            11,
+            76,
+            7,
+            186
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 7
+        },
+        "got": {
+          "mode": "a",
+          "result": 191
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "error",
+          "vals": [
+            131,
+            74,
+            69,
+            -15,
+            101
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": -15
+        },
+        "got": {
+          "mode": "a",
+          "result": 131
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "err",
+          "vals": [
+            9,
+            109
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 9
+        },
+        "got": {
+          "mode": "a",
+          "result": 109
+        },
+        "error": ""
+      }
+    ]
+  },
+  "join": {
+    "passed": false,
+    "join_receipt": "local:plan_team01-77739c1deca84fadaf3fe4425d286fb3_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-77739c1deca84fadaf3fe4425d286fb3:r1:check",
+    "candidate_digest": "55e7a1930c7d5f956914c7a571ded0c41952153aebe8aa884bea83d83fb44167"
+  },
+  "frozen_digest": null,
+  "receipts": {
+    "w1": [
+      "local:plan_team01-77739c1deca84fadaf3fe4425d286fb3_r1_w1_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_executions": 0,
+    "model_invocations": 0,
+    "wall_s": 0.864
+  },
+  "live": {
+    "planner_operations": [
+      ""
+    ],
+    "calls": [
+      {
+        "operation_id": "",
+        "arm": "S",
+        "task_id": "team01-t11",
+        "repeat": 1,
+        "probe": null,
+        "exposure": 0,
+        "usage": {
+          "in": 0,
+          "out": 0
+        },
+        "outcome": "forced-single",
+        "stop_reason": "",
+        "shape": "single",
+        "text_chars": 0
+      }
+    ]
+  }
+}

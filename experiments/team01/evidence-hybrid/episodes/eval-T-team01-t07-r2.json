@@ -1,0 +1,78 @@
+{
+  "episode_id": "eval-T-team01-t07-r2",
+  "panel": "eval",
+  "arm": "T",
+  "task_id": "team01-t07",
+  "repeat": 2,
+  "family": "fam-cpl",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-bd3f6f56a8eb4b198a4f56475db04cca",
+  "revision": 1,
+  "shape": "alternatives",
+  "snapshot_digest": "3e277727abbbbc710fc6edf8981a457620ded62c28a05772e7db52744755b2a4",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-bd3f6f56a8eb4b198a4f56475db04cca_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-bd3f6f56a8eb4b198a4f56475db04cca:r1:check",
+    "candidate_digest": "f88aee4149063800fab35cde669a7e526c5308896a42307750e95652e91a0c65"
+  },
+  "frozen_digest": "f88aee4149063800fab35cde669a7e526c5308896a42307750e95652e91a0c65",
+  "receipts": {
+    "w1": [
+      "local:plan_team01-bd3f6f56a8eb4b198a4f56475db04cca_r1_w1_work_team-work_1.result"
+    ],
+    "w2": [
+      "local:plan_team01-bd3f6f56a8eb4b198a4f56475db04cca_r1_w2_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 4.868
+  },
+  "live": {
+    "planner_operations": [
+      "tlive02-eval-plan-T-team01-t07-r2-39"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive02-eval-plan-T-team01-t07-r2-39",
+        "arm": "T",
+        "task_id": "team01-t07",
+        "repeat": 2,
+        "probe": null,
+        "exposure": 648,
+        "usage": {
+          "in": 0,
+          "out": 0
+        },
+        "outcome": "fallback-empty-output",
+        "stop_reason": "",
+        "shape": "alternatives",
+        "text_chars": 0
+      }
+    ]
+  }
+}

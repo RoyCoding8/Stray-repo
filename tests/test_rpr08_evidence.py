@@ -35,7 +35,7 @@ def _full_run(dsn, tmp_path, tag):
 def test_full_panel_is_checker_clean(migrated_db, tmp_path):
     dsn = migrated_db
     index, evidence = _full_run(dsn, tmp_path, "ev8")
-    assert index["arm_task_records"] == 27
+    assert index["arm_task_records"] == 48
     assert index["control_records"] == 12
     assert index["attribution_records"] == 2
     assert index["use_records"] == 4
@@ -53,9 +53,13 @@ def test_full_panel_is_checker_clean(migrated_db, tmp_path):
 
 
 def test_committed_evidence_is_checker_clean():
-    report = checker.check_all(REP / "evidence")
-    assert report["clean"], report["problems"]
-    assert report["records"] == 27
+    mechanics = checker.check_all(REP / "evidence",
+                                  manifest_name="manifest_acq1.json")
+    assert mechanics["clean"], mechanics["problems"]
+    assert mechanics["records"] == 27
+    heldout = checker.check_all(REP / "evidence-heldout")
+    assert heldout["clean"], heldout["problems"]
+    assert heldout["records"] == 48
 
 
 def test_trial_disposition_persisted(migrated_db, tmp_path):

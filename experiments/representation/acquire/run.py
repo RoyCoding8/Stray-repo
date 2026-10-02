@@ -24,9 +24,9 @@ ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 from experiments.representation import checkers, graphs, reducers, software
-from experiments.representation.acquire import contexts, panel
+from experiments.representation.acquire import contexts, panel, retention
 from experiments.representation.experiment import freeze
-from settlement import development, launcher_local, store, trials
+from settlement import broker, development, launcher_local, store, trials
 from settlement import representation as R
 from settlement.common import Command, ResultCode, SettlementError
 from settlement import db as _db
@@ -39,6 +39,27 @@ FIXTURES = REP / "fixtures"
 OUTCOME = {"improved": "success", "no_improvement": "failure",
            "unsupported": "failure", "refused": "failure",
            "budget_exhausted": "timeout", "paused": "infra"}
+
+RETENTION_MODES = ("authored-fixture", "retained")
+STAGE_OF_FAMILY = {family: stage for stage, families
+                   in retention.STAGE_FAMILIES.items()
+                   for family in families}
+PROCEDURE_TIMEOUT_MS = 2000
+PROCEDURE_WALL_S = 30.0
+REFUSED_PROCEDURE = "refused-no-candidate"
+
+PROCEDURE_DRIVER = (
+    "import importlib.util\n"
+    "import json\n"
+    "import sys\n"
+    "proc_path, req_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]\n"
+    "measure = json.load(open(req_path))[\"measure\"]\n"
+    "spec = importlib.util.spec_from_file_location(\"retained_procedure\","
+    " proc_path)\n"
+    "module = importlib.util.module_from_spec(spec)\n"
+    "spec.loader.exec_module(module)\n"
+    "json.dump({\"method\": module.select(measure)}, open(out_path, \"w\"))\n"
+)
 
 
 def _cmd() -> Command:
@@ -250,6 +271,466 @@ def _assign(dsn: str, protocol_id: str, arm: str, task_id: str, instance: dict):
     return "%s:%s:%s" % (protocol_id, arm, task_id)
 
 
+def _package_file(artifacts_root, digest: str, name: str) -> bytes:
+    try:
+        raw = (Path(artifacts_root) / digest).read_bytes()
+    except OSError:
+        raise SettlementError("retained artifact %s missing" % digest[:12])
+    if _digest(raw) != digest:
+        raise SettlementError("retained artifact %s mismatch" % digest[:12])
+    try:
+        files = json.loads(raw.decode("utf-8"))["files"]
+        return bytes.fromhex(files[name])
+    except (ValueError, KeyError, TypeError):
+        raise SettlementError("retained artifact %s unreadable" % digest[:12])
+
+
+def ensure_retained_composition(dsn: str, ctx: dict, entry: dict,
+                                stage: str) -> dict:
+    comp_id = entry["identities"]["composition_id"]
+    try:
+        checked = R.check_composition(dsn, ctx["artifacts_root"], comp_id)
+    except SettlementError:
+        checked = None
+    if checked is None:
+        try:
+            raw = (Path(ctx["artifacts_root"])
+                   / entry["identities"]["package_digest"]).read_bytes()
+        except OSError:
+            raise SettlementError(
+                "retained composition %s has no package bytes" % comp_id)
+        if _digest(raw) != entry["identities"]["package_digest"]:
+            raise SettlementError(
+                "retained composition %s package mismatch" % comp_id)
+        try:
+            files = json.loads(raw.decode("utf-8"))["files"]
+            core_raw = bytes.fromhex(files["core.py"])
+            adapter_raw = bytes.fromhex(files["adapter.py"])
+            desc_raw = bytes.fromhex(files["DESCRIPTION.md"])
+        except (ValueError, KeyError, TypeError):
+            raise SettlementError(
+                "retained composition %s package unreadable" % comp_id)
+        receipt = R.stage_composition(
+            ctx["staging_root"], core_bytes=core_raw,
+            adapter_bytes=adapter_raw, description=desc_raw, dsn=dsn)
+        published = R.publish_composition(dsn, _cmd(), ctx["artifacts_root"],
+                                          receipt)
+        if published.code not in (ResultCode.APPLIED,
+                                  ResultCode.ALREADY_APPLIED):
+            raise SettlementError("retained composition %s not published: %s"
+                                  % (comp_id, published.detail))
+        recorded = R.record_composition(
+            dsn, _cmd(), ctx["artifacts_root"], composition_id=comp_id,
+            package_digest=receipt["digest"], role=stage,
+            protocol_id="rpr-camp-%s" % ctx["tag"])
+        if recorded.code != ResultCode.APPLIED \
+                and "already recorded" not in recorded.detail:
+            raise SettlementError("retained composition %s refused: %s"
+                                  % (comp_id, recorded.detail))
+        checked = R.check_composition(dsn, ctx["artifacts_root"], comp_id)
+    identities = entry.get("identities") or {}
+    if checked["core_digest"] != identities.get("core_digest") \
+            or checked["adapter_digest"] != identities.get("adapter_digest") \
+            or checked["package_digest"] != identities.get("package_digest"):
+        raise SettlementError(
+            "retained composition %s binds other bytes" % comp_id)
+    return checked
+
+
+def bind_retention(dsn: str, ctx: dict) -> dict:
+    entries = ctx["retention"]["entries"]
+    binding: dict = {}
+    for key in retention.ENTRY_KEYS:
+        arm, stage = key.split("-")
+        entry = entries[key]
+        identities = entry.get("identities") or {}
+        if arm == "A":
+            deal = entry["directive"]
+            family = retention.STAGE_FAMILIES[stage][0]
+            binding[key] = {"method": deal["directive"][family],
+                            "source": deal["source"],
+                            "reason": entry.get("reason", "")}
+        elif arm == "B":
+            if entry.get("selected") is None:
+                binding[key] = {"bound": False,
+                                "reason": entry.get("reason", "")}
+            else:
+                body = _package_file(ctx["artifacts_root"],
+                                     identities["artifact_digest"],
+                                     "procedure.py")
+                try:
+                    text = body.decode("utf-8")
+                except UnicodeDecodeError:
+                    raise SettlementError(
+                        "retained procedure for %s not text" % key)
+                checked = retention.validate_procedure(text)
+                if checked["status"] != "valid":
+                    binding[key] = {
+                        "bound": False,
+                        "reason": "rejected-procedure: " + checked["reason"]}
+                else:
+                    binding[key] = {"bound": True,
+                                    "procedure_source": body}
+        elif entry.get("selected") is None:
+            binding[key] = {"bound": False,
+                            "reason": entry.get("reason", "")}
+        else:
+            binding[key] = {"bound": True, "composition":
+                            ensure_retained_composition(dsn, ctx, entry,
+                                                        stage)}
+    ctx["binding"] = binding
+    return binding
+
+
+def _procedure_op_id(run_tag: str, task_id: str) -> str:
+    return "rpr:%s:%s:procedure:0000" % (run_tag, task_id)
+
+
+def _op_receipts(dsn: str, operation_id: str) -> list:
+    from psycopg.rows import dict_row
+
+    with _db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT receipt_identity, outcome, content"
+                        " FROM receipts WHERE operation_id = %s"
+                        " ORDER BY created_at", (operation_id,))
+            rows = [dict(row) for row in cur.fetchall()]
+            conn.commit()
+            return rows
+
+
+def run_retained_procedure(dsn: str, ctx: dict, *, key: str, task_id: str,
+                           measure: float, entry: dict) -> dict:
+    body = ctx["binding"][key]["procedure_source"]
+    procedure_digest = _digest(body)
+    if procedure_digest != entry["identities"]["file_digest"]:
+        raise SettlementError("retained procedure for %s changed" % key)
+    op_id = _procedure_op_id(ctx["run_tag"], task_id)
+    identity = "rpr-procedure:%s" % op_id
+    for receipt in _op_receipts(dsn, op_id):
+        if receipt.get("receipt_identity") == identity:
+            method = (receipt.get("content") or {}).get("method")
+            if method not in retention.METHODS:
+                raise SettlementError(
+                    "retained procedure for %s returned %r" % (key, method))
+            return {"method": method, "procedure_digest": procedure_digest,
+                    "op_id": op_id, "elapsed_s": 0.0, "reused": True}
+    launcher = ctx["launcher"]
+    wall = time.time()
+    in_dir, out_dir = launcher.exec_dirs(op_id, "")
+    ensured = broker.ensure_operation(
+        dsn, operation_id=op_id, effect=broker.SANDBOX_EXEC,
+        payload={"profile": launcher.profile,
+                 "argv": [launcher.staged_python(),
+                          "%s/driver.py" % in_dir,
+                          "%s/procedure.py" % in_dir,
+                          "%s/request.json" % in_dir,
+                          "%s/response.json" % out_dir],
+                 "timeout_ms": PROCEDURE_TIMEOUT_MS,
+                 "max_output_bytes": 65536},
+        allocation_id=ctx["allocation_id"], attempt_id=ctx["attempt_id"])
+    if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        raise SettlementError("retained procedure for %s not admitted: %s"
+                              % (key, ensured.detail))
+    launcher.stage_input(op_id, "", "procedure.py", body)
+    launcher.stage_input(op_id, "", "driver.py", PROCEDURE_DRIVER.encode())
+    launcher.stage_input(op_id, "", "request.json",
+                         _canon({"measure": measure}))
+    broker.dispatch_operation(dsn, op_id,
+                              launchers={launcher.profile: launcher})
+    try:
+        raw_response = launcher.read_output(op_id, "", "response.json")
+        method = json.loads(raw_response.decode("utf-8"))["method"]
+    except (OSError, ValueError, KeyError, TypeError, UnicodeDecodeError):
+        raise SettlementError("retained procedure for %s gave no method"
+                              % key)
+    elapsed = round(time.time() - wall, 3)
+    if elapsed > PROCEDURE_WALL_S:
+        raise SettlementError(
+            "retained procedure for %s exceeded its bound" % key)
+    if method not in retention.METHODS:
+        raise SettlementError("retained procedure for %s returned %r"
+                              % (key, method))
+    broker.admit_launcher_receipt(
+        dsn, op_id, broker.ReceiptProposal(
+            receipt_identity=identity,
+            content={"kind": "rpr-procedure", "run_tag": ctx["run_tag"],
+                     "task_id": task_id, "method": method,
+                     "procedure_digest": procedure_digest,
+                     "artifact_digest": entry["identities"]["artifact_digest"],
+                     "elapsed_s": elapsed},
+            outcome="unknown", provenance="representation-01"))
+    return {"method": method, "procedure_digest": procedure_digest,
+            "op_id": op_id, "elapsed_s": elapsed, "reused": False}
+
+
+def _native_outcome(native: dict) -> str:
+    outcome = "success" if native["u"] > 0 else "failure"
+    if native["status"] == "initial-not-preserved":
+        outcome = "invalid"
+    return outcome
+
+
+def _refused_record(manifest_sha: str, arm: str, task: dict, task_id: str,
+                    family: str, stage: str, ctx: dict, reason: str) -> tuple:
+    incumbent, initial = incumbent_of(task)
+    record = {"arm": arm, "task_id": task_id, "family": family,
+              "stage": stage, "trial_group": panel.trial_group(task_id),
+              "manifest_sha256": manifest_sha,
+              "checker_version": panel.CHECKER_VERSION,
+              "inputs_digest": _inputs_for(task_id, family, ctx["manifest"],
+                                           None),
+              "composition": {"native": True,
+                              "procedure": REFUSED_PROCEDURE,
+                              "directive_source": "refused-no-candidate",
+                              "response_digest": None,
+                              "artifact_digest": None, "reason": reason},
+              "initial": {"measure": initial},
+              "result": {"disposition": "refused", "reason": reason,
+                         "best_measure": initial, "improvement_u": 0.0,
+                         "verified": False,
+                         "delivered_digest": _digest(_canon(incumbent))},
+              "oracle_queries": [], "invocations": [],
+              "costs": {"invocations_used": 0, "queries_used": 0,
+                        "validation_used": 0, "elapsed_s": 0.0,
+                        "model_calls": 0,
+                        "model_tokens": {"in": 0, "out": 0}},
+              "operator": None,
+              "acquired": {"retention_digest": ctx["retention_digest"],
+                           "selected": None, "response_digest": None,
+                           "artifact_digest": None}}
+    return record, "failure"
+
+
+def _retained_native_pair(dsn: str, ctx: dict, arm: str, task: dict,
+                          task_id: str, family: str, stage: str,
+                          manifest: dict, manifest_sha: str) -> tuple:
+    key = "%s-%s" % (arm, STAGE_OF_FAMILY[family])
+    entry = ctx["retention"]["entries"][key]
+    identities = entry.get("identities") or {}
+    lineage = entry.get("lineage") or {}
+    if arm == "B" and not ctx["binding"][key]["bound"]:
+        return _refused_record(manifest_sha, arm, task, task_id, family,
+                               stage, ctx,
+                               ctx["binding"][key].get("reason")
+                               or entry.get("reason") or "no-candidate")
+    if arm == "A":
+        deal = ctx["binding"][key]
+        method = deal["method"]
+        native = run_native(task, method)
+        procedure = None
+        extras = {"selector": manifest["selectors"]["arm-A"][family],
+                  "directive_source": deal["source"],
+                  "response_digest": lineage.get("response_digest"),
+                  "artifact_digest": identities.get("artifact_digest"),
+                  "reason": deal["reason"]}
+        inputs = _inputs_for(task_id, family, manifest, None)
+        inputs["directive_artifact"] = identities.get("artifact_digest")
+        costs = {"invocations_used": 0, "queries_used": native["queries"],
+                 "validation_used": 0, "elapsed_s": native["elapsed_s"],
+                 "model_calls": 0, "model_tokens": {"in": 0, "out": 0}}
+    else:
+        proc = run_retained_procedure(dsn, ctx, key=key, task_id=task_id,
+                                      measure=incumbent_of(task)[1],
+                                      entry=entry)
+        native = run_native(task, proc["method"])
+        procedure = {"op_id": proc["op_id"], "method": proc["method"],
+                     "procedure_digest": proc["procedure_digest"],
+                     "elapsed_s": proc["elapsed_s"],
+                     "reused": proc["reused"]}
+        extras = {"selector": manifest["selectors"]["arm-B"][family],
+                  "directive_source": "acquired",
+                  "response_digest": lineage.get("response_digest"),
+                  "artifact_digest": identities.get("artifact_digest"),
+                  "reason": entry.get("reason", "")}
+        inputs = _inputs_for(task_id, family, manifest, None)
+        inputs["procedure_artifact"] = identities.get("artifact_digest")
+        costs = {"invocations_used": 1, "queries_used": native["queries"],
+                 "validation_used": 0,
+                 "elapsed_s": round(native["elapsed_s"]
+                                    + proc["elapsed_s"], 3),
+                 "model_calls": 0, "model_tokens": {"in": 0, "out": 0}}
+    record = {"arm": arm, "task_id": task_id, "family": family,
+              "stage": stage, "trial_group": panel.trial_group(task_id),
+              "manifest_sha256": manifest_sha,
+              "checker_version": panel.CHECKER_VERSION,
+              "inputs_digest": inputs,
+              "composition": {"native": True, "procedure": native["method"],
+                              **extras},
+              "initial": {"measure": native["initial_measure"]},
+              "result": {"disposition": "improved" if native["u"] > 0
+                         else "no_improvement",
+                         "reason": native["status"],
+                         "best_measure": native["verdict"].get("measure"),
+                         "improvement_u": native["u"],
+                         "verified": native["verdict"].get("verdict")
+                         == "preserved",
+                         "delivered_digest": native["delivered_digest"]},
+              "oracle_queries": native["history"], "invocations": [],
+              "costs": costs, "operator": None,
+              "native_detail": {"accepted": native["accepted"],
+                                "final_verdict": native["verdict"]},
+              "acquired": {"retention_digest": ctx["retention_digest"],
+                           "selected": entry.get("selected"),
+                           "response_digest": lineage.get("response_digest"),
+                           "artifact_digest": identities.get("artifact_digest")}}
+    if procedure is not None:
+        record["procedure"] = procedure
+    return record, _native_outcome(native)
+
+
+def _retained_composition_pair(dsn: str, ctx: dict, task: dict,
+                               task_id: str, family: str, stage: str,
+                               manifest: dict, manifest_sha: str) -> tuple:
+    key = "C-%s" % STAGE_OF_FAMILY[family]
+    entry = ctx["retention"]["entries"][key]
+    identities = entry.get("identities") or {}
+    lineage = entry.get("lineage") or {}
+    if not ctx["binding"][key]["bound"]:
+        record, outcome = _refused_record(
+            manifest_sha, "C", task, task_id, family, stage, ctx,
+            entry.get("reason") or "no-candidate")
+        return record, outcome, ""
+    composed = run_composition(dsn, ctx["launcher"], ctx["artifacts_root"],
+                               tag=ctx["run_tag"], task=task,
+                               composition_id=identities["composition_id"],
+                               manifest=manifest,
+                               allocation_id=ctx["allocation_id"],
+                               attempt_id=ctx["attempt_id"])
+    outcome_fresh = OUTCOME[composed["disposition"]]
+    if composed["disposition"] == "improved" and not composed["verified"]:
+        outcome_fresh = "failure"
+    record = {"arm": "C", "task_id": task_id, "family": family,
+              "stage": stage, "trial_group": panel.trial_group(task_id),
+              "manifest_sha256": manifest_sha,
+              "checker_version": panel.CHECKER_VERSION,
+              "inputs_digest": _inputs_for(task_id, family, manifest,
+                                           composed),
+              "composition": {"native": False,
+                              "composition_id": identities["composition_id"],
+                              "role": composed["role"],
+                              "core_digest": composed["core_digest"],
+                              "adapter_digest": composed["adapter_digest"],
+                              "package_digest": composed["package_digest"],
+                              "checker_id": composed["checker_id"],
+                              "response_digest":
+                              lineage.get("response_digest"),
+                              "lineage": lineage},
+              "initial": {"measure": composed["initial_measure"]},
+              "result": {"disposition": composed["disposition"],
+                         "reason": composed["reason"],
+                         "best_measure": composed["best_measure"],
+                         "improvement_u": composed["u"],
+                         "verified": composed["verified"],
+                         "delivered_digest": composed["delivered_digest"]},
+              "oracle_queries": composed["queries"],
+              "oracle_validations": composed["validations"],
+              "invocations": composed["invocations"],
+              "costs": composed["costs"],
+              "operator": composed["operator"],
+              "acquired": {"retention_digest": ctx["retention_digest"],
+                           "selected": entry.get("selected"),
+                           "response_digest": lineage.get("response_digest"),
+                           "package_digest": identities.get("package_digest")}}
+    invocation_ref = composed["invocations"][0]["op_id"] \
+        if composed["invocations"] else ""
+    return record, outcome_fresh, invocation_ref
+
+
+def _retained_use_record(dsn: str, ctx: dict, task: dict, task_id: str,
+                         family: str, incumbent: dict, initial: float,
+                         manifest: dict, manifest_sha: str) -> dict:
+    retained = ctx["retention"]
+    disp = ctx.get("disposition")
+    if not isinstance(disp, dict) or not disp:
+        raise SettlementError("retained use requires a disposition record")
+    stage = STAGE_OF_FAMILY[family]
+    a_key, c_key = "A-%s" % stage, "C-%s" % stage
+    a_entry = retained["entries"][a_key]
+    c_entry = retained["entries"][c_key]
+    a_deal = ctx["binding"][a_key]
+    a_lineage = a_entry.get("lineage") or {}
+    c_bound = ctx["binding"][c_key]["bound"]
+    use_tag = "%s-use" % ctx["run_tag"]
+    if disp.get("use_authorized") is True and disp.get("use_composition_id"):
+        composed = run_composition(
+            dsn, ctx["launcher"], ctx["artifacts_root"], tag=use_tag,
+            task=task, composition_id=disp["use_composition_id"],
+            manifest=manifest, allocation_id=ctx["allocation_id"],
+            attempt_id=ctx["attempt_id"])
+        inputs = _inputs_for(task_id, family, manifest, composed)
+        attempt = {"composition_id": disp["use_composition_id"],
+                   "disposition": composed["disposition"],
+                   "reason": composed["reason"], "u": composed["u"],
+                   "verified": composed["verified"], "trial_only": True,
+                   "invocations": composed["invocations"],
+                   "queries": composed["queries"],
+                   "costs": composed["costs"]}
+        selected = {"route": "selected-use",
+                    "reason": "disposition-authorized",
+                    "delivered_digest": _digest(_canon(composed["delivered"]))}
+        fallback = None
+    else:
+        if c_bound:
+            composed = run_composition(
+                dsn, ctx["launcher"], ctx["artifacts_root"], tag=use_tag,
+                task=task, composition_id=c_entry["identities"]["composition_id"],
+                manifest=manifest, allocation_id=ctx["allocation_id"],
+                attempt_id=ctx["attempt_id"])
+            inputs = _inputs_for(task_id, family, manifest, composed)
+            attempt = {"composition_id": c_entry["identities"]["composition_id"],
+                       "disposition": composed["disposition"],
+                       "reason": composed["reason"], "u": composed["u"],
+                       "verified": composed["verified"], "trial_only": True,
+                       "invocations": composed["invocations"],
+                       "queries": composed["queries"],
+                       "costs": composed["costs"]}
+        else:
+            composed = None
+            inputs = _inputs_for(task_id, family, manifest, None)
+            attempt = {"composition_id": None, "disposition": "refused",
+                       "reason": ctx["binding"][c_key].get("reason")
+                       or "no-candidate", "u": 0.0, "verified": False,
+                       "trial_only": True, "invocations": [], "queries": [],
+                       "costs": {"invocations_used": 0, "queries_used": 0,
+                                 "validation_used": 0, "elapsed_s": 0.0,
+                                 "model_calls": 0,
+                                 "model_tokens": {"in": 0, "out": 0}}}
+        if composed is not None and composed["disposition"] == "unsupported":
+            selected = {"route": "incumbent",
+                        "reason": "unsupported-scope",
+                        "delivered_digest": _digest(_canon(incumbent))}
+            fallback = None
+        else:
+            native = run_native(task, a_deal["method"])
+            fallback = {"procedure": a_deal["method"], "u": native["u"],
+                        "delivered_digest": native["delivered_digest"],
+                        "queries": native["queries"],
+                        "response_digest": a_lineage.get("response_digest"),
+                        "artifact_digest": (a_entry.get("identities") or {}).get("artifact_digest"),
+                        "directive_source": a_deal["source"]}
+            if c_bound or "out-of-scope" not in task_id:
+                selected = {"route": "A-fallback",
+                            "reason": "no-release-trial-only",
+                            "delivered_digest": native["delivered_digest"]}
+            else:
+                selected = {"route": "incumbent",
+                            "reason": "no-candidate-out-of-scope",
+                            "delivered_digest": _digest(_canon(incumbent))}
+    return {"task_id": task_id, "family": family, "stage": "subsequent-use",
+            "manifest_sha256": manifest_sha,
+            "checker_version": panel.CHECKER_VERSION,
+            "inputs_digest": inputs,
+            "release": "none: representation unreleased",
+            "c_attempt": attempt, "fallback": fallback,
+            "selected": selected,
+            "acquired": {"retention_digest": ctx["retention_digest"],
+                         "campaign_tag": retained["tag"],
+                         "disposition_digest":
+                         ctx.get("disposition_digest"),
+                         "selected": c_entry.get("selected")}}
+
+
 def load_task(task_id: str) -> tuple:
     for sub in ("software/development", "graphs/development", "software/check",
                 "graphs/check", "software/evaluation", "graphs/evaluation",
@@ -429,13 +910,18 @@ def _receipts_present(dsn: str, op_ids: list) -> bool:
 
 
 def run_benefit_pair(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
+    ctx.setdefault("run_tag", ctx["tag"])
     manifest, manifest_sha = ctx["manifest"], ctx["manifest_sha"]
     task, fixture_rel = load_task(task_id)
     family = family_of(task)
-    stage = "acquisition" if task_id in panel.ACQUIRE_SW + panel.ACQUIRE_GR \
-        else "mechanics"
-    if family == "graph" and stage == "acquisition":
-        stage = "transfer"
+    group = panel.trial_group(task_id)
+    if group == "protected-eval":
+        stage = "evaluation"
+    else:
+        stage = "acquisition" if task_id in panel.ACQUIRE_SW + panel.ACQUIRE_GR \
+            else "mechanics"
+        if family == "graph" and stage == "acquisition":
+            stage = "transfer"
     record_path = ctx["evidence_root"] / "arm_task" / ("%s-%s.json" % (arm, task_id))
     protocol_bases = [panel.PROTOCOL_B, panel.PROTOCOL_C] if arm == "A" \
         else [panel.PROTOCOL_B if arm == "B" else panel.PROTOCOL_C]
@@ -451,7 +937,18 @@ def run_benefit_pair(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
                                         record.get("invocations", [])]):
             return {"skipped": True, "outcome": existing[0][0], "record": record}
     outcome = existing[0][0]
-    if arm in ("A", "B"):
+    if ctx.get("retention") is not None:
+        if arm in ("A", "B"):
+            record, outcome_fresh = _retained_native_pair(
+                dsn, ctx, arm, task, task_id, family, stage, manifest,
+                manifest_sha)
+            invocation_ref = ""
+        else:
+            record, outcome_fresh, invocation_ref = \
+                _retained_composition_pair(
+                    dsn, ctx, task, task_id, family, stage, manifest,
+                    manifest_sha)
+    elif arm in ("A", "B"):
         method = method_for(manifest["selectors"], arm, task,
                             incumbent_of(task)[1])
         native = run_native(task, method)
@@ -489,7 +986,7 @@ def run_benefit_pair(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
         comp_base = "rpr-C-source-v1" if family == "software" else "rpr-C-transfer-v1"
         comp_id = _comp_id(comp_base, ctx["tag"])
         composed = run_composition(dsn, ctx["launcher"], ctx["artifacts_root"],
-                                   tag=ctx["tag"], task=task,
+                                   tag=ctx["run_tag"], task=task,
                                    composition_id=comp_id, manifest=manifest,
                                    allocation_id=ctx["allocation_id"],
                                    attempt_id=ctx["attempt_id"])
@@ -529,7 +1026,7 @@ def run_benefit_pair(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
                 {"composition": record["composition"].get(
                     "composition_id",
                     record["composition"].get("procedure")),
-                 "run_id": _run_id(ctx["tag"], arm, task_id)})
+                 "run_id": _run_id(ctx["run_tag"], arm, task_id)})
         if prior is None:
             trials.record_result(
                 dsn, _cmd(), assignment_id=assignment_id,
@@ -555,6 +1052,7 @@ def run_benefit_pair(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
 
 
 def run_control(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
+    ctx.setdefault("run_tag", ctx["tag"])
     manifest, manifest_sha = ctx["manifest"], ctx["manifest_sha"]
     task, _ = load_task(task_id)
     family = family_of(task)
@@ -566,7 +1064,16 @@ def run_control(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
                 _receipts_present(dsn, [i["op_id"] for i in
                                         record.get("invocations", [])]):
             return {"skipped": True, "record": record}
-    if arm in ("A", "B"):
+    if ctx.get("retention") is not None:
+        if arm in ("A", "B"):
+            record, _ = _retained_native_pair(
+                dsn, ctx, arm, task, task_id, family, "control", manifest,
+                manifest_sha)
+        else:
+            record, _, _ = _retained_composition_pair(
+                dsn, ctx, task, task_id, family, "control", manifest,
+                manifest_sha)
+    elif arm in ("A", "B"):
         method = method_for(manifest["selectors"], arm, task, initial)
         native = run_native(task, method)
         record = {"arm": arm, "task_id": task_id, "family": family,
@@ -589,7 +1096,7 @@ def run_control(dsn: str, ctx: dict, arm: str, task_id: str) -> dict:
     else:
         comp_base = "rpr-C-source-v1" if family == "software" else "rpr-C-transfer-v1"
         composed = run_composition(
-            dsn, ctx["launcher"], ctx["artifacts_root"], tag=ctx["tag"],
+            dsn, ctx["launcher"], ctx["artifacts_root"], tag=ctx["run_tag"],
             task=task, composition_id=_comp_id(comp_base, ctx["tag"]),
             manifest=manifest, allocation_id=ctx["allocation_id"],
             attempt_id=ctx["attempt_id"])
@@ -674,6 +1181,7 @@ def run_attribution(dsn: str, ctx: dict, task_id: str, family: str) -> dict:
 
 
 def run_use_task(dsn: str, ctx: dict, task_id: str) -> dict:
+    ctx.setdefault("run_tag", ctx["tag"])
     manifest, manifest_sha = ctx["manifest"], ctx["manifest_sha"]
     task, _ = load_task(task_id)
     family = family_of(task)
@@ -686,13 +1194,19 @@ def run_use_task(dsn: str, ctx: dict, task_id: str) -> dict:
                                         record.get("c_attempt", {})
                                         .get("invocations", [])]):
             return {"skipped": True, "record": record}
+    if ctx.get("retention") is not None:
+        record = _retained_use_record(dsn, ctx, task, task_id, family,
+                                      incumbent, initial, manifest,
+                                      manifest_sha)
+        evidence_record(record, ctx["evidence_root"], "use", task_id)
+        return {"skipped": False, "record": record}
     comp_base = "rpr-C-source-v1" if family == "software" else "rpr-C-transfer-v1"
     checked = R.check_composition(dsn, ctx["artifacts_root"],
                                   _comp_id(comp_base, ctx["tag"]))
     assert checked["ok"]
     composed = run_composition(
         dsn, ctx["launcher"], ctx["artifacts_root"],
-        tag="%s-use" % ctx["tag"], task=task,
+        tag="%s-use" % ctx["run_tag"], task=task,
         composition_id=_comp_id(comp_base, ctx["tag"]),
         manifest=manifest, allocation_id=ctx["allocation_id"],
         attempt_id=ctx["attempt_id"])
@@ -772,7 +1286,7 @@ def build_index(dsn: str, ctx: dict, stats: dict) -> dict:
         except SettlementError as exc:
             verdicts[base] = {"error": str(exc)}
     benefit = [r for r in arm_task if r.get("stage") in
-               ("mechanics", "acquisition", "transfer")]
+               ("mechanics", "acquisition", "transfer", "evaluation")]
     by_arm: dict = {}
     for record in benefit:
         by_arm.setdefault(record["arm"], []).append(record)
@@ -834,7 +1348,14 @@ def build_index(dsn: str, ctx: dict, stats: dict) -> dict:
 
 
 def run_panel(dsn: str, *, tag: str, artifacts_root: Path, staging_root: Path,
-              runs_root: Path, evidence_root: Path) -> dict:
+              runs_root: Path, evidence_root: Path,
+              mode: str = "authored-fixture", retention_path=None) -> dict:
+    if mode not in RETENTION_MODES:
+        raise SettlementError("unknown panel mode %r" % (mode,))
+    if mode == "authored-fixture" and retention_path is not None:
+        raise SettlementError("retention path without retained mode")
+    if mode == "retained" and not retention_path:
+        raise SettlementError("retained mode requires a retention path")
     for path in (artifacts_root, staging_root, runs_root, evidence_root):
         path.mkdir(parents=True, exist_ok=True)
     wall = time.time()
@@ -850,8 +1371,17 @@ def run_panel(dsn: str, *, tag: str, artifacts_root: Path, staging_root: Path,
     ensure_compositions(dsn, tag, staging_root, artifacts_root)
     ensure_protocols(dsn, tag, manifest)
     launcher = launcher_local.LocalLauncher(str(runs_root))
-    ctx = {**base, "tag": tag, "launcher": launcher,
-           "artifacts_root": artifacts_root, "evidence_root": evidence_root}
+    ctx = {**base, "tag": tag, "run_tag": tag, "launcher": launcher,
+           "artifacts_root": artifacts_root, "staging_root": staging_root,
+           "evidence_root": evidence_root, "retention": None}
+    if mode == "retained":
+        loaded = retention.load_retention(str(retention_path), dsn,
+                                          artifacts_root)
+        retention_digest = _digest(Path(retention_path).read_bytes())
+        ctx.update(retention=loaded, retention_digest=retention_digest,
+                   retention_path=str(retention_path),
+                   run_tag="%s-ret" % tag)
+        bind_retention(dsn, ctx)
     stats: dict = {"ran": 0, "skipped": 0}
     for task_id in panel.BENEFIT_SW + panel.BENEFIT_GR:
         for arm in panel.ARMS:
@@ -864,9 +1394,10 @@ def run_panel(dsn: str, *, tag: str, artifacts_root: Path, staging_root: Path,
     for task_id, family in panel.ATTRIBUTION:
         result = run_attribution(dsn, ctx, task_id, family)
         stats["ran" if not result["skipped"] else "skipped"] += 1
-    for task_id in panel.USE:
-        result = run_use_task(dsn, ctx, task_id)
-        stats["ran" if not result["skipped"] else "skipped"] += 1
+    if ctx["retention"] is None:
+        for task_id in panel.USE:
+            result = run_use_task(dsn, ctx, task_id)
+            stats["ran" if not result["skipped"] else "skipped"] += 1
     index = build_index(dsn, ctx, stats)
     index["wall_s"] = round(time.time() - wall, 3)
     evidence_record(index, evidence_root, ".", "index")
@@ -883,6 +1414,8 @@ def main(argv):
     parser.add_argument("--runs-root", default="var/rpr-acq-runs")
     parser.add_argument("--evidence-root",
                         default=str(REP / "evidence"))
+    parser.add_argument("--mode", default="authored-fixture")
+    parser.add_argument("--retention-path", default="")
     args = parser.parse_args(argv)
     import os
     dsn = args.dsn or os.environ.get("SETTLEMENT_TEST_DSN", "")
@@ -893,7 +1426,9 @@ def main(argv):
                       artifacts_root=Path(args.artifacts_root),
                       staging_root=Path(args.staging_root),
                       runs_root=Path(args.runs_root),
-                      evidence_root=Path(args.evidence_root))
+                      evidence_root=Path(args.evidence_root),
+                      mode=args.mode,
+                      retention_path=args.retention_path or None)
     print(json.dumps({"tag": index["tag"], "pairs": index["pairs"],
                       "means": index["means"],
                       "trial_verdicts": index["trial_verdicts"],

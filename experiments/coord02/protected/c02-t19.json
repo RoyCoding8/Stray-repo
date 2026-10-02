@@ -1,0 +1,47 @@
+[
+  {
+    "input": {
+      "a": "1",
+      "b": "2"
+    },
+    "expected": {
+      "text": "1-2"
+    }
+  },
+  {
+    "input": {
+      "a": "-",
+      "b": "-"
+    },
+    "expected": {
+      "text": "---"
+    }
+  },
+  {
+    "input": {
+      "a": "",
+      "b": ""
+    },
+    "expected": {
+      "text": "-"
+    }
+  },
+  {
+    "input": {
+      "a": "X",
+      "b": "Y"
+    },
+    "expected": {
+      "text": "X-Y"
+    }
+  },
+  {
+    "input": {
+      "a": "p",
+      "b": "p"
+    },
+    "expected": {
+      "text": "p-p"
+    }
+  }
+]

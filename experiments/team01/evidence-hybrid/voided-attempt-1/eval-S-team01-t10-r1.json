@@ -1,0 +1,267 @@
+{
+  "episode_id": "eval-S-team01-t10-r1",
+  "panel": "eval",
+  "arm": "S",
+  "task_id": "team01-t10",
+  "repeat": 1,
+  "family": "fam-seq",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-0ce0d4adf9d842069e16ae29eaf015eb",
+  "revision": 1,
+  "shape": "alternatives",
+  "snapshot_digest": "96f02988d89a8f055428cfa7154c9e74c92fef039c9bbee9942de9848c1a5525",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "failure",
+  "public": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "failures": [
+      {
+        "input": {
+          "code": 144,
+          "vals": [
+            -5,
+            127,
+            132,
+            96
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 132
+        },
+        "got": {
+          "mode": "a",
+          "result": 132
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 17,
+          "vals": [
+            38,
+            20,
+            153
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": 20
+        },
+        "got": {
+          "mode": "a",
+          "result": 153
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 227,
+          "vals": [
+            153,
+            55,
+            117,
+            16,
+            71
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 153
+        },
+        "got": {
+          "mode": "a",
+          "result": 153
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 204,
+          "vals": []
+        },
+        "expected": {
+          "mode": "b",
+          "result": 0
+        },
+        "got": {
+          "mode": "a",
+          "result": 0
+        },
+        "error": ""
+      }
+    ]
+  },
+  "protected": {
+    "passed": 0,
+    "failed": 6,
+    "total": 6,
+    "failures": [
+      {
+        "input": {
+          "code": 116,
+          "vals": [
+            105,
+            112,
+            -20
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 112
+        },
+        "got": {
+          "mode": "a",
+          "result": 112
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 155,
+          "vals": [
+            42
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 42
+        },
+        "got": {
+          "mode": "a",
+          "result": 42
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 31,
+          "vals": [
+            42,
+            88,
+            -6
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": -6
+        },
+        "got": {
+          "mode": "a",
+          "result": 88
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 81,
+          "vals": [
+            -15,
+            120,
+            157,
+            147,
+            16
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": -15
+        },
+        "got": {
+          "mode": "a",
+          "result": 157
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 72,
+          "vals": [
+            143,
+            200,
+            -19
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": -19
+        },
+        "got": {
+          "mode": "a",
+          "result": 200
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "code": 183,
+          "vals": [
+            107
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 107
+        },
+        "got": {
+          "mode": "a",
+          "result": 107
+        },
+        "error": ""
+      }
+    ]
+  },
+  "join": {
+    "passed": false,
+    "join_receipt": "local:plan_team01-0ce0d4adf9d842069e16ae29eaf015eb_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-0ce0d4adf9d842069e16ae29eaf015eb:r1:check",
+    "candidate_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "frozen_digest": null,
+  "receipts": {
+    "w1": [
+      "local:plan_team01-0ce0d4adf9d842069e16ae29eaf015eb_r1_w1_work_team-work_1.result"
+    ],
+    "w2": [
+      "local:plan_team01-0ce0d4adf9d842069e16ae29eaf015eb_r1_w2_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 151,
+      "out": 455
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 3.48
+  },
+  "live": {
+    "planner_operations": [
+      "tlive01-eval-plan-S-team01-t10-r1-8"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive01-eval-plan-S-team01-t10-r1-8",
+        "arm": "S",
+        "task_id": "team01-t10",
+        "repeat": 1,
+        "probe": null,
+        "exposure": 647,
+        "usage": {
+          "in": 151,
+          "out": 455
+        },
+        "outcome": "model-shape",
+        "stop_reason": "stop",
+        "shape": "alternatives",
+        "text_chars": 138
+      }
+    ]
+  }
+}

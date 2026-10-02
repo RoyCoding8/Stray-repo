@@ -1,0 +1,7 @@
+Attempt-1 eval (48) + transfer (24) VOID for arm-semantics bug.
+LivePlanner let the model choose shapes for S and P arms
+(S ran decompose/alternatives, P ran single/decompose),
+violating the frozen panel protocol (S=single, P=alternatives).
+Dev (12), template freeze (build-1), and continuity probe are unaffected
+(all T-arm or mechanism probes) and stand.
+Re-run as attempt-2 under envelope-2 with forced S/P shapes.

@@ -1,0 +1,94 @@
+[
+  {
+    "input": {
+      "parcels": [
+        {
+          "v": 107,
+          "u": "q"
+        }
+      ],
+      "want": "p"
+    },
+    "expected": {
+      "values": [
+        2.68
+      ],
+      "flags": [
+        "high"
+      ]
+    }
+  },
+  {
+    "input": {
+      "parcels": [
+        {
+          "v": 80,
+          "u": "q"
+        }
+      ],
+      "want": "p"
+    },
+    "expected": {
+      "values": [
+        2.0
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "parcels": [
+        {
+          "v": 0,
+          "u": "p"
+        }
+      ],
+      "want": "p"
+    },
+    "expected": {
+      "values": [
+        0.0
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "parcels": [],
+      "want": "p"
+    },
+    "expected": {
+      "values": [],
+      "flags": []
+    }
+  },
+  {
+    "input": {
+      "parcels": [
+        {
+          "v": 2,
+          "u": "p"
+        },
+        {
+          "v": 1,
+          "u": "q"
+        }
+      ],
+      "want": "p"
+    },
+    "expected": {
+      "values": [
+        2.0,
+        0.03
+      ],
+      "flags": [
+        "ok",
+        "ok"
+      ]
+    }
+  }
+]

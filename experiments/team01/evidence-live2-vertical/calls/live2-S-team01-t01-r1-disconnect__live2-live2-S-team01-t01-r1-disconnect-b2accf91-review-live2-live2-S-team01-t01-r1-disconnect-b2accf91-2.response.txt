@@ -1,0 +1,1 @@
+{"verdict": "keep", "notes": "Checked strip_lower preserves order, strip then lower, empty list->[]; sum aggregates ints/floats, empty->0, int vs float preserved, no rounding needed; app.py maps spec text_op/num_op to correct helpers and uses lowercase texts/numbers keys matching visible I/O; both halves executed together."}

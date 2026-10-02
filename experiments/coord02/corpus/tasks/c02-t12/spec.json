@@ -1,0 +1,10 @@
+{
+  "ops": {
+    "a": "sum",
+    "b": "prod"
+  },
+  "rule": {
+    "at": 5,
+    "kind": "threshold"
+  }
+}

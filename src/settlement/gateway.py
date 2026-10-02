@@ -33,6 +33,7 @@ class ModelRequest:
     deadline_ms: int
     operation_id: str = field(default_factory=lambda: new_id("op"))
     dispatch_generation: int = 0
+    reasoning_effort: str | None = None
 
 
 @dataclass(frozen=True)

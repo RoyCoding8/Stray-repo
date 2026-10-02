@@ -1,0 +1,18 @@
+{
+  "kind": "ctor",
+  "node": "w2",
+  "op_id": "live2-live2-T-team01-t01-r1-f66b8320-ctor-w2-live2-live2-T-team01-t01-r1-f66b8320-3",
+  "usage": {
+    "in": 668,
+    "out": 626
+  },
+  "stop": "stop",
+  "outcome": "model-text",
+  "error": "",
+  "parse_error": "",
+  "notes": "Fixed rotated implementations so strip_lower strips and lowercases, and corrected other ops to their proper behaviors.",
+  "files_digest": "a5e0655da08201ea522e90d82b6577b1ca12ca5a7d9f70304647b15c777c8fd5",
+  "receipts": [
+    "gw:live2-live2-T-team01-t01-r1-f66b8320-ctor-w2-live2-live2-T-team01-t01-r1-f66b8320-3"
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "arm": "B",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "native": true,
+    "procedure": "greedy",
+    "selector": {
+      "buckets": {
+        "large": {
+          "mean_u": 0.775,
+          "method": "greedy",
+          "queries": 32,
+          "runner_up": {
+            "mean_u": 0.733334,
+            "method": "ddmin",
+            "queries": 26
+          }
+        },
+        "small": {
+          "mean_u": 0.681494,
+          "method": "ddmin",
+          "queries": 48,
+          "runner_up": {
+            "mean_u": 0.681494,
+            "method": "greedy",
+            "queries": 55
+          }
+        }
+      },
+      "threshold": 11.0
+    }
+  },
+  "costs": {
+    "elapsed_s": 0.001,
+    "invocations_used": 0,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 16,
+    "validation_used": 0
+  },
+  "family": "software",
+  "initial": {
+    "measure": 16
+  },
+  "inputs_digest": {
+    "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+    "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+    "fixture": "08744959079cf211225f82606e3bc239bd25559b068f630baa519a15880851e8"
+  },
+  "invocations": [],
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "native_detail": {
+    "accepted": 13,
+    "final_verdict": {
+      "initial_measure": 16,
+      "measure": 3,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    }
+  },
+  "operator": null,
+  "oracle_queries": [
+    {
+      "measure": 16,
+      "reason": "ok-incumbent",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 15,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 14,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 13,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 12,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 11,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 10,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 9,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 8,
+      "reason": "witness-lost-agree",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 8,
+      "reason": "witness-lost-agree",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 8,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 7,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 6,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 5,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 4,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 3,
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    }
+  ],
+  "result": {
+    "best_measure": 3,
+    "delivered_digest": "0c55264f163287f4168b4e2a7e9e7076e1441919f7328673a697f4007106ad20",
+    "disposition": "improved",
+    "improvement_u": 0.8125,
+    "reason": "budget-exhausted",
+    "verified": true
+  },
+  "stage": "mechanics",
+  "task_id": "sw-eva-05",
+  "trial": [
+    {
+      "assignment_id": "rpr-acq-B:candidate:sw-eva-05",
+      "invocation_ref": "",
+      "outcome": "success",
+      "protocol_id": "rpr-acq-B"
+    }
+  ],
+  "trial_group": "protected-eval"
+}

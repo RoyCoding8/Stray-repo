@@ -19,6 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from experiments.representation.acquire import panel
 from experiments.representation.experiment import checker
 from settlement import db as _db
 
@@ -112,7 +113,10 @@ def test_sigkill_then_resume(migrated_db, tmp_path):
               if row[2].timestamp() < resume_start]
     assert len(reused) >= len(sentinel_receipts)
     index = json.loads((tmp_path / "evidence" / "index.json").read_bytes())
-    assert index["pairs"]["ran"] + index["pairs"]["skipped"] == 45
-    assert index["arm_task_records"] == 27
+    benefit = len(panel.BENEFIT_SW) + len(panel.BENEFIT_GR)
+    expected_pairs = ((benefit + len(panel.CONTROLS)) * len(panel.ARMS)
+                      + len(panel.ATTRIBUTION) + len(panel.USE))
+    assert index["pairs"]["ran"] + index["pairs"]["skipped"] == expected_pairs
+    assert index["arm_task_records"] == benefit * len(panel.ARMS)
     report = checker.check_all(tmp_path / "evidence", dsn=dsn)
     assert report["clean"], report["problems"]

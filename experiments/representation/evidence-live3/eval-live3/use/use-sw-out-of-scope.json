@@ -1,0 +1,54 @@
+{
+  "acquired": {
+    "campaign_tag": "live3",
+    "disposition_digest": "3f05677a7929c3cb253a92b9f5ad56ee7263cf98930cfc38cde052821c013837",
+    "retention_digest": "5038393bc99e7a42e23e13e968ab79a4a08eb38576ee74d13fff99ab7c8d32ce",
+    "selected": null
+  },
+  "c_attempt": {
+    "composition_id": null,
+    "costs": {
+      "elapsed_s": 0.0,
+      "invocations_used": 0,
+      "model_calls": 0,
+      "model_tokens": {
+        "in": 0,
+        "out": 0
+      },
+      "queries_used": 0,
+      "validation_used": 0
+    },
+    "disposition": "refused",
+    "invocations": [],
+    "queries": [],
+    "reason": "no-candidate: not-json,timeout",
+    "trial_only": true,
+    "u": 0.0,
+    "verified": false
+  },
+  "checker_version": "rpr-checker/1",
+  "fallback": {
+    "artifact_digest": "0c0ba90f2c54684f5684e45b585a0468a0a3761f4a1450824a1bc6fc1ef434c6",
+    "delivered_digest": "5af9942c7b7df024036f3f9db6c29d593690b193ed3a27ccb8277593651e581c",
+    "directive_source": "fallback-frozen-selector",
+    "procedure": "greedy",
+    "queries": 1,
+    "response_digest": "9897261f5cac393197e1af524dfd26edfae59e57aedf763b156ebc249b719e28",
+    "u": 0.0
+  },
+  "family": "software",
+  "inputs_digest": {
+    "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+    "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+    "fixture": "bdc0b552bf6586c0baa6d6bdfe192dc3043884f849a7dd6dffc9cc5acf0e330c"
+  },
+  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "release": "none: representation unreleased",
+  "selected": {
+    "delivered_digest": "5af9942c7b7df024036f3f9db6c29d593690b193ed3a27ccb8277593651e581c",
+    "reason": "no-candidate-out-of-scope",
+    "route": "incumbent"
+  },
+  "stage": "subsequent-use",
+  "task_id": "use-sw-out-of-scope"
+}

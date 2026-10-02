@@ -1,0 +1,18 @@
+{
+  "kind": "ctor",
+  "node": "w1",
+  "op_id": "live2-live2-S-team01-t01-r1-90e2e8c4-ctor-w1-live2-live2-S-team01-t01-r1-90e2e8c4-0",
+  "usage": {
+    "in": 922,
+    "out": 1104
+  },
+  "stop": "stop",
+  "outcome": "model-text",
+  "error": "",
+  "parse_error": "",
+  "notes": "Fixed scrambled op mappings: strip_lower now strip+lower, sum now sums; also corrected the other rotated ops.",
+  "files_digest": "940f57aa4827954646788b81e040faa5684944e029102bf16eef0262a4ba1862",
+  "receipts": [
+    "gw:live2-live2-S-team01-t01-r1-90e2e8c4-ctor-w1-live2-live2-S-team01-t01-r1-90e2e8c4-0"
+  ]
+}

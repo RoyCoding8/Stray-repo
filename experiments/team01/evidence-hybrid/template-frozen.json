@@ -1,0 +1,52 @@
+{
+  "applicability": {
+    "families": [
+      "fam-cpl",
+      "fam-ind",
+      "fam-seq",
+      "fam-sng"
+    ],
+    "refuses": "missing bindings or changed assumptions",
+    "required_bindings": [
+      "interface-contract",
+      "owned-partition"
+    ]
+  },
+  "boundary_probe": false,
+  "builds_attempted": [
+    "build-1-bind-first"
+  ],
+  "ceiling": {
+    "input_tokens": 4000,
+    "model_invocations": 2,
+    "output_tokens": 1000
+  },
+  "checks": [
+    "public-boundary-probe"
+  ],
+  "digest": "4f5e7e79651624a539bfeaf9dbc6e5d0a330e7e1c27b092c56158876ae7b20ec",
+  "directive": "bind the producer/consumer interface contract before independent edits, then exercise a boundary case through both modules",
+  "frozen_out": [
+    {
+      "id": "build-2-bind-first-with-probe",
+      "reason": "more development public failures (12 vs 12)"
+    }
+  ],
+  "known_failures": [
+    "dev-T-team01-t09-r1-incompatible"
+  ],
+  "required_inputs": [
+    "interface-contract",
+    "owned-partition"
+  ],
+  "shape": "decompose",
+  "source": "dev-evidence-only",
+  "supporting_episodes": [
+    "team01-t01",
+    "team01-t05",
+    "team01-t09",
+    "team01-t13"
+  ],
+  "template": "build-1-bind-first",
+  "version": "coordination-template/1"
+}

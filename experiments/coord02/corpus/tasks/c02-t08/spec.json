@@ -1,0 +1,13 @@
+{
+  "boundary": "inclusive",
+  "bounds": [
+    1,
+    20
+  ],
+  "rounding": "half-up",
+  "units": {
+    "cm": 10,
+    "m": 1000,
+    "mm": 1
+  }
+}

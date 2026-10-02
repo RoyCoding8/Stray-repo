@@ -1,0 +1,78 @@
+{
+  "episode_id": "eval-P-team01-t10-r2",
+  "panel": "eval",
+  "arm": "P",
+  "task_id": "team01-t10",
+  "repeat": 2,
+  "family": "fam-seq",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-d9bd2cdab457494cad448a7b8d5caf50",
+  "revision": 1,
+  "shape": "alternatives",
+  "snapshot_digest": "96f02988d89a8f055428cfa7154c9e74c92fef039c9bbee9942de9848c1a5525",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "success",
+  "public": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "failures": []
+  },
+  "protected": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "failures": []
+  },
+  "join": {
+    "passed": true,
+    "join_receipt": "local:plan_team01-d9bd2cdab457494cad448a7b8d5caf50_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-d9bd2cdab457494cad448a7b8d5caf50:r1:check",
+    "candidate_digest": "0471a4190c5690bd97d6fd96ef9d5ee16d16f7b6f74ffac9c9771e6cc92230a6"
+  },
+  "frozen_digest": "0471a4190c5690bd97d6fd96ef9d5ee16d16f7b6f74ffac9c9771e6cc92230a6",
+  "receipts": {
+    "w1": [
+      "local:plan_team01-d9bd2cdab457494cad448a7b8d5caf50_r1_w1_work_team-work_1.result"
+    ],
+    "w2": [
+      "local:plan_team01-d9bd2cdab457494cad448a7b8d5caf50_r1_w2_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 151,
+      "out": 494
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 4.681
+  },
+  "live": {
+    "planner_operations": [
+      "tlive01-eval-plan-P-team01-t10-r2-25"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive01-eval-plan-P-team01-t10-r2-25",
+        "arm": "P",
+        "task_id": "team01-t10",
+        "repeat": 2,
+        "probe": null,
+        "exposure": 647,
+        "usage": {
+          "in": 151,
+          "out": 494
+        },
+        "outcome": "model-shape",
+        "stop_reason": "stop",
+        "shape": "alternatives",
+        "text_chars": 148
+      }
+    ]
+  }
+}

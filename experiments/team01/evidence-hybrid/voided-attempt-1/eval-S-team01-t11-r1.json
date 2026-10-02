@@ -1,0 +1,269 @@
+{
+  "episode_id": "eval-S-team01-t11-r1",
+  "panel": "eval",
+  "arm": "S",
+  "task_id": "team01-t11",
+  "repeat": 1,
+  "family": "fam-seq",
+  "probe": null,
+  "panel_version": "team01-panel/1",
+  "plan_id": "plan_team01-bf0cbe5018a740b880775b73dfad9af8",
+  "revision": 1,
+  "shape": "alternatives",
+  "snapshot_digest": "9ce58b68f181771d5cc2413b9e85cfc113c0f8658b3a2ba6f7eef626dcfa681b",
+  "manifest_sha256": "55df40d437a8f7d43d975cf7385e51628a67c310ca6e8e87893e04dab15344dd",
+  "template_digest": null,
+  "template_changed_decision": false,
+  "outcome": "failure",
+  "public": {
+    "passed": 0,
+    "failed": 4,
+    "total": 4,
+    "failures": [
+      {
+        "input": {
+          "kind": "errx",
+          "vals": []
+        },
+        "expected": {
+          "mode": "b",
+          "result": 0
+        },
+        "got": {
+          "mode": "a",
+          "result": 0
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "err",
+          "vals": [
+            124,
+            190,
+            5,
+            -14
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": -14
+        },
+        "got": {
+          "mode": "a",
+          "result": -14
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "error",
+          "vals": [
+            31,
+            84
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 31
+        },
+        "got": {
+          "mode": "a",
+          "result": 31
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "ok",
+          "vals": [
+            152,
+            150
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": 152
+        },
+        "got": {
+          "mode": "a",
+          "result": 150
+        },
+        "error": ""
+      }
+    ]
+  },
+  "protected": {
+    "passed": 0,
+    "failed": 6,
+    "total": 6,
+    "failures": [
+      {
+        "input": {
+          "kind": "errx",
+          "vals": [
+            -5,
+            60,
+            55
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": -5
+        },
+        "got": {
+          "mode": "a",
+          "result": -5
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "err",
+          "vals": [
+            191,
+            11,
+            76,
+            7,
+            186
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 7
+        },
+        "got": {
+          "mode": "a",
+          "result": 7
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "error",
+          "vals": [
+            131,
+            74,
+            69,
+            -15,
+            101
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": -15
+        },
+        "got": {
+          "mode": "a",
+          "result": -15
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "info",
+          "vals": [
+            135,
+            162,
+            75,
+            196,
+            76
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": 196
+        },
+        "got": {
+          "mode": "a",
+          "result": 75
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "err",
+          "vals": [
+            9,
+            109
+          ]
+        },
+        "expected": {
+          "mode": "b",
+          "result": 9
+        },
+        "got": {
+          "mode": "a",
+          "result": 9
+        },
+        "error": ""
+      },
+      {
+        "input": {
+          "kind": "ok",
+          "vals": [
+            138,
+            4
+          ]
+        },
+        "expected": {
+          "mode": "a",
+          "result": 138
+        },
+        "got": {
+          "mode": "a",
+          "result": 4
+        },
+        "error": ""
+      }
+    ]
+  },
+  "join": {
+    "passed": false,
+    "join_receipt": "local:plan_team01-bf0cbe5018a740b880775b73dfad9af8_r1_check_team-work_1.result",
+    "check_operation": "plan_team01-bf0cbe5018a740b880775b73dfad9af8:r1:check",
+    "candidate_digest": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+  },
+  "frozen_digest": null,
+  "receipts": {
+    "w1": [
+      "local:plan_team01-bf0cbe5018a740b880775b73dfad9af8_r1_w1_work_team-work_1.result"
+    ],
+    "w2": [
+      "local:plan_team01-bf0cbe5018a740b880775b73dfad9af8_r1_w2_work_team-work_1.result"
+    ]
+  },
+  "simulated": true,
+  "costs": {
+    "model_tokens": {
+      "in": 151,
+      "out": 402
+    },
+    "tool_executions": 0,
+    "model_invocations": 1,
+    "wall_s": 4.165
+  },
+  "live": {
+    "planner_operations": [
+      "tlive01-eval-plan-S-team01-t11-r1-10"
+    ],
+    "calls": [
+      {
+        "operation_id": "tlive01-eval-plan-S-team01-t11-r1-10",
+        "arm": "S",
+        "task_id": "team01-t11",
+        "repeat": 1,
+        "probe": null,
+        "exposure": 647,
+        "usage": {
+          "in": 151,
+          "out": 402
+        },
+        "outcome": "model-shape",
+        "stop_reason": "stop",
+        "shape": "alternatives",
+        "text_chars": 169
+      }
+    ]
+  }
+}

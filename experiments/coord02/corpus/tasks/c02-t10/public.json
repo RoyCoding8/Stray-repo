@@ -1,0 +1,84 @@
+[
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 300,
+          "u": "B"
+        }
+      ],
+      "want": "A"
+    },
+    "expected": {
+      "values": [
+        1.5
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 250,
+          "u": "B"
+        },
+        {
+          "v": 1,
+          "u": "A"
+        }
+      ],
+      "want": "A"
+    },
+    "expected": {
+      "values": [
+        1.25,
+        1.0
+      ],
+      "flags": [
+        "ok",
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 0,
+          "u": "B"
+        }
+      ],
+      "want": "A"
+    },
+    "expected": {
+      "values": [
+        0.0
+      ],
+      "flags": [
+        "ok"
+      ]
+    }
+  },
+  {
+    "input": {
+      "readings": [
+        {
+          "v": 3400,
+          "u": "B"
+        }
+      ],
+      "want": "A"
+    },
+    "expected": {
+      "values": [
+        17.0
+      ],
+      "flags": [
+        "high"
+      ]
+    }
+  }
+]

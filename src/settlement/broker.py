@@ -65,7 +65,8 @@ def validate_effect(effect: str, payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _validate_model(p: dict[str, Any]) -> dict[str, Any]:
-    _no_extra(p, {"model", "messages", "max_output_tokens", "deadline_ms"}, "model-inference")
+    _no_extra(p, {"model", "messages", "max_output_tokens", "deadline_ms",
+                  "reasoning_effort"}, "model-inference")
     _nonempty_str(p.get("model"), "model-inference needs a model reference")
     messages = p.get("messages")
     _require(isinstance(messages, list) and messages, "model-inference needs non-empty messages")
@@ -76,8 +77,13 @@ def _validate_model(p: dict[str, Any]) -> dict[str, Any]:
     _require(isinstance(limit, int) and limit > 0, "max_output_tokens must be a positive integer")
     deadline = p.get("deadline_ms", 300_000)
     _require(isinstance(deadline, int) and deadline > 0, "deadline_ms must be a positive integer")
+    effort = p.get("reasoning_effort")
+    if effort is not None:
+        _require(effort in ("low", "medium", "high"),
+                 "reasoning_effort must be low|medium|high")
     return {"model": p["model"], "messages": list(messages),
-            "max_output_tokens": limit, "deadline_ms": deadline}
+            "max_output_tokens": limit, "deadline_ms": deadline,
+            "reasoning_effort": effort}
 
 
 def _validate_sandbox(p: dict[str, Any]) -> dict[str, Any]:
@@ -444,7 +450,8 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                            max_output_tokens=op.payload["max_output_tokens"],
                            deadline_ms=op.payload["deadline_ms"],
                            operation_id=op.operation_id,
-                           dispatch_generation=generation)
+                           dispatch_generation=generation,
+                           reasoning_effort=op.payload.get("reasoning_effort"))
     try:
         response = gateway.infer(request)
     except Exception:

@@ -1,0 +1,53 @@
+[
+ {
+  "input": {
+   "kind": "errx",
+   "vals": []
+  },
+  "expected": {
+   "mode": "b",
+   "result": 0
+  }
+ },
+ {
+  "input": {
+   "kind": "err",
+   "vals": [
+    124,
+    190,
+    5,
+    -14
+   ]
+  },
+  "expected": {
+   "mode": "b",
+   "result": -14
+  }
+ },
+ {
+  "input": {
+   "kind": "error",
+   "vals": [
+    31,
+    84
+   ]
+  },
+  "expected": {
+   "mode": "b",
+   "result": 31
+  }
+ },
+ {
+  "input": {
+   "kind": "ok",
+   "vals": [
+    152,
+    150
+   ]
+  },
+  "expected": {
+   "mode": "a",
+   "result": 152
+  }
+ }
+]

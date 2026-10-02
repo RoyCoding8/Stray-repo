@@ -1,0 +1,91 @@
+[
+ {
+  "input": {
+   "texts": [
+    "  KILO  ",
+    "alpha",
+    "juliet",
+    "   foxtrot   "
+   ],
+   "numbers": [
+    4,
+    27,
+    25.3
+   ]
+  },
+  "expected": {
+   "texts": [
+    "   foxtrot   ",
+    "  KILO  ",
+    "alpha",
+    "juliet"
+   ],
+   "numbers": 23
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    " ECHO   ",
+    "   kilo  ",
+    "   GOLF   "
+   ],
+   "numbers": [
+    21,
+    -4
+   ]
+  },
+  "expected": {
+   "texts": [
+    "   GOLF   ",
+    "   kilo  ",
+    " ECHO   "
+   ],
+   "numbers": 25
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    " Charlie ",
+    " Charlie "
+   ],
+   "numbers": [
+    23,
+    2,
+    4,
+    -2
+   ]
+  },
+  "expected": {
+   "texts": [
+    " Charlie "
+   ],
+   "numbers": 25
+  }
+ },
+ {
+  "input": {
+   "texts": [
+    "India",
+    "   India  ",
+    "HOTEL",
+    "Golf"
+   ],
+   "numbers": [
+    -1,
+    -2,
+    0
+   ]
+  },
+  "expected": {
+   "texts": [
+    "   India  ",
+    "Golf",
+    "HOTEL",
+    "India"
+   ],
+   "numbers": 2
+  }
+ }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "input": {
+      "m": {
+        "k": ""
+      },
+      "key": "k"
+    },
+    "expected": {
+      "value": ""
+    }
+  },
+  {
+    "input": {
+      "m": {
+        "k": 0
+      },
+      "key": "missing"
+    },
+    "expected": {
+      "value": "n/a"
+    }
+  },
+  {
+    "input": {
+      "m": {
+        "z": null
+      },
+      "key": "z"
+    },
+    "expected": {
+      "value": null
+    }
+  },
+  {
+    "input": {
+      "m": {
+        "a": []
+      },
+      "key": "a"
+    },
+    "expected": {
+      "value": []
+    }
+  },
+  {
+    "input": {
+      "m": {
+        "n": 5
+      },
+      "key": "n"
+    },
+    "expected": {
+      "value": 5
+    }
+  }
+]

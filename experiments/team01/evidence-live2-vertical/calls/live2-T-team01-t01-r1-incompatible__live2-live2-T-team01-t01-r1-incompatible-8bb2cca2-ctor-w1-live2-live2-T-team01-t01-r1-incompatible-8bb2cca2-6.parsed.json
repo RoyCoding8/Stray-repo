@@ -1,0 +1,18 @@
+{
+  "kind": "ctor",
+  "node": "w1",
+  "op_id": "live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-ctor-w1-live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-6",
+  "usage": {
+    "in": 709,
+    "out": 1179
+  },
+  "stop": "stop",
+  "outcome": "model-text",
+  "error": "",
+  "parse_error": "",
+  "notes": "Kept sum aggregation correct while making op matching tolerant to case/whitespace so integration join succeeds.",
+  "files_digest": "87ba4fc4b2af75bb203a1f975a0619e0e051efdf5279053d0fd9d1e76898b347",
+  "receipts": [
+    "gw:live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-ctor-w1-live2-live2-T-team01-t01-r1-incompatible-8bb2cca2-6"
+  ]
+}

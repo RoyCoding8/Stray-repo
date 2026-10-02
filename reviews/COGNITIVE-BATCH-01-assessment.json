@@ -1,0 +1,118 @@
+{
+  "agenda": {
+    "ok": true,
+    "pairs": 64,
+    "source_check": "verified",
+    "totals": {
+      "correct_q": 288,
+      "correct_r": 288,
+      "explore_q": 2276,
+      "explore_r": 2292
+    },
+    "traces": 128,
+    "violations": {}
+  },
+  "configured_live_preflight": {
+    "blocked": true,
+    "reason": "awaiting-authorization",
+    "spent": {
+      "grant_units": 0,
+      "input_tokens": 0,
+      "model_calls": 0,
+      "output_tokens": 0
+    }
+  },
+  "representation": {
+    "clean": true,
+    "controls": {
+      "A-ctrl-gr-bipartite": true,
+      "A-ctrl-gr-triangle": true,
+      "A-ctrl-sw-invalid": true,
+      "A-ctrl-sw-wrong-obs": true,
+      "B-ctrl-gr-bipartite": true,
+      "B-ctrl-gr-triangle": true,
+      "B-ctrl-sw-invalid": true,
+      "B-ctrl-sw-wrong-obs": true,
+      "C-ctrl-gr-bipartite": true,
+      "C-ctrl-gr-triangle": true,
+      "C-ctrl-sw-invalid": true,
+      "C-ctrl-sw-wrong-obs": true
+    },
+    "pilot_rule": {
+      "clauses": {
+        "software-within-0.05-vs-A": false,
+        "software-within-0.05-vs-B": false,
+        "transfer-gain-0.10-vs-A": false,
+        "transfer-gain-0.10-vs-B": false
+      },
+      "means": {
+        "A-software-mean": 0.70974,
+        "A-transfer-mean": 0.222588,
+        "B-software-mean": 0.70974,
+        "B-transfer-mean": 0.222588,
+        "C-software-mean": 0.310173,
+        "C-transfer-mean": 0.117873
+      },
+      "promising": false
+    },
+    "problems": [],
+    "records": 27,
+    "use": {
+      "use-gr-out-of-scope": "incumbent",
+      "use-gr-supported": "A-fallback",
+      "use-sw-out-of-scope": "incumbent",
+      "use-sw-supported": "A-fallback"
+    }
+  },
+  "representation_panel": {
+    "benefit_tasks": [
+      "sw-dev-00",
+      "sw-dev-01",
+      "sw-dev-02",
+      "sw-dev-03",
+      "sw-che-00",
+      "gr-dev-00",
+      "gr-dev-01",
+      "gr-dev-02",
+      "gr-che-00"
+    ],
+    "groups": [
+      "check",
+      "development"
+    ],
+    "observed_heldout_benefit_tasks": 0,
+    "required_heldout_benefit_tasks": 16
+  },
+  "representation_regeneration": [
+    "regeneration-failed committed source_context.json drifted from its generator"
+  ],
+  "resource_counterexample": {
+    "C_elapsed_ratio": 1000000,
+    "decision": {
+      "clauses": {
+        "software-within-0.05-vs-A": true,
+        "software-within-0.05-vs-B": true,
+        "transfer-gain-0.10-vs-A": true,
+        "transfer-gain-0.10-vs-B": true
+      },
+      "means": {
+        "A-software-mean": 0.7,
+        "A-transfer-mean": 0.2,
+        "B-software-mean": 0.7,
+        "B-transfer-mean": 0.2,
+        "C-software-mean": 0.7,
+        "C-transfer-mean": 0.4
+      },
+      "promising": true
+    },
+    "required_max_ratio": 1.25,
+    "synthetic_only": true
+  },
+  "reviewed_revision": "324174f4e98890c95c25bca039feec267a061e8a",
+  "scope": "stored evidence, source checks and synthetic decision probe; no DB or inference",
+  "sources": {
+    "experiments/representation/acquire/live_campaign.py": "3d6afebbf125d04d09fa730715b2ab9a1312d40f014912469b49139bb9467183",
+    "experiments/representation/acquire/panel.py": "3e1aafc7721ad801a83bd3b71d300708bc4f51e398ca6fa9bd97bbbb8dbfa6ba",
+    "experiments/representation/experiment/checker.py": "322f1b7667be9f24bbf1a27018b6b447f56e3443dae5f30373c027b2217c593c"
+  }
+}

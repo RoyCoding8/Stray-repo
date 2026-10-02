@@ -1,0 +1,52 @@
+[
+  {
+    "input": {
+      "nums": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "k": 2
+    },
+    "expected": {
+      "total": 7
+    }
+  },
+  {
+    "input": {
+      "nums": [
+        5
+      ],
+      "k": 1
+    },
+    "expected": {
+      "total": 5
+    }
+  },
+  {
+    "input": {
+      "nums": [
+        1,
+        2,
+        3
+      ],
+      "k": 3
+    },
+    "expected": {
+      "total": 6
+    }
+  },
+  {
+    "input": {
+      "nums": [
+        9,
+        8
+      ],
+      "k": 0
+    },
+    "expected": {
+      "total": 0
+    }
+  }
+]

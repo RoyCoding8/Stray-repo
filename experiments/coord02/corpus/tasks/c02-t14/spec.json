@@ -1,0 +1,9 @@
+{
+  "ops": {
+    "a": "sum",
+    "b": "prod"
+  },
+  "rule": {
+    "kind": "shape"
+  }
+}
