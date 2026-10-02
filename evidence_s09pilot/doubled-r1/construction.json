@@ -1,0 +1,32 @@
+{
+ "P1": {
+  "arm": "P1",
+  "calls": 1,
+  "capability_id": "acquired-sw-5518de75",
+  "entry": "ENTRY",
+  "init_operation": "ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-construct-l1-init",
+  "method_source": "def ENTRY(task, oracle, max_queries=16):\n    return {\"candidate\": {\"family\": \"software\", \"task_id\": task[\"task_id\"], \"ops\": list(task[\"ops\"])}, \"queries\": 0}\n",
+  "operations": [
+   "ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-validate-l1-init"
+  ],
+  "repair_operation": null,
+  "scope": {
+   "family": "software"
+  },
+  "source_digest": "5518de755d5139717796a834e914692312f227d0099c746a94167d9afe315ff4",
+  "status": "available"
+ },
+ "P2": {
+  "arm": "P2",
+  "calls": 2,
+  "init_operation": "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-init",
+  "operations": [
+   "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-init",
+   "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-repair"
+  ],
+  "reason": "construction exhausted within 1-init-plus-1-repair allowance: model call cap reached",
+  "repair_operation": "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-repair",
+  "status": "unavailable"
+ }
+}

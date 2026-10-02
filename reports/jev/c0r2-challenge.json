@@ -1,0 +1,112 @@
+{
+ "checkpoint": "C0R2 fixes challenge",
+ "base": "0dfb2ec",
+ "model": "typesafe-ai/jev",
+ "request": {
+  "state": "Revised plan C0R2 after review found five gaps. New provisions: (1) each action names its executing function and evidence row, distinguishing construct_method for task methods from construct_policy for STEP policies. (2) agenda_policy is no longer split in parallel: C1 owns decide plus step loop plus broker path plus limits in wave 1a, C2A owns _step_proposal plus propose_revision branch in wave 1b on the merged tip, C2B owns selection plus records plus cli plus trajectory threading in wave 1a. (3) bind gate refuses empty protocol, empty evaluator, empty evidence, binds exact frozen bytes only, caller labels never authorize. (4) C3 names P0 frozen incumbent STEP and P1/P2 constructed STEP with digest equality, no substitution, no post-outcome change, and wires StepPolicyConsumer into the trajectory boundary default. (5) CLI use requires the release flag or refuses, first-match fallback retires, two studies prove mutual non-selection.",
+  "questions": {
+   "actions": {
+    "type": "choice",
+    "instructions": "Does provision 1 give each action an executing function and evidence row with the two constructors distinguished?",
+    "criteria": {
+     "yes": "functions plus rows named per action",
+     "no": "verbs remain",
+     "insufficient_evidence": "text does not settle it"
+    }
+   },
+   "split": {
+    "type": "choice",
+    "instructions": "Does provision 2 remove the unsafe parallel split inside one file?",
+    "criteria": {
+     "yes": "one writer per file per wave",
+     "no": "two lanes still share decide",
+     "insufficient_evidence": "text does not settle it"
+    }
+   },
+   "bind": {
+    "type": "choice",
+    "instructions": "Does provision 3 close caller labels and empty assessment fields?",
+    "criteria": {
+     "yes": "refusals plus exact-bytes named",
+     "no": "labels can still authorize",
+     "insufficient_evidence": "text does not settle it"
+    }
+   },
+   "treatment": {
+    "type": "choice",
+    "instructions": "Does provision 4 assign STEP treatment ownership with digest equality and panel freeze?",
+    "criteria": {
+     "yes": "arms plus wiring plus freeze named",
+     "no": "treatment still unowned",
+     "insufficient_evidence": "text does not settle it"
+    }
+   },
+   "fallback": {
+    "type": "choice",
+    "instructions": "Does provision 5 retire the public first-match fallback?",
+    "criteria": {
+     "yes": "flag required or refuse, fallback retires",
+     "no": "global newest scan survives",
+     "insufficient_evidence": "text does not settle it"
+    }
+   }
+  }
+ },
+ "answers": {
+  "actions": {
+   "type": "choice",
+   "choice": "yes",
+   "probabilities": {
+    "yes": 1,
+    "no": 0,
+    "insufficient_evidence": 0
+   },
+   "confidence": 1
+  },
+  "split": {
+   "type": "choice",
+   "choice": "yes",
+   "probabilities": {
+    "yes": 0.91,
+    "no": 0.01,
+    "insufficient_evidence": 0.08
+   },
+   "confidence": 0.86
+  },
+  "bind": {
+   "type": "choice",
+   "choice": "yes",
+   "probabilities": {
+    "yes": 1,
+    "no": 0,
+    "insufficient_evidence": 0
+   },
+   "confidence": 1
+  },
+  "treatment": {
+   "type": "choice",
+   "choice": "yes",
+   "probabilities": {
+    "yes": 1,
+    "no": 0,
+    "insufficient_evidence": 0
+   },
+   "confidence": 0.99
+  },
+  "fallback": {
+   "type": "choice",
+   "choice": "yes",
+   "probabilities": {
+    "yes": 1,
+    "no": 0,
+    "insufficient_evidence": 0
+   },
+   "confidence": 1
+  }
+ },
+ "usage": {
+  "inputTokens": 899,
+  "outputTokens": 210
+ },
+ "resolution": "all five yes; split 0.86 accepted with wave serialization; proceeding to wave 1a."
+}

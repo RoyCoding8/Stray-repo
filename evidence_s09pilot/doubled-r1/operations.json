@@ -1,0 +1,130 @@
+{
+ "ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-construct-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-construct-l1-init",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 5,
+     "output_tokens": 5
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-validate-l1-init": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-validate-l1-init",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-54-b0-ad01-w0-dev-sw-00-validate-l1-init_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-init",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 5,
+     "output_tokens": 5
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-repair": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-repair",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-55-b0-ad01-w0-dev-sw-01-construct-l1-repair",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 5,
+     "output_tokens": 5
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-64-use-ad01-w1-transfer-sw-00": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-64-use-ad01-w1-transfer-sw-00",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w1-I-64-use-ad01-w1-transfer-sw-00_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-64-use-ad01-w1-within-sw-00": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-64-use-ad01-w1-within-sw-00",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w1-I-64-use-ad01-w1-within-sw-00_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-66-use-ad01-w2-transfer-sw-00": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-66-use-ad01-w2-transfer-sw-00",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w2-I-66-use-ad01-w2-transfer-sw-00_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-66-use-ad01-w2-within-sw-00": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-66-use-ad01-w2-within-sw-00",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w2-I-66-use-ad01-w2-within-sw-00_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ }
+}

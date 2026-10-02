@@ -94,8 +94,66 @@ def learner_request(charter: dict, visible: list, experience: dict,
         retained=retained, remaining=remaining, curriculum=curriculum,
         boundary=None)
     if prior_failure is not None:
-        packet["prior_failure"] = dict(prior_failure)
+        packet["prior_failure"] = _packet._strip_value(
+            dict(prior_failure))
     return packet
+
+
+def visible_prompt(charter: dict, visible: list, experience: dict,
+                   retained: list, remaining: dict,
+                   curriculum: str | None,
+                   prior_failure: dict | None = None) -> str:
+    from . import packet as _pkt
+    cleaned_obs = [o for o in (experience or {}).get("observations", [])
+                   if not _pkt._is_sealed_observation(o)]
+    cleaned_exp = dict(experience or {}, observations=cleaned_obs)
+    packet = _pkt.decision_packet(
+        charter=charter, visible=visible, experience=cleaned_exp,
+        retained=retained, remaining=remaining, curriculum=curriculum,
+        boundary=None)
+    if prior_failure is not None:
+        packet["prior_failure"] = _pkt._strip_value(dict(prior_failure))
+    return LEARNER_INSTRUCTION + "\n" + json.dumps(packet, sort_keys=True)
+
+
+def _read_conn(dsn: str):
+    from psycopg.rows import dict_row
+    from settlement import db
+    return db.connect(dsn, row_factory=dict_row)
+
+
+def record_exposure(dsn: str, batch_id: str, exposed_to: str) -> dict:
+    if not batch_id or not exposed_to:
+        raise ValueError("exposure needs batch and consumer")
+    with _read_conn(dsn) as conn:
+        conn.execute(
+            "INSERT INTO s09_assessment_exposure"
+            " (batch_id, exposed_to, retired_at)"
+            " VALUES (%s, %s, now())"
+            " ON CONFLICT (batch_id, exposed_to)"
+            " DO UPDATE SET retired_at = COALESCE("
+            " s09_assessment_exposure.retired_at, now())",
+            (batch_id, exposed_to))
+        conn.commit()
+    return {"batch_id": batch_id, "exposed_to": exposed_to,
+            "retired": True}
+
+
+def is_retired(dsn: str, batch_id: str) -> bool:
+    with _read_conn(dsn) as conn:
+        row = conn.execute(
+            "SELECT 1 FROM s09_assessment_exposure"
+            " WHERE batch_id = %s AND retired_at IS NOT NULL",
+            (batch_id,)).fetchone()
+        conn.commit()
+        return row is not None
+
+
+def require_unretired(dsn: str, batch_id: str, consumer: str) -> None:
+    if is_retired(dsn, batch_id):
+        raise LearnerRefused(
+            "assessment batch %r retired for descendant %r"
+            % (batch_id, consumer))
 
 
 def validate_proposal(proposal: dict) -> dict:
@@ -103,8 +161,10 @@ def validate_proposal(proposal: dict) -> dict:
         raise LearnerRefused("learner response is not an object")
     action = proposal.get("next_action")
     if not isinstance(action, dict) or action.get("kind") not in (
-            "diagnostic", "development", "stop"):
+            "diagnostic", "development", "use_method", "stop"):
         raise LearnerRefused("unknown action kind")
+    if action["kind"] == "use_method" and not isinstance(action.get("method_id"), str):
+        raise LearnerRefused("use_method needs a method_id")
     if action["kind"] != "stop" and not isinstance(action.get("task_id"), str):
         raise LearnerRefused("action needs a task_id")
     if "max_queries" in action and (
@@ -156,12 +216,9 @@ def model_propose(dsn: str, *, cid: str, seq: int, gateway: Any,
     operation_id = _learner_op_id(cid, seq, attempt)
     settled = _settled_text(dsn, operation_id)
     if settled is None:
-        prompt = LEARNER_INSTRUCTION + "\n" + json.dumps(learner_request(
+        prompt = visible_prompt(
             charter, visible, experience, retained, remaining,
-            curriculum, prior_failure), sort_keys=True)
-        if prior_failure is not None:
-            prompt += "\nPRIOR FAILURE (correct it): " + json.dumps(
-                prior_failure, sort_keys=True)
+            curriculum, prior_failure)
         ensured = broker.ensure_operation(
             dsn, operation_id=operation_id,
             effect=broker.MODEL_INFERENCE,

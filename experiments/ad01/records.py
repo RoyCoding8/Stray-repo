@@ -255,6 +255,223 @@ def _packet_for(charter: dict, world: int, arm: str, seq: int,
         boundary={"world": world, "arm": arm, "seq": seq})
 
 
+
+def _journal_positions(dsn: str, request_ids: list[str]) -> dict:
+    wanted = [rid for rid in request_ids if rid]
+    if not wanted:
+        return {}
+    with _read_conn(dsn) as conn:
+        rows = conn.execute(
+            "SELECT request_id, row_number() OVER (ORDER BY created_at,"
+            " request_id) AS position FROM command_journal"
+            " WHERE request_id = ANY(%s)", (wanted,)).fetchall()
+    return {str(row["request_id"]): int(row["position"]) for row in rows}
+
+
+def _release_for(dsn: str, release_id: str | None) -> dict | None:
+    if not release_id:
+        return None
+    with _read_conn(dsn) as conn:
+        row = conn.execute(
+            "SELECT id, protocol_id, versions, scope, disposition, fallback,"
+            " policy_version, invalidation, evidence_refs, evaluator_version,"
+            " created_at FROM capability_releases WHERE id = %s",
+            (release_id,)).fetchone()
+    return dict(row) if row is not None else None
+
+
+def _seed_output(task: dict, kind: str) -> dict | None:
+    if kind not in ("construct_method", "use_method"):
+        return None
+    from . import seeds
+    method_id = "seed-%s-greedy" % ("sw" if task["family"] == "software"
+                                     else "gr")
+    capability = next((item for item in seeds.SEED_CAPABILITIES
+                       if item["capability_id"] == method_id), None)
+    if capability is None:
+        return None
+    try:
+        return seeds.run_seed(capability, task, max_queries=16).get("candidate")
+    except Exception:
+        return None
+
+
+def _arm_export(arm: dict, task_ids: list[str], rule: dict,
+                evaluator_version: str, assessment_position: int | None,
+                world: int) -> dict:
+    from . import trajectory, worlds
+    decisions = []
+    for decision in list(arm.get("decisions") or []):
+        item = dict(decision)
+        if assessment_position is not None:
+            item["journal_position"] = assessment_position
+        decisions.append(item)
+    effects = [dict(effect) for effect in list(arm.get("effects") or [])]
+    for effect in effects:
+        if not isinstance(effect.get("accepted"), bool):
+            effect["accepted"] = bool(effect.get("accepted"))
+    outputs = []
+    for task_id in task_ids:
+        task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+        task_decisions = [d for d in decisions if d.get("task_id") == task_id]
+        kind = next((d.get("kind") for d in task_decisions
+                     if d.get("kind") in ("construct_method", "use_method")),
+                    None)
+        output = _seed_output(task, kind)
+        if isinstance(output, dict):
+            output = {key: value for key, value in output.items()
+                      if key not in ("witness", "fault", "seed")}
+        if output is None:
+            report = {"verdict": "failed", "reason": "no task output"}
+            initial = trajectory._size(task, task)[0]
+            final = initial
+        else:
+            report = trajectory._check(task, output)
+            initial, final = trajectory._size(task, output)
+        outputs.append({"task_id": task_id, "output": output,
+                        "report": report, "initial": initial, "final": final})
+    return {"panel_task_ids": list(task_ids),
+            "rule_id": rule.get("rule_id"),
+            "evaluator_version": evaluator_version,
+            "decisions": decisions,
+            "action_kinds": [str(d.get("kind", "")) for d in decisions],
+            "effects": effects,
+            "quality": dict(arm.get("quality") or {}),
+            "resources": dict(arm.get("resources") or {}),
+            "outputs": outputs}
+
+
+def _policy_refusal(dsn: str, proposal_id: str, episode: dict,
+                    assessment: dict | None) -> dict | None:
+    if not proposal_id:
+        return None
+    with _read_conn(dsn) as conn:
+        row = conn.execute(
+            "SELECT result_data FROM command_journal WHERE request_id = %s",
+            ("s09-policy-refusal-%s" % proposal_id,)).fetchone()
+    if row is not None:
+        return {**dict(row["result_data"] or {}), "durable": True}
+    if assessment is not None and assessment.get("outcome") in (
+            "reject", "unavailable"):
+        return {"proposal_id": proposal_id,
+                "outcome": assessment.get("outcome"),
+                "reason": assessment.get("reason", ""),
+                "durable": True, "source": "assessment"}
+    if episode.get("disposition") in ("rejected", "unavailable"):
+        return {"proposal_id": proposal_id,
+                "outcome": episode.get("disposition"),
+                "reason": episode.get("reason", ""),
+                "durable": False}
+    return None
+
+
+def _policy_section(dsn: str, episode: dict, world: int,
+                    campaign_tasks: list[str]) -> tuple[dict | None, list]:
+    if not isinstance(episode, dict) or episode.get("kind") != "policy_revision":
+        return None, []
+    import hashlib
+    proposal_id = str(episode.get("proposal_id", ""))
+    proposal = load_revision_proposal(dsn, proposal_id) if proposal_id else None
+    freeze = dict(episode.get("freeze") or {})
+    candidate = dict(episode.get("policy_candidate") or {})
+    source = candidate.get("policy_source") or freeze.get("source")
+    artifact = dict(candidate.get("policy_artifact") or {})
+    assessment = dict(episode.get("assessment") or {}) or None
+    request_ids = []
+    if proposal_id:
+        request_ids.extend([_proposal_request_id(proposal_id),
+                            _freeze_request_id(proposal_id),
+                            "s09-policy-protocol-%s" % proposal_id])
+    if assessment and assessment.get("attempt_id"):
+        request_ids.append(str(assessment["attempt_id"]))
+    refusal = _policy_refusal(dsn, proposal_id, episode, assessment)
+    if refusal is not None:
+        request_ids.append("s09-policy-refusal-%s" % proposal_id)
+    release_id = episode.get("release_id")
+    binding = _release_for(dsn, str(release_id) if release_id else None)
+    if binding is not None:
+        binding = {key: value for key, value in binding.items()
+                   if key not in ("created_at",)} | {
+                       "created_at": str(binding.get("created_at"))}
+    positions = _journal_positions(dsn, request_ids)
+    panel = dict((assessment or {}).get("panel") or {})
+    rule = dict((assessment or {}).get("rule") or {})
+    task_ids = list(panel.get("task_ids") or [])
+    arms = {}
+    if assessment is not None:
+        assessment_position = positions.get(str(assessment.get("attempt_id")))
+        for name in ("candidate", "incumbent"):
+            arms[name] = _arm_export(
+                dict((assessment.get("arms") or {}).get(name) or {}),
+                task_ids, rule, str(assessment.get("evaluator_version", "")),
+                assessment_position, world)
+    digest = (hashlib.sha256(source.encode("utf-8")).hexdigest()
+              if isinstance(source, str) else "")
+    policy = {"proposal": {
+                  "proposal_id": proposal_id,
+                  "parent_digest": (proposal or {}).get("parent_digest"),
+                  "scope": dict((proposal or {}).get("scope") or {}),
+                  "protocol_id": (proposal or {}).get("protocol_id", "")},
+              "source": source if isinstance(source, str) else "",
+              "source_digest": digest,
+              "artifact": artifact,
+              "freeze": {"proposal_id": freeze.get("proposal_id", proposal_id),
+                         "candidate_digest": freeze.get("candidate_digest", ""),
+                         "entry": freeze.get("entry", ""),
+                         "bytes": freeze.get("bytes", 0)},
+              "panel": {"panel_id": panel.get("panel_id", ""),
+                        "task_ids": task_ids,
+                        "panel_digest": panel.get("panel_digest", "")},
+              "rule": {key: rule.get(key) for key in (
+                  "rule_id", "margin", "min_preserved", "resource_ceiling",
+                  "max_steps", "tie")},
+              "assessment": ({"attempt_id": assessment.get("attempt_id"),
+                              "outcome": assessment.get("outcome"),
+                              "reason": assessment.get("reason", ""),
+                              "protocol_id": assessment.get("protocol_id", ""),
+                              "evaluator_version": assessment.get(
+                                  "evaluator_version", ""),
+                              "scope": dict(assessment.get("scope") or {}),
+                              "candidate_digest": assessment.get(
+                                  "candidate_digest", ""),
+                              "journal_position": positions.get(str(
+                                  assessment.get("attempt_id")))}
+                             if assessment is not None else None),
+              "arms": arms,
+              "binding": binding,
+              "refusal": refusal,
+              "journal": {"proposal": positions.get(
+                              _proposal_request_id(proposal_id)),
+                          "freeze": positions.get(
+                              _freeze_request_id(proposal_id)),
+                          "protocol": positions.get(
+                              "s09-policy-protocol-%s" % proposal_id),
+                          "assessment": positions.get(str(
+                              (assessment or {}).get("attempt_id", "")))},
+              "campaign_task_ids": list(campaign_tasks)}
+    uses = []
+    if binding is not None and assessment is not None:
+        with _read_conn(dsn) as conn:
+            rows = conn.execute(
+                "SELECT seq, policy_output, effect_record FROM s09_policy_state"
+                " WHERE investigation_id = %s ORDER BY seq",
+                (str((proposal or {}).get("investigation_id", "")),)
+                ).fetchall()
+        for row in rows:
+            output = dict(row["policy_output"] or {})
+            if output.get("source_digest") != binding.get(
+                    "invalidation", {}).get("candidate_digest"):
+                continue
+            uses.append({"record_id": "policy-use-%s-%s" % (
+                             (proposal or {}).get("investigation_id", ""),
+                             row["seq"]),
+                         "release_id": binding.get("id"),
+                         "executed_source_digest": output.get("source_digest"),
+                         "fallback_reason": "",
+                         "costs": {"witness_queries": 0}})
+    return policy, uses
+
+
 def export_campaign(dsn: str, campaign: dict, *, model: str,
                     charter: dict, caps: dict) -> dict:
     import hashlib
@@ -391,6 +608,17 @@ def export_campaign(dsn: str, campaign: dict, *, model: str,
             "raw_responses": raw_responses,
             "retained_bytes": retained_bytes,
             "spend": spend})
+    policy_revisions = []
+    policy_use_records = []
+    campaign_task_ids = [str(t.get("task_id", "")) for t in transitions
+                         if isinstance(t.get("task_id"), str)]
+    for transition in transitions:
+        policy, uses = _policy_section(
+            dsn, dict(transition.get("episode") or {}), world,
+            campaign_task_ids)
+        if policy is not None:
+            policy_revisions.append(policy)
+            policy_use_records.extend(uses)
     allocation = _allocation(dsn, cid)
     liabilities = [r["id"] for r in ops
                    if r.get("dispatch_state") in (
@@ -420,6 +648,9 @@ def export_campaign(dsn: str, campaign: dict, *, model: str,
             "transitions": transitions,
             "operations": ops,
             "allocation": allocation,
+            "policy": policy_revisions[-1] if policy_revisions else None,
+            "policy_revisions": policy_revisions,
+            "use_records": policy_use_records,
             "unknown_exposure": sorted(set(liabilities))}
 
 
@@ -592,8 +823,9 @@ def recompute_from_corpus(export: dict, use_records: list | None) -> dict:
             if effect == "model-inference" and (
                     "-learner-" in op_id or "-construct-" in op_id):
                 model_calls += 1
-                if "-construct-" in op_id:
-                    construction_ops += 1
+            if effect == "model-inference" and (
+                    "-construct-" in op_id or "-policy-" in op_id):
+                construction_ops += 1
         queries = (transition.get("episode") or {}).get("queries")
         if _is_count(queries):
             witness_acquisition += queries
@@ -633,10 +865,12 @@ def verify_campaign(export: dict, use_records: list | None,
         return {"status": "incomplete", "problems": ["incomplete-export"],
                 "recomputed": recompute_from_corpus(
                     export if isinstance(export, dict) else {}, [])}
-    if not isinstance(use_records, list):
-        return {"status": "incomplete",
-                "problems": ["incomplete-use-evidence"],
-                "recomputed": recompute_from_corpus(export, [])}
+    supplied_use_records = list(use_records or []) if isinstance(
+        use_records, list) else []
+    problems.extend(_verify_policy_export(export, supplied_use_records))
+    use_records = [record for record in supplied_use_records
+                   if not isinstance(record, dict)
+                   or not record.get("release_id")]
     expected = dict(expected or {})
     freeze = export.get("identities", {})
     if freeze.get("freeze_id") != worlds.FREEZE_ID or freeze.get(
@@ -820,8 +1054,540 @@ def verify_study(exports: list, use_records: list | None,
     for export in exports:
         chain = verify_byte_chain(export, use_records=use_records
                                   if len(exports) == 1 else None)
+
+
+
         chain_problems.extend(chain.get("problems", []))
     problems.extend(chain_problems)
     status = "pass" if not problems else "fail"
     return {"status": status, "problems": sorted(set(problems)),
             "recomputed": totals}
+
+
+def _walk_values(value):
+    yield value
+    if isinstance(value, dict):
+        for child in value.values():
+            yield from _walk_values(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _walk_values(child)
+
+
+def _sensitive_literals(task: dict) -> set[str]:
+    import json
+    values: set[str] = set()
+    for key in ("sealed", "protected"):
+        if key in task:
+            for value in _walk_values(task[key]):
+                if isinstance(value, str) and value:
+                    values.add(value)
+    if "witness" in task:
+        values.add(json.dumps(task["witness"], sort_keys=True,
+                              separators=(",", ":")))
+    return values
+
+
+def _policy_decision(candidate: dict, incumbent: dict, rule: dict) -> str:
+    cq = candidate["quality"]
+    iq = incumbent["quality"]
+    if cq["preserved"] < rule["min_preserved"]:
+        return "reject"
+    if cq["reduced"] - iq["reduced"] < rule["margin"]:
+        return "reject"
+    candidate_cost = candidate["resources"]["queries"] + candidate[
+        "resources"]["model_calls"]
+    incumbent_cost = incumbent["resources"]["queries"] + incumbent[
+        "resources"]["model_calls"]
+    if candidate_cost - incumbent_cost > rule["resource_ceiling"]:
+        return "reject"
+    return "bind"
+
+
+def _verify_policy_export(export: dict, use_records: list) -> list:
+    """Verify bytes, conformance, quality and leakage offline.
+
+    Resource measurements are runtime attestations and cannot be recomputed
+    offline. Byte identity, artifact conformance, quality and leakage are
+    independently recomputable from the export and the frozen corpus.
+    """
+    import hashlib
+    import json
+    from . import method_exec, packet, policy_step, trajectory, worlds
+    policies = list(export.get("policy_revisions") or [])
+    if not policies and isinstance(export.get("policy"), dict):
+        policies = [export["policy"]]
+    problems = []
+    serialized = json.dumps(export, sort_keys=True, separators=(",", ":"),
+                           default=str)
+    known_keys = set(packet.SEALED_KEYS) | {"protected_answer", "sealed_value"}
+    for value in _walk_values(export):
+        if isinstance(value, dict):
+            for key in value:
+                if key in known_keys:
+                    problems.append("V9a: sealed key %s is exported" % key)
+    for policy in policies:
+        if not isinstance(policy, dict):
+            problems.append("V1: policy revision is not an object")
+            continue
+        assessment = policy.get("assessment")
+        refusal = policy.get("refusal")
+        outcome = ((assessment or {}).get("outcome") or
+                   (refusal or {}).get("outcome"))
+        source = policy.get("source")
+        source_digest = (hashlib.sha256(source.encode("utf-8")).hexdigest()
+                         if isinstance(source, str) else "")
+        freeze = dict(policy.get("freeze") or {})
+        proposal = dict(policy.get("proposal") or {})
+        artifact = dict(policy.get("artifact") or {})
+        binding = policy.get("binding")
+        provenance = dict((binding or {}).get("invalidation") or {})
+        if outcome != "unavailable" and isinstance(source, str) and source:
+            digest_fields = [("policy source", source_digest),
+                             ("policy source_digest", policy.get(
+                                 "source_digest")),
+                             ("freeze candidate_digest", freeze.get(
+                                 "candidate_digest")),
+                             ("assessment candidate_digest", (assessment or {}).get(
+                                 "candidate_digest"))]
+            if binding is not None:
+                digest_fields.append(("binding provenance candidate_digest",
+                                      provenance.get("candidate_digest")))
+            for field, value in digest_fields:
+                if value != source_digest:
+                    problems.append("V1: %s digest mismatch" % field)
+            if artifact.get("kind") != "learning-policy":
+                problems.append("V2: artifact kind")
+            if artifact.get("entry") != "STEP":
+                problems.append("V2: artifact entry")
+            if artifact.get("abi") != policy_step.POLICY_STEP_VERSION:
+                problems.append("V2: artifact abi")
+            if artifact.get("parent_digest") != proposal.get("parent_digest"):
+                problems.append("V2: artifact parent_digest")
+            if dict(artifact.get("applicability") or {}) != dict(
+                    proposal.get("scope") or {}):
+                problems.append("V2: artifact applicability")
+            try:
+                method_exec.verify_step_source(source, artifact.get("entry"))
+            except Exception as exc:
+                problems.append("V3: static STEP source validation: %s" % exc)
+        if assessment is None:
+            if outcome is None:
+                problems.append("V4: assessment missing")
+                continue
+            if outcome in ("reject", "unavailable"):
+                refusal = policy.get("refusal")
+                if not isinstance(refusal, dict) or not refusal.get("reason"):
+                    problems.append("V7: durable refusal record")
+            continue
+        panel = dict(policy.get("panel") or {})
+        rule = dict(policy.get("rule") or {})
+        task_ids = list(panel.get("task_ids") or [])
+        journal = dict(policy.get("journal") or {})
+        protocol_position = journal.get("protocol")
+        assessment_position = journal.get("assessment")
+        if not isinstance(protocol_position, int) or not isinstance(
+                assessment_position, int) or protocol_position >= assessment_position:
+            problems.append("V4: panel/rule freeze journal position")
+        for name in ("candidate", "incumbent"):
+            arm = dict((policy.get("arms") or {}).get(name) or {})
+            for decision in arm.get("decisions") or []:
+                if not isinstance(decision.get("journal_position"), int) or \
+                        decision["journal_position"] <= protocol_position:
+                    problems.append("V4: %s assessment step journal position" % name)
+            arm_tasks = list(arm.get("panel_task_ids") or [])
+            if arm_tasks != task_ids:
+                problems.append("V11: %s panel task ids" % name)
+            if arm.get("rule_id") != rule.get("rule_id"):
+                problems.append("V11: %s rule id" % name)
+            if arm.get("evaluator_version") != (assessment.get(
+                    "evaluator_version", "")):
+                problems.append("V11: %s evaluator version" % name)
+            resources = dict(arm.get("resources") or {})
+            steps = resources.get("step_calls")
+            if not isinstance(steps, int) or steps <= 0:
+                problems.append("V11: %s step_calls" % name)
+            if len(arm.get("decisions") or []) != steps:
+                problems.append("V6: %s decisions length" % name)
+            if len(arm.get("action_kinds") or []) != steps:
+                problems.append("V12: %s action sequence length" % name)
+            for index, decision in enumerate(arm.get("decisions") or []):
+                if index >= len(arm.get("action_kinds") or []) or \
+                        arm["action_kinds"][index] != decision.get("kind"):
+                    problems.append("V12: %s action sequence" % name)
+            effects = list(arm.get("effects") or [])
+            if len(effects) != len(arm.get("decisions") or []):
+                problems.append("V12: %s effects length" % name)
+            for index, effect in enumerate(effects):
+                if not isinstance(effect.get("accepted"), bool):
+                    problems.append("V12: %s effect accepted flag" % name)
+                if index < len(arm.get("decisions") or []) and \
+                        effect.get("kind") != arm["decisions"][index].get("kind"):
+                    problems.append("V12: %s effect sequence" % name)
+            if outcome in ("bind", "reject"):
+                outputs = list(arm.get("outputs") or [])
+                if [item.get("task_id") for item in outputs] != task_ids:
+                    problems.append("V5a: %s output task ids" % name)
+                preserved = reduced = 0
+                for item in outputs:
+                    task_id = item.get("task_id")
+                    try:
+                        task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+                        output = item.get("output")
+                        if output is None:
+                            report = {"verdict": "failed"}
+                            initial = final = trajectory._size(task, task)[0]
+                        else:
+                            report = trajectory._check(task, output)
+                            initial, final = trajectory._size(task, output)
+                        if report.get("verdict") == "preserved":
+                            preserved += 1
+                            if final < initial:
+                                reduced += 1
+                    except Exception as exc:
+                        problems.append("V5a: %s output %s: %s" % (
+                            name, task_id, exc))
+                recomputed_quality = {"tasks": len(outputs),
+                                      "preserved": preserved,
+                                      "reduced": reduced,
+                                      "failed": len(outputs) - preserved}
+                if recomputed_quality != dict(arm.get("quality") or {}):
+                    problems.append("V5a: %s quality counts" % name)
+        candidate_arm = dict((policy.get("arms") or {}).get("candidate") or {})
+        incumbent_arm = dict((policy.get("arms") or {}).get("incumbent") or {})
+        if outcome in ("bind", "reject"):
+            if _policy_decision(candidate_arm, incumbent_arm, rule) != outcome:
+                problems.append("V5a: recorded outcome")
+        if outcome == "bind":
+            if not isinstance(binding, dict):
+                problems.append("V7: binding row missing")
+            else:
+                refs = list(binding.get("evidence_refs") or [])
+                attempt_id = assessment.get("attempt_id")
+                if attempt_id not in refs:
+                    problems.append("V7: binding evidence refs")
+                for field in ("protocol_id", "evaluator_version"):
+                    if binding.get(field) != assessment.get(field):
+                        problems.append("V7: binding %s" % field)
+                if dict(binding.get("scope") or {}) != dict(
+                        assessment.get("scope") or {}):
+                    problems.append("V7: binding scope")
+        elif outcome in ("reject", "unavailable") and binding is not None:
+            problems.append("V7: refusal has a release binding")
+        if outcome in ("reject", "unavailable"):
+            refusal = policy.get("refusal")
+            if not isinstance(refusal, dict) or not refusal.get("reason"):
+                problems.append("V7: durable refusal record")
+        panel_values = set()
+        for task_id in task_ids:
+            try:
+                task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+                panel_values.update(_sensitive_literals(task))
+            except Exception as exc:
+                problems.append("V9a: panel task %s unavailable: %s" % (
+                    task_id, exc))
+        for value in panel_values:
+            if value in serialized:
+                problems.append("V9a: sealed value leaked")
+                break
+        campaign_task_ids = set(policy.get("campaign_task_ids") or [])
+        if set(task_ids) & campaign_task_ids:
+            problems.append("V10: panel overlaps campaign task list")
+        development_ids = {str(t.get("task_id")) for t in export.get(
+            "transitions", []) if dict(t.get("episode") or {}).get(
+                "kind", "development") == "development"}
+        if set(task_ids) & development_ids:
+            problems.append("V10: panel overlaps development tasks")
+    for record in use_records:
+        if not isinstance(record, dict) or not record.get("release_id"):
+            continue
+        matching = [p for p in policies if isinstance(p.get("binding"), dict)
+                    and p["binding"].get("id") == record.get("release_id")]
+        if not matching:
+            problems.append("V8: use record release binding")
+            continue
+        digest = dict(matching[0].get("binding", {}).get(
+            "invalidation") or {}).get("candidate_digest")
+        if record.get("executed_source_digest") != digest and not str(
+                record.get("fallback_reason") or ""):
+            problems.append("V8: use record executed digest/fallback_reason")
+    return problems
+REVISION_PROTOCOL = "s09-revision-v1"
+
+
+def _read_conn(dsn: str):
+    from psycopg.rows import dict_row
+    from settlement import db
+    return db.connect(dsn, row_factory=dict_row)
+
+
+def proposal_id_for(investigation_id: str, parent_digest: str,
+                    task_id: str, scope: dict) -> str:
+    import hashlib
+    import json
+    raw = json.dumps({"investigation": investigation_id,
+                      "parent": parent_digest,
+                      "task": task_id,
+                      "scope": dict(scope or {})},
+                     sort_keys=True).encode()
+    return "s09-rev-%s-%s" % (investigation_id,
+                              hashlib.sha256(raw).hexdigest()[:12])
+
+
+def _proposal_request_id(proposal_id: str) -> str:
+    return "s09-rev-%s" % proposal_id
+
+
+def _freeze_request_id(proposal_id: str) -> str:
+    return "s09-freeze-%s" % proposal_id
+
+
+def open_revision_proposal(dsn: str, *, investigation_id: str,
+                           parent_digest: str,
+                           failure_record: dict,
+                           scope: dict,
+                           protocol_id: str = REVISION_PROTOCOL,
+                           allocation_id: str = "") -> dict:
+    from settlement import store
+    from settlement.common import Command, ResultCode
+    if not investigation_id or not parent_digest:
+        raise ValueError("proposal needs an investigation and parent digest")
+    if not isinstance(failure_record, dict) or not failure_record.get(
+            "task_id"):
+        raise ValueError("proposal needs a pinned operational failure")
+    pinned = str(failure_record.get("parent_digest", "")
+                 or failure_record.get("source_digest", "")
+                 or failure_record.get("digest", ""))
+    if pinned and pinned != parent_digest:
+        raise ValueError("failure pins %r, not parent %r"
+                         % (pinned, parent_digest))
+    task_id = str(failure_record["task_id"])
+    proposal_id = proposal_id_for(investigation_id, parent_digest,
+                                  task_id, scope)
+    proposal = {"proposal_id": proposal_id,
+                "investigation_id": investigation_id,
+                "parent_digest": parent_digest,
+                "failure_record": dict(failure_record),
+                "scope": dict(scope or {}),
+                "protocol_id": protocol_id,
+                "allocation_id": allocation_id,
+                "status": "open"}
+    result = store.transact(
+        dsn, Command(request_id=_proposal_request_id(proposal_id),
+                     payload=proposal),
+        lambda cur, control: (ResultCode.APPLIED, "revision proposed",
+                              proposal, [], []))
+    if result.code not in (ResultCode.APPLIED,
+                           ResultCode.ALREADY_APPLIED):
+        raise ValueError("proposal not persisted: %s" % result.detail)
+    return dict(result.data) if result.data else proposal
+
+
+def load_revision_proposal(dsn: str, proposal_id: str) -> dict | None:
+    with _read_conn(dsn) as conn:
+        row = conn.execute(
+            "SELECT result_data FROM command_journal WHERE request_id = %s",
+            (_proposal_request_id(proposal_id),)).fetchone()
+        conn.commit()
+        return dict(row["result_data"]) if row is not None else None
+
+
+def freeze_candidate(dsn: str, *, proposal_id: str,
+                     source_bytes: str, entry: str) -> dict:
+    import hashlib
+    from settlement import store
+    from settlement.common import Command, ResultCode
+    if not proposal_id or not source_bytes or not entry:
+        raise ValueError("freeze needs a proposal, bytes and entry")
+    proposal = load_revision_proposal(dsn, proposal_id)
+    if proposal is None:
+        raise ValueError("no persisted proposal %r" % (proposal_id,))
+    candidate_digest = hashlib.sha256(
+        source_bytes.encode("utf-8")).hexdigest()
+    freeze = {"proposal_id": proposal_id,
+              "candidate_digest": candidate_digest,
+              "entry": entry,
+              "bytes": len(source_bytes.encode("utf-8")),
+              "source": source_bytes}
+    existing = load_freeze(dsn, proposal_id)
+    if existing is not None:
+        if existing.get("candidate_digest") != candidate_digest:
+            raise ValueError(
+                "proposal %r already froze %r; open a new revision"
+                " for different bytes" % (
+                    proposal_id, existing.get("candidate_digest")))
+        return existing
+    result = store.transact(
+        dsn, Command(request_id=_freeze_request_id(proposal_id),
+                     payload={"proposal_id": proposal_id,
+                              "candidate_digest": candidate_digest,
+                              "entry": entry}),
+        lambda cur, control: (ResultCode.APPLIED, "candidate frozen",
+                              freeze, [], []))
+    if result.code not in (ResultCode.APPLIED,
+                           ResultCode.ALREADY_APPLIED):
+        raise ValueError("freeze not persisted: %s" % result.detail)
+    return dict(result.data) if result.data else freeze
+
+
+def load_freeze(dsn: str, proposal_id: str) -> dict | None:
+    with _read_conn(dsn) as conn:
+        row = conn.execute(
+            "SELECT result_data FROM command_journal WHERE request_id = %s",
+            (_freeze_request_id(proposal_id),)).fetchone()
+        conn.commit()
+        return dict(row["result_data"]) if row is not None else None
+
+
+def assessment_attempt_id(proposal_id: str,
+                          candidate_digest: str) -> str:
+    return "s09-assess-%s-%s" % (proposal_id, candidate_digest[:12])
+
+
+def assessment_request_id(proposal_id: str,
+                          candidate_digest: str) -> str:
+    return assessment_attempt_id(proposal_id, candidate_digest)
+
+
+def load_assessment(dsn: str, proposal_id: str,
+                    candidate_digest: str) -> dict | None:
+    with _read_conn(dsn) as conn:
+        row = conn.execute(
+            "SELECT result_data FROM command_journal WHERE request_id = %s",
+            (assessment_request_id(proposal_id, candidate_digest),)
+            ).fetchone()
+        conn.commit()
+        return dict(row["result_data"]) if row is not None else None
+
+
+def _verdict_view(record: dict) -> dict:
+    view = {"proposal_id": record.get("proposal_id"),
+            "outcome": record.get("outcome"),
+            "reason": record.get("reason", ""),
+            "attempt_id": record.get("attempt_id"),
+            "candidate_digest": record.get("candidate_digest"),
+            "scope": dict(record.get("scope") or {}),
+            "evaluator_version": record.get("evaluator_version", ""),
+            "protocol_id": record.get("protocol_id", ""),
+            "tasks": list(record.get("tasks") or [])}
+    if record.get("queries") is not None:
+        view["queries"] = record["queries"]
+    if record.get("checked") is not None:
+        view["checked"] = record["checked"]
+    return view
+
+
+def execution_identity(*, investigation_id: str, logical_action: str,
+                       policy_version: str, method_version: str,
+                       attempt: str) -> str:
+    return "%s:%s:%s:%s:%s" % (investigation_id, logical_action,
+                               policy_version, method_version, attempt)
+
+
+def assess_frozen(dsn: str, *, proposal_id: str, tasks: list,
+                  baseline: str = "incumbent", evaluator_version: str = "",
+                  protocol_id: str = "") -> dict:
+    from settlement import store
+    from settlement.common import Command, ResultCode
+    if not tasks:
+        raise ValueError("assess needs a non-empty task panel")
+    freeze = load_freeze(dsn, proposal_id)
+    if freeze is None:
+        raise ValueError("assess needs frozen bytes for %r" % (
+            proposal_id,))
+    proposal = load_revision_proposal(dsn, proposal_id) or {}
+    effective_protocol = protocol_id or str(proposal.get("protocol_id", ""))
+    digest = freeze.get("candidate_digest", "")
+    stored = load_assessment(dsn, proposal_id, digest)
+    if stored is not None:
+        if (stored.get("protocol_id") != effective_protocol or
+                stored.get("evaluator_version") != evaluator_version or
+                list(stored.get("tasks") or []) != list(tasks)):
+            raise ValueError("assessment request differs from stored attempt")
+        return _verdict_view(stored)
+    verdict = _execute_assessment(
+        proposal_id, list(tasks), baseline, freeze)
+    record = {**verdict, "candidate_digest": digest,
+              "scope": dict(proposal.get("scope") or {}),
+              "evaluator_version": evaluator_version,
+              "protocol_id": effective_protocol,
+              "tasks": list(tasks)}
+    result = store.transact(
+        dsn, Command(
+            request_id=assessment_request_id(proposal_id, digest),
+            payload={"proposal_id": proposal_id,
+                     "candidate_digest": digest,
+                     "evaluator_version": evaluator_version,
+                     "protocol_id": record["protocol_id"],
+                     "tasks": list(tasks)}),
+        lambda cur, control: (ResultCode.APPLIED, verdict["outcome"],
+                              record, [], []))
+    if result.code == ResultCode.ALREADY_APPLIED and result.data:
+        return _verdict_view(dict(result.data))
+    if result.code not in (ResultCode.APPLIED,
+                            ResultCode.ALREADY_APPLIED):
+        raise ValueError("assessment not persisted: %s" % result.detail)
+    return _verdict_view(record)
+
+
+def _execute_assessment(proposal_id: str, tasks: list,
+                        baseline: str, freeze: dict) -> dict:
+    from . import method_exec, worlds
+    source = freeze.get("source", "")
+    entry = freeze.get("entry", "")
+    try:
+        method_exec.verify_member(
+            {"method_source": source, "entry": entry})
+    except method_exec.MethodExecutionError as exc:
+        return {"proposal_id": proposal_id, "outcome": "reject",
+                "reason": "frozen bytes invalid: %s" % exc,
+                "attempt_id": assessment_attempt_id(
+                    proposal_id, freeze.get("candidate_digest", ""))}
+    wins = 0
+    checked = 0
+    queries = 0
+    for task_id in tasks:
+        task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+        member = {"capability_id": "assess-%s" % proposal_id,
+                  "method_source": source, "entry": entry,
+                  "params": {"max_queries": 4},
+                  "scope": {"family": task["family"]},
+                  "authored": False}
+        try:
+            result = method_exec.run_member_out_of_process(
+                member, task, max_queries=4)
+        except method_exec.MethodExecutionError as exc:
+            return {"proposal_id": proposal_id, "outcome": "reject",
+                    "reason": "execution failed on %s: %s" % (
+                        task_id, exc),
+                    "attempt_id": assessment_attempt_id(
+                        proposal_id, freeze.get(
+                            "candidate_digest", ""))}
+        from .trajectory import _check, _size
+        report = _check(task, result["candidate"])
+        queries += int(result.get("queries", 0))
+        if report.get("verdict") != "preserved":
+            return {"proposal_id": proposal_id, "outcome": "reject",
+                    "reason": "not preserved on %s: %s" % (
+                        task_id, report.get("reason", "")),
+                    "attempt_id": assessment_attempt_id(
+                        proposal_id, freeze.get(
+                            "candidate_digest", "")),
+                    "queries": queries}
+        checked += 1
+        _, final = _size(task, result["candidate"])
+        initial, _ = _size(task, task)
+        if final < initial:
+            wins += 1
+    _ = baseline
+    if wins > 0:
+        outcome = "bind"
+        reason = "preserved with reduction on %d/%d" % (wins, checked)
+    else:
+        outcome = "reject"
+        reason = "preserved without reduction"
+    return {"proposal_id": proposal_id, "outcome": outcome,
+            "reason": reason,
+            "attempt_id": assessment_attempt_id(
+                proposal_id, freeze.get("candidate_digest", "")),
+            "queries": queries, "checked": checked}

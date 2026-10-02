@@ -1,0 +1,112 @@
+{
+ "checkpoint": "C0 plan challenge",
+ "base": "ef36a27",
+ "model": "typesafe-ai/jev",
+ "request": {
+  "state": "Stage 9 completion plan at ef36a27. Contract: persistent investigation executes versioned STEP policies through a trusted driver with durable state, independent assessment, atomic binding. Lanes: C1 fixes StepPolicyConsumer to persist private state across boundaries and enforce cumulative 6-step 6-call limits from durable state (owns decide plus step-loop region, gates: allowance-1 repeated requests, restart resume). C2 gives use_method real method-byte execution, propose_revision a lifecycle or durable refusal, bind_revision an assessment gate, CLI a release flag (owns proposal region, selection, cli, gates: cross-study isolation, stale bind refusal). C3 rewrites the pilot so P0/P1/P2 are STEP policies through the same driver with controlled HTTP proof and disconnect proof. C4 runs one bounded live study on root s09-completion-live-01 with frozen caps after C1-C3 plus pre-live checks. Confirmed defects: 3 model preparations from 1-call allowance with empty next-boundary state; use_method mapped to development; bind accepts caller labels with no assessment gate; binding scans global newest with no CLI flag.",
+  "questions": {
+   "execution": {
+    "type": "choice",
+    "instructions": "Does the plan cover actual STEP policy execution with durable state across boundaries, not just fixture passing?",
+    "criteria": {
+     "covered": "C1 persists state plus enforces cumulative limits with restart gates",
+     "gap": "plan leaves state reset or per-call limits in place",
+     "insufficient_evidence": "state text does not settle it"
+    }
+   },
+   "effects": {
+    "type": "choice",
+    "instructions": "Does the plan cover persistent effects and pending identity before external effects with resume reconciliation?",
+    "criteria": {
+     "covered": "pending identity plus reconcile gates named",
+     "gap": "effects can run without durable pending rows",
+     "insufficient_evidence": "state text does not settle it"
+    }
+   },
+   "promotion": {
+    "type": "choice",
+    "instructions": "Does the plan cover independent promotion where binding requires a passing assessment bound to the exact bytes?",
+    "criteria": {
+     "covered": "C2 gates absent failed stale wrong-scope evidence",
+     "gap": "caller labels can still authorize release",
+     "insufficient_evidence": "state text does not settle it"
+    }
+   },
+   "binding": {
+    "type": "choice",
+    "instructions": "Does the plan cover exact binding scope so two studies of one family cannot cross-select through the public command?",
+    "criteria": {
+     "covered": "CLI release flag plus cross-study gate named",
+     "gap": "global newest scan remains on a public path",
+     "insufficient_evidence": "state text does not settle it"
+    }
+   },
+   "isolation": {
+    "type": "choice",
+    "instructions": "Does the plan keep experimental isolation with frozen panels, unavailable arms staying missing, and no post-outcome panel changes?",
+    "criteria": {
+     "covered": "freeze plus missing-arm plus verifier gates named",
+     "gap": "arms can be substituted or panels changed",
+     "insufficient_evidence": "state text does not settle it"
+    }
+   }
+  }
+ },
+ "answers": {
+  "execution": {
+   "type": "choice",
+   "choice": "covered",
+   "probabilities": {
+    "insufficient_evidence": 0,
+    "gap": 0.01,
+    "covered": 0.99
+   },
+   "confidence": 0.98
+  },
+  "effects": {
+   "type": "choice",
+   "choice": "covered",
+   "probabilities": {
+    "insufficient_evidence": 0.34,
+    "gap": 0.26,
+    "covered": 0.4
+   },
+   "confidence": 0.09
+  },
+  "promotion": {
+   "type": "choice",
+   "choice": "covered",
+   "probabilities": {
+    "insufficient_evidence": 0.01,
+    "gap": 0.06,
+    "covered": 0.93
+   },
+   "confidence": 0.89
+  },
+  "binding": {
+   "type": "choice",
+   "choice": "covered",
+   "probabilities": {
+    "insufficient_evidence": 0.02,
+    "gap": 0.29,
+    "covered": 0.69
+   },
+   "confidence": 0.54
+  },
+  "isolation": {
+   "type": "choice",
+   "choice": "insufficient_evidence",
+   "probabilities": {
+    "insufficient_evidence": 0.64,
+    "gap": 0.3,
+    "covered": 0.06
+   },
+   "confidence": 0.46
+  }
+ },
+ "usage": {
+  "inputTokens": 990,
+  "outputTokens": 215
+ },
+ "resolution": "effects: plan strengthened so C1 persists pending STEP action identity before broker effects and gates reconcile plus no-redraw; isolation: rebutted with source, PLAN M0R1 plus C3 rows freeze panel plus missing-arm plus verifier gates; binding gap 0.29 kept as implementation risk under C2 cross-study gate; no question rephrased."
+}

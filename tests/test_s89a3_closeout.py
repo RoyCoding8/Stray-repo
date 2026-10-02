@@ -33,6 +33,8 @@ DEV_TASK = "ad01-w0-dev-sw-00"
 USE_TASK = "ad01-w0-within-sw-00"
 ACQ_CID = "ad01-w0-I-60"
 REJ_CID = "ad01-w0-I-61"
+PROTOCOL = "s09-revision-v1"
+EVALUATOR = "ad01-method-exec-v1"
 
 SIMULATED_MODEL_SW_SOURCE = (
     "def acquired_sw_bare(task, oracle, max_queries=16):\n"
@@ -101,6 +103,40 @@ class ScriptedModelBoundaryDouble:
         return False
 
 
+def _lifecycle(dsn, investigation, source, entry):
+    from experiments.ad01 import records
+    proposal = records.open_revision_proposal(
+        dsn, investigation_id=investigation,
+        parent_digest="seed-sw-greedy",
+        failure_record={"task_id": USE_TASK,
+                        "parent_digest": "seed-sw-greedy",
+                        "verdict": "not_preserved"},
+        scope={"family": "software"})
+    freeze = records.freeze_candidate(
+        dsn, proposal_id=proposal["proposal_id"],
+        source_bytes=source, entry=entry)
+    assessment = records.assess_frozen(
+        dsn, proposal_id=proposal["proposal_id"], tasks=[DEV_TASK],
+        evaluator_version=EVALUATOR, protocol_id=PROTOCOL)
+    assert assessment["outcome"] == "bind", assessment
+    assert assessment["candidate_digest"] == freeze["candidate_digest"]
+    return {"proposal": proposal, "freeze": freeze,
+            "assessment": assessment}
+
+
+def _bind(dsn, life, release, versions, expected=None):
+    from experiments.ad01 import selection
+    return selection.bind_revision(
+        dsn, release_id=release, versions=list(versions),
+        scope={"family": "software"}, disposition="default",
+        fallback="seed-sw-greedy", expected_versions=expected,
+        policy_version="p1", protocol_id=PROTOCOL,
+        evaluator_version=EVALUATOR,
+        evidence_refs=[life["assessment"]["attempt_id"]],
+        proposal_id=life["proposal"]["proposal_id"],
+        candidate_digest=life["freeze"]["candidate_digest"])
+
+
 def _campaign(dsn, cid):
     from experiments.ad01 import trajectory
     trajectory.authorize_campaign(dsn, cid, authorized=100000)
@@ -141,6 +177,11 @@ def test_public_acquisition_check_retention_use(store, tmp_path):
     assert executable["authored"] is False
     assert executable["method_source"] == SIMULATED_MODEL_SW_SOURCE
     assert executable["scope"] == {"family": "software"}
+    life = _lifecycle(store, ACQ_CID, SIMULATED_MODEL_SW_SOURCE,
+                      member["entry"])
+    assert life["freeze"]["candidate_digest"] == member["source_digest"]
+    release = "s89a3-acq"
+    _bind(store, life, release, [member["capability_id"]])
     repertoire = {"campaign_id": ACQ_CID, "members": [executable]}
     frozen = tmp_path / "s89a3-repertoire.json"
     trajectory.freeze_repertoire(
@@ -151,17 +192,19 @@ def test_public_acquisition_check_retention_use(store, tmp_path):
     allocation = "ad01-campaign-%s" % ACQ_CID
     [record] = trajectory.run_use(
         loaded, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        dsn=store, allocation_id=allocation)
+        dsn=store, allocation_id=allocation, release_id=release)
     assert record["selected"] == member["capability_id"]
     assert record["executed"] == member["capability_id"]
     assert record["executed_source"] == SIMULATED_MODEL_SW_SOURCE
     assert record["fallback_reason"] == ""
+    assert record["release_id"] == release
     assert record["verdict"] == "preserved"
     assert record["operation_ids"]
     proc = subprocess.run(
         [sys.executable, "-m", "experiments.ad01.cli", "use",
          "--repertoire", str(frozen), "--dsn", store,
-         "--allocation-id", allocation, "--world", "0", "--arm", "I",
+         "--allocation-id", allocation, "--release", release,
+         "--world", "0", "--arm", "I",
          "--tasks", USE_TASK],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300)
     assert proc.returncode == 0, proc.stderr
@@ -170,6 +213,7 @@ def test_public_acquisition_check_retention_use(store, tmp_path):
     assert fresh["executed"] == member["capability_id"]
     assert fresh["executed_source"] == SIMULATED_MODEL_SW_SOURCE
     assert fresh["fallback_reason"] == ""
+    assert fresh["release_id"] == release
 
 
 def test_archived_model_bytes_execute_through_fixed_child():
@@ -208,6 +252,10 @@ def test_invalid_candidate_refused_and_use_falls_back(store):
     assert empty["selected"] == "incumbent"
     assert empty["executed"] == "incumbent"
     assert "no eligible repertoire member" in empty["fallback_reason"]
+    life = _lifecycle(store, REJ_CID, SIMULATED_MODEL_SW_SOURCE,
+                      "acquired_sw_bare")
+    release = "s89a3-rej"
+    _bind(store, life, release, ["acquired-sw-s89a3boom"])
     failing = {"capability_id": "acquired-sw-s89a3boom",
                "method_source": FAILING_MEMBER_SOURCE,
                "entry": "acquired_sw_boom",
@@ -215,11 +263,31 @@ def test_invalid_candidate_refused_and_use_falls_back(store):
                "scope": {"family": "software"}, "authored": False,
                "source_digest": hashlib.sha256(
                    FAILING_MEMBER_SOURCE.encode("utf-8")).hexdigest()}
-    [fallback] = trajectory.run_use(
+    [pinned] = trajectory.run_use(
         {"campaign_id": REJ_CID, "members": [failing]}, 0, "I",
         [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        dsn=store, allocation_id="ad01-campaign-%s" % REJ_CID)
-    assert fallback["requested"] == "acquired-sw-s89a3boom"
-    assert fallback["selected"] == "acquired-sw-s89a3boom"
+        dsn=store, allocation_id="ad01-campaign-%s" % REJ_CID,
+        release_id=release)
+    assert pinned["selected"] == "incumbent"
+    assert pinned["executed"] == "incumbent"
+    assert "pins bytes" in pinned["fallback_reason"]
+    assert release in pinned["fallback_reason"]
+    _bind(store, life, release, ["acquired-sw-s89a3good"],
+          ["acquired-sw-s89a3boom"])
+    broken_entry = {"capability_id": "acquired-sw-s89a3good",
+                    "method_source": SIMULATED_MODEL_SW_SOURCE,
+                    "entry": "acquired_sw_boom",
+                    "params": {"max_queries": 16},
+                    "scope": {"family": "software"}, "authored": False,
+                    "source_digest": hashlib.sha256(
+                        SIMULATED_MODEL_SW_SOURCE.encode(
+                            "utf-8")).hexdigest()}
+    [fallback] = trajectory.run_use(
+        {"campaign_id": REJ_CID, "members": [broken_entry]}, 0, "I",
+        [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
+        dsn=store, allocation_id="ad01-campaign-%s" % REJ_CID,
+        release_id=release)
+    assert fallback["requested"] == "acquired-sw-s89a3good"
+    assert fallback["selected"] == "acquired-sw-s89a3good"
     assert fallback["executed"] == "incumbent"
     assert "member execution failed" in fallback["fallback_reason"]

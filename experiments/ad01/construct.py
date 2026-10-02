@@ -80,11 +80,11 @@ def _settled_text(dsn: str, operation_id: str) -> str | None:
 
 def _call(dsn: str, *, cid: str, lineage: int, attempt: str,
           prompt: str, budget: dict, gateway: Any, model: str,
-          allocation_id: str) -> dict:
+          allocation_id: str, operation_id: str | None = None) -> dict:
     from settlement import broker
     from settlement.common import ResultCode
     from .trajectory import reasoning_effort
-    operation_id = _op_id(cid, lineage, attempt)
+    operation_id = operation_id or _op_id(cid, lineage, attempt)
     settled = _settled_text(dsn, operation_id)
     if settled is not None:
         return {"operation_id": operation_id, "text": settled,
@@ -282,3 +282,224 @@ def _member(task: dict, source: str, entry: str, cid: str, lineage: int,
             "calls_made": calls_made,
         },
     }
+
+
+def _policy_op_id(episode: str, lineage: int, attempt: str) -> str:
+    return "ad01-%s-policy-l%d-%s" % (episode, lineage, attempt)
+
+
+def _policy_id(task: dict, source: str) -> str:
+    digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:8]
+    return "policy-%s-%s" % (FAMILY_TAG[task["family"]], digest)
+
+
+def _policy_prompt(task: dict, experience: dict, budget: dict,
+                   prior_failure: dict | None) -> str:
+    import hashlib as _hashlib
+    import json as _json
+    from . import method_exec
+    from . import policy_step
+    contract = method_exec.step_contract()
+    lines = [
+        "Write one python policy that decides how to investigate.",
+        "Family: %s." % task.get("family", "software"),
+        "Task digest (content arrives in the STEP view, not here): %s"
+        % _hashlib.sha256(_json.dumps(
+            task, sort_keys=True).encode("utf-8")).hexdigest(),
+        "Interface: exactly one module-level function STEP(view, state).",
+        "The view holds task_content, observations, open_questions,",
+        "last_result, eligible_methods, remaining and contract_versions.",
+        "Return exactly {\"action\": <action>, \"state\": <object>}.",
+        "Action kinds: %s." % ", ".join(policy_step.ACTION_KINDS),
+        "An action holds kind, target, inputs, evidence_refs and",
+        "requested_resources; %s." % (
+            policy_step.validate_action.__doc__ or "shapes are strict"),
+        "Entry: %s with %s." % (contract["entry"],
+                                 contract["param_rule"]),
+        "The word import anywhere in the entry source fails validation,",
+        "so use no imports, no dunder access, no IO. Precisely: %s; %s; "
+        "calls to %s fail validation."
+        % (contract["forbidden"]["import_statements"],
+           contract["forbidden"]["dunder"],
+           ",".join(contract["forbidden"]["calls"])),
+        "Source must be %s." % contract["source_rule"],
+        "State is bounded JSON: at most %d bytes; larger states fail."
+        % policy_step.STATE_LIMIT_BYTES,
+        "Reply with exactly one JSON object and nothing else, shaped "
+        '{"entry": "<complete python source>", "notes": "<sentence>"}.',
+        "Budget: %s." % _json.dumps(dict(budget or {}),
+                                    sort_keys=True),
+    ]
+    observed = (experience or {}).get("observations") or []
+    if observed:
+        lines.append("Prior observations: %s" % _json.dumps(
+            [{"task_id": o.get("task_id"), "verdict": o.get("verdict")}
+             for o in observed[-8:]], sort_keys=True))
+    if prior_failure is not None:
+        lines.append("PRIOR FAILURE (repair it): %s"
+                     % _json.dumps(prior_failure, sort_keys=True))
+    return "\n".join(lines)
+
+
+def _policy_evaluate(text: str, operation_id: str, task: dict,
+                     experience: dict, *, dsn: str,
+                     allocation_id: str) -> dict:
+    import hashlib as _hashlib
+    import json as _json
+    from . import method_exec, policy_step
+    digest = _hashlib.sha256(text.encode("utf-8")).hexdigest()
+    source, problem = _parse_entry(text)
+    failure = None
+    checked = None
+    if problem:
+        failure = {"stage": "parse", "reason": problem,
+                   "operation_id": operation_id,
+                   "response_digest": digest}
+    else:
+        try:
+            policy_step.verify_policy_record(
+                policy_step.make_policy_artifact(
+                    source, origin="model-acquired"))
+        except (method_exec.MethodExecutionError, ValueError) as exc:
+            failure = {"stage": "gate", "reason": str(exc),
+                       "operation_id": operation_id,
+                       "response_digest": digest}
+        if failure is None:
+            view = policy_step.materialize_view(
+                task=task,
+                observations=list(
+                    (experience or {}).get("observations") or []),
+                open_questions=[], last_result=None,
+                eligible_methods=[],
+                remaining={"steps": 1, "model_calls": 0,
+                           "queries": 0})
+            try:
+                stepped = method_exec.run_step_out_of_process(
+                    source, view, {}, dsn=dsn,
+                    allocation_id=allocation_id,
+                    operation_id="%s-validate" % operation_id)
+            except method_exec.MethodExecutionError as exc:
+                failure = {"stage": "execute", "reason": str(exc),
+                           "operation_id": operation_id,
+                           "response_digest": digest}
+            else:
+                checked = {
+                    "action_kind": stepped["action"]["kind"],
+                    "state_bytes": len(_json.dumps(
+                        stepped["state"],
+                        sort_keys=True).encode()),
+                    "operation_id": "%s-validate" % operation_id,
+                }
+    return {"source": source, "failure": failure,
+            "ok": failure is None, "checked": checked,
+            "response_digest": digest}
+
+
+def construct_policy(dsn: str, *, campaign_id: str, task: dict,
+                     experience: dict, budget: dict, gateway: Any,
+                     model: str, study_root: str | None = None,
+                     parent_digest: str | None = None,
+                     applicability: dict | None = None) -> dict:
+    from . import policy_step
+    from .trajectory import _alloc_id, _campaign_operations
+
+    episode = "%s-b%d-%s-policy" % (
+        campaign_id, experience.get("boundary", {}).get("seq", 0),
+        task["task_id"])
+    prior_lineages = sum(
+        op["effect"] == "model-inference"
+        and "-policy-l" in op["id"] and op["id"].endswith("-init")
+        and not op["id"].startswith("ad01-%s-policy-" % episode)
+        for op in _campaign_operations(dsn, campaign_id))
+    if prior_lineages >= MAX_LINEAGES:
+        raise ConstructionFailed("lineage cap reached (2/trajectory)")
+    allocation_id = _construction_allocation(
+        dsn, episode, budget, _alloc_id(campaign_id))
+    calls_made = 0
+    operation_ids = []
+    for lineage in range(1, MAX_LINEAGES - prior_lineages + 1):
+        attempts = []
+        for attempt in ("init", "repair"):
+            if calls_made >= budget.get("model_calls",
+                                        CONSTRUCTION_CALL_CEILING):
+                raise ConstructionFailed("model call cap reached",
+                                         calls_made=calls_made,
+                                         queries=0)
+            operation_id = _policy_op_id(episode, lineage, attempt)
+            prior = attempts[-1]["failure"] if attempts else None
+            try:
+                record = _call(
+                    dsn, cid=episode, lineage=lineage, attempt=attempt,
+                    prompt=_policy_prompt(task, experience, budget,
+                                          prior),
+                    budget=budget, gateway=gateway, model=model,
+                    allocation_id=allocation_id,
+                    operation_id=operation_id)
+            except ConstructionFailed as exc:
+                from settlement import broker
+                exists = broker.read_operation(
+                    dsn, operation_id) is not None
+                exc.calls_made = calls_made + int(exists)
+                exc.queries = 0
+                if attempt == "repair":
+                    if exists:
+                        operation_ids.append(operation_id)
+                        calls_made += 1
+                    attempts.append({
+                        "operation_id": operation_id,
+                        "failure": {"stage": "repair-transport",
+                                    "reason": str(exc),
+                                    "operation_id": operation_id}})
+                    break
+                raise
+            operation_ids.append(operation_id)
+            calls_made += 1
+            evaluated = _policy_evaluate(
+                record["text"], operation_id, task, experience,
+                dsn=dsn, allocation_id=_alloc_id(campaign_id))
+            attempts.append({**record, **evaluated})
+            if evaluated["failure"] is None:
+                artifact = policy_step.make_policy_artifact(
+                    evaluated["source"], origin="model-acquired",
+                    parent_digest=parent_digest,
+                    applicability=applicability or {
+                        "family": task.get("family", ""),
+                        "task_id": task.get("task_id", "")})
+                return {
+                    "capability_id": _policy_id(
+                        task, evaluated["source"]),
+                    "policy_source": evaluated["source"],
+                    "entry": "STEP",
+                    "params": {"abi":
+                               policy_step.POLICY_STEP_VERSION},
+                    "scope": {"family": task["family"]},
+                    "authored": False,
+                    "qualified_on": task.get("task_id", ""),
+                    "source_digest": _source_digest(
+                        evaluated["source"]),
+                    "policy_artifact": artifact["artifact"],
+                    "lineage": {
+                        "campaign_id": campaign_id,
+                        "lineage": lineage,
+                        "study_root": study_root,
+                        "init_operation": attempts[0][
+                            "operation_id"],
+                        "repair_operation": attempts[1][
+                            "operation_id"]
+                        if len(attempts) > 1 else None,
+                        "init_failure": attempts[0].get("failure"),
+                        "init_response_digest": attempts[0][
+                            "response_digest"],
+                        "calls_made": calls_made,
+                        "response_digest": evaluated[
+                            "response_digest"],
+                    },
+                    "validation": {
+                        "gate": "ok",
+                        "dry_run": evaluated["checked"],
+                    },
+                    "operation_ids": operation_ids,
+                }
+    raise ConstructionFailed("construction exhausted without a checked"
+                             " policy", calls_made=calls_made,
+                             queries=0)

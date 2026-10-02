@@ -61,6 +61,7 @@ class GatewayError:
     message: str
     retryable: bool
     operation_id: str
+    usage: Usage | None = None
 
 
 class GatewayAdapter(ABC):

@@ -1,0 +1,30 @@
+{
+ "charge_units": {
+  "measured": "unknown",
+  "source": "doubles-carry-no-priced-charge"
+ },
+ "construction": {
+  "measured": 3,
+  "source": "durable-model-inference-operations"
+ },
+ "model_requests": {
+  "measured": 3,
+  "source": "episode-plus-construction-census"
+ },
+ "policy_execution": {
+  "measured": 16,
+  "source": "settled-boundaries"
+ },
+ "rejected_actions": {
+  "measured": 0,
+  "source": "episode-dispositions"
+ },
+ "repair": {
+  "measured": 1,
+  "source": "repair-attempt-operations"
+ },
+ "use": {
+  "measured": 24,
+  "source": "sealed-use-records"
+ }
+}

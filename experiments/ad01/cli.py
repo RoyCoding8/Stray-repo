@@ -66,7 +66,8 @@ def _campaign_kwargs(args, world: int, arm: str, cid: str):
         constructor = "model"
     return {"propose": propose, "gateway": gateway,
             "model": args.model or "recorded-double",
-            "constructor": constructor}
+            "constructor": constructor,
+            "policy_release": getattr(args, "policy_release", None)}
 
 
 def _resume_ids(campaign: str, parser) -> tuple:
@@ -96,6 +97,19 @@ def main(argv: list | None = None) -> int:
     run.add_argument("--model", default="")
     run.add_argument("--recordings", default="")
     run.add_argument("--export-out", default="")
+    run.add_argument("--policy-release")
+    cycle = sub.add_parser("cycle")
+    cycle.add_argument("--dsn", required=True)
+    cycle.add_argument("--world", type=int, required=True)
+    cycle.add_argument("--arm", required=True)
+    cycle.add_argument("--seq", type=int, default=0)
+    cycle.add_argument("--max-boundaries", type=int, default=6)
+    cycle.add_argument("--agenda-authorized", type=int)
+    cycle.add_argument("--tasks", default="")
+    cycle.add_argument("--model", default="")
+    cycle.add_argument("--recordings", default="")
+    cycle.add_argument("--export-out", default="")
+    cycle.add_argument("--policy-release")
     resume = sub.add_parser("resume")
     resume.add_argument("--dsn", required=True)
     resume.add_argument("--campaign", required=True)
@@ -105,10 +119,12 @@ def main(argv: list | None = None) -> int:
     resume.add_argument("--model", default="")
     resume.add_argument("--recordings", default="")
     resume.add_argument("--export-out", default="")
+    resume.add_argument("--policy-release")
     use = sub.add_parser("use")
     use.add_argument("--repertoire", required=True)
     use.add_argument("--dsn", required=True)
     use.add_argument("--allocation-id", required=True)
+    use.add_argument("--release")
     use.add_argument("--accounting-out")
     use.add_argument("--world", type=int, required=True)
     use.add_argument("--arm", required=True)
@@ -187,15 +203,15 @@ def main(argv: list | None = None) -> int:
         json.dump(out, sys.stdout, sort_keys=True, default=str)
         sys.stdout.write("\n")
         return 0
-    if args.command in ("run", "use"):
+    if args.command in ("run", "cycle", "use"):
         if args.world not in worlds.WORLDS:
             parser.error("unknown --world %r, want one of %s"
                          % (args.world, list(worlds.WORLDS)))
         if args.arm not in ("I", "R"):
             parser.error("unknown --arm %r, want I or R" % args.arm)
-    if args.command == "run" and args.seq < 0:
+    if args.command in ("run", "cycle") and args.seq < 0:
         parser.error("--seq must be a nonnegative integer")
-    if args.command in ("run", "resume") and args.max_boundaries < 0:
+    if args.command in ("run", "cycle", "resume") and args.max_boundaries < 0:
         parser.error("--max-boundaries must be a nonnegative integer")
     if args.command == "use":
         try:
@@ -206,7 +222,8 @@ def main(argv: list | None = None) -> int:
             records = trajectory.run_use(
                 repertoire, args.world, args.arm,
                 _tasks(args.tasks) or [],
-                {}, dsn=args.dsn, allocation_id=args.allocation_id)
+                {}, dsn=args.dsn, allocation_id=args.allocation_id,
+                release_id=args.release)
         except Exception as exc:
             return _refuse(exc)
         if args.accounting_out:
@@ -227,7 +244,7 @@ def main(argv: list | None = None) -> int:
     caps = dict(CAPS, max_boundaries=args.max_boundaries,
                 agenda_authorized=args.agenda_authorized)
     try:
-        if args.command == "run":
+        if args.command in ("run", "cycle"):
             cid = trajectory.campaign_id(args.world, args.arm, args.seq)
             if args.agenda_authorized:
                 trajectory.authorize_campaign(

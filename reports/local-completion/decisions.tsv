@@ -1,0 +1,7 @@
+ts	phase	decision	why	evidence	result
+2026-09-21T18:10:57.356Z	frame	Continue from pushed worker work	Avoid duplicating completed implementation	0fba219;79c5b3a	open
+2026-09-21T18:16:44.179Z	cleanup	Retired inactive dev02 assessment checkout	Tracked content recoverable and three unique untracked files archived byte-for-byte	D:/AI/Agent-Society-worktree-archives/dev02-assessment-20260921	verified
+2026-09-21T18:19:07.862Z	verification	Provisioned isolated local PostgreSQL18 runtime	Rerun real child and database gates instead of accepting worker counts	WSL Ubuntu; /tmp/as9-venv; PostgreSQL18.6	ready
+2026-09-22	C2A	Connect actual retained use and freeze policy candidates	Remove construction substitution and silent stop	ab7456f; five real-PG/child gates	verified partial; policy assessment next
+2026-09-22	C2B	Merge exact binding and canonical assessment identity	Candidate bytes and explicit release must reach execution	22 merged gates; 13 adjacent gates after fixing omitted fixture digest	verified
+2026-09-22	cleanup	Remove merged binding worktree and branch	Clean and ancestor of integration HEAD; upstream tracking removed before safe branch deletion	bfd8fab; D:/AI/as9-c2	removed

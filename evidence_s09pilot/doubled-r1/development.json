@@ -1,0 +1,62 @@
+[
+ {
+  "campaign_id": "ad01-w0-I-50",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "dev-sw-0",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w0-dev-sw-00",
+  "witness_queries": 1,
+  "world": 0
+ },
+ {
+  "campaign_id": "ad01-w0-I-51",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "dev-sw-1",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w0-dev-sw-01",
+  "witness_queries": 1,
+  "world": 0
+ },
+ {
+  "campaign_id": "ad01-w0-I-52",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "dev-gr-0",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w0-dev-gr-00",
+  "witness_queries": 15,
+  "world": 0
+ },
+ {
+  "campaign_id": "ad01-w0-I-53",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "dev-gr-1",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w0-dev-gr-01",
+  "witness_queries": 15,
+  "world": 0
+ }
+]

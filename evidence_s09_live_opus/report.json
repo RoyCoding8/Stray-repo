@@ -1,0 +1,326 @@
+{
+ "arms": {
+  "P0": {
+   "changed_decisions": 4,
+   "construction_delivery": {
+    "calls": 0,
+    "candidate_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+    "release_id": null,
+    "status": "authored"
+   },
+   "coverage": {
+    "graph": {
+     "status": "covered"
+    },
+    "software": {
+     "status": "covered"
+    }
+   },
+   "downstream_task_quality": {
+    "normalized_reduction": 2.8215034965034964,
+    "preserved": 8,
+    "tasks": 8
+   },
+   "effects": {
+    "dispositions": {
+     "inspected": 0,
+     "no-candidate": 0,
+     "rejected": 4,
+     "retained": 0
+    }
+   },
+   "executable_validity": {
+    "available": true,
+    "executed_digests": [
+     "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+    ]
+   },
+   "resource_cost": {
+    "construction_calls": 0,
+    "model_calls": 6,
+    "policy_steps": 4,
+    "sealed_use_tasks": 8,
+    "witness_queries": 32
+   }
+  },
+  "P1": {
+   "changed_decisions": 0,
+   "construction_delivery": {
+    "calls": 1,
+    "candidate_digest": "",
+    "release_id": null,
+    "status": "unavailable"
+   },
+   "coverage": {
+    "graph": {
+     "status": "arm-unavailable"
+    },
+    "software": {
+     "status": "arm-unavailable"
+    }
+   },
+   "downstream_task_quality": {
+    "normalized_reduction": 0.0,
+    "preserved": 0,
+    "tasks": 8
+   },
+   "effects": {
+    "dispositions": {
+     "inspected": 0,
+     "no-candidate": 0,
+     "rejected": 0,
+     "retained": 0
+    }
+   },
+   "executable_validity": {
+    "available": false,
+    "executed_digests": []
+   },
+   "resource_cost": {
+    "construction_calls": 1,
+    "model_calls": 0,
+    "policy_steps": 0,
+    "sealed_use_tasks": 8,
+    "witness_queries": 0
+   }
+  },
+  "P2": {
+   "changed_decisions": 0,
+   "construction_delivery": {
+    "calls": 2,
+    "candidate_digest": "",
+    "release_id": null,
+    "status": "unavailable"
+   },
+   "coverage": {
+    "graph": {
+     "status": "arm-unavailable"
+    },
+    "software": {
+     "status": "arm-unavailable"
+    }
+   },
+   "downstream_task_quality": {
+    "normalized_reduction": 0.0,
+    "preserved": 0,
+    "tasks": 8
+   },
+   "effects": {
+    "dispositions": {
+     "inspected": 0,
+     "no-candidate": 0,
+     "rejected": 0,
+     "retained": 0
+    }
+   },
+   "executable_validity": {
+    "available": false,
+    "executed_digests": []
+   },
+   "resource_cost": {
+    "construction_calls": 2,
+    "model_calls": 0,
+    "policy_steps": 0,
+    "sealed_use_tasks": 8,
+    "witness_queries": 0
+   }
+  }
+ },
+ "comparison_complete": false,
+ "comparisons": {
+  "P2-vs-P0": {
+   "baseline": "P0",
+   "baseline_metrics": {
+    "changed_decisions": 4,
+    "construction_delivery": {
+     "calls": 0,
+     "candidate_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+     "release_id": null,
+     "status": "authored"
+    },
+    "coverage": {
+     "graph": {
+      "status": "covered"
+     },
+     "software": {
+      "status": "covered"
+     }
+    },
+    "downstream_task_quality": {
+     "normalized_reduction": 2.8215034965034964,
+     "preserved": 8,
+     "tasks": 8
+    },
+    "effects": {
+     "dispositions": {
+      "inspected": 0,
+      "no-candidate": 0,
+      "rejected": 4,
+      "retained": 0
+     }
+    },
+    "executable_validity": {
+     "available": true,
+     "executed_digests": [
+      "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+     ]
+    },
+    "resource_cost": {
+     "construction_calls": 0,
+     "model_calls": 6,
+     "policy_steps": 4,
+     "sealed_use_tasks": 8,
+     "witness_queries": 32
+    }
+   },
+   "candidate": "P2",
+   "candidate_metrics": {
+    "changed_decisions": 0,
+    "construction_delivery": {
+     "calls": 2,
+     "candidate_digest": "",
+     "release_id": null,
+     "status": "unavailable"
+    },
+    "coverage": {
+     "graph": {
+      "status": "arm-unavailable"
+     },
+     "software": {
+      "status": "arm-unavailable"
+     }
+    },
+    "downstream_task_quality": {
+     "normalized_reduction": 0.0,
+     "preserved": 0,
+     "tasks": 8
+    },
+    "effects": {
+     "dispositions": {
+      "inspected": 0,
+      "no-candidate": 0,
+      "rejected": 0,
+      "retained": 0
+     }
+    },
+    "executable_validity": {
+     "available": false,
+     "executed_digests": []
+    },
+    "resource_cost": {
+     "construction_calls": 2,
+     "model_calls": 0,
+     "policy_steps": 0,
+     "sealed_use_tasks": 8,
+     "witness_queries": 0
+    }
+   },
+   "not_covered_domains": [
+    "software",
+    "graph"
+   ],
+   "status": "incomplete"
+  },
+  "P2-vs-P1": {
+   "baseline": "P1",
+   "baseline_metrics": {
+    "changed_decisions": 0,
+    "construction_delivery": {
+     "calls": 1,
+     "candidate_digest": "",
+     "release_id": null,
+     "status": "unavailable"
+    },
+    "coverage": {
+     "graph": {
+      "status": "arm-unavailable"
+     },
+     "software": {
+      "status": "arm-unavailable"
+     }
+    },
+    "downstream_task_quality": {
+     "normalized_reduction": 0.0,
+     "preserved": 0,
+     "tasks": 8
+    },
+    "effects": {
+     "dispositions": {
+      "inspected": 0,
+      "no-candidate": 0,
+      "rejected": 0,
+      "retained": 0
+     }
+    },
+    "executable_validity": {
+     "available": false,
+     "executed_digests": []
+    },
+    "resource_cost": {
+     "construction_calls": 1,
+     "model_calls": 0,
+     "policy_steps": 0,
+     "sealed_use_tasks": 8,
+     "witness_queries": 0
+    }
+   },
+   "candidate": "P2",
+   "candidate_metrics": {
+    "changed_decisions": 0,
+    "construction_delivery": {
+     "calls": 2,
+     "candidate_digest": "",
+     "release_id": null,
+     "status": "unavailable"
+    },
+    "coverage": {
+     "graph": {
+      "status": "arm-unavailable"
+     },
+     "software": {
+      "status": "arm-unavailable"
+     }
+    },
+    "downstream_task_quality": {
+     "normalized_reduction": 0.0,
+     "preserved": 0,
+     "tasks": 8
+    },
+    "effects": {
+     "dispositions": {
+      "inspected": 0,
+      "no-candidate": 0,
+      "rejected": 0,
+      "retained": 0
+     }
+    },
+    "executable_validity": {
+     "available": false,
+     "executed_digests": []
+    },
+    "resource_cost": {
+     "construction_calls": 2,
+     "model_calls": 0,
+     "policy_steps": 0,
+     "sealed_use_tasks": 8,
+     "witness_queries": 0
+    }
+   },
+   "not_covered_domains": [
+    "software",
+    "graph"
+   ],
+   "status": "incomplete"
+  }
+ },
+ "complete": false,
+ "incomplete_arms": [
+  "P1",
+  "P2"
+ ],
+ "missing_arms": [
+  "P1",
+  "P2"
+ ],
+ "status": "incomplete"
+}

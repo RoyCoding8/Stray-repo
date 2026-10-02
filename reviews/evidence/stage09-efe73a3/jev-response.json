@@ -1,0 +1,104 @@
+{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "policy_pilot": {
+      "type": "choice",
+      "choice": "incomplete",
+      "probabilities": {
+        "uncertain": 0.04,
+        "complete": 0.35,
+        "incomplete": 0.61
+      },
+      "confidence": 0.41
+    },
+    "live_route": {
+      "type": "choice",
+      "choice": "incomplete",
+      "probabilities": {
+        "uncertain": 0.15,
+        "complete": 0.12,
+        "incomplete": 0.73
+      },
+      "confidence": 0.6
+    },
+    "assessment_binding": {
+      "type": "choice",
+      "choice": "incomplete",
+      "probabilities": {
+        "uncertain": 0.12,
+        "complete": 0.01,
+        "incomplete": 0.87
+      },
+      "confidence": 0.81
+    },
+    "continuity": {
+      "type": "choice",
+      "choice": "incomplete",
+      "probabilities": {
+        "uncertain": 0.23,
+        "complete": 0.04,
+        "incomplete": 0.73
+      },
+      "confidence": 0.59
+    },
+    "priority": {
+      "type": "choice",
+      "choice": "incomplete",
+      "probabilities": {
+        "uncertain": 0.02,
+        "complete": 0.02,
+        "incomplete": 0.96
+      },
+      "confidence": 0.93
+    }
+  },
+  "usage": {
+    "inputTokens": 5565,
+    "outputTokens": 214
+  },
+  "providerMetadata": {
+    "typesafe": {
+      "confidence": {
+        "policy_pilot": 0.41,
+        "live_route": 0.6,
+        "assessment_binding": 0.81,
+        "continuity": 0.59,
+        "priority": 0.93
+      }
+    },
+    "gateway": {
+      "routing": {
+        "originalModelId": "typesafe-ai/jev",
+        "resolvedProvider": "typesafe-ai",
+        "fallbacksAvailable": [],
+        "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+        "canonicalSlug": "typesafe-ai/jev",
+        "finalProvider": "typesafe-ai",
+        "modelAttemptCount": 1,
+        "modelAttempts": [
+          {
+            "canonicalSlug": "typesafe-ai/jev",
+            "success": true,
+            "providerAttemptCount": 1,
+            "providerAttempts": [
+              {
+                "provider": "typesafe-ai",
+                "credentialType": "system",
+                "success": true,
+                "startTime": 1789978311971,
+                "endTime": 1789978312194,
+                "statusCode": 200
+              }
+            ]
+          }
+        ],
+        "totalProviderAttemptCount": 1
+      },
+      "cost": "0",
+      "marketCost": "0.00023373",
+      "surchargeCost": "0",
+      "gatewayCost": "0",
+      "generationId": "gen_01M31GAYYKFEJ6EXJHVRRWF576"
+    }
+  }
+}

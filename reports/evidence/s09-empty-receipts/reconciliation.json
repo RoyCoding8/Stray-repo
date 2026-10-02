@@ -1,0 +1,115 @@
+{
+ "buckets": {
+  "export omission": [],
+  "never-sent preparation": [],
+  "observed provider failure": [],
+  "receipt-admission refusal": [],
+  "unknown response": [
+   {
+    "claimed_by": [
+     "development:dev-gr-1"
+    ],
+    "context": "disposition=['rejected'] status=complete",
+    "evidence": "exported with 1 receipt(s), outcomes=['unknown'], none settled; raw provider bytes unavailable, live store is dropped",
+    "operation_id": "ad01-ad01-w0-I-53-b0-ad01-w0-dev-gr-01-construct-l1-init",
+    "receipt_identities": [
+     "gw:ad01-ad01-w0-I-53-b0-ad01-w0-dev-gr-01-construct-l1-init:unknown"
+    ]
+   },
+   {
+    "claimed_by": [
+     "construction:P1"
+    ],
+    "context": "arm=P1 status=unavailable reason=policy constructor unavailable: construction call ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init left no settled response",
+    "evidence": "exported with 1 receipt(s), outcomes=['unknown'], none settled; raw provider bytes unavailable, live store is dropped",
+    "operation_id": "ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "receipt_identities": [
+     "gw:ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init:unknown"
+    ]
+   },
+   {
+    "claimed_by": [
+     "assessment:assess-P0-w1-software"
+    ],
+    "context": "assessment status=complete",
+    "evidence": "exported with 1 receipt(s), outcomes=['unknown'], none settled; raw provider bytes unavailable, live store is dropped",
+    "operation_id": "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-repair",
+    "receipt_identities": [
+     "gw:ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-repair:unknown"
+    ]
+   },
+   {
+    "claimed_by": [
+     "assessment:assess-P0-w1-software"
+    ],
+    "context": "assessment status=complete",
+    "evidence": "exported with 1 receipt(s), outcomes=['unknown'], none settled; raw provider bytes unavailable, live store is dropped",
+    "operation_id": "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l2-init",
+    "receipt_identities": [
+     "gw:ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l2-init:unknown"
+    ]
+   },
+   {
+    "claimed_by": [
+     "assessment:assess-P0-w1-graph"
+    ],
+    "context": "assessment status=complete",
+    "evidence": "exported with 1 receipt(s), outcomes=['unknown'], none settled; raw provider bytes unavailable, live store is dropped",
+    "operation_id": "ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init",
+    "receipt_identities": [
+     "gw:ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init:unknown"
+    ]
+   },
+   {
+    "claimed_by": [
+     "assessment:assess-P0-w2-software"
+    ],
+    "context": "assessment status=complete",
+    "evidence": "exported with 1 receipt(s), outcomes=['unknown'], none settled; raw provider bytes unavailable, live store is dropped",
+    "operation_id": "ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init",
+    "receipt_identities": [
+     "gw:ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init:unknown"
+    ]
+   },
+   {
+    "claimed_by": [
+     "assessment:assess-P0-w2-graph"
+    ],
+    "context": "assessment status=complete",
+    "evidence": "exported with 1 receipt(s), outcomes=['unknown'], none settled; raw provider bytes unavailable, live store is dropped",
+    "operation_id": "ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init",
+    "receipt_identities": [
+     "gw:ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init:unknown"
+    ]
+   }
+  ]
+ },
+ "bundle": "evidence_s09_live_opus",
+ "bundle_sha256": {
+  "accounting": "e21ec02eae42beda1e1ae572b886d4af79bed0cc074f1272a91e8694e84319c1",
+  "assessment": "71e8ccd53cc6f63db6d4fa23e0502af745e0227ceab0488ddecff2199299fede",
+  "conformance_replay": "46d50606f2786148f9080fb27d925c98a00eeaf931207a37571933096573283f",
+  "construction": "beaf9065fed689b61b6d1a165416f835e6d872aa9666435b7f69036d27fd6a5a",
+  "development": "23c4049b85f34eef7efd838c1866772408fb35f3ee3ac2856fdc836a8e7594a7",
+  "freeze": "1bfd023d87becfcd4e56e96d872cd7c26961d5f7f5982375a4f3e57a946680ea",
+  "operations": "1b2b716467989229a48a36f214d10848a3b3816be59aec41d302c55fb25a089b",
+  "refusal_probes": "5fb3df5176ec8ebee24c9d2e90886ddd5c80ea39c1e6f56e816ceb6a29c10c44",
+  "use_records": "c15dc8d51b429d59e14cfe2bd8846c20939764a95620876b0dd847e3777a28ee"
+ },
+ "counts": {
+  "export omission": 0,
+  "never-sent preparation": 0,
+  "observed provider failure": 0,
+  "receipt-admission refusal": 0,
+  "unknown response": 7
+ },
+ "limits": [
+  "receipt-admission refusal leaves no export trace and is undetectable from the bundle alone; count 0 means none observed, not none occurred",
+  "unknown response cannot be split into timeout, empty completion or transport failure: the export slim usage carries no error text and the live store is dropped",
+  "never-sent preparation with zero receipts cannot be split from admission refusal without the durable journal"
+ ],
+ "settled_outcomes": [
+  "success",
+  "failure"
+ ]
+}

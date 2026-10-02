@@ -1,0 +1,147 @@
+[
+ {
+  "bound_digest": "",
+  "campaign_id": "ad01-w0-I-50",
+  "construction_calls": 1,
+  "dispositions": [
+   "retained"
+  ],
+  "domain": "software",
+  "episode_id": "dev-sw-0",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-construct-l1-init",
+   "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-validate-l1-init",
+   "ad01-ad01-w0-I-50-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 15,
+    "task_id": "ad01-w0-dev-sw-00"
+   }
+  ],
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w0-dev-sw-00",
+  "witness_queries": 10,
+  "world": 0
+ },
+ {
+  "bound_digest": "",
+  "campaign_id": "ad01-w0-I-51",
+  "construction_calls": 2,
+  "dispositions": [
+   "retained"
+  ],
+  "domain": "software",
+  "episode_id": "dev-sw-1",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "model_calls": 2,
+  "operations": [
+   "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-init",
+   "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-repair",
+   "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-validate-l1-repair",
+   "ad01-ad01-w0-I-51-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 15,
+    "task_id": "ad01-w0-dev-sw-01"
+   }
+  ],
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w0-dev-sw-01",
+  "witness_queries": 16,
+  "world": 0
+ },
+ {
+  "bound_digest": "",
+  "campaign_id": "ad01-w0-I-52",
+  "construction_calls": 2,
+  "dispositions": [
+   "no-candidate"
+  ],
+  "domain": "graph",
+  "episode_id": "dev-gr-0",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "model_calls": 2,
+  "operations": [
+   "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-init",
+   "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-repair",
+   "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-validate-l1-repair",
+   "ad01-ad01-w0-I-52-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w0-dev-gr-00"
+   }
+  ],
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w0-dev-gr-00",
+  "witness_queries": 16,
+  "world": 0
+ },
+ {
+  "bound_digest": "",
+  "campaign_id": "ad01-w0-I-53",
+  "construction_calls": 1,
+  "dispositions": [
+   "rejected"
+  ],
+  "domain": "graph",
+  "episode_id": "dev-gr-1",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w0-I-53-b0-ad01-w0-dev-gr-01-construct-l1-init",
+   "ad01-ad01-w0-I-53-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w0-dev-gr-01"
+   }
+  ],
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w0-dev-gr-01",
+  "witness_queries": 15,
+  "world": 0
+ }
+]

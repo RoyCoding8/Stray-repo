@@ -1,0 +1,89 @@
+{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "architecture": {
+      "type": "choice",
+      "choice": "B",
+      "probabilities": {
+        "A": 0,
+        "B": 1,
+        "C": 0
+      },
+      "confidence": 1
+    },
+    "meta_identification": {
+      "type": "boolean",
+      "probability": 0.81
+    },
+    "critical_missing_contract": {
+      "type": "choice",
+      "choice": "action_semantics",
+      "probabilities": {
+        "model_reliability": 0.01,
+        "state_migration": 0.31,
+        "none": 0,
+        "agenda_utility": 0.08,
+        "action_semantics": 0.6
+      },
+      "confidence": 0.51
+    },
+    "scope": {
+      "type": "score",
+      "score": 2.91,
+      "probabilities": {
+        "0": 0,
+        "1": 0,
+        "2": 0.08,
+        "3": 0.92
+      },
+      "confidence": 0.91
+    }
+  },
+  "usage": {
+    "inputTokens": 1494,
+    "outputTokens": 138
+  },
+  "providerMetadata": {
+    "typesafe": {
+      "confidence": {
+        "architecture": 1,
+        "critical_missing_contract": 0.51,
+        "scope": 0.91
+      }
+    },
+    "gateway": {
+      "routing": {
+        "originalModelId": "typesafe-ai/jev",
+        "resolvedProvider": "typesafe-ai",
+        "fallbacksAvailable": [],
+        "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+        "canonicalSlug": "typesafe-ai/jev",
+        "finalProvider": "typesafe-ai",
+        "modelAttemptCount": 1,
+        "modelAttempts": [
+          {
+            "canonicalSlug": "typesafe-ai/jev",
+            "success": true,
+            "providerAttemptCount": 1,
+            "providerAttempts": [
+              {
+                "provider": "typesafe-ai",
+                "credentialType": "system",
+                "success": true,
+                "startTime": 1790117191701,
+                "endTime": 1790117191889,
+                "statusCode": 200
+              }
+            ]
+          }
+        ],
+        "totalProviderAttemptCount": 1
+      },
+      "cost": "0",
+      "marketCost": "0.000062748",
+      "surchargeCost": "0",
+      "gatewayCost": "0",
+      "generationId": "gen_01M35MS7532QTKMPDPZWS94SAV"
+    }
+  }
+}

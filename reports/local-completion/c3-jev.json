@@ -1,0 +1,16 @@
+{
+  "model": "typesafe-ai/jev",
+  "questions": {
+    "behavior": "Does the evidence support the controlled public policy-to-method-to-frozen-use path?",
+    "causality": "Do P1 and P2 share task input while retaining distinct experience identities?",
+    "checkpoint": "What status should be reported for this lane?"
+  },
+  "answers": {
+    "behavior": {"probability": 0.78},
+    "causality": {"probability": 0.91},
+    "checkpoint": {"choice": "controlled_checkpoint", "confidence": 1.0}
+  },
+  "usage": {"input_tokens": 747, "output_tokens": 77},
+  "cost": "0",
+  "sanitization": "No credentials, database identifiers, endpoint values, or provider response text were retained. Jev evidence is advisory and does not claim full C3 passage."
+}

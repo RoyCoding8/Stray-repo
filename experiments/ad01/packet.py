@@ -37,13 +37,89 @@ RESPONSE_CONTRACT = {
 }
 
 
+SEALED_LABELS = frozenset({"hidden", "evaluator"})
+
+SEALED_KEYS = frozenset({
+    "hidden_answer", "sealed_answer", "judgment", "sealed_judgment",
+    "blind_key", "assessment_answer", "use_answers",
+})
+
+
+def _is_sealed_observation(obs: dict) -> bool:
+    if not isinstance(obs, dict):
+        return False
+    if str(obs.get("access_label", "")) in SEALED_LABELS:
+        return True
+    for key in SEALED_KEYS:
+        if obs.get(key) not in (None, "", [], {}):
+            return True
+    detail = obs.get("detail")
+    if isinstance(detail, dict):
+        if str(detail.get("access_label", "")) in SEALED_LABELS:
+            return True
+        for key in SEALED_KEYS:
+            if detail.get(key) not in (None, "", [], {}):
+                return True
+    return False
+
+
+def _strip_value(value):
+    if isinstance(value, dict):
+        out = {}
+        for k, v in value.items():
+            if k in SEALED_KEYS or k == "access_label":
+                continue
+            out[k] = _strip_value(v)
+        return out
+    if isinstance(value, list):
+        return [_strip_value(v) for v in value]
+    return value
+
+
+def strip_task(task: dict | None) -> dict:
+    cleaned = {k: _strip_value(v) for k, v in dict(task or {}).items()
+               if k not in SEALED_KEYS}
+    cleaned.pop("access_label", None)
+    return cleaned
+
+
+def _dev_task_ids() -> set:
+    from . import worlds
+    membership = worlds.world_membership(worlds.FROZEN_DIR)
+    return {t for w in membership.values()
+            for d in w.get("dev", {}).values() for t in d}
+
+
+def visible_context(*, observations: list, basis_references: list,
+                    dev_ids: set | None = None) -> dict:
+    by_id = {o.get("observation_id"): o for o in observations or []}
+    dev = set(dev_ids) if dev_ids is not None else _dev_task_ids()
+    for ref in basis_references or []:
+        obs = by_id.get(ref)
+        if obs is None:
+            continue
+        if _is_sealed_observation(obs):
+            raise ValueError("sealed assessment reference %r cannot drive"
+                             " construction" % (ref,))
+        task_id = obs.get("task_id", "")
+        if task_id not in dev:
+            raise ValueError("protected-use reference %r cannot drive"
+                             " development" % (ref,))
+    visible = [o for o in observations or []
+               if not _is_sealed_observation(o)]
+    return {"observations": visible}
+
+
 def project_observations(observations: list) -> list:
+    cleaned = [o for o in observations or []
+               if not _is_sealed_observation(o)]
     return [
         {"observation_id": o.get("observation_id"),
          "task_id": o.get("task_id"),
          "capability_id": o.get("capability_id"),
-         "verdict": o.get("verdict"), "detail": o.get("detail")}
-        for o in observations or []]
+         "verdict": o.get("verdict"),
+         "detail": _strip_value(o.get("detail"))}
+        for o in cleaned]
 
 
 def project_retained(retained: list) -> list:
@@ -126,7 +202,7 @@ def public_operations(family: str) -> dict:
 def construction_packet(*, task: dict | None, experience: dict | None,
                         budget: dict | None,
                         prior_failure: dict | None) -> dict:
-    task = dict(task or {})
+    task = strip_task(dict(task or {}))
     family = task.get("family", "software")
     return {
         "packet_version": PACKET_VERSION,
@@ -140,7 +216,8 @@ def construction_packet(*, task: dict | None, experience: dict | None,
         "diagnostics": {
             "observations": project_observations(
                 (experience or {}).get("observations", [])),
-            "prior_failure": prior_failure,
+            "prior_failure": _strip_value(prior_failure)
+            if prior_failure is not None else None,
         },
         "budgets": dict(budget or {}),
         "entry_rules": entry_rules(),

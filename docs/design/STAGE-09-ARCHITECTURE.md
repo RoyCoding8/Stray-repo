@@ -1,6 +1,6 @@
-# Stage 9 architecture (draft, proposed, not implemented)
+# Stage 9 architecture: first draft, superseded
 
-Status: draft. Nothing here is built. Section 7 marks the migration as proposed.
+Status: historical first draft. The [selected implementation contract](STAGE-09-IMPLEMENTATION-CONTRACT.md) now governs stage 9. The worker must reconcile this document during M0; the proposals below do not override that contract.
 
 Review status at `1d90c2e`: grounding and the in-place consolidation option are accepted as useful inputs; the package needs refinement before migration. The [architectural assessment](../../reviews/STAGE-08-09-1D90C2E-ASSESSMENT.md) identifies the replay-study limitation, feedback/promotion protocol and missing executable policy-revision contract. The proposals below remain recorded for review and are not a final implementation contract.
 
@@ -230,3 +230,33 @@ See `reports/STAGE-09-FEASIBILITY.md` section 4. Replay
 policy-comparison coverage on the committed corpus decides whether
 replay can rank policies or the next learner question must be
 prospective.
+
+## M0 selected contract annex (governs; draft above is historical)
+
+The implementation contract docs/design/STAGE-09-IMPLEMENTATION-CONTRACT.md governs. This annex pins what downstream lanes build against.
+
+Policy ABI ad01-policy-step-v1: STEP(view,state) returns action plus state. Driver owns materialize view, execute policy step, validate and admit or refuse, persist transition, execute and reconcile effect, incorporate result, next step or stop. Policy state is bounded JSON; budgets, claims, visibility, accepted operations stay driver-owned.
+
+State to storage: investigation row holds objective, visible evidence refs, open questions, active policy digest, scoped method bindings, pending accepted action id, policy-private state, revision lineage, remaining authority. Journal holds exact policy input, output, state transition, accepted action identity before effects. Resume reconciles pending id first.
+
+Effects to owners: broker owns model requests plus responses as observations; method_exec child owns bounded execution of ENTRY and STEP; admission owns visibility, target, artifact, budget checks at both orchestration and direct admission; evaluator owns sealed assessment judgments; repertoire binding owns active selection.
+
+Feedback boundary: operational failure with pinned digest opens revision. Sealed assessment bytes never enter constructors. Exposure retires batch for descendants. Protected-task fence from _run_boundary carries into consolidated path; admit_investigation admitted is not execution permission.
+
+Acceptance pins: M1 resume proof needs real process restart after acceptance and after effect; M2 needs two policies diverging plus restart consistency plus model-bytes lineage; M3 needs hidden-answer request-unchanged proof; M4 needs atomic bind plus first-match fix plus full deterministic cycle; M5 needs frozen 12-episode panel plus offline verifier; M6 needs reviewer-supplied candidate; M7 needs byte-identical evidence_inv01_live.
+
+## M0R1 annex v2 (supersedes M0 annex where they differ)
+
+Historical note (F9): lines above the M0 annex are the superseded first draft appendix. They stay for review history and hold no authority. The implementation contract plus this annex govern.
+
+State map (F1): fields reuse investigations, investigation_revisions, observations, attempt_observations, context_views, development_opportunities, public claims, artifact_versions, artifact_refs, capability_versions, capability_releases, attempt_capability_pins, command_journal, operations, allocations, reservations, grants. Only s09_policy_state and s09_assessment_exposure are new, in migrations/0017_s09_state.sql owned by M1.
+
+ABI (F2): experiments/ad01/policy_step.py POLICY_STEP_VERSION ad01-policy-step-v1 with view, state, action shapes and pure validators. M2 adds the STEP runner in method_exec.py and imports the constant.
+
+Execution (F3): ENTRY runner exists in method_exec child ad01-child-v1. STEP runner is M2 work in the method_exec STEP region.
+
+Selection (F4): first-match _select_member is the removed behavior. Binding-aware selection consults capability_releases plus fallback. M1 extracts selection.py. M4 implements bind.
+
+Exposure (F5): exposure events append s09_assessment_exposure with batch, exposed_to, retired_at. Constructors check the retired flag plus hidden or evaluator labels. Exposure retires the batch for descendants.
+
+Driver (F6): cli.py main is the one public driver. trajectory supplies ensure_campaign, _run_boundary, resume_campaign, record_decision. run_c3_qualification.py migrates to a client.

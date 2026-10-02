@@ -1,0 +1,578 @@
+{
+ "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-construct-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-construct-l1-init",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 1538,
+     "output_tokens": 1702
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-validate-l1-init": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-validate-l1-init",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-50-b0-ad01-w0-dev-sw-00-validate-l1-init_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-50-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-50-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-50-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-init",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 1607,
+     "output_tokens": 2048
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-repair": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-repair",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-construct-l1-repair",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 1680,
+     "output_tokens": 1565
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-validate-l1-repair": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-validate-l1-repair",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-51-b0-ad01-w0-dev-sw-01-validate-l1-repair_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-51-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-51-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-51-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-init",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 1091,
+     "output_tokens": 2048
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-repair": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-repair",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-construct-l1-repair",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 1165,
+     "output_tokens": 1255
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-validate-l1-repair": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-validate-l1-repair",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-52-b0-ad01-w0-dev-gr-00-validate-l1-repair_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-52-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-52-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-52-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-53-b0-ad01-w0-dev-gr-01-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-53-b0-ad01-w0-dev-gr-01-construct-l1-init",
+    "outcome": "unknown",
+    "receipt_identity": "gw:ad01-ad01-w0-I-53-b0-ad01-w0-dev-gr-01-construct-l1-init:unknown",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-53-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-53-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-53-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "outcome": "unknown",
+    "receipt_identity": "gw:ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init:unknown",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-54-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-54-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-54-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-54-policy-s1-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-54-policy-s1-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-54-policy-s1-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 513,
+     "output_tokens": 1799
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init-validate": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init-validate",
+    "outcome": "failure",
+    "receipt_identity": "local:ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init-validate_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-repair": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-repair",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-repair",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 676,
+     "output_tokens": 2048
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-55-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-policy-s1-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-policy-s1-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-55-policy-s1-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w0-I-55-policy-s2-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w0-I-55-policy-s2-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w0-I-55-policy-s2-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-init",
+    "outcome": "success",
+    "receipt_identity": "gw:ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-init",
+    "usage": {
+     "billed": false,
+     "charge_units": 0,
+     "input_tokens": 1564,
+     "output_tokens": 2048
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-repair": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-repair",
+    "outcome": "unknown",
+    "receipt_identity": "gw:ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-repair:unknown",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l2-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l2-init",
+    "outcome": "unknown",
+    "receipt_identity": "gw:ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l2-init:unknown",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-60-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-60-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w1-I-60-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init",
+    "outcome": "unknown",
+    "receipt_identity": "gw:ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init:unknown",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-61-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-61-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w1-I-61-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-90-use-ad01-w1-transfer-sw-00-acquired-sw-b9d5f005": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-90-use-ad01-w1-transfer-sw-00-acquired-sw-b9d5f005",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w1-I-90-use-ad01-w1-transfer-sw-00-acquired-sw-b9d5f005_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w1-I-90-use-ad01-w1-within-sw-00-acquired-sw-b9d5f005": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w1-I-90-use-ad01-w1-within-sw-00-acquired-sw-b9d5f005",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w1-I-90-use-ad01-w1-within-sw-00-acquired-sw-b9d5f005_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init",
+    "outcome": "unknown",
+    "receipt_identity": "gw:ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init:unknown",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-62-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-62-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w2-I-62-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init": {
+  "effect": "model-inference",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init",
+    "outcome": "unknown",
+    "receipt_identity": "gw:ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init:unknown",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-63-policy-s0-k0": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-63-policy-s0-k0",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w2-I-63-policy-s0-k0_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-92-use-ad01-w2-transfer-sw-00-acquired-sw-b9d5f005": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-92-use-ad01-w2-transfer-sw-00-acquired-sw-b9d5f005",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w2-I-92-use-ad01-w2-transfer-sw-00-acquired-sw-b9d5f005_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ },
+ "ad01-ad01-w2-I-92-use-ad01-w2-within-sw-00-acquired-sw-b9d5f005": {
+  "effect": "sandbox-exec",
+  "receipts": [
+   {
+    "operation_id": "ad01-ad01-w2-I-92-use-ad01-w2-within-sw-00-acquired-sw-b9d5f005",
+    "outcome": "success",
+    "receipt_identity": "local:ad01-ad01-w2-I-92-use-ad01-w2-within-sw-00-acquired-sw-b9d5f005_exec-default.result",
+    "usage": {
+     "billed": null,
+     "charge_units": null,
+     "input_tokens": null,
+     "output_tokens": null
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,55 @@
+{
+ "checkpoint": "C1 acceptance",
+ "merge": "bafe47c",
+ "model": "typesafe-ai/jev",
+ "request": {
+  "state": "C1 merged at bafe47c. Changed: agenda_policy StepPolicyConsumer seeds state from prior final row, computes model remaining from durable operation counts against packet allowance and hard 6 cap, returns cached terminal rows without reexecution, carries operation identity on failures, persists step-failed and budget-exhausted as incorporated refusal. policy_step adds prior-final loading, durable model counting over policy plus construct ops, idempotent terminal persistence. Observed: 6 continuity gates green on real Postgres plus real children (allowance-1 prepares once, state survives boundary, resume reuses settled text, pending survives, exhausted persists, empty attributable); 20 nearby gates green. Counterexamples known: early validation refusals before any view carry no durable row; stop admissions show accepted until trajectory incorporates on resume; doubled probe still shows old observations by design. Boundaries: recording doubles only, no live inference; bypass risk in _step_proposal translation and propose_revision branch owned by later lane C2A.",
+  "questions": {
+   "claim": {
+    "type": "choice",
+    "instructions": "Does durable STEP state with cumulative limits follow from the 6 gates plus 20 nearby gates?",
+    "criteria": {
+     "follows": "gates assert literal counts plus reuse on real store",
+     "gap": "a stated behavior lacks gate cover",
+     "insufficient_evidence": "text does not settle it"
+    }
+   },
+   "bypass": {
+    "type": "choice",
+    "instructions": "Does the patch leave a continuity bypass in another caller such as proposal translation or the revision branch?",
+    "criteria": {
+     "clean": "other callers cannot reset state or skip limits",
+     "bypass": "a named path still resets or overspends",
+     "insufficient_evidence": "text does not settle it"
+    }
+   }
+  }
+ },
+ "answers": {
+  "claim": {
+   "type": "choice",
+   "choice": "gap",
+   "probabilities": {
+    "follows": 0.34,
+    "insufficient_evidence": 0.04,
+    "gap": 0.62
+   },
+   "confidence": 0.44
+  },
+  "bypass": {
+   "type": "choice",
+   "choice": "bypass",
+   "probabilities": {
+    "clean": 0.01,
+    "insufficient_evidence": 0.03,
+    "bypass": 0.96
+   },
+   "confidence": 0.94
+  }
+ },
+ "usage": {
+  "inputTokens": 672,
+  "outputTokens": 93
+ },
+ "resolution": "bypass 0.96 inspected: the open paths are _step_proposal plus propose_revision, untouched by C1 (0 diff lines) and explicitly owned by wave-1b C2A; not a C1 defect. claim gap 0.62 inspected: the six gates assert literal allowance, state, resume-text-reuse, pending, exhaustion, empty-attribution on real store; early pre-view refusals plus stop-accepted display are disclosed boundaries with no durable row by design. C2A gates will close the bypass; no question rephrased."
+}

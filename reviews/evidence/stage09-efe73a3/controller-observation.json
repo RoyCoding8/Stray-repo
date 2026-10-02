@@ -1,0 +1,20 @@
+{
+  "boundaries_doubled": [
+    "child",
+    "broker",
+    "receipt-read",
+    "persistence"
+  ],
+  "declared_model_calls": 1,
+  "events": [
+    "prepare-model",
+    "prepare-model",
+    "prepare-model",
+    "persist-policy"
+  ],
+  "last_returned_state": {
+    "counter": 4
+  },
+  "next_boundary_initial_state": {},
+  "prepared_model_calls": 3
+}

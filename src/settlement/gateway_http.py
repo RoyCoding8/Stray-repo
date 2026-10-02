@@ -34,8 +34,9 @@ _STATUS_ERRORS = {
 }
 
 
-def _error(kind: GatewayErrorKind, message: str, retryable: bool, operation_id: str) -> GatewayError:
-    return GatewayError(kind, message, retryable, operation_id)
+def _error(kind: GatewayErrorKind, message: str, retryable: bool, operation_id: str,
+           usage: Usage | None = None) -> GatewayError:
+    return GatewayError(kind, message, retryable, operation_id, usage)
 
 
 def gateway_timeout_overrides() -> dict[str, int]:
@@ -341,11 +342,6 @@ class HttpGatewayAdapter(GatewayAdapter):
         first = choices[0] if choices else {}
         message = first.get("message") or {} if isinstance(first, dict) else {}
         text = message.get("content") if isinstance(message, dict) else None
-        if not isinstance(text, str):
-            return _error(
-                GatewayErrorKind.PROTOCOL, "gateway response has no message content", False,
-                operation_id,
-            )
         usage_raw = body.get("usage")
         if not isinstance(usage_raw, dict):
             usage_raw = {}
@@ -392,6 +388,11 @@ class HttpGatewayAdapter(GatewayAdapter):
             provider_enforced_ceiling=False,
             billed=billed,
         )
+        if not isinstance(text, str):
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway response has no message content", False,
+                operation_id, usage,
+            )
         stop = first.get("finish_reason", "stop") if isinstance(first, dict) else "stop"
         return ModelResponse(
             operation_id=operation_id,
@@ -443,11 +444,6 @@ class HttpGatewayAdapter(GatewayAdapter):
                     if isinstance(item.get("text"), str):
                         pieces.append(item["text"])
         text = "".join(pieces)
-        if not text:
-            return _error(
-                GatewayErrorKind.PROTOCOL, "gateway responses output has no text", False,
-                operation_id,
-            )
         usage_raw = body.get("usage")
         if not isinstance(usage_raw, dict):
             usage_raw = {}
@@ -467,6 +463,11 @@ class HttpGatewayAdapter(GatewayAdapter):
             provider_enforced_ceiling=False,
             billed=False,
         )
+        if not text:
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway responses output has no text", False,
+                operation_id, usage,
+            )
         if status == "completed":
             stop: str = "stop"
         elif status == "incomplete":

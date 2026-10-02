@@ -1,0 +1,111 @@
+......F......                                                            [100%]
+=================================== FAILURES ===================================
+___________ test_full_deterministic_cycle_with_provider_double_only ____________
+
+store = 'dbname=s09_m34_cycle host=/var/run/postgresql user=ubuntu'
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-1/test_full_deterministic_cycle_0')
+
+    def test_full_deterministic_cycle_with_provider_double_only(store, tmp_path):
+        from experiments.ad01 import construct, records, selection, trajectory
+        from experiments.ad01 import worlds
+        cid = trajectory.campaign_id(0, "I", 60)
+        trajectory.authorize_campaign(store, cid, authorized=100000)
+        campaign = trajectory.run_campaign(
+            0, "I", CHARTER, dict(CAPS, max_boundaries=1),
+            tasks=[DEV_TASK], campaign_seq=60, dsn=store)
+        assert campaign["boundaries"]
+        assert campaign["boundaries"][0]["observation_id"]
+        task = worlds.load_task(worlds.FROZEN_DIR, DEV_TASK)
+        gateway = _RecordingConstructor([ACQUIRED_SOURCE])
+        member = construct.construct_method(
+            store, campaign_id=cid, task=task,
+            experience={"observations": [], "boundary": {"seq": 0}},
+            budget={"max_output_tokens": 512, "max_queries": 4,
+                    "model_calls": 4},
+            gateway=gateway, model="s09-m34-double", study_root=cid)
+        assert member["method_source"] == ACQUIRED_SOURCE
+        assert len(gateway.calls) >= 1
+        failure_record = {"task_id": USE_TASK,
+                          "parent_digest": "seed-sw-greedy",
+                          "verdict": "not_preserved",
+                          "use_record": "operational-failure-pin"}
+        proposal = records.open_revision_proposal(
+            store, investigation_id=cid, parent_digest="seed-sw-greedy",
+            failure_record=failure_record, scope={"family": "software"},
+            allocation_id="ad01-campaign-%s" % cid)
+        assert proposal["parent_digest"] == "seed-sw-greedy"
+        assert records.load_revision_proposal(
+            store, proposal["proposal_id"]) == proposal
+        freeze = records.freeze_candidate(
+            store, proposal_id=proposal["proposal_id"],
+            source_bytes=member["method_source"],
+            entry=member["entry"])
+        assert freeze["candidate_digest"] == member["source_digest"]
+        verdict = records.assess_frozen(
+            store, proposal_id=proposal["proposal_id"], tasks=[DEV_TASK],
+            evaluator_version="e1", protocol_id="s09-revision-v1")
+        assert verdict["outcome"] == "bind", verdict
+        version_id = "acquired-sw-%s" % freeze["candidate_digest"][:8]
+        bound = selection.bind_revision(
+            store, release_id="s09-cycle-bind", versions=[version_id],
+            scope={"family": "software"}, disposition="default",
+            fallback="seed-sw-greedy", expected_versions=None,
+            policy_version="ad01-policy-model-v1",
+            protocol_id="s09-revision-v1", evaluator_version="e1",
+            evidence_refs=[verdict["attempt_id"]],
+            proposal_id=proposal["proposal_id"],
+            candidate_digest=freeze["candidate_digest"])
+        assert bound["versions"] == [version_id]
+        repertoire = {"campaign_id": cid, "members": [
+            {"capability_id": "seed-sw-greedy",
+             "scope": {"family": "software"},
+             "method_source": None},
+            {"capability_id": version_id,
+             "scope": {"family": "software"},
+             "method_source": member["method_source"],
+             "entry": member["entry"],
+             "source_digest": member["source_digest"],
+             "authored": False}]}
+        chosen = selection.select_member(
+            repertoire, {"family": "software"}, dsn=store,
+            release_id="s09-cycle-bind")
+        assert chosen["capability_id"] == version_id
+        probe_path = tmp_path / "s09_m34_fresh.py"
+        probe_path.write_text(
+            "import sys\n"
+            "dsn, release, version = sys.argv[1:4]\n"
+            "from experiments.ad01 import method_exec, selection, worlds\n"
+            "repertoire = {'members': ["
+            "{'capability_id': 'seed-sw-greedy',"
+            " 'scope': {'family': 'software'}}, "
+            "{'capability_id': version, 'scope': {'family': 'software'},"
+            " 'method_source': %r, 'entry': %r}]}\n"
+            "chosen = selection.select_member(repertoire,"
+            " {'family': 'software'}, dsn=dsn, release_id=release)\n"
+            "task = worlds.load_task(worlds.FROZEN_DIR, %r)\n"
+            "out = method_exec.run_member_out_of_process("
+            "chosen, task, max_queries=4)\n"
+            "print(__import__('json').dumps({'selected':"
+            " chosen['capability_id'], 'queries': out['queries']}))\n"
+            % (member["method_source"], member["entry"], DEV_TASK))
+        proc = subprocess.run(
+            [sys.executable, probe_path, store, "s09-cycle-bind", version_id],
+            cwd=str(ROOT), capture_output=True, text=True, timeout=300,
+            env=_env())
+>       assert proc.returncode == 0, proc.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "/tmp/pytest-of-ubuntu/pytest-1/test_full_deterministic_cycle_0/s09_m34_fresh.py", line 7, in <module>
+E             out = method_exec.run_member_out_of_process(chosen, task, max_queries=4)
+E           File "/mnt/d/AI/Agent-Society-v2-investigation-review/experiments/ad01/method_exec.py", line 239, in run_member_out_of_process
+E             entry = verify_member(member)
+E           File "/mnt/d/AI/Agent-Society-v2-investigation-review/experiments/ad01/method_exec.py", line 126, in verify_member
+E             raise MethodExecutionError("refused: empty-method-source")
+E         experiments.ad01.method_exec.MethodExecutionError: refused: empty-method-source
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/ubuntu/.venvs/as9/bin/python', PosixPath('/tmp/pytest-of-ubuntu/pytest-1/test_full_deter...or("refused: empty-method-source")\nexperiments.ad01.method_exec.MethodExecutionError: refused: empty-method-source\n').returncode
+
+tests/test_s09m34_cycle.py:181: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_s09m34_cycle.py::test_full_deterministic_cycle_with_provider_double_only
+1 failed, 12 passed in 13.65s

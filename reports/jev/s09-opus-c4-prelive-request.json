@@ -1,0 +1,70 @@
+{
+  "state": {
+    "grant": "Authorization and cap sheet, verbatim from the assignment.\n\"The human explicitly authorized free-model live spending on 2026-09-21. This section is the written grant for one new study after C1-C3 pass, not a request to ask again for the same permission. Use the worker's configured free model and gateway. Resolve the exact model ID and effort level from that working configuration and freeze them before the first call. If several free models are available, choose a capable one with functioning structured/source output. Paid fallback, changing provider/model mid-study or increasing these ceilings is not authorized.\"\nCeilings: study model calls 100 including discovery inference/smoke, empties, errors and repairs; development 4 episodes 2 per domain; policy construction 4 calls total, 1 initial plus 1 repair per P1/P2; assessment 12 episodes and 24 scheduled sealed method-use slots; episode model calls and STEP decisions 6 each cumulative.\n\"Use one new root s09-completion-live-01. If that identity already exists, inspect its grants, operations, receipts and exported evidence and resume it; do not mint a replacement to reset exposure. Persist the resolved model, effort, protocol, root, this authorization reference and cap sheet in the durable grant before effects. Keep the endpoint and key in local configuration, outside committed evidence. Do not reuse a historical spent grant.\"\n\"Do not manufacture success using a recording adapter in live mode.\"",
+    "measured_preflight": "Measured preflight facts. Every item below was observed, not assumed.\n1. No study gateway was preconfigured anywhere. SETTLEMENT_GATEWAY_ENDPOINT, SETTLEMENT_GATEWAY_URL, SETTLEMENT_GATEWAY_KEY, SETTLEMENT_GATEWAY_API and SETTLEMENT_DSN are all unset in the Windows user environment, the Windows machine environment, and the WSL login environment. There is no .env file in the repository root. Neither /home/ubuntu/.bashrc nor /home/ubuntu/.profile contains any line matching SETTLEMENT, GATEWAY or API_KEY.\n2. The only gateway credential present on the machine is VERCEL_API_KEY in the Windows user environment. It is the same key the Jev evaluator uses. AI_GATEWAY_API_KEY and OPENAI_API_KEY are unset.\n3. A read-only GET to https://ai-gateway.vercel.sh/v1/models with that key returned 386 models, of which 78 have pricing.input == 0 and pricing.output == 0. Of those 78, by declared type: 35 video, 26 image, 10 language, 3 reranking, 3 realtime, 1 transcription. So only 10 zero-cost models can emit text at all.\n4. The 10 zero-cost language model ids are inclusionai/ling-3.0-flash-fin, -fin-free, -sante, -sante-free, -vl, -vl-free, perplexity/sonar, perplexity/sonar-pro, perplexity/sonar-reasoning-pro, poolside/laguna-s-2.1-free.\n5. Two candidates were smoke tested with one real chat completion each, asking for Python source with no prose. poolside/laguna-s-2.1-free returned HTTP 503 service_unavailable_error and is unusable. inclusionai/ling-3.0-flash-vl-free returned HTTP 200 and emitted valid Python whose first line is \"def STEP(view, state):\", 183 characters, and a regex for \"def STEP(\" matched.\n6. The successful call's own usage block reported cost 0, market_cost 0, upstream_inference_prompt_cost 0, upstream_inference_completions_cost 0, is_byok false, prompt_tokens 85, completion_tokens 177. So zero cost is a measured billed figure from the response, not only a price listed in the catalogue.\n7. Two model calls have therefore been spent on discovery, one failing and one succeeding. The cap sheet counts both. 98 of the 100 authorized calls remain.\n8. No prior study state exists to resume. The reachable PostgreSQL databases are s09_local_c3_diag and s09_local_control, both created by a previous worker and not by me, and neither contains a s09-completion-live-01 root. No grant has been spent under that root.",
+    "frozen_configuration": "Configuration proposed to be frozen in the durable grant before the first study effect.\nendpoint: https://ai-gateway.vercel.sh/v1\napi shape: chat, via POST /v1/chat/completions, which is the shape that returned HTTP 200 in the smoke test\nmodel: inclusionai/ling-3.0-flash-vl-free\nreasoning effort: the model exposed no effort parameter in the smoke test, so effort is recorded as \"unset-by-provider\" rather than invented\nkey: read at run time from the VERCEL_API_KEY environment variable, never written to any file, evidence bundle, report, prompt or commit\nstudy root: s09-completion-live-01, newly minted because no such root exists\nadapter: settlement.gateway_http.HttpGatewayAdapter.from_settings, the same real adapter the controlled HTTP test exercises\npaid fallback: none permitted; the study aborts rather than substituting another model or provider\naggregate ceiling: 100 study model calls, 2 already spent on discovery, enforced in the real dispatch path\nabort condition: if any response reports a nonzero cost, the study stops immediately rather than continuing",
+    "deterministic_mechanism_evidence": "Deterministic causal evidence already established on this branch, with provider doubles and no live calls.\nIntegrated gate across 22 test files: 133 passed, exit 0, 391.33s, real PostgreSQL 18.6, Python 3.14.4, real child processes.\nThe public path performs assessment, binding and fresh-process continuation itself. tests/test_s09o_cycle.py drives eleven cases through trajectory.run_campaign and trajectory.resume_campaign only, including a second operating-system process that is given nothing but a release id and still executes the bound policy bytes.\ntests/test_s09o_causal.py discriminates behaviour from labels. Two different bound policies produce different durably recorded action-kind sequences: [\"diagnose\",\"propose_revision\",\"construct_method\",\"stop\"] with construction_calls 4, against [\"diagnose\",\"propose_revision\",\"use_method\",\"stop\"] with construction_calls 0. A third policy differing only in whitespace has a different digest, fd5c9d3f, but identical behaviour, and produces the same sequence as the first. That control rules out digest identity as the explanation.\nscripts/s09_pilot.py now obtains each of P1 and P2's policy from the public cycle and names that arm's policy_release on every assessment episode. A grep of the pilot for open_revision_proposal, freeze_candidate, assess_frozen, assess_policy, freeze_protocol and bind_revision returns zero matches. A preflight in the pilot proves the real HttpGatewayAdapter carried the bytes that were constructed, frozen, assessed and bound.\nrecords.export_campaign exports the policy sections and scripts/s09_verify.py verifies them offline with no provider and no database, including recomputing quality from the committed frozen corpus rather than from runtime counts."
+  },
+  "questions": {
+    "live_path_is_distinct_from_recording_doubles": {
+      "type": "boolean",
+      "instructions": "Do the supplied preflight facts and frozen configuration establish that the study would run against a real external provider through the real HTTP adapter, rather than against a recording or fake adapter? Answer false if a doubled adapter could satisfy the same evidence.",
+      "criteria": {
+        "true": "The live path is genuinely distinct from doubles",
+        "false": "A recording adapter could produce the same evidence"
+      }
+    },
+    "model_choice_is_resolved_not_invented": {
+      "type": "boolean",
+      "instructions": "Given that no gateway was preconfigured, is resolving the model by querying the gateway catalogue, filtering to zero-cost language models, smoke testing candidates, and then pinning the one that returned HTTP 200 with a measured zero billed cost, a legitimate resolution from a working configuration? Answer false if this amounts to inventing authority or configuration the human did not grant.",
+      "criteria": {
+        "true": "Legitimately resolved from the reachable working configuration",
+        "false": "This invents configuration or authority"
+      }
+    },
+    "free_model_constraint_is_actually_enforced": {
+      "type": "boolean",
+      "instructions": "Does pinning a single model whose own response reported cost 0 and market_cost 0, permitting no paid fallback, and aborting the study if any response reports a nonzero cost, actually enforce the \"free model, no paid fallback\" constraint? Answer false if the constraint could still be violated without detection.",
+      "criteria": {
+        "true": "The constraint is mechanically enforced and detectable",
+        "false": "A paid call could still occur undetected"
+      }
+    },
+    "treatment_is_the_step_policy": {
+      "type": "boolean",
+      "instructions": "Do the supplied mechanism facts establish that what the study varies between arms is the executable STEP learning policy, rather than a task method, a prompt, or a label?",
+      "criteria": {
+        "true": "The treatment is the STEP policy",
+        "false": "The treatment is something else or is ambiguous"
+      }
+    },
+    "data_exposure_is_controlled": {
+      "type": "boolean",
+      "instructions": "Do the supplied facts establish that sealed assessment answers cannot reach the model prompt, the policy view, the journal, or the export, and that the assessment panel is held out from construction exposure?",
+      "criteria": {
+        "true": "Exposure is controlled at the points that matter",
+        "false": "A leakage or exposure-ordering path remains open"
+      }
+    },
+    "all_effects_fit_the_grant": {
+      "type": "boolean",
+      "instructions": "With 2 of 100 calls already spent on discovery, do the stated ceilings and the per-phase schedule fit inside the authorized cap sheet, with the aggregate enforced in the real dispatch path?",
+      "criteria": {
+        "true": "The planned effects fit the grant",
+        "false": "The plan could exceed the grant"
+      }
+    },
+    "largest_live_launch_risk": {
+      "type": "choice",
+      "instructions": "Which single risk most threatens the validity or the safety of launching this live study now? Choose insufficient_evidence only if the supplied material genuinely does not let you judge.",
+      "criteria": {
+        "model_capability_too_low": "The pinned free model may be too weak to produce a valid executable policy, making the study measure provider capability rather than the mechanism",
+        "unmetered_spend": "The spend could exceed free tier or route to a paid model without being caught",
+        "provider_instability": "The provider returned a 503 on one candidate, so mid-study unavailability could corrupt the schedule",
+        "mechanism_not_ready": "Some part of the cycle is still not genuinely production-owned",
+        "exposure_leak": "Sealed data could reach the provider",
+        "insufficient_evidence": "The material does not support a judgement"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+ "answers": {
+  "shared_executor_preserves_meaning": {
+   "probability": 0.89,
+   "type": "boolean"
+  }
+ },
+ "model": "typesafe-ai/jev",
+ "usage": {
+  "inputTokens": 530,
+  "outputTokens": 27
+ }
+}

@@ -75,7 +75,7 @@ def test_cli_missing_db_clean(capsys):
 def test_cli_missing_repertoire_clean(pg, capsys):
     from experiments.ad01.cli import main
     rc = main(["use", "--repertoire", "/tmp/p3e-no-repertoire.json",
-               "--dsn", pg, "--allocation-id", "a",
+               "--dsn", pg, "--allocation-id", "a", "--release", "p3e-rel",
                "--world", "0", "--arm", "I"])
     assert rc == 2
     assert "Traceback" not in capsys.readouterr().err

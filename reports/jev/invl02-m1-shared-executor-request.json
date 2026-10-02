@@ -1,0 +1,13 @@
+{
+ "questions": {
+  "shared_executor_preserves_meaning": {
+   "criteria": {
+    "false": "meaning changes silently or a second interpreter decides effects",
+    "true": "same owners and matching effects until a declared difference"
+   },
+   "instructions": "Does routing development and assessment actions through one dispatch function with the same effect owners preserve operational meaning, with only declared profile differences in permissions, visibility, budgets, and destinations?",
+   "type": "boolean"
+  }
+ },
+ "state": "M1 lane implements experiments/ad01/assessment_profile.py: one dispatch() used by development and assessment profiles. Method actions call the same owners as the operational path (seeds.run_seed repertoire, method_exec.run_member_out_of_process child). Model actions build broker MODEL_INFERENCE payloads through broker.validate_effect with byte-identical payloads across profiles; only operation-id prefix, destination, and permission differ by declared profile. Legacy policy_assess._effect is untouched under the assessment-restricted label. Evidence: 14 new tests in tests/test_m1_shared_executor.py pass (same program and observations yield matching candidates, queries, selected identity; monkeypatch proves seeds.run_seed reached; source check proves no second interpreter); nearby tests/test_s09o_policy_assess.py 8 passed and tests/test_s09m2_policy.py 2 passed. No live network, no DB, disposable namespace unused so far."
+}

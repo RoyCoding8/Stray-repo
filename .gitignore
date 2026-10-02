@@ -25,5 +25,4 @@ secrets/
 .DS_Store
 Thumbs.db
 .worktrees/
-.worktrees/
-.worktrees/
+.ad01-runs/

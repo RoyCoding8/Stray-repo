@@ -1,0 +1,55 @@
+[
+  {
+    "path": "D:/AI/Agent-Society-v2",
+    "sha": "e1b95a61",
+    "status": [
+      "?? .unsnooze/"
+    ],
+    "files": 772,
+    "MiB": 10,
+    "ancestor": true,
+    "top_untracked": [
+      ".unsnooze/",
+      ".worktrees/"
+    ]
+  },
+  {
+    "path": "D:/AI/Agent-Society-v2-development-02-live-assessment",
+    "sha": "976cee16",
+    "status": [
+      "?? reports/evidence/development-02-adapter-smoke/",
+      "?? reviews/probes/development_02_adapter_smoke.py"
+    ],
+    "files": 233,
+    "MiB": 3,
+    "ancestor": true,
+    "top_untracked": [
+      "reports/evidence/development-02-adapter-smoke/",
+      "reviews/probes/development_02_adapter_smoke.py"
+    ]
+  },
+  {
+    "path": "D:/AI/Agent-Society-v2-investigation-review",
+    "sha": "0fba2192",
+    "status": [
+      "?? reports/local-completion/"
+    ],
+    "files": 2295,
+    "MiB": 23,
+    "ancestor": true,
+    "top_untracked": [
+      "reports/local-completion/"
+    ]
+  },
+  {
+    "path": "D:/AI/Agent-Society-v2-review-02",
+    "sha": "3268620c",
+    "status": [],
+    "files": 3428,
+    "MiB": 66,
+    "ancestor": false,
+    "top_untracked": [
+      ""
+    ]
+  }
+]

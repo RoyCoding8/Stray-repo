@@ -518,9 +518,15 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
     except Exception:
         response = None
     if response is None or isinstance(response, GatewayError):
+        err_usage = getattr(response, "usage", None)
+        content: dict[str, Any] = {"error": getattr(response, "message", "lost-response")}
+        content["usage"] = {"input_tokens": getattr(err_usage, "input_tokens", None),
+                            "output_tokens": getattr(err_usage, "output_tokens", None),
+                            "charge_units": getattr(err_usage, "charge_units", None),
+                            "billed": getattr(err_usage, "billed", None)}
         admit_launcher_receipt(dsn, op.operation_id, ReceiptProposal(
             receipt_identity=f"gw:{op.operation_id}:unknown",
-            content={"error": getattr(response, "message", "lost-response")},
+            content=content,
             outcome="unknown", provenance="gateway"))
         _deliver(dsn, f"dispatch:{op.operation_id}")
         return _status_of(dsn, op.operation_id, sent_this_call=True)

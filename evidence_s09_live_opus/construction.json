@@ -1,0 +1,143 @@
+{
+ "P1": {
+  "arm": "P1",
+  "assessment": null,
+  "bound_digest": "",
+  "calls": 1,
+  "campaign_id": "ad01-w0-I-54",
+  "candidate_digest": "",
+  "construction_requests": [
+   {
+    "deadline_ms": 300000,
+    "experience": "[{\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"unmeasured\"}]",
+    "max_output_tokens": 2048,
+    "model": "inclusionai/ling-3.0-flash-vl-free",
+    "operation_id": "ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "prompt_without_experience": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): ae22435ae3fa5f7d9928f3523ac3fad922c95c2305972c9644796ec5ee52d973\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"model_calls\": 2}.",
+    "reasoning_effort": "low"
+   }
+  ],
+  "disposition": "unavailable",
+  "experience_digest": "39043ee722b025ea2b5c8e69f28c2a0b86c884349d37e926aa588640905ab608",
+  "freeze": {},
+  "init_operation": null,
+  "operations": [
+   "ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init",
+   "ad01-ad01-w0-I-54-policy-s0-k0",
+   "ad01-ad01-w0-I-54-policy-s1-k0"
+  ],
+  "policy_artifact": {},
+  "policy_candidate": null,
+  "policy_source": "",
+  "reason": "policy constructor unavailable: construction call ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init left no settled response",
+  "release_id": null,
+  "repair_operation": null,
+  "requests": [
+   {
+    "deadline_ms": 300000,
+    "experience": "[{\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"unmeasured\"}]",
+    "max_output_tokens": 2048,
+    "model": "inclusionai/ling-3.0-flash-vl-free",
+    "operation_id": "ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "prompt_without_experience": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): ae22435ae3fa5f7d9928f3523ac3fad922c95c2305972c9644796ec5ee52d973\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"model_calls\": 2}.",
+    "reasoning_effort": "low"
+   }
+  ],
+  "revision_episode": {
+   "assessment_status": "unavailable",
+   "construction_calls": 1,
+   "disposition": "unavailable",
+   "fallback": "incumbent",
+   "kind": "policy_revision",
+   "proposal_id": "s09-rev-ad01-w0-I-54-6f62c7859a1b",
+   "queries": 0,
+   "reason": "policy constructor unavailable: construction call ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init left no settled response",
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  "scope": {},
+  "source_digest": "",
+  "status": "unavailable",
+  "task_id": "ad01-w0-dev-sw-00"
+ },
+ "P2": {
+  "arm": "P2",
+  "assessment": null,
+  "bound_digest": "",
+  "calls": 2,
+  "campaign_id": "ad01-w0-I-55",
+  "candidate_digest": "",
+  "construction_requests": [
+   {
+    "deadline_ms": 300000,
+    "experience": "[{\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"unmeasured\"}]",
+    "max_output_tokens": 2048,
+    "model": "inclusionai/ling-3.0-flash-vl-free",
+    "operation_id": "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "prompt_without_experience": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): ae22435ae3fa5f7d9928f3523ac3fad922c95c2305972c9644796ec5ee52d973\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"model_calls\": 2}.",
+    "reasoning_effort": "low"
+   },
+   {
+    "deadline_ms": 300000,
+    "experience": "[{\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"unmeasured\"}]\nPRIOR FAILURE (repair it): {\"operation_id\": \"ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init\", \"reason\": \"step-failed: {'worker': {'status': 'error', 'data': {}, 'error': 'KeyError: slice(None, 200, None)'}, 'timed_out': False, 'wall_ms': 51}\", \"response_digest\": \"3eda991f82a4798e5c6accdef72bb79414dd1f97786fda5ea0335be84387cfe2\", \"stage\": \"execute\"}",
+    "max_output_tokens": 2048,
+    "model": "inclusionai/ling-3.0-flash-vl-free",
+    "operation_id": "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-repair",
+    "prompt_without_experience": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): ae22435ae3fa5f7d9928f3523ac3fad922c95c2305972c9644796ec5ee52d973\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"model_calls\": 2}.",
+    "reasoning_effort": "low"
+   }
+  ],
+  "disposition": "unavailable",
+  "experience_digest": "351f899db88684f8e08e15e33329f309c38e09b40035012e4cc35149c3e4ca3e",
+  "freeze": {},
+  "init_operation": null,
+  "operations": [
+   "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init",
+   "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init-validate",
+   "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-repair",
+   "ad01-ad01-w0-I-55-policy-s0-k0",
+   "ad01-ad01-w0-I-55-policy-s1-k0",
+   "ad01-ad01-w0-I-55-policy-s2-k0"
+  ],
+  "policy_artifact": {},
+  "policy_candidate": null,
+  "policy_source": "",
+  "reason": "policy constructor unavailable: model call cap reached",
+  "release_id": null,
+  "repair_operation": null,
+  "requests": [
+   {
+    "deadline_ms": 300000,
+    "experience": "[{\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"unmeasured\"}]",
+    "max_output_tokens": 2048,
+    "model": "inclusionai/ling-3.0-flash-vl-free",
+    "operation_id": "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init",
+    "prompt_without_experience": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): ae22435ae3fa5f7d9928f3523ac3fad922c95c2305972c9644796ec5ee52d973\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"model_calls\": 2}.",
+    "reasoning_effort": "low"
+   },
+   {
+    "deadline_ms": 300000,
+    "experience": "[{\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"preserved-vs-not_preserved\"}, {\"task_id\": \"ad01-w0-dev-sw-00\", \"verdict\": \"unmeasured\"}]\nPRIOR FAILURE (repair it): {\"operation_id\": \"ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-init\", \"reason\": \"step-failed: {'worker': {'status': 'error', 'data': {}, 'error': 'KeyError: slice(None, 200, None)'}, 'timed_out': False, 'wall_ms': 51}\", \"response_digest\": \"3eda991f82a4798e5c6accdef72bb79414dd1f97786fda5ea0335be84387cfe2\", \"stage\": \"execute\"}",
+    "max_output_tokens": 2048,
+    "model": "inclusionai/ling-3.0-flash-vl-free",
+    "operation_id": "ad01-ad01-w0-I-55-b2-ad01-w0-dev-sw-00-policy-policy-l1-repair",
+    "prompt_without_experience": "Write one python policy that decides how to investigate.\nFamily: software.\nTask digest (content arrives in the STEP view, not here): ae22435ae3fa5f7d9928f3523ac3fad922c95c2305972c9644796ec5ee52d973\nInterface: exactly one module-level function STEP(view, state).\nThe view holds task_content, observations, open_questions,\nlast_result, eligible_methods, remaining and contract_versions.\nReturn exactly {\"action\": <action>, \"state\": <object>}.\nAction kinds: diagnose, construct_method, use_method, request_model, propose_revision, stop.\nAn action holds kind, target, inputs, evidence_refs and\nrequested_resources; shapes are strict.\nEntry: STEP(view, state) with the two parameters must be named view and state, no *args, **kwargs, or keyword-only parameters.\nThe word import anywhere in the entry source fails validation,\nso use no imports, no dunder access, no IO. Precisely: import statements fail validation; attribute access starting with a single underscore and variable names starting with a double underscore fail validation; calls to __import__,breakpoint,compile,delattr,dir,eval,exec,exit,getattr,globals,help,input,locals,memoryview,open,quit,setattr,type,vars fail validation.\nSource must be non-empty python source that parses with exactly one module-level function carrying the entry name.\nState is bounded JSON: at most 4096 bytes; larger states fail.\nReply with exactly one JSON object and nothing else, shaped {\"entry\": \"<complete python source>\", \"notes\": \"<sentence>\"}.\nBudget: {\"max_output_tokens\": 2048, \"model_calls\": 2}.",
+    "reasoning_effort": "low"
+   }
+  ],
+  "revision_episode": {
+   "assessment_status": "unavailable",
+   "construction_calls": 2,
+   "disposition": "unavailable",
+   "fallback": "incumbent",
+   "kind": "policy_revision",
+   "proposal_id": "s09-rev-ad01-w0-I-55-229cf780c2fa",
+   "queries": 0,
+   "reason": "policy constructor unavailable: model call cap reached",
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  "scope": {},
+  "source_digest": "",
+  "status": "unavailable",
+  "task_id": "ad01-w0-dev-sw-00"
+ }
+}

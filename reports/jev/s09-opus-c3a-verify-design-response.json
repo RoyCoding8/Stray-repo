@@ -1,0 +1,79 @@
+﻿{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "set_is_sufficient_for_independent_recomputation": {
+      "type": "boolean",
+      "probability": 0.24
+    },
+    "verdict_recomputation_is_meaningful": {
+      "type": "boolean",
+      "probability": 0.59
+    },
+    "fallback_check_closes_the_substitution_hole": {
+      "type": "boolean",
+      "probability": 0.61
+    },
+    "leakage_check_by_key_name_is_adequate": {
+      "type": "boolean",
+      "probability": 0.19
+    },
+    "most_important_omission": {
+      "type": "choice",
+      "choice": "no_incumbent_comparison_evidence",
+      "probabilities": {
+        "insufficient_evidence": 0,
+        "no_exposure_ordering_proof": 0.01,
+        "no_decision_sequence_export": 0.44,
+        "no_cross_process_evidence": 0.01,
+        "no_resource_completeness_proof": 0,
+        "no_incumbent_comparison_evidence": 0.54
+      },
+      "confidence": 0.45
+    }
+  },
+  "usage": {
+    "inputTokens": 1750,
+    "outputTokens": 221
+  },
+  "providerMetadata": {
+    "typesafe": {
+      "confidence": {
+        "most_important_omission": 0.45
+      }
+    },
+    "gateway": {
+      "routing": {
+        "originalModelId": "typesafe-ai/jev",
+        "resolvedProvider": "typesafe-ai",
+        "fallbacksAvailable": [],
+        "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+        "canonicalSlug": "typesafe-ai/jev",
+        "finalProvider": "typesafe-ai",
+        "modelAttemptCount": 1,
+        "modelAttempts": [
+          {
+            "canonicalSlug": "typesafe-ai/jev",
+            "success": true,
+            "providerAttemptCount": 1,
+            "providerAttempts": [
+              {
+                "provider": "typesafe-ai",
+                "credentialType": "system",
+                "success": true,
+                "startTime": 1790088317407,
+                "endTime": 1790088317618,
+                "statusCode": 200
+              }
+            ]
+          }
+        ],
+        "totalProviderAttemptCount": 1
+      },
+      "cost": "0",
+      "marketCost": "0.0000735",
+      "surchargeCost": "0",
+      "gatewayCost": "0",
+      "generationId": "gen_01M34S822D4DTZ4K78ENP7EKNX"
+    }
+  }
+}

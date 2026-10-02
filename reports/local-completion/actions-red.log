@@ -1,0 +1,65 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+____________ test_policy_uses_retained_bytes_without_reconstructing ____________
+
+store = 'dbname=s09_local_actions'
+
+    def test_policy_uses_retained_bytes_without_reconstructing(store):
+        source = '''def STEP(view, state):
+        methods = view["eligible_methods"]
+        action = {"kind": "use_method" if methods else "construct_method",
+                  "target": view["task_content"]["task_id"],
+                  "inputs": {"method_id": methods[0] if methods else "", "max_queries": 4},
+                  "evidence_refs": [], "requested_resources": {"queries": 4}}
+        return {"action": action, "state": state}
+    '''
+        gateway = Constructor()
+        campaign = run(store, 91, source, gateway)
+>       assert len(gateway.calls) == 1
+E       AssertionError: assert 2 == 1
+E        +  where 2 = len([ModelRequest(model='fixture', messages=({'role': 'user', 'content': 'Write one python method that searches explanator...peration_id='ad01-ad01-w0-I-91-b1-ad01-w0-dev-sw-01-construct-l1-init', dispatch_generation=1, reasoning_effort='low')])
+E        +    where [ModelRequest(model='fixture', messages=({'role': 'user', 'content': 'Write one python method that searches explanator...peration_id='ad01-ad01-w0-I-91-b1-ad01-w0-dev-sw-01-construct-l1-init', dispatch_generation=1, reasoning_effort='low')] = <test_s09c2a_actions.Constructor object at 0x7264791a8440>.calls
+
+tests/test_s09c2a_actions.py:73: AssertionError
+_______________ test_unknown_method_refuses_without_constructing _______________
+
+store = 'dbname=s09_local_actions'
+
+    def test_unknown_method_refuses_without_constructing(store):
+        source = '''def STEP(view, state):
+        return {"action": {"kind": "use_method", "target": view["task_content"]["task_id"],
+                           "inputs": {"method_id": "missing", "max_queries": 4},
+                           "evidence_refs": [], "requested_resources": {"queries": 4}}, "state": state}
+    '''
+        gateway = Constructor()
+        campaign = run(store, 92, source, gateway, TASKS[:1])
+>       assert gateway.calls == []
+E       AssertionError: assert [ModelRequest...effort='low')] == []
+E         
+E         Left contains one more item: ModelRequest(model='fixture', messages=({'role': 'user', 'content': 'Write one python method that searches explanatory...operation_id='ad01-ad01-w0-I-92-b0-ad01-w0-dev-sw-00-construct-l1-init', dispatch_generation=1, reasoning_effort='low')
+E         Use -v to get more diff
+
+tests/test_s09c2a_actions.py:91: AssertionError
+________ test_revision_without_operational_feedback_is_durable_refusal _________
+
+store = 'dbname=s09_local_actions'
+
+    def test_revision_without_operational_feedback_is_durable_refusal(store):
+        source = '''def STEP(view, state):
+        return {"action": {"kind": "propose_revision", "target": view["task_content"]["task_id"],
+                           "inputs": {"motivation": "investigate better"},
+                           "evidence_refs": [], "requested_resources": {}}, "state": state}
+    '''
+        gateway = Constructor()
+        campaign = run(store, 93, source, gateway, TASKS[:1])
+        assert gateway.calls == []
+>       assert len(campaign["episodes"]) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+
+tests/test_s09c2a_actions.py:105: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_s09c2a_actions.py::test_policy_uses_retained_bytes_without_reconstructing
+FAILED tests/test_s09c2a_actions.py::test_unknown_method_refuses_without_constructing
+FAILED tests/test_s09c2a_actions.py::test_revision_without_operational_feedback_is_durable_refusal
+3 failed in 13.07s

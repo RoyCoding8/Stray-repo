@@ -1,0 +1,21 @@
+{
+ "problems": [
+  "missing-receipt for-operation ad01-ad01-w0-I-53-b0-ad01-w0-dev-gr-01-construct-l1-init",
+  "missing-receipt for-operation ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init",
+  "missing-receipt for-operation ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-repair",
+  "missing-receipt for-operation ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l2-init",
+  "missing-receipt for-operation ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init",
+  "missing-receipt for-operation ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init",
+  "missing-receipt for-operation ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init"
+ ],
+ "recomputed": {
+  "claimed_operations": 36,
+  "construction_calls": 3,
+  "model_calls": 15,
+  "use_records": 24,
+  "witness_acquisition": 89,
+  "witness_use": 52,
+  "worst_case": 100
+ },
+ "status": "fail"
+}

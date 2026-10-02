@@ -1,0 +1,266 @@
+[
+ {
+  "arm": "P0",
+  "campaign_id": "ad01-w1-I-60",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P0-w1-software",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 1
+ },
+ {
+  "arm": "P0",
+  "campaign_id": "ad01-w1-I-61",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P0-w1-graph",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 1
+ },
+ {
+  "arm": "P0",
+  "campaign_id": "ad01-w2-I-62",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P0-w2-software",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 2
+ },
+ {
+  "arm": "P0",
+  "campaign_id": "ad01-w2-I-63",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P0-w2-graph",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 2
+ },
+ {
+  "arm": "P1",
+  "campaign_id": "ad01-w1-I-64",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P1-w1-software",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 1
+ },
+ {
+  "arm": "P1",
+  "campaign_id": "ad01-w1-I-65",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P1-w1-graph",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 1
+ },
+ {
+  "arm": "P1",
+  "campaign_id": "ad01-w2-I-66",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P1-w2-software",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 2
+ },
+ {
+  "arm": "P1",
+  "campaign_id": "ad01-w2-I-67",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P1-w2-graph",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 2
+ },
+ {
+  "arm": "P2",
+  "campaign_id": "ad01-w1-I-68",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P2-w1-software",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 1
+ },
+ {
+  "arm": "P2",
+  "campaign_id": "ad01-w1-I-69",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P2-w1-graph",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 1
+ },
+ {
+  "arm": "P2",
+  "campaign_id": "ad01-w2-I-70",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P2-w2-software",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 2
+ },
+ {
+  "arm": "P2",
+  "campaign_id": "ad01-w2-I-71",
+  "construction_calls": 0,
+  "dispositions": [
+   "inspected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P2-w2-graph",
+  "freeze_digest": "a29b6a1cc9e0b5b93a220cc4e20a942d498649cb50cde4839b2b154e078bed3d",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_steps": 1,
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 2
+ }
+]

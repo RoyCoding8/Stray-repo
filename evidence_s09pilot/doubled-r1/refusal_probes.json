@@ -1,0 +1,14 @@
+[
+ {
+  "detail": "model call cap reached",
+  "observed_new_ops": [],
+  "probe_id": "model-cap-zero-refuses",
+  "refused": true
+ },
+ {
+  "detail": "{'reason': 'boundary cap reached'}",
+  "observed_new_ops": [],
+  "probe_id": "boundary-cap-zero-refuses",
+  "refused": true
+ }
+]

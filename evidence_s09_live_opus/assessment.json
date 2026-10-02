@@ -1,0 +1,468 @@
+[
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w1-I-60",
+  "comparison_status": "complete",
+  "construction_calls": 3,
+  "coverage_status": "covered",
+  "dispositions": [
+   "rejected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P0-w1-software",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 3,
+  "operations": [
+   "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-init",
+   "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l1-repair",
+   "ad01-ad01-w1-I-60-b0-ad01-w1-dev-sw-00-construct-l2-init",
+   "ad01-ad01-w1-I-60-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 15,
+    "task_id": "ad01-w1-dev-sw-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 1
+ },
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w1-I-61",
+  "comparison_status": "complete",
+  "construction_calls": 1,
+  "coverage_status": "covered",
+  "dispositions": [
+   "rejected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P0-w1-graph",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w1-I-61-b0-ad01-w1-dev-gr-00-construct-l1-init",
+   "ad01-ad01-w1-I-61-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w1-dev-gr-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 1
+ },
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w2-I-62",
+  "comparison_status": "complete",
+  "construction_calls": 1,
+  "coverage_status": "covered",
+  "dispositions": [
+   "rejected"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P0-w2-software",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w2-I-62-b0-ad01-w2-dev-sw-00-construct-l1-init",
+   "ad01-ad01-w2-I-62-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "software",
+    "kind": "development",
+    "max_queries": 15,
+    "task_id": "ad01-w2-dev-sw-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 1,
+  "world": 2
+ },
+ {
+  "arm": "P0",
+  "arm_disposition": "authored",
+  "bound_digest": "",
+  "campaign_id": "ad01-w2-I-63",
+  "comparison_status": "complete",
+  "construction_calls": 1,
+  "coverage_status": "covered",
+  "dispositions": [
+   "rejected"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P0-w2-graph",
+  "executed_policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "executed_policy_digests": [
+   "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f"
+  ],
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 1,
+  "operations": [
+   "ad01-ad01-w2-I-63-b0-ad01-w2-dev-gr-00-construct-l1-init",
+   "ad01-ad01-w2-I-63-policy-s0-k0"
+  ],
+  "policy_actions": [
+   {
+    "diagnostic": "graph",
+    "kind": "development",
+    "max_queries": 1,
+    "task_id": "ad01-w2-dev-gr-00"
+   }
+  ],
+  "policy_artifact_kind": "learning-policy",
+  "policy_digest": "f92058cf6c0417f5f87e60ee544d608e9bdd604d6830fe7f0e9af306d7a1ad0f",
+  "policy_release": null,
+  "policy_steps": 1,
+  "release_id": null,
+  "status": "complete",
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 15,
+  "world": 2
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P1-w1-software",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P1-w1-software",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: construction call ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init left no settled response",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 0,
+  "world": 1
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P1-w1-graph",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P1-w1-graph",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: construction call ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init left no settled response",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 0,
+  "world": 1
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P1-w2-software",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P1-w2-software",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: construction call ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init left no settled response",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 0,
+  "world": 2
+ },
+ {
+  "arm": "P1",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P1-w2-graph",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P1-w2-graph",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: construction call ad01-ad01-w0-I-54-b1-ad01-w0-dev-sw-00-policy-policy-l1-init left no settled response",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 0,
+  "world": 2
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w1-software",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P2-w1-software",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w1-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w1-dev-sw-00",
+  "use_tasks": [
+   "ad01-w1-within-sw-00",
+   "ad01-w1-transfer-sw-00"
+  ],
+  "witness_queries": 0,
+  "world": 1
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w1-graph",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P2-w1-graph",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w1-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w1-dev-gr-00",
+  "use_tasks": [
+   "ad01-w1-within-gr-00",
+   "ad01-w1-transfer-gr-00"
+  ],
+  "witness_queries": 0,
+  "world": 1
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w2-software",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "software",
+  "episode_id": "assess-P2-w2-software",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w2-dev-sw-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w2-dev-sw-00",
+  "use_tasks": [
+   "ad01-w2-within-sw-00",
+   "ad01-w2-transfer-sw-00"
+  ],
+  "witness_queries": 0,
+  "world": 2
+ },
+ {
+  "arm": "P2",
+  "arm_disposition": "unavailable",
+  "bound_digest": "",
+  "campaign_id": "unavailable-assess-P2-w2-graph",
+  "comparison_status": "arm-unavailable: unavailable",
+  "construction_calls": 0,
+  "coverage_status": "arm-unavailable: unavailable",
+  "dispositions": [
+   "unavailable"
+  ],
+  "domain": "graph",
+  "episode_id": "assess-P2-w2-graph",
+  "executed_policy_digest": "",
+  "executed_policy_digests": [],
+  "fallback_reason": "arm-unavailable: policy constructor unavailable: model call cap reached",
+  "freeze_digest": "ba94d81a67f7e720308cf8f65e3d0fd25dd7a5af68593466cf992bba25515078",
+  "investigation_task": "ad01-w2-dev-gr-00",
+  "model_calls": 0,
+  "operations": [],
+  "policy_actions": [],
+  "policy_artifact_kind": null,
+  "policy_digest": "",
+  "policy_release": null,
+  "policy_steps": 0,
+  "release_id": null,
+  "status": "unavailable",
+  "task_id": "ad01-w2-dev-gr-00",
+  "use_tasks": [
+   "ad01-w2-within-gr-00",
+   "ad01-w2-transfer-gr-00"
+  ],
+  "witness_queries": 0,
+  "world": 2
+ }
+]

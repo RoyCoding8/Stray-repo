@@ -1439,3 +1439,112 @@ skipped, 0 failed, 2 setup errors in `tests/test_broker_dbos.py` from
 unset `SETTLEMENT_TEST_DSN` only; the same file gives 3 passed with
 URL-form DSN, so effective totals are 872 passed, 0 failed. Tree left
 clean, lane databases dropped.
+
+## Stage 9 consolidation M0-M7 (base 9984baf, branch codex/implementation-stage-09-consolidation, worktree .worktrees/s09c)
+
+Baseline 9984baf holds implementation 1d90c2e plus review 0e142be plus contract. Stage 8 gates green here: 19 passed (s89a1, s89a2 extract, s89a2 rerun, s89a3 closeout). Live evidence evidence_inv01_live/ untouched, still no-retention. Contract docs/design/STAGE-09-IMPLEMENTATION-CONTRACT.md governs; architecture draft is historical input only.
+
+Concrete N1-N6 pins:
+
+N1 durable ownership: investigation id inv-<study>-<seq> independent of world/arm/schedule. State fields map to storage: objective plus visible evidence plus open questions plus active policy artifact plus scoped method bindings plus pending accepted action plus policy-private state plus revision lineage plus remaining authority. Pending accepted action persists as journal row before effects; resume reconciles same operation id without duplicate effects or renewed limits. Attempt identities: att-<cid>-<seq>; retry reuses identity, intentional revision gets new attempt. Serial first: one active policy plus at most one assessment candidate per lineage.
+
+N2 policy ABI: STEP(view,state) JSON-in JSON-out, versioned ad01-policy-step-v1. View holds permitted task content, visible observations, unresolved questions, last action result or refusal, eligible method identities, remaining resources, contract versions. State is bounded JSON opaque to driver. Artifact holds kind, source digest, entry ABI, dependency plus instrument identities, origin (authored control, model-acquired bytes, fixture stand-in), parent digest, applicability. Child executes acquired source outside host with CPU, wall, output, state limits via method_exec child machinery. Driver validates every action; admission, evaluation, budgets stay trusted. Actions: diagnose, construct-check method, use scoped method, request model reasoning, propose revision, stop. Model request is a broker effect; response returns as next-step observation.
+
+N3 feedback versus assessment: roles are development, operational feedback, sealed assessment. Operational-use failure opens revision. Sealed content never enters constructors. Exposure retires batch for descendants. AD01 protected-task guard stays under original protocol; new feedback uses versioned protocol. Matched arms get isolated state plus identical declared inputs; hidden-output perturbation must not change pre-assessment construction inputs.
+
+N4 revision plus bind: proposal persists parent artifact, motivating evidence, scope, allocation, protocol. Candidates build through broker with returned-bytes validation plus one bounded repair. Freeze before assessment. Compare under fixed protocol on matched fresh opportunities with finite limits; costs include construction plus repair amortized separately. Outcomes are reject, inconclusive, retain scoped alternative, or bind active for declared scope. Bind is atomic against expected current version; parent plus rejection evidence preserved. Selection consults active eligible binding, not first family match. Execution ids bind investigation, logical action, active policy, method version.
+
+N5 pilot: keep 28-prefix replay as conformance only. Prospective P0 frozen incumbent, P1 constructed without experience, P2 constructed with permitted experience; same interface plus allowance; candidates from returned model bytes when labeled live. At most 4 development episodes (2 per domain), 1 candidate plus 1 repair each for P1/P2 (4 construction calls max). Assessment is 12 policy episodes (2 fresh worlds per domain times 3 arms) with bounded opportunities plus 2 sealed use tasks each (in-scope plus structural variation). Per-episode caps are 6 policy steps plus 6 model calls; at most one method lineage plus one repair per episode. Ceiling is 100 new model calls; stop, unknown, no-candidate never authorizes replacement. Freeze identities, order, metric plus resource rules, config, ceilings, study root before exposing assessment. Missing candidates are unavailable arms, not rebranded baselines.
+
+N6 migration plus acceptance: one current investigation driver; CLI and study callers become clients. Reuse broker, journal, artifacts, context, capability facilities only where real contracts fit. Domain adapter supplies content, operations, result interpretation; driver never decodes world or task-name conventions. Map old campaign state, pending decisions, checkpoints, selection, use ids to new semantics; preserve completed reproduction; pending legacy work needs lossless versioned resume proof. Public acceptance runs full deterministic cycle with doubles only at provider boundary plus fresh-process continuation plus offline verifier.
+
+| milestone | scope | owner worktree and branch | owned paths | depends | acceptance command | status |
+|---|---|---|---|---|---|
+| M0 | plan plus concrete contracts | coordinator .worktrees/s09c | reports/PLAN.md, docs/design/STAGE-09-ARCHITECTURE.md, reports/workstreams/s09-m0.md | none | 19 stage-8 gates green; reviewer challenges plan vs contract | in-progress |
+| M1 | persistent driver plus checkpoints | wt/s09-m1 .worktrees/s09-m1 | experiments/ad01/driver plus trajectory plus agenda_policy consolidation, migrations, checkpoint manifest | M0 | public run plus resume with interruption after acceptance and after effect, no duplicate effects | pending |
+| M2 | versioned policy artifacts | wt/s09-m2 .worktrees/s09-m2 | policy ABI, child policy execution, model constructor lineage | M0, M1 driver ABI | two authored policies diverge through public entry; restart consistent; model bytes path validated | pending |
+| M3 | feedback versus assessment | wt/s09-m3 .worktrees/s09-m3 | visibility boundary, exposure tracking, protected-task guard | M0 | operational failure opens proposal; hidden-answer probe leaves provider request unchanged; protected refs refused | pending |
+| M4 | assess plus bind revision | wt/s09-m4 .worktrees/s09-m4 | frozen assessment, atomic bind, selection by binding | M1-M3 | full deterministic cycle plus rejection cycle, fresh-process revised bytes | pending |
+| M5 | prospective pilot plus verifier | wt/s09-m5 .worktrees/s09-m5 | pilot episodes, offline verifier, evidence exports | M1-M4 | deterministic pilot plus verifier green; live only on fresh grant with exact command | pending |
+| M6 | independent review | reviewer worktree | isolated DB plus worktree, own candidate | M5 | own policy challenges execution, feedback, identity, selection, resume, evidence | pending |
+| M7 | deliver plus cleanup | coordinator .worktrees/s09c | reports/STAGE-09-CONSOLIDATION.md, roadmap, public command, evidence | M6 | gates pass, evidence_inv01_live unchanged, remote SHA verified | pending |
+
+Rules: coordinator alone writes integration branch; lanes own disjoint paths and push only own wt branches; serial --no-ff merges with affected reruns. Disposable DB prefix s09_ only; never touch ec02test_*, inv_*, or other owners. No live inference without fresh human grant; spent grants never reused. Probe scripts committed and runnable from fresh checkout.
+
+## M0R1 corrections (supersede M0 rows where they differ; reviewer F1-F11)
+
+Storage map (F1): investigation row investigations holds id, objective, scope, obligations, sponsor, origin, disposition; revisions hold objective history. Visible evidence lives in observations plus attempt_observations plus context_views sources. Open questions live in development_opportunities plus context_views limitations plus public claims. Active policy artifact lives in artifact_versions digest plus artifact_refs plus capability_versions artifact_digest. Scoped bindings live in capability_releases versions plus scope plus disposition plus fallback plus policy_version, pinned per attempt in attempt_capability_pins. Pending accepted action lives in command_journal plus operations dispatch_state plus trajectory.record_decision. Policy-private state plus assessment exposure retirements are the only justified additions in migrations/0017_s09_state.sql: s09_policy_state (bounded JSON by attempt) and s09_assessment_exposure (batch, exposed_to, retired_at). Lineage reuses capability_versions reference_version plus artifact_refs plus investigation_revisions. Remaining authority reuses allocations plus reservations plus grants.
+
+ABI in code (F2): experiments/ad01/policy_step.py now holds POLICY_STEP_VERSION plus VIEW_REQUIRED plus ACTION_KINDS plus ACTION_REQUIRED plus STATE_LIMIT_BYTES with pure validate_view, validate_state, validate_action. M2 imports the constant and adds the STEP child runner; no lane restates the version string.
+
+Executor ownership (F3): STEP execution owner is M2, in method_exec.py STEP region plus policy_step.py. The M0 annex claim is corrected: ENTRY exists, STEP is M2 new work reusing child machinery.
+
+Binding ownership (F4): selection consults capability_releases disposition default or limited plus fallback. M1 extracts trajectory._select_member plus run_use selection into experiments/ad01/selection.py (subtract first, no dual truth). M4 implements binding-aware select plus atomic bind against capability_releases.
+
+Exposure record (F5): s09_assessment_exposure in 0017 plus claims and artifact_versions access_label hidden or evaluator plus trial_assignments blind_key. M3 owns exposure tracking and retirement; M4 consumes the retired flag, never invents lineage.
+
+Migration map (F6): current public driver is experiments/ad01/cli.py main with run, resume, use through trajectory.ensure_campaign, _run_boundary, resume_campaign, record_decision. run_c3_qualification.py becomes a client of the driver, not a parallel driver. Old to new: investigations plus attempts plus operations plus receipts plus artifact_versions plus observations keep historical reproduction; pending legacy work drains unless a lossless versioned resume proof lands in M1.
+
+Lane regions, waves, gates (F7, F8): wave 1 is M1 driver plus selection extraction plus 0017. Wave 2 after M1 merges is M2, M3M4, M5 in parallel.
+
+| lane | branch | owned paths (exclusive) | tests | DB prefix | acceptance command |
+|---|---|---|---|---|---|
+| M1 driver | wt/s09-m1 | experiments/ad01/trajectory.py driver regions plus cli.py plus selection.py extraction plus migrations/0017_s09_state.sql plus checkpoint manifest | tests/test_s09m1_*.py | s09_m1_ | public run plus kill after acceptance and after effect, fresh resume reconciles same op, no duplicate effects |
+| M2 policy exec | wt/s09-m2 | experiments/ad01/policy_step.py executor region plus method_exec.py STEP region plus construct.py lineage region plus agenda_policy.py version region | tests/test_s09m2_*.py | s09_m2_ | two authored policies diverge via public entry, restart consistent, model-bytes lineage validated |
+| M3M4 visibility plus bind | wt/s09-m34 | experiments/ad01/records.py plus learner.py visibility region plus packet.py context region plus selection.py binding region plus capability_releases use | tests/test_s09m34_*.py | s09_m34_ | hidden-answer probe leaves provider request unchanged, protected refs refused, atomic bind selects revised bytes fresh-process |
+| M5 pilot | wt/s09-m5 | scripts/s09_pilot*.py plus verifier plus evidence exports only (no shared runtime) | tests/test_s09m5_*.py | s09_m5_ | deterministic pilot plus offline verifier green, missing arms stay missing |
+
+M2 depends on M1 selection.py plus 0017 merged tip. M3M4 depends on M1. M5 depends on M1-M4 for live panel but its skeleton may start in wave 2 on the M1 tip. N5 panel specifics plus token, query, runtime, wall ceilings freeze in M5. Stage 8 19-gate count is carried as coordinator-measured, M6 reruns it on the final tip.
+
+M1 merged 1e60bb3 (lane 3cbbd10): driver persists accept before effects, selection extracted, 0017 adds s09_policy_state plus s09_assessment_exposure. Tip gates 25 passed (m1 6 plus stage-8 19). Wave 2 opens on this tip.
+
+M2 merged eb1c6df (lane 0497c21): bounded STEP child execution plus policy constructor with lineage plus one repair. Tip gates 39 passed (m2 14 plus m1 6 plus stage-8 19). M34 plus M5 continue on disjoint paths.
+
+M34 merged 527eb01 (lane ab2d28d): sealed filtering at packet plus learner boundary with exposure retirement plus atomic binding-aware selection. Tip gates 50 passed (m34 11 plus m2 14 plus m1 6 plus stage-8 19). M5 continues on scripts only.
+
+M5 merged 037d176 (lane 2abfffe): prospective P0/P1/P2 pilot plus offline verifier plus doubled-r1 bundle (3 of 100 calls, P2 unavailable arm proven). Tip gates 58 passed (m5 8 plus m34 11 plus m2 14 plus m1 6 plus stage-8 19) plus verifier pass with documented PYTHONPATH. All implementation lanes merged.
+
+M6FIX merged 5b7fd8a (lane f77f495): F1 run_use routes through binding-aware selector with dsn plus release_id; F2 use operations mint versioned identity. Tip gates 62 passed (m6fix 4 plus 58) plus verifier pass. M6 findings closed; M7 delivery opens.
+
+Suite regression R1 fixed: M1 execute_pending dropped the journal, so the s09 resume path never consulted the diagnostic checkpoint and redid diagnostics. Fix passes journal dsn plus cid into _run_boundary; re-record skipped since accepted is present. tests/test_invr2_diagnostic.py green. tests/test_invr2_correction.py fails identically on base 9984baf, pre-existing, ledgered minor, out of scope.
+
+Full suite on final tip: 900 passed, 12 failed, 592 skipped, 2 errors. 10 failures are test_invr3_export missing-database environmental. 1 is the pre-existing invr2_correction base failure. 1 was the R1 diagnostic regression, now fixed with 63 gates green plus verifier pass. 2 dbos errors are empty-DSN environmental, 3 passed on URL-form rerun. No sums across runs claimed as one suite.
+
+## Completion C0-C6 (base ef36a27, branch codex/implementation-stage-09-completion, worktree .worktrees/s09cp)
+
+Base ef36a27 holds implementation efe73a3 plus assessment with S9R-01-04 plus probe plus Jev example. Stage 8 stays closed. evidence_inv01_live untouched. Doubled bundle evidence_s09pilot/doubled-r1 stays historical apparatus evidence.
+
+S9R verdicts (confirmed on base, no rebuttals): S9R-01 pilot builds task methods with no STEP consumer and live mode keeps recording gateways. S9R-02 probe repeats 3 preparations from a 1-call allowance with empty next-boundary state; use_method maps to development; propose_revision stops with metadata. S9R-03 bind_revision accepts caller versions with optional protocol/evaluator and no assessment gate. S9R-04 active_binding_for without release scans globally for newest; CLI exposes no release flag.
+
+Shared meanings: investigation ad01-w<world>-<arm>-<seq>; attempt att-<cid>-<seq>; policy source_digest plus POLICY_STEP_VERSION; STEP state bounded JSON in s09_policy_state; accepted action in s09 row; pending effect in operations row; method artifact in artifact_versions; revision proposal in journal with parent digest plus scope; assessment as frozen bytes plus protocol plus evaluator verdict; active binding as capability_releases disposition default or limited plus fallback. Feedback consumers are learner prompts; STEP bytes come from construct_policy; promotion qualifies in selection bind path only.
+
+Action map: diagnose runs run_diagnostic; construct_method runs broker construction; use_method must resolve plus execute bound method bytes; request_model routes broker op with text as next observation; propose_revision enters records revision lifecycle or durable refusal; stop ends the episode. Each persists policy identity, state transition, pending action before effects.
+
+| lane | branch | owned paths (exclusive) | tests | DB | acceptance |
+|---|---|---|---|---|---|
+| C1 continuity | wt/s09-c1 | agenda_policy.py decide plus step-loop region, policy_step.py persistence region | tests/test_s09c1_*.py | s09_c1_ | allowance 1 plus repeated requests prepares once; state survives boundary plus restart; restart never redraws model text |
+| C2 actions plus bind | wt/s09-c2 | agenda_policy.py proposal region, selection.py bind gate, cli.py release flag, trajectory.py release threading | tests/test_s09c2_*.py | s09_c2_ | use_method executes bytes never constructs; propose_revision reaches lifecycle or named refusal; bind refuses absent, failed, stale, wrong scope or source; two studies never cross-select; CLI release selects exact bytes fresh-process |
+| C3 experiment | wt/s09-c3 | scripts/s09_pilot*.py, controlled HTTP provider, exports | tests/test_s09c3_*.py | s09_c3_ | STEP arms diverge via driver; controlled HTTP proves live adapter distinct; disconnect yields no candidate; verifier names deleted record |
+| C4 live | coordinator | evidence_s09completion_live/, grant records | panel gates | s09-completion-live-01 | one bounded run on frozen spec, honest negatives kept |
+| C5 review | reviewer | read-only | isolated | s09_rv_ | own bytes falsify C1-C4 plus causal sensitivity |
+| C6 deliver | coordinator | reports/STAGE-09-COMPLETION.md, roadmap, plan | suite | none | matrix plus commands plus Jev record plus SHA |
+
+Waves: C1 plus C2 in parallel after C0 review (disjoint regions of agenda_policy). C3 after C1 plus C2 merge. C4 after C3 plus Jev pre-live. Rules: serial merges, affected reruns, disposable s09_ DBs, no live inference before C4, no spent-grant reuse.
+
+C0R1 (Jev c0-challenge): effects covered weakly, isolation insufficient. C1 acceptance now requires pending STEP action identity persisted before broker effects with reconcile gates and no model-text redraw. Isolation stands on PLAN M0R1 plus C3 freeze, missing-arm, verifier gates; C3 freezes panel specifics. Binding residual risk stays under the C2 cross-study gate. No question was rephrased.
+
+C0R2 (plan review findings 1-5, all accepted, no rebuttals).
+
+Action map with functions plus evidence: diagnose runs trajectory.run_diagnostic, evidence study_phases diagnostic row plus observation. construct_method runs construct.construct_method for task methods, evidence broker ops plus artifact_versions plus method record. STEP construction runs construct.construct_policy for learning policies, evidence lineage plus response digests plus repair record. use_method resolves plus executes bound method bytes through the bound executor, evidence use records plus receipts. request_model routes the broker model op in agenda_policy 380-440, evidence operations plus receipts plus settled text. propose_revision enters the records revision lifecycle or a durable named refusal, evidence journal proposal plus freeze plus assessment. stop ends the episode, evidence boundary record.
+
+Waves replace parallel C1 plus C2 inside agenda_policy. Wave 1a: C1 owns agenda_policy.py decide plus step loop plus broker request path plus limits plus state, and policy_step.py persistence. Wave 1a parallel: C2B owns selection.py bind gate plus records.py revision records plus cli.py release flag plus trajectory.py release threading. Wave 1b on the merged tip: C2A owns agenda_policy.py _step_proposal 290-323 plus propose_revision branch 543-569 with failing-first gates. One writer per file per wave.
+
+C2 bind gate strengthened: refuse empty protocol, empty evaluator, empty evidence references; bind exact frozen bytes only; caller labels never authorize a release; stale, failed, wrong-scope, wrong-source refused.
+
+C3 treatment named: P0 is the frozen incumbent STEP policy; P1 plus P2 are constructed STEP policies through the same driver; executed digests must equal returned bytes; no substitution of unavailable arms; no post-outcome panel change; panel freeze owned by C3. C3 wires StepPolicyConsumer at agenda_policy.py:347 into the trajectory boundary that defaults at trajectory.py:464-476.
+
+Public fallback closed: CLI use requires the release flag or the public path refuses; first-match fallback at selection.py:156-160 retires; two studies of one family prove mutual non-selection; resumed use resolves identical bytes or records precise refusal.
+
+C1 merged bafe47c (lane bd116de): durable STEP state plus cumulative limits from durable counts. Tip gates 26 green. C2B continues on disjoint paths.
+
+C0R3 (strict-refusal overreach): retiring all release-less selection broke four neighboring suites doing single-study repertoire use with digest-verified members. Corrected scope: global newest store scan stays retired; repertoire-scoped selection within the caller-passed members is restored with zero store access; CLI still requires --release; binding path unchanged. S9R-04 threat was cross-study store selection, never explicit repertoire passing.

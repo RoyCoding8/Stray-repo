@@ -10,6 +10,8 @@ import os
 
 from . import controls, seeds, worlds
 from . import packet as _packet
+from .selection import select_member as _select_member
+from .selection import versioned_use_op_id as _versioned_use_op_id
 
 
 def reasoning_effort() -> str:
@@ -203,6 +205,126 @@ def record_decision(dsn: str, cid: str, seq: int, decision: dict) -> str:
     return aid
 
 
+def _s09_effect_id(cid: str, seq: int) -> str:
+    return "ad01-%s-b%d-effect" % (cid, seq)
+
+
+def _s09_get(dsn: str, cid: str, seq: int):
+    with _read_conn(dsn) as conn:
+        row = conn.execute(
+            "SELECT * FROM s09_policy_state"
+            " WHERE investigation_id = %s AND seq = %s",
+            (cid, seq)).fetchone()
+        conn.commit()
+        return row
+
+
+def _s09_insert_accepted(dsn: str, cid: str, seq: int,
+                         decision: dict, provenance: str) -> None:
+    from psycopg.types.json import Json
+    with _read_conn(dsn) as conn:
+        conn.execute(
+            "INSERT INTO s09_policy_state"
+            " (investigation_id, seq, attempt_id, effect_id,"
+            " policy_input, policy_output, state_transition,"
+            " accepted_action, status, provenance, driver_version)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s,"
+            " 'accepted', %s, 's09-m1')"
+            " ON CONFLICT (investigation_id, seq) DO NOTHING",
+            (cid, seq, _attempt_id(cid, seq),
+             _s09_effect_id(cid, seq), Json({}), Json({}),
+             Json({}), Json(decision), provenance))
+        conn.commit()
+
+
+def _s09_ensure_incorporated(dsn: str, cid: str, seq: int,
+                             decision: dict, observation,
+                             episode: dict, spend: int,
+                             provenance: str) -> None:
+    from psycopg.types.json import Json
+    payload = {"observation": observation, "episode": episode,
+               "spend": spend, "decision": decision}
+    with _read_conn(dsn) as conn:
+        conn.execute(
+            "INSERT INTO s09_policy_state"
+            " (investigation_id, seq, attempt_id, effect_id,"
+            " policy_input, policy_output, state_transition,"
+            " accepted_action, effect_record, status,"
+            " provenance, driver_version)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,"
+            " 'incorporated', %s, 's09-m1')"
+            " ON CONFLICT (investigation_id, seq) DO NOTHING",
+            (cid, seq, _attempt_id(cid, seq),
+             _s09_effect_id(cid, seq), Json({}), Json({}),
+             Json({}), Json(decision), Json(payload), provenance))
+        conn.execute(
+            "UPDATE s09_policy_state SET status = 'incorporated',"
+            " effect_record = COALESCE(effect_record, %s::jsonb),"
+            " updated_at = now()"
+            " WHERE investigation_id = %s AND seq = %s",
+            (Json(payload), cid, seq))
+        conn.commit()
+
+
+def _s09_mark_incorporated(dsn: str, cid: str, seq: int) -> None:
+    with _read_conn(dsn) as conn:
+        conn.execute(
+            "UPDATE s09_policy_state SET status = 'incorporated',"
+            " updated_at = now()"
+            " WHERE investigation_id = %s AND seq = %s",
+            (cid, seq))
+        conn.commit()
+
+
+def accept_action(dsn: str, cid: str, seq: int,
+                  decision: dict) -> str:
+    existing = _s09_get(dsn, cid, seq)
+    if existing is not None:
+        return existing["attempt_id"]
+    settled, pending = _read_campaign(dsn, cid)
+    if seq in settled:
+        raise ValueError("boundary %d already settled" % seq)
+    if seq in pending and pending[seq].get("decision") != decision:
+        raise ValueError("pending effect %d already accepted" % seq)
+    _s09_insert_accepted(dsn, cid, seq, decision, "s09-m1")
+    if seq not in pending:
+        record_decision(dsn, cid, seq, decision)
+    return _attempt_id(cid, seq)
+
+
+def execute_pending(dsn: str, cid: str, seq: int, *,
+                    task_id: str, capability_id: str, caps: dict,
+                    seed_obs: dict, charter: dict, boundary: dict,
+                    experience: dict, state: dict,
+                    study_root: str | None = None,
+                    construction=None) -> tuple:
+    from psycopg.types.json import Json
+    row = _s09_get(dsn, cid, seq)
+    if row is None:
+        raise ValueError("no accepted action for %s %d" % (cid, seq))
+    if row["effect_record"] is not None:
+        rec = dict(row["effect_record"])
+        return (rec["observation"], rec["episode"],
+                int(rec["spend"]), rec["decision"])
+    decision = dict(row["accepted_action"])
+    journal = {"dsn": dsn, "cid": cid, "decision": decision}
+    observation, episode, spend = _run_boundary(
+        task_id, capability_id, caps, seed_obs, charter=charter,
+        boundary=boundary, experience=experience, state=state,
+        construction=construction, accepted=decision,
+        journal=journal, study_root=study_root or cid)
+    payload = {"observation": observation, "episode": episode,
+               "spend": spend, "decision": decision}
+    with _read_conn(dsn) as conn:
+        conn.execute(
+            "UPDATE s09_policy_state SET effect_record = %s,"
+            " updated_at = now()"
+            " WHERE investigation_id = %s AND seq = %s",
+            (Json(payload), cid, seq))
+        conn.commit()
+    return observation, episode, spend, decision
+
+
 def _read_campaign(dsn: str, cid: str) -> tuple:
     settled, pending = {}, {}
     with _read_conn(dsn) as conn:
@@ -384,7 +506,7 @@ def _run_boundary(task_id: str, capability_id: str, caps: dict,
                        "fallback": "incumbent", "fallback_reason": reason,
                        "task_id": task_id, "queries": 0}
             return seed_obs, episode, 0
-    if action.get("kind") not in ("diagnostic", "development"):
+    if action.get("kind") not in ("diagnostic", "development", "use_method", "policy_revision"):
         episode = {"disposition": "no-candidate",
                    "fallback": "incumbent",
                    "fallback_reason": "unknown action kind %r"
@@ -424,6 +546,10 @@ def _run_boundary(task_id: str, capability_id: str, caps: dict,
         if journal.get("dsn") and accepted is None:
             record_decision(journal["dsn"], journal["cid"], boundary["seq"],
                             investigation)
+    if action["kind"] == "use_method":
+        return _use_retained_method(action, experience or {}, seed_obs, journal, boundary)
+    if action["kind"] == "policy_revision":
+        return _construct_policy_revision(investigation, seen, seed_obs, construction, state)
     diagnostic_budget = _sequenced_construction_allowance(
         seen["remaining"].get("queries", 16), 0)
     checkpoint = None
@@ -542,6 +668,281 @@ def _run_boundary(task_id: str, capability_id: str, caps: dict,
     return observation, episode, spend
 
 
+def _use_retained_method(action: dict, experience: dict, seed_obs: dict,
+                         journal: dict | None, boundary: dict | None) -> tuple:
+    import hashlib
+    from .method_exec import MethodExecutionError
+    target, method_id = action["task_id"], action["method_id"]
+    member = next((m for m in experience.get("retained", [])
+                   if m.get("capability_id") == method_id), None)
+    episode = {"kind": "use_method", "task_id": target, "method_id": method_id,
+               "construction_calls": 0, "queries": 0, "disposition": "refused"}
+    if member is None or member.get("scope", {}).get("family") != _family(target):
+        return seed_obs, {**episode, "reason": "no eligible retained method %r" % method_id}, 0
+    source = member.get("method_source")
+    if not isinstance(source, str) or hashlib.sha256(source.encode()).hexdigest() != member.get("source_digest"):
+        return seed_obs, {**episode, "reason": "retained method bytes differ from source digest"}, 0
+    task = worlds.load_task(worlds.FROZEN_DIR, target)
+    budget = min(int(action.get("max_queries", 16)),
+                 int(experience.get("remaining", {}).get("queries", 0)))
+    if budget <= 0:
+        return seed_obs, {**episode, "reason": "retained use query budget exhausted"}, 0
+    authority = {}
+    if journal and journal.get("dsn") and boundary is not None:
+        authority = {"dsn": journal["dsn"], "allocation_id": _alloc_id(journal["cid"]),
+                     "operation_id": _attempt_id(journal["cid"], boundary["seq"]) + "-use"}
+    try:
+        result = _run_member(member, task, max_queries=budget, **authority)
+    except MethodExecutionError as exc:
+        return seed_obs, {**episode, "reason": str(exc), "queries": budget,
+                          "query_accounting": "upper-bound-on-failure"}, budget
+    report = _check(task, result["candidate"])
+    initial, final = _size(task, result["candidate"])
+    episode = {**episode, "disposition": "used" if report["verdict"] == "preserved" else "rejected",
+               "source_digest": member["source_digest"], "check": report,
+               "initial_size": initial, "final_size": final, "queries": result["queries"],
+               "operation_id": result.get("operation_id")}
+    observation = {"observation_id": "obs-%s-%s-use" % (method_id, target),
+                   "task_id": target, "capability_id": method_id,
+                   "verdict": report["verdict"], "queries": result["queries"], "detail": report}
+    return observation, episode, result["queries"]
+
+
+def _policy_record_for_consumer(consumer) -> dict | None:
+    source = getattr(consumer, "_policy_source", None)
+    artifact = getattr(consumer, "_policy", None)
+    if not isinstance(source, str) or not isinstance(artifact, dict):
+        return None
+    return {"artifact": dict(artifact), "policy_source": source}
+
+
+def _persist_policy_refusal(dsn: str, proposal_id: str, outcome: str,
+                            reason: str) -> dict:
+    from settlement import store
+    from settlement.common import Command, ResultCode
+    record = {"proposal_id": proposal_id, "outcome": outcome,
+              "reason": reason}
+    result = store.transact(
+        dsn, Command(request_id="s09-policy-refusal-%s" % proposal_id,
+                     payload=record),
+        lambda cur, control: (ResultCode.APPLIED, outcome, record, [], []))
+    if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        raise ValueError("policy refusal not persisted: %s" % result.detail)
+    return dict(result.data or record)
+
+
+def _construct_policy_revision(investigation: dict, seen: dict, seed_obs: dict,
+                               construction: dict | None, state: dict | None) -> tuple:
+    import hashlib
+    from . import construct, policy_assess, policy_step, records, selection
+    target = investigation["next_action"]["task_id"]
+    request = investigation["revision_proposal"]
+    episode = {"kind": "policy_revision", "task_id": target, "queries": 0,
+               "construction_calls": 0, "disposition": "refused",
+               "fallback": "incumbent"}
+    refs = list(investigation.get("basis_references") or [])
+    feedback = {o["observation_id"]: o for o in seen["observations"]
+                if o.get("verdict") not in (None, "unmeasured")
+                and o.get("task_id") in _dev_task_ids()}
+    if not refs or any(ref not in feedback for ref in refs):
+        return seed_obs, {**episode, "reason": "revision needs attributable operational feedback"}, 0
+    if construction is None:
+        return seed_obs, {**episode, "reason": "revision needs configured policy construction"}, 0
+    task = worlds.load_task(worlds.FROZEN_DIR, target)
+    scope = {"family": task["family"]}
+    if request.get("scope") and request["scope"] != scope:
+        return seed_obs, {**episode, "reason": "revision scope differs from target family"}, 0
+    remaining = min(2, int(seen["remaining"].get("model_calls", 0)),
+                    construct.CONSTRUCTION_CALL_CEILING - int((state or {}).get("construction_calls", 0)))
+    if remaining <= 0:
+        return seed_obs, {**episode, "reason": "policy construction call budget exhausted"}, 0
+    proposal = records.open_revision_proposal(
+        construction["dsn"], investigation_id=construction["cid"],
+        parent_digest=request["parent_digest"],
+        failure_record={**feedback[refs[-1]], "parent_digest": request["parent_digest"]},
+        scope=scope, protocol_id=policy_assess.PANEL_PROTOCOL,
+        allocation_id=_alloc_id(construction["cid"]))
+    episode["proposal_id"] = proposal["proposal_id"]
+    try:
+        candidate = construct.construct_policy(
+            construction["dsn"], campaign_id=construction["cid"], task=task,
+            experience=seen, budget={**construction["budget"], "model_calls": remaining},
+            gateway=construction["gateway"], model=construction["model"],
+            study_root=construction["study_root"], parent_digest=request["parent_digest"],
+            applicability=scope)
+    except construct.ConstructionFailed as exc:
+        reason = "policy constructor unavailable: %s" % exc
+        _persist_policy_refusal(construction["dsn"], proposal["proposal_id"],
+                                "unavailable", reason)
+        episode.update(disposition="unavailable", reason=reason,
+                       assessment_status="unavailable",
+                       construction_calls=exc.calls_made)
+    else:
+        freeze = records.freeze_candidate(
+            construction["dsn"], proposal_id=proposal["proposal_id"],
+            source_bytes=candidate["policy_source"], entry="STEP")
+        episode.update(policy_candidate=candidate, freeze=freeze,
+                       construction_calls=candidate["lineage"]["calls_made"])
+        incumbent = construction.get("incumbent_policy")
+        if incumbent is None:
+            reason = "incumbent policy bytes unavailable for assessment"
+            _persist_policy_refusal(construction["dsn"], proposal["proposal_id"],
+                                    "unavailable", reason)
+            episode.update(disposition="unavailable", reason=reason,
+                           assessment_status="unavailable")
+        else:
+            panel = policy_assess.panel_for(
+                scope=scope, world=construction["world"],
+                seed=proposal["proposal_id"])
+            rule = policy_assess.rule_for(resource_ceiling=16)
+            protocol = policy_assess.freeze_protocol(
+                construction["dsn"], proposal_id=proposal["proposal_id"],
+                panel=panel, rule=rule)
+            candidate_source = freeze["source"]
+            candidate_record = policy_step.make_policy_artifact(
+                candidate_source, origin="model-acquired",
+                parent_digest=proposal["parent_digest"],
+                applicability=scope)
+            policy_step.verify_policy_record(candidate_record)
+            incumbent_source = incumbent["policy_source"]
+            incumbent_record = dict(incumbent)
+            incumbent_digest = hashlib.sha256(
+                incumbent_source.encode("utf-8")).hexdigest()
+            assessment = policy_assess.assess_policy(
+                construction["dsn"], proposal_id=proposal["proposal_id"],
+                candidate_source=candidate_source,
+                candidate_digest=freeze["candidate_digest"],
+                candidate_artifact=candidate_record,
+                incumbent_source=incumbent_source,
+                incumbent_digest=incumbent_digest,
+                incumbent_artifact=incumbent_record,
+                panel=panel, rule=rule, scope=scope,
+                protocol_id=policy_assess.PANEL_PROTOCOL,
+                evaluator_version=policy_assess.EVALUATOR_VERSION)
+            stored = records.load_assessment(
+                construction["dsn"], proposal["proposal_id"],
+                freeze["candidate_digest"])
+            if stored is None:
+                raise ValueError("policy assessment was not durably journaled")
+            assessment = stored
+            resources = [dict(assessment["arms"][name]["resources"])
+                         for name in ("candidate", "incumbent")]
+            assessment_queries = sum(r["queries"] for r in resources)
+            assessment_model_calls = sum(r["model_calls"] for r in resources)
+            episode.update(assessment=assessment, assessment_status="complete",
+                           assessment_queries=assessment_queries,
+                           assessment_model_calls=assessment_model_calls,
+                           queries=assessment_queries)
+            if assessment["outcome"] == "bind":
+                release_id = "ad01-%s-policy-%s" % (
+                    construction["cid"], freeze["candidate_digest"][:12])
+                current = selection.active_binding_for(
+                    construction["dsn"], scope["family"],
+                    release_id=release_id)
+                expected = list(current["versions"]) if current else None
+                version_id = candidate["capability_id"]
+                try:
+                    bound = selection.bind_revision(
+                        construction["dsn"], release_id=release_id,
+                        versions=[version_id], scope=scope,
+                        disposition="default", fallback="incumbent",
+                        expected_versions=expected,
+                        policy_version=policy_step.POLICY_STEP_VERSION,
+                        protocol_id=proposal["protocol_id"],
+                        evaluator_version=policy_assess.EVALUATOR_VERSION,
+                        evidence_refs=[assessment["attempt_id"]],
+                        proposal_id=proposal["proposal_id"],
+                        candidate_digest=freeze["candidate_digest"])
+                except selection.StaleBind as exc:
+                    episode.update(disposition="rejected", reason=str(exc),
+                                   fallback="incumbent")
+                else:
+                    episode.update(disposition="bound", release_id=release_id,
+                                   bound_digest=freeze["candidate_digest"],
+                                   scope=dict(scope),
+                                   binding={"release_id": release_id,
+                                            "versions": [version_id]},
+                                   fallback="incumbent")
+            elif assessment["outcome"] == "reject":
+                episode.update(disposition="rejected",
+                               reason=assessment.get("reason", ""),
+                               fallback="incumbent")
+            elif assessment["outcome"] == "unavailable":
+                episode.update(disposition="unavailable",
+                               reason=assessment.get("reason", ""),
+                               fallback="incumbent")
+            else:
+                raise ValueError("unknown policy assessment outcome %r" %
+                                 assessment["outcome"])
+    if state is not None:
+        state["model_calls"] += episode["construction_calls"] \
+            + int(episode.get("assessment_model_calls", 0))
+        state["construction_calls"] += episode["construction_calls"]
+    observation = {"observation_id": "obs-" + proposal["proposal_id"],
+                   "task_id": target, "verdict": episode["disposition"],
+                   "queries": episode.get("queries", 0),
+                   "detail": {"proposal_id": proposal["proposal_id"],
+                              "kind": "policy_revision",
+                              "reason": episode.get("reason", "")}}
+    return observation, episode, int(episode.get("queries", 0))
+
+
+def _resolve_policy_consumer(dsn: str, release_id: str, family: str, *,
+                             cid: str, charter: dict, world: int, arm: str,
+                             study_root: str, gateway, model: str):
+    import hashlib
+    from . import agenda_policy, policy_step, records, selection
+    binding = selection.active_binding_for(dsn, family,
+                                           release_id=release_id)
+    if binding is None:
+        return None, "no active policy binding for release %r (family %s)" % (
+            release_id, family)
+    provenance = selection.binding_provenance(binding)
+    proposal_id = provenance.get("proposal_id")
+    candidate_digest = provenance.get("candidate_digest")
+    freeze = records.load_freeze(dsn, proposal_id) if proposal_id else None
+    if freeze is None:
+        return None, "policy release %r has no frozen candidate" % release_id
+    if freeze.get("candidate_digest") != candidate_digest:
+        return None, "policy release %r provenance digest differs from frozen candidate" % release_id
+    source = freeze.get("source")
+    if not isinstance(source, str) or hashlib.sha256(
+            source.encode("utf-8")).hexdigest() != candidate_digest:
+        return None, "policy release %r frozen bytes do not match provenance" % release_id
+    proposal = records.load_revision_proposal(dsn, proposal_id)
+    if proposal is None:
+        return None, "policy release %r has no revision proposal" % release_id
+    try:
+        record = policy_step.make_policy_artifact(
+            source, origin="model-acquired",
+            parent_digest=proposal.get("parent_digest"),
+            applicability=dict(proposal.get("scope") or {}))
+        policy_step.verify_policy_record(record)
+    except (ValueError, LookupError) as exc:
+        return None, "policy release %r refused: %s" % (release_id, exc)
+    return agenda_policy.step_policy_consumer(
+        record, dsn=dsn, cid=cid, charter=charter, world=world, arm=arm,
+        allocation_id=_alloc_id(cid), study_root=study_root, gateway=gateway,
+        model=model), None
+
+
+def _activate_bound_policy(episode: dict, consumer, construction: dict | None,
+                           *, dsn: str | None, cid: str, charter: dict,
+                           world: int, arm: str, study_root: str,
+                           gateway, model: str):
+    if episode.get("disposition") != "bound" or dsn is None:
+        return consumer
+    resolved, refusal = _resolve_policy_consumer(
+        dsn, episode["release_id"], episode["scope"]["family"], cid=cid,
+        charter=charter, world=world, arm=arm, study_root=study_root,
+        gateway=gateway, model=model)
+    if refusal is not None:
+        raise ValueError("bound policy could not be activated: %s" % refusal)
+    if construction is not None:
+        construction["incumbent_policy"] = _policy_record_for_consumer(resolved)
+    return resolved
+
+
 def _default_tasks(world: int, arm: str = "I") -> list:
     if arm == "R":
         from . import rotation
@@ -588,9 +989,14 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
                  campaign_seq: int = 0, dsn: str | None = None,
                  propose=None, gateway=None, model: str = "",
                  constructor: str = "seed", consumer=None,
-                 study_root: str | None = None) -> dict:
+                 study_root: str | None = None,
+                 policy_release: str | None = None) -> dict:
     cid = campaign_id(world, arm, campaign_seq)
     study_root = study_root or cid
+    if consumer is not None and policy_release is not None:
+        raise ValueError("consumer and policy_release are mutually exclusive")
+    if policy_release is not None and dsn is None:
+        raise ValueError("policy release resolution needs a settlement store")
     if gateway is not None and dsn is None:
         raise ValueError("a gateway needs a dsn for broker operations")
     if constructor == "model" and (dsn is None or gateway is None):
@@ -604,6 +1010,19 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
         tasks = _default_tasks(world, arm) if tasks is None else tasks
         _check_tasks(tasks)
         settled, pending = {}, {}
+    if consumer is None and policy_release is not None:
+        family = _family(tasks[0]) if tasks else ""
+        consumer, refusal = _resolve_policy_consumer(
+            dsn, policy_release, family, cid=cid, charter=charter,
+            world=world, arm=arm, study_root=study_root, gateway=gateway,
+            model=model)
+        if refusal is not None:
+            return {"campaign_id": cid, "world": world, "arm": arm,
+                    "charter": charter.get("objective", ""),
+                    "boundaries": [], "episodes": [],
+                    "stop": {"reason": refusal}, "queries": 0,
+                    "dev_episodes": 0, "model_calls": 0,
+                    "construction_calls": 0, "study_root": study_root}
     experience: dict = {"observations": [], "retained": []}
     boundaries, episodes = [], []
     queries = 0
@@ -613,6 +1032,8 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
     if constructor == "model":
         construction = {"dsn": dsn, "cid": cid, "gateway": gateway,
                         "model": model, "study_root": study_root,
+                        "world": world, "arm": arm,
+                        "incumbent_policy": _policy_record_for_consumer(consumer),
                         "model_cap": int(caps.get("model_calls", 60)),
                         "budget": {"max_output_tokens": int(
                             caps.get("construction_tokens", 2048))}}
@@ -647,6 +1068,11 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
         decision = None
         if seq in settled:
             old = settled[seq]
+            if dsn is not None:
+                _s09_ensure_incorporated(
+                    dsn, cid, seq, old["decision"],
+                    old["observation"], old["episode"],
+                    int(old["spend"]), "s09-m1")
             queries += int(old["spend"])
             if old["episode"].get("kind", "development") == "development" \
                     and old["episode"]["disposition"] in (
@@ -669,6 +1095,57 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
                                "observation_id": old["observation_id"],
                                "spend": old["spend"], "resumed": True})
             continue
+        if dsn is not None:
+            s09row = _s09_get(dsn, cid, seq)
+            pend = pending.get(seq, {}).get("decision")
+            pending_step = s09row is not None and dict(
+                s09row["accepted_action"] or {}).get("status") == "pending"
+            if pending_step and consumer is None:
+                raise ValueError("pending STEP requires a policy consumer")
+            if (s09row is not None or pend is not None) and not pending_step:
+                if s09row is None:
+                    _s09_insert_accepted(
+                        dsn, cid, seq, pend, "legacy-drain")
+                    s09row = _s09_get(dsn, cid, seq)
+                routed = _capability_for(task_id, capability_id)
+                seed_obs = {"observation_id": "obs-%s-seed" % task_id,
+                            "task_id": task_id, "capability_id": routed,
+                            "verdict": "unmeasured"}
+                observation, episode, spend, decision = execute_pending(
+                    dsn, cid, seq, task_id=task_id,
+                    capability_id=routed, caps=caps,
+                    seed_obs=seed_obs, charter=charter,
+                    boundary={"world": world, "arm": arm, "seq": seq},
+                    experience=experience, state=state,
+                    construction=construction, study_root=study_root)
+                if observation is None:
+                    _s09_mark_incorporated(dsn, cid, seq)
+                    stop = {"reason": "learner stop"}
+                    break
+                executed = episode.get("task_id", task_id)
+                queries += spend
+                if episode.get("disposition") == "retained" \
+                        and isinstance(episode.get("executable"), dict):
+                    experience["retained"].append(episode["executable"])
+                observation = {**observation, "task_id": executed,
+                               "capability_id": _capability_for(
+                                   executed, routed)}
+                experience["observations"].append(observation)
+                episodes.append(episode)
+                consumer = _activate_bound_policy(
+                    episode, consumer, construction, dsn=dsn, cid=cid,
+                    charter=charter, world=world, arm=arm,
+                    study_root=study_root, gateway=gateway, model=model)
+                entry = {"seq": seq, "task_id": executed,
+                         "decision": decision,
+                         "observation_id": observation["observation_id"],
+                         "spend": spend}
+                entry["decision_id"] = _publish_boundary(
+                    dsn, cid, seq, executed, decision, observation,
+                    episode, spend)
+                boundaries.append(entry)
+                _s09_mark_incorporated(dsn, cid, seq)
+                continue
         routed = _capability_for(task_id, capability_id)
         seed_obs = {"observation_id": "obs-%s-seed" % task_id,
                     "task_id": task_id, "capability_id": routed,
@@ -695,6 +1172,10 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
                        "capability_id": _capability_for(executed, routed)}
         experience["observations"].append(observation)
         episodes.append(episode)
+        consumer = _activate_bound_policy(
+            episode, consumer, construction, dsn=dsn, cid=cid,
+            charter=charter, world=world, arm=arm,
+            study_root=study_root, gateway=gateway, model=model)
         entry = {"seq": seq, "task_id": executed,
                  "decision": decision,
                  "observation_id": observation["observation_id"],
@@ -703,6 +1184,9 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
             entry["decision_id"] = _publish_boundary(
                 dsn, cid, seq, executed, decision, observation,
                 episode, spend)
+            _s09_ensure_incorporated(
+                dsn, cid, seq, decision, observation, episode,
+                spend, "s09-m1")
         boundaries.append(entry)
     else:
         stop = {"reason": "no admissible work remains"}
@@ -753,13 +1237,6 @@ def load_repertoire(path) -> dict:
     return repertoire
 
 
-def _select_member(repertoire: dict, task: dict) -> dict | None:
-    for member in repertoire.get("members", []):
-        if member.get("scope", {}).get("family") == task["family"]:
-            return member
-    return None
-
-
 def _run_member(member: dict, task: dict, *,
                  max_queries: int | None = None,
                  timeout_ms: int | None = None,
@@ -780,29 +1257,56 @@ def _run_member(member: dict, task: dict, *,
         **({} if timeout_ms is None else {"timeout_ms": timeout_ms}))
 
 
+def _use_refusal(repertoire: dict, task: dict, dsn: str | None,
+                 release_id: str | None) -> str:
+    domain = task["family"]
+    if dsn is None or not release_id:
+        return "no eligible repertoire member for %s" % domain
+    from .selection import active_binding_for, binding_provenance
+    binding = active_binding_for(dsn, domain, release_id=release_id)
+    if binding is None:
+        return "no active binding for release %r (family %s)" % (
+            release_id, domain)
+    wanted = list(binding.get("versions") or [])
+    members = list(repertoire.get("members", []))
+    if not any(m.get("capability_id") in set(wanted) for m in members):
+        return "release %r binds %s, absent from repertoire" % (
+            release_id, wanted)
+    pinned = str(binding_provenance(binding).get("candidate_digest")
+                 or "")
+    return "release %r pins bytes %s, repertoire member bytes differ" % (
+        release_id, pinned[:12])
+
+
 def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
             base_costs: dict, *, dsn: str | None = None,
-            allocation_id: str | None = None) -> list:
+            allocation_id: str | None = None,
+            release_id: str | None = None) -> list:
     from . import checker
     if dsn is not None and not allocation_id:
         raise ValueError("use requires explicit execution allocation")
+    if dsn is None and release_id is not None:
+        raise ValueError("use cannot resolve release %r without a store"
+                         % (release_id,))
     _check_tasks(list(use_tasks))
     records = []
     for task_id in use_tasks:
         task = worlds.load_task(worlds.FROZEN_DIR, task_id)
         domain = task["family"]
-        member = _select_member(repertoire, task)
+        member = _select_member(repertoire, task, dsn=dsn,
+                                release_id=release_id)
         operation_ids = []
         execution = None
         if member is not None and dsn is not None:
             execution = {"dsn": dsn, "allocation_id": allocation_id,
-                         "operation_id": "ad01-%s-use-%s"
-                                         % (repertoire["campaign_id"], task_id)}
+                         "operation_id": _versioned_use_op_id(
+                             repertoire["campaign_id"], task_id,
+                             member["capability_id"])}
         if member is None:
             requested = selected = "incumbent"
             output = controls.incumbent(task)
             queries = 0
-            reason = "no eligible repertoire member for %s" % domain
+            reason = _use_refusal(repertoire, task, dsn, release_id)
             executed_source = "incumbent"
         else:
             requested = selected = member["capability_id"]
@@ -824,6 +1328,7 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
                     "domain": domain, "freeze": worlds.FREEZE_ID,
                     "freeze_digest": checker.freeze_digest(
                         worlds.FROZEN_DIR),
+                    "release_id": release_id,
                     "verdict": report["verdict"],
                     "initial_measure": initial, "final_measure": final,
                     "normalized_reduction": 0.0,
@@ -853,6 +1358,7 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
             "world": world, "arm": arm, "task_id": task_id,
             "domain": domain, "freeze": worlds.FREEZE_ID,
             "freeze_digest": checker.freeze_digest(worlds.FROZEN_DIR),
+            "release_id": release_id,
             "verdict": report["verdict"],
             "initial_measure": initial, "final_measure": final,
             "normalized_reduction": ((initial - final) / initial
@@ -942,7 +1448,8 @@ def resume_campaign(dsn: str, cid: str, charter: dict, caps: dict,
                     capability_id: str = "seed-sw-greedy",
                     propose=None, gateway=None, model: str = "",
                     constructor: str = "seed", consumer=None,
-                    study_root: str | None = None) -> dict:
+                    study_root: str | None = None,
+                    policy_release: str | None = None) -> dict:
     parts = cid.split("-")
     if len(parts) != 4 or parts[0] != "ad01" or parts[2] not in ("I", "R"):
         raise ValueError("malformed campaign id %r" % (cid,))
@@ -956,7 +1463,8 @@ def resume_campaign(dsn: str, cid: str, charter: dict, caps: dict,
                        campaign_seq=seq, dsn=dsn,
                        propose=propose, gateway=gateway, model=model,
                        constructor=constructor, consumer=consumer,
-                       study_root=study_root)
+                       study_root=study_root,
+                       policy_release=policy_release)
     if out["campaign_id"] != cid:
         raise ValueError("resumed unexpected campaign %r" % (
             out.get("campaign_id"),))

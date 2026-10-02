@@ -1,0 +1,16 @@
+{
+  "model": "typesafe-ai/jev",
+  "questions": {
+    "separation": "Which integration best preserves executable STEP policy versus task-method revision while minimizing disconnected paths?",
+    "reuse": "How much of records.assess_frozen can be reused safely for STEP policies?",
+    "causal": "Does the proposed gate establish causal evidence that returned policy bytes changed actual decisions and effects?"
+  },
+  "answers": {
+    "separation": {"choice": "hybrid", "probability": 0.99, "confidence": 0.98},
+    "reuse": {"choice": "dispatch", "probability": 0.60, "confidence": 0.40},
+    "causal": {"probability_true": 0.52}
+  },
+  "usage": {"input_tokens": 816, "output_tokens": 100},
+  "cost": "0",
+  "sanitization": "No credentials, prompts containing secrets, database identifiers, or provider response text were retained."
+}
