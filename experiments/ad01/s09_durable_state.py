@@ -120,6 +120,18 @@ def _same_step(left: DurableStep, right: DurableStep) -> bool:
     return left.as_dict() == right.as_dict()
 
 
+def _names_a_settled_operation(dsn: str, operation_id: str) -> bool:
+    """Whether this id is a settled operation, asked of the table."""
+    from settlement import db as _db
+
+    with _db.connect(dsn) as conn:
+        row = conn.execute(
+            "SELECT 1 FROM operations WHERE id = %s AND settled",
+            (operation_id,)).fetchone()
+        conn.commit()
+    return row is not None
+
+
 def _loaded_step(dsn: str, cid: str, seq: int,
                  binding: PolicyBinding) -> DurableStep | None:
     row = policy_step.load_policy_state(dsn, cid, seq)
@@ -151,9 +163,22 @@ def _loaded_step(dsn: str, cid: str, seq: int,
         raise PolicyBindingMismatch("durable policy step shape is invalid")
     policy_step.validate_state(stored_state)
     attempt_id, effect_id = _identity(cid, seq)
-    if row.get("attempt_id") != attempt_id or row.get("effect_id") != effect_id:
+    # The attempt identity is what this API owns and recomputes. The effect
+    # identity is no longer a constant it can recompute: it is the operation
+    # the boundary admitted, set when the effect is incorporated, and empty
+    # until then. So the binding check here is on the attempt, plus the shape
+    # the effect column is allowed to take. Comparing against a recomputed
+    # effect constant would be the RF-02 defect restated as a guard, and it
+    # would refuse every row that had correctly adopted a real operation.
+    stored_effect = row.get("effect_id")
+    if row.get("attempt_id") != attempt_id \
+            or not isinstance(stored_effect, str):
         raise PolicyBindingMismatch(
             "durable policy step has a different attempt or effect identity")
+    if stored_effect and not _names_a_settled_operation(dsn, stored_effect):
+        raise PolicyBindingMismatch(
+            "durable policy step names effect %r, which is not a settled"
+            " operation" % (stored_effect,))
     output = row.get("policy_output")
     if not isinstance(output, dict) \
             or output.get("source_digest") != binding.digest:
@@ -167,7 +192,7 @@ def _loaded_step(dsn: str, cid: str, seq: int,
         action=deepcopy(stored_action),
         state=deepcopy(stored_state),
         attempt_id=attempt_id,
-        effect_id=effect_id,
+        effect_id=stored_effect,
     )
 
 

@@ -41,8 +41,73 @@ from experiments.ad01.assessment_profile import (
     make_ctx,
 )
 from settlement import broker
+from settlement.gateway import ModelResponse, Usage
 
 TASK_ID = "ad01-w0-dev-sw-00"
+MIGRATIONS = ROOT / "migrations"
+
+
+@pytest.fixture(scope="module")
+def store():
+    """A disposable store, so authority can be real rather than a string.
+
+    Policy source is executed out of process under an allocation the
+    broker knows about. A dsn that names nothing is not authority: the
+    executor refuses it, and a test that supplies one is testing the
+    refusal while reading it as a result. This is the same store the
+    `inv-a` mandate builds for its positive control.
+    """
+    from experiments.ad01.s09_run_isolation import (create_disposable_db,
+                                                   drop_disposable_db)
+    database = create_disposable_db("m1shared", migrations_dir=MIGRATIONS)
+    try:
+        yield database.dsn
+    finally:
+        drop_disposable_db(database)
+
+
+def _allocation(dsn, suffix):
+    """One allocation for one profile's execution of the same program."""
+    from settlement import authority
+    handle = authority.authorize_study(
+        dsn, "m1-shared-%s" % suffix, authorized=1_000_000,
+        allocation_id="m1-shared-%s" % suffix,
+        ceilings={"sandbox_calls": 10_000, "model_calls": 10_000})
+    return handle.allocation_id
+
+
+def _offline_gateway(text):
+    """A gateway that answers without a network, and counts its own sends.
+
+    The wire is the one seam a test may hold shut, and holding it shut is
+    what lets the broker stay real. Stubbing the broker instead does not
+    work: a panel cell is a `sandbox-exec` operation the broker has to
+    have admitted, so a stubbed `ensure_operation` leaves the child
+    operation missing and the cell is refused before it runs.
+    """
+    from experiments.ad01 import live_construct
+
+    route = dict(live_construct.OUTPUT_ROUTE)
+
+    class _Offline:
+        def __init__(self):
+            self.sent = []
+
+        def infer(self, request):
+            self.sent.append(request.operation_id)
+            return ModelResponse(
+                request.operation_id, text,
+                {"model": route["resolved_model"],
+                 "provider": route["provider"], "tier": route["tier"],
+                 "endpoint": route["endpoint"]},
+                Usage(input_tokens=9, output_tokens=5, charge_units=0,
+                      charge_scale=1000, billed=False,
+                      provider_enforced_ceiling=None), "stop")
+
+        def check_discovery(self):
+            return "configured"
+
+    return _Offline()
 
 
 def _task():
@@ -216,10 +281,28 @@ def test_settled_model_response_rejects_successful_unusable_receipt(monkeypatch)
     assert "successful usable" in failure
 
 
-def test_shared_assessment_arm_feeds_settled_model_result_to_next_step(
-        monkeypatch):
+def test_shared_assessment_arm_feeds_settled_model_result_to_next_step(store):
+    """The arm runs its policy steps under real authority and reads its
+    own receipts back.
+
+    Two things changed underneath this and neither is the arm. The executor
+    no longer runs policy source without a store, so a panel cell needs a
+    real one. And the arm's model accounting is read from the durable
+    receipt, whose `settled` and `usable_result` are properties of the
+    receipt row rather than columns the broker writes: the row carries
+    `outcome` and `content`, and nothing else decides whether that content
+    is a usable answer. So the settled-response read is stubbed and the
+    broker is not. Stubbing the broker instead does not work, because a
+    panel cell is a `sandbox-exec` operation the broker has to have
+    admitted, and a stubbed `ensure_operation` leaves it missing.
+
+    Passing the string "assessment-store" rather than a dsn never worked
+    either. `_step_authority` hands the executor what it was given, so the
+    string reached the allocation lookup, the broker and the receipt read.
+    That failure predates the authority mandate: swapping the pre-repair
+    executor back in leaves this test red at the same assertion.
+    """
     import experiments.ad01.assessment_profile as shared
-    from settlement.common import ResultCode
 
     source = (
         "def STEP(view, state):\n"
@@ -240,24 +323,26 @@ def test_shared_assessment_arm_feeds_settled_model_result_to_next_step(
         "'queries': 4}}, 'state': {'done': True}}\n"
     )
     record = _record(source)
-    monkeypatch.setattr(
-        broker, "ensure_operation",
-        lambda *args, **kwargs: SimpleNamespace(code=ResultCode.APPLIED,
-                                               detail="", data={}))
-    monkeypatch.setattr(
-        broker, "dispatch_operation",
-        lambda *args, **kwargs: SimpleNamespace(next_decision="terminal"))
+    gateway = _offline_gateway("settled answer")
+    monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(
         shared, "_settled_model_response",
-        lambda _dsn, _operation_id: ({"text": "settled answer",
-                                      "receipt_identity": "gw:answer"}, None))
+        lambda _dsn, operation_id: ({"text": gateway.sent and "settled answer",
+                                      "receipt_identity": "gw:answer"},
+                                     None))
+    try:
+        arm = shared._shared_assessment_arm(
+            record, [TASK_ID], policy_assess.rule_for(resource_ceiling=16),
+            "assessment-arm", dsn=store,
+            allocation_id=_allocation(store, "m1-arm"),
+            gateway=gateway, model="assessment-model")
+    finally:
+        monkeypatch.undo()
 
-    arm = shared._shared_assessment_arm(
-        record, [TASK_ID], policy_assess.rule_for(resource_ceiling=16),
-        "assessment-arm", dsn="assessment-store",
-        allocation_id="assessment-allocation", gateway=object(),
-        model="assessment-model")
-
+    assert gateway.sent, (
+        "the model request never reached the gateway, so the model_calls "
+        "below would be counting a stub rather than an execution: %r"
+        % (arm["effects"],))
     assert arm["resources"]["model_calls"] == 1
     assert [effect["kind"] for effect in arm["effects"]] == [
         "request_model", "use_method"]
@@ -277,17 +362,42 @@ def test_legacy_divergence_demo_same_payload_admitted_by_broker_owner():
     assert legacy["accepted"] is False
 
 
-def test_same_program_same_step_action_in_both_profiles():
+def test_same_program_same_step_action_in_both_profiles(store):
+    """One program, one step action, under either profile's authority.
+
+    The point of this file is that development and assessment mean the
+    same thing, so the program is run twice and asked for the same action.
+    What the two runs now differ in is authority rather than meaning: the
+    executor refuses to run policy source without a store, an allocation
+    and an operation id (1e0dd44), and a profile with no store is not a
+    different runtime, it is a refused one. So the development arm runs
+    under the development profile's real allocation and the assessment arm
+    under the assessment profile's, and the assertion is that the program
+    chose the same action either way.
+
+    Calling this with no dsn would assert nothing: it would be measuring
+    the refusal rather than the program. `tests/test_inv_a_no_dsn_execution.py`
+    owns the refusal, and pins it against a positive control that runs the
+    same bytes with authority.
+    """
     record = _record(USE_SOURCE)
     task = _task()
     view = policy_step.materialize_view(
         task=task, observations=[], open_questions=[], last_result=None,
         eligible_methods=["seed-sw-greedy"],
         remaining={"steps": 6, "model_calls": 0, "queries": 4})
-    dev = policy_step.run_policy_step(record, view, {})
-    assess = policy_step.run_policy_step(record, view, {})
+    dev = policy_step.run_policy_step(
+        record, view, {}, dsn=store,
+        allocation_id=_allocation(store, "m1-dev"),
+        operation_id="m1-dev-k0")
+    assess = policy_step.run_policy_step(
+        record, view, {}, dsn=store,
+        allocation_id=_allocation(store, "m1-assess"),
+        operation_id="m1-assess-k0")
     assert dev["action"] == assess["action"]
     assert dev["action"]["kind"] == "use_method"
+    assert dev["operation_id"] == "m1-dev-k0"
+    assert assess["operation_id"] == "m1-assess-k0"
 
 
 def test_unified_method_effect_matches_across_profiles():
@@ -410,7 +520,24 @@ def test_revision_staged_locally_only_trusted_bind():
     assert bound["candidate_digest"] == _digest(source)
 
 
-def test_production_revision_assessment_uses_shared_dispatcher(monkeypatch):
+def test_production_revision_assessment_uses_shared_dispatcher(store,
+                                                             monkeypatch):
+    """A production revision reaches the shared dispatcher and is scored.
+
+    The dsn is `store`, a migrated disposable database, and not the string
+    "unused". Every ledger the revision touches is real: the proposal, the
+    frozen candidate, the panel protocol and the journal read back at the
+    end, whose absence raises rather than returning an empty assessment.
+    The four seams that would otherwise have to be faked are the ones that
+    record the revision, so faking them leaves nothing to assert against.
+
+    The string dsn is what this test used to pass, and it could not have
+    worked once the executor required a real allocation. `_step_authority`
+    forwards whatever the caller gave it, so "unused" reached the allocation
+    lookup and the panel cells were refused before execution. That failure
+    predates the authority mandate; swapping the pre-repair executor back in
+    leaves it red at the same assertion.
+    """
     source = USE_SOURCE
     candidate_digest = _digest(source)
     incumbent = policy_step.make_policy_artifact(source, origin="authored-control")
@@ -466,7 +593,12 @@ def test_production_revision_assessment_uses_shared_dispatcher(monkeypatch):
                               "task_id": TASK_ID,
                               "verdict": "not_preserved"}],
             "remaining": {"model_calls": 2}}
-    construction = {"dsn": "unused", "cid": "ad01-w0-I-00",
+    cid = "ad01-w0-I-00"
+    trajectory.authorize_campaign(store, cid, authorized=1_000_000,
+                                  study_root="study",
+                                  ceilings={"sandbox_calls": 10_000,
+                                            "model_calls": 10_000})
+    construction = {"dsn": store, "cid": cid,
                     "gateway": object(), "model": "model",
                     "budget": {"max_output_tokens": 64},
                     "study_root": "study", "world": 0,
@@ -475,10 +607,23 @@ def test_production_revision_assessment_uses_shared_dispatcher(monkeypatch):
         investigation, seen,
         {"observation_id": "seed", "task_id": TASK_ID}, construction,
         {"construction_calls": 0, "model_calls": 0})
-    assert spend == 16
+    arms = episode["assessment"]["arms"]
     assert episode["assessment_status"] == "complete"
-    candidate_effect = episode["assessment"]["arms"]["candidate"]["effects"][0]
+    # The spend is what the two panel arms actually cost, so it is the sum
+    # of the arms' own accounting rather than a number written beside it.
+    # `max_queries` is 4 and there is one panel task, so each arm spends 4
+    # and a candidate that ran would double it. The old literal of 16 was
+    # unreachable: it was 4 requests times 4 queries, a number the panel
+    # never spends, and it held only while nothing executed at all.
+    assert spend == sum(arm["resources"]["queries"] for arm in arms.values())
+    assert spend == 8
+    assert all(arm["resources"]["queries"] == 4
+               for arm in arms.values()), (
+        "a panel arm no longer spends its own budget, so the spend is not "
+        "the panel's: %r" % (arms,))
+    candidate_effect = arms["candidate"]["effects"][0]
     assert candidate_effect["owner"] == "seeds.run_seed"
+    assert candidate_effect["accepted"] is True
     assert observation["detail"]["kind"] == "policy_revision"
 
 

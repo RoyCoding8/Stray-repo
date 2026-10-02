@@ -1,3 +1,9 @@
+> Historical batch report for the Agenda 01 cognitive batch. Its commits do
+> not resolve in the current repository. Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md). Read it
+> for the panel and freeze records it kept byte-frozen.
+
 # Agenda 01 — implementation and corrected experiment report
 
 Branch `codex/implementation-cognitive-batch-01`. Current corrected

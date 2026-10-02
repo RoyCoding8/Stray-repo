@@ -169,6 +169,31 @@ def disconnect_revision() -> dict:
 # the instrument refuses; this is a decision the instrument accepts and that
 # still changes nothing, which is the shape that actually shipped once
 # already: bytes that differ, behaviour that does not.
+#
+# The integer is the decoy the unreachable branch hides, and it is not
+# calibrated to any measurement. It was once described as the ceiling's
+# argmax, and that was true only while `lineage_descendant_score` read the
+# task's table bit and resolved it to one of two descendants, which made
+# every input map to a two-valued set whose argmax was 7. Construction
+# substitutes the probed input itself, so the mapping is no longer
+# two-valued and the argmax framing no longer describes anything.
+#
+# Measured on the audit cohort of 150 seeds, the argmax is 12 and 7 ranks
+# 13th of 16, tied with the incumbent at 0.058667; it beats the incumbent on
+# 26 seeds, loses on 26 and ties on 98, so it is indistinguishable from the
+# incumbent rather than a gain going unused. That argmax is not stable
+# either: the four interleaved quarters of the same cohort argmax to 4, 1,
+# 12 and 4, `noise_floor` reports `best_probe_agrees: False`, and the
+# reachable spread 0.009333 sits inside the resampling spread 0.009778.
+# No input beats the incumbent in all four quarters.
+#
+# So this constant is a decoy, which is all the control needs it to be. It
+# names an input a reader cannot distinguish from the incumbent, so the
+# control measures that the arm never takes the branch. Naming the peak
+# instead would measure that a peak exists, and repointing at the current
+# argmax would re-pin the constant to a quantity this module reports as
+# unstable. The value is kept because the control is load-bearing, not
+# because the number behind it means anything.
 DISCONNECT_X = 7
 _C15_ANCHOR = '''    if step == 0:
         inner = {"kind": "probe", "inputs": {"x": 3},
@@ -196,9 +221,13 @@ def disconnect_bytes_revision() -> dict:
     cannot tell a revision that chooses from one that merely contains a
     choice, and this control is what that sentence looks like when it runs.
 
-    The integer is the ceiling's argmax on the audit cohort, so a reader can
-    see the rule is not trivial - the same integer, reached, would improve
-    the descendant. The control is the unreachability, not the integer.
+    The integer is not calibrated to any measurement, and the comment at
+    `DISCONNECT_X` says what it was and is. On the audit cohort the hidden
+    input scores exactly what the incumbent scores, so no reader can show
+    that reaching it would have helped. The control shows the arm never takes
+    the branch, which is what it was written to show, and it no longer claims
+    a gain that was going unused. The control is the unreachability, not the
+    integer.
     """
     source = channel.IMPROVE_LOW_SOURCE
     if _C15_ANCHOR not in source:
@@ -266,6 +295,10 @@ def _package_for(source: str, parent: dict, control_id: str) -> dict:
     """
     package = {
         "control_id": control_id, "origin": channel.ORIGIN,
+        # `source_kind` marks provenance: these bytes were authored here,
+        # not returned by a live dispatch. It is what `validate_package`
+        # cross-checks against `origin`, and it names nothing about the
+        # program that is built from them.
         "source_kind": "fixed-menu", "op_source": parent["op_source"],
         "imp_source": source,
         "op_digest": _frontier.source_digest(parent["op_source"]),

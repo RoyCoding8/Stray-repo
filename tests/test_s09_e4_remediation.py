@@ -128,32 +128,67 @@ def test_the_measurement_is_carried_out_before_it_is_decided():
         assert 0 <= half["seeds"][0] <= half["seeds"][-1] < REFERENCE_N
 
 
-def _substrate_with_a_real_effect():
-    """The real module with one probe input made worth choosing.
+def _planted_effect(gain_input, spread):
+    """The real substrate with one reachable input made worth choosing.
 
     A revision's only lever is choosing a better probe, so the way to ask
     whether the estimator can see a real effect is to give it a substrate
-    where one probe really is better than another. `_STRATEGY_EVIDENCE`
-    is what `leaf_construct` installs and what the incumbent gathers, so
-    remapping it to two inputs that differ is a change to the substrate
-    and not a change to the estimator's plumbing.
+    where one probe really is better than another. The lever is the
+    substrate's own scorer rather than a published table of what each
+    strategy gathers: `_STRATEGY_EVIDENCE` is gone, because a descendant
+    is now built from its parent's bytes and what it gathers is derived
+    from the evidence the round observed (`construction_from_evidence`)
+    rather than resolved from a two-member dict.
+
+    The gain varies with the seed. That is deliberate and it is what makes
+    the planted case worth having. A constant gain would make the paired
+    difference identical on every seed, the standard error would be
+    exactly zero, and `measurable` would pass on a number its own noise
+    could never contradict. A gain that varies gives the planted effect a
+    real standard error, so the flag has to clear it on magnitude the way
+    it would have to clear any other effect's.
     """
     module = sys.modules[channel.__name__]
-    saved = module._STRATEGY_EVIDENCE.copy()
-    low, high = saved["low"], saved["high"]
-    module._STRATEGY_EVIDENCE["low"] = 16
-    original = module._strategy_descendant
+    scored = module.descendant_score
 
-    def planted(strategy, split, seed):
-        if strategy == "low":
-            return module.descendant_score(
-                list(channel.GENERAL_POSITION), split, int(seed))
-        return original(strategy, split, seed)
+    def planted(evidence, split, seed):
+        score = scored(list(evidence), split, int(seed))
+        if int(evidence[-1]) != gain_input:
+            return score
+        return {**score, "unqueried": score["unqueried"] + spread(
+            int(seed))}
 
-    module._strategy_descendant = planted
-    return module, low, high, lambda: (
-        module._STRATEGY_EVIDENCE.update(saved),
-        setattr(module, "_strategy_descendant", original))
+    return module, scored, planted
+
+
+def _broken_comparison(module):
+    """The old estimator, rebuilt locally so this file can contrast with it."""
+    def broken(split, seeds) -> dict:
+        seeds = list(seeds)
+        means = {p: module.evaluate_lineage(
+            [p], split=split, seeds=seeds)["mean"] for p in range(16)}
+        halves = []
+        for half in (seeds[0::2], seeds[1::2]):
+            half_means = [module.evaluate_lineage(
+                [p], split=split, seeds=half)["mean"] for p in range(16)]
+            halves.append(max(half_means) - min(half_means))
+        spread = max(means.values()) - min(means.values())
+        return {"reachable_spread": spread, "noise_floor": max(halves),
+                "headroom": spread - max(halves),
+                "measurable": spread > max(halves)}
+    return broken
+
+
+#: The reachable input the planted effect is worth choosing, and a gain that
+#: varies with the seed. `spread` is the whole of the planting: four seeds in
+#: five gain 1, the fifth gains 2, so the effect is real on every seed and
+#: carries a standard error.
+GAINED_INPUT = 6
+GAIN = {True: 2, False: 1}
+
+
+def _gains(seed: int) -> int:
+    return GAIN[seed % 5 == 0]
 
 
 def test_a_substrate_with_a_real_effect_is_reported_as_measurable():
@@ -165,15 +200,22 @@ def test_a_substrate_with_a_real_effect_is_reported_as_measurable():
     stayed false here would mean the flag is still reporting the
     estimator's shape rather than the substrate.
     """
-    module, low, high, restore = _substrate_with_a_real_effect()
+    module, scored, planted = _planted_effect(GAINED_INPUT, _gains)
+    module.descendant_score = planted
     try:
         report = module.channel_headroom(split="dev", seeds=list(range(48)))
     finally:
-        restore()
+        module.descendant_score = scored
 
-    assert report["reachable_evidence"] == [str(low), str(high)], (
-        "the reachable menu moved, so the planted effect is not where the "
-        "estimator looks: %r" % (report,))
+    assert report["reachable_evidence"] == [
+        str(x) for x in channel.INCUMBENT_EVIDENCE], (
+        "reachable_evidence is what the incumbent's own bytes probe, and it "
+        "no longer reports a menu a construction can install from, so it "
+        "has moved: %r" % (report,))
+    assert report["best_probe"] == GAINED_INPUT, (
+        "the estimator chose %r rather than the planted input, so the "
+        "planted effect is not where the estimator looks: %r"
+        % (report["best_probe"], report))
     assert report["incumbent_mean"] < report["best_mean"], (
         "the incumbent was not made worse, so there is no real effect to "
         "find: %r" % (report,))
@@ -181,6 +223,10 @@ def test_a_substrate_with_a_real_effect_is_reported_as_measurable():
         "a probe that really is better than the incumbent read as a "
         "non-positive paired gap, so the estimator is still inverted: %r"
         % (report,))
+    assert report["paired_se"] > 0.0, (
+        "the planted gain is identical on every seed, so the paired "
+        "difference has no standard error and `measurable` would be "
+        "reading a constant rather than a measurement: %r" % (report,))
     assert report["measurable"] is True, (
         "a real effect inside the reachable set was reported as not "
         "measurable: %r" % (report,))
@@ -195,32 +241,42 @@ def test_a_gap_inside_its_own_noise_is_not_reported_as_measurable():
     the cohort is small is not a measurement, and a flag that reported one
     would be reporting the cohort size.
 
-    This is a real point in the space rather than a contrivance. The
-    incumbent is a descendant the instrument refuses every input to, so
-    the frozen reducer falls back to its default predictor and still gets
-    one sixteenth of the unqueried inputs right. Every reachable probe
-    beats that on this cohort, and the gap is small enough to be inside
-    its own standard error, so the flag has to go back to false.
-    """
-    report = channel.channel_headroom(
-        split="dev", seeds=list(range(48)), incumbent_evidence=(16,))
+    This is a real point in the space rather than a contrivance, and it no
+    longer needs an out-of-menu incumbent to reach. The descendant the
+    incumbent inherits probes input 3 and gathers one observation, so every
+    reachable probe differs from it only in the evidence it ends up with.
+    Probe 6 does beat it on this cohort, by less than its own standard
+    error, so the flag has to go back to false.
 
-    assert report["incumbent_evidence"] not in (
-            report["reachable_evidence"]), (
-        "the incumbent is inside the menu, so this is not the out-of-menu "
-        "case: %r" % (report,))
-    assert report["best_beats_incumbent"] is True, (
-        "the best probe did not beat the out-of-menu incumbent, so the "
-        "noise guard has nothing to refuse: %r" % (report,))
-    assert report["delta"] > 0.0, (
-        "the gap is not positive, so this is not the case the noise guard "
-        "is for: %r" % (report,))
-    assert report["delta"] < report["paired_se"], (
-        "the gap clears its own standard error, so the noise guard has "
-        "nothing to refuse: %r" % (report,))
-    assert report["measurable"] is False, (
-        "a gap that its own standard error does not clear was reported as "
-        "a measurement: %r" % (report,))
+    It used to ask for incumbent `(16,)`, an input the instrument refuses,
+    which made the gap come from a descendant no construction can install.
+    That point has moved: the incumbent is `INCUMBENT_EVIDENCE` and a
+    cohort of 48 puts the real gap inside its own noise. Cohort 96 is
+    checked too, so the assertion is not balanced on one cohort size. At 48
+    the old `(16,)` gap now clears its own standard error by 2%, which is
+    why that fixture can no longer demonstrate the guard at all.
+    """
+    for cohort in (48, 96):
+        report = channel.channel_headroom(
+            split="dev", seeds=list(range(cohort)))
+
+        assert report["incumbent_evidence"] == list(
+            channel.INCUMBENT_EVIDENCE), (
+            "the incumbent is no longer the one the construction installs, "
+            "so this is not the case the noise guard is about: %r"
+            % (report,))
+        assert report["best_beats_incumbent"] is True, (
+            "the best probe did not beat the incumbent, so the noise guard "
+            "has nothing to refuse on %d seeds: %r" % (cohort, report))
+        assert report["delta"] > 0.0, (
+            "the gap is not positive, so this is not the case the noise "
+            "guard is for on %d seeds: %r" % (cohort, report))
+        assert report["delta"] < report["paired_se"], (
+            "the gap clears its own standard error on %d seeds, so the "
+            "noise guard has nothing to refuse: %r" % (cohort, report))
+        assert report["measurable"] is False, (
+            "a gap that its own standard error does not clear was reported "
+            "as a measurement on %d seeds: %r" % (cohort, report))
 
 
 def test_the_old_estimator_would_have_missed_the_planted_effect():
@@ -236,30 +292,16 @@ def test_the_old_estimator_would_have_missed_the_planted_effect():
     deletion rather than a re-aim, so this pins the difference on the
     very inputs where the two disagree.
     """
-    module, low, high, restore = _substrate_with_a_real_effect()
-
-    def broken(split, seeds) -> dict:
-        seeds = list(seeds)
-        means = {p: module.evaluate_lineage(
-            [p], split=split, seeds=seeds)["mean"] for p in range(16)}
-        halves = []
-        for half in (seeds[0::2], seeds[1::2]):
-            half_means = [module.evaluate_lineage(
-                [p], split=split, seeds=half)["mean"] for p in range(16)]
-            halves.append(max(half_means) - min(half_means))
-        return {"reachable_spread": max(means.values()) - min(means.values()),
-                "noise_floor": max(halves),
-                "headroom": (max(means.values()) - min(means.values())
-                             - max(halves)),
-                "measurable": (max(means.values()) - min(means.values())
-                               > max(halves))}
+    module, scored, planted = _planted_effect(GAINED_INPUT, _gains)
+    broken = _broken_comparison(module)
 
     seeds = list(range(48))
+    module.descendant_score = planted
     try:
         real_broken = broken("dev", seeds)
         real_fixed = module.channel_headroom(split="dev", seeds=seeds)
     finally:
-        restore()
+        module.descendant_score = scored
 
     assert real_fixed["measurable"] is True, (
         "the fixed estimator did not recover the planted effect, so this "
@@ -273,6 +315,23 @@ def test_the_old_estimator_would_have_missed_the_planted_effect():
         "resample spread, and it did not: %r" % (real_broken,))
 
 
+#: Two revisions of the channel's own improvement source, each differing
+#: from it only at the probed input, which is the one decision a revision is
+#: authorised to move. `INHERITS` reads the learner's last observation, so it
+#: probes what the view carries. `MUTES` reads that observation's bits, so
+#: the step runs, returns an action, and selects no probe input at all.
+INHERITS = channel.IMPROVE_LOW_SOURCE.replace(
+    '{"kind": "probe", "inputs": {"x": 3},',
+    '{"kind": "probe", "inputs": {"x": view["experience"][-1]["x"]},')
+MUTES = channel.IMPROVE_LOW_SOURCE.replace(
+    '{"kind": "probe", "inputs": {"x": 3},',
+    '{"kind": "probe", "inputs": {"x": view["experience"][-1]["y"]},')
+
+SEEDED_VIEWS = [{"frontier": [{"task": "t", "capability": "c"}],
+                 "experience": [{"x": 2, "y": [1, 0, 0, 1]}],
+                 "authority_remaining": {"queries": 8, "steps": 6}}]
+
+
 def test_a_non_empty_evidence_set_is_what_makes_the_admission_say_it_informed():
     """N-26. The flag is derived, not declared.
 
@@ -282,30 +341,35 @@ def test_a_non_empty_evidence_set_is_what_makes_the_admission_say_it_informed():
     was still reported as having informed a decision. Nothing consumed the
     flag yet, so the defect was latent; any future E4 run has to inherit
     the fix rather than the literal.
-    """
-    healthy = channel.classify_revision(
-        "def STEP(view, state):\n"
-        "    x = view['experience'][0]['x']\n"
-        "    task = view['task_content']['task_id']\n"
-        "    if state.get('done'):\n"
-        "        return {'action': {'kind': 'diagnose', 'target': task,\n"
-        "                         'inputs': {}, 'evidence_refs': [],\n"
-        "                         'requested_resources': {}},\n"
-        "                'state': state}\n"
-        "    return {'action': {'kind': 'diagnose', 'target': task,\n"
-        "                     'inputs': {'frontier_action': {\n"
-        "                         'kind': 'probe', 'target': task,\n"
-        "                         'inputs': {'x': x, 'y': 0},\n"
-        "                         'evidence_refs': [],\n"
-        "                         'requested_resources': {}}},\n"
-        "                     'evidence_refs': [],\n"
-        "                     'requested_resources': {'queries': 1}},\n"
-        "            'state': {'done': True}}\n",
-        views=[{"frontier": [{"task": "t", "capability": "c"}],
-                "experience": [{"x": 2, "y": [1, 0, 0, 1]}],
-                "authority_remaining": {"queries": 8, "steps": 6}}])
 
-    assert healthy["eligibility"] == channel.ELIGIBLE
+    Both fixtures are revisions of `IMPROVE_LOW_SOURCE` moving nothing but
+    the probed input, because eligibility is now a property of the bytes. A
+    revision that changed the allocation, the construction or the step
+    skeleton is refused as `changes-an-unauthorised-decision` before
+    `informs_decision` is ever read, and the pair this test used to carry
+    was written before that check existed. It was refused at the eligibility
+    assertion rather than exercising the flag at all.
+
+    The two arms still differ in the only way that matters here. One is
+    admissible and probes; it selects evidence, so it informs. The other is
+    admissible and probes nothing, because it runs and picks something that
+    is not a probe input; it is admitted on the strength of its static shape
+    having selected nothing, and reporting that as a decision would be the
+    verdict asserting a measurement it never made.
+    """
+    for fixture in (INHERITS, MUTES):
+        assert channel.unauthorised_change(
+            channel.IMPROVE_LOW_SOURCE, fixture) == {}, (
+            "the fixture moves a decision the interface does not authorise, "
+            "so eligibility would refuse it before `informs_decision` is "
+            "read: %r" % (channel.unauthorised_change(
+                channel.IMPROVE_LOW_SOURCE, fixture),))
+
+    healthy = channel.classify_revision(INHERITS, views=SEEDED_VIEWS)
+
+    assert healthy["eligibility"] == channel.ELIGIBLE, (
+        "the healthy fixture was refused as %r, so the two arms of this "
+        "test are not comparable" % (healthy["eligibility"],))
     assert healthy["selected_evidence"] == [[2]], (
         "the healthy fixture selected %r, so the two arms of this test are "
         "not comparable" % (healthy["selected_evidence"],))
@@ -313,26 +377,15 @@ def test_a_non_empty_evidence_set_is_what_makes_the_admission_say_it_informed():
         "a revision that selected evidence was reported as not informing "
         "anything: %r" % (healthy,))
 
-    silent = channel.classify_revision(
-        "def STEP(view, state):\n"
-        "    x = view['experience'][0]['x']\n"
-        "    if view.get('experience'):\n"
-        "        probe = {'kind': 'probe', 'inputs': {'x': x, 'y': 0}}\n"
-        "        raise RuntimeError('the step never reaches the return')\n"
-        "    return {'action': {'kind': 'diagnose', 'target': 't',\n"
-        "                     'inputs': {}, 'evidence_refs': [],\n"
-        "                     'requested_resources': {}},\n"
-        "            'state': state}\n",
-        views=[{"frontier": [{"task": "t", "capability": "c"}],
-                "experience": [{"x": 2, "y": [1, 0, 0, 1]}],
-                "authority_remaining": {"queries": 8, "steps": 6}}])
+    silent = channel.classify_revision(MUTES, views=SEEDED_VIEWS)
 
     assert silent["eligibility"] == channel.ELIGIBLE, (
-        "eligibility is unchanged by the flag repair and the test should "
-        "not be asserting on it: %r" % (silent,))
+        "the mute arm was refused as %r, so the premise of this test is "
+        "that these bytes are admissible and select nothing"
+        % (silent["eligibility"],))
     assert silent["selected_evidence"] == [[]], (
         "the premise of this test is that the bytes select nothing and are "
-        "still admitted: %r" % (silent,))
+        "still admitted: %r" % (silent["selected_evidence"],))
     assert silent["informs_decision"] is False, (
         "a revision that selected no evidence reported that it informed a "
         "decision: %r" % (silent,))

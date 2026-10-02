@@ -242,24 +242,51 @@ def test_the_c15_control_is_distinguishable_from_the_no_op_only_by_bytes(
     assert c15["source_digest"] != noop["source_digest"]
 
 
-def test_the_decoy_input_is_one_the_decision_could_otherwise_reach(
-        tmp_path):
-    """The control is not trivial: the integer it hides is the best one.
+def test_the_decoy_input_is_not_a_reachable_improvement(tmp_path):
+    """The control is not trivial, and no longer claims to hide a gain.
 
-    If input 7 could not improve the descendant, a reader could dismiss the
-    control as a no-op wearing a disguise. Measured on the audit cohort, the
-    ceiling's argmax is the decoy, so the only thing standing between this
-    arm and an improvement is that the arm never takes the branch.
+    This test used to assert that the ceiling's argmax over the sixteen
+    inputs *was* the decoy, on the reading that a control hiding an ordinary
+    input could be dismissed as a no-op wearing a disguise. That assertion
+    was true only while `lineage_descendant_score` resolved every input to
+    one of two descendants, which made the mapping two-valued and its argmax
+    7. Construction substitutes the probed input, so the mapping is no longer
+    two-valued and the argmax is 12. The old assertion is false and it is
+    kept as a canary in the opposite direction: if the decoy ever becomes
+    the argmax again, the substrate changed and the comment at
+    `channel_controls.DISCONNECT_X` has to be re-derived rather than assumed.
+
+    What replaces it is the property the control actually rests on, and it
+    is checked by asking the program rather than by pinning a number. The
+    decoy scores exactly what the incumbent scores over the audit cohort, so
+    there is no improvement going unused and none was ever shown to be. What
+    the arm demonstrates is that it does not take the branch.
+
+    The underlying substrate's argmax is unstable. The four interleaved
+    quarters of this cohort disagree, and `noise_floor` reports
+    `best_probe_agrees: False`, so pinning a particular winner would pin a
+    quantity the module reports as noise. That instability is deliberately
+    not asserted here. It is a property of the substrate rather than of the
+    control, and a test that depended on it would fail on a substrate change
+    that said nothing about this control.
     """
     control = lr.build_control("disconnect-bytes")
-    reach = lr.ceiling(AUDIT, list(range(150)))
+    cohort = list(range(150))
+    means = {x: channel.evaluate_lineage([x], split=AUDIT, seeds=cohort)[
+        "mean"] for x in range(channel._N_INPUTS)}
+    argmax = max(sorted(means), key=means.get)
     record = _drive("disconnect-bytes", tmp_path)
 
-    assert reach["measured"] is True
-    assert reach["best_input"] == control["decoy_x"], (
-        "the decoy stopped being the best reachable input, so the control no"
-        " longer shows a reachable improvement going unused: %r" % (reach,))
-    assert reach["best_mean"] - reach["worst_mean"] > 0.0
+    assert argmax != control["decoy_x"], (
+        "the decoy is the ceiling's argmax again, so the drift recorded at"
+        " channel_controls.DISCONNECT_X has closed and that comment is now"
+        " stale: %r" % (means,))
+    assert means[control["decoy_x"]] == means[INCUMBENT_X], (
+        "the decoy stopped scoring exactly what the incumbent scores, so the"
+        " control is hiding something and the comment at DISCONNECT_X must be"
+        " re-derived before this test is re-aimed: %r" % (means,))
+    assert control["decoy_x"] != INCUMBENT_X, (
+        "the decoy is the incumbent's own input, so the control is the no-op")
     assert record["x_probed"] == INCUMBENT_X
 
 
@@ -367,6 +394,16 @@ def test_each_control_records_the_effect_it_knows_before_the_run(tmp_path):
 #   test_all_four_controls_qualify_the_apparatus
 #     same _C15_REPLACEMENT mutation
 #     qualified is True  ->  AssertionError, checks["disconnect-bytes"] false
+#
+#   test_the_decoy_input_is_not_a_reachable_improvement
+#     DISCONNECT_X 7 -> 3 turns two tests red rather than one.
+#     test_the_decoy_input_is_not_a_reachable_improvement fails on
+#     `decoy_x != INCUMBENT_X` ("the control is the no-op"), because 3 then
+#     *is* the incumbent's own input. The equality assertion that 3 also
+#     breaks is never reached, so its message is a contingency rather than
+#     the observed failure.
+#     test_the_c15_control_probes_the_incumbents_own_input fails too, on
+#     its own `== 7` pin, which is a literal and not a claim.
 MUTATIONS = (
     {"test": "known-effect", "target": "learner_revision.REVIEWER_X",
      "from": 8, "to": 3},
@@ -376,4 +413,6 @@ MUTATIONS = (
      "from": 16, "to": 3},
     {"test": "disconnect-bytes", "target": "_C15_REPLACEMENT else arm",
      "from": "else 3", "to": "else 7"},
+    {"test": "disconnect-bytes", "target": "channel_controls.DISCONNECT_X",
+     "from": 7, "to": 3},
 )

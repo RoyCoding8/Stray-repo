@@ -810,8 +810,15 @@ def load_task(root, task_id: str) -> dict:
     raise KeyError(task_id)
 
 
-def reader_echoer(target: dict, observations: list) -> dict:
+def reader_echoer(target: dict, observations: list, *,
+                  authority: dict) -> dict:
     """Whether the instrument can tell a reader from an echoer, both ways.
+
+    `authority` is `{dsn, allocation_id}` for a store the caller holds. Every
+    step here executes policy source, so this function does not get to run
+    without one: it used to hold none, every step was refused, and each policy
+    came back as `{"scored": False}` — a reading about the missing authority
+    that the tests then read as a property of the policy.
 
     The brief for this lane named the confound: holding the task fixed and
     flipping verdicts, reader and echoer both score 2.0, because `VERBATIM`
@@ -848,9 +855,13 @@ def reader_echoer(target: dict, observations: list) -> dict:
             dict(target), rows,
             eligible_methods=replica.eligible_for(target),
             remaining={"steps": 1})
-        return {name: scored._execute(proposal, record, views[name],
-                                      proposal.digest)
-                for name in ("scored", "alternate")}
+        # One operation identity per view, derived in `scored._execute` from
+        # the policy digest, the view digest and the label. A shared identity
+        # would return the scored view's action under the alternate view and
+        # compare a run with itself.
+        return {name: scored._execute(
+            proposal, record, views[name], proposal.digest, authority)
+            for name in ("scored", "alternate")}
 
     flipped = [dict(row, verdict=scored.VERDICT_FLIP.get(
         str(row.get("verdict")), row.get("verdict"))) for row in observations]

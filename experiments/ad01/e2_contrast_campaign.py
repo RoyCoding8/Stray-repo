@@ -907,16 +907,21 @@ def _longest_prompt(body: Mapping[str, Any]) -> int:
 
 
 def score_one(target: Mapping[str, Any], arm: Mapping[str, Any],
-              source: str, *, arm_name: str, origin: str):
+              source: str, *, arm_name: str, origin: str,
+              authority: Mapping[str, Any]):
     """One acquired policy, scored through the campaign's own scorer.
 
     `replica.score_acquired` unchanged. The arm's observations are the list
     the policy was shown and the list the view it is stepped under carries,
     so the two are the same list and the arm with no experience is stepped
     under an empty one.
+
+    `authority` is the campaign's own store. Scoring the acquired policy
+    executes it, so the campaign that dispatched it is the one that can run
+    it, and it forwards that rather than leaving the scorer to decide.
     """
     return replica.score_acquired(target, arm, source, arm_name=arm_name,
-                                  origin=origin)
+                                  origin=origin, authority=authority)
 
 
 def run_campaign(*, dsn: str, gateway: Any, model: str, allocation_id: str,
@@ -955,7 +960,8 @@ def run_campaign(*, dsn: str, gateway: Any, model: str, allocation_id: str,
         if not qualification:
             qualification = replica.qualify_instrument(
                 task, list(arms[replica.ARM_RELEVANT]["observations"]),
-                eligible_methods=replica.eligible_for(task))
+                eligible_methods=replica.eligible_for(task),
+                authority={"dsn": dsn, "allocation_id": allocation_id})
             if not qualification["separates_reader_from_blind"]:
                 raise ContrastRefused(
                     "the instrument does not score a reader above an echoer,"
@@ -984,8 +990,9 @@ def run_campaign(*, dsn: str, gateway: Any, model: str, allocation_id: str,
 
                 origin = _construct.acquisition_origin(
                     dsn, got.operation_id, settled)["origin"]
-            reading = score_one(task, arms[name], source, arm_name=name,
-                                origin=origin)
+            reading = score_one(
+                task, arms[name], source, arm_name=name, origin=origin,
+                authority={"dsn": dsn, "allocation_id": allocation_id})
             # The whole Reading, not `reading_row`. `reading_row` writes nine
             # keys and drops `normalized_reduction` and `action`, which are
             # the two `paired_report` reads, so a row from it makes every

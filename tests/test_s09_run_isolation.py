@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import psycopg
 import pytest
@@ -30,6 +31,20 @@ REQUEST = {"model": DOUBLES_MODEL,
 
 def token() -> str:
     return "t%s" % uuid.uuid4().hex[:10]
+
+
+def expected_migrations() -> int:
+    """How many migrations the store was built from, asked rather than pinned.
+
+    A disposable database is migrated from the directory, so the count in
+    `schema_migrations` is the number of `.sql` files there. Two migrations
+    landed in this batch and a literal written before them re-broke this
+    file twice. Reading the same glob `apply_migrations` reads keeps the
+    assertion true through the next migration: what would fail is a store
+    that took the wrong directory, or a migration that failed to record
+    itself, not the arrival of a new file.
+    """
+    return len(sorted(Path(iso.MIGRATIONS).glob("*.sql")))
 
 
 def rows(dsn: str, sql: str, params=()) -> list[dict]:
@@ -163,7 +178,7 @@ def test_disposable_name_carries_the_caller_token(live_run):
     assert live_run.database.token in live_run.identity.study_root
     assert live_run.database.token in live_run.identity.allocation_id
     assert one(live_run.dsn, "SELECT count(*) AS n FROM schema_migrations")["n"] \
-        == 18
+        == expected_migrations()
 
 
 def test_store_refuses_a_name_that_is_not_disposable():
@@ -301,7 +316,8 @@ def test_disposable_db_is_dropped_even_when_the_body_raises():
         with iso.disposable_db(token()) as database:
             name = database.name
             assert one(database.dsn,
-                       "SELECT count(*) AS n FROM schema_migrations")["n"] == 18
+                       "SELECT count(*) AS n FROM schema_migrations")["n"] \
+                == expected_migrations()
             raise RuntimeError("run failed")
     with pytest.raises(psycopg.OperationalError):
         with db.read_connect("dbname=%s %s" % (name, PG)) as conn:

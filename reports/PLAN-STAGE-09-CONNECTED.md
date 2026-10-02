@@ -1,3 +1,9 @@
+> Historical task graph and ownership plan, issued against `dd504e1` on a
+> branch whose commits do not resolve in the current repository. It is a plan
+> for a campaign that has since been superseded. Current scoped status is
+> reconciled in [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md).
+
 # Stage 9 connected study: task graph and file ownership
 
 Issued against `dd504e1` on `codex/implementation-investigation-learning-02`. Supplements

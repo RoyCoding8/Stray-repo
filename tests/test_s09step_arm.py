@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import subprocess
 import sys
 import time
@@ -35,11 +34,30 @@ from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import method_exec
 from experiments.ad01 import policy_action
 from experiments.ad01 import policy_step
+from execution_authority import execution_authority
 
 
 def _artifact(source: str) -> dict:
     return policy_step.make_policy_artifact(
         source, origin="authored-control", instruments=["boolean-rule-v1"])
+
+
+def _child_receipt(dsn: str, operation_id: str) -> dict:
+    """The launcher's own record of one execution, read back from the store.
+
+    Every execution failure now settles a receipt and produces the same
+    refusal message, so a refusal's text says only that an execution failed.
+    What distinguishes a CPU kill from a wall timeout, or a truncated stream
+    from a chatty policy, is in the receipt the child settled. Reading it back
+    is how these tests stay assertions about the child rather than about the
+    executor's wording, and it is the idiom `test_s89a1_contract.py` already
+    established.
+    """
+    from settlement import store
+
+    receipts = store.operation_receipts(dsn, operation_id)
+    assert len(receipts) == 1, receipts
+    return dict(receipts[0]["content"]["data"])
 
 
 def _public_state(seed: int = 4, queried=()) -> dict:
@@ -455,13 +473,15 @@ def test_the_opaque_id_is_still_recoverable_by_enumeration():
 
 
 RELOAD_SCRIPT = '''import json, os, sys
-view_path, state_path, source_path = sys.argv[1:4]
+view_path, state_path, source_path, dsn, allocation_id, operation_id = sys.argv[1:7]
 from experiments.ad01 import policy_step
 source = open(source_path).read()
 record = policy_step.make_policy_artifact(source, origin="authored-control")
 view = json.load(open(view_path))
 state = json.load(open(state_path)) if os.path.exists(state_path) else {}
-result = policy_step.run_policy_step(record, view, state, timeout_ms=20000)
+result = policy_step.run_policy_step(record, view, state, timeout_ms=20000,
+                                     dsn=dsn, allocation_id=allocation_id,
+                                     operation_id=operation_id)
 json.dump(result["state"], open(state_path, "w"))
 print(json.dumps({"action": result["action"], "state": result["state"]}))
 '''
@@ -494,25 +514,31 @@ def test_policy_state_survives_a_fresh_interpreter(tmp_path):
     env = dict(os.environ)
     env["PYTHONPATH"] = "%s:%s" % (ROOT, ROOT / "src")
 
-    def run():
-        return subprocess.run(
-            [sys.executable, "-c", RELOAD_SCRIPT, str(view_path),
-             str(state_path), str(source_path)],
-            cwd=str(ROOT), capture_output=True, text=True, timeout=120,
-            env=env)
+    # Three executions, three operation identities. The executor reads back the
+    # first receipt rather than executing again for a repeated id, so reusing
+    # one here would return `seen: 1` on every run and the test would pass
+    # against a child that never ran the second or third time.
+    with execution_authority("armreload") as auth:
+        def run(step):
+            return subprocess.run(
+                [sys.executable, "-c", RELOAD_SCRIPT, str(view_path),
+                 str(state_path), str(source_path), auth["dsn"],
+                 auth["allocation_id"], "armreload-k%d" % step],
+                cwd=str(ROOT), capture_output=True, text=True, timeout=120,
+                env=env)
 
-    first = run()
-    assert first.returncode == 0, first.stderr
-    assert json.loads(first.stdout)["action"]["inputs"] == {"seen": 1}
-    assert json.loads(state_path.read_text()) == {"seen": 1}
+        first = run(0)
+        assert first.returncode == 0, first.stderr
+        assert json.loads(first.stdout)["action"]["inputs"] == {"seen": 1}
+        assert json.loads(state_path.read_text()) == {"seen": 1}
 
-    second = run()
-    assert second.returncode == 0, second.stderr
-    assert json.loads(second.stdout)["action"]["inputs"] == {"seen": 2}
+        second = run(1)
+        assert second.returncode == 0, second.stderr
+        assert json.loads(second.stdout)["action"]["inputs"] == {"seen": 2}
 
-    third = run()
-    assert third.returncode == 0, third.stderr
-    assert json.loads(third.stdout)["action"]["inputs"] == {"seen": 3}
+        third = run(2)
+        assert third.returncode == 0, third.stderr
+        assert json.loads(third.stdout)["action"]["inputs"] == {"seen": 3}
 
 
 def _step_view():
@@ -533,20 +559,31 @@ def test_the_cpu_bound_kills_a_spinning_policy_without_a_wall_timeout():
     """`cpu_seconds` is enforced, and it is a CPU bound.
 
     One CPU-second of budget and a generous sixty-second wall limit, so the
-    only thing that can stop this child is the rlimit. The refusal carries the
-    kill signal and no timeout flag, which is what distinguishes the two
-    bounds from the outside.
+    only thing that can stop this child is the rlimit. The kill signal is
+    `-9` with no timeout flag, which is what distinguishes the two bounds from
+    the outside.
+
+    Both facts are read from the settled receipt rather than from the refusal
+    text. A child that runs and fails settles its own receipt and the executor
+    refuses with one message that every execution failure produces, so the
+    message alone cannot tell this kill from any other. Reading the receipt
+    back is the idiom `test_s89a1_contract.py` established for the same
+    reason, and it is what keeps the assertion about the child rather than
+    about the wording.
     """
     started = time.monotonic()
-    with pytest.raises(method_exec.MethodExecutionError) as caught:
-        policy_step.run_policy_step(
-            _artifact(SPIN_SOURCE), _step_view(), {},
-            timeout_ms=60000, cpu_seconds=1)
+    with execution_authority("armspin") as auth:
+        with pytest.raises(method_exec.MethodExecutionError):
+            policy_step.run_policy_step(
+                _artifact(SPIN_SOURCE), _step_view(), {},
+                timeout_ms=60000, cpu_seconds=1,
+                dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
+        reason = _child_receipt(auth["dsn"], auth["operation_id"])
     elapsed = time.monotonic() - started
 
-    reason = str(caught.value)
-    assert "'returncode': -9" in reason
-    assert "'timed_out': False" in reason
+    assert reason["returncode"] == -9, reason
+    assert reason["timed_out"] is False, reason
     assert elapsed < 60
 
 
@@ -591,9 +628,12 @@ def test_a_bounded_policy_completes_under_a_one_second_cpu_budget():
     CPU-second budget that killed it. The limit gates a runaway rather than
     rationing a policy, which is what makes it usable as a default.
     """
-    result = policy_step.run_policy_step(
-        _artifact(BOUNDED_SOURCE), _step_view(), {},
-        timeout_ms=60000, cpu_seconds=1)
+    with execution_authority("armbounded") as auth:
+        result = policy_step.run_policy_step(
+            _artifact(BOUNDED_SOURCE), _step_view(), {},
+            timeout_ms=60000, cpu_seconds=1,
+            dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
 
     assert result["action"]["kind"] == "stop"
     assert result["state"]["total"] > 0
@@ -608,6 +648,10 @@ def test_the_output_bound_is_the_exact_cap_and_not_a_soft_hint():
     A policy that prints 200 KB cannot smuggle it past a 1 KB cap, and cannot
     return a valid-looking action by having the cap applied after the envelope
     is read: the truncated stream does not parse, so the step is refused.
+
+    The retained bytes are read from the settled receipt. The refusal carries
+    no stream, so the assertion about the cap has to read the record the child
+    settled, which is where the retained output lives.
     """
     noisy = ('def STEP(view, state):\n'
              '    print("z" * 200000)\n'
@@ -616,14 +660,18 @@ def test_the_output_bound_is_the_exact_cap_and_not_a_soft_hint():
              '              "requested_resources": {}}\n'
              '    return {"action": action, "state": {}}\n')
 
-    for cap in (1024, 8192, 65536):
-        with pytest.raises(method_exec.MethodExecutionError) as caught:
-            policy_step.run_policy_step(
-                _artifact(noisy), _step_view(), {},
-                timeout_ms=20000, max_output_bytes=cap)
-        retained = re.search(r"'stdout': '([^']*)'", str(caught.value))
-        assert retained is not None, cap
-        assert len(retained.group(1)) == cap
+    with execution_authority("armoutput") as auth:
+        for cap in (1024, 8192, 65536):
+            with pytest.raises(method_exec.MethodExecutionError):
+                policy_step.run_policy_step(
+                    _artifact(noisy), _step_view(), {},
+                    timeout_ms=20000, max_output_bytes=cap,
+                    dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+                    operation_id="armoutput-%d" % cap)
+            data = _child_receipt(auth["dsn"], "armoutput-%d" % cap)
+            retained = data.get("stdout")
+            assert retained is not None, (cap, sorted(data))
+            assert len(retained) == cap, (cap, len(retained))
 
     assert policy_step.step_limits() == {
         "timeout_ms": policy_step.STEP_TIMEOUT_MS,
@@ -655,8 +703,11 @@ def test_the_receipt_does_not_claim_os_containment():
     timeout, an `RLIMIT_CPU`, an output cap and a refused-source check. Anyone
     reading a STEP run as sandboxed is reading more than the receipt says.
     """
-    result = policy_step.run_policy_step(
-        _artifact(QUIET_STEP), _step_view(), {}, timeout_ms=20000)
+    with execution_authority("armreceipt") as auth:
+        result = policy_step.run_policy_step(
+            _artifact(QUIET_STEP), _step_view(), {}, timeout_ms=20000,
+            dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
 
     launcher = result["receipt"]["details"]["raw_payload"]["launcher_receipt"]
     assert launcher["containment"] is False
@@ -664,7 +715,15 @@ def test_the_receipt_does_not_claim_os_containment():
     assert launcher["parse"] == "typed-json"
     assert launcher["outcome"] == "success"
     assert launcher["truncated"] is False
-    assert sorted(launcher["data"]) == ["timed_out", "wall_ms", "worker"]
+    # `supervised` names whether a supervisor watched the child, and it is not
+    # the same claim as `containment`. A supervised child is still a normal
+    # process on this host: the boundary is a budget and a source check. The
+    # assertion names the key and reads its value, so a supervisor appearing
+    # later shows up as a value change rather than as a silently widened key
+    # set the test never looks at again.
+    assert sorted(launcher["data"]) == [
+        "supervised", "timed_out", "wall_ms", "worker"]
+    assert launcher["data"]["supervised"] is True
 
 
 def test_stdout_is_the_channel_so_a_printing_policy_is_refused():
@@ -675,11 +734,22 @@ def test_stdout_is_the_channel_so_a_printing_policy_is_refused():
     is refused even though the policy returned a perfectly well-formed action.
     A policy that logs cannot govern, and the failure names the policy rather
     than the environment.
-    """
-    with pytest.raises(method_exec.MethodExecutionError) as caught:
-        policy_step.run_policy_step(
-            _artifact(CHATTY_STEP), _step_view(), {}, timeout_ms=20000)
 
-    assert "'returncode': 0" in str(caught.value)
-    assert "step-failed" in str(caught.value)
+    The child exits cleanly, which is the point: the policy did not crash and
+    the environment did not fail. It returned `0` and its own output is what
+    stopped the envelope parsing, so the receipt has to show a clean return
+    code beside the line it wrote. `parse` is the executor's reading of that
+    stream and is not `typed-json`.
+    """
+    with execution_authority("armchatter") as auth:
+        with pytest.raises(method_exec.MethodExecutionError):
+            policy_step.run_policy_step(
+                _artifact(CHATTY_STEP), _step_view(), {}, timeout_ms=20000,
+                dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
+        reason = _child_receipt(auth["dsn"], auth["operation_id"])
+
+    assert reason["returncode"] == 0, reason
+    assert reason["timed_out"] is False, reason
+    assert "hello" in reason["stdout"], reason
     assert method_exec.verify_step_source(CHATTY_STEP, "STEP") == "STEP"

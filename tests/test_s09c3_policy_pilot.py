@@ -16,6 +16,8 @@ from experiments.ad01.s09_run_isolation import create_disposable_db, \
 from scripts import s09_pilot as pilot
 from scripts import s09_verify as verify
 
+from execution_authority import execution_authority
+
 RUN_TOKEN = "c3pilot"
 
 
@@ -72,7 +74,11 @@ def test_incumbent_step_does_real_method_work_and_arms_share_input_task():
         observations=[], open_questions=[], last_result=None,
         eligible_methods=[], remaining={"steps": 6, "model_calls": 6,
                                         "queries": 16})
-    result = policy_step.run_policy_step(record, view, {})
+    with execution_authority("c3incumbent") as auth:
+        result = policy_step.run_policy_step(
+            record, view, {},
+            dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
     assert result["action"]["kind"] == "construct_method"
     assert result["action"]["inputs"]["max_queries"] == 16
     assert pilot.P1_TASK == pilot.P2_TASK

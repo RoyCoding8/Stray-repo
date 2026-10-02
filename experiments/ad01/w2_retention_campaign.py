@@ -1131,7 +1131,8 @@ def run_one_panel(panel: Mapping[str, Any], *, split: str, dsn: str,
         if not qualification:
             qualification = replica.qualify_instrument(
                 task, list(arms[replica.ARM_RELEVANT]["observations"]),
-                eligible_methods=replica.eligible_for(task))
+                eligible_methods=replica.eligible_for(task),
+                authority={"dsn": dsn, "allocation_id": allocation_id})
             if not qualification["separates_reader_from_blind"]:
                 raise W2Refused(
                     "the instrument does not score a reader above an echoer,"
@@ -1158,7 +1159,8 @@ def run_one_panel(panel: Mapping[str, Any], *, split: str, dsn: str,
                 origin = _construct.acquisition_origin(
                     dsn, got.operation_id, settled)["origin"]
             reading = experience.score_one(
-                task, arms[name], source, arm_name=name, origin=origin)
+                task, arms[name], source, arm_name=name, origin=origin,
+                authority={"dsn": dsn, "allocation_id": allocation_id})
             readings.setdefault(name, {})[task_id] = reading.as_dict()
 
     replica.require_no_empty_dispatch_is_compared(acquired)
@@ -1204,7 +1206,8 @@ def run_campaign(*, dsn: str, gateway: Any, model: str, allocation_id: str,
 
     closure = measure_repertoire_closure()
     defect = defect_report()
-    gate = qualification_census()
+    gate = qualification_census(
+        authority={"dsn": dsn, "allocation_id": allocation_id})
     if not gate["readable"]:
         raise W2Refused(
             "the qualification gate reads no target on this panel, so a"
@@ -1494,7 +1497,7 @@ def build_report(bundle: Mapping[str, Any], *, namespace: str,
     return report
 
 
-def qualification_census() -> dict:
+def qualification_census(*, authority: Mapping[str, Any]) -> dict:
     """Which targets the instrument can read at all, measured per target.
 
     `replica.qualify_instrument` is the gate a run must pass before it will
@@ -1517,6 +1520,12 @@ def qualification_census() -> dict:
     targets are readable and which are not, so a panel is chosen on a
     measured property rather than on the assumption that a gate which
     passed on one family passes on another.
+
+    `authority` is `{dsn, allocation_id}` for a store the caller holds. The
+    census qualifies the instrument on every panel target, which steps five
+    policies each, so it cannot run without one. It ran with none and every
+    row came back unreadable for want of a store rather than for the reason
+    the row names.
     """
     rows = []
     for panel in PANELS:
@@ -1540,7 +1549,8 @@ def qualification_census() -> dict:
                     continue
                 outcome = replica.qualify_instrument(
                     task, list(arms[replica.ARM_RELEVANT]["observations"]),
-                    eligible_methods=replica.eligible_for(task))
+                    eligible_methods=replica.eligible_for(task),
+                    authority=authority)
                 rows.append({
                     "panel": panel["name"], "split": split,
                     "task_id": task_id, "family": panel["family"],
@@ -1579,12 +1589,42 @@ def qualification_census() -> dict:
     }
 
 
+def _first_allocation(dsn: str) -> str:
+    """The allocation this store already holds, or a refusal naming why.
+
+    The census qualifies the instrument, which executes policy source, so it
+    needs an allocation. `--census-only` takes a dsn rather than building a
+    store, so the allocation is either named on the command line or it is
+    whichever one the caller's store already authorized. A store with none
+    cannot run the census, and saying so names the fix rather than returning
+    an empty string the executor would refuse later with less context.
+    """
+    from settlement import db
+
+    with db.connect(dsn) as conn:
+        row = conn.execute(
+            "SELECT id FROM allocations ORDER BY created_at LIMIT 1"
+        ).fetchone()
+    if row is None:
+        raise W2Refused(
+            "the census executes policy source and needs an allocation; this"
+            " store holds none, so pass --allocation-id for one that"
+            " `authority.authorize_study` created")
+    return str(row[0])
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
         description="the W2 retention and adaptation contrasts")
     parser.add_argument("--dsn", required=True)
+    parser.add_argument("--allocation-id", default=None,
+                        help="the allocation the census's executions run"
+                             " under. The qualification census steps policy"
+                             " source, so it needs one; without this argument"
+                             " it took the first allocation the store"
+                             " already holds.")
     parser.add_argument("--out", default=None)
     parser.add_argument("--max-output-tokens", type=int, default=1024,
                         help="the route fails at 2048 on this campaign's"
@@ -1599,6 +1639,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.census_only:
         verify_contrast(freeze())
+        allocation_id = args.allocation_id or _first_allocation(args.dsn)
         report = build_report({
             "measured_live": False,
             "freeze": freeze(),
@@ -1616,7 +1657,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                              else []))},
             "repertoire_closure": measure_repertoire_closure(),
             "inherited_census_defect": defect_report(),
-            "qualification_gate": qualification_census(),
+            "qualification_gate": qualification_census(
+                authority={"dsn": args.dsn, "allocation_id": allocation_id}),
             "census_only": {
                 "%s/%s" % (p["name"], p["target_split"]): census(
                     panel_targets(p), family=p["family"])

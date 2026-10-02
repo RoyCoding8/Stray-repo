@@ -1,3 +1,12 @@
+> Historical audit pass over the `d8436f0` handover documents, on a branch whose
+> commits do not resolve in the current repository. Its findings were about
+> those documents. Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md); the
+> superseded matrix it audits is
+> [STAGE-09-COMPLETION-MATRIX.md](STAGE-09-COMPLETION-MATRIX.md), which carries
+> its own historical banner. Read this for what this pass found then.
+
 # Stage 9 completion audit
 
 Read-only adversarial pass over the three handover documents at `d8436f0`. No file

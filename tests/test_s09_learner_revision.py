@@ -179,19 +179,63 @@ def test_a_literal_probe_input_is_refused_before_it_is_measured():
     assert lr.is_constant_x(view_dependent) is False
 
 
-def test_the_frozen_prompt_cannot_be_answered_with_the_incumbents_own_input():
-    """The prompt withholds the incumbent's value, so agreement is not free.
+def test_the_frozen_prompt_hands_over_the_skeleton_and_is_not_answered_by_copying_it():
+    """The prompt carries the incumbent's value, and copying it is refused.
 
-    A reply that echoed the template would be a fixed guess whatever the
-    prompt said, and the eligibility rule would catch it. This pins the
-    other half: that the template itself is not a giveaway.
+    The prompt does not withhold the incumbent's input. `template_for` is
+    `IMPROVE_LOW_SOURCE`, so the model receives the whole program including
+    `{"x": 3}`, and `INCUMBENT_EVIDENCE[0]` is 3. This test previously
+    asserted the opposite under this name, which is why the name and the body
+    disagreed.
+
+    Carrying the value is deliberate, and two checks make it safe. The
+    skeleton is the interface: `unauthorised_change` blanks the probed input on
+    both sides and refuses anything that is not the same program afterwards,
+    so a prompt without the incumbent's skeleton would yield replies refused
+    for `step-skeleton` rather than revisions. And the value is the parrot
+    defence: a verbatim echo is the incumbent's own bytes, so the identity
+    check refuses it before it can be measured.
+
+    The first assertion is the giveaway half, kept because it is a real
+    property of the frozen bytes rather than a wish: the instruction prose
+    names no input, so the only source of a number is the fenced template.
     """
     prompt = lr.prompt_for()
     template = lr.template_for()
 
+    assert template == channel.IMPROVE_LOW_SOURCE
+    assert '"x": %d' % channel.INCUMBENT_EVIDENCE[0] in template
     assert str(channel.INCUMBENT_EVIDENCE[0]) not in prompt["user"].split(
         "```python")[0]
-    assert '"x": %d' % channel.INCUMBENT_EVIDENCE[0] in template
+
+    echo = "```python\n%s\n```" % template
+    verdict = lr.judge_acquisition(echo, operation_id="prompt-echo")
+
+    assert verdict["acquisition"] == lr.UNUSABLE, (
+        "a verbatim echo of the template is the incumbent's own bytes; if it"
+        " were acquired, the prompt would be answering itself")
+    assert lr.differs_from_incumbent(template) is False
+
+
+def test_a_skeleton_the_prompt_never_supplied_is_refused_for_that_skeleton():
+    """Why the template is the interface rather than an answer key.
+
+    A revision built on any program other than the incumbent's is refused for
+    the skeleton it changed, even when its probed input is computed from the
+    view and would otherwise pass every other gate. Without this, a prompt
+    could drop the template as a giveaway and still measure nothing, because
+    every reply would be refused here instead.
+    """
+    foreign = ('def STEP(view, state):\n'
+               '    picked = 7 if not view["experience"] else 9\n'
+               '    return {"action": {"kind": "probe",\n'
+               '                       "inputs": {"x": picked},\n'
+               '                       "requested_resources": {}},\n'
+               '            "state": state}\n')
+
+    assert channel._x_is_data_dependent(foreign) is True
+    assert channel.unauthorised_change(
+        channel.IMPROVE_LOW_SOURCE, foreign)["decision"] == "step-skeleton"
 
 
 # --- the controls -----------------------------------------------------------

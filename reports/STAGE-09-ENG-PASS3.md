@@ -1,3 +1,10 @@
+> Historical engineering pass, read at `19676a5` on a branch whose commits do
+> not resolve in the current repository. Its CONFIRMED rows are that
+> revision's findings against that revision's source, not today's. Current
+> scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md).
+
 # Stage 09 engineering pass 3 (evidence pass after experiments)
 
 Independent review of the execution, storage, gateway, packet, agenda, learning and experiment subsystems, per `WORKER-STAGE-09-PARALLEL-EXPANSION.md` line 103. Source read at commit `19676a5` on `codex/implementation-investigation-learning-02`. No runtime process was launched; every CONFIRMED row below is derived by reading the code path end to end, not by searching for a name.

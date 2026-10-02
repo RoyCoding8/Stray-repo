@@ -58,6 +58,7 @@ from experiments.ad01 import e2_replication
 from experiments.ad01 import panel_variation as panel
 from experiments.ad01 import s09_e2_scored as scored
 from experiments.representation import checkers
+from execution_authority import execution_store
 
 BUDGET = panel.ARM_BUDGET
 
@@ -65,6 +66,19 @@ BUDGET = panel.ARM_BUDGET
 @pytest.fixture(scope="module")
 def frozen():
     return panel.all_tasks()
+
+
+@pytest.fixture(scope="module")
+def authority():
+    """The store the instrument measures through.
+
+    `s09_e2_scored.Score.measure` requires `{dsn, allocation_id}` and refuses a
+    caller holding none. It executed policy source without them before, so
+    every reading on this panel was `unscored: execute` and the reader-echoer
+    separation these tests assert could not be observed at all.
+    """
+    with execution_store("panelvariation") as store:
+        yield store
 
 
 @pytest.fixture(scope="module")
@@ -306,7 +320,7 @@ def test_the_terminal_candidate_cannot_open_that_gate(frozen):
 # ---------------------------------------------------------------------------
 
 
-def _scored_on(task, source, records, monkeypatch, tmp_path):
+def _scored_on(task, source, records, monkeypatch, tmp_path, authority):
     """One authored policy, stepped by the real instrument on a panel task.
 
     `s09_e2_scored` reaches back through `worlds.FROZEN_DIR` to load the task
@@ -326,11 +340,11 @@ def _scored_on(task, source, records, monkeypatch, tmp_path):
     return score.measure(task, records,
                          eligible_methods=e2_replication.eligible_for(task),
                          remaining={"steps": 1, "queries": 64,
-                                    "model_calls": 0})
+                                    "model_calls": 0}, authority=authority)
 
 
 def test_a_reader_outscores_an_echoer_on_this_panel(frozen, monkeypatch,
-                                                    tmp_path):
+                                                    tmp_path, authority):
     """The C15 test, on a panel whose stream varies and under the real scorer.
 
     The reader counts the verdicts and names its method on the count; the
@@ -358,9 +372,9 @@ def test_a_reader_outscores_an_echoer_on_this_panel(frozen, monkeypatch,
          and t["family"] == "software"], BUDGET)
 
     reader = _scored_on(task, panel.COUNT_READS_THE_VERDICTS,
-                        records, monkeypatch, tmp_path)
+                        records, monkeypatch, tmp_path, authority)
     echoer = _scored_on(task, panel.ECHOES_WITHOUT_READING,
-                        records, monkeypatch, tmp_path)
+                        records, monkeypatch, tmp_path, authority)
 
     assert reader.scored and echoer.scored
     assert reader.candidate_digest_scored != reader.candidate_digest_alternate
@@ -372,7 +386,8 @@ def test_a_reader_outscores_an_echoer_on_this_panel(frozen, monkeypatch,
 
 def test_a_membership_reader_is_vacuous_on_a_panel_that_varies(frozen,
                                                                monkeypatch,
-                                                               tmp_path):
+                                                               tmp_path,
+                                                               authority):
     """The reader the `ad01` world qualified cannot read this panel's stream.
 
     `e2_replication.PROMPTED_SHAPE_READER` switches on whether any observation
@@ -391,7 +406,7 @@ def test_a_membership_reader_is_vacuous_on_a_panel_that_varies(frozen,
          and t["family"] == "software"], BUDGET)
 
     membership = _scored_on(task, e2_replication.PROMPTED_SHAPE_READER,
-                            records, monkeypatch, tmp_path)
+                            records, monkeypatch, tmp_path, authority)
     assert membership.scored
     assert membership.evidence == 0.0, membership.evidence
     assert (membership.candidate_digest_scored

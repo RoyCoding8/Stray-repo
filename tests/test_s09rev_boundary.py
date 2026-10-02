@@ -134,17 +134,47 @@ def test_the_decision_actually_flips_on_a_real_task(tmp_path):
 
 # --- the reachable range of this decision --------------------------------
 
-def test_a_descendant_only_ever_runs_the_authored_menu():
-    """What survives into a descendant is the menu entry, not the choice.
+def test_a_descendant_runs_what_its_own_bytes_reach(tmp_path):
+    """A descendant inherits its parent's procedure, and the choice survives.
 
-    `leaf_construct` swaps the improvement source for a member of an
-    authored two-entry menu, so a descendant gathers one of exactly two
-    evidence sets no matter what the revision selected. Any descendant
-    metric that scores the reviser's own evidence would be measuring an
-    improvement no descendant ever received.
+    The previous version asserted a two-member authored menu and that a
+    descendant could only ever gather one of exactly two evidence sets
+    whatever the revision selected. That is the contract lane C4 removed
+    rather than widened: the construction is inherited instead of resolved
+    against a table, so what a revision selects is what its descendant
+    runs, and the reachable set is a property of the program's own bytes
+    rather than a constant published beside it. The reason the old test
+    existed survives in a different form, and this is it. A descendant's
+    reachable evidence is derived from the descendant the code actually
+    built, and two revisions differing only in their probed input produce
+    descendants that can reach different things.
+
+    Read off the built descendant's own `imp_source` rather than off any
+    module-level table, so a constructor that resolved a menu again would
+    report one set for every revision and fail here.
     """
-    assert channel._STRATEGY_EVIDENCE == {"low": 3, "high": 11}
-    assert set(channel.REACHABLE_EVIDENCE) == {"3", "11"}
+    reached = {}
+    for x in (3, 11):
+        store, base = _bound_store(tmp_path, "inherit-%d.json" % x)
+        store.adopt_revision(_revision_package(
+            channel._revision_source(str(x)), base))
+        driven = channel.drive_improve_round(
+            store, br.make_task("dev", 0), package=store.active_package,
+            round_no=1, admit_probes=True)
+        reached[x] = channel.reachable_evidence(
+            driven["candidate"]["imp_source"])
+
+    assert reached[3] == ("3",), (
+        "the descendant of a revision that probed 3 does not report 3 as"
+        " what it can reach, so the reachability is not read off the"
+        " program's own bytes: %r" % (reached,))
+    assert reached[11] == ("11",), (
+        "the descendant of a revision that probed 11 does not report 11 as"
+        " what it can reach, so the reachability is not read off the"
+        " program's own bytes: %r" % (reached,))
+    assert reached[3] != reached[11], (
+        "both descendants report the same reachable set, so a revision is"
+        " still choosing between two things it cannot name: %r" % (reached,))
 
 
 def test_the_reachable_lineage_range_is_within_the_noise_floor():
@@ -203,10 +233,19 @@ def test_channel_headroom_reports_no_measurable_headroom():
     `tests/test_s09_e4_remediation.py` requires the same flag to come out
     true for a substrate with a planted effect, which is what makes its
     being false on this one worth reading.
+
+    The `reachable_evidence` line was restated from the removed menu's two
+    members. It is now read off the incumbent's own bytes by
+    `channel_headroom`, which is where the report itself gets it, so the
+    test asks the program rather than pinning the width the menu had.
     """
     report = channel.channel_headroom(split="qual", seeds=COHORT)
     assert report["estimator"] == channel.ESTIMATOR
-    assert report["reachable_evidence"] == ["3", "11"]
+    assert report["reachable_evidence"] == list(
+        channel.reachable_evidence(channel.IMPROVE_LOW_SOURCE)), (
+        "the report's reachable set is not the one read off the incumbent's"
+        " own bytes, so the reader is being shown a different range from the"
+        " one the estimator works over: %r" % (report,))
     scoring = report["split_half"]["score"]["seeds"]
     paired = [channel.lineage_descendant_score(
         report["best_probe"], "qual", seed)["unqueried"]

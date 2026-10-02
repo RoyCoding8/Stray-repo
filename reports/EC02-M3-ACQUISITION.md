@@ -1,3 +1,10 @@
+> Historical batch report. Its commits do not resolve in the current
+> repository. Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md). Read it
+> for that campaign's own no-acquisition disposition against a doubled empty
+> gateway, which is a different observation from the 2026-10-01 batch's.
+
 # EC02 M3 acquisition/disposition
 
 Branch `wt/ecr2-m3`, base tip `63090c8` (learn+evid+M2 merged). DB

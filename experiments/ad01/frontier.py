@@ -128,6 +128,16 @@ def package_digest(op_source_or_package, imp_source=None, parent_digest=None,
                    version=None, control_id=None, provenance_digest=None,
                    *, origin="authored-control", source_kind="fixed-menu",
                    authority_request=None) -> str:
+    """Digest a package manifest.
+
+    `source_kind` is provenance, not a description of any selection. The
+    label says the bytes were authored here rather than returned by a live
+    dispatch, and `validate_package` gates on exactly that pairing with
+    `origin`: `authored-control` must carry the authored label, `acquired`
+    must carry `model-response`. A descendant inherits its parent's
+    construction and so inherits the label too. Nothing about the label
+    names what the program may choose.
+    """
     if isinstance(op_source_or_package, dict):
         manifest = package_manifest(op_source_or_package)
     else:
@@ -427,7 +437,9 @@ def validate_package(package: dict, *, grant: dict) -> dict:
         raise Refused("revision candidate has no channel")
     if package["origin"] == "authored-control":
         if package["source_kind"] != "fixed-menu":
-            raise Refused("authored-control requires fixed-menu source kind")
+            raise Refused(
+                "authored-control requires the fixed-menu label, which marks"
+                " bytes authored here rather than returned by a dispatch")
         if package["provenance"] is not None or package["provenance_digest"] is not None:
             raise Refused("authored-control cannot carry model provenance")
     elif package["origin"] == "acquired":

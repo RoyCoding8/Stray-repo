@@ -14,13 +14,22 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any, Mapping
 
 from . import e2_replication as replica
 from . import learner
 from . import worlds
 
 
-def gate() -> dict:
+def gate(*, authority: Mapping[str, Any]) -> dict:
+    """Qualify the instrument on the frozen contrast's first target.
+
+    `authority` is `{dsn, allocation_id}` for a store the caller holds, and
+    it is required rather than optional because qualifying the instrument
+    steps five policies, and stepping policy source is what the executor
+    refuses without a store. It ran with none, so every row came back
+    unscored and `separates_reader_from_blind` answered from nothing.
+    """
     body = replica.contrast_block()
     task = worlds.load_task(worlds.FROZEN_DIR, body["target_task_ids"][0])
     arm = replica.build_arm(replica.ARM_RELEVANT, task,
@@ -29,7 +38,7 @@ def gate() -> dict:
                             visible=learner.visible_opportunities(0))
     result = replica.qualify_instrument(
         task, list(arm.get("observations") or []),
-        eligible_methods=replica.eligible_for(task))
+        eligible_methods=replica.eligible_for(task), authority=authority)
     return result
 
 
@@ -82,7 +91,22 @@ def _as_dict_fields() -> set:
 
 
 def main() -> int:
-    result = gate()
+    from . import s09_run_isolation as isolation
+    from settlement import authority as settlement_authority
+
+    admin = isolation.admin_dsn()
+    database = isolation.create_disposable_db("e2contrastgate",
+                                              admin_dsn=admin)
+    try:
+        handle = settlement_authority.authorize_study(
+            database.dsn, isolation.study_root_for("e2contrastgate"),
+            authorized=1_000_000,
+            allocation_id="e2contrastgate-alloc",
+            ceilings={"sandbox_calls": 10_000, "model_calls": 1_000})
+        result = gate(authority={"dsn": database.dsn,
+                                 "allocation_id": handle.allocation_id})
+    finally:
+        isolation.drop_disposable_db(database, admin_dsn=admin)
     out = {
         "gate_passes": bool(result.get("separates_reader_from_blind")),
         "rows": {name: row for name, row in result.items()

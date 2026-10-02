@@ -134,6 +134,15 @@ def _decision_rows(dsn, cid):
         return [dict(r["content"]) for r in rows]
 
 
+def _operation_rows(dsn, cid):
+    from experiments.ad01 import trajectory
+    with trajectory._read_conn(dsn) as conn:
+        rows = conn.execute(
+            "SELECT id FROM operations WHERE id LIKE %s", ("ad01-%s%%" % cid,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
 def _s09_row(dsn, cid, seq):
     from experiments.ad01 import trajectory
     with trajectory._read_conn(dsn) as conn:
@@ -166,7 +175,18 @@ def test_kill_after_acceptance_resumes_same_operation(store, tmp_path):
     assert len(_decision_rows(store, cid)) == 1
     row = _s09_row(store, cid, 0)
     assert row["status"] == "incorporated"
-    assert row["effect_id"] == "ad01-%s-b0-effect" % cid
+    # This boundary ran a host-side diagnostic and admitted no operation, so
+    # the effect identity is empty rather than a name. It used to assert
+    # `ad01-%s-b0-effect` % cid, a constant that matched no `operations` row on
+    # this path or any other: the effect column named an identity that had
+    # never existed (RF-02). The campaign below carries the construction arm,
+    # and `tests/test_inv_x4b_effect_identity.py` pins the admitted case, where
+    # the identity is a real settled operation.
+    assert row["effect_id"] == ""
+    operations = _operation_rows(store, cid)
+    assert operations == [], (
+        "this boundary admits no operation, so an empty effect identity is"
+        " the honest value; the store holds %r" % (operations,))
     control = trajectory.run_campaign(
         0, "I", CHARTER, dict(CAPS, max_boundaries=1),
         tasks=[TASK], campaign_seq=41)

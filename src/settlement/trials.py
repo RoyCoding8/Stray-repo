@@ -14,7 +14,7 @@ from psycopg.types.json import Json
 
 from . import broker, db, store
 from .common import (Command, CommandResult, ConflictPayload, ResultCode,
-                     SettlementError, payload_digest)
+                     SettlementError, StaleRevision, payload_digest)
 
 OUTCOMES = ("success", "failure", "timeout", "invalid", "unavailable", "infra")
 CATEGORIES = ("construction", "retrieval", "evaluation", "coordination",
@@ -30,6 +30,24 @@ def _j(value: Any) -> Json:
     return Json(value if value is not None else {})
 
 
+_VERSION_FIELDS = ("candidate_version", "reference_version", "evaluator_version")
+# The columns an amendment inherits from its parent when the caller names no
+# override, each with the shape its stored form decodes to. Grouped because
+# "what does this child inherit" is a property of the parent's row, so it has
+# to be resolved where that row is read: under its lock, in the transaction
+# that writes the child.
+_INHERITED = (("task_groups", list), ("budgets", dict), ("metrics", list),
+              ("stopping", dict), ("exclusions", list), ("uncertainty", dict),
+              ("supported_scope", dict))
+
+
+def _require_separated_groups(groups: list) -> None:
+    kinds = {g.get("kind") for g in groups if isinstance(g, dict)}
+    if not groups or kinds - set(GROUP_KINDS) or "protected-eval" not in kinds:
+        raise SettlementError(
+            "protocol needs separated dev/visible-regression/protected-eval groups")
+
+
 def freeze_protocol(dsn: str, cmd: Command, *, protocol_id: str,
                     candidate_version: str = "", reference_version: str = "",
                     evaluator_version: str = "", task_groups: list | None = None,
@@ -37,64 +55,192 @@ def freeze_protocol(dsn: str, cmd: Command, *, protocol_id: str,
                     stopping: dict | None = None, exclusions: list | None = None,
                     uncertainty: dict | None = None,
                     supported_scope: dict | None = None,
+                    supersedes: str = "", _amend: dict | None = None,
+                    _observed: frozenset | None = None,
                     _frozen: bool = True) -> CommandResult:
-    groups = list(task_groups or [])
-    kinds = {g.get("kind") for g in groups if isinstance(g, dict)}
-    if not groups or kinds - set(GROUP_KINDS) or "protected-eval" not in kinds:
+    """Freeze one protocol, optionally as the successor of another.
+
+    An amendment is a freeze that names its parent, so it is one freeze rather
+    than a freeze followed by a stamp. `amend_protocol` used to run the
+    freeze, commit, and then write `supersedes` and `frozen` from a second
+    connection with `autocommit=True`. Nothing held the parent across those
+    two steps, so four concurrent amends of one parent all applied and left
+    four frozen children and no unique successor. Here the parent is read
+    under `FOR UPDATE` and the child that names it is inserted inside that
+    same transaction, so the read that decided the amendment still holds its
+    lock when the row it decided about is written, and the lineage is a
+    property of the child at the instant the child becomes durable.
+
+    `_amend` carries the caller's overrides and `_observed` the successor set
+    it saw before locking. A `supersedes` without an `_observed` is refused
+    rather than admitted: an amendment arriving without the observation cannot
+    tell an overtaken caller from a later one, and admitting it would reopen
+    the race this closes. Both private arguments exist because this function
+    is also the plain freeze half of the pair, which has no parent and so no
+    observation. A caller wanting an amendment goes through `amend_protocol`,
+    the boundary that owns the rule.
+    """
+    if supersedes and _observed is None:
         raise SettlementError(
-            "protocol needs separated dev/visible-regression/protected-eval groups")
+            "a protocol naming a parent needs the successor set observed"
+            " before the parent lock; amend_protocol supplies it")
 
     def _fn(cur, control):
+        old = None
+        if supersedes:
+            cur.execute("SELECT * FROM trial_protocols WHERE id = %s FOR UPDATE",
+                        (supersedes,))
+            old = cur.fetchone()
+            if old is None:
+                raise SettlementError(f"unknown protocol {supersedes}")
+            # The successor set as this transaction's snapshot holds it, taken
+            # under the parent lock. A child committed by the amend that held
+            # the lock before this one committed after this transaction took
+            # its snapshot, so it is invisible here and visible in `_observed`.
+            # A caller arriving strictly after that amend committed saw it in
+            # both, so the two agree and the amendment proceeds.
+            cur.execute("SELECT id FROM trial_protocols WHERE supersedes = %s",
+                        (supersedes,))
+            if frozenset(row["id"] for row in cur.fetchall()) != _observed:
+                raise StaleRevision(
+                    "concurrent amendment of %s: this amendment was prepared"
+                    " against a successor set this transaction's snapshot does"
+                    " not hold, so it waited behind another amendment of the"
+                    " same parent. Re-read the parent and amend again to"
+                    " supersede it deliberately."
+                    % (supersedes,))
+        overrides = dict(_amend or {})
+        if old is None:
+            base = {"candidate_version": candidate_version,
+                    "reference_version": reference_version,
+                    "evaluator_version": evaluator_version}
+        else:
+            base = {name: old[name] for name in _VERSION_FIELDS}
+        base.update({name: overrides[name] for name in _VERSION_FIELDS
+                     if name in overrides})
+        resolved = _resolve(
+            overrides, old,
+            task_groups=task_groups, budgets=budgets, metrics=metrics,
+            stopping=stopping, exclusions=exclusions, uncertainty=uncertainty,
+            supported_scope=supported_scope)
+        _require_separated_groups(list(resolved["task_groups"]))
         cur.execute("SELECT 1 FROM trial_protocols WHERE id = %s", (protocol_id,))
         if cur.fetchone() is not None:
             raise SettlementError(f"protocol {protocol_id} already exists")
         cur.execute(
             "INSERT INTO trial_protocols (id, candidate_version, reference_version,"
             " evaluator_version, task_groups, budgets, metrics, stopping, exclusions,"
-            " uncertainty, supported_scope, frozen)"
-            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (protocol_id, candidate_version, reference_version, evaluator_version,
-             _j(groups), _j(budgets or {}), _j(metrics or []), _j(stopping or {}),
-             _j(exclusions or []), _j(uncertainty or {}),
-             _j(supported_scope or {}), _frozen))
+            " uncertainty, supported_scope, frozen, supersedes)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (protocol_id, base["candidate_version"], base["reference_version"],
+             base["evaluator_version"], _j(resolved["task_groups"]),
+             _j(resolved["budgets"]), _j(resolved["metrics"]),
+             _j(resolved["stopping"]), _j(resolved["exclusions"]),
+             _j(resolved["uncertainty"]), _j(resolved["supported_scope"]),
+             _frozen, supersedes))
         return (ResultCode.APPLIED, f"protocol {protocol_id} frozen",
                 {"protocol_id": protocol_id},
                 [("trial.protocol_frozen", {"protocol_id": protocol_id})], [])
     return store.transact(dsn, cmd, _fn)
 
 
+def _resolve(overrides: dict, old: dict | None, **plain: Any) -> dict:
+    """Each protocol column, in precedence order, for both halves of the pair.
+
+    An amendment names the fields it changes in `overrides` and inherits the
+    rest from the parent it read under the lock. A plain freeze has no
+    parent, so its columns come from the arguments the caller passed. The
+    first present value wins, and an argument the caller passed as empty is
+    that value rather than an absent one: `budgets={}` stores `{}`, which is
+    what it stored before, and treating it as absent would silently drop
+    `metrics=["success_rate"]` into a column shaped like the empty default.
+    """
+    resolved = {}
+    for name, shape in _INHERITED:
+        if name in overrides:
+            resolved[name] = overrides[name]
+        elif old is not None:
+            resolved[name] = shape(old[name] or shape())
+        elif plain.get(name) is not None:
+            resolved[name] = plain[name]
+        else:
+            resolved[name] = shape()
+    return resolved
+
+
+def _observed_successors(dsn: str, parent: str) -> frozenset:
+    """The successor set of `parent` as this caller sees it, before any lock.
+
+    The one read in this call that is not serialised, and deliberately so. A
+    caller holding the parent lock before it looked would see the same set the
+    lock releases, and the comparison in `freeze_protocol` could never tell an
+    overtaken caller from one that arrived in time. One reader outside the
+    lock and one inside it is what makes the difference visible, so this is
+    not a leftover of the split read. It decides nothing on its own: it is the
+    half of the comparison that says what the caller expected.
+    """
+    with db.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM trial_protocols WHERE supersedes = %s",
+                        (parent,))
+            seen = frozenset(row[0] for row in cur.fetchall())
+            conn.commit()
+    return seen
+
+
 def amend_protocol(dsn: str, cmd: Command, *, protocol_id: str,
                    supersedes: str, **fields: Any) -> CommandResult:
-    with db.connect(dsn) as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT * FROM trial_protocols WHERE id = %s", (supersedes,))
-            old = cur.fetchone()
-            conn.commit()
-    if old is None:
-        raise SettlementError(f"unknown protocol {supersedes}")
-    base = {key: old[key] for key in
-            ("candidate_version", "reference_version", "evaluator_version")}
-    base.update({k: v for k, v in fields.items() if k in base})
-    groups = fields.get("task_groups", list(old["task_groups"] or []))
-    supported_scope = fields.get("supported_scope",
-                                 dict(old.get("supported_scope") or {}))
-    budgets = fields.get("budgets", dict(old["budgets"] or {}))
-    metrics = fields.get("metrics", list(old["metrics"] or []))
-    stopping = fields.get("stopping", dict(old["stopping"] or {}))
-    exclusions = fields.get("exclusions", list(old["exclusions"] or []))
-    uncertainty = fields.get("uncertainty", dict(old["uncertainty"] or {}))
+    """Replace one frozen protocol with a new frozen version naming it.
+
+    The read that decides this amendment and the write that records it run on
+    one connection inside one transaction, with the parent held `FOR UPDATE`
+    across both. That was the defect: the parent was read on one connection,
+    committed, and `supersedes` written on a second with `autocommit=True`, so
+    four concurrent amends of one parent all applied and left four frozen
+    children claiming the same parent.
+
+    The lock is necessary and not sufficient, and the reason is the domain
+    rather than the mechanism. Four children of one parent is a legitimate
+    shape, not a defect: `experiment.run_abcs` builds exactly it, four arm
+    protocols off one frozen panel protocol
+    (`src/settlement/experiment.py:1147-1153`), and
+    `tests/test_dev02_episode.py:270` runs that path. So amends serialise
+    rather than being limited to one, and a loser is told apart from a caller
+    that merely arrived later instead of both being refused.
+
+    That distinction is the comparison in `freeze_protocol`, between the
+    successor set this caller saw before it locked and the one its own
+    transaction's snapshot holds. A caller arriving strictly after another
+    amend committed saw that child in both, so nothing moved under it and it
+    proceeds. A caller that read the lineage and then waited behind another
+    amend's lock saw one child where its snapshot holds another, so it is
+    refused: the parent fields it would have inherited are decided here, under
+    the lock, and a caller whose snapshot predates the winner is amending
+    against a lineage that moved while it was deciding.
+
+    The refusal raises rather than returning a `CommandResult`, so a caller
+    cannot mistake it for an apply, and it leaves no child row behind. An
+    amend is an operator action: being told is the whole of what a loser gets,
+    and whether to amend the winner instead is the operator's decision rather
+    than a retry this function performs on its own.
+
+    That raising is not optional decoration. `store.transact` turns a raised
+    `SettlementError` into a returned `CommandResult` carrying the refusal,
+    because most of its callers are `CommandResult` consumers that read the
+    code. Two live callers of this function are not: `development.freeze_comparison`
+    and `development.bind` call it for its effect and ignore the result, and
+    each catches `SettlementError` only to re-test the message for "already
+    exists". A returned refusal would pass through both of them as a success
+    shape, which is the one outcome the honesty constraint forbids. So the
+    code is re-raised here, where the operator action actually is.
+    """
+    observed = _observed_successors(dsn, supersedes)
     result = freeze_protocol(
-        dsn, cmd, protocol_id=protocol_id, task_groups=groups, budgets=budgets,
-        metrics=metrics, stopping=stopping, exclusions=exclusions,
-        uncertainty=uncertainty, supported_scope=supported_scope,
-        _frozen=False, **base)
-    with db.connect(dsn, autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute("UPDATE trial_protocols SET supersedes = %s, frozen = TRUE"
-                        " WHERE id = %s", (supersedes, protocol_id))
+        dsn, cmd, protocol_id=protocol_id, supersedes=supersedes,
+        _amend=fields, _observed=observed, _frozen=True)
+    if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        raise StaleRevision(result.detail)
     return result
-
-
 def _protocol(dsn: str, protocol_id: str) -> dict:
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:

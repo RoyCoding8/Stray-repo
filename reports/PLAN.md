@@ -34,39 +34,100 @@ base because it minted 8-hex-digit tokens, which `_checked_token` refuses as
 belonging to the pytest sweep space. Fixed on the integration branch at
 `898b10c` so every lane gate measures only its own change.
 
-### Lane graph
+### Lane graph, as merged
 
 Disjoint paths, one writer per worktree under `.worktrees/`, serial `--no-ff`
 merge by the coordinator in the main checkout, gate before merge and re-run on
 the merged tip.
 
+**This table is the merged reality at `5b7f1ca`, not the pre-merge plan.** The
+State column was rewritten after the independent acceptance pass found it
+entirely pre-merge: it marked sixteen lanes unfinished, none merged, and
+omitted the twenty-eight workstream reports that exist on the tree. `State` now
+distinguishes *landed* from *never run*, which is the only distinction a reader
+needs in order to decide what is outstanding.
+
 | Lane | Milestone | Ownership | Depends on | State |
 |---|---|---|---|---|
-| a1-preflight | A1 | `live_construct.py`, `invl02_live.py`, campaign r2/r3, new durable-preflight test | — | running |
-| a2-nodsn | A2 | `method_exec.py`, `policy_step.py`, trajectory out-of-process call sites, new no-dsn test | — | running |
-| a3-action | A3 | `policy_action.py`, `policy_step.py`, `policy_assess.py`, `assessment_profile.py`, `s09_arm_parity.py`, new action-meaning test | — | running |
-| b1-sweharness | B1+B2 | `s09_swe_experiment.py` view contract, `s09_swe_ast.py` graph view read, new SWE view test | — | running |
-| b4-score | B4 | `agenda_policy.py` `_score_constant_rules`, new constant-score test | — | running |
-| b8-panel | B8 | `w2_retention_campaign.py` panel enumeration, new panel-power test, new census evidence dir | — | running |
-| a4-single-owner | A4 | `frontier.py` decision/authority projection onto the trajectory path | a1, a2, a3 | queued |
-| a5-chain | A5 | new chain test, reviewer-written counterexamples, reviewer source | a4 | queued |
-| b3-repertoire | B3 | open the closed repertoire so retention becomes measurable | b8 | queued |
-| b5-sealed-state | B5 | per-task policy state in sealed assessment | b1 | queued |
-| c1-mission | C1 | single durable mission entry, retire the partial owners | a4 | queued |
-| b10-cap | B10 | the B cap sheet, written from the complete matrix before any effect | b1, b3 | queued |
-| b11-probe | B11 | route re-probe establishing a served output budget | b10 | queued |
-| c2-channel | C2 | freeze enforcement and independently written channel controls | c1 | queued |
-| c3-construction | C3 | inheritable construction procedure, replacing the two-member menu | c2 | queued |
-| b12-live | B12 | SWE matrix live construction, 4 lineages per supported cell | b11 | queued, LIVE |
-| c4-live | C4 | bounded live revision attempt under its own freeze | c3, b11 | queued, LIVE |
+| a1-preflight | A1 | `live_construct.py`, `invl02_live.py`, campaign r2/r3, durable-preflight test | — | landed `450a988` |
+| a2-nodsn | A2 | `method_exec.py`, `policy_step.py`, out-of-process call sites, no-dsn test | — | landed `fb563ce` |
+| a3-action | A3 | `policy_action.py`, `policy_step.py`, `policy_assess.py`, `assessment_profile.py`, action-meaning test | — | landed `f836a16` |
+| a4-owner | A4 | frontier decision/authority projection onto the trajectory path | a1, a2, a3 | landed `6caacbc` |
+| a4b-lostupdate | A4 | frontier crash-loss premise, measured then repaired | a4 | landed `1252c4f` |
+| a5-chain | A5 | chain test, reviewer counterexamples, reviewer source | a4 | landed `a4929f2` |
+| a6-callers | A6 | the five no-authority callers, migrated to real authority | a2 | landed `94efa12` |
+| a7-probe | A7 | the preflight probe as a durable broker operation | a1 | landed `992ad93` |
+| a8-improveauth | A8 | real authority threaded through the invl02 improve channel | a6 | landed `5d3f4be` |
+| b1-sweharness | B1 | SWE view contract, SWE AST graph view read, SWE view test | — | landed `f5f536d` |
+| b1c-flip | B1c | B1's assertions corrected, the bound action that could never fill | b1 | landed `35ba5e9` |
+| b2-graphchild | B2 | a graph arm reaches a world turn; a dead child is not an empty one | b1 | landed `051d702` |
+| b3-repertoire | B3 | open the closed repertoire so retention becomes measurable | b8 | landed `794520f` |
+| b4-score | B4 | `agenda_policy` `_score_constant_rules` scored on a mean | — | landed `2c187ae`; its freeze is **unmeasured**, see below |
+| b8-panel | B8 | panel enumeration, panel-power test, census evidence dir | — | landed `5d8bb4e` |
+| b9-driver | B9 | one named executor per world in the bounded graph driver | b2 | landed `160f8e4` |
+| b10-cap | B10 | the B cap sheet, written from the complete matrix before any effect | b1, b3 | landed `933f487` |
+| b11-probe | B11 | route re-probe establishing the served output budget | b10 | landed `e7d0e3f`, 6 of 6 sends used |
+| b12-live | B12 | SWE matrix live construction, 4 lineages per supported cell | b11 | landed `7cc4df7`, **0 of 4 lineages acquired** |
+| b13 | B13 | E2 contrast replication on the powered panel | b8 | landed `a4083df` then **reverted** `a6687d6`; superseded by b13b |
+| b13b-replseed | B13 | the E2 method resolved per family, and a graph edge read as a pair | b13 | landed `75cab06` |
+| b14-retention | B14 | retention and adaptation behind the opened repertoire | b3, b12 | landed `9cc7249`, **0 of 3 members measurable** |
+| b18-view | B18 | the contract view already carried what the guard reads | c2 | landed `c8c58bf` |
+| c1-mission | C1 | single durable mission entry, retiring the partial owners | a4 | landed `eeb9e68` |
+| c2-freeze | C2 | freeze enforcement and independently written channel controls | c1 | landed `dd81e3e` |
+| c3-fixture | C3 | the verdict-shape fixture repaired against the freeze guard | c2 | landed `3894f8c` |
+| c4-construction | C4 | inheritable construction procedure, replacing the two-member menu | c2 | landed `a82baca` |
+| c6-suspend | C6 | one resume owner, naming what it resumed | c1 | landed `58aaae7` |
+| c7-twodomain | C7 | one mission crossing both task structures, naming the powered side | c2, c6 | landed `3138408` |
+| p1-search | review | search pass 1, four findings over the merged tip | all A | landed `f919431` |
+| p2-search | review | search pass 2, three findings over the merged tip | p1 | landed `32823e8` |
+| x1-sigfix | repair | two merged-tip defects no single lane could see | p1 | landed `01030c7` |
+| x2-subscript | repair | freeze widened to the subscript position | p2 | landed `794737f` |
+| acceptance | review | independent acceptance pass over the merged tip | all | landed `8a207ab` |
+| x3-freeze | repair | the freeze refuses a frozen write made through a mapping method, read off the parse's own binding contexts | review | landed |
+| x4b-effectid | repair | the effect identity is read off the episode and checked against `operations WHERE settled` before it is written | review | landed |
+| x5-amend | repair | concurrent amends of one protocol resolve to one successor under a held parent lock | review | landed |
+| doc-apply | doc | the ledger, roadmap and matrix record what is true, including the overturned mechanism verdict | review | landed |
+| x6b-scan | repair | `source_kind` says what it gates on, not what C4 deleted | c4 | landed |
+| token-grammar | repair | the grammar reads its sources from the index, not from a walk of the checkout | c7 | landed |
+| decoy-fix | repair | the decoy's justification is repaired rather than the control removed | c7 | landed |
+| sib2-fix | repair | migrate the two tests that named the removed construction menu by label | c4 | landed |
+| giveaway | doc | name what the prompt actually is: the skeleton is the interface, not a giveaway | c7 | landed |
+| z2-retarget | repair | re-aim six guards whose subjects had been repaired; find nine unexplained reds the earlier audit had not seen | all | landed |
+| b5-sealed-state | B5 | per-task policy state in sealed assessment | b1 | **never run.** No workstream report, no evidence directory, no test exists. WORKER-PROMPT.md §B asked for per-task policy state in sealed assessment; nothing in this batch delivers it and nothing claims to. |
+| c4-live | C4 | bounded live revision attempt under its own freeze | c3, b11 | **never run.** No report, no evidence directory, no test. This is the milestone-C deliverable in WORKER-PROMPT.md §C, so it is recorded as outstanding rather than dropped. The mechanism that would have made it runnable exists (c4-construction landed an inheritable construction procedure); no eligible revision was attempted against it, so **no live revision and no revised descendant cohort exist**. |
 
-Review lanes (a separate agent from the author of their target) are queued
-behind each implementation group: R1 on the a1/a2 authority migration, R2 on
-a3 action meaning, R3 on the mission entry, and a final independent acceptance
-pass over the merged tip.
+The two never-run lanes are the whole of the outstanding implementation scope
+this batch left behind. Neither is a live lane: no cap sheet authorizes either,
+and neither consumed a dispatch.
 
-Live lanes are frozen before any effect and gated on the written cap sheet. A
-missing cap sheet is setup work, not a reason to re-ask for authorization.
+**Two reds remain deliberately unresolved and are recorded, not open work.**
+FA-04 asserts `hasattr(channel, "REACHABLE_EVIDENCE")`, which the correct
+deletion of the fixed menu falsifies, and it can only be greened by restoring
+the menu C4 deleted. FA-02 names
+`reports/evidence/invr1b4-mean-score/b4-crossover-mean.json`, a file that was
+never committed and must not be fabricated to satisfy a gate. Z2-RETARGET's
+audit found nine further unexplained reds across four files that no document
+recorded; the ledger carries the count and the audit's own coverage gap.
+
+**B4's freeze is not a lane failure and is not closed.** The single
+`control_competence(40)` sweep was cancelled for resource reasons before it
+returned, so `reports/evidence/invr1b4-mean-score/b4-crossover-mean.json` does
+not exist. A cancelled measurement is not a null measurement: nothing about the
+crossover is known in either direction
+(`reports/workstreams/b4-score.md`; see also
+[FA-04 note](STAGE-09-10-COMPLETION-MATRIX.md)). The four tests that read it
+now assert the absence is the declared one instead of erroring on a file
+nobody was able to write.
+
+Review lanes R1–R3 and the final acceptance pass ran as a separate agent from
+the author of each target, and all three landed. R1 on the a1/a2 authority
+migration is folded into `a6-callers` and `a8-improveauth`; R2 on a3 action
+meaning into `a3-action`; R3 on the mission entry into `c1-mission` and
+`c6-suspend`.
+
+Live lanes were frozen before any effect and gated on the written cap sheet. A
+missing cap sheet was setup work, not a reason to re-ask for authorization, and
+no live lane re-asked.
 
 ## Current closure checkpoint — 2026-09-30
 

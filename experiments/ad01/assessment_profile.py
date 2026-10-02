@@ -398,15 +398,30 @@ def _step_authority(dsn: str | None, allocation_id: str | None, session: str,
 
 
 def _execution_identity(profile: Profile, session: str, step_index: int,
-                        kind: str) -> str:
+                        kind: str, candidate_digest: str = "",
+                        task_id: str = "") -> str:
     """The operation id a task effect runs under.
 
     Deterministic, because the same arm replaying the same panel step must
     land on the same operation and read back its own settled receipt rather
     than dispatch a second time. It carries the profile, the session and the
     step so two arms, two sessions and two steps never collide on one row.
+
+    It carries the candidate's digest and the task's id too, because profile,
+    session, step and kind are all the same for two different methods in one
+    session and for one method measured on two tasks. The broker refuses an
+    identity reused with a different payload, so without those two a second
+    policy or a second task in the same session was refused as a replay of the
+    first with different bytes — and `s09_e2_scored`, which measures five
+    policies and several tasks per session, read that refusal as an unscored
+    reading rather than as the collision it was.
     """
-    return "%s-%s-%s-k%d" % (profile.op_prefix, session, kind, step_index)
+    parts = [profile.op_prefix, session, kind]
+    if candidate_digest:
+        parts.append(candidate_digest[:12])
+    if task_id:
+        parts.append(task_id)
+    return "%s-k%d" % ("-".join(parts), step_index)
 
 
 def _resolve_method(task: dict, inputs: dict, kind: str = "use_method", *,
@@ -543,7 +558,8 @@ def dispatch(*, profile_name: str, record: dict, task: dict,
         authority = {"dsn": dsn, "allocation_id": allocation_id,
                      "operation_id": _execution_identity(
                          profile, ctx["session"], int(ctx["step_index"]),
-                         kind)}
+                         kind, str(ctx["candidate_digest"]),
+                         str(task.get("task_id") or ""))}
         candidate, queries, _calls, wall_ms, identity, owner, failure, walk = \
             _resolve_method(task, dict(action.get("inputs") or {}), kind,
                             authority=authority)

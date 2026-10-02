@@ -41,6 +41,20 @@ sys.path.insert(0, str(ROOT / "src"))
 from experiments.ad01 import control_distinctness as gates  # noqa: E402
 from experiments.ad01 import experience_axis as axis  # noqa: E402
 from experiments.representation import checkers  # noqa: E402
+from execution_authority import execution_store  # noqa: E402
+
+
+@pytest.fixture(scope="module")
+def authority():
+    """The store the reader-echoer measurement executes through.
+
+    `experience_axis.reader_echoer` steps policy source, and `Score._execute`
+    refuses an execution with no dsn and no allocation. It held none, so every
+    policy came back `{"scored": False}` and the three tests below were
+    reading a missing authority as a property of the policies.
+    """
+    with execution_store("experienceaxis") as store:
+        yield store
 
 
 def _panel(budget: int = axis.ARM_BUDGET) -> list:
@@ -323,7 +337,7 @@ def _echo_setup():
     return target, observations
 
 
-def test_the_instrument_separates_a_reader_from_an_echoer():
+def test_the_instrument_separates_a_reader_from_an_echoer(authority):
     """Direction one, and it now separates, on the candidate.
 
     The confound was real and it is gone. It was the evidence leg reading a
@@ -340,7 +354,7 @@ def test_the_instrument_separates_a_reader_from_an_echoer():
     happened.
     """
     target, observations = _echo_setup()
-    answer = axis.reader_echoer(target, observations)
+    answer = axis.reader_echoer(target, observations, authority=authority)
     one = answer["directions"]["one_verdicts_flipped"]
     # On this fixture both policies move their action inputs and neither
     # changes the candidate the world produced, so the leg scores them equally.
@@ -350,7 +364,7 @@ def test_the_instrument_separates_a_reader_from_an_echoer():
     assert one["reader_score"] == one["echoer_score"], one
     assert one["reader_inputs_moved"] and one["echoer_inputs_moved"], one
 
-def test_a_policy_that_re_routes_outscores_the_echoer():
+def test_a_policy_that_re_routes_outscores_the_echoer(authority):
     """Direction two, and the reversal is gone.
 
     A policy that reads the verdicts and names a different method returns a
@@ -361,17 +375,28 @@ def test_a_policy_that_re_routes_outscores_the_echoer():
 
     The previous version of this test asserted the reversal and said so in its
     own comment: "an echo outscoring a real reader is the defect; if a future
-    change closes it this assertion is what should be updated".
+    change closes it this assertion is what should be updated". That is what
+    happened.
+
+    The echoer's score is asserted as the literal measured rather than the
+    `1.0` that stood here before. Nothing ran under this file's assertions:
+    `reader_echoer` reached `_execute` with no store, every step was refused,
+    and every policy came back `{"scored": False}`, so the `1.0` was a value
+    no execution had produced. What the numbers are now: the reader that
+    re-routes its method scores `1.7` and the echoer `0.7`, and the difference
+    is the benefit leg reading a candidate that actually moved.
     """
     target, observations = _echo_setup()
-    policies = axis.reader_echoer(target, observations)["policies"]
+    policies = axis.reader_echoer(
+        target, observations, authority=authority)["policies"]
     assert policies["prompted-shape-reader"]["candidates_moved"], policies
     assert policies["echoer"]["score"] < policies["prompted-shape-reader"]["score"], (
         "a real reader must outscore an echoer; if this inverts the candidate "
         "comparison is measuring something else")
-    assert policies["echoer"]["score"] == 1.0, policies
+    assert policies["echoer"]["score"] == 0.7, policies
+    assert policies["prompted-shape-reader"]["score"] == 1.7, policies
 
-def test_the_candidate_is_where_a_reader_and_an_echoer_differ():
+def test_the_candidate_is_where_a_reader_and_an_echoer_differ(authority):
     """Direction two, the comparison the instrument does not make.
 
     The candidates are compared here rather than by the evidence leg, which
@@ -379,7 +404,8 @@ def test_the_candidate_is_where_a_reader_and_an_echoer_differ():
     policy that re-routes is the one whose candidate moves.
     """
     target, observations = _echo_setup()
-    policies = axis.reader_echoer(target, observations)["policies"]
+    policies = axis.reader_echoer(
+        target, observations, authority=authority)["policies"]
     assert policies["prompted-shape-reader"]["candidates_moved"], policies
     assert not policies["echoer"]["candidates_moved"], policies
     assert not policies["ignores-the-view"]["inputs_moved"], policies

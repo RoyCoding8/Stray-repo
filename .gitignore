@@ -31,3 +31,6 @@ Thumbs.db
 .ad01-r4-runs/
 .s09suite/
 .audit/
+
+# Claude agent worktrees -- scratch for this batch
+.claude/

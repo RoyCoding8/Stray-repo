@@ -1174,14 +1174,23 @@ def admit_revision_under_freeze(store, source: str, views: list) -> dict:
     the program it would replace, so a store bound to the high menu member is
     not measured against the low one's bytes.
 
-    The frozen state is captured before the revision is executed at all and
-    compared after, so a write that slips past the static check is still
-    caught by the comparison rather than by trust.
+    The frozen state is captured before the revision is executed at all
+    and compared after. That comparison is not a second layer over the
+    static check and cannot be one. A revision's bytes run out of
+    process, in a bounded child, against a JSON view that carries none
+    of the six frozen fields, so nothing those bytes do can reach the
+    store compared here. What the comparison does hold is admission
+    itself: a write to the store from inside this function is a real
+    breach, and it is caught here rather than trusted.
+
+    The reason a revision is refused names the write that was caught,
+    so a refusal distinguishes `view.update({"grant": x})` from
+    `view["grant"] = x` instead of reporting both as ineligibility.
     """
     before = frozen_state(store)
-    if _attempts_frozen_write(source):
-        return _refused(INELIGIBLE_FROZEN_WRITE,
-                        "revision writes frozen authority state")
+    breach = _frozen_write_reason(source)
+    if breach:
+        return _refused(INELIGIBLE_FROZEN_WRITE, breach)
     verdict = classify_revision(source, views,
                                 incumbent=bound_improve_source(store))
     if verdict.get("eligibility") != ELIGIBLE:
@@ -1214,37 +1223,389 @@ def _attempts_frozen_write(source: str) -> bool:
     Read access is legitimate: a learner reads the remaining budget to
     decide what it can still afford. A write is not, so the check is on
     the assignment target rather than on the name alone.
+
+    A write position is read off the parse rather than off a list of
+    statement types. Python has five binding statements and an earlier
+    version of this check named two of them, so a candidate could write the
+    grant as `grant: dict = {}` or `(grant := x)` and pass a check that
+    reads as a guarantee. An annotated local is ordinary Python and the
+    walrus is how a name is bound inside a conditional expression, so
+    neither is an exotic way in.
+
+    Extending that list to four would have closed those two holes and left
+    `Subscript.slice`, `Delete`, the `for` and `with` targets and the
+    comprehension targets unexamined, since every one of them binds exactly
+    as `=` does. The parser already marks every name, attribute and
+    subscript it stores into or deletes with a `Store` or `Del` context, so
+    asking which of those contexts a node carries is the language's own
+    answer and cannot be incomplete the way a hand-kept enumeration is. The
+    enumeration is therefore gone rather than extended, and it also covers a
+    statement Python adds later without touching this file.
+
+    That rule covers every position that carries a target and it says
+    nothing about a position that reaches the same key without one.
+    `view.update({"grant": x})` writes the same key `view["grant"] = x`
+    writes, and the parser marks no store in it at all, because the write
+    happens inside the method rather than at a target. So the method forms
+    are read by what they are called with, which is what `_call_writes`
+    does. The two questions are kept apart on purpose: a call is examined
+    for a named method with a named key, and a target is examined for a
+    name, an attribute or a subscript key.
+    """
+    return bool(_frozen_write_reason(source))
+
+
+def _frozen_write_reason(source: str) -> str:
+    """The reason a revision is refused for writing frozen state, or ''.
+
+    Returns the write that was caught rather than a bare true, because
+    `admit_revision_under_freeze` reports a reason to a caller and a caller
+    cannot act on "ineligible". Every reason names the form, so
+    `view.update({"grant": x})`, `view["grant"] = x` and a key the check
+    could not read are three different sentences in the verdict rather than
+    one.
+
+    A key this check cannot resolve is refused rather than admitted, and
+    that is the honest default rather than a convenient one. Resolving
+    `k` in `view[k] = x` means tracking what every name in the program
+    binds to, which is a taint analysis over the whole program, and a
+    static check that guessed at it would report a verdict it had not
+    earned. The previous version of this function deferred that case to a
+    second layer, the runtime comparison of frozen state either side of
+    admission. That comparison cannot fire: a revision's bytes run out of
+    process against a JSON view carrying none of the six fields, against
+    disposable stores, never the store compared. The deferral was the
+    reason the gap survived every gate, so it is deleted rather than
+    documented. There is no runtime backstop and this function is the
+    whole of the freeze.
+
+    The two default-deny rules are the ones that close what the target rule
+    cannot reach, and both are stated in the reason rather than hidden:
+
+    - an unreadable key on the view. `view[k] = x` names a key the check
+      cannot name, so it is refused as unreadable. It is not claimed to be
+      frozen. A subscript the revision built for itself, `seen[key] = ...`,
+      is not covered by this rule, and neither is a method on one. That is
+      the same line the module draws between `eval(...)` and
+      `view.eval(...)`, applied to the receiver rather than to the word:
+      the check reads the receiver and cannot read the key, so it refuses
+      where it knows the container is the view and stays quiet where it
+      knows the revision made it.
+    - a keyless write to the view. `clear()` and `popitem()` write every
+      key they hold and take no key at all, so the only question left is
+      whose mapping it is. Same receiver rule, same reason it holds.
+
+    That last rule is coarser than the key-taking forms get, and it is the
+    price of closing a write with no name in it. It refuses
+    `view.update(...)` with a computed argument and `view.pop(viewed_key)`
+    with a computed key, both of which would be admitted if the key were
+    spelled out. That is the limit stated in one place rather than spread
+    across the cases, because a reader who finds it there will believe the
+    rest. The rule also does not reach a mapping the revision reached
+    through one hop, `view["frozen_source"]["grant"] = x`, because the
+    check reads names and not what they resolve to. The keys this misses
+    are keys the revision cannot name either: the view the child receives
+    carries `authority_remaining` and `improvement_budget` and none of the
+    six frozen fields, so a write through one hop lands on nothing frozen.
+    That is a property of the view and not of this function, and if the
+    view ever carries a frozen field the receiver rule has to follow it.
     """
     try:
         tree = ast.parse(source)
     except (SyntaxError, ValueError, RecursionError):
-        return False
+        return ""
     frozen = set(FROZEN_FIELDS)
+    view_names = _names_bound_to_view(tree)
     for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if _targets_frozen(target, frozen):
-                    return True
-        if isinstance(node, ast.AugAssign) and _targets_frozen(
-                node.target, frozen):
-            return True
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) \
-                and node.func.id in ("setattr", "delattr", "exec", "eval",
-                                     "open"):
-            return True
-    return False
+        if isinstance(node, ast.Call):
+            # A call before its own receiver, so `view.update(grant=x)` is
+            # answered by the call that writes rather than by the attribute
+            # that merely names the method.
+            reason = _call_write_reason(node, frozen, view_names)
+            if reason:
+                return reason
+            continue
+        if isinstance(node, (ast.Name, ast.Attribute, ast.Subscript)) \
+                and isinstance(node.ctx, (ast.Store, ast.Del)):
+            reason = _target_frozen_reason(node, frozen, view_names)
+            if reason:
+                return reason
+        # The one binding the parser records as a bare string rather than
+        # a node with a context, so the rule above cannot see it.
+        if isinstance(node, ast.ExceptHandler) and node.name in frozen:
+            return "bound %r as an exception name" % (node.name,)
+        if isinstance(node, ast.AugAssign) and _is_view(
+                node.target, view_names):
+            return "%s |= merges keys into the view it was handed" \
+                % (ast.unparse(node.target),)
+    return ""
 
 
-def _targets_frozen(node, frozen: set) -> bool:
-    if isinstance(node, ast.Attribute):
-        return node.attr in frozen or _targets_frozen(node.value, frozen)
+# The names a revision holds the view under, which is `view` plus whatever it
+# bound that name to. `v = view` then `v.clear()` is the same write as
+# `view.clear()`, and a receiver rule that read only the parameter would miss
+# it, so the alias is resolved rather than left to a reader.
+#
+# One hop. Following `v = w = view` is the same thing and is followed, but a
+# name bound from a call's return, `v = dict(view)`, or passed as an
+# argument, `helper(view)`, is not followed, and neither is a name bound
+# inside a comprehension or a nested function the walk never enters. That is
+# stated rather than papered over: a write through an alias this does not
+# follow would be missed, and the price of closing it is tracking what every
+# binding in the program resolves to, which is the taint analysis the
+# computed-key case already declines. What the gap cannot reach is the grant,
+# because the view the child receives carries none of the six frozen fields
+# (see the limit stated on this function).
+_VIEW_PARAMETER = "view"
+
+
+def _names_bound_to_view(tree) -> frozenset:
+    """The view, plus every name bound directly to it in this program."""
+    names = {_VIEW_PARAMETER}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        value = node.value
+        if isinstance(value, ast.Starred):
+            value = value.value
+        if not _is_view(value, names):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                names.add(target.id)
+    return frozenset(names)
+
+
+# A receiver is the view, or an attribute or subscript of it. A name bound
+# to a mapping the revision built is not, and neither is a call: the module
+# draws this line already, between `eval(...)` and `view.eval(...)`, and
+# this is the same line applied to who owns the object rather than to the
+# name of the method on it.
+def _is_view(node, names: frozenset) -> bool:
     if isinstance(node, ast.Name):
-        return node.id in frozen
+        return node.id in names
+    if isinstance(node, ast.Attribute):
+        return _is_view(node.value, names)
     if isinstance(node, ast.Subscript):
-        return _targets_frozen(node.value, frozen)
-    if isinstance(node, (ast.Tuple, ast.List)):
-        return any(_targets_frozen(item, frozen) for item in node.elts)
+        return _is_view(node.value, names)
     return False
+
+
+def _frozen_write_reason_unreadable_key(node) -> str:
+    return "writes view[%s], a key this check cannot resolve to a name" \
+        % (ast.unparse(node.slice),)
+
+
+def _frozen_write_reason_unreadable_arg(node) -> str:
+    return "%s writes view with keys this check cannot resolve to names" \
+        % (ast.unparse(node.func),)
+
+
+def _frozen_write_reason_keyless(node) -> str:
+    return "%s writes every key of the view it was handed" \
+        % (ast.unparse(node.func),)
+
+
+# The mapping methods that take a key and write it, and the two that take
+# no key and write all of them. `update` is here rather than among the
+# builtins because it is a method on a mapping, and `view.update(...)` is a
+# call on a value rather than a builtin; it is refused on its argument in
+# the same way `eval(...)` is refused on its name.
+_KEY_WRITING_METHODS = frozenset((
+    "update", "setdefault", "pop", "popitem", "clear", "__delitem__"))
+
+
+# `update` names the keys it writes in the keys of the mapping it is given,
+# not in the argument itself: `update({"grant": x})` and `pop("grant")` are
+# the same write with two different shapes of argument. Reading both through
+# one rule would either miss `update`'s keys or refuse every mapping passed
+# to `pop`, so the key-taking methods are split by what their argument is.
+_MAPPING_ARG_METHODS = frozenset(("update",))
+
+
+def _call_write_reason(node, frozen: set, view_names: frozenset) -> str:
+    """The reason a call writes frozen state, or ''.
+
+    A bare name and a method are kept apart. `setattr(...)` is the builtin
+    and refuses, while `obj.setattr(...)` is an attribute on a type this
+    program never sees, and refusing it would be the guard refusing a word
+    rather than the act it names.
+
+    `update` takes a mapping and the rest take a key, so `update` is read
+    through the keys of its argument rather than through the argument
+    itself. `view.update({"grant": x})` and `view.pop("grant")` are the same
+    write with two different shapes of argument, and reading both through one
+    rule would either miss `update`'s keys or refuse every mapping handed to
+    `pop`.
+    """
+    func = node.func
+    if isinstance(func, ast.Name):
+        return ("calls %s, which writes a frozen field" % (func.id,)
+                if func.id in _BUILTIN_WRITES else "")
+    if not isinstance(func, ast.Attribute):
+        return ""
+    name = func.attr
+    if name in _PROTOCOL_WRITES:
+        return "%s writes a frozen field" % (ast.unparse(func),)
+    if name not in _KEY_WRITING_METHODS:
+        return ""
+    if not _is_view(func.value, view_names):
+        return ""
+    if name in ("clear", "popitem"):
+        return _frozen_write_reason_keyless(node)
+    if name in _MAPPING_ARG_METHODS:
+        # Before the positional test below, because `update(grant=x)` names
+        # its key in a keyword and has no positional argument to read.
+        return _update_write_reason(node, frozen)
+    if not node.args:
+        return _frozen_write_reason_unreadable_arg(node)
+    argument = node.args[0]
+    if isinstance(argument, ast.Starred):
+        return _frozen_write_reason_unreadable_arg(node)
+    if _names_frozen(argument, frozen):
+        return "%s writes the frozen field %s" % (
+            ast.unparse(func), ast.unparse(argument))
+    if _readable_key(argument):
+        return ""
+    return _frozen_write_reason_unreadable_arg(node)
+
+
+def _update_write_reason(node, frozen: set) -> str:
+    """The reason an `update` writes frozen state, or ''.
+
+    `update` takes a mapping, so the frozen field is named in the keys of
+    that mapping rather than in the argument itself. Both spellings of a key
+    are read: `update({"grant": x})` and `update(grant=x)` are one write
+    written two ways, and reading only the literal form would leave the
+    keyword form as a door beside it.
+
+    `**other` merges a mapping built elsewhere and names no key here, and
+    neither does a mapping bound to a name. Both are refused as unreadable
+    rather than followed, which is the same default-deny the computed-key
+    case takes and is stated in the limit on `_frozen_write_reason`.
+    """
+    for text, key in _keys_named_by_update(node):
+        if key in frozen:
+            return "%s writes the frozen field %r" % (
+                ast.unparse(node.func), key)
+        if key is None:
+            return _frozen_write_reason_unreadable_arg(node)
+    return ""
+
+
+def _keys_named_by_update(node):
+    """Every key an `update` names, as (source text, key or None).
+
+    Both spellings of a key are collected, because `update` takes both at
+    once: `update({"harmless": 1}, grant=1)` names one key the check can
+    read and one it cannot read only if it is written as a name, and reading
+    the positional argument alone would miss the keyword beside it.
+
+    None is the unreadable case and is refused by the caller rather than
+    resolved, so this function decides only what can be read. A keyword
+    argument names its own key, because `update(grant=x)` and
+    `update({"grant": x})` are one write written two ways.
+    """
+    found: list = []
+    if node.args and not isinstance(node.args[0], ast.Starred):
+        argument = node.args[0]
+        if isinstance(argument, ast.Dict):
+            for key in argument.keys:
+                if key is not None and _readable_key(key):
+                    found.append((ast.unparse(key), key.value))
+                else:
+                    found.append((ast.unparse(argument), None))
+        elif _readable_key(argument):
+            found.append((ast.unparse(argument), argument.value))
+        else:
+            found.append((ast.unparse(argument), None))
+    for keyword in node.keywords:
+        found.append((keyword.arg or "**%s" % ast.unparse(keyword.value),
+                      keyword.arg))
+    return found or [(ast.unparse(node), None)]
+
+
+# A key the check reads, which is a literal string or a tuple or list of
+# them. `update({"experience": []})` names a key it can read and it is not
+# frozen, so the call is admitted; `update(computed)` names nothing it can
+# read, so the call is refused as unreadable. The distinction is the whole
+# of what the key-taking forms claim, and collapsing the two would make the
+# rule a blanket refusal of every mapping method on the view.
+def _readable_key(node) -> bool:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return True
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return all(_readable_key(item) for item in node.elts)
+    return False
+
+
+def _names_frozen(node, frozen: set) -> bool:
+    """True when a key the check can read names a frozen field.
+
+    A `dict.update` key and a `pop` key are the same question as a subscript
+    key and are answered by the same rule, including the unanswered case: a
+    key the check cannot read returns false here and is refused as
+    unreadable by the caller, rather than being resolved or admitted.
+    """
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value in frozen
+    if isinstance(node, (ast.Tuple, ast.List)):
+        return any(_names_frozen(item, frozen) for item in node.elts)
+    return False
+
+
+# Calls that write to a container or an attribute with no syntactic target
+# to inspect. Named rather than derived because a method name belongs to a
+# type this program never sees, so the only place the name can come from
+# is here.
+_BUILTIN_WRITES = frozenset((
+    "setattr", "delattr", "exec", "eval", "open"))
+
+# The same acts spelled as a method, which is what the protocol gives them.
+# `view["grant"] = x` and `view.__setitem__("grant", x)` write the same
+# key, so covering one and not the other would leave the subscript rule
+# with a second door beside it.
+_PROTOCOL_WRITES = frozenset((
+    "__setattr__", "__delattr__", "__setitem__", "__delitem__"))
+
+
+def _target_frozen_reason(node, frozen: set, view_names: frozenset) -> str:
+    """The reason a store target reaches frozen state, or ''.
+
+    The three spellings are the three the parser marks with a context, and
+    a check that catches one and not the other is checking a spelling
+    rather than the write. The target's own container is followed too:
+    `view.grant` is the attribute and `view["grant"]` is the key, and a
+    subscript's value is a target when the subscript is.
+    """
+    if isinstance(node, ast.Attribute):
+        if node.attr in frozen:
+            return "writes view.%s, a frozen field" % (node.attr,)
+        return _target_frozen_reason(node.value, frozen, view_names)
+    if isinstance(node, ast.Name):
+        return ("binds %r, a frozen field" % (node.id,)
+                if node.id in frozen else "")
+    if isinstance(node, ast.Subscript):
+        if _names_frozen(node.slice, frozen):
+            return "writes view[%s], a frozen field" % (ast.unparse(
+                node.slice),)
+        nested = _target_frozen_reason(node.value, frozen, view_names)
+        if nested:
+            return nested
+        # A key the check cannot read, on the view. `view[k] = x` reaches
+        # the view the revision was handed and the key is the one thing
+        # here that cannot be resolved, so it is refused rather than
+        # resolved. `seen[key] = x` is not, because the revision made it.
+        if _is_view(node.value, view_names) \
+                and not _readable_key(node.slice):
+            return _frozen_write_reason_unreadable_key(node)
+        return ""
+    if isinstance(node, (ast.Tuple, ast.List)):
+        for item in node.elts:
+            reason = _target_frozen_reason(item, frozen, view_names)
+            if reason:
+                return reason
+    return ""
 
 
 # --- qualification versus outcome ----------------------------------------

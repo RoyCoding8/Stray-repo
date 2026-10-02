@@ -443,13 +443,41 @@ def test_restart_refuses_changed_finalization_parse_outcome(tmp_path):
 
 
 def test_restart_revalidates_historical_accepted_revisions(tmp_path):
+    """Two adopted generations, then a tampered response digest on the first.
+
+    The subject is the restart revalidating a lineage it did not witness, so
+    the two generations have to be real ones the store adopted, not a doctored
+    document. It used to manufacture them with `leaf_construct("high", ...)`
+    then `("low", ...)`, the two names the removed construction menu answered
+    to. `leaf_construct` now refuses those names by name rather than resolving
+    them against a table that no longer exists, and the pair shape it accepted
+    while its caller was mid-migration is gone with the migration.
+
+    The two generations are named the way the current constructor names one,
+    by the input the construction selects, and each is read back off the
+    bytes it actually built rather than off a table, so a constructor that
+    resolved a menu again would build the same generation twice and the
+    lineage would have nothing to revalidate.
+    """
     store = _store(tmp_path)
     base = channel.make_control("low")
     store.bind_active(base)
-    first = channel.leaf_construct("high", base, 1)
+    incumbent_x = int(channel.INCUMBENT_EVIDENCE[0])
+    other_x = (incumbent_x + 1) % 16
+    first = channel.leaf_construct(other_x, base, 1)
     store.adopt_revision(first)
-    second = channel.leaf_construct("low", first, 2)
+    second = channel.leaf_construct(incumbent_x, first, 2)
     store.adopt_revision(second)
+
+    assert first["imp_source"] != second["imp_source"], (
+        "both generations built the same improvement bytes, so the lineage"
+        " restart revalidates has nothing to revalidate: %r"
+        % (first["control_id"],))
+    assert second["parent_digest"] == first["package_digest"], (
+        "the second generation does not descend from the first, so this is"
+        " two unrelated adoptions rather than a lineage: %r"
+        % (second["parent_digest"],))
+
     store._doc["accepted_revisions"][0]["response_digest"] = "f" * 64
     store.save()
 

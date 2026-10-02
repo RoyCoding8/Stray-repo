@@ -119,9 +119,13 @@ The predicate is vacuous anyway, which is the finding that matters. On
 `"not_preserved" in verdicts` is **True under both exposures** — scored True,
 alternate True, moved **False**. Counting losses does move: **7 scored against
 1 alternate** on `panel-w0-dev-gr-00`, and **5 against 3** on
-`panel-w0-transfer-gr-01`. So `PROMPTED_SHAPE_READER` would read nothing on the
-only powered panel, and `panel_variation.COUNT_READS_THE_VERDICTS` is the
-predicate that survives. **Not fixed.** `panel_variation` is another lane's
+`panel-w0-transfer-gr-01`. So `PROMPTED_SHAPE_READER` would read nothing on
+`panel-w0-dev-gr-00` or `panel-w0-transfer-gr-01`, and
+`panel_variation.COUNT_READS_THE_VERDICTS` is the predicate that survives.
+Those two panels are in `graph:dev+transfer`, the smallest of the **three**
+powered panels; the vacuity measured here is a property of those two rows, not
+of powered panels in general, and this lane measured nothing about
+`graph:within+transfer` or `graph:dev+within+transfer`. **Not fixed.** `panel_variation` is another lane's
 record and repairing it inside a qualification gate would delete it. Recorded
 in `test_the_membership_reader_is_vacuous_on_the_powered_graph_panel`.
 

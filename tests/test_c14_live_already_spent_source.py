@@ -52,6 +52,8 @@ from pathlib import Path
 
 import pytest
 
+import worktree_checkouts as checkouts
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -71,47 +73,63 @@ def test_the_dead_name_is_gone_from_the_driver() -> None:
 
 
 def test_the_dead_name_is_no_longer_a_reader_anywhere() -> None:
-    """No live code path may read it again.
+    """No live code path may read it again, in this checkout or any lane's.
 
     Prose that names the variable as the thing that was removed is kept: the
-    preflight's docstring at `s09_study_preflight.py:1228` and this lane's
-    `_already_spent` docstring both have to name it to say what they replaced.
-    So the check is for a read, not a mention: an `environ.get` or
-    `os.environ` lookup of the name, which is the only way a value could reach
-    a ceiling.
+    preflight's docstring at `s09_study_preflight.py:1228`, the driver's at
+    `invl02_live.py:248`, and this lane's own `_already_spent` docstring all
+    have to name it to say what they replaced. So the check is for a read, not
+    a mention: an `environ.get` or `os.environ` lookup of the name, which is
+    the only way a value could reach a ceiling. A census over the tracked
+    sources confirms exactly one file carries the name outside a docstring, and
+    no subscript read of it exists, so this pattern is the whole reader set.
 
-    `scripts/s09_pilot.py:1101` is such a reader, defaults it to `"2"` rather
-    than zero, and is out of C14's scope, which named the e0, frontier and
-    probe paths. It is a live-path guard seeded a dispatch count from a name
-    nothing writes, so the same hole is open there with a worse default. It
-    is recorded in the test rather than fixed, because fixing it is the same
+    `scripts/s09_pilot.py:1101` is that reader. It defaults the name to `"2"`
+    rather than zero and is out of C14's scope, which named the e0, frontier
+    and probe paths. It is a live-path guard seeded a dispatch count from a
+    name nothing writes, so the same hole is open there with a worse default.
+    It is recorded in the test rather than fixed, because fixing it is the same
     decision C14 is making and belongs in the same wave.
 
-    The scan skips `.worktrees/`. A lane worktree is a copy of this tree at
-    an earlier commit, so without the exclusion every live lane adds its own
-    stale reader to the list and the assertion below names copies rather
-    than the source of truth.
+    The scan resolves its own identity instead of trusting where it was
+    invoked. A lane worktree is a copy of this tree, so a `rglob` from
+    wherever the file happens to live sees one tree or eleven, and the answer
+    would depend on the invocation directory. What makes a file a copy rather
+    than a second reader is that its checkout already tracks it, so the reader
+    set is this checkout's tracked sources plus each sibling checkout's
+    untracked ones. A lane's own edit to a tracked file is reported once under
+    its own lane path, and the same edit committed to the repository would be
+    reported once under the repository path.
     """
     import re
 
     reader = re.compile(
         r"""environ\s*\.?\s*(?:\.get\s*\(\s*)?\(?\s*['"]%s['"]"""
         % DEAD)
+    canonical = checkouts.canonical_root(ROOT)
     hits: list[str] = []
-    for path in sorted(ROOT.rglob("*.py")):
-        if ".venv" in path.parts or ".git" in path.parts:
-            continue
-        if ".worktrees" in path.parts:
-            continue
-        if path.name in (Path(__file__).name,
-                         "test_s09_c11_reported_spend.py"):
-            continue
-        for number, line in enumerate(
-                path.read_text(encoding="utf-8", errors="ignore").splitlines(),
-                1):
-            if reader.search(line):
-                hits.append("%s:%d" % (path.relative_to(ROOT), number))
 
+    def scan(paths: list[tuple[Path, str]]) -> None:
+        for path, key in paths:
+            for number, line in enumerate(
+                    path.read_text(encoding="utf-8", errors="ignore")
+                    .splitlines(), 1):
+                if reader.search(line):
+                    hits.append("%s:%d" % (key, number))
+
+    # This checkout's tracked sources, keyed the way the assertion reads.
+    scan([(ROOT / name, name)
+          for name in checkouts.tracked_paths(canonical, ("*.py",))])
+
+    # A sibling's untracked sources, keyed by their lane-relative path so an
+    # untracked reader is never confused with a copy of a tracked file.
+    for lane in checkouts.sibling_checkouts(canonical, ROOT):
+        prefix = checkouts.label_for(canonical, lane)
+        scan([(lane / name, "%s/%s" % (prefix, name))
+              for name in checkouts.untracked_paths(
+                  canonical, lane, ("*.py",))])
+
+    hits.sort()
     assert hits == ["scripts/s09_pilot.py:1101"], (
         "the live readers of the dead name moved: %r" % hits)
 

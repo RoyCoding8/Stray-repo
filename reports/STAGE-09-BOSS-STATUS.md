@@ -1,3 +1,11 @@
+> Historical campaign report, cut at `4dd5f07` on a branch whose commits do not
+> resolve in the current repository. Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md). Read it
+> for the withdrawal this campaign recorded; its "unproven, not disproven"
+> framing for M3 was superseded by the 2026-10-01 batch, which measured the
+> denominator and returned acquisition NEGATIVE.
+
 # Stage 9 generality campaign: status for the boss agent
 
 Branch `codex/implementation-investigation-learning-02`. Tip `4dd5f07`. 40 commits this

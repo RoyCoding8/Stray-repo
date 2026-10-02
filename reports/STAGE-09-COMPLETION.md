@@ -1,3 +1,10 @@
+> Historical batch report. Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md). This
+> file's "the mechanism is demonstrated" was overturned as too generous by an
+> independent review in a later batch; read it for its source revisions and
+> measurements, not as today's completion state.
+
 # Stage 9 completion report
 
 Branch `codex/stage-09-opus-completion`, cut from checkpoint `8e05c14`.

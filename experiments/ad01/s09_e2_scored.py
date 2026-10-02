@@ -232,7 +232,22 @@ class Score:
 
     def measure(self, task: Mapping[str, Any], observations: Sequence, *,
                 eligible_methods: Sequence | None = None,
-                remaining: Mapping[str, Any] | None = None) -> "Reading":
+                remaining: Mapping[str, Any] | None = None,
+                authority: Mapping[str, Any]) -> "Reading":
+        """Score this policy's bytes on this task, under `authority`.
+
+        `authority` is a required keyword: `{dsn, allocation_id}` for a store
+        the caller holds. Measuring a policy means executing it, and executing
+        it is the act the executor requires authority for. This used to hold
+        none, so every measurement this method returned was an unscored
+        reading recorded against the policy.
+
+        The third key, `operation_id`, is derived per execution in `_execute`
+        rather than named here. The executor is idempotent on it, so a caller
+        naming it would have to get a distinct one per policy per view for the
+        measurement to be a measurement rather than a replay of an earlier
+        one. Deriving it removes that as something to get right.
+        """
         task = dict(task or {})
         task_id = str(task.get("task_id") or "")
         family = str(task.get("family") or "")
@@ -241,6 +256,11 @@ class Score:
                 "the target task needs a task_id and a family this scheme "
                 "has an authored control for; got %r and %r"
                 % (task_id, family))
+        if not (isinstance(authority, Mapping) and authority.get("dsn")
+                and authority.get("allocation_id")):
+            raise ScoreRefused(
+                "measuring a policy needs a store and an allocation the caller "
+                "holds; got %r" % sorted(authority))
         try:
             record = self.record()
             digest = record["artifact"]["source_digest"]
@@ -263,7 +283,7 @@ class Score:
         views = build_views(task, observations,
                             eligible_methods=eligible_methods,
                             remaining=remaining)
-        run = _run(self, record, views, digest)
+        run = _run(self, record, views, digest, authority)
         if run is None:
             return _unscored(self, task, UNSCORED_EXECUTE,
                              "the returned bytes admitted no action that "
@@ -319,6 +339,7 @@ def score_response(text: str, task: Mapping[str, Any], observations: Sequence,
                    origin: str, arm: str = "response",
                    eligible_methods: Sequence | None = None,
                    remaining: Mapping[str, Any] | None = None,
+                   authority: Mapping[str, Any],
                    **kwargs) -> Reading:
     """Score one returned response against the named methods.
 
@@ -341,7 +362,8 @@ def score_response(text: str, task: Mapping[str, Any], observations: Sequence,
                  max_queries, **kwargs).measure(
                      task, observations,
                      eligible_methods=eligible_methods,
-                     remaining=remaining)
+                     remaining=remaining,
+                     authority=authority)
 
 
 # ---------------------------------------------------------------------------
@@ -440,7 +462,7 @@ def _gate(source: str) -> str | None:
 
 
 def _run(score: Score, record: dict, views: Mapping[str, Any],
-         digest: str) -> dict | None:
+         digest: str, authority: Mapping[str, Any]) -> dict | None:
     """Step the bytes under each view, and admit what each view admitted.
 
     The probe run is run first and the run that is scored is the scheme's
@@ -450,10 +472,17 @@ def _run(score: Score, record: dict, views: Mapping[str, Any],
     `assessment_profile.dispatch`, which refuses an action whose target is
     not the task in scope or whose method cannot run, and runs the method in
     a further child.
+
+    Each view gets its own operation identity, derived from the view's own
+    digest. The executor reads back the first receipt rather than executing
+    again for a repeated id, so a shared identity would return the probe's
+    action under every view and the comparison this function exists to make
+    would compare a run with itself.
     """
     runs = {}
     for name in ("probe", "scored", "alternate"):
-        runs[name] = _execute(score, record, views[name], digest)
+        runs[name] = _execute(score, record, views[name], digest,
+                              authority, name)
     if runs["probe"] is None or runs["scored"] is None \
             or runs["alternate"] is None:
         return None
@@ -461,13 +490,51 @@ def _run(score: Score, record: dict, views: Mapping[str, Any],
 
 
 def _execute(score: Score, record: dict, view: Mapping[str, Any],
-             digest: str) -> dict | None:
+             digest: str, authority: Mapping[str, Any],
+             label: str = "step") -> dict | None:
+    """One step under one view, or `None` with the reason it did not run.
+
+    The step is a real execution of policy source, so it runs under a store,
+    an allocation and an operation identity like every other one. It does not
+    get them by default: `authority` is a required argument, because a caller
+    that has none has no honest execution to report, and this used to call the
+    executor with none, catch the refusal it returned, and record every
+    reading as `unscored: execute`. Eighteen tests in `test_s09_e2_scored.py`
+    were reading that as a property of the policies under test.
+
+    The operation identity is derived from the policy digest, the view digest
+    and `label`. The executor is idempotent on that key, so a repeated step
+    under a repeated identity would read back the first receipt rather than run
+    again. Deriving it here means a caller supplies a store and gets
+    executions that are distinct wherever the work is, and identical wherever
+    the work is the same.
+
+    A refusal that is about the bytes (a refused source, a malformed step) is
+    still a `None` here, because an unscored reading is the honest stage for a
+    policy that will not run. A refusal that is about the authority is not
+    swallowed: it propagates, because a caller that reached this without
+    authority has a bug and a study that read `None` would record it as the
+    policy's failure.
+    """
+    if not (isinstance(authority, Mapping) and authority.get("dsn")
+            and authority.get("allocation_id")):
+        raise ScoreRefused(
+            "a step needs a store and an allocation the caller holds; got %r"
+            % sorted(authority))
+    operation_id = "e2-%s-%s-%s" % (
+        digest[:12], _candidate_digest(view)[:12], label)
     try:
         stepped = method_exec.run_step_out_of_process(
             score.source, dict(view), {}, entry=policy_step.STEP_ENTRY,
             timeout_ms=STEP_TIMEOUT_MS, cpu_seconds=STEP_CPU_SECONDS,
-            max_output_bytes=STEP_MAX_OUTPUT_BYTES)
-    except method_exec.MethodExecutionError:
+            max_output_bytes=STEP_MAX_OUTPUT_BYTES,
+            dsn=str(authority["dsn"]),
+            allocation_id=str(authority["allocation_id"]),
+            operation_id=operation_id)
+    except method_exec.MethodExecutionError as exc:
+        if str(exc).startswith("refused: execution needs explicit "
+                               "authority and identity"):
+            raise
         return None
     action = dict(stepped.get("action") or {})
     if not action or action.get("kind") not in STEP_METHOD_KINDS:
@@ -475,7 +542,7 @@ def _execute(score: Score, record: dict, view: Mapping[str, Any],
     if action.get("target") != \
             str((view.get("task_content") or {}).get("task_id") or ""):
         return None
-    effect = _dispatch(record, action, digest)
+    effect = _dispatch(record, action, digest, authority, label)
     if not effect.get("accepted") or effect.get("candidate") is None:
         return None
     task = worlds.load_task(worlds.FROZEN_DIR, str(action["target"]))
@@ -488,7 +555,22 @@ def _execute(score: Score, record: dict, view: Mapping[str, Any],
             "executed_source": _executed_source(action)}
 
 
-def _dispatch(record: dict, action: dict, digest: str) -> dict:
+def _dispatch(record: dict, action: dict, digest: str,
+              authority: Mapping[str, Any],
+              label: str = "step") -> dict:
+    """Admit one action through the shipped dispatcher.
+
+    `dsn` and `allocation_id` go to the dispatcher because admitting a
+    `construct_method` or `use_method` runs the named method in a further
+    child, and that execution is refused without them the same way the step
+    was. It held none here, so every admission failed with `owner: none` and
+    the reading came back unscored even once the step itself had authority.
+
+    `label` goes into the session so each view is its own dispatcher session.
+    The broker's operation identity is derived from the session, the step index
+    and the action kind, so one shared session ran all three views under one
+    identity, and the second and third came back refused as replays.
+    """
     task_id = str(action["target"])
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
     requested = dict(action.get("requested_resources") or {})
@@ -499,12 +581,13 @@ def _dispatch(record: dict, action: dict, digest: str) -> dict:
     ctx = assessment_profile.make_ctx(
         candidate_digest=digest,
         scope={"family": str(task.get("family") or ""), "task_ids": [task_id]},
-        session="s09-e2-scored",
+        session="s09-e2-scored-%s" % label,
         remaining={"queries": max(int(requested.get("queries", 0)), ceiling),
                    "model_calls": int(requested.get("model_calls", 0))})
     return assessment_profile.dispatch(
         profile_name=assessment_profile.DEVELOPMENT, record=record, task=task,
-        action=action, ctx=ctx)
+        action=action, ctx=ctx, dsn=str(authority["dsn"]),
+        allocation_id=str(authority["allocation_id"]))
 
 
 def _control(task: Mapping[str, Any], capability_id: str,

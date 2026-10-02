@@ -60,8 +60,27 @@ from experiments.ad01 import method_exec
 from experiments.ad01 import policy_step
 from experiments.ad01 import s09_e2_scored as scored
 from experiments.ad01 import worlds
+from execution_authority import execution_store
 
 SOFTWARE = "ad01-w1-dev-sw-00"
+
+
+@pytest.fixture(scope="module")
+def authority():
+    """The store every measurement in this file executes against.
+
+    One module-scoped store rather than one per test: creating and migrating a
+    database is most of the cost and none of the subject, and every
+    measurement here needs the same three keys to exist.
+
+    The executor is idempotent on `operation_id`, and every call site below
+    derives a distinct one from the bytes it is about, so a repeated
+    measurement of the same policy on the same task reads back its first
+    receipt instead of spending a second child, while a different policy or a
+    different view still executes.
+    """
+    with execution_store("e2scored") as store:
+        yield store
 # The op this task's witness observation names. `materialize_view` carries
 # the op list, so an observation can point at one of them.
 WITNESS_OP = "o0"
@@ -328,7 +347,7 @@ def _observations(verdicts, task_id: str = SOFTWARE) -> list:
 # ---------------------------------------------------------------------------
 
 
-def test_two_policies_differing_only_in_whether_they_read_score_differently():
+def test_two_policies_differing_only_in_whether_they_read_score_differently(authority):
     """The test the dead `diagnostic` field could not pass.
 
     Same target task, same observations, same frozen world, same query
@@ -337,9 +356,9 @@ def test_two_policies_differing_only_in_whether_they_read_score_differently():
     verdict says the op is not preserved.
     """
     read = _score(RE_ROUTES_ON_THE_VERDICT).measure(
-        _load(SOFTWARE), _observations(["preserved"]))
+        _load(SOFTWARE), _observations(["preserved"]), authority=authority)
     unread = _score(IGNORES_THE_ROUTING).measure(
-        _load(SOFTWARE), _observations(["preserved"]))
+        _load(SOFTWARE), _observations(["preserved"]), authority=authority)
 
     assert read.scored and unread.scored, (read.detail, unread.detail)
     assert read.origin == unread.origin
@@ -357,7 +376,7 @@ def test_two_policies_differing_only_in_whether_they_read_score_differently():
     assert scored.LEG_EVIDENCE == "candidate_varies_with_evidence"
 
 
-def test_a_read_that_never_reaches_the_world_scores_like_a_blind_policy():
+def test_a_read_that_never_reaches_the_world_scores_like_a_blind_policy(authority):
     """The plan-only reader, and the reason the leg does not read actions.
 
     This policy reads the verdicts, re-plans from them, and moves two
@@ -369,9 +388,9 @@ def test_a_read_that_never_reaches_the_world_scores_like_a_blind_policy():
     first above a genuine re-route.
     """
     plan_only = _score(READS_THE_VERDICT).measure(
-        _load(SOFTWARE), _observations(["preserved"]))
+        _load(SOFTWARE), _observations(["preserved"]), authority=authority)
     echoer = _score(ECHOES_THE_VIEW).measure(
-        _load(SOFTWARE), _observations(["preserved"]))
+        _load(SOFTWARE), _observations(["preserved"]), authority=authority)
 
     assert plan_only.scored and echoer.scored
     # It does read, and the read is visible in its action.
@@ -386,7 +405,7 @@ def test_a_read_that_never_reaches_the_world_scores_like_a_blind_policy():
     assert plan_only.score == echoer.score
 
 
-def test_a_policy_that_reads_nothing_scores_the_same_under_two_observations():
+def test_a_policy_that_reads_nothing_scores_the_same_under_two_observations(authority):
     """The control for the test above, so it cannot pass vacuously.
 
     A fixed plan has one reachable score. A scheme that rewarded a policy
@@ -394,8 +413,10 @@ def test_a_policy_that_reads_nothing_scores_the_same_under_two_observations():
     """
     blind = _score(IGNORES_THE_VERDICT)
 
-    first = blind.measure(_load(SOFTWARE), _observations(["preserved"]))
-    second = blind.measure(_load(SOFTWARE), _observations(["not_preserved"]))
+    first = blind.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
+    second = blind.measure(_load(SOFTWARE), _observations(["not_preserved"]),
+        authority=authority)
 
     assert first.scored and second.scored
     assert first.score == second.score
@@ -404,7 +425,7 @@ def test_a_policy_that_reads_nothing_scores_the_same_under_two_observations():
     assert first.action["inputs"] == second.action["inputs"]
 
 
-def test_the_evidence_leg_measures_dependence_on_the_verdict_not_on_its_length():
+def test_the_evidence_leg_measures_dependence_on_the_verdict_not_on_its_length(authority):
     """Two observations of the same length, different verdicts.
 
     A scheme that scored an action for how much text it carried would pass
@@ -414,11 +435,15 @@ def test_the_evidence_leg_measures_dependence_on_the_verdict_not_on_its_length()
     read = _score(RE_ROUTES_ON_THE_VERDICT)
     blind = _score(IGNORES_THE_ROUTING)
 
-    kept = read.measure(_load(SOFTWARE), _observations(["preserved"]))
-    dropped = read.measure(_load(SOFTWARE), _observations(["not_preserved"]))
-    unchanged = blind.measure(_load(SOFTWARE), _observations(["preserved"]))
-    unchanged_too = blind.measure(_load(SOFTWARE),
-                                  _observations(["not_preserved"]))
+    kept = read.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
+    dropped = read.measure(_load(SOFTWARE), _observations(["not_preserved"]),
+        authority=authority)
+    unchanged = blind.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
+    unchanged_too = blind.measure(
+        _load(SOFTWARE), _observations(["not_preserved"]),
+        authority=authority)
 
     # The leg is the dependence itself, so it does not vary with which set
     # of verdicts the reading was taken under: both readings of the reader
@@ -455,7 +480,7 @@ def test_the_evidence_leg_measures_dependence_on_the_verdict_not_on_its_length()
     assert kept.candidate_measure != dropped.candidate_measure
 
 
-def test_the_evidence_leg_reads_the_candidate_and_not_the_action():
+def test_the_evidence_leg_reads_the_candidate_and_not_the_action(authority):
     """What the leg is set on, and what is still set aside.
 
     The candidate is the site. `method_source` and `entry` remain in
@@ -468,7 +493,7 @@ def test_the_evidence_leg_reads_the_candidate_and_not_the_action():
     assert "method_source" in scored.VERBATIM
 
     result = _score(RE_ROUTES_ON_THE_VERDICT).measure(
-        _load(SOFTWARE), _observations(["preserved"]))
+        _load(SOFTWARE), _observations(["preserved"]), authority=authority)
 
     assert "method_source" not in result.control_inputs
     assert "max_queries" not in result.control_inputs
@@ -485,7 +510,7 @@ def test_the_evidence_leg_reads_the_candidate_and_not_the_action():
 # ---------------------------------------------------------------------------
 
 
-def test_a_policy_that_echoes_its_context_cannot_earn_the_agreement_leg_by_it():
+def test_a_policy_that_echoes_its_context_cannot_earn_the_agreement_leg_by_it(authority):
     """A context-echoing policy scores on execution, not on what it wrote.
 
     This policy writes the whole view into its action: the observation
@@ -498,9 +523,12 @@ def test_a_policy_that_echoes_its_context_cannot_earn_the_agreement_leg_by_it():
     echoer = _score(ECHOES_THE_VIEW)
     searcher = _score(IGNORES_THE_VERDICT)
 
-    echoed = echoer.measure(_load(SOFTWARE), _observations(["preserved"]))
+    echoed = echoer.measure(_load(SOFTWARE),
+                                _observations(["preserved"]),
+                                authority=authority)
     searched = searcher.measure(_load(SOFTWARE),
-                                _observations(["preserved"]))
+                                _observations(["preserved"]),
+                                authority=authority)
 
     assert echoed.scored and searched.scored
     assert [row["verdict"] for row in
@@ -523,7 +551,7 @@ def test_a_policy_that_echoes_its_context_cannot_earn_the_agreement_leg_by_it():
     assert echoed.score == searched.score
 
 
-def test_the_label_a_policy_carries_scores_nothing_on_its_own():
+def test_the_label_a_policy_carries_scores_nothing_on_its_own(authority):
     """The `diagnostic` field under a scored observable, tested directly.
 
     `LABEL_ONLY` and `ECHOES_THE_VIEW` are both label carriers and both
@@ -537,8 +565,10 @@ def test_the_label_a_policy_carries_scores_nothing_on_its_own():
     labelled = _score(LABEL_ONLY)
     echoing = _score(ECHOES_THE_VIEW)
 
-    left = labelled.measure(_load(SOFTWARE), _observations(["preserved"]))
-    right = echoing.measure(_load(SOFTWARE), _observations(["preserved"]))
+    left = labelled.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
+    right = echoing.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
 
     assert left.scored and right.scored
     assert left.action["inputs"]["diagnostic"] == "preserved"
@@ -560,7 +590,7 @@ def test_the_label_a_policy_carries_scores_nothing_on_its_own():
     assert right.evidence == left.evidence == 0.0
 
 
-def test_the_grade_the_label_predicts_does_not_move_the_score():
+def test_the_grade_the_label_predicts_does_not_move_the_score(authority):
     """The same method, two templates, two predicted grades, one result.
 
     `LABEL_ONLY` reads the task's template and calls the candidate
@@ -574,8 +604,10 @@ def test_the_grade_the_label_predicts_does_not_move_the_score():
     assert stale_clear["template"] == "stale-clear-core"
 
     label = _score(LABEL_ONLY)
-    left = label.measure(stale_read, _observations(["preserved"]))
-    right = label.measure(stale_clear, _observations(["preserved"]))
+    left = label.measure(stale_read, _observations(["preserved"]),
+        authority=authority)
+    right = label.measure(stale_clear, _observations(["preserved"]),
+        authority=authority)
 
     assert left.action["inputs"]["diagnostic"] == "preserved"
     assert right.action["inputs"]["diagnostic"] == "not_preserved"
@@ -590,7 +622,7 @@ def test_the_grade_the_label_predicts_does_not_move_the_score():
     assert left.score == left.evidence + left.quality
 
 
-def test_a_policy_that_names_a_method_rather_than_building_one_reaches_the_control():
+def test_a_policy_that_names_a_method_rather_than_building_one_reaches_the_control(authority):
     """The control the agreement leg compares against is reachable.
 
     `NAMES_A_METHOD` reads the view for a repertoire name and emits
@@ -603,8 +635,10 @@ def test_a_policy_that_names_a_method_rather_than_building_one_reaches_the_contr
     searcher = _score(IGNORES_THE_VERDICT)
 
     named = namer.measure(_load(SOFTWARE), _observations([]),
-                          eligible_methods=["seed-sw-greedy"])
-    searched = searcher.measure(_load(SOFTWARE), _observations([]))
+                          eligible_methods=["seed-sw-greedy"],
+        authority=authority)
+    searched = searcher.measure(_load(SOFTWARE), _observations([]),
+        authority=authority)
 
     assert named.scored and searched.scored, (named.detail, searched.detail)
     assert named.selected_identity == "seed-sw-greedy"
@@ -631,7 +665,7 @@ def test_a_policy_that_names_a_method_rather_than_building_one_reaches_the_contr
     assert named.initial_measure == searched.initial_measure == 14
 
 
-def test_the_agreement_leg_fails_when_the_candidate_is_not_preserved():
+def test_the_agreement_leg_fails_when_the_candidate_is_not_preserved(authority):
     """The leg is not a constant, and this is what a failure looks like.
 
     A policy that hands the dispatcher a source it cannot execute never
@@ -645,7 +679,8 @@ def test_the_agreement_leg_fails_when_the_candidate_is_not_preserved():
     garbled = _score(IGNORES_THE_VERDICT.replace(
         '"method_source": _PACKED,',
         '"method_source": %s,' % json.dumps(empty_method)))
-    result = garbled.measure(_load(SOFTWARE), _observations(["preserved"]))
+    result = garbled.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
 
     assert result.scored, result.detail
     assert result.verdict in {"invalid", "not_preserved", "unknown"}
@@ -662,7 +697,7 @@ def test_the_agreement_leg_fails_when_the_candidate_is_not_preserved():
 # ---------------------------------------------------------------------------
 
 
-def test_a_policy_that_never_governs_is_unscored_rather_than_zero():
+def test_a_policy_that_never_governs_is_unscored_rather_than_zero(authority):
     """A transport failure is an absent result, not a bad one.
 
     The distinction the old field could not carry: an arm that produced no
@@ -671,7 +706,8 @@ def test_a_policy_that_never_governs_is_unscored_rather_than_zero():
     """
     refused = _score(REFUSES_EVERYTHING)
 
-    result = refused.measure(_load(SOFTWARE), _observations(["preserved"]))
+    result = refused.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
 
     assert not result.scored
     assert result.score == 0
@@ -681,7 +717,7 @@ def test_a_policy_that_never_governs_is_unscored_rather_than_zero():
     assert set(result.leg_status().values()) == {"absent"}
 
 
-def test_the_four_ways_a_policy_never_governs_are_all_unscored():
+def test_the_four_ways_a_policy_never_governs_are_all_unscored(authority):
     """Four refusals, four different reasons inside the one stage.
 
     Returns nothing, raises, names a method this task does not have, and
@@ -693,7 +729,8 @@ def test_the_four_ways_a_policy_never_governs_are_all_unscored():
     for template in (RETURNS_NOTHING, RAISES, UNKNOWN_METHOD,
                      REFUSES_EVERYTHING):
         result = _score(template).measure(_load(SOFTWARE),
-                                          _observations(["preserved"]))
+                                          _observations(["preserved"]),
+            authority=authority)
 
         assert not result.scored, template
         assert result.score == 0
@@ -708,7 +745,7 @@ def test_the_four_ways_a_policy_never_governs_are_all_unscored():
                                  "executor")
 
 
-def test_a_policy_needing_an_import_is_refused_at_the_gate_not_scored():
+def test_a_policy_needing_an_import_is_refused_at_the_gate_not_scored(authority):
     """An unrunnable proposal is `unscored`, and the gate is named.
 
     `verify_step_source` is the campaign's own gate. A policy that needs an
@@ -718,7 +755,8 @@ def test_a_policy_needing_an_import_is_refused_at_the_gate_not_scored():
     needs_import = scored.Score({"policy_source": NEEDS_AN_IMPORT},
                                 "authored-control", "e2", 8)
 
-    result = needs_import.measure(_load(SOFTWARE), _observations([]))
+    result = needs_import.measure(_load(SOFTWARE), _observations([]),
+        authority=authority)
 
     assert not result.scored
     assert result.detail == "unscored: gate: refused: imports-forbidden"
@@ -727,7 +765,7 @@ def test_a_policy_needing_an_import_is_refused_at_the_gate_not_scored():
         method_exec.verify_step_source(NEEDS_AN_IMPORT, "STEP")
 
 
-def test_every_non_scored_case_names_the_stage_that_refused_it():
+def test_every_non_scored_case_names_the_stage_that_refused_it(authority):
     """Four refusals, two stages, each named, and the messages differ.
 
     A reader who cannot tell a source the gate refused from bytes that
@@ -743,7 +781,8 @@ def test_every_non_scored_case_names_the_stage_that_refused_it():
     for source in (NEEDS_AN_IMPORT, RAISES, _source(REFUSES_EVERYTHING)):
         result = scored.Score({"policy_source": source},
                               "authored-control", "e2", 8).measure(
-                                  _load(SOFTWARE), _observations([]))
+                                  _load(SOFTWARE), _observations([]),
+            authority=authority)
         assert not result.scored, source
         assert result.score == 0 and result.quality == 0.0
         assert result.evidence == 0.0
@@ -755,7 +794,7 @@ def test_every_non_scored_case_names_the_stage_that_refused_it():
     assert len(set(stages)) == 3
 
 
-def test_a_missing_proposal_source_is_refused_rather_than_scored_as_empty():
+def test_a_missing_proposal_source_is_refused_rather_than_scored_as_empty(authority):
     """An arm that returned no bytes has not returned a policy.
 
     `None` and `""` are the two ways a study's record can say nothing came
@@ -766,7 +805,7 @@ def test_a_missing_proposal_source_is_refused_rather_than_scored_as_empty():
     """
     for proposal in (None, {}, {"policy_source": ""}, {"policy_source": 7}):
         result = scored.Score(proposal, "authored-control", "e2", 8).measure(
-            _load(SOFTWARE), _observations([]))
+            _load(SOFTWARE), _observations([]), authority=authority)
 
         assert not result.scored, proposal
         assert result.detail.startswith("unscored: gate: "), result.detail
@@ -776,7 +815,7 @@ def test_a_missing_proposal_source_is_refused_rather_than_scored_as_empty():
             result.detail
 
 
-def test_a_family_with_no_authored_control_is_refused_rather_than_defaulted():
+def test_a_family_with_no_authored_control_is_refused_rather_than_defaulted(authority):
     """The control is named, not assumed.
 
     A scheme that fell back to a default control for an unrecognised
@@ -786,10 +825,12 @@ def test_a_family_with_no_authored_control_is_refused_rather_than_defaulted():
     with pytest.raises(scored.ScoreRefused, match="authored control"):
         _score(IGNORES_THE_VERDICT).measure({"task_id": "t",
                                              "family": "quantum"},
-                                            _observations([]))
+                                            _observations([]),
+            authority=authority)
     with pytest.raises(scored.ScoreRefused, match="task_id"):
         _score(IGNORES_THE_VERDICT).measure({"family": "software"},
-                                            _observations([]))
+                                            _observations([]),
+            authority=authority)
     with pytest.raises(scored.ScoreRefused, match="authored method"):
         scored.inline_method({"family": "quantum"}, "ddmin")
     with pytest.raises(scored.ScoreRefused, match="authored control"):
@@ -801,7 +842,7 @@ def test_a_family_with_no_authored_control_is_refused_rather_than_defaulted():
 # ---------------------------------------------------------------------------
 
 
-def test_the_grade_is_the_checkers_own_vocabulary_and_no_other():
+def test_the_grade_is_the_checkers_own_vocabulary_and_no_other(authority):
     """The score is not computed here.
 
     `checkers` emits preserved / not_preserved / invalid / unknown, and a
@@ -812,7 +853,8 @@ def test_the_grade_is_the_checkers_own_vocabulary_and_no_other():
     came back `preserved`, so a bit taken from it was a constant.
     """
     result = _score(IGNORES_THE_VERDICT).measure(_load(SOFTWARE),
-                                                 _observations(["preserved"]))
+                                                 _observations(["preserved"]),
+        authority=authority)
 
     assert result.reason == ("the checker graded the candidate preserved "
                              "and the authored control ok-preserved")
@@ -823,7 +865,7 @@ def test_the_grade_is_the_checkers_own_vocabulary_and_no_other():
     assert 0 <= result.score <= scored.MAX_SCORE
 
 
-def test_the_score_is_the_sum_of_two_legs_and_normalising_is_not_its_job():
+def test_the_score_is_the_sum_of_two_legs_and_normalising_is_not_its_job(authority):
     """A weight between the legs is a pre-registration, not a default.
 
     Weighting agreement against evidence would have this module choosing on
@@ -831,7 +873,7 @@ def test_the_score_is_the_sum_of_two_legs_and_normalising_is_not_its_job():
     the two legs ride out beside it in the serialized reading.
     """
     result = _score(RE_ROUTES_ON_THE_VERDICT).measure(
-        _load(SOFTWARE), _observations(["preserved"]))
+        _load(SOFTWARE), _observations(["preserved"]), authority=authority)
 
     assert result.score == result.evidence + result.quality
     assert result.evidence == 1.0
@@ -853,7 +895,7 @@ def test_the_score_is_the_sum_of_two_legs_and_normalising_is_not_its_job():
     assert payload["candidate_digest_scored"] != payload["candidate_digest_alternate"]
 
 
-def test_the_executed_bytes_are_the_scored_bytes():
+def test_the_executed_bytes_are_the_scored_bytes(authority):
     """The score is attributed to the source that ran, not to a claim.
 
     `executed_source` is the method the dispatcher ran, which for these
@@ -863,7 +905,8 @@ def test_the_executed_bytes_are_the_scored_bytes():
     defect the campaign has already paid for once.
     """
     result = _score(IGNORES_THE_VERDICT).measure(_load(SOFTWARE),
-                                                 _observations(["preserved"]))
+                                                 _observations(["preserved"]),
+        authority=authority)
     in_process = hashlib.sha256(DDMIN_METHOD.encode("utf-8")).hexdigest()
 
     assert result.scored
@@ -924,7 +967,7 @@ def test_the_probe_view_is_not_a_view_the_abi_owes_a_policy():
 # ---------------------------------------------------------------------------
 
 
-def test_a_score_is_a_frozen_value_that_serializes_and_repeats():
+def test_a_score_is_a_frozen_value_that_serializes_and_repeats(authority):
     """Two measurements of one policy and task are the same measurement.
 
     A result that varied run to run could not carry a contrast, and one
@@ -932,8 +975,10 @@ def test_a_score_is_a_frozen_value_that_serializes_and_repeats():
     """
     score = _score(IGNORES_THE_VERDICT)
 
-    first = score.measure(_load(SOFTWARE), _observations(["preserved"]))
-    second = score.measure(_load(SOFTWARE), _observations(["preserved"]))
+    first = score.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
+    second = score.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
 
     assert first == second
     assert json.loads(json.dumps(first.as_dict())) == first.as_dict()
@@ -943,7 +988,7 @@ def test_a_score_is_a_frozen_value_that_serializes_and_repeats():
     assert first.as_dict()["scored"] is True
 
 
-def test_a_contrast_is_a_word_with_a_rule_and_never_a_number():
+def test_a_contrast_is_a_word_with_a_rule_and_never_a_number(authority):
     """The reader-facing output is a verdict; the numbers ride beside it.
 
     `contract` refuses to compare readings of different tasks or different
@@ -953,8 +998,10 @@ def test_a_contrast_is_a_word_with_a_rule_and_never_a_number():
     reader = _score(RE_ROUTES_ON_THE_VERDICT, arm="relevant")
     ignore = _score(IGNORES_THE_ROUTING, arm="no-experience")
 
-    read = reader.measure(_load(SOFTWARE), _observations(["preserved"]))
-    unread = ignore.measure(_load(SOFTWARE), _observations(["preserved"]))
+    read = reader.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
+    unread = ignore.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
     settled = scored.contract(read, unread)
 
     assert settled.outcome == "relevant"
@@ -983,7 +1030,7 @@ def test_a_contrast_is_a_word_with_a_rule_and_never_a_number():
         scored.contract(read, on_another)
 
 
-def test_a_contrast_with_an_unscored_arm_is_unscored_and_names_the_arm():
+def test_a_contrast_with_an_unscored_arm_is_unscored_and_names_the_arm(authority):
     """An absent result cannot be compared with a present one.
 
     This is the conflation the retraction's own lesson is about: a field
@@ -993,8 +1040,10 @@ def test_a_contrast_with_an_unscored_arm_is_unscored_and_names_the_arm():
     reader = _score(READS_THE_VERDICT, arm="relevant")
     broken = _score(REFUSES_EVERYTHING, arm="no-experience")
 
-    read = reader.measure(_load(SOFTWARE), _observations(["preserved"]))
-    dead = broken.measure(_load(SOFTWARE), _observations(["preserved"]))
+    read = reader.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
+    dead = broken.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
     settled = scored.contract(read, dead)
 
     assert settled.outcome == "unscored"
@@ -1004,19 +1053,19 @@ def test_a_contrast_with_an_unscored_arm_is_unscored_and_names_the_arm():
     assert "unscored: execute" in settled.reason
 
 
-def test_a_contrast_between_two_equal_readings_is_a_tie_not_a_win():
+def test_a_contrast_between_two_equal_readings_is_a_tie_not_a_win(authority):
     """A tie is a tie, and it is not broken by hand.
 
     The campaign has two recorded ties already, and this is the third
     place the rule would otherwise lapse.
     """
     left = _score(IGNORES_THE_ROUTING, arm="relevant").measure(
-        _load(SOFTWARE), _observations([]))
+        _load(SOFTWARE), _observations([]), authority=authority)
     # The echoer on no observations names no observation, so it copies
     # nothing into its action, and neither policy's read reaches the world.
     # Same evidence, same grade, same score.
     right = _score(ECHOES_THE_VIEW, arm="irrelevant").measure(
-        _load(SOFTWARE), _observations([]))
+        _load(SOFTWARE), _observations([]), authority=authority)
 
     settled = scored.contract(left, right)
 
@@ -1037,7 +1086,7 @@ def test_a_contrast_between_two_equal_readings_is_a_tie_not_a_win():
 # ---------------------------------------------------------------------------
 
 
-def test_a_parsed_proposal_scores_identically_to_its_response():
+def test_a_parsed_proposal_scores_identically_to_its_response(authority):
     """The scheme consumes what the construction path settles.
 
     `construct.construct_policy` never hands raw source to its caller, so
@@ -1050,11 +1099,12 @@ def test_a_parsed_proposal_scores_identically_to_its_response():
     a literal in this file, so the honest label is the study's own.
     """
     score = _score(IGNORES_THE_VERDICT)
-    direct = score.measure(_load(SOFTWARE), _observations(["preserved"]))
+    direct = score.measure(_load(SOFTWARE), _observations(["preserved"]),
+        authority=authority)
 
     parsed = scored.Score.from_response(
         score.response(), 8, origin="authored-control").measure(
-        _load(SOFTWARE), _observations(["preserved"]))
+        _load(SOFTWARE), _observations(["preserved"]), authority=authority)
 
     assert parsed.digest == direct.digest
     assert parsed.score == direct.score
@@ -1075,7 +1125,7 @@ def test_from_response_will_not_label_a_response_on_its_own():
         scored.Score.from_response(score.response(), 8)
 
 
-def test_a_caller_can_name_a_stand_in_and_the_reading_says_so():
+def test_a_caller_can_name_a_stand_in_and_the_reading_says_so(authority):
     """The label survives the round trip when the caller earned it.
 
     The counterpart to the two tests above. If `from_response` dropped or
@@ -1087,11 +1137,12 @@ def test_a_caller_can_name_a_stand_in_and_the_reading_says_so():
         parsed = scored.Score.from_response(
             score.response(), 8, origin=origin)
         assert parsed.origin == origin
-        reading = parsed.measure(_load(SOFTWARE), _observations(["preserved"]))
+        reading = parsed.measure(_load(SOFTWARE), _observations(["preserved"]),
+            authority=authority)
         assert reading.origin == origin
 
 
-def test_the_control_is_named_and_a_study_can_choose_which_one_it_uses():
+def test_the_control_is_named_and_a_study_can_choose_which_one_it_uses(authority):
     """The control is visible in the reading, and there is more than one.
 
     A scheme that hid which control it compared against would make its
@@ -1103,9 +1154,10 @@ def test_the_control_is_named_and_a_study_can_choose_which_one_it_uses():
         "software": {"ddmin": "seed-sw-ddmin", "greedy": "seed-sw-greedy"}}
 
     default = _score(IGNORES_THE_VERDICT).measure(_load(SOFTWARE),
-                                                 _observations([]))
+                                                 _observations([]),
+        authority=authority)
     greedy = _score(IGNORES_THE_VERDICT, control_method="greedy").measure(
-        _load(SOFTWARE), _observations([]))
+        _load(SOFTWARE), _observations([]), authority=authority)
 
     assert default.control == "seed-sw-ddmin"
     assert greedy.control == "seed-sw-greedy"

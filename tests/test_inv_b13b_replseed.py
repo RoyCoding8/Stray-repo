@@ -201,7 +201,7 @@ def test_the_method_the_reader_names_moves_with_the_verdicts(stepper):
     assert held["method_id"] == "seed-gr-ddmin"
 
 
-def test_a_policy_naming_a_software_method_is_refused_on_graph():
+def test_a_policy_naming_a_software_method_is_refused_on_graph(authority):
     """The defect this lane repairs, on the refusal that exposed it.
 
     `assessment_profile.dispatch` resolves `method_id` against the target's
@@ -209,6 +209,12 @@ def test_a_policy_naming_a_software_method_is_refused_on_graph():
     on scope. The step itself is admitted — the ABI does not know about
     repertoires — so the refusal is asserted where it happens, at dispatch,
     and the correct graph method is shown to dispatch in the same test.
+
+    The dispatch needs the same store the step does, because admitting a
+    `use_method` runs the named method in a further child. These two calls
+    were made with no store, so the admitted half was admitted by a route that
+    would have refused under any authority — the assertion did not distinguish
+    the graph method from the software one on scope at all.
     """
     task = worlds.load_task(worlds.FROZEN_DIR, GRAPH)
     score = _score(SOFTWARE_METHOD_ON_GRAPH, GRAPH, _observations(GRAPH))
@@ -218,46 +224,53 @@ def test_a_policy_naming_a_software_method_is_refused_on_graph():
         {"kind": "use_method", "target": GRAPH,
          "inputs": {"method_id": "seed-sw-ddmin", "max_queries": 8},
          "evidence_refs": [], "requested_resources": {"queries": 8}},
-        score.digest)
+        score.digest, authority, "refused")
     admitted = scored._dispatch(
         record,
         {"kind": "use_method", "target": GRAPH,
          "inputs": {"method_id": "seed-gr-ddmin", "max_queries": 8},
          "evidence_refs": [], "requested_resources": {"queries": 8}},
-        score.digest)
+        score.digest, authority, "admitted")
 
     assert task["family"] == "graph"
     assert refused["accepted"] is False
     assert refused["candidate"] is None
+    assert "repertoire" in str(refused.get("reason") or "") or \
+        refused.get("owner") == "none", refused
     assert admitted["accepted"] is True
     assert admitted["candidate"] is not None
 
 
-def test_the_scored_gate_cannot_execute_on_this_source_for_any_family():
-    """The defect that gates this lane, named so it is not mistaken for ours.
+def test_the_scored_gate_executes_once_a_caller_carries_authority(authority):
+    """What this lane gated on, measured after the repair rather than before.
 
-    `Score.measure` calls `_execute` with no dsn, allocation or operation id,
-    and `method_exec` refuses any policy-source execution without all three.
-    So every reading this instrument produces is unscored, on graph and on
-    software alike, and the graph repairs below are what becomes measurable
-    once a caller carries authority. This asserts the refusal itself rather
-    than a score, because the score is not obtainable here.
+    `Score.measure` used to call `_execute` with no dsn, allocation or
+    operation id, so `method_exec` refused and every reading this instrument
+    produced was `unscored: execute` — on graph and on software alike. That was
+    recorded here as the defect that gated this lane, and it was recorded as a
+    refusal because the score was not obtainable without the fix.
 
-    The fix belongs with the campaign that owns the durable route, not with a
-    qualification gate: adding a second execution path here would delete A2's
-    recorded repair.
+    The fix belongs with the campaign that owns the durable route, and that is
+    where it went: `measure` now requires `{dsn, allocation_id}` and refuses a
+    caller holding none, and `_execute` derives the third key per execution.
+    So this test carries authority and the reading is scored, which is the
+    thing the lane's own docstring said would become measurable once a caller
+    did.
+
+    The refusal is still the contract and is still asserted below, directly
+    against the executor, so this lane's obligation to pin it is unchanged.
     """
     reading = _score(replica.PROMPTED_SHAPE_READER, GRAPH,
                      _observations(GRAPH)).measure(
                          worlds.load_task(worlds.FROZEN_DIR, GRAPH),
                          _observations(GRAPH),
                          eligible_methods=replica.eligible_for(
-                             worlds.load_task(worlds.FROZEN_DIR, GRAPH)))
+                             worlds.load_task(worlds.FROZEN_DIR, GRAPH)),
+                         authority=authority)
 
-    assert reading.scored is False
-    assert reading.detail == (
-        "unscored: execute: the returned bytes admitted no action that reaches"
-        " a method executor")
+    assert reading.scored is True, reading.detail
+    assert reading.action is not None
+    assert reading.candidate is not None
 
     with pytest.raises(method_exec.MethodExecutionError,
                        match="explicit authority and identity"):

@@ -1,3 +1,8 @@
+> Historical slice-status report for the S0-S3 implementation batch. Its
+> commits do not resolve in the current repository. Current scoped status is
+> reconciled in [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md).
+
 # Implementation status (S0-S3)
 
 Base commit: `be7956d`. Integration branch: `codex/implementation-s0-s3`.

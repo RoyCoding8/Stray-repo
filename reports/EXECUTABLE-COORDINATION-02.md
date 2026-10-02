@@ -1,3 +1,8 @@
+> Historical integration handback. Its commits do not resolve in the current
+> repository. Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md).
+
 # Executable Coordination 02 — integration handback
 
 Tip on `codex/implementation-executable-coordination-02`

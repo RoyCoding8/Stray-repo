@@ -596,7 +596,8 @@ IGNORES_THE_VIEW = '''def STEP(view, state):
 
 def echo_confound(target: Mapping[str, Any], *,
                   relevant: Sequence[Mapping[str, Any]],
-                  eligible_methods: Sequence[str]) -> dict:
+                  eligible_methods: Sequence[str],
+                  authority: Mapping[str, Any]) -> dict:
     """Whether the evidence leg separates reading from echoing.
 
     Four cells, two authored policies against two exposures. An echoer and
@@ -618,7 +619,8 @@ def echo_confound(target: Mapping[str, Any], *,
         return scored.score_response(
             json.dumps({"entry": source}), dict(target), list(observations),
             origin="authored-control", arm=arm,
-            eligible_methods=list(eligible_methods), remaining={"steps": 1})
+            eligible_methods=list(eligible_methods), remaining={"steps": 1},
+            authority=authority)
 
     cells = {}
     for arm, observations in (("relevant", list(relevant)), ("none", [])):
@@ -650,13 +652,20 @@ def echo_confound(target: Mapping[str, Any], *,
 
 
 def qualify_instrument(target: Mapping[str, Any], observations: Sequence[Mapping[str, Any]],
-                       *, eligible_methods: Sequence[str]) -> dict:
+                       *, eligible_methods: Sequence[str],
+                       authority: Mapping[str, Any]) -> dict:
     """Show the repaired leg separates a reader from an echoer.
 
     Run before any dispatch and without a model. A replication that re-tested
     a negative with an instrument that cannot produce a positive would find
     zero again and read it as a confirmation, so the instrument has to be
     shown to discriminate before its verdict is trusted.
+
+    `authority` is `{dsn, allocation_id}` for a store the caller holds. Every
+    policy here is stepped by `Score.measure`, which executes policy source
+    and so cannot run without one. This qualification scored five policies
+    with none and read every one of them as unscored, so the discrimination it
+    was written to demonstrate was never demonstrated.
 
     The gate is reader-above-echoer, and it is strict about that ordering
     rather than about a ratio. Under the corrected leg the reader re-routes
@@ -676,7 +685,8 @@ def qualify_instrument(target: Mapping[str, Any], observations: Sequence[Mapping
         reading = scored.score_response(
             json.dumps({"entry": source}), dict(target), list(observations),
             origin="authored-control", arm=name,
-            eligible_methods=list(eligible_methods), remaining={"steps": 1})
+            eligible_methods=list(eligible_methods), remaining={"steps": 1},
+            authority=authority)
         rows[name] = reading_row(name, reading)
     separated = (rows["reader"]["scored"] and rows["echoer"]["scored"]
                  and rows["reader"]["score"] > rows["echoer"]["score"])
@@ -695,8 +705,9 @@ def qualify_instrument(target: Mapping[str, Any], observations: Sequence[Mapping
                 " reads the verdicts and re-plans, its plan reaches no"
                 " executor, and it scores beside an echoer. A read that does"
                 " not reach the world is not evidence of anything.",
-        "echo_confound": echo_confound(target, relevant=observations,
-                                       eligible_methods=eligible_methods),
+        "echo_confound": echo_confound(
+            target, relevant=observations,
+            eligible_methods=eligible_methods, authority=authority),
     }
 
 
@@ -1294,7 +1305,8 @@ def longest_prompt_chars(body: Mapping[str, Any]) -> int:
 
 
 def score_acquired(target: Mapping[str, Any], arm: Mapping[str, Any],
-                   source: str, *, arm_name: str, origin: str) -> Any:
+                   source: str, *, arm_name: str, origin: str,
+                   authority: Mapping[str, Any]) -> Any:
     """One acquired policy, on this arm's own observations, at this task.
 
     The arm's experience is what the policy was shown and what the view it is
@@ -1307,6 +1319,11 @@ def score_acquired(target: Mapping[str, Any], arm: Mapping[str, Any],
     a recording double is the receipt for the operation that produced these
     bytes, and the caller is what holds that operation. It passes
     `construct.acquisition_origin(...)["origin"]`.
+
+    `authority` is the store the acquisition already settled against, and it
+    is required for the same reason `origin` is: scoring an acquired policy
+    executes it, and the caller that paid for the bytes is the caller that
+    holds the authority to run them.
     """
     from . import s09_e2_scored as scored
 
@@ -1314,7 +1331,8 @@ def score_acquired(target: Mapping[str, Any], arm: Mapping[str, Any],
         json.dumps({"entry": source}), dict(target),
         list(arm.get("observations") or []),
         origin=origin, arm=arm_name,
-        eligible_methods=eligible_for(target), remaining={"steps": 1})
+        eligible_methods=eligible_for(target), remaining={"steps": 1},
+        authority=authority)
 
 
 def _source_of(dsn: str, operation_id: str) -> tuple:
@@ -1447,7 +1465,8 @@ def run_campaign(*, dsn: str, gateway: Any, model: str, allocation_id: str,
         if not qualification:
             qualification = qualify_instrument(
                 task, arms[ARM_RELEVANT]["observations"],
-                eligible_methods=eligible_for(task))
+                eligible_methods=eligible_for(task),
+                authority={"dsn": dsn, "allocation_id": allocation_id})
             if not qualification["separates_reader_from_blind"]:
                 raise ReplicaRefused(
                     "the instrument does not score a reader above an echoer,"
@@ -1471,8 +1490,9 @@ def run_campaign(*, dsn: str, gateway: Any, model: str, allocation_id: str,
                 origin = _construct.acquisition_origin(
                     dsn, got.operation_id, settled)["origin"]
             readings.setdefault(name, {})[task_id] = reading_row(
-                name, score_acquired(task, arms[name], source,
-                                     arm_name=name, origin=origin))
+                name, score_acquired(
+                    task, arms[name], source, arm_name=name, origin=origin,
+                    authority={"dsn": dsn, "allocation_id": allocation_id}))
 
     require_no_empty_dispatch_is_compared(acquired)
     return {"freeze": frozen, "cap_sheet": sheet,

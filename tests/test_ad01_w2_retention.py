@@ -20,6 +20,7 @@ import pytest
 
 from experiments.ad01 import e2_replication as replica
 from experiments.ad01 import w2_retention_campaign as campaign
+from execution_authority import execution_store
 from experiments.ad01 import w2_retention_verify as verify
 
 
@@ -114,7 +115,8 @@ def test_both_w2_panels_run_on_a_family_the_gate_can_read():
     # The qualification gate's authored policies all name a `seed-sw-`
     # method, so a graph target cannot be read at all and a run on one
     # refuses rather than reporting a number.
-    gate = campaign.qualification_census()
+    with execution_store("w2retention") as auth:
+        gate = campaign.qualification_census(authority=auth)
     assert gate["readable"] > 0, gate
     for panel in campaign.PANELS:
         assert panel["family"] in gate["readable_families"], panel

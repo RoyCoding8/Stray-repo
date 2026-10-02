@@ -45,10 +45,12 @@ fewest dispatches on the same power.
 | `software:within+transfer` | 4 | 6 | 2 | no | 0.285714 | 1/8 | 2/6 |
 | `software:dev+within+transfer` | 4 | 6 | 2 | no | 0.312500 | 1/8 | 3/9 |
 
-The three `graph` rows are the only powered panels; the ten `software` rows are the
-unpowered remainder, and the four unpowered graph panels are omitted from this table
-because this sheet allocates nothing to them. `powered_but_blind` is empty, because
-every panel that reaches six clusters also has a non-zero ceiling. A powered-but-blind
+**Three** panels are powered, and all three are the `graph` rows above.
+`graph:dev+transfer` is the smallest of the three, not the only one. The seven
+`software` rows are unpowered, and the four unpowered graph panels are omitted
+from this table because this sheet allocates nothing to them.
+`powered_but_blind` is empty, because every panel that reaches six clusters
+also has a non-zero ceiling. A powered-but-blind
 panel would be a different world. The census rounds its ceiling to six decimal places;
 `0.285714` is the rounded value and `2/7` is the exact one.
 

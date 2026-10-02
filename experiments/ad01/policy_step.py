@@ -343,8 +343,22 @@ def verify_policy_record(record: dict) -> dict:
 
 
 def _s09_ids(cid: str, seq: int) -> tuple:
-    from .trajectory import _attempt_id, _s09_effect_id
-    return _attempt_id(cid, seq), _s09_effect_id(cid, seq)
+    """The attempt a policy step belongs to, and no effect identity.
+
+    The second element is empty, and that is the honest answer rather than a
+    placeholder. This row is written when the step is persisted, which is
+    before the boundary's effect has run, so there is no operation to name yet.
+    The identity is set when the effect is incorporated, in
+    `trajectory._s09_ensure_incorporated`, by reading the operation that
+    actually ran.
+
+    It used to return the constant `ad01-<cid>-b<seq>-effect`, which named no
+    `operations` row at all. That is RF-02: both sides of the "admitted effect
+    -> observation" arrow were durable rows and the only thing joining them
+    was `(investigation_id, seq)`.
+    """
+    from .trajectory import _attempt_id
+    return _attempt_id(cid, seq), ""
 
 
 def load_policy_state(dsn: str | None, cid: str, seq: int):

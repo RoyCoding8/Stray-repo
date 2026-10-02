@@ -18,6 +18,13 @@ It also pins the one interface that makes the grammar trustworthy: the sweep
 and the direct creator must agree about which tokens are the harness's. They
 live in two modules that cannot import each other -- the harness already
 imports the creator -- so the agreement has to be asserted, not inherited.
+
+The sources read are this checkout's and every sibling lane's own. The list
+comes from the repository index rather than from a walk, so the answer is the
+same whichever checkout the test runs in and a lane's uncommitted creator is
+read before it merges rather than after. A directory skip list was never what
+gave that property; measured, it gave the opposite one, and the emptiness
+assertion below is what notices.
 """
 
 from __future__ import annotations
@@ -33,6 +40,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
+sys.path.insert(0, str(REPO / "tests"))
 
 from experiments.ad01 import s09_run_isolation as iso  # noqa: E402
 from tests.conftest_isolation import (  # noqa: E402
@@ -40,34 +48,64 @@ from tests.conftest_isolation import (  # noqa: E402
     derived_token,
     derived_name,
 )
+import worktree_checkouts as checkouts  # noqa: E402
 
-# Directories whose sources are not this repository's own code. A sibling
-# worktree under ``.claude/worktrees`` is a checkout of the same tree at a
-# different commit: its creators are somebody else's lane, and failing on them
-# would make this test a function of what other agents happen to have checked
-# out. A vendored tree is not this project's code at all.
-# Directories that are not this repository's own code. A sibling worktree under
-# ``.claude/worktrees`` is a checkout of the same tree at a different commit: its
-# creators are somebody else's lane, and failing on them would make this test a
-# function of what other agents happen to have checked out. A vendored tree is
-# not this project's code at all. A run's own scratch output -- ``.ad01-runs``
-# and friends -- is data a past experiment wrote, thousands of generated modules
-# whose creators were the code that produced them.
-FOREIGN = (".git", ".venv", "__pycache__", "node_modules",
-           ".claude", ".s09suite", "site-packages", ".tox", "build", "dist",
-           ".ad01-runs", ".ad01-walk-runs", ".ad01-r3-runs", ".ad01-r4-runs",
-           ".worktrees", "evidence-live", "reports")
+# The directories that hold this repository's own code. A ``.py`` file in any
+# other top-level directory is evidence, a report or a probe, and the grammar
+# does not govern what a past run recorded: ``reports/evidence/`` is an
+# immutable artifact tree, ``reviews/probes/`` is a dated assessment, and
+# ``evidence-live/`` is experiment output. These are whole top-level components
+# of a repository-relative path, which is what makes them a statement about the
+# repository rather than a filter over whatever directory the file happens to
+# sit in.
+SOURCE_ROOTS = ("experiments", "scripts", "src", "tools", "tests", "migrations")
 
 
-def _own_sources() -> list[Path]:
-    found: list[Path] = []
-    for top in ("experiments", "scripts", "src", "tools", "tests", "migrations"):
-        root = REPO / top
-        if not root.is_dir():
-            continue
-        found.extend(p for p in root.rglob("*.py")
-                     if not any(part in FOREIGN for part in p.parts))
-    found.extend(p for p in REPO.glob("*.py") if p.name != "conftest.py")
+def _own_sources() -> list[tuple[Path, str]]:
+    """This checkout's sources, and every sibling lane's own, keyed for a message.
+
+    The list comes from the repository index rather than from a walk of ``REPO``,
+    and the bytes are read from whichever checkout holds them. That split is
+    what makes the answer the same in a lane worktree as in the integration
+    checkout, and what lets a lane's own edit to a tracked file still fail here.
+
+    The walk this replaces tested each FOREIGN name for equality against every
+    component of the *absolute* path, so the component naming the checkout a
+    file lives in was enough to exclude it. A lane sitting under
+    ``.claude/worktrees`` excluded all of its own files on the component
+    ``.claude``: the scan found zero of 930 sources, and every inventory
+    assertion reported an empty list rather than a disagreement. Measured at the
+    four roots that matter, the same code finds 930 sources at the integration
+    root and at a throwaway clone, 1 in a lane under ``.claude`` and 0 in a lane
+    under ``.worktrees`` -- so the exclusion was not hiding a sibling's copy, it
+    was deleting the checkout's own tree. A directory skip list never did that
+    job. Asking a sibling only for the files it does not track does, because the
+    repository index already covers the rest.
+
+    ``reports`` and ``evidence-live`` stay excluded, and they stay excluded by
+    being outside ``SOURCE_ROOTS`` rather than by being named. That is the same
+    policy stated as a fact about the repository instead of a filter over a
+    walk, and it cannot be widened by a directory appearing somewhere else.
+    """
+    canonical = checkouts.canonical_root(REPO)
+
+    def own(checkout: Path, names: list[str]) -> list[tuple[Path, str]]:
+        found = []
+        for relative in sorted(set(names)):
+            if relative.split("/")[0] not in SOURCE_ROOTS:
+                continue
+            path = checkout / relative
+            if path.is_file():
+                found.append((path, relative))
+        return found
+
+    found = own(REPO, checkouts.tracked_paths(canonical, ("*.py",)))
+    for lane in checkouts.sibling_checkouts(canonical, REPO):
+        prefix = checkouts.label_for(canonical, lane)
+        found.extend(
+            (path, "%s/%s" % (prefix, relative))
+            for path, relative in
+            own(lane, checkouts.untracked_paths(canonical, lane, ("*.py",))))
     return sorted(set(found))
 
 
@@ -88,7 +126,7 @@ def _prefix_constants() -> dict[str, str]:
     literal, and so that renaming the prefix cannot silently retire the check.
     """
     found: dict[str, str] = {}
-    for path in SOURCES:
+    for path, _key in SOURCES:
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
         except (SyntaxError, UnicodeDecodeError):
@@ -135,9 +173,19 @@ class Creator:
     lineno: int
     source: str
     is_creator: bool
+    key: str = ""
 
     @property
     def where(self) -> str:
+        """Where to send a reader who wants to see the site.
+
+        The key comes from the scan rather than from ``path.relative_to(REPO)``,
+        because a sibling lane's file is not under this checkout and that call
+        would raise. A lane's own creator is named under the lane's own prefix,
+        which is the path that opens.
+        """
+        if self.key:
+            return "%s:%d" % (self.key, self.lineno)
         return "%s:%d" % (self.path.relative_to(REPO), self.lineno)
 
 
@@ -196,7 +244,7 @@ def _builds_a_string(node: ast.AST) -> bool:
 def creators() -> list[Creator]:
     """Every site that can build a name in the namespace, sorted by location."""
     found: list[Creator] = []
-    for path in SOURCES:
+    for path, key in SOURCES:
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"))
         except (SyntaxError, UnicodeDecodeError):
@@ -217,8 +265,9 @@ def creators() -> list[Creator]:
                 continue
             found.append(Creator(path=path, lineno=node.lineno,
                                  source=ast.unparse(node),
-                                 is_creator=_is_create_site(node, enclosing)))
-    return sorted(found, key=lambda c: (str(c.path), c.lineno))
+                                 is_creator=_is_create_site(node, enclosing),
+                                 key=key))
+    return sorted(found, key=lambda c: (c.key, c.lineno))
 
 
 ALL_SITES = creators()
@@ -232,8 +281,104 @@ def test_the_enumeration_is_not_empty():
     whole file green: every other test would iterate an empty list and pass.
     """
     assert NAMESPACES, (
-        "found no %s_ name-synthesis site in %d sources; the walk is broken, "
-        "not the code" % (iso.DB_PREFIX, len(SOURCES)))
+        "found no %s_ name-synthesis site in %d sources; the scan is looking "
+        "in the wrong place, not the code" % (iso.DB_PREFIX, len(SOURCES)))
+
+
+def test_the_scan_reads_a_plausible_number_of_sources():
+    """The emptiness assertion has a hole, and this is what closes it.
+
+    Inside a lane worktree the scan used to find *zero* sources, which the
+    assertion above caught. It could equally have found four, or thirty, and
+    every inventory assertion would still have passed over the short list: an
+    assertion that iterates a short list does not know it is short. So the
+    floor is pinned against the repository's own index, which is the one count
+    that does not depend on where this file happens to be.
+
+    The bar is deliberately loose -- a quarter of the tracked code roots, not
+    the exact total -- because the point is to catch a scan that lost a whole
+    tree, not to fail when a lane legitimately adds files. The exact figure is
+    printed on failure so the reader can see what was found.
+    """
+    canonical = checkouts.canonical_root(REPO)
+    tracked = [name for name in checkouts.tracked_paths(canonical, ("*.py",))
+               if name.split("/")[0] in SOURCE_ROOTS]
+    assert len(SOURCES) >= max(1, len(tracked) // 4), (
+        "the scan read %d sources where the repository tracks %d under %s, so "
+        "it is reading a fraction of the tree and every inventory assertion "
+        "over it is being decided by a short list" % (
+            len(SOURCES), len(tracked), ", ".join(SOURCE_ROOTS)))
+
+
+def test_the_scan_covers_every_checkout_the_repository_knows_about():
+    """A sibling lane's own file is read, and keyed so a reader can open it.
+
+    This is the property the ``.worktrees`` exclusion was supposed to buy, and
+    it is asserted here rather than described. Whether any lane exists is the
+    environment's business -- a throwaway clone registers one checkout and has
+    no sibling -- so what is asserted is that every lane git does report
+    contributes its untracked sources, under a key carrying the lane's own name
+    rather than a bare relative path that would point somewhere else.
+
+    Whether the cross-lane half actually ran is a separate claim, and it is
+    ``test_the_cross_lane_half_runs_whenever_there_is_a_sibling_to_reach``.
+    """
+    canonical = checkouts.canonical_root(REPO)
+    for lane in checkouts.sibling_checkouts(canonical, REPO):
+        prefix = checkouts.label_for(canonical, lane)
+        for relative in checkouts.untracked_paths(canonical, lane, ("*.py",)):
+            key = "%s/%s" % (prefix, relative)
+            assert (prefix + "/") in key and key != relative, (
+                "lane %s contributed %r unkeyed, so a failure would name a path "
+                "that does not open" % (lane.name, relative))
+            if relative.split("/")[0] in SOURCE_ROOTS:
+                path, scanned = next(
+                    ((p, k) for p, k in SOURCES if p == lane / relative),
+                    (None, None))
+                assert scanned == key, (
+                    "lane %s holds %r under a code root and the scan read it as "
+                    "%r; a sibling's own creator is invisible to this grammar" % (
+                        lane.name, relative, scanned))
+
+
+def _registered_checkouts(canonical: Path) -> list[str]:
+    """Every checkout the registry names, read raw.
+
+    Raw, so that a discovery which returns nothing can be told apart from a
+    repository that has nothing. Those are different failures and the test
+    below reports them differently.
+    """
+    import subprocess
+
+    out = subprocess.run(
+        ["git", "-c", "safe.directory=*", "-C", str(canonical),
+         "worktree", "list", "--porcelain"],
+        capture_output=True, text=True, check=True, cwd=str(canonical)).stdout
+    return [line[len("worktree "):]
+            for line in out.splitlines() if line.startswith("worktree ")]
+
+
+def test_the_cross_lane_half_runs_whenever_there_is_a_sibling_to_reach():
+    """In the batch checkout this is the assertion that the scan reaches the
+    other lanes; in a standalone clone it says so and stops.
+
+    Seventeen lanes are registered here, and each of them has a path component
+    the old ``FOREIGN`` tuple named. A scan that reports green while reading
+    one tree is exactly the defect this lane exists to repair, so the clone
+    case skips rather than passes -- a green here would otherwise be read as
+    "the cross-lane scan ran".
+    """
+    canonical = checkouts.canonical_root(REPO)
+    registered = _registered_checkouts(canonical)
+    if len(registered) < 2:
+        pytest.skip("a standalone clone registers one checkout and has no "
+                    "sibling to scan; the cross-lane claim is vacuous here")
+
+    lanes = checkouts.sibling_checkouts(canonical, REPO)
+    assert lanes, (
+        "the repository registers %d checkouts but none were discovered, so "
+        "the scan is reading one tree and reporting it as the batch" % (
+            len(registered),))
 
 
 def test_the_pinned_creator_is_among_those_found():
@@ -374,14 +519,20 @@ def test_the_harness_own_token_source_is_outside_the_creators_reach():
     calls ``stale_plan``, which resolves the token out of each database name
     rather than out of the environment. Naming it here would pin a fact about
     the sweep's imports rather than about anyone's liveness.
+
+    The third entry is the archived copy, at the path it now holds. It read
+    ``tests/test_s09iso_stale_sweep.py`` until the heavy-archive move of
+    2026-09-29, and the stale spelling is why this assertion was red in the
+    integration checkout before this lane touched it: the scan could not see a
+    file whose recorded name had stopped existing.
     """
     self_path = Path(__file__).resolve()
-    offenders = sorted(path.relative_to(REPO).as_posix() for path in SOURCES
+    offenders = sorted(key for path, key in SOURCES
                        if path != self_path
                        and "S09ISO_TOKEN" in path.read_text(encoding="utf-8"))
-    assert offenders == ["tests/conftest_isolation.py",
-                         "tests/test_conftest_isolation.py",
-                         "tests/test_s09iso_stale_sweep.py"], (
+    assert offenders == ["tests/_heavy_archived/test_s09iso_stale_sweep.py",
+                         "tests/conftest_isolation.py",
+                         "tests/test_conftest_isolation.py"], (
         "only the harness and the two files that pin its behaviour may read "
         "the variable that mints bare hex; these others do: %s" % (offenders,))
 

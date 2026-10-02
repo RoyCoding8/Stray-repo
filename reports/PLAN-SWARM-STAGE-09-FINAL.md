@@ -1,3 +1,9 @@
+> Historical coordination plan for the Stage 9 expanded study. It is a
+> dispatch plan, not a result, and the campaign it plans was superseded.
+> Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md).
+
 # Final swarm: three independent slices
 
 The handoff asks for the expanded work completed without restarting lanes.

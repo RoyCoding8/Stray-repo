@@ -152,7 +152,65 @@ def test_round_trip_uses_the_existing_s09_store(store):
     assert loaded.action == ACTION
     assert loaded.view_digest == durable.view_digest(VIEW)
     assert loaded.attempt_id == "att-%s-0" % cid
-    assert loaded.effect_id == "ad01-%s-b0-effect" % cid
+    # A persisted step has run no effect yet, so there is no operation to name
+    # and the identity is empty. This used to assert
+    # `ad01-%s-b0-effect` % cid, a constant no `operations` row ever carried:
+    # the effect column named an identity that had never existed, which is
+    # RF-02. Asserting the empty value instead pins the honest state, and the
+    # companion test below pins that a real operation is adopted once one
+    # exists.
+    assert loaded.effect_id == ""
+
+
+def test_an_incorporated_effect_replaces_the_empty_identity_with_its_operation(
+        store):
+    """Once the boundary runs an operation, the row names that operation.
+
+    This is the half of the round trip the constant used to fake. The step API
+    writes no effect identity because no effect has run; incorporating the
+    boundary sets the identity from the operation that actually ran, and this
+    API reads that row back rather than recomputing an answer of its own.
+    """
+    from experiments.ad01 import trajectory
+
+    cid = "durable-round-trip-incorporated"
+    durable.persist_step(
+        store, cid, 0, binding=BINDING,
+        view=VIEW, action=ACTION, state=STATE)
+    operation_id = _settled_operation(store, "durable-round-trip-incorporated")
+    trajectory._s09_ensure_incorporated(
+        store, cid, 0, {"next_action": {"kind": "diagnostic"}},
+        {"observation_id": "obs-durable"}, {"kind": "diagnostic",
+                                            "operation_id": operation_id},
+        1, "s09-m1")
+    loaded = durable.load_step(store, cid, 0, binding=BINDING)
+    assert loaded.effect_id == operation_id
+    assert loaded.attempt_id == "att-%s-0" % cid
+
+
+def _settled_operation(dsn, campaign):
+    """One settled operation, admitted the way a boundary admits it.
+
+    A real allocation and a real broker admission, so the identity this test
+    pins is an operation the store actually holds rather than a row written
+    for the test to find.
+    """
+    from settlement import broker
+    from experiments.ad01 import trajectory
+
+    trajectory.authorize_campaign(dsn, campaign, authorized=100000)
+    operation_id = "durable-op-%s" % campaign
+    result = broker.ensure_operation(
+        dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
+        payload={"profile": "local-process", "argv": ["/bin/true"]},
+        allocation_id=trajectory._alloc_id(campaign))
+    assert result.code.name in ("APPLIED", "ALREADY_APPLIED"), result.detail
+    with trajectory._read_conn(dsn) as conn:
+        conn.execute(
+            "UPDATE operations SET settled = TRUE, dispatch_state = 'observed'"
+            " WHERE id = %s", (operation_id,))
+        conn.commit()
+    return operation_id
 
 
 def test_fresh_interpreter_resumes_without_re_execution(store, tmp_path):

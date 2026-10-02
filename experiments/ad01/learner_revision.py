@@ -87,10 +87,22 @@ def _route_execution_version(route: dict) -> str:
 # function over a reply rather than a judgement about one.
 REVISION_INTERFACE = "improve_channel.STEP.frontier_action.probe.inputs.x"
 
-# The prompt is frozen with the interface. A study that redacts the constant
-# is measuring whether the model guesses a literal, which is a different
-# question from whether it can choose an input; the incumbent's own value is
-# withheld so a reply that echoes the template cannot be scored as agreement.
+# The prompt is frozen with the interface, and it carries the incumbent's own
+# value rather than withholding it. That is not an oversight and it is not a
+# giveaway the model is expected to take: the interface is the skeleton, and
+# `unauthorised_change` refuses any reply that does not reproduce that skeleton
+# exactly once the probed input is blanked, so a prompt without it would produce
+# replies that are all refused for `step-skeleton`. Measured, not assumed.
+#
+# What the unredacted constant buys is the parrot defence. An echo of the
+# template is the incumbent's own bytes, so `differs_from_incumbent` refuses it
+# as `identical-to-incumbent` before it can be measured, and the literal check
+# refuses it a second time as a fixed answer. Redacting the constant would
+# leave the first check with nothing to compare against: a redacted echo would
+# differ from the incumbent and would have to be caught by the literal check
+# alone. So the constant is the anchor the identity check is written against,
+# and the test beside it says which of the two is a giveaway and which is the
+# interface.
 SYSTEM_PROMPT = (
     "You are revising one decision inside a learning agent. The agent is "
     "learning a four-output Boolean rule over sixteen inputs by probing them. "

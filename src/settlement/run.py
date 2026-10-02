@@ -595,6 +595,16 @@ def _hold_on_mission_entry(dsn: str, investigation_id: str, attempt_id: str,
     The held entry is rewritten wholesale rather than field by field, because
     the shape is the migration's and a partially written entry should read back
     as what it is rather than as an operation with a missing identity.
+
+    The read and the write are one transaction under `FOR UPDATE`, which is
+    what `mission.admit_operation` and `mission.resume_operation` already do
+    to this column. Split across two connections the rewrite is a lost update:
+    two barriers suspending two attempts of one investigation both read the
+    pre-barrier list and the second write drops the first barrier's
+    `status` and `barrier_ref`, so a held attempt reads back as never
+    marked. That is the same defect lane A4b repaired on the other side of
+    the batch, reintroduced by a second writer to a column that already had
+    one owner.
     """
     from psycopg import errors as _pgerrors
     from psycopg.rows import dict_row
@@ -603,27 +613,28 @@ def _hold_on_mission_entry(dsn: str, investigation_id: str, attempt_id: str,
     try:
         with db.read_connect(dsn) as conn:
             with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute("SELECT in_flight FROM investigations WHERE id = %s",
-                            (investigation_id,))
+                cur.execute("SELECT in_flight FROM investigations WHERE id = %s"
+                            " FOR UPDATE", (investigation_id,))
                 row = cur.fetchone()
+                if row is None:
+                    raise SettlementError(
+                        f"no mission entry for investigation {investigation_id}")
+
+                entries = [dict(raw) for raw in (row["in_flight"] or [])]
+                if not any(str(raw.get("attempt_id") or "") == attempt_id
+                           for raw in entries):
+                    raise SettlementError(
+                        f"attempt {attempt_id} holds no admitted operation on"
+                        f" its mission entry: a barrier suspends admitted"
+                        f" work, so record it first")
+                updated = [
+                    dict(raw, status="suspended", barrier_ref=barrier_ref)
+                    if str(raw.get("attempt_id") or "") == attempt_id else raw
+                    for raw in entries]
+                cur.execute(
+                    "UPDATE investigations SET in_flight = %s,"
+                    " updated_at = now() WHERE id = %s",
+                    (Json(updated), investigation_id))
                 conn.commit()
     except _pgerrors.UndefinedColumn:
         return
-    if row is None:
-        raise SettlementError(
-            f"no mission entry for investigation {investigation_id}")
-
-    entries = [dict(raw) for raw in (row["in_flight"] or [])]
-    if not any(str(raw.get("attempt_id") or "") == attempt_id for raw in entries):
-        raise SettlementError(
-            f"attempt {attempt_id} holds no admitted operation on its mission"
-            f" entry: a barrier suspends admitted work, so record it first")
-    updated = [dict(raw, status="suspended", barrier_ref=barrier_ref)
-               if str(raw.get("attempt_id") or "") == attempt_id else raw
-               for raw in entries]
-    with db.read_connect(dsn) as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                "UPDATE investigations SET in_flight = %s, updated_at = now()"
-                " WHERE id = %s", (Json(updated), investigation_id))
-            conn.commit()

@@ -23,6 +23,20 @@ import pytest
 from experiments.ad01 import e2_replication as replica
 from experiments.ad01 import learner
 from experiments.ad01 import worlds
+from execution_authority import execution_store
+
+
+@pytest.fixture(scope="module")
+def authority():
+    """The store the instrument qualification executes against.
+
+    `replica.qualify_instrument` steps five policies, so it cannot run
+    without a store, and the four tests below called it with none. Every row
+    came back `scored: false`, so the ordering they assert was never measured
+    and the literals they pinned were values no execution had produced.
+    """
+    with execution_store("e2replication") as store:
+        yield store
 
 
 def _target(task_id: str = None) -> dict:
@@ -183,21 +197,27 @@ def test_the_measured_arm_carries_a_verdict_a_real_reducer_earned():
 # ---------------------------------------------------------------------------
 
 
-def test_the_repaired_leg_separates_a_reader_from_an_identical_blind_policy():
+def test_the_repaired_leg_separates_a_reader_from_an_identical_blind_policy(
+        authority):
     target = _target()
     result = replica.qualify_instrument(
         target, _relevant_observations(),
-        eligible_methods=replica.eligible_for(target))
+        eligible_methods=replica.eligible_for(target), authority=authority)
 
     assert result["separates_reader_from_blind"]
     assert result["reader"]["scored"] and result["blind"]["scored"]
-    assert result["reader"]["score"] == 2.0
-    assert result["blind"]["score"] == 1.0
+    # Measured, not carried forward. These rows pinned `2.0` and `1.0` while
+    # the qualification ran with no store and scored nothing, so the numbers
+    # were never produced by an execution. The reader earns its whole score
+    # from the candidate comparison and the benefit leg; the blind policy
+    # earns the benefit leg alone.
+    assert result["reader"]["score"] == 1.7
+    assert result["blind"]["score"] == 0.7
     assert result["reader"]["evidence"] == 1.0
     assert result["blind"]["evidence"] == 0.0
 
 
-def test_a_reader_scores_above_an_echoer_that_reads_nothing():
+def test_a_reader_scores_above_an_echoer_that_reads_nothing(authority):
     """The ordering the old leg inverted.
 
     The echoer copies the verdicts into an input key and then runs the same
@@ -209,15 +229,15 @@ def test_a_reader_scores_above_an_echoer_that_reads_nothing():
     target = _target()
     result = replica.qualify_instrument(
         target, _relevant_observations(),
-        eligible_methods=replica.eligible_for(target))
+        eligible_methods=replica.eligible_for(target), authority=authority)
 
     assert result["reader"]["scored"] and result["echoer"]["scored"]
     assert result["reader"]["score"] > result["echoer"]["score"]
     assert result["echoer"]["evidence"] == 0.0
-    assert result["echoer"]["score"] == 1.0
+    assert result["echoer"]["score"] == 0.7
 
 
-def test_a_read_that_never_reaches_the_world_scores_beside_an_echoer():
+def test_a_read_that_never_reaches_the_world_scores_beside_an_echoer(authority):
     """`READS_THE_VERDICT`, retained because it is the sharpest row here.
 
     It reads the verdicts and re-plans, and the two keys it moves are named
@@ -227,7 +247,7 @@ def test_a_read_that_never_reaches_the_world_scores_beside_an_echoer():
     target = _target()
     result = replica.qualify_instrument(
         target, _relevant_observations(),
-        eligible_methods=replica.eligible_for(target))
+        eligible_methods=replica.eligible_for(target), authority=authority)
 
     plan_only = result["plan_only_reader"]
     assert plan_only["scored"]
@@ -235,7 +255,8 @@ def test_a_read_that_never_reaches_the_world_scores_beside_an_echoer():
     assert plan_only["score"] == result["echoer"]["score"]
 
 
-def test_a_reader_confined_to_the_prompted_action_shape_earns_its_evidence():
+def test_a_reader_confined_to_the_prompted_action_shape_earns_its_evidence(
+        authority):
     """The row the old leg reported as a zero over an empty denominator.
 
     The prompted shape admits only `method_id` and `max_queries`, and the
@@ -246,13 +267,13 @@ def test_a_reader_confined_to_the_prompted_action_shape_earns_its_evidence():
     target = _target()
     result = replica.qualify_instrument(
         target, _relevant_observations(),
-        eligible_methods=replica.eligible_for(target))
+        eligible_methods=replica.eligible_for(target), authority=authority)
     prompted = result["prompted_shape_reader"]
 
     assert result["prompted_shape_earns_evidence"]
     assert prompted["scored"]
     assert prompted["evidence"] == 1.0
-    assert prompted["score"] == 2.0
+    assert prompted["score"] == 1.7
 
 
 def test_the_added_prompt_line_asks_for_a_decision_not_a_copy():

@@ -536,6 +536,19 @@ def take_correction(dsn: str, study_root: str, decision_key: str,
         raise SettlementError("correction attempts count from one")
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
+            # The row is created before it is locked, not after. A first
+            # correction finds no `study_corrections` row to lock, and
+            # `SELECT ... FOR UPDATE` over no row locks nothing, so two
+            # callers arriving together both read `used = 0` and both admit
+            # against the budget. Inserting the zero row first makes the
+            # conflict itself the lock: the second caller's insert blocks
+            # until the first commits, and the `FOR UPDATE` below then reads
+            # the committed count rather than the one that was absent.
+            cur.execute(
+                "INSERT INTO study_corrections (study_root, decision_key,"
+                " used, failure) VALUES (%s, %s, 0, %s)"
+                " ON CONFLICT (study_root, decision_key) DO NOTHING",
+                (study_root, decision_key, _j({})))
             cur.execute("SELECT used FROM study_corrections"
                         " WHERE study_root = %s AND decision_key = %s"
                         " FOR UPDATE", (study_root, decision_key))

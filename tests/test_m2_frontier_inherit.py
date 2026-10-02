@@ -270,26 +270,124 @@ def test_adopt_at_quiescent_boundary_pins_history_and_resets_state(
         raise AssertionError("adoption admitted expanded authority")
 
 
+def _revision_package(imp_source, parent, control_id="m2-revision"):
+    """A revision differing from `parent` at exactly the probed input.
+
+    A descendant's construction is substituted into its parent's own
+    improvement source, so the interesting way to drive a second round is
+    from a parent that probes something other than the incumbent. Starting
+    from the low control alone would probe 3 in both rounds and the
+    inheritance would be a fixed point that never has to substitute
+    anything.
+    """
+    package = {
+        "control_id": control_id, "origin": "authored-control",
+        "source_kind": "fixed-menu", "op_source": parent["op_source"],
+        "imp_source": imp_source,
+        "op_digest": frontier.source_digest(parent["op_source"]),
+        "imp_digest": frontier.source_digest(imp_source),
+        "parent_digest": parent["package_digest"],
+        "provenance": None, "provenance_digest": None,
+        "version": int(parent["version"]) + 1,
+        "authority_request": dict(parent["authority_request"]),
+        "obligations": list(parent["obligations"]),
+        "channel": parent["channel"], "package_digest": None}
+    package["package_digest"] = frontier.package_digest(package)
+    return package
+
+
 def test_second_improvement_round_under_inherited_bytes(tmp_path):
+    """The second round runs the first round's bytes, and inherits from them.
+
+    The subject is durability across a restart. A candidate staged by round
+    one is saved, the process is replaced by a fresh store read off disk, and
+    round two executes the candidate's own bytes, not a reconstructed copy of
+    them, and builds its descendant from those bytes as its parent. That part
+    is unchanged and is asserted here.
+
+    Three of the old assertions were the removed two-member menu and have been
+    re-expressed. The descendant used to be required to equal
+    `make_control("high")`'s improvement bytes, and the round to probe 11 and
+    read back `[1, 0, 1, 1]`; those were the menu's `low`/`high` split, which
+    corresponded to the observation's first bit. The construction is inherited
+    instead of resolved, so what a descendant runs is the input the round
+    actually probed.
+
+    Inheriting 11 into a parent that probes 3 does reproduce the high
+    control's improvement bytes, because the two authored templates differ at
+    that one literal and nowhere else. So "the descendant is not a menu
+    member" cannot be asserted here and is not asserted: it is a claim about
+    bytes, and inheritance reaches the same bytes by a different route. The
+    claim that separates the two is about reachability rather than identity,
+    and it lives where two revisions are driven rather than one:
+    `test_s09rev_boundary.py::test_a_descendant_runs_what_its_own_bytes_reach`
+    reads each descendant's own `imp_source` and requires two revisions
+    differing only in their probed input to produce descendants that can
+    reach different things. A constructor resolving a menu would report one
+    set for every revision and fail there.
+
+    A round driven from the low control alone could not carry this test at
+    all. It probes 3 in both rounds, so its descendant is byte-identical to
+    its parent, the inheritance never has to substitute anything, and the
+    cascade it is about would be a fixed point. This drives from a parent that
+    probes 11, so the substitution is real and the second round has a
+    different procedure to inherit.
+    """
     store = _make_store(tmp_path)
     base = channel.make_control("low")
     store.bind_active(base)
+    store.adopt_revision(
+        _revision_package(channel._revision_source("11"), base))
     task = br.make_task("dev", 4)
+
     first = channel.drive_improve_round(store, task, round_no=1)
     candidate = first["candidate"]
-    assert candidate["imp_digest"] == channel.make_control("high")[
-        "imp_digest"]
+    first_probed = [e["inputs"]["x"] for e in first["log"]
+                    if e["action"] == "probe"]
+    assert first_probed == [11], (
+        "the first round did not probe the input the revision selected, so"
+        " the second round would inherit a parent that never had a choice"
+        " to inherit: %r" % (first_probed,))
+    assert channel.reachable_evidence(candidate["imp_source"]) == ("11",), (
+        "the first descendant does not run the input the round probed, so"
+        " the construction did not reach it: %r"
+        % (channel.reachable_evidence(candidate["imp_source"]),))
+    assert channel.unauthorised_change(
+        store.active_package["imp_source"], candidate["imp_source"]) == {}, (
+        "the descendant differs from its parent at a decision other than the"
+        " probed input, so the constructor changed more than it was asked to"
+        " change: %r" % (channel.unauthorised_change(
+            store.active_package["imp_source"], candidate["imp_source"]),))
+
     store.adopt_revision(candidate)
     store.save()
     restarted = frontier.FrontierStore(str(store.path))
     second = channel.drive_improve_round(restarted, task, round_no=2)
-    probed = [e for e in second["log"] if e["action"] == "probe"]
-    assert [e["inputs"]["x"] for e in probed] == [11]
+
+    probed = [e["inputs"]["x"] for e in second["log"] if e["action"] == "probe"]
+    assert probed == first_probed, (
+        "the second round probed %r rather than the input its inherited"
+        " parent runs %r, so the round did not execute the candidate's own"
+        " procedure: %r" % (probed, first_probed, candidate["control_id"]))
     assert second["candidate"]["parent_digest"] == candidate[
-        "package_digest"]
+        "package_digest"], (
+        "the second descendant does not descend from the first, so nothing"
+        " was inherited: %r" % (second["candidate"]["parent_digest"],))
     executed = {e["executed_digest"] for e in second["log"]}
-    assert executed == {candidate["imp_digest"]}
-    assert second["observations"][0]["y"] == [1, 0, 1, 1]
+    assert executed == {candidate["imp_digest"]}, (
+        "the second round executed bytes other than the candidate's own, so"
+        " the inheritance is a reconstruction rather than a resume: %r"
+        % (executed,))
+    assert second["observations"][0]["y"] == first["observations"][0]["y"], (
+        "the same input read back a different observation on the second"
+        " round, so the two rounds are not measuring one procedure: %r vs %r"
+        % (second["observations"][0]["y"], first["observations"][0]["y"]))
+    assert channel.reachable_evidence(
+        second["candidate"]["imp_source"]) == ("11",), (
+        "the second descendant does not run the input its parent runs, so"
+        " inheritance changed the procedure at a second decision: %r"
+        % (channel.reachable_evidence(
+            second["candidate"]["imp_source"]),))
 
 
 def test_fresh_process_inherited_bytes_generate_candidate(tmp_path):

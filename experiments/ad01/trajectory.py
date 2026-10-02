@@ -254,8 +254,64 @@ def record_decision(dsn: str, cid: str, seq: int, decision: dict) -> str:
     return aid
 
 
-def _s09_effect_id(cid: str, seq: int) -> str:
-    return "ad01-%s-b%d-effect" % (cid, seq)
+def _effect_operation_id(dsn: str, cid: str, episode: dict) -> str:
+    """The operation a boundary's effect ran as, or empty when it ran as none.
+
+    This is the repair to RF-02. The column used to be written with the
+    constant `ad01-<cid>-b<seq>-effect`, which named no `operations` row and
+    was read back by nothing, so the "admitted effect -> observation" arrow
+    was doubly durable and causally unbound: both sides were rows and the only
+    thing joining them was `(investigation_id, seq)`.
+
+    The identity is read off the episode the boundary actually produced and
+    then checked against the `operations` table. That order is the point. An
+    episode can carry any string, and a derivation that trusted the episode
+    would make the column true by being written to, which is the defect
+    reproduced one level down. So the database has the last word: a name that
+    does not resolve to a settled operation is not an identity and returns
+    empty.
+
+    Empty is a real answer rather than a fallback. A boundary that runs a
+    host-side diagnostic (`controls.diagnostic_resolves` has no dsn and never
+    reaches the broker) admits no operation at all, and on such a boundary the
+    honest outcome is that the effect is NOT admitted. Writing a synthesized id
+    there would restore exactly the defect: a row that looks joined and joins
+    nothing. The witness is `test_a_boundary_that_admitted_no_operation_claims_no_effect`.
+    """
+    candidates = []
+    named = str((episode or {}).get("operation_id") or "")
+    if named:
+        candidates.append(named)
+    construction = ((episode or {}).get("executable") or {}).get(
+        "construction") or {}
+    for key in ("init_operation", "repair_operation"):
+        value = str(construction.get(key) or "")
+        if value:
+            candidates.append(value)
+    if not candidates or dsn is None:
+        return ""
+    with _read_conn(dsn) as conn:
+        rows = conn.execute(
+            "SELECT id FROM operations WHERE id = ANY(%s) AND settled",
+            (candidates,)).fetchall()
+        conn.commit()
+    settled = {row["id"] for row in rows}
+    for candidate in candidates:
+        if candidate in settled:
+            return candidate
+    return ""
+
+
+def _s09_effect_id(dsn: str, cid: str, seq: int) -> str:
+    """The effect identity already recorded for this boundary, or empty.
+
+    Read rather than computed, because a computed identity is the defect. A
+    boundary adopts an operation identity once, at the moment it admits an
+    effect, and a caller that arrives later reads the row instead of deriving
+    a second answer that could disagree with the first.
+    """
+    row = _s09_get(dsn, cid, seq)
+    return str((row or {}).get("effect_id") or "")
 
 
 def _s09_get(dsn: str, cid: str, seq: int):
@@ -281,7 +337,7 @@ def _s09_insert_accepted(dsn: str, cid: str, seq: int,
             " 'accepted', %s, 's09-m1')"
             " ON CONFLICT (investigation_id, seq) DO NOTHING",
             (cid, seq, _attempt_id(cid, seq),
-             _s09_effect_id(cid, seq), Json({}), Json({}),
+             "", Json({}), Json({}),
              Json({}), Json(decision), provenance))
         conn.commit()
 
@@ -293,6 +349,8 @@ def _s09_ensure_incorporated(dsn: str, cid: str, seq: int,
     from psycopg.types.json import Json
     payload = {"observation": observation, "episode": episode,
                "spend": spend, "decision": decision}
+    effect_id = _effect_operation_id(dsn, cid, episode or {})
+    payload["effect_operation_id"] = effect_id
     with _read_conn(dsn) as conn:
         conn.execute(
             "INSERT INTO s09_policy_state"
@@ -304,14 +362,19 @@ def _s09_ensure_incorporated(dsn: str, cid: str, seq: int,
             " 'incorporated', %s, 's09-m1')"
             " ON CONFLICT (investigation_id, seq) DO NOTHING",
             (cid, seq, _attempt_id(cid, seq),
-             _s09_effect_id(cid, seq), Json({}), Json({}),
+             effect_id, Json({}), Json({}),
              Json({}), Json(decision), Json(payload), provenance))
+        # The effect identity is settled by the table, so the UPDATE adopts it
+        # rather than restating it. `COALESCE` keeps a row that already
+        # admitted an operation on a resumed run, which is what makes a
+        # restart idempotent: the first run's identity is the identity.
         conn.execute(
             "UPDATE s09_policy_state SET status = 'incorporated',"
             " effect_record = COALESCE(effect_record, %s::jsonb),"
+            " effect_id = CASE WHEN effect_id = '' THEN %s ELSE effect_id END,"
             " updated_at = now()"
             " WHERE investigation_id = %s AND seq = %s",
-            (Json(payload), cid, seq))
+            (Json(payload), effect_id, cid, seq))
         conn.commit()
 
 
@@ -1147,6 +1210,18 @@ def _publish_boundary(dsn: str, cid: str, seq: int, task_id: str,
                          payload={"investigation_id": cid, "attempt_id": aid,
                                   "allocation_id": _alloc_id(cid),
                                   "composition": "ad01-boundary", "owner": cid}))
+    # The backward half of the effect -> observation arrow. This row already
+    # carried `seq`, `task_id` and `observation_id`, which is what let a reader
+    # bind the two sides by `(investigation_id, seq)` alone. It now carries the
+    # identity of the operation that produced the effect, so the row answers
+    # "which operation produced this observation" on its own.
+    #
+    # Read back from `s09_policy_state` rather than derived a second time, and
+    # empty when that row admits no operation, so this value and the effect row
+    # cannot disagree. A boundary that admitted no operation leaves both empty
+    # rather than one of them naming something.
+    effect_id = _s09_effect_id(dsn, cid, seq) or \
+        _effect_operation_id(dsn, cid, episode)
     made = store.submit_observation(
         dsn, Command(request_id="settle-%s" % aid,
                      payload={"attempt_id": aid,
@@ -1156,6 +1231,7 @@ def _publish_boundary(dsn: str, cid: str, seq: int, task_id: str,
                                           "observation": observation,
                                           "observation_id": observation[
                                               "observation_id"],
+                                          "operation_id": effect_id,
                                           "episode": episode,
                                           "spend": spend}}))
     if made.data["attempt_id"] != aid:

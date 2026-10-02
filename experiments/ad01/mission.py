@@ -443,16 +443,6 @@ def _entry(investigation_id: str, raw: dict) -> InFlightOperation:
     return InFlightOperation.from_json(investigation_id, dict(raw))
 
 
-def _replace(dsn: str, investigation_id: str,
-             operations: list[InFlightOperation]) -> None:
-    with connect(dsn) as conn:
-        conn.execute(
-            "UPDATE investigations SET in_flight = %s, updated_at = now()"
-            " WHERE id = %s",
-            (_j([item.as_json() for item in operations]), investigation_id))
-        conn.commit()
-
-
 def read_in_flight(dsn: str, investigation_id: str) -> list[InFlightOperation]:
     """Every operation this investigation still holds, whole.
 
@@ -536,9 +526,33 @@ def release_operation(dsn: str, investigation_id: str,
     An operation whose effect is recorded in `s09_policy_state.effect_record`
     is no longer in flight, and leaving it on the entry would make a later
     resume restore work that already ran.
+
+    The read and the write are one transaction under `FOR UPDATE`, as in
+    `admit_operation` and `resume_operation`. This used to read on one
+    connection, filter the attempt out in Python, and overwrite the column on
+    a second connection with no lock, which is a lost update against every
+    other writer of the same column: two boundaries of one campaign settling
+    at once each read the pre-settle list, and the second write restored the
+    first one's settled operation. That operation then reads back as still in
+    flight, and a later resume restores an effect that already ran. The
+    unlocked overwrite existed only to express this removal, so removing the
+    helper removed the unlocked path rather than adding a second guard to it.
     """
-    current = read_in_flight(dsn, investigation_id)
-    remaining = [item for item in current if item.attempt_id != attempt_id]
-    if len(remaining) == len(current):
-        return
-    _replace(dsn, investigation_id, remaining)
+    with connect(dsn) as conn:
+        row = conn.execute(
+            "SELECT in_flight FROM investigations WHERE id = %s FOR UPDATE",
+            (investigation_id,)).fetchone()
+        if row is None:
+            raise MissionRefused("no mission for investigation %r"
+                                 % investigation_id)
+        current = [_entry(investigation_id, raw)
+                   for raw in (row["in_flight"] or [])]
+        remaining = [item for item in current if item.attempt_id != attempt_id]
+        if len(remaining) == len(current):
+            conn.commit()
+            return
+        conn.execute(
+            "UPDATE investigations SET in_flight = %s, updated_at = now()"
+            " WHERE id = %s",
+            (_j([item.as_json() for item in remaining]), investigation_id))
+        conn.commit()

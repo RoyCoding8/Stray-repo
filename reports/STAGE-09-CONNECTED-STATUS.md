@@ -1,3 +1,11 @@
+> Historical batch report, cut at `34463a6` on a branch whose commits do not
+> resolve in the current repository. Current scoped status is reconciled in
+> [PROJECT-LEDGER.md](PROJECT-LEDGER.md) and
+> [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md). Read it
+> for what that campaign measured; its M3 verdict was superseded by the
+> 2026-10-01 batch, which returned acquisition NEGATIVE on a denominator of one
+> returned artifact.
+
 # Stage 9 connected study: status at the merged tip
 
 Against `34463a6` on `codex/implementation-investigation-learning-02`. Sixteen lanes, all
