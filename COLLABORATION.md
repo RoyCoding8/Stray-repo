@@ -10,8 +10,12 @@ Git carries the specification, implementation and written reviews. The human ini
 | `codex/implementation-s0-s3` | Implementation agent. Starts from the seed; receives implementation and review-fix commits. |
 | `codex/task-<task-id>` | One implementation specialist per task. Created in its own worktree; integrated only by the coordinator. |
 | `codex/review-s0-s3-01` | First reviewer branch, created from the exact implementation commit being reviewed. Contains review findings and any justified design clarifications. |
+| `codex/development-design-01` | Design role's roadmap and learning-model handoff, based on `be1730d`. Documentation only. |
+| `codex/implementation-development-01` | Implementation coordinator's bounded development episode. Integrates the design handoff and preserves the S0-S3 implementation lineage. |
 
 Increment the review suffix for subsequent passes. The review branch is not a second implementation line. Do not let two agents concurrently write the same branch.
+
+The current assignment is `WORKER-DEVELOPMENT-01-PROMPT.md`. Merge that design packet into the new implementation branch; do not automatically reopen completed S0-S3 review findings. Keep `docs/design/REFINEMENT-ROADMAP.md` current at handoff. For this stage, reviews distinguish experiment-blocking defects, controlled prototype limitations and later operational qualification. A positive learning result is not an acceptance requirement.
 
 The human authorizes parallel implementation specialists. [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) defines task contracts, worktrees, isolated test resources, shared-file ownership, internal review and integration gates. This document governs the external implementation/reviewer exchange. The integration coordinator remains responsible for the complete result produced by its specialists.
 

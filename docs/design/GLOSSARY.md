@@ -1,6 +1,6 @@
 # Settlement conceptual redesign
 
-Vocabulary for [the selected conceptual redesign](REFINED-ARCHITECTURE.md). This glossary belongs only to this isolated design pass. The existing implementation and its earlier glossary have not been migrated to these meanings.
+Vocabulary for [the selected architecture](REFINED-ARCHITECTURE.md) and [learning model](LEARNING-MODEL.md). These are domain meanings; implementation and empirical status are tracked separately in [the roadmap](REFINEMENT-ROADMAP.md).
 
 ## Language
 
@@ -23,6 +23,20 @@ _Avoid_: Capability tier when referring to demonstrated competence.
 **Learning**: An evidence-supported, durable change that improves subsequent competence or resource efficiency within a stated scope.
 
 **Development**: A change in the repertoire or organization through which the Settlement solves problems and learns. A developmental change is not necessarily beneficial.
+
+**Development episode**: A bounded investigation into a proposed change in future behavior, connecting triggering experience, candidate construction, comparison and disposition. Completing an episode does not imply a learning gain.
+
+**Method**: A procedure transforming admissible inputs into outcomes or informative failure. Its operational form can be deterministic, model-assisted or a composition.
+
+**Representation**: A language or structure with a stated interpretation that makes operations available on a problem. Its validity and the range of problems it can express are separate questions.
+
+**Cognitive policy**: A procedure choosing actions, methods, context or allocations from permitted alternatives. Its effectiveness is judged by the downstream consequences of those choices.
+
+**Applicability**: The conditions under which a capability is suitable for a proposed use. Support, contradiction and uncertainty about those conditions are distinct.
+
+**Acquisition cost**: Resources consumed to develop, check, select and retain a change, including failed candidates. It is distinct from the resources consumed by subsequent use.
+
+**Subsequent use**: A later attempt using retained behavior, with its own task, conditions and outcome. Fresh-worker invocation establishes continuity; comparative outcomes are needed to establish benefit.
 
 **Investigation**: A persistent pursuit of an objective or question, including its alternatives, observations, obligations, and stopping conditions.
 

@@ -23,8 +23,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from psycopg.rows import dict_row
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from . import agenda, broker, steward, store
-from .common import Command, CommandResult, ConflictPayload, ResultCode
+from . import agenda, broker, steward, store, trials
+from .common import Command, CommandResult, ConflictPayload, ResultCode, SettlementError
 
 HERE = Path(__file__).resolve().parent.parent.parent
 T5_PROBES = ("trial_protocols", "trial_assignments", "trial_results",
@@ -183,7 +183,8 @@ def learning_data(dsn: str) -> dict[str, Any]:
     hypotheses = _rows(dsn, "SELECT * FROM derivations ORDER BY id LIMIT 100") \
         if table_present(dsn, "derivations") else []
     if not state["installed"]:
-        return {"t5": state, "pending": True, "hypotheses": hypotheses, "comparisons": []}
+        return {"t5": state, "pending": True, "hypotheses": hypotheses,
+                "comparisons": [], "episodes": []}
     protocols = _rows(dsn, "SELECT id, candidate_version, reference_version, evaluator_version,"
                             " exclusions, uncertainty FROM trial_protocols ORDER BY id LIMIT 50")
     pids = [p["id"] for p in protocols]
@@ -216,7 +217,114 @@ def learning_data(dsn: str) -> dict[str, Any]:
                              " ORDER BY version_id LIMIT 100")
     routers = _rows(dsn, "SELECT version FROM router_policies ORDER BY version LIMIT 100")
     return {"t5": state, "pending": False, "hypotheses": hypotheses, "comparisons": comparisons,
-            "releases": releases, "quarantined": quarantined, "router_policies": routers}
+            "releases": releases, "quarantined": quarantined, "router_policies": routers,
+            "episodes": episode_data(dsn)["episodes"]}
+
+
+EPISODE_SUFFIXES = ("-dev", "-panel-B", "-panel-C", "-transfer-B", "-transfer-C")
+
+
+def _episode_prefix(pid: str) -> str:
+    for suffix in EPISODE_SUFFIXES:
+        if pid.endswith(suffix):
+            return pid[: -len(suffix)]
+    return pid
+
+
+def _episode_summary(dsn: str, prefix: str, protocols: list[dict]) -> dict[str, Any]:
+    pids = [p["id"] for p in protocols]
+    pending = _rows(dsn, "SELECT COUNT(*) AS n FROM trial_assignments a"
+                         " LEFT JOIN trial_results r ON r.assignment_id = a.id"
+                         " WHERE a.protocol_id = ANY(%s) AND r.outcome IS NULL",
+                    (pids,))[0]["n"]
+    outcomes = _rows(dsn, "SELECT a.protocol_id, a.arm, r.outcome, COUNT(*) AS n"
+                          " FROM trial_assignments a LEFT JOIN trial_results r"
+                          " ON r.assignment_id = a.id"
+                          " WHERE a.protocol_id = ANY(%s)"
+                          " GROUP BY a.protocol_id, a.arm, r.outcome"
+                          " ORDER BY a.protocol_id, a.arm", (pids,))
+    by_protocol: dict[str, dict[str, dict[str, int]]] = {}
+    for row in outcomes:
+        by_protocol.setdefault(row["protocol_id"], {}).setdefault(
+            row["arm"], {})[str(row["outcome"])] = int(row["n"])
+    spend = _rows(dsn, "SELECT protocol_id, category, SUM(amount) AS amount"
+                       " FROM expenditure_ledger WHERE protocol_id = ANY(%s)"
+                       " GROUP BY protocol_id, category ORDER BY protocol_id, category",
+                  (pids,))
+    by_spend: dict[str, dict[str, int]] = {}
+    for row in spend:
+        by_spend.setdefault(row["protocol_id"], {})[row["category"]] = int(row["amount"])
+    verdicts: dict[str, dict[str, Any]] = {}
+    for pid in pids:
+        try:
+            verdicts[pid] = trials.verdict(dsn, pid)
+        except SettlementError:
+            verdicts[pid] = {"protocol_id": pid, "label": "incomplete"}
+    receipts = _rows(dsn, "SELECT assignment_id, result FROM evaluator_receipts"
+                          " ORDER BY id LIMIT 1000")
+    simulated = any(str(r["assignment_id"]).startswith(prefix)
+                    and isinstance(r["result"], dict)
+                    and r["result"].get("simulated") for r in receipts)
+    lineage = _rows(dsn, "SELECT id, family, hypothesis, reference_version,"
+                         " artifact_digest, protocol_id FROM capability_versions"
+                         " WHERE protocol_id = ANY(%s) ORDER BY id LIMIT 50", (pids,))
+    releases = _rows(dsn, "SELECT id, disposition, versions, fallback, policy_version"
+                          " FROM capability_releases WHERE protocol_id = ANY(%s)"
+                          " ORDER BY id LIMIT 50", (pids,))
+    routers = _rows(dsn, "SELECT version, mapping FROM router_policies"
+                         " ORDER BY version LIMIT 20")
+    compare_pids = [p for p in pids if not p.endswith("-dev")]
+    if int(pending) > 0:
+        phase = "awaiting-outcomes"
+        next_decision = ("record every assigned outcome before comparison;"
+                         " no verdict is drawn from partial assignments")
+    elif not compare_pids:
+        phase = "development"
+        next_decision = ("freeze the protected-eval panel and compare A/B/C"
+                         " before any disposition")
+    elif releases:
+        phase = f"disposed-{releases[0]['disposition']}"
+        next_decision = (f"use routes via {releases[0]['policy_version']}"
+                         f" with fallback {releases[0]['fallback']};"
+                         " contradiction narrows eligibility under existing rules")
+    elif simulated:
+        phase = "compared-simulated"
+        next_decision = ("fixture evidence only: re-run the live entry point for"
+                         " promotable evidence; incumbent baseline-v0 stays selected")
+    elif any(v.get("label") == "observed-gain" for v in verdicts.values()):
+        phase = "compared-awaiting-disposition"
+        next_decision = ("dispose: limited release with fallback baseline-v0,"
+                         " or record rejection with reopening conditions")
+    else:
+        phase = "compared-no-gain"
+        next_decision = ("retain incumbent baseline-v0;"
+                         " keep scoped negative evidence discoverable")
+    return {"prefix": prefix, "phase": phase, "next_decision": next_decision,
+            "simulated": simulated, "pending_outcomes": int(pending),
+            "protocols": [{"protocol_id": p["id"],
+                           "candidate_version": p["candidate_version"],
+                           "reference_version": p["reference_version"],
+                           "evaluator_version": p["evaluator_version"],
+                           "frozen": p["frozen"],
+                           "arms": by_protocol.get(p["id"], {}),
+                           "verdict": verdicts[p["id"]].get("label"),
+                           "expenditure": by_spend.get(p["id"], {})}
+                          for p in protocols],
+            "lineage": lineage, "releases": releases, "router_policies": routers}
+
+
+def episode_data(dsn: str) -> dict[str, Any]:
+    state = t5_state(dsn)
+    if not state["installed"]:
+        return {"t5": state, "episodes": []}
+    protocols = _rows(dsn, "SELECT id, candidate_version, reference_version,"
+                            " evaluator_version, frozen, exclusions, uncertainty"
+                            " FROM trial_protocols ORDER BY id LIMIT 100")
+    groups: dict[str, list[dict]] = {}
+    for proto in protocols:
+        groups.setdefault(_episode_prefix(proto["id"]), []).append(proto)
+    return {"t5": state, "episodes": [_episode_summary(dsn, prefix, groups[prefix])
+                                     for prefix in sorted(groups)]}
 
 
 def evidence_data(dsn: str) -> dict[str, Any]:

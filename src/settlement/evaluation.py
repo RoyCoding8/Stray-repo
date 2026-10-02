@@ -54,6 +54,20 @@ def register_evaluator(dsn: str, cmd: Command, evaluator_id: str, version: str,
 def propose_hidden_answer(dsn: str, cmd: Command, task_id: str,
                           answer: dict) -> CommandResult:
     claim_id = f"{ANSWER_PREFIX}{task_id}"
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT proposition FROM claims WHERE id = %s",
+                        (claim_id,))
+            row = cur.fetchone()
+            conn.commit()
+    if row is not None:
+        if dict(row["proposition"] or {}) == {"task_id": task_id, **answer}:
+            return CommandResult(code=ResultCode.ALREADY_APPLIED,
+                                 request_id=cmd.request_id,
+                                 detail=f"hidden answer {claim_id} already present",
+                                 data={"claim_id": claim_id})
+        raise SettlementError(
+            f"hidden answer {claim_id} already records different content")
     sub = Command(request_id=f"{cmd.request_id}:answer:{task_id}",
                   payload={"claim_id": claim_id})
     return evidence.propose_claim(dsn, sub, claim_id, {"task_id": task_id, **answer},

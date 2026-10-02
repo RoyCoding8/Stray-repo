@@ -138,6 +138,8 @@ The launcher installs the hard execution deadline in host supervision outside th
 
 ## 10. Candidate, trial, and release protocol
 
+The [learning model](LEARNING-MODEL.md) refines this protocol into one bounded development episode and adds DEV-01 through DEV-12 for the next worker assignment. Its seed policy and two-stage evaluation freeze preserve LEARN-1 through LEARN-9. Overall design/build status is maintained in [the roadmap](REFINEMENT-ROADMAP.md).
+
 **LEARN-1.** A candidate record binds reference version, proposed change, causal hypothesis, scope, dependencies, trial protocol, and allocated development budget. A generated program is untrusted until run through the admitted execution profile; publication is not release.
 
 **LEARN-2.** Freeze an explicit task selection and evaluation protocol before scoring. Separate development examples, visible regression tasks, and protected evaluation assignments. Store hidden answers outside candidate access. All task generators and evaluators have versions and access policies; a candidate cannot write its own successful receipt.

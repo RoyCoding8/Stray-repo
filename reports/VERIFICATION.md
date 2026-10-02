@@ -143,3 +143,38 @@ the DSN database name to contain `settlement_t1broker`; they create and use
   across the program under parallel load; passes alone and in full-suite reruns.
 - T6 reported one full-suite-only failure it could not reproduce; same signature
   family (timing under load), no open defect.
+- `test_stop_uses_kill_fallback_and_clears_tracking`: failed once in the
+  Development-01 full-suite run; 4/4 passes in isolation. Timing-sensitive
+  kill fallback under parallel load; no open defect.
+
+## Development-01 episode (tested code revision `5a2ed91`)
+
+Full-suite command (real PostgreSQL 16.15, real subprocesses, shim docker
+runtime for launcher paths, fake/simulated models only):
+
+```
+SETTLEMENT_TEST_DSN="postgresql://ubuntu@/settlement_t1broker?host=/var/run/postgresql" \
+PYTHONPATH=<worktree>/src:<worktree>/experiments:<worktree>/tests \
+  .venv/bin/python -m pytest tests/ reviews/probes/ -q
+```
+
+Result: **484 passed, 0 failed** (no `lastfailed`; warnings summary printed
+at end of session, so the run completed). The 2 failures seen on `f3318f8`
+are both resolved: the kill-fallback load flake (green in this run) and the
+stale 0007 manifest pin (fixed in `5a2ed91`). Targeted greens on the final
+tree: `test_dev01_episode.py` 12 passed, `test_dev01_ops.py` +
+`test_s3_evaluation.py` 13 passed. Deterministic entry proven end-to-end on
+scratch DBs: fresh `devep-run-01` and repeat `devep-int-05` on a used DB;
+bound episode ids refuse re-run.
+
+Wall-time anatomy (~11 min serial): single process, no xdist (the shared
+truncate fixture assumes one DB); real PostgreSQL round-trips per test with
+per-test migration re-runs in the newer files; real subprocesses and real
+sleeps on timeout/kill paths. Sampled: `tests/test_r02_exec.py`, 16 passed
+in 6.71s, slowest `test_supervisor_terminates_container_after_broker_death`
+4.78s (real process supervision). Follow-up: shard the suite across
+disposable DBs so truncate fixtures parallelize.
+
+Still unverified: live model run (no endpoint/key/grant in this
+environment), empirical learning comparison, real runsc containment,
+PostgreSQL 18.

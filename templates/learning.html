@@ -14,6 +14,15 @@
 <h2>router policies</h2>
 <ul>{% for p in view.router_policies %}<li>{{ p.version }}</li>{% endfor %}</ul>
 {% endif %}
+<h2>episodes</h2>
+{% if view.episodes %}{% for e in view.episodes %}<h3>episode {{ e.prefix }}</h3>
+<p>phase: {{ e.phase }} | next decision: {{ e.next_decision }} | simulated evidence: {{ e.simulated }}</p>
+<ul>{% for p in e.protocols %}<li>{{ p.protocol_id }}: {{ p.candidate_version }} vs {{ p.reference_version }} | verdict {{ p.verdict }} | arms {{ p.arms }} | spend {{ p.expenditure }}</li>{% endfor %}</ul>
+<h4>lineage</h4>
+<ul>{% for v in e.lineage %}<li>{{ v.id }} (family {{ v.family }}, protocol {{ v.protocol_id }}): {{ v.hypothesis }}</li>{% endfor %}</ul>
+<h4>disposition</h4>
+<ul>{% for r in e.releases %}<li>{{ r.id }}: {{ r.disposition }} via {{ r.policy_version }} (fallback: {{ r.fallback }})</li>{% endfor %}</ul>
+{% endfor %}{% else %}<p>no frozen episode protocols recorded</p>{% endif %}
 <h2>unsupported hypotheses</h2>
 <ul>{% for h in view.hypotheses %}<li>{{ h.id }}: {{ h.result }} (untested, not a gain claim)</li>{% endfor %}</ul>
 {% endblock %}

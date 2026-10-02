@@ -31,6 +31,14 @@ Base commit: `be7956d`. Integration branch: `codex/implementation-s0-s3`.
   probe correspondence in `reviews/probes/test_review_03.py` header. Remaining
   open gates: live DBOS-executor backup interleaving, real runsc containment
   (writable output/scratch limits), live inference billing, PG18.
+- DEVELOPMENT-01 episode: durable lifecycle (`development.py`, migration
+  `0007`), broker-routed constructor, apply-then-grade check, frozen
+  splits, honest A/B/C, release/reject paths, operator view, one entry
+  point driving the lifecycle with the bound candidate injected into the
+  comparison (C invokes the exact bound bytes). Deterministic slice
+  proven end-to-end (fresh and repeat DB runs); live run blocked on model
+  access. Evidence in `reports/DEVELOPMENT-01.md`; decisions D-018..D-020.
+  Full-suite count in `reports/VERIFICATION.md` (Development-01 section).
 
 ## Entry points
 
