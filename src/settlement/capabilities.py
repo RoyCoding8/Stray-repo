@@ -77,16 +77,21 @@ def _extract_entry(artifacts_root: str | Path, digest: str) -> tuple[str, bytes,
 
     if hashlib.sha256(raw).hexdigest() != digest:
         raise SettlementError(f"capability artifact {digest[:12]} bytes do not match their digest")
-    package = json.loads(raw.decode())
-    files = {rel: bytes.fromhex(hexed) for rel, hexed in package["files"].items()}
-    manifest = package["manifest"]
-    entries = [e for e in manifest.get("files", []) if e.get("kind", "file") != "dir"]
-    if not entries:
-        raise SettlementError("capability artifact has no executable entry")
-    named = manifest.get("entry")
-    entry = next((e for e in entries if e["path"] == named),
-                 next(e for e in entries if e["path"].endswith(".py")))
-    return entry["path"], files[entry["path"]], list(manifest.get("verify_args", ["--selftest"]))
+    try:
+        package = json.loads(raw.decode())
+        files = {rel: bytes.fromhex(hexed) for rel, hexed in package["files"].items()}
+        manifest = package["manifest"]
+        entries = [e for e in manifest.get("files", []) if e.get("kind", "file") != "dir"]
+        if not entries:
+            raise SettlementError("capability artifact has no executable entry")
+        named = manifest.get("entry")
+        entry = next((e for e in entries if e["path"] == named),
+                     next(e for e in entries if e["path"].endswith(".py")))
+        return entry["path"], files[entry["path"]], list(manifest.get("verify_args", ["--selftest"]))
+    except SettlementError:
+        raise
+    except (ValueError, KeyError, StopIteration) as exc:
+        raise SettlementError(f"capability artifact {digest[:12]} has no loadable entry: {exc}")
 
 
 def _verified_op(dsn: str, launcher: Any, allocation_id: str, entry_rel: str,

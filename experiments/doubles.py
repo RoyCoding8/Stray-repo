@@ -56,7 +56,12 @@ class ScriptedDouble(GatewayAdapter):
             return GatewayError("protocol", "scripted double needs JSON arm/task_id",
                                 False, request.operation_id)
         self.calls.append({"arm": arm, "task_id": task_id})
-        code = (self.fixes if self.competence.get((arm, task_id)) else self.broken)[task_id]
+        table = self.fixes if self.competence.get((arm, task_id)) else self.broken
+        if task_id not in table:
+            return GatewayError("protocol",
+                                f"scripted double has no fixture for {arm}/{task_id}",
+                                False, request.operation_id)
+        code = table[task_id]
         return ModelResponse(request.operation_id, code,
                              {"simulated": True, "arm": arm, "task_id": task_id},
                              Usage(input_tokens=50, output_tokens=120,

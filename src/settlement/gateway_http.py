@@ -20,6 +20,9 @@ from .gateway import (
 )
 
 CONTRACT = "settlement-gateway/http-chat-completions-v1"
+RESPONSES_CONTRACT = "settlement-gateway/http-responses-v1"
+
+APIS = ("chat", "responses")
 
 _CANCELLATION_REQUESTED = "requested"
 _CANCELLATION_CONFIRMED = "confirmed"
@@ -35,6 +38,31 @@ def _error(kind: GatewayErrorKind, message: str, retryable: bool, operation_id: 
     return GatewayError(kind, message, retryable, operation_id)
 
 
+def gateway_timeout_overrides() -> dict[str, int]:
+    def ms(name: str, default: int) -> int:
+        raw = os.environ.get(name, "")
+        if not raw:
+            return default
+        try:
+            value = int(raw)
+        except ValueError:
+            raise ValueError(f"{name}={raw!r} is not an integer")
+        if value <= 0:
+            raise ValueError(f"{name}={raw!r} must be a positive integer")
+        return value
+
+    return {"timeout_connect_ms": ms("SETTLEMENT_GATEWAY_TIMEOUT_CONNECT_MS", 5_000),
+            "timeout_read_ms": ms("SETTLEMENT_GATEWAY_TIMEOUT_READ_MS", 60_000),
+            "timeout_total_ms": ms("SETTLEMENT_GATEWAY_TIMEOUT_TOTAL_MS", 300_000)}
+
+
+def _responses_input(messages: tuple[dict[str, Any], ...]) -> Any:
+    if len(messages) == 1 and isinstance(messages[0].get("content"), str):
+        return messages[0]["content"]
+    return [{"role": message.get("role", "user"), "content": message.get("content", "")}
+            for message in messages]
+
+
 class HttpGatewayAdapter(GatewayAdapter):
     def __init__(
         self,
@@ -45,9 +73,13 @@ class HttpGatewayAdapter(GatewayAdapter):
         timeout_write_ms: int | None = None,
         timeout_total_ms: int = 300_000,
         client: httpx.Client | None = None,
+        api: str = "chat",
     ) -> None:
+        if api not in APIS:
+            raise ValueError(f"unknown gateway api {api!r}: expected one of {APIS}")
         self.endpoint = endpoint.rstrip("/")
         self.api_key = api_key
+        self.api = api
         self.timeouts = {
             "connect": timeout_connect_ms / 1000,
             "read": timeout_read_ms / 1000,
@@ -61,15 +93,18 @@ class HttpGatewayAdapter(GatewayAdapter):
         self._cancel_confirmed: set[str] = set()
 
     @classmethod
-    def from_settings(cls, settings: Settings, api_key: str | None = None) -> "HttpGatewayAdapter":
+    def from_settings(cls, settings: Settings, api_key: str | None = None,
+                      api: str | None = None) -> "HttpGatewayAdapter":
         gateway: GatewayConfig = settings.gateway
         key = api_key if api_key is not None else os.environ.get(gateway.api_key_env, "")
+        shape = api if api is not None else os.environ.get("SETTLEMENT_GATEWAY_API", "chat")
         return cls(
             endpoint=gateway.endpoint,
             api_key=key,
             timeout_connect_ms=gateway.timeout_connect_ms,
             timeout_read_ms=gateway.timeout_read_ms,
             timeout_total_ms=gateway.timeout_total_ms,
+            api=shape,
         )
 
     def _headers(self) -> dict[str, str]:
@@ -178,11 +213,20 @@ class HttpGatewayAdapter(GatewayAdapter):
             return _error(
                 GatewayErrorKind.TIMEOUT, "deadline already expired", False, request.operation_id
             )
-        payload = {
-            "model": request.model,
-            "messages": list(request.messages),
-            "max_tokens": request.max_output_tokens,
-        }
+        if self.api == "responses":
+            url = f"{self.endpoint}/responses"
+            payload = {
+                "model": request.model,
+                "input": _responses_input(request.messages),
+                "max_output_tokens": request.max_output_tokens,
+            }
+        else:
+            url = f"{self.endpoint}/chat/completions"
+            payload = {
+                "model": request.model,
+                "messages": list(request.messages),
+                "max_tokens": request.max_output_tokens,
+            }
         started = time.monotonic()
         deadline = started + budget_s
         timeout = self._http_timeout(budget_s)
@@ -195,7 +239,7 @@ class HttpGatewayAdapter(GatewayAdapter):
                 client, owned = self._client_for(timeout)
                 try:
                     with client.stream(
-                        "POST", f"{self.endpoint}/chat/completions",
+                        "POST", url,
                         headers=self._headers(), json=payload, timeout=timeout,
                     ) as streamed:
                         if resigned.is_set() or request.operation_id in self._cancelled:
@@ -228,7 +272,16 @@ class HttpGatewayAdapter(GatewayAdapter):
 
         worker = threading.Thread(target=_work, daemon=True)
         worker.start()
-        finished.wait(timeout=max(deadline - time.monotonic(), 0))
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            if request.operation_id in self._cancelled:
+                outcome["cancelled"] = True
+                break
+            finished.wait(timeout=min(0.05, remaining))
+            if finished.is_set():
+                break
         resigned.set()
         if "raised" in outcome:
             raise outcome["raised"]
@@ -261,10 +314,9 @@ class HttpGatewayAdapter(GatewayAdapter):
         body = outcome["body"]
         if status != 200:
             return self._status_error(status, request.operation_id)
+        if self.api == "responses":
+            return self._decode_responses_body(body, request.operation_id)
         return self._decode_body(body, request.operation_id)
-
-    def _decode(self, response: httpx.Response, operation_id: str) -> ModelResponse | GatewayError:
-        return self._decode_body(response.content, operation_id)
 
     def _decode_body(self, raw: bytes, operation_id: str) -> ModelResponse | GatewayError:
         try:
@@ -344,6 +396,92 @@ class HttpGatewayAdapter(GatewayAdapter):
             },
             usage=usage,
             stop_reason=str(stop),
+        )
+
+    def _decode_responses_body(self, raw: bytes, operation_id: str) -> ModelResponse | GatewayError:
+        try:
+            body: Any = json.loads(raw)
+        except ValueError:
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway returned non-JSON body", False, operation_id
+            )
+        if not isinstance(body, dict):
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway returned malformed body", False, operation_id
+            )
+        status = body.get("status", "")
+        if status == "failed":
+            error = body.get("error")
+            detail = error.get("message") if isinstance(error, dict) else error
+            return _error(
+                GatewayErrorKind.PROTOCOL, f"gateway responses call failed: {detail}", False,
+                operation_id,
+            )
+        pieces: list[str] = []
+        output = body.get("output") or []
+        if isinstance(output, list):
+            for item in output:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("type") == "message" or isinstance(item.get("text"), str):
+                    for part in item.get("content") or []:
+                        if not isinstance(part, dict):
+                            continue
+                        if isinstance(part.get("text"), str):
+                            pieces.append(part["text"])
+                        elif part.get("type") == "refusal" \
+                                and isinstance(part.get("refusal"), str):
+                            pieces.append(part["refusal"])
+                    if isinstance(item.get("text"), str):
+                        pieces.append(item["text"])
+        text = "".join(pieces)
+        if not text:
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway responses output has no text", False,
+                operation_id,
+            )
+        usage_raw = body.get("usage")
+        if not isinstance(usage_raw, dict):
+            usage_raw = {}
+        try:
+            input_tokens = int(usage_raw.get("input_tokens", 0))
+            output_tokens = int(usage_raw.get("output_tokens", 0))
+        except (TypeError, ValueError):
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway returned non-numeric usage", False,
+                operation_id,
+            )
+        usage = Usage(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            charge_units=0,
+            charge_scale=1000,
+            provider_enforced_ceiling=False,
+            billed=False,
+        )
+        if status == "completed":
+            stop: str = "stop"
+        elif status == "incomplete":
+            reason = (body.get("incomplete_details") or {}).get("reason", "")
+            stop = "length" if reason == "max_output_tokens" else f"incomplete-{reason}"
+        elif status == "cancelled":
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway responses call cancelled", False,
+                operation_id,
+            )
+        else:
+            stop = str(status) if status else "stop"
+        return ModelResponse(
+            operation_id=operation_id,
+            text=text,
+            model_meta={
+                "adapter": "http",
+                "contract": RESPONSES_CONTRACT,
+                "endpoint": self.endpoint,
+                "model": body.get("model", ""),
+            },
+            usage=usage,
+            stop_reason=stop,
         )
 
     def cancel(self, operation_id: str) -> bool:

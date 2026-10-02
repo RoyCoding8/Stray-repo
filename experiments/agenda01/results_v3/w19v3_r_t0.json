@@ -1,0 +1,1637 @@
+{
+  "arm": "R",
+  "backend": "AgendaBackend",
+  "complete": true,
+  "db": "agenda01_w19v3_r_t0",
+  "drained_products": [],
+  "end_reason": "horizon",
+  "family": 4,
+  "files": {
+    "checker.py": "c7c72ac7f8f424145d06e4a56abd57156f961c35b835700e0cc41da90acb2cc0",
+    "grader.py": "3d688c7755d51c3fed10c9bda6805f1d5a723fb8eb7ae920112874235bda4017",
+    "launcher.py": "cc901ef44430dd694f8583419e02bbd6152a8be3bb64c0e892e3db7013e7b191",
+    "manifest.py": "cafd0f183828a1907af6d083d63965cb0c09fa720a2534bbba60984e410bada1",
+    "observations.py": "0dbbe576684ce25fb6eaebbb31e7ccfc6df181db7cdc031aa60b76d223cb4e72",
+    "panel.py": "d61ea08cbf65452239e0656afba362cee3c5b338b88b52080489f1a88a786732",
+    "replay.py": "b6f6b3e4e09f615597a85798f73f7814b61c93a23ac761f357b1ac3164069386",
+    "runner.py": "1530be4aec2a152b668f6c7162f3ab0b322893402c18eaacbcd24cfd9e8e7c85",
+    "worlds.py": "5332f209fa8e9085f013fdad22902d194e2a2232808c9d02730aa06a7a8dbfd2"
+  },
+  "grade": {
+    "correct": 5,
+    "eval_cost": 8,
+    "per_task": {
+      "w19-t0": {
+        "answer": false,
+        "correct": true
+      },
+      "w19-t1": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w19-t2": {
+        "answer": false,
+        "correct": true
+      },
+      "w19-t3": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w19-t4": {
+        "answer": true,
+        "correct": true
+      },
+      "w19-t5": {
+        "answer": false,
+        "correct": true
+      },
+      "w19-t6": {
+        "answer": true,
+        "correct": true
+      },
+      "w19-t7": {
+        "answer": "unknown",
+        "correct": false
+      }
+    },
+    "total": 8
+  },
+  "ledger": {
+    "allocations": [
+      {
+        "authorized": 88,
+        "consumed": 0,
+        "id": "ag01:w19v3_r_t0",
+        "parent_id": null,
+        "reserved": 0
+      },
+      {
+        "authorized": 8,
+        "consumed": 8,
+        "id": "ag01:w19v3_r_t0:eval",
+        "parent_id": "ag01:w19v3_r_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 64,
+        "consumed": 44,
+        "id": "ag01:w19v3_r_t0:explore",
+        "parent_id": "ag01:w19v3_r_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 16,
+        "consumed": 0,
+        "id": "ag01:w19v3_r_t0:recovery",
+        "parent_id": "ag01:w19v3_r_t0",
+        "reserved": 0
+      }
+    ],
+    "conflicts": 0,
+    "cursor": {
+      "dep_versions": {
+        "d0": 2,
+        "d1": 1
+      },
+      "epoch": 24,
+      "rotation": 24,
+      "tick": 24
+    },
+    "decisions": [
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-n1"
+        ],
+        "selection": {
+          "attempt_id": "att-s-n1-n1",
+          "cost": 2,
+          "input_digest": "7f1e27f079d37bedacc97c4e67544ea7bace0026c03ba26f043fceca20724734",
+          "kind": "initial",
+          "option_id": "s-n1",
+          "option_revision": 1,
+          "ownership_generation": 1,
+          "policy_version": "AG01-R-1",
+          "probe": "n1"
+        },
+        "tick": 1
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m0"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m0-m0",
+          "cost": 2,
+          "input_digest": "57e032dc327056b90638d775f04ce440da6e0443638ff465d1c23bdfa9c87c09",
+          "kind": "initial",
+          "option_id": "s-m0",
+          "option_revision": 1,
+          "ownership_generation": 2,
+          "policy_version": "AG01-R-1",
+          "probe": "m0"
+        },
+        "tick": 2
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m2"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m2-m2",
+          "cost": 2,
+          "input_digest": "0302167606fa6a531da0eccdc05d5b7a4a0aff918dc0f0910c3dc61e8d85bd6d",
+          "kind": "initial",
+          "option_id": "s-m2",
+          "option_revision": 1,
+          "ownership_generation": 3,
+          "policy_version": "AG01-R-1",
+          "probe": "m2"
+        },
+        "tick": 3
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m6"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m6-m6",
+          "cost": 2,
+          "input_digest": "a55df67fb1a5fe8a2dc72d8998257582a4d57a48afa73f3cbf1bb4f4c24f46dd",
+          "kind": "initial",
+          "option_id": "s-m6",
+          "option_revision": 1,
+          "ownership_generation": 4,
+          "policy_version": "AG01-R-1",
+          "probe": "m6"
+        },
+        "tick": 4
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 5
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 6
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 7
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 8
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-n1"
+        ],
+        "selection": {
+          "attempt_id": "att-s-n1-n1-1",
+          "cost": 2,
+          "input_digest": "00fd052fe40e6d33d0c3f43603178dbf37a161cd6b5dad41b36a46f19ed4db5f",
+          "kind": "initial",
+          "option_id": "s-n1",
+          "option_revision": 1,
+          "ownership_generation": 5,
+          "policy_version": "AG01-R-1",
+          "probe": "n1"
+        },
+        "tick": 9
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m0"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m0-m0-1",
+          "cost": 2,
+          "input_digest": "05a9efe890118bae81a40c5c14cacac6b2ca527faccaba7d225e2a5552ff5596",
+          "kind": "initial",
+          "option_id": "s-m0",
+          "option_revision": 1,
+          "ownership_generation": 6,
+          "policy_version": "AG01-R-1",
+          "probe": "m0"
+        },
+        "tick": 10
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m2"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m2-m2-1",
+          "cost": 2,
+          "input_digest": "cd04739f4768b091031eee0a250efba64500baff2e102aaa13660d3536ff0405",
+          "kind": "initial",
+          "option_id": "s-m2",
+          "option_revision": 1,
+          "ownership_generation": 7,
+          "policy_version": "AG01-R-1",
+          "probe": "m2"
+        },
+        "tick": 11
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m6"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m6-m6-1",
+          "cost": 2,
+          "input_digest": "87e02f45949bffb500ff6eeb1f5dcc78df5ffa8f73969bb597c099d3edd2c1e5",
+          "kind": "initial",
+          "option_id": "s-m6",
+          "option_revision": 1,
+          "ownership_generation": 8,
+          "policy_version": "AG01-R-1",
+          "probe": "m6"
+        },
+        "tick": 12
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-n2"
+        ],
+        "selection": {
+          "attempt_id": "att-s-n2-n2",
+          "cost": 4,
+          "input_digest": "c343101a9926183587efac6d60881a3de621e6fbe4689e929efe0b3c92bcb994",
+          "kind": "initial",
+          "option_id": "s-n2",
+          "option_revision": 1,
+          "ownership_generation": 9,
+          "policy_version": "AG01-R-1",
+          "probe": "n2"
+        },
+        "tick": 13
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 14
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 15
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 16
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 17
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 18
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 19
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 20
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 21
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 22
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 23
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 24
+      }
+    ],
+    "links": [
+      {
+        "attempt_id": "att-s-m0-m0",
+        "effect_identity": "64a74eaa092622f227f8cde1fcabfdf27cf0e28d73d66e38a8e4f563dc03a61b",
+        "intended_decision": "execute-m0",
+        "operation_id": "ag01:w19v3_r_t0:probe:2",
+        "option_id": "s-m0",
+        "probe": "m0",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:2:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m0-m0-1",
+        "effect_identity": "293af3c97c16cae3a1ecfd1b1d0dbcafd84cbf964e9f33570789d5b251c3a6a0",
+        "intended_decision": "execute-m0",
+        "operation_id": "ag01:w19v3_r_t0:probe:10",
+        "option_id": "s-m0",
+        "probe": "m0",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:10:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m2-m2",
+        "effect_identity": "03ca155a72c0bcf8bb3d585a964cee03d98e04e9b7b061a30de229ce610ae2aa",
+        "intended_decision": "execute-m2",
+        "operation_id": "ag01:w19v3_r_t0:probe:3",
+        "option_id": "s-m2",
+        "probe": "m2",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:3:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m2-m2-1",
+        "effect_identity": "7fddc896c3d6043a67d4d51b49d0813c9f2f0c3c344e1af2e816c2fcc961288b",
+        "intended_decision": "execute-m2",
+        "operation_id": "ag01:w19v3_r_t0:probe:11",
+        "option_id": "s-m2",
+        "probe": "m2",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:11:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m6-m6",
+        "effect_identity": "4d5ac6d6383007882108b25eb33fa1eff2fbdb0396b0e5ccc132a045daf5bc8e",
+        "intended_decision": "execute-m6",
+        "operation_id": "ag01:w19v3_r_t0:probe:4",
+        "option_id": "s-m6",
+        "probe": "m6",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:4:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m6-m6-1",
+        "effect_identity": "af563146efecc67c9f2c66490f34801abec04d12ea2d655fa0713e4aaadd60a9",
+        "intended_decision": "execute-m6",
+        "operation_id": "ag01:w19v3_r_t0:probe:12",
+        "option_id": "s-m6",
+        "probe": "m6",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:12:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-n1-n1",
+        "effect_identity": "3b2d6d7c4d65db4a653f82f3c3a957770ccf10d59fc97ddd3e4ac82b226be2fc",
+        "intended_decision": "execute-n1",
+        "operation_id": "ag01:w19v3_r_t0:probe:1",
+        "option_id": "s-n1",
+        "probe": "n1",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:1:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-n1-n1-1",
+        "effect_identity": "9f96ae8bfdd40297afe4cbf972983635c2c7c8b5f409e327261743f8e6942f9f",
+        "intended_decision": "execute-n1",
+        "operation_id": "ag01:w19v3_r_t0:probe:9",
+        "option_id": "s-n1",
+        "probe": "n1",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:9:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      },
+      {
+        "attempt_id": "att-s-n2-n2",
+        "effect_identity": "b7ae619e5b7cbb9dd75ac569394bd1df2a5163df20ab6132e524ae156c28dd39",
+        "intended_decision": "execute-n2",
+        "operation_id": "ag01:w19v3_r_t0:probe:13",
+        "option_id": "s-n2",
+        "probe": "n2",
+        "replication_slot": null,
+        "reservation_id": "ag01:w19v3_r_t0:probe:13:r",
+        "state": "settled",
+        "trajectory": "w19v3_r_t0"
+      }
+    ],
+    "ops": [
+      {
+        "attempt_id": "att-s-n1-n1",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:1"
+      },
+      {
+        "attempt_id": "att-s-m0-m0-1",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:10"
+      },
+      {
+        "attempt_id": "att-s-m2-m2-1",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:11"
+      },
+      {
+        "attempt_id": "att-s-m6-m6-1",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:12"
+      },
+      {
+        "attempt_id": "att-s-n2-n2",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:13"
+      },
+      {
+        "attempt_id": "att-s-m0-m0",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:2"
+      },
+      {
+        "attempt_id": "att-s-m2-m2",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:3"
+      },
+      {
+        "attempt_id": "att-s-m6-m6",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:4"
+      },
+      {
+        "attempt_id": "att-s-n1-n1-1",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w19v3_r_t0:probe:9"
+      }
+    ],
+    "outcomes": [
+      {
+        "epoch": 9,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 2,
+          "epoch": 9,
+          "kind": "observation",
+          "prop": "p0",
+          "receipt": "w19v3_r_t0:rc:att-s-m0-m0-1:p0",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m0-m0-1",
+          "value": "false"
+        },
+        "option_id": "s-m0",
+        "receipt": "w19v3_r_t0:rc:att-s-m0-m0-1:p0",
+        "scored": true
+      },
+      {
+        "epoch": 1,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 1,
+          "kind": "observation",
+          "prop": "p0",
+          "receipt": "w19v3_r_t0:rc:att-s-m0-m0:p0",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m0-m0",
+          "value": "false"
+        },
+        "option_id": "s-m0",
+        "receipt": "w19v3_r_t0:rc:att-s-m0-m0:p0",
+        "scored": true
+      },
+      {
+        "epoch": 10,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 2,
+          "epoch": 10,
+          "kind": "observation",
+          "prop": "p2",
+          "receipt": "w19v3_r_t0:rc:att-s-m2-m2-1:p2",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m2-m2-1",
+          "value": "false"
+        },
+        "option_id": "s-m2",
+        "receipt": "w19v3_r_t0:rc:att-s-m2-m2-1:p2",
+        "scored": true
+      },
+      {
+        "epoch": 2,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 2,
+          "kind": "observation",
+          "prop": "p2",
+          "receipt": "w19v3_r_t0:rc:att-s-m2-m2:p2",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m2-m2",
+          "value": "false"
+        },
+        "option_id": "s-m2",
+        "receipt": "w19v3_r_t0:rc:att-s-m2-m2:p2",
+        "scored": true
+      },
+      {
+        "epoch": 11,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 2,
+          "epoch": 11,
+          "kind": "observation",
+          "prop": "p6",
+          "receipt": "w19v3_r_t0:rc:att-s-m6-m6-1:p6",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m6-m6-1",
+          "value": "true"
+        },
+        "option_id": "s-m6",
+        "receipt": "w19v3_r_t0:rc:att-s-m6-m6-1:p6",
+        "scored": true
+      },
+      {
+        "epoch": 3,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 3,
+          "kind": "observation",
+          "prop": "p6",
+          "receipt": "w19v3_r_t0:rc:att-s-m6-m6:p6",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m6-m6",
+          "value": "true"
+        },
+        "option_id": "s-m6",
+        "receipt": "w19v3_r_t0:rc:att-s-m6-m6:p6",
+        "scored": true
+      },
+      {
+        "epoch": 8,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 2,
+          "epoch": 8,
+          "kind": "observation",
+          "prop": "p4",
+          "receipt": "w19v3_r_t0:rc:att-s-n1-n1-1:p4",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-n1-n1-1",
+          "value": "true"
+        },
+        "option_id": "s-n1",
+        "receipt": "w19v3_r_t0:rc:att-s-n1-n1-1:p4",
+        "scored": true
+      },
+      {
+        "epoch": 0,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 0,
+          "kind": "observation",
+          "prop": "p4",
+          "receipt": "w19v3_r_t0:rc:att-s-n1-n1:p4",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-n1-n1",
+          "value": "true"
+        },
+        "option_id": "s-n1",
+        "receipt": "w19v3_r_t0:rc:att-s-n1-n1:p4",
+        "scored": true
+      },
+      {
+        "epoch": 12,
+        "observation": {
+          "dep": "d1",
+          "dep_version": 1,
+          "epoch": 12,
+          "kind": "observation",
+          "prop": "p5",
+          "receipt": "w19v3_r_t0:rc:att-s-n2-n2:p5",
+          "scope": "s1",
+          "simulated": true,
+          "source_attempt": "att-s-n2-n2",
+          "value": "false"
+        },
+        "option_id": "s-n2",
+        "receipt": "w19v3_r_t0:rc:att-s-n2-n2:p5",
+        "scored": true
+      }
+    ],
+    "receipts": [
+      {
+        "content_digest": "fdcbd760bed8cccf3e7ce29adcfbd5faa8602700459cee1bcd2cc26863ab1d55",
+        "operation_id": "ag01:w19v3_r_t0:probe:10",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-m0-m0-1:p0"
+      },
+      {
+        "content_digest": "e7d3c2996345303cc3c1a302783bd404265dbe85f19fdf79ec974f4d03c73e72",
+        "operation_id": "ag01:w19v3_r_t0:probe:2",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-m0-m0:p0"
+      },
+      {
+        "content_digest": "dfb22ac965cf202e90e56afc228405882de472583d035e5fff3c15e56b97ebb2",
+        "operation_id": "ag01:w19v3_r_t0:probe:11",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-m2-m2-1:p2"
+      },
+      {
+        "content_digest": "a0880dc430d19f16ddf658789e08f082f4480c0a512ef7fe0150b280df862423",
+        "operation_id": "ag01:w19v3_r_t0:probe:3",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-m2-m2:p2"
+      },
+      {
+        "content_digest": "833799dd4631a4936ad89f28e836e0e35938f28542b0da90ffb511de7d42b705",
+        "operation_id": "ag01:w19v3_r_t0:probe:12",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-m6-m6-1:p6"
+      },
+      {
+        "content_digest": "d034d9f997ec2de53dd04776d2ed9e944729a2bff31719abc666fea694d8b5a4",
+        "operation_id": "ag01:w19v3_r_t0:probe:4",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-m6-m6:p6"
+      },
+      {
+        "content_digest": "6d745ed7d041ce6dfd1ce76bc1626c4e20b6c0376f4645ec04694d9988979509",
+        "operation_id": "ag01:w19v3_r_t0:probe:9",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-n1-n1-1:p4"
+      },
+      {
+        "content_digest": "f9fba7b67a40f8d21a90353a3ed1a76210e1105acef237e15bde0d6be814d0e3",
+        "operation_id": "ag01:w19v3_r_t0:probe:1",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-n1-n1:p4"
+      },
+      {
+        "content_digest": "90193081681e71fbb91c8340ecf02d820e5022d6c205edeea91ada0101e93da4",
+        "operation_id": "ag01:w19v3_r_t0:probe:13",
+        "outcome": "success",
+        "receipt": "w19v3_r_t0:rc:att-s-n2-n2:p5"
+      }
+    ],
+    "reservations": [
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:10:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:10",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:11:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:11",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:12:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:12",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:13:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:13",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:14:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:14",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:15:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:15",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:16:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:16",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:17:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:17",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:18:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:18",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:19:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:19",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:1:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:20:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:20",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:21:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:21",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:22:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:22",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:23:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:23",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:24:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:24",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:2:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:3:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:4:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:4",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:5:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:5",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:6:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:6",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:7:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:7",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:8:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:8",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w19v3_r_t0:dec:9:r",
+        "operation_id": "ag01:w19v3_r_t0:dec:9",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:eval",
+        "amount": 8,
+        "id": "ag01:w19v3_r_t0:eval-final:res",
+        "operation_id": "ag01:w19v3_r_t0:eval-final",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:10:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:10",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:11:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:11",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:12:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:12",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 4,
+        "id": "ag01:w19v3_r_t0:probe:13:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:13",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:1:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:2:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:3:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:4:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:4",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w19v3_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w19v3_r_t0:probe:9:r",
+        "operation_id": "ag01:w19v3_r_t0:probe:9",
+        "state": "settled"
+      }
+    ]
+  },
+  "manifest_sha256": "c6ad5d9147c4c130221e0fb0ec56e500902a4abe91f0975853dcfbe0f7c4a1f2",
+  "observations": [
+    {
+      "dep": "d0",
+      "dep_version": 2,
+      "epoch": 9,
+      "prop": "p0",
+      "receipt": "w19v3_r_t0:rc:att-s-m0-m0-1:p0",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m0-m0-1",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 1,
+      "prop": "p0",
+      "receipt": "w19v3_r_t0:rc:att-s-m0-m0:p0",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m0-m0",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 2,
+      "epoch": 10,
+      "prop": "p2",
+      "receipt": "w19v3_r_t0:rc:att-s-m2-m2-1:p2",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m2-m2-1",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p2",
+      "receipt": "w19v3_r_t0:rc:att-s-m2-m2:p2",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m2-m2",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 2,
+      "epoch": 11,
+      "prop": "p6",
+      "receipt": "w19v3_r_t0:rc:att-s-m6-m6-1:p6",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m6-m6-1",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 3,
+      "prop": "p6",
+      "receipt": "w19v3_r_t0:rc:att-s-m6-m6:p6",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m6-m6",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 2,
+      "epoch": 8,
+      "prop": "p4",
+      "receipt": "w19v3_r_t0:rc:att-s-n1-n1-1:p4",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-n1-n1-1",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 0,
+      "prop": "p4",
+      "receipt": "w19v3_r_t0:rc:att-s-n1-n1:p4",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-n1-n1",
+      "value": true
+    },
+    {
+      "dep": "d1",
+      "dep_version": 1,
+      "epoch": 12,
+      "prop": "p5",
+      "receipt": "w19v3_r_t0:rc:att-s-n2-n2:p5",
+      "scope": "s1",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-n2-n2",
+      "value": false
+    }
+  ],
+  "option_spend": {
+    "s-m0": 4,
+    "s-m2": 4,
+    "s-m6": 4,
+    "s-n1": 4,
+    "s-n2": 4
+  },
+  "pending_drained": [],
+  "policy_version": "AG01-R-1",
+  "products": {},
+  "rng_seed": 1019,
+  "sources": {
+    "src/settlement/agenda.py": "956f865baa6daa2e2a5697f6ce62dcaeedd6a1d2a8af00c30512771512084b6e",
+    "src/settlement/agenda_policy.py": "8f4b2144fce34f3f0a4bcfd7ab2859f55a5a6b827443fe6df6e243c353cb6e30",
+    "src/settlement/broker.py": "04308ec5ee6dbb76734fe37c9424e2575db3158cbd9907899ee81acf8de380a9",
+    "src/settlement/store.py": "e6ca61b8da177328b1d755d782d224d461a9dfe8d074a91133df8686d8b9cef8"
+  },
+  "ticks": [
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:1",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-n1",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-n1",
+        "reason": "selected:s-n1"
+      },
+      "eligible": [
+        "s-n1",
+        "s-m0",
+        "s-m2",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:1",
+      "tick": 0,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:2",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m2",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:2",
+      "tick": 1,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:3",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m2",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m2",
+        "reason": "selected:s-m2"
+      },
+      "eligible": [
+        "s-m2",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:3",
+      "tick": 2,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:4",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m6",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m6",
+        "reason": "selected:s-m6"
+      },
+      "eligible": [
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:4",
+      "tick": 3,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:5",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 4,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:6",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 5,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:7",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 6,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:8",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 7,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:9",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-n1",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-n1",
+        "reason": "selected:s-n1"
+      },
+      "eligible": [
+        "s-n1",
+        "s-m0",
+        "s-m2",
+        "s-m6",
+        "s-n2"
+      ],
+      "events": [
+        {
+          "dep": "d0",
+          "kind": "dep-bump",
+          "to": 2
+        }
+      ],
+      "probe_op": "ag01:w19v3_r_t0:probe:9",
+      "tick": 8,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:10",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m2",
+        "s-m6",
+        "s-n2"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:10",
+      "tick": 9,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:11",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m2",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m2",
+        "reason": "selected:s-m2"
+      },
+      "eligible": [
+        "s-m2",
+        "s-m6",
+        "s-n2"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:11",
+      "tick": 10,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:12",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m6",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m6",
+        "reason": "selected:s-m6"
+      },
+      "eligible": [
+        "s-m6",
+        "s-n2"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:12",
+      "tick": 11,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:13",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-n2",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-n2",
+        "reason": "selected:s-n2"
+      },
+      "eligible": [
+        "s-n2"
+      ],
+      "events": [],
+      "probe_op": "ag01:w19v3_r_t0:probe:13",
+      "tick": 12,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:14",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 13,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:15",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 14,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:16",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 15,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:17",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 16,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:18",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 17,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:19",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 18,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:20",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 19,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:21",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 20,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:22",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 21,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:23",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 22,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w19v3_r_t0:dec:24",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 23,
+      "wakes": []
+    }
+  ],
+  "tie": 0,
+  "totals": {
+    "eval_spent": 8,
+    "explore_spent": 44,
+    "feasible_waiting": 0,
+    "idle_ticks": 15,
+    "liabilities": [],
+    "recovery_spent": 0
+  },
+  "traj_id": "w19v3_r_t0",
+  "variant": 3,
+  "world_id": "w19"
+}

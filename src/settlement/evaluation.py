@@ -38,6 +38,13 @@ def register_evaluator(dsn: str, cmd: Command, evaluator_id: str, version: str,
         raise SettlementError("evaluator needs an id and version")
 
     def _fn(cur, control):
+        cur.execute("SELECT version FROM evaluator_packages WHERE id = %s",
+                    (evaluator_id,))
+        prior = cur.fetchone()
+        if prior is not None and prior["version"] != version:
+            raise SettlementError(
+                f"evaluator {evaluator_id} is already v{prior['version']!r}:"
+                f" registering v{version!r} under the same id refused")
         cur.execute("INSERT INTO evaluator_packages (id, version, access_policy, code_digest)"
                     " VALUES (%s, %s, %s, %s) ON CONFLICT (id) DO NOTHING",
                     (evaluator_id, version, _j(access_policy or {}), code_digest))

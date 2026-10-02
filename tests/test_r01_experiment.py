@@ -79,8 +79,11 @@ def _db_settled(dsn, operation_id):
     assert reservation["state"] == "settled"
     assert terms, f"{operation_id} settled without a terminal receipt"
     usage = dict((terms[-1].get("content") or {}).get("usage") or {})
-    if "charge_units" in usage:
-        return int(usage["charge_units"])
+    charge = usage.get("charge_units")
+    if (bool(usage.get("billed", False)) and isinstance(charge, int)
+            and not isinstance(charge, bool)
+            and 0 <= charge <= int(reservation["amount"])):
+        return charge
     return int(reservation["amount"])
 
 

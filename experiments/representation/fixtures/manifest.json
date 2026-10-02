@@ -1,0 +1,269 @@
+{
+  "files": [
+    {
+      "bytes": 333,
+      "digest": "1d52eed2ef750cc39867add310e9883c35294c74ae72f64c7b80c12167a02b5c",
+      "path": "controls/ctrl-gr-bipartite.json",
+      "task_id": "ctrl-gr-bipartite"
+    },
+    {
+      "bytes": 258,
+      "digest": "3d2cd110c411199b38aa552d954ef6e794e8069e91532445fe5a5bed8d1bff82",
+      "path": "controls/ctrl-gr-triangle.json",
+      "task_id": "ctrl-gr-triangle"
+    },
+    {
+      "bytes": 1314,
+      "digest": "9bbbc960e340bd6f9861c620acc2be5308cc0c8ee3cfb31fe510ac8aadc54b4a",
+      "path": "controls/ctrl-sw-invalid.json",
+      "task_id": "ctrl-sw-invalid"
+    },
+    {
+      "bytes": 1271,
+      "digest": "87d075f89f75112a3fe36acb1e3b85722f3e2203d516447892c5d80d9cb4fe73",
+      "path": "controls/ctrl-sw-wrong-obs.json",
+      "task_id": "ctrl-sw-wrong-obs"
+    },
+    {
+      "bytes": 399,
+      "digest": "1580f1bcffaf6b2fedbdd9a355cbf8f4cc84eedaaad6e716d6706a5d6b88fe4d",
+      "path": "graphs/check/gr-che-00.json",
+      "task_id": "gr-che-00"
+    },
+    {
+      "bytes": 466,
+      "digest": "15c1467b1653d628621c2039577bd601e8fff98d8c6f094affbd1e65adac9388",
+      "path": "graphs/check/gr-che-01.json",
+      "task_id": "gr-che-01"
+    },
+    {
+      "bytes": 332,
+      "digest": "cc8a42bef03ad78c54c9e329d0543d827964e3155a878d6e04d8452358a03962",
+      "path": "graphs/check/gr-che-02.json",
+      "task_id": "gr-che-02"
+    },
+    {
+      "bytes": 443,
+      "digest": "eab9972da38b290203a5cef476b65355382f47256faa5bb9f620b2424560fad3",
+      "path": "graphs/check/gr-che-03.json",
+      "task_id": "gr-che-03"
+    },
+    {
+      "bytes": 325,
+      "digest": "500bcd105555e0a284ae333a50fd0b8c418b8041ca321519af6cde44cf033686",
+      "path": "graphs/development/gr-dev-00.json",
+      "task_id": "gr-dev-00"
+    },
+    {
+      "bytes": 399,
+      "digest": "4864793ec12f84fd297f17feabac433e03b5cead145cad073ea92b3a9006e7b7",
+      "path": "graphs/development/gr-dev-01.json",
+      "task_id": "gr-dev-01"
+    },
+    {
+      "bytes": 466,
+      "digest": "39b314d6b703566aa72045d1e78693b550e441991b599d6d50022eaede105aec",
+      "path": "graphs/development/gr-dev-02.json",
+      "task_id": "gr-dev-02"
+    },
+    {
+      "bytes": 369,
+      "digest": "dc6749c9dad0ff5c7acb56dc5d200018fa10986947d6c01e7a036b35d8ac0078",
+      "path": "graphs/development/gr-dev-03.json",
+      "task_id": "gr-dev-03"
+    },
+    {
+      "bytes": 436,
+      "digest": "564a39c9be0bfbc094f8bf216d103ca0dcf55071560f0327c2f7c769866095fb",
+      "path": "graphs/development/gr-dev-04.json",
+      "task_id": "gr-dev-04"
+    },
+    {
+      "bytes": 443,
+      "digest": "66dcaa24b69a2b8c1b1c5a96058df628b2fb31ac2ea544831974f1866b866426",
+      "path": "graphs/development/gr-dev-05.json",
+      "task_id": "gr-dev-05"
+    },
+    {
+      "bytes": 473,
+      "digest": "ac1291d014326d7e57ee2f16476683da64667b155c7ad6b391a092ba13707bd5",
+      "path": "graphs/evaluation/gr-eva-00.json",
+      "task_id": "gr-eva-00"
+    },
+    {
+      "bytes": 443,
+      "digest": "f763170fbb981e4c99d0a23479c719e88403aec280c4ffb2346b67f9495f5f0c",
+      "path": "graphs/evaluation/gr-eva-01.json",
+      "task_id": "gr-eva-01"
+    },
+    {
+      "bytes": 429,
+      "digest": "8a5cd0a96722bc1fa10e7e2f3f4f6a009cfb1bce8d37872df5ceeb1cf5e576f1",
+      "path": "graphs/evaluation/gr-eva-02.json",
+      "task_id": "gr-eva-02"
+    },
+    {
+      "bytes": 466,
+      "digest": "01ab8f403722554c27c858c116d4f812fc7d7206d2786b53e0409881dbb629a7",
+      "path": "graphs/evaluation/gr-eva-03.json",
+      "task_id": "gr-eva-03"
+    },
+    {
+      "bytes": 503,
+      "digest": "a2a1c6c916662179a2ee70e6990a74b02932e95cb4c512d08d7bbaa7c9c032d9",
+      "path": "graphs/evaluation/gr-eva-04.json",
+      "task_id": "gr-eva-04"
+    },
+    {
+      "bytes": 399,
+      "digest": "49ad6b506e6d6b3086fd585b3c7d57efa054d5515d5a215e8c49b9c75c29ebca",
+      "path": "graphs/evaluation/gr-eva-05.json",
+      "task_id": "gr-eva-05"
+    },
+    {
+      "bytes": 436,
+      "digest": "d7c755570aafe76086a881975114ac2beb0be1237b649242842ffe172da953bd",
+      "path": "graphs/evaluation/gr-eva-06.json",
+      "task_id": "gr-eva-06"
+    },
+    {
+      "bytes": 443,
+      "digest": "3bd10a3aa4d5f00a321b6bb1905397e1e25ed9fa0d1dd180bb5d86b0749ad85c",
+      "path": "graphs/evaluation/gr-eva-07.json",
+      "task_id": "gr-eva-07"
+    },
+    {
+      "bytes": 1010,
+      "digest": "5aff20b295d56ec4d5b47895da8cd2e756981949c68700fbcd9d0e34aa3b0e3f",
+      "path": "software/check/sw-che-00.json",
+      "task_id": "sw-che-00"
+    },
+    {
+      "bytes": 738,
+      "digest": "413526116153b84605ae8e0dd70c515f24dd7dc75227e5d4264528ad397d2917",
+      "path": "software/check/sw-che-01.json",
+      "task_id": "sw-che-01"
+    },
+    {
+      "bytes": 1053,
+      "digest": "05092ce859b5b118deadd82c1ee3d95fad2e3b8743b6fb5e46fa776afbe6ded2",
+      "path": "software/check/sw-che-02.json",
+      "task_id": "sw-che-02"
+    },
+    {
+      "bytes": 757,
+      "digest": "cedca0df85d26f3fa97ef7b597202816f63c3771bc6354670ccd0dc458077df7",
+      "path": "software/check/sw-che-03.json",
+      "task_id": "sw-che-03"
+    },
+    {
+      "bytes": 1255,
+      "digest": "f8b539f48bd5a657cc5086a34dbabc8f421a3c4ab255e54689a1ab44a080f2eb",
+      "path": "software/development/sw-dev-00.json",
+      "task_id": "sw-dev-00"
+    },
+    {
+      "bytes": 1032,
+      "digest": "501e4a4de0363520e1d92e67e390b82e9c8c139bc83a090a62da4a23802ec4cc",
+      "path": "software/development/sw-dev-01.json",
+      "task_id": "sw-dev-01"
+    },
+    {
+      "bytes": 720,
+      "digest": "2b78dc9b8533c057fa1c0202df4a05155705920da9f59e04889c2cf0dcff15c5",
+      "path": "software/development/sw-dev-02.json",
+      "task_id": "sw-dev-02"
+    },
+    {
+      "bytes": 869,
+      "digest": "7a6eac72979dc3c57abcdb2fe30ec5e481e4973aa1d849445fde06c40b6f277e",
+      "path": "software/development/sw-dev-03.json",
+      "task_id": "sw-dev-03"
+    },
+    {
+      "bytes": 1012,
+      "digest": "e48f3142fc1777c6aa498e654f1edc8a065b44eabe3a0138feecc903ceaa19e1",
+      "path": "software/development/sw-dev-04.json",
+      "task_id": "sw-dev-04"
+    },
+    {
+      "bytes": 973,
+      "digest": "5f576c6858a6c50d23c8804aafbf8bb04d196a8bc6d170ddf0d8b98202fc46f5",
+      "path": "software/development/sw-dev-05.json",
+      "task_id": "sw-dev-05"
+    },
+    {
+      "bytes": 722,
+      "digest": "ef583fa8aaed9d0d4fee586e5f3c50232ff008dc72a26073f25dde64b096aec3",
+      "path": "software/evaluation/sw-eva-00.json",
+      "task_id": "sw-eva-00"
+    },
+    {
+      "bytes": 976,
+      "digest": "5c092884f789df8a75a33f2971e3fae622452a2fc4fcbc7dbefc1e37c370e446",
+      "path": "software/evaluation/sw-eva-01.json",
+      "task_id": "sw-eva-01"
+    },
+    {
+      "bytes": 1116,
+      "digest": "9c0cfdbc7eafa3ab6c422302b01afdf7d39cc6703a59a08ef801011df526b759",
+      "path": "software/evaluation/sw-eva-02.json",
+      "task_id": "sw-eva-02"
+    },
+    {
+      "bytes": 1177,
+      "digest": "1cb8b4bf9f6300325db3216e6f4e4aa7e54d1dfc13d5bdec722bdc6e686ff323",
+      "path": "software/evaluation/sw-eva-03.json",
+      "task_id": "sw-eva-03"
+    },
+    {
+      "bytes": 993,
+      "digest": "35718cdd3f1f5c6643c8660b13f7668b33690983316f99703aa99beb03d7e202",
+      "path": "software/evaluation/sw-eva-04.json",
+      "task_id": "sw-eva-04"
+    },
+    {
+      "bytes": 1296,
+      "digest": "08744959079cf211225f82606e3bc239bd25559b068f630baa519a15880851e8",
+      "path": "software/evaluation/sw-eva-05.json",
+      "task_id": "sw-eva-05"
+    },
+    {
+      "bytes": 854,
+      "digest": "a0b918241b37236a0d224d85e6dc0f280769dbd98124bb2fcac77e9011bdbbe6",
+      "path": "software/evaluation/sw-eva-06.json",
+      "task_id": "sw-eva-06"
+    },
+    {
+      "bytes": 1039,
+      "digest": "f7d2677e8ee660fd26808ee323921f925e8cc2b9211ee77986272dfbbb869a99",
+      "path": "software/evaluation/sw-eva-07.json",
+      "task_id": "sw-eva-07"
+    },
+    {
+      "bytes": 469,
+      "digest": "ed2fbb6dab9efe1fb913fd9f4e69799fe5377771919ab231463ead2aee3f6080",
+      "path": "use/use-gr-out-of-scope.json",
+      "task_id": "use-gr-out-of-scope"
+    },
+    {
+      "bytes": 480,
+      "digest": "e52ebd611d6bc25df54c187688af112b6502e2c34536af3cfaf7b0f8298a6c21",
+      "path": "use/use-gr-supported.json",
+      "task_id": "use-gr-supported"
+    },
+    {
+      "bytes": 1896,
+      "digest": "bdc0b552bf6586c0baa6d6bdfe192dc3043884f849a7dd6dffc9cc5acf0e330c",
+      "path": "use/use-sw-out-of-scope.json",
+      "task_id": "use-sw-out-of-scope"
+    },
+    {
+      "bytes": 729,
+      "digest": "b5cbc3d58e75a9aaf9ea801635206cb209061340b2bb9e5ef547d9f1f7ef201a",
+      "path": "use/use-sw-supported.json",
+      "task_id": "use-sw-supported"
+    }
+  ],
+  "version": "RPR-01/1"
+}

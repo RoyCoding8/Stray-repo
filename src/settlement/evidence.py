@@ -271,7 +271,7 @@ def check_use_verified(dsn: str, claim_id: str, evidence_epoch: int,
 def check_use(dsn: str, claim_id: str, evidence_epoch: int,
               artifacts_root: str | Path | None = None) -> dict:
     current = int(store.get_control(dsn)["evidence_epoch"])
-    if int(evidence_epoch) < current:
+    if int(evidence_epoch) != current:
         raise MissingEvidence(f"stale admissibility: saw epoch {evidence_epoch}, now {current}")
     snapshot = current_support(dsn, claim_id, artifacts_root)
     if not snapshot["supported"]:

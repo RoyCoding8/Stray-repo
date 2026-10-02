@@ -1,0 +1,1089 @@
+{
+  "arm": "R",
+  "backend": "AgendaBackend",
+  "complete": true,
+  "db": "agenda01_w10v2_r_t0",
+  "drained_products": [],
+  "end_reason": "horizon",
+  "family": 2,
+  "grade": {
+    "correct": 3,
+    "eval_cost": 8,
+    "per_task": {
+      "w10-t0": {
+        "answer": true,
+        "correct": true
+      },
+      "w10-t1": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w10-t2": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w10-t3": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w10-t4": {
+        "answer": true,
+        "correct": true
+      },
+      "w10-t5": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w10-t6": {
+        "answer": true,
+        "correct": true
+      },
+      "w10-t7": {
+        "answer": "unknown",
+        "correct": false
+      }
+    },
+    "total": 8
+  },
+  "ledger": {
+    "allocations": [
+      {
+        "authorized": 88,
+        "consumed": 0,
+        "id": "ag01:w10v2_r_t0",
+        "parent_id": null,
+        "reserved": 0
+      },
+      {
+        "authorized": 8,
+        "consumed": 8,
+        "id": "ag01:w10v2_r_t0:eval",
+        "parent_id": "ag01:w10v2_r_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 64,
+        "consumed": 12,
+        "id": "ag01:w10v2_r_t0:explore",
+        "parent_id": "ag01:w10v2_r_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 16,
+        "consumed": 0,
+        "id": "ag01:w10v2_r_t0:recovery",
+        "parent_id": "ag01:w10v2_r_t0",
+        "reserved": 0
+      }
+    ],
+    "conflicts": 0,
+    "cursor": {
+      "dep_versions": {
+        "d0": 1,
+        "d1": 1,
+        "instrument:scope2": 1
+      },
+      "epoch": 4,
+      "rotation": 4,
+      "tick": 4
+    },
+    "decisions": [
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m0"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m0-m0",
+          "cost": 2,
+          "input_digest": "957483d213a4051045f06cbcb3eb9910b3b6154c55c505fc42728ce156b1b43c",
+          "kind": "initial",
+          "option_id": "s-m0",
+          "option_revision": 1,
+          "ownership_generation": 1,
+          "policy_version": "AG01-R-1",
+          "probe": "m0"
+        },
+        "tick": 1
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m4"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m4-m4",
+          "cost": 2,
+          "input_digest": "5cfc1441307e2009c5380682dbf879eb1f3336eb0b6a931a7fabc02e7ac74ab8",
+          "kind": "initial",
+          "option_id": "s-m4",
+          "option_revision": 1,
+          "ownership_generation": 2,
+          "policy_version": "AG01-R-1",
+          "probe": "m4"
+        },
+        "tick": 2
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m6"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m6-m6",
+          "cost": 2,
+          "input_digest": "3648364da3a58f22265ec508c8b9fe752764c9933691d0fe42a9c9af13cd2ac7",
+          "kind": "initial",
+          "option_id": "s-m6",
+          "option_revision": 1,
+          "ownership_generation": 3,
+          "policy_version": "AG01-R-1",
+          "probe": "m6"
+        },
+        "tick": 3
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m0"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m0-m0-1",
+          "cost": 2,
+          "input_digest": "0ca6aa3c8c18682415de211eb3da0568e0d2a8c76a2cd4ba069a46191652fbcc",
+          "kind": "initial",
+          "option_id": "s-m0",
+          "option_revision": 1,
+          "ownership_generation": 4,
+          "policy_version": "AG01-R-1",
+          "probe": "m0"
+        },
+        "tick": 4
+      }
+    ],
+    "links": [
+      {
+        "attempt_id": "att-s-m0-m0",
+        "effect_identity": "bf3feb97351ce16b19c87585155e8bdf994e97fab1bcdd82ce766bb94a1416e7",
+        "intended_decision": "execute-m0",
+        "operation_id": "ag01:w10v2_r_t0:probe:1",
+        "option_id": "s-m0",
+        "probe": "m0",
+        "replication_slot": null,
+        "reservation_id": "ag01:w10v2_r_t0:probe:1:r",
+        "state": "settled",
+        "trajectory": "w10v2_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m0-m0-1",
+        "effect_identity": "65e1e2cc60f4f06f77dddf7f633577a4a04b34626d18562da7958ca344f8aeb8",
+        "intended_decision": "execute-m0",
+        "operation_id": "ag01:w10v2_r_t0:probe:4",
+        "option_id": "s-m0",
+        "probe": "m0",
+        "replication_slot": null,
+        "reservation_id": "ag01:w10v2_r_t0:probe:4:r",
+        "state": "settled",
+        "trajectory": "w10v2_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m4-m4",
+        "effect_identity": "7e7b5319ceb92852dad52e5425d3c00868baea40f7fae9a1cefe0334da4721aa",
+        "intended_decision": "execute-m4",
+        "operation_id": "ag01:w10v2_r_t0:probe:2",
+        "option_id": "s-m4",
+        "probe": "m4",
+        "replication_slot": null,
+        "reservation_id": "ag01:w10v2_r_t0:probe:2:r",
+        "state": "settled",
+        "trajectory": "w10v2_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m6-m6",
+        "effect_identity": "ecdbcdfc063c1bcd382a32ea032b5e709f7f789a87a3cc641ca0f67dfb18bbec",
+        "intended_decision": "execute-m6",
+        "operation_id": "ag01:w10v2_r_t0:probe:3",
+        "option_id": "s-m6",
+        "probe": "m6",
+        "replication_slot": null,
+        "reservation_id": "ag01:w10v2_r_t0:probe:3:r",
+        "state": "settled",
+        "trajectory": "w10v2_r_t0"
+      }
+    ],
+    "ops": [
+      {
+        "attempt_id": "att-s-m0-m0",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w10v2_r_t0:probe:1"
+      },
+      {
+        "attempt_id": "att-s-m4-m4",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w10v2_r_t0:probe:2"
+      },
+      {
+        "attempt_id": "att-s-m6-m6",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w10v2_r_t0:probe:3"
+      },
+      {
+        "attempt_id": "att-s-m0-m0-1",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w10v2_r_t0:probe:4"
+      }
+    ],
+    "outcomes": [
+      {
+        "epoch": 4,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 4,
+          "kind": "observation",
+          "prop": "p0",
+          "receipt": "w10v2_r_t0:rc:att-s-m0-m0-1:p0",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m0-m0-1",
+          "value": "true"
+        },
+        "option_id": "s-m0",
+        "receipt": "w10v2_r_t0:rc:att-s-m0-m0-1:p0",
+        "scored": true
+      },
+      {
+        "epoch": 2,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 2,
+          "kind": "observation",
+          "prop": "p0",
+          "receipt": "w10v2_r_t0:rc:att-s-m0-m0:p0",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m0-m0",
+          "value": "true"
+        },
+        "option_id": "s-m0",
+        "receipt": "w10v2_r_t0:rc:att-s-m0-m0:p0",
+        "scored": true
+      },
+      {
+        "epoch": 2,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 2,
+          "kind": "observation",
+          "prop": "p4",
+          "receipt": "w10v2_r_t0:rc:att-s-m4-m4:p4",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m4-m4",
+          "value": "true"
+        },
+        "option_id": "s-m4",
+        "receipt": "w10v2_r_t0:rc:att-s-m4-m4:p4",
+        "scored": true
+      },
+      {
+        "epoch": 3,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 3,
+          "kind": "observation",
+          "prop": "p6",
+          "receipt": "w10v2_r_t0:rc:att-s-m6-m6:p6",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m6-m6",
+          "value": "true"
+        },
+        "option_id": "s-m6",
+        "receipt": "w10v2_r_t0:rc:att-s-m6-m6:p6",
+        "scored": true
+      }
+    ],
+    "receipts": [
+      {
+        "content_digest": "b19c5762a93c3fa197134ec87026784c2b6c2c3083f89051c1ef43ced5ee305a",
+        "operation_id": "ag01:w10v2_r_t0:probe:4",
+        "outcome": "success",
+        "receipt": "w10v2_r_t0:rc:att-s-m0-m0-1:p0"
+      },
+      {
+        "content_digest": "b1d4d5f9bddd88271191dc8f72212d8158a29119511e9997d8906ca33575c181",
+        "operation_id": "ag01:w10v2_r_t0:probe:1",
+        "outcome": "success",
+        "receipt": "w10v2_r_t0:rc:att-s-m0-m0:p0"
+      },
+      {
+        "content_digest": "1ac1b57a4645f377320c279abea391e38bbc35b4e242c9b8502831a43b1c0e4c",
+        "operation_id": "ag01:w10v2_r_t0:probe:2",
+        "outcome": "success",
+        "receipt": "w10v2_r_t0:rc:att-s-m4-m4:p4"
+      },
+      {
+        "content_digest": "380dda2cd9839dd8186a0c4facd325aa77ca52b79d8d4e37abfbb0e9124b493a",
+        "operation_id": "ag01:w10v2_r_t0:probe:3",
+        "outcome": "success",
+        "receipt": "w10v2_r_t0:rc:att-s-m6-m6:p6"
+      }
+    ],
+    "reservations": [
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w10v2_r_t0:dec:1:r",
+        "operation_id": "ag01:w10v2_r_t0:dec:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w10v2_r_t0:dec:2:r",
+        "operation_id": "ag01:w10v2_r_t0:dec:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w10v2_r_t0:dec:3:r",
+        "operation_id": "ag01:w10v2_r_t0:dec:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w10v2_r_t0:dec:4:r",
+        "operation_id": "ag01:w10v2_r_t0:dec:4",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:eval",
+        "amount": 8,
+        "id": "ag01:w10v2_r_t0:eval-final:res",
+        "operation_id": "ag01:w10v2_r_t0:eval-final",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w10v2_r_t0:probe:1:r",
+        "operation_id": "ag01:w10v2_r_t0:probe:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w10v2_r_t0:probe:2:r",
+        "operation_id": "ag01:w10v2_r_t0:probe:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w10v2_r_t0:probe:3:r",
+        "operation_id": "ag01:w10v2_r_t0:probe:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w10v2_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w10v2_r_t0:probe:4:r",
+        "operation_id": "ag01:w10v2_r_t0:probe:4",
+        "state": "settled"
+      }
+    ]
+  },
+  "manifest_sha256": "99e9d5f61a9e7c1ddaea37df24073cc8b23d999c3cddecefc7acaaebbb01ab70",
+  "observations": [
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 4,
+      "prop": "p0",
+      "receipt": "w10v2_r_t0:rc:att-s-m0-m0-1:p0",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m0-m0-1",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p0",
+      "receipt": "w10v2_r_t0:rc:att-s-m0-m0:p0",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m0-m0",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p4",
+      "receipt": "w10v2_r_t0:rc:att-s-m4-m4:p4",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m4-m4",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 3,
+      "prop": "p6",
+      "receipt": "w10v2_r_t0:rc:att-s-m6-m6:p6",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m6-m6",
+      "value": true
+    }
+  ],
+  "option_spend": {
+    "s-m0": 4,
+    "s-m4": 2,
+    "s-m6": 2
+  },
+  "pending_drained": [],
+  "policy_version": "AG01-R-1",
+  "products": {},
+  "rng_seed": 1010,
+  "ticks": [
+    {
+      "dec_op": "ag01:w10v2_r_t0:dec:1",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w10v2_r_t0:probe:1",
+      "tick": 0,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w10v2_r_t0:dec:2",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m4",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m4",
+        "reason": "selected:s-m4"
+      },
+      "eligible": [
+        "s-m4",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": "ag01:w10v2_r_t0:probe:2",
+      "tick": 1,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w10v2_r_t0:dec:3",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m6",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m6",
+        "reason": "selected:s-m6"
+      },
+      "eligible": [
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": "ag01:w10v2_r_t0:probe:3",
+      "tick": 2,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 3,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 4,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 5,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w10v2_r_t0:dec:4",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-deep"
+      ],
+      "events": [],
+      "probe_op": "ag01:w10v2_r_t0:probe:4",
+      "tick": 6,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 7,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 8,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 9,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 10,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 11,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 12,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 13,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 14,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 15,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 16,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 17,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 18,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 19,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 20,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 21,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 22,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-m0",
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-deep",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 23,
+      "wakes": []
+    }
+  ],
+  "tie": 0,
+  "totals": {
+    "eval_spent": 8,
+    "explore_spent": 12,
+    "feasible_waiting": 0,
+    "idle_ticks": 20,
+    "liabilities": [],
+    "recovery_spent": 0
+  },
+  "traj_id": "w10v2_r_t0",
+  "variant": 2,
+  "world_id": "w10"
+}

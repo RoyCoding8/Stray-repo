@@ -64,6 +64,62 @@ empirical learning comparison. No learning claim is made.
 
 ---
 
+# Review request — Development 02 (memory/context slice)
+
+To: design/review role. From: worker (coordinator).
+
+Review: DEVELOPMENT-02 per `WORKER-DEVELOPMENT-02-PROMPT.md`
+Branch: codex/implementation-development-02
+Design packet: `origin/codex/development-design-02` (tip `0816ebf`)
+Tested code revision: `56f7bba` (this request committed on top without code
+changes)
+Requested review scope: D02-001..D02-004 finding dispositions, CTX-01..CTX-10
+contract coverage, and the deterministic-slice boundary.
+
+## Assessment summary (all 4 confirmed, none rebutted)
+
+- D02-001 experience-before-construction: `collect_experience` runs the
+  permitted dev batch pre-diagnosis (real inference/grade, observations,
+  candidate-scope experience claims with actual task content, live
+  observation-premise warrants); diagnose/construct consume ready-gated
+  packets with explicit response/invocation contract, invocations
+  digest-bound; trigger-refs-only experience shape deleted.
+- D02-002 binding-only synthesis: closure resolves the bound binding only;
+  reject/no-candidate yields no C candidate (harness abstention is the
+  control behavior), no fallback stem; bound stem dedupes to the bound row.
+- D02-003 panel freeze timing: admit freezes the full finite-panel policy;
+  freeze verifies groups and amends panel → eval → bound; harness amends
+  arm protocols superseding the eval protocol and refuses group drift.
+- D02-004/CTX-08 subsequent use: fresh-process `run_use.py` (ordinary
+  selection, invocation, grading, use protocol, domain event,
+  exposure/pending snapshot); report phases derive from use receipts;
+  rejected episodes follow the visible incumbent path.
+- CTX-01..CTX-07 + CTX-09 packets behind the pinned `build_packet` seam;
+  CTX-10 six-scenario challenge panel executed in
+  `tests/test_dev02_episode.py`. Four characterization probes retired to
+  `reviews/probes/historical_test_development_01_readiness.py` with
+  per-probe correspondence.
+- Process note: the M-EP specialist terminated after reading with an empty
+  tree; the coordinator implemented the slice directly on the integration
+  branch (recorded in `reports/PLAN.md`, workstream
+  `reports/workstreams/dev02-ep.md`). No fake lane history.
+
+## Questions for review
+
+1. Is the entry-declared pre-candidate contract (D-025) an acceptable
+   resolution of the construct-packet chicken-and-egg, or should the
+   contract slots stay needs-information until a version pins?
+2. Is transcript reuse with split cost settlement (collection → episode
+   dev protocol, lessons/synthesis → harness dev protocol) honest
+   no-double-run accounting, or should all development spend share one
+   protocol?
+3. Does the transfer-task subsequent use (prior comparison exposure
+   honestly recorded) satisfy CTX-08 for the deterministic slice, or is a
+   held-out fixture task required before live comparison?
+4. Is the deterministic slice (509 passed, live gate stated with runnable
+   commands) sufficient to close D02-001..D02-004 pending the live
+   finite-panel run?
+
 # Review request — S0–S3 implementation, pass 02 (REVIEW-01 fixes)
 
 To: design/review role. From: worker (coordinator).
@@ -133,3 +189,90 @@ tests derive from whatever `SETTLEMENT_TEST_DSN` names.
    satisfy IF-6/LEARN-2/LEARN-7, given the stated filesystem co-tenancy limits?
 4. Is the deterministic-doubles A/B/C now a fair protocol (matched tools,
    frozen retention), with only the live run outstanding?
+
+# Review request — DEVELOPMENT-02-LIVE (D2A-001..D2A-005 + cost union)
+
+To: design/review role. From: worker (coordinator).
+
+Review: `WORKER-DEVELOPMENT-02-LIVE-PROMPT.md` (D2A-001..D2A-005 plus
+cost union, deterministic slice; exact live blockers recorded, no live
+inference claimed)
+Branch: codex/implementation-development-02
+Tested code revision: `8221d35` (this request committed on top without
+code changes)
+Requested review scope: D2A-001..D2A-005 dispositions, cost-union
+semantics, the L-EP/L-CTX merge (overlap: one diagnose-shape hunk),
+the 4-probe migration, and the deterministic-slice boundary.
+
+## Assessment summary
+
+- D2A-001 file-ABI constructor: one canonical `METHOD_ABI`
+  (method.py + broken.py in, fixed.py out, `--selftest` typed-JSON
+  worker-ok gate); response contract shared with the rendered packet;
+  strict-JSON else one-bare-fence envelope; a bare repaired function
+  can no longer pass construction (lane evidence: bare-function-fails
+  vs constructed-procedure-survives-consumer on held-out
+  panel-triangular).
+- D2A-002 collect linkage: `trigger_refs` UPDATEs carry each task's
+  `claim_id` in the collecting transaction; diagnose bundles resolve
+  collected claims (prompt carries the exact broken/cases/outcome
+  sentinel).
+- D2A-003 disposition-gated use: ordinary selection exclusively from
+  `--disposition-json` through the normal router path; 8 negative
+  shapes fall back to incumbent with reason; `trial: true` is
+  explicitly labeled, never ordinary use.
+- D2A-004 inference-only binding: operation payload read, non-model
+  effect refused (legacy effect-less rows accepted — L-CTX-1),
+  `input_digest` recorded (migration 0009), conflicting second-op
+  linkage refused while true redelivery works (L-CTX-2).
+- D2A-005 nothing-stripped budget: slim renderer deleted; over-budget
+  stages `needs_information` with a narrow-proposal gap.
+- Cost union: `episode_cost_union` over all 8 phase groups, unique-op
+  totals, shared-op listing, preserved `unresolved_exposure`; entry
+  reports it as `episode_costs` with harness totals labeled
+  `accounting_scope`.
+- Integration (`reports/workstreams/d02live-integration.md`): one-hunk
+  overlap kept, lane suite numbers compose exactly (517 = 512 + 5 =
+  497 + 20), zero add/remove/rename in pre-existing files, 4 stale
+  limitation-probes migrated to fixed-behavior gates (6/6 green).
+
+Verification: full suite **1 failed, 516 passed in 743.72s** (real PG
+16 + real subprocesses; command and flake analysis in
+`reports/VERIFICATION.md`). The single failure is the known
+process-group-kill load flake (3rd program sighting; green in
+isolation and file-level on the same revision; file untouched by both
+lanes). Lane per-requirement evidence in
+`reports/workstreams/d02live-{ep,ctx}.md`.
+
+Unmet gates: live finite-panel comparison, provider smoke, real runsc
+containment, PG18, held-out transfer use. No live inference claimed;
+recorded live-pilot bytes are fixed test vectors.
+
+## Questions for review
+
+1. Does the file-ABI + typed-JSON-selftest gate close the
+   bare-function loophole completely, or is a stronger
+   procedure-shape check (e.g. argv-parsing proof) required before
+   live construction?
+2. Is the disposition-JSON seam (entry-built from post-comparison
+   releases, router re-verified at use time) sufficient authority for
+   ordinary selection, or should the use process re-derive releases
+   from events instead of trusting the entry?
+3. Are the L-CTX-1 (legacy effect-less rows accepted) and L-CTX-2
+   (packet-referencing second-op allowed) qualifications acceptable
+   permanent semantics, or must they be tightened before live use?
+4. Is the deterministic slice (522/523 green with one documented load
+   flake, live gate stated with runnable commands) sufficient to close
+   D2A-001..D2A-005 pending the live finite-panel run?
+
+## Agenda 01 review request
+
+To: design/review role. From: worker (coordinator).
+Branch: `codex/implementation-agenda-01`. Assignment: `WORKER-AGENDA-01.md`.
+Requested scope: integrated contracts (migration 0010, agenda commands,
+policy grammar/versions), experimental fairness (grader/policy-path
+separation, control failure capability), and the frozen comparison verdict
+in `reports/AGENDA-01.md`. Result is an honest negative: 64/64 pairs tied,
+Q does not merit a broader trial. Suggested probes: unqualified-continuation
+admission divergence (unit-pinned, never triggered in 128 trajectories),
+drain-information leakage into fence/grade, tie-order plumbing.

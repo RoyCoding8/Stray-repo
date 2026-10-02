@@ -294,7 +294,7 @@ def _settle_amount(cur, reservation_id: str, outcome: str, actual: Any = None) -
 
 
 def get_control(dsn: str) -> dict:
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("INSERT INTO control (id) VALUES (1) ON CONFLICT DO NOTHING")
             cur.execute("SELECT * FROM control WHERE id = 1")
@@ -303,7 +303,7 @@ def get_control(dsn: str) -> dict:
 
 
 def allocation_status(dsn: str, allocation_id: str) -> dict:
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT * FROM allocations WHERE id = %s", (allocation_id,))
             row = cur.fetchone()
@@ -409,6 +409,12 @@ def withdraw_commitment(dsn: str, cmd: Command) -> CommandResult:
 def seed_allocation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
+        if int(p["authorized"]) <= 0:
+            raise SettlementError("seed authorized must be a positive integer")
+        if int(p.get("amount_scale", 1)) <= 0:
+            raise SettlementError("seed amount_scale must be a positive integer")
+        if int(p.get("max_occupancy", 8)) < 0:
+            raise SettlementError("seed max_occupancy must be a non-negative integer")
         cur.execute("SELECT 1 FROM allocations WHERE id = %s", (p["allocation_id"],))
         if cur.fetchone() is not None:
             raise SettlementError(f"allocation {p['allocation_id']} already exists")
@@ -550,40 +556,55 @@ def _admission_checks(cur, control, op, ownership_generation: Any, grant_version
         _check_release(cur, op["attempt_id"])
 
 
+def _acquire_work(cur, *, investigation_id: str, attempt_id: str,
+                  allocation_id=None, composition: str = "", model: str = "",
+                  env: str = "", deadline=None, owner: str = "",
+                  kind: str = "task") -> dict:
+    cur.execute("SELECT * FROM investigations WHERE id = %s", (investigation_id,))
+    inv = cur.fetchone()
+    if inv is None:
+        raise SettlementError(f"unknown investigation {investigation_id}")
+    if inv["disposition"] in ("withdrawn", "fulfilled"):
+        raise SettlementError(f"investigation {inv['id']} is {inv['disposition']}")
+    if allocation_id is not None:
+        alloc = _get_alloc(cur, allocation_id)
+        if int(alloc["occupancy"]) >= int(alloc["max_occupancy"]):
+            raise InsufficientResources(f"allocation {allocation_id} occupancy exhausted")
+        if str(alloc.get("owner_scope") or "") == SUPERVISION_SCOPE \
+                and kind != "recovery":
+            raise InsufficientResources(
+                f"allocation {allocation_id} is protected supervision capacity")
+        cur.execute("UPDATE allocations SET occupancy = occupancy + 1 WHERE id = %s",
+                    (allocation_id,))
+    cur.execute("SELECT COALESCE(MAX(ownership_generation), 0) AS g FROM attempts WHERE investigation_id = %s",
+                (inv["id"],))
+    generation = int(cur.fetchone()["g"]) + 1
+    cur.execute(
+        "INSERT INTO attempts (id, investigation_id, investigation_revision, allocation_id,"
+        " ownership_generation, composition, model, env, lifecycle, deadline, owner)"
+        " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'running', %s, %s)",
+        (attempt_id, inv["id"], int(inv["revision"]), allocation_id, generation,
+         composition, model, env, deadline, owner),
+    )
+    return {"attempt_id": attempt_id, "ownership_generation": generation,
+            "investigation_revision": int(inv["revision"])}
+
+
 def acquire_work(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
-        cur.execute("SELECT * FROM investigations WHERE id = %s", (p["investigation_id"],))
-        inv = cur.fetchone()
-        if inv is None:
-            raise SettlementError(f"unknown investigation {p['investigation_id']}")
-        if inv["disposition"] in ("withdrawn", "fulfilled"):
-            raise SettlementError(f"investigation {inv['id']} is {inv['disposition']}")
-        alloc_id = p.get("allocation_id")
-        if alloc_id is not None:
-            alloc = _get_alloc(cur, alloc_id)
-            if int(alloc["occupancy"]) >= int(alloc["max_occupancy"]):
-                raise InsufficientResources(f"allocation {alloc_id} occupancy exhausted")
-            if str(alloc.get("owner_scope") or "") == SUPERVISION_SCOPE \
-                    and p.get("kind", "task") != "recovery":
-                raise InsufficientResources(
-                    f"allocation {alloc_id} is protected supervision capacity")
-            cur.execute("UPDATE allocations SET occupancy = occupancy + 1 WHERE id = %s", (alloc_id,))
-        cur.execute("SELECT COALESCE(MAX(ownership_generation), 0) AS g FROM attempts WHERE investigation_id = %s",
-                    (inv["id"],))
-        generation = int(cur.fetchone()["g"]) + 1
-        cur.execute(
-            "INSERT INTO attempts (id, investigation_id, investigation_revision, allocation_id,"
-            " ownership_generation, composition, model, env, lifecycle, deadline, owner)"
-            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'running', %s, %s)",
-            (p["attempt_id"], inv["id"], int(inv["revision"]), alloc_id, generation,
-             p.get("composition", ""), p.get("model", ""), p.get("env", ""),
-             p.get("deadline"), p.get("owner", "")),
-        )
-        return (ResultCode.APPLIED, f"attempt {p['attempt_id']} acquired at generation {generation}",
-                {"attempt_id": p["attempt_id"], "ownership_generation": generation,
-                 "investigation_revision": int(inv["revision"])},
-                [("work.acquired", {"attempt_id": p["attempt_id"], "ownership_generation": generation})],
+        acquired = _acquire_work(
+            cur, investigation_id=p["investigation_id"], attempt_id=p["attempt_id"],
+            allocation_id=p.get("allocation_id"), composition=p.get("composition", ""),
+            model=p.get("model", ""), env=p.get("env", ""),
+            deadline=p.get("deadline"), owner=p.get("owner", ""),
+            kind=p.get("kind", "task"))
+        return (ResultCode.APPLIED,
+                f"attempt {acquired['attempt_id']} acquired"
+                f" at generation {acquired['ownership_generation']}",
+                acquired,
+                [("work.acquired", {"attempt_id": acquired["attempt_id"],
+                                   "ownership_generation": acquired["ownership_generation"]})],
                 [])
     return transact(dsn, cmd, _fn)
 
@@ -711,7 +732,7 @@ def _check_obligation_witnesses(dsn: str, cur, control, inv: dict, attempt: dict
 
 
 def attempts_with_continuations(dsn: str) -> list[dict]:
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT id, ownership_generation FROM attempts"
                         " WHERE lifecycle IN ('running', 'suspended')"
@@ -805,40 +826,54 @@ def _get_operation(cur, operation_id: str) -> dict:
     return row
 
 
+def _prepare_operation(cur, authority_version: int, *, operation_id: str,
+                       attempt_id=None, allocation_id=None, reservation_id=None,
+                       exposure: int = 0, operation=None,
+                       execution_version: str = "") -> dict:
+    body = operation or {}
+    digest = payload_digest(body)
+    cur.execute("SELECT payload_digest FROM operations WHERE id = %s", (operation_id,))
+    existing = cur.fetchone()
+    if existing is not None:
+        if existing["payload_digest"] != digest:
+            raise ConflictPayload(f"operation {operation_id} intent is immutable")
+        return {"operation_id": operation_id, "prepared": False}
+    if attempt_id is not None and _get_attempt(cur, attempt_id) is None:
+        raise SettlementError(f"unknown attempt {attempt_id}")
+    if int(exposure) > 0:
+        if not reservation_id or not allocation_id:
+            raise SettlementError("exposure needs reservation_id and allocation_id")
+        _take_reservation(cur, allocation_id, reservation_id, int(exposure), operation_id)
+    stored = dict(body) if isinstance(body, dict) else {}
+    stored["_authority_version"] = int(authority_version)
+    cur.execute(
+        "INSERT INTO operations (id, attempt_id, allocation_id, reservation_id, payload_digest,"
+        " payload, dispatch_state, execution_version)"
+        " VALUES (%s, %s, %s, %s, %s, %s, 'prepared', %s)",
+        (operation_id, attempt_id, allocation_id, reservation_id, digest, _j(stored),
+         execution_version),
+    )
+    return {"operation_id": operation_id, "reservation_id": reservation_id,
+            "prepared": True}
+
+
 def prepare_operation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
-        op_id = p["operation_id"]
-        body = p.get("operation", {})
-        digest = payload_digest(body)
-        cur.execute("SELECT payload_digest FROM operations WHERE id = %s", (op_id,))
-        existing = cur.fetchone()
-        if existing is not None:
-            if existing["payload_digest"] != digest:
-                raise ConflictPayload(f"operation {op_id} intent is immutable")
+        prepared = _prepare_operation(
+            cur, int(control["authority_version"]),
+            operation_id=p["operation_id"], attempt_id=p.get("attempt_id"),
+            allocation_id=p.get("allocation_id"),
+            reservation_id=p.get("reservation_id"),
+            exposure=int(p.get("exposure", 0)), operation=p.get("operation", {}),
+            execution_version=p.get("execution_version", ""))
+        if not prepared["prepared"]:
             return (ResultCode.ALREADY_APPLIED, "operation already prepared",
-                    {"operation_id": op_id}, [], [])
-        attempt_id = p.get("attempt_id")
-        if attempt_id is not None and _get_attempt(cur, attempt_id) is None:
-            raise SettlementError(f"unknown attempt {attempt_id}")
-        exposure = int(p.get("exposure", 0))
-        reservation_id = p.get("reservation_id")
-        if exposure > 0:
-            if not reservation_id or not p.get("allocation_id"):
-                raise SettlementError("exposure needs reservation_id and allocation_id")
-            _take_reservation(cur, p["allocation_id"], reservation_id, exposure, op_id)
-        stored = dict(body) if isinstance(body, dict) else {}
-        stored["_authority_version"] = int(control["authority_version"])
-        cur.execute(
-            "INSERT INTO operations (id, attempt_id, allocation_id, reservation_id, payload_digest,"
-            " payload, dispatch_state, execution_version)"
-            " VALUES (%s, %s, %s, %s, %s, %s, 'prepared', %s)",
-            (op_id, attempt_id, p.get("allocation_id"), reservation_id, digest, _j(stored),
-             p.get("execution_version", "")),
-        )
-        return (ResultCode.APPLIED, f"operation {op_id} prepared",
-                {"operation_id": op_id, "reservation_id": reservation_id},
-                [("operation.prepared", {"operation_id": op_id})], [])
+                    {"operation_id": p["operation_id"]}, [], [])
+        return (ResultCode.APPLIED, f"operation {p['operation_id']} prepared",
+                {"operation_id": p["operation_id"],
+                 "reservation_id": prepared["reservation_id"]},
+                [("operation.prepared", {"operation_id": p["operation_id"]})], [])
     return transact(dsn, cmd, _fn)
 
 
@@ -886,7 +921,7 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
         cur.execute("SELECT * FROM receipts WHERE receipt_identity = %s", (p["receipt_identity"],))
         seen = cur.fetchone()
         if seen is not None:
-            if seen["content_digest"] == digest:
+            if seen["operation_id"] == op["id"] and seen["content_digest"] == digest:
                 return (ResultCode.ALREADY_APPLIED, "duplicate receipt",
                         {"operation_id": op["id"], "settled": bool(op["settled"])}, [], [])
             cur.execute(
@@ -908,6 +943,24 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
             (p["receipt_identity"], op["id"], digest, _j(content), outcome),
         )
         if bool(op["settled"]):
+            if outcome in ("success", "failure"):
+                cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s"
+                            " AND outcome <> %s AND outcome <> 'unknown'", (op["id"], outcome))
+                if cur.fetchone() is not None:
+                    cur.execute(
+                        "INSERT INTO receipt_conflicts (receipt_identity, operation_id,"
+                        " content_digest, content) VALUES (%s, %s, %s, %s)",
+                        (p["receipt_identity"], op["id"], digest, _j(content)),
+                    )
+                    cur.execute(
+                        "UPDATE operations SET reconcile_state = 'conflict',"
+                        " receipt_provenance = %s, updated_at = now() WHERE id = %s",
+                        (p.get("provenance", ""), op["id"]),
+                    )
+                    return (ResultCode.APPLIED,
+                            "conflicting receipt preserved for reconciliation",
+                            {"operation_id": op["id"], "conflict": True, "settled": True},
+                            [("operation.receipt_conflict", {"operation_id": op["id"]})], [])
             return (ResultCode.APPLIED, "receipt recorded, reservation already settled",
                     {"operation_id": op["id"], "settled": True},
                     [("operation.receipted", {"operation_id": op["id"]})], [])
@@ -964,7 +1017,7 @@ def confirm_cancellation(dsn: str, cmd: Command) -> CommandResult:
 
 
 def operation_receipts(dsn: str, operation_id: str) -> list[dict]:
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT receipt_identity, outcome FROM receipts WHERE operation_id = %s"
                         " ORDER BY receipt_identity", (operation_id,))
@@ -1008,6 +1061,9 @@ def reconcile_operation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
         op = _get_operation(cur, p["operation_id"])
+        if op["dispatch_state"] in ("prepared", "cancelled"):
+            raise SettlementError(
+                f"operation {op['id']} is {op['dispatch_state']}, nothing dispatched to reconcile")
         resolution = p.get("resolution", "reconciled")
         if resolution not in ("reconciled", "unresolved"):
             raise SettlementError(f"unknown resolution {resolution}")
@@ -1023,7 +1079,7 @@ def reconcile_operation(dsn: str, cmd: Command) -> CommandResult:
 
 
 def scan_outbox(dsn: str, limit: int = 100) -> list[dict]:
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 "SELECT workflow_identity, intent_kind, payload, delivered, created_epoch"
@@ -1068,7 +1124,7 @@ def record_delivery(dsn: str, cmd: Command) -> CommandResult:
 
 
 def read_events(dsn: str, cursor_epoch: int = 0, cursor_ordinal: int = -1, limit: int = 100) -> dict:
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 "SELECT epoch, ordinal, kind, payload FROM domain_events"
@@ -1084,7 +1140,7 @@ def read_events(dsn: str, cursor_epoch: int = 0, cursor_ordinal: int = -1, limit
 
 
 def restart_reconciliation(dsn: str) -> dict:
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
                 "SELECT id, attempt_id, dispatch_state, launcher_id, execution_version, reconcile_state,"

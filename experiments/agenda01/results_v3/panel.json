@@ -1,0 +1,6158 @@
+{
+  "experiment": "AG01-EXP/3",
+  "finished": "2026-09-12T00:42:22.198059+00:00",
+  "incomplete": [],
+  "manifest_sha256": "c6ad5d9147c4c130221e0fb0ec56e500902a4abe91f0975853dcfbe0f7c4a1f2",
+  "policy_versions": {
+    "Q": "AG01-Q-2",
+    "R": "AG01-R-1"
+  },
+  "runs": [
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w00-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w00-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w00v0_q_t0",
+      "world_id": "w00"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w00-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w00-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w00v0_q_t1",
+      "world_id": "w00"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w00-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w00-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w00v0_r_t0",
+      "world_id": "w00"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w00-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w00-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w00-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w00-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w00v0_r_t1",
+      "world_id": "w00"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w01-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w01-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w01v1_q_t0",
+      "world_id": "w01"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w01-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w01-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w01v1_q_t1",
+      "world_id": "w01"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w01-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w01-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w01v1_r_t0",
+      "world_id": "w01"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w01-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w01-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w01-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w01-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w01v1_r_t1",
+      "world_id": "w01"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w02-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w02-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w02v2_q_t0",
+      "world_id": "w02"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w02-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w02-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w02v2_q_t1",
+      "world_id": "w02"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w02-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w02-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w02v2_r_t0",
+      "world_id": "w02"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 6,
+        "eval_cost": 8,
+        "per_task": {
+          "w02-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w02-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w02-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w02-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w02v2_r_t1",
+      "world_id": "w02"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w03-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w03-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w03v3_q_t0",
+      "world_id": "w03"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w03-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w03-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w03v3_q_t1",
+      "world_id": "w03"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w03-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w03-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w03v3_r_t0",
+      "world_id": "w03"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w03-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w03-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w03-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w03-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w03v3_r_t1",
+      "world_id": "w03"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w04-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w04v0_q_t0",
+      "world_id": "w04"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w04-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w04v0_q_t1",
+      "world_id": "w04"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w04-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w04v0_r_t0",
+      "world_id": "w04"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w04-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w04-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w04-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w04-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w04v0_r_t1",
+      "world_id": "w04"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w05-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w05v1_q_t0",
+      "world_id": "w05"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w05-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w05v1_q_t1",
+      "world_id": "w05"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w05-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w05v1_r_t0",
+      "world_id": "w05"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w05-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w05-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w05-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w05-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w05v1_r_t1",
+      "world_id": "w05"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w06-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w06v2_q_t0",
+      "world_id": "w06"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w06-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w06v2_q_t1",
+      "world_id": "w06"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w06-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w06v2_r_t0",
+      "world_id": "w06"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w06-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w06-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w06-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w06-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w06v2_r_t1",
+      "world_id": "w06"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 7,
+        "eval_cost": 8,
+        "per_task": {
+          "w07-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w07v3_q_t0",
+      "world_id": "w07"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 7,
+        "eval_cost": 8,
+        "per_task": {
+          "w07-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w07v3_q_t1",
+      "world_id": "w07"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 7,
+        "eval_cost": 8,
+        "per_task": {
+          "w07-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w07v3_r_t0",
+      "world_id": "w07"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 7,
+        "eval_cost": 8,
+        "per_task": {
+          "w07-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w07-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w07-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w07v3_r_t1",
+      "world_id": "w07"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w08-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w08v0_q_t0",
+      "world_id": "w08"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w08-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w08v0_q_t1",
+      "world_id": "w08"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w08-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w08v0_r_t0",
+      "world_id": "w08"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w08-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w08-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w08-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w08-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w08v0_r_t1",
+      "world_id": "w08"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w09-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w09v1_q_t0",
+      "world_id": "w09"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w09-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w09v1_q_t1",
+      "world_id": "w09"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w09-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w09v1_r_t0",
+      "world_id": "w09"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w09-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w09-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w09-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w09-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w09v1_r_t1",
+      "world_id": "w09"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w10-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w10-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w10v2_q_t0",
+      "world_id": "w10"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w10-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w10-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w10v2_q_t1",
+      "world_id": "w10"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w10-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w10-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w10v2_r_t0",
+      "world_id": "w10"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w10-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w10-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w10-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w10-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w10v2_r_t1",
+      "world_id": "w10"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w11-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w11-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w11v3_q_t0",
+      "world_id": "w11"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w11-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w11-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w11v3_q_t1",
+      "world_id": "w11"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w11-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w11-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w11v3_r_t0",
+      "world_id": "w11"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w11-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w11-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w11-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w11-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w11v3_r_t1",
+      "world_id": "w11"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w12-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w12-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w12v0_q_t0",
+      "world_id": "w12"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w12-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w12-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w12v0_q_t1",
+      "world_id": "w12"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w12-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w12-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w12v0_r_t0",
+      "world_id": "w12"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w12-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w12-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w12-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w12-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w12v0_r_t1",
+      "world_id": "w12"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w13-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w13v1_q_t0",
+      "world_id": "w13"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w13-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w13v1_q_t1",
+      "world_id": "w13"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w13-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w13v1_r_t0",
+      "world_id": "w13"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w13-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w13-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w13-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w13v1_r_t1",
+      "world_id": "w13"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w14-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w14-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w14v2_q_t0",
+      "world_id": "w14"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w14-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w14-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w14v2_q_t1",
+      "world_id": "w14"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w14-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w14-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w14v2_r_t0",
+      "world_id": "w14"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w14-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w14-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w14-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w14-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w14v2_r_t1",
+      "world_id": "w14"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w15-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w15-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w15v3_q_t0",
+      "world_id": "w15"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w15-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w15-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w15v3_q_t1",
+      "world_id": "w15"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w15-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w15-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w15v3_r_t0",
+      "world_id": "w15"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w15-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w15-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w15-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w15-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w15v3_r_t1",
+      "world_id": "w15"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w16-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w16-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w16v0_q_t0",
+      "world_id": "w16"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w16-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w16-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w16v0_q_t1",
+      "world_id": "w16"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w16-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w16-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w16v0_r_t0",
+      "world_id": "w16"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w16-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w16-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w16-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w16-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w16v0_r_t1",
+      "world_id": "w16"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w17-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w17v1_q_t0",
+      "world_id": "w17"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w17-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w17v1_q_t1",
+      "world_id": "w17"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w17-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w17v1_r_t0",
+      "world_id": "w17"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w17-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w17-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w17-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w17-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w17v1_r_t1",
+      "world_id": "w17"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w18-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w18-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w18v2_q_t0",
+      "world_id": "w18"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w18-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w18-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w18v2_q_t1",
+      "world_id": "w18"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w18-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w18-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w18v2_r_t0",
+      "world_id": "w18"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w18-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w18-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w18-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w18-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w18v2_r_t1",
+      "world_id": "w18"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w19-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w19v3_q_t0",
+      "world_id": "w19"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w19-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w19v3_q_t1",
+      "world_id": "w19"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w19-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w19v3_r_t0",
+      "world_id": "w19"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 5,
+        "eval_cost": 8,
+        "per_task": {
+          "w19-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w19-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w19-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w19-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w19v3_r_t1",
+      "world_id": "w19"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w20-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w20-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w20v0_q_t0",
+      "world_id": "w20"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w20-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w20-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w20v0_q_t1",
+      "world_id": "w20"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w20-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w20-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w20v0_r_t0",
+      "world_id": "w20"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w20-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w20-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w20-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w20-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w20v0_r_t1",
+      "world_id": "w20"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w21-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w21-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w21v1_q_t0",
+      "world_id": "w21"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w21-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w21-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w21v1_q_t1",
+      "world_id": "w21"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w21-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w21-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w21v1_r_t0",
+      "world_id": "w21"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w21-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w21-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w21-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w21-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w21v1_r_t1",
+      "world_id": "w21"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w22-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w22-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w22v2_q_t0",
+      "world_id": "w22"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w22-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w22-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w22v2_q_t1",
+      "world_id": "w22"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w22-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w22-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w22v2_r_t0",
+      "world_id": "w22"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w22-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w22-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w22-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w22-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w22v2_r_t1",
+      "world_id": "w22"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w23-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w23-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t5": {
+            "answer": false,
+            "correct": false
+          },
+          "w23-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w23v3_q_t0",
+      "world_id": "w23"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w23-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w23-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t5": {
+            "answer": false,
+            "correct": false
+          },
+          "w23-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w23v3_q_t1",
+      "world_id": "w23"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w23-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w23-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t5": {
+            "answer": false,
+            "correct": false
+          },
+          "w23-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w23v3_r_t0",
+      "world_id": "w23"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w23-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w23-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w23-t5": {
+            "answer": false,
+            "correct": false
+          },
+          "w23-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w23-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w23v3_r_t1",
+      "world_id": "w23"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w24-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w24-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w24v0_q_t0",
+      "world_id": "w24"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w24-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w24-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w24v0_q_t1",
+      "world_id": "w24"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w24-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w24-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w24v0_r_t0",
+      "world_id": "w24"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w24-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w24-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w24-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w24-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w24v0_r_t1",
+      "world_id": "w24"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w25-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w25-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w25v1_q_t0",
+      "world_id": "w25"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w25-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w25-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w25v1_q_t1",
+      "world_id": "w25"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w25-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w25-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w25v1_r_t0",
+      "world_id": "w25"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w25-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w25-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w25-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w25-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w25v1_r_t1",
+      "world_id": "w25"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w26-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w26v2_q_t0",
+      "world_id": "w26"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w26-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w26v2_q_t1",
+      "world_id": "w26"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w26-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w26v2_r_t0",
+      "world_id": "w26"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w26-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t2": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t4": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w26-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w26-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w26v2_r_t1",
+      "world_id": "w26"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w27-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w27-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w27v3_q_t0",
+      "world_id": "w27"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w27-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w27-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w27v3_q_t1",
+      "world_id": "w27"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w27-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w27-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w27v3_r_t0",
+      "world_id": "w27"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 4,
+        "eval_cost": 8,
+        "per_task": {
+          "w27-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w27-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w27-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w27-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w27v3_r_t1",
+      "world_id": "w27"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w28-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w28-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w28v0_q_t0",
+      "world_id": "w28"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w28-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w28-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w28v0_q_t1",
+      "world_id": "w28"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w28-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w28-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w28v0_r_t0",
+      "world_id": "w28"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w28-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w28-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t3": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t5": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t6": {
+            "answer": true,
+            "correct": true
+          },
+          "w28-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w28v0_r_t1",
+      "world_id": "w28"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w29-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t7": {
+            "answer": true,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w29v1_q_t0",
+      "world_id": "w29"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w29-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t7": {
+            "answer": true,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w29v1_q_t1",
+      "world_id": "w29"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w29-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t7": {
+            "answer": true,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w29v1_r_t0",
+      "world_id": "w29"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 8,
+        "eval_cost": 8,
+        "per_task": {
+          "w29-t0": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t1": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t3": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t4": {
+            "answer": true,
+            "correct": true
+          },
+          "w29-t5": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t6": {
+            "answer": false,
+            "correct": true
+          },
+          "w29-t7": {
+            "answer": true,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w29v1_r_t1",
+      "world_id": "w29"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 2,
+        "eval_cost": 8,
+        "per_task": {
+          "w30-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w30v2_q_t0",
+      "world_id": "w30"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 2,
+        "eval_cost": 8,
+        "per_task": {
+          "w30-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w30v2_q_t1",
+      "world_id": "w30"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 2,
+        "eval_cost": 8,
+        "per_task": {
+          "w30-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w30v2_r_t0",
+      "world_id": "w30"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 2,
+        "eval_cost": 8,
+        "per_task": {
+          "w30-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t1": {
+            "answer": false,
+            "correct": true
+          },
+          "w30-t2": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w30-t7": {
+            "answer": "unknown",
+            "correct": false
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w30v2_r_t1",
+      "world_id": "w30"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w31-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w31-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w31-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w31v3_q_t0",
+      "world_id": "w31"
+    },
+    {
+      "arm": "Q",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w31-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w31-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w31-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w31v3_q_t1",
+      "world_id": "w31"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w31-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w31-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w31-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 0,
+      "traj_id": "w31v3_r_t0",
+      "world_id": "w31"
+    },
+    {
+      "arm": "R",
+      "complete": true,
+      "end_reason": "horizon",
+      "error": null,
+      "grade": {
+        "correct": 3,
+        "eval_cost": 8,
+        "per_task": {
+          "w31-t0": {
+            "answer": false,
+            "correct": true
+          },
+          "w31-t1": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t2": {
+            "answer": true,
+            "correct": true
+          },
+          "w31-t3": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t4": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t5": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t6": {
+            "answer": "unknown",
+            "correct": false
+          },
+          "w31-t7": {
+            "answer": false,
+            "correct": true
+          }
+        },
+        "total": 8
+      },
+      "tie": 1,
+      "traj_id": "w31v3_r_t1",
+      "world_id": "w31"
+    }
+  ],
+  "source_revision": "e644ff530d74cfb334a3cb1351f51ef16fe5e5e4",
+  "started": "2026-09-12T00:36:23.389080+00:00"
+}

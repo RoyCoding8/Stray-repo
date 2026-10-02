@@ -1,0 +1,1071 @@
+{
+  "family": "software",
+  "instruments": {
+    "budgets": {
+      "component_invocations": 64,
+      "elapsed_s": 120,
+      "message_bytes": 65536,
+      "per_invocation_ms": 2000,
+      "witness_queries": 16
+    },
+    "oracle_vocabulary": [
+      "preserved",
+      "not_preserved",
+      "invalid",
+      "unknown"
+    ]
+  },
+  "lessons": [
+    "authored-fixture-lesson 1: keep the observing read and the writes that set up the stale value; prefix reads on other names usually drop away.",
+    "authored-fixture-lesson 2: a halving step that spans both the setup pair and the observing read fails whole; tail-first single removals spend fewer checks.",
+    "authored-fixture-lesson 3: reads that agree in both interpreters are expendable; only the designated disagreeing read must survive.",
+    "authored-fixture-lesson 4: after a clear, the surviving stale value comes from the pre-clear write; prefix writes on other names drop away.",
+    "authored-fixture-lesson 5: ddmin halves win early on long sequences with clustered setup; greedy tail-first wins when setup sits near the front.",
+    "authored-fixture-lesson 6: never claim a smaller sequence without a preserved verdict on the exact bytes; count every check."
+  ],
+  "parent_refs": {
+    "lane_b_manifest_digest": "54ae7c4a11061bc240064a75a4f04ee10332ad3a990ebc3c69e6e5a3b0a53c6f",
+    "lane_b_manifest_version": "RPR-01/1"
+  },
+  "provenance": "authored-fixture, not model output",
+  "stage": "source",
+  "tasks": [
+    {
+      "digest": "f8b539f48bd5a657cc5086a34dbabc8f421a3c4ab255e54689a1ab44a080f2eb",
+      "fault": "stale-read",
+      "measure": 15,
+      "path": "software/development/sw-dev-00.json",
+      "task_id": "sw-dev-00"
+    },
+    {
+      "digest": "501e4a4de0363520e1d92e67e390b82e9c8c139bc83a090a62da4a23802ec4cc",
+      "fault": "stale-clear",
+      "measure": 12,
+      "path": "software/development/sw-dev-01.json",
+      "task_id": "sw-dev-01"
+    },
+    {
+      "digest": "2b78dc9b8533c057fa1c0202df4a05155705920da9f59e04889c2cf0dcff15c5",
+      "fault": "stale-read",
+      "measure": 7,
+      "path": "software/development/sw-dev-02.json",
+      "task_id": "sw-dev-02"
+    },
+    {
+      "digest": "7a6eac72979dc3c57abcdb2fe30ec5e481e4973aa1d849445fde06c40b6f277e",
+      "fault": "stale-clear",
+      "measure": 10,
+      "path": "software/development/sw-dev-03.json",
+      "task_id": "sw-dev-03"
+    },
+    {
+      "digest": "e48f3142fc1777c6aa498e654f1edc8a065b44eabe3a0138feecc903ceaa19e1",
+      "fault": "stale-read",
+      "measure": 11,
+      "path": "software/development/sw-dev-04.json",
+      "task_id": "sw-dev-04"
+    },
+    {
+      "digest": "5f576c6858a6c50d23c8804aafbf8bb04d196a8bc6d170ddf0d8b98202fc46f5",
+      "fault": "stale-clear",
+      "measure": 11,
+      "path": "software/development/sw-dev-05.json",
+      "task_id": "sw-dev-05"
+    }
+  ],
+  "transcripts": {
+    "sw-dev-00": {
+      "ddmin": {
+        "accepted": 3,
+        "final_measure": 3,
+        "final_u": 0.8,
+        "history": [
+          {
+            "measure": 15,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          5,
+          6,
+          7
+        ],
+        "queries": 10,
+        "status": "locally-irreducible"
+      },
+      "greedy": {
+        "accepted": 12,
+        "final_measure": 3,
+        "final_u": 0.8,
+        "history": [
+          {
+            "measure": 15,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 14,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 13,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 12,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 11,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 10,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          5,
+          6,
+          7
+        ],
+        "queries": 16,
+        "status": "budget-exhausted"
+      }
+    },
+    "sw-dev-01": {
+      "ddmin": {
+        "accepted": 4,
+        "final_measure": 4,
+        "final_u": 0.666667,
+        "history": [
+          {
+            "measure": 12,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          3,
+          4,
+          5,
+          6
+        ],
+        "queries": 16,
+        "status": "budget-exhausted"
+      },
+      "greedy": {
+        "accepted": 9,
+        "final_measure": 3,
+        "final_u": 0.75,
+        "history": [
+          {
+            "measure": 12,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 11,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 10,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          4,
+          5,
+          6
+        ],
+        "queries": 16,
+        "status": "locally-irreducible"
+      }
+    },
+    "sw-dev-02": {
+      "ddmin": {
+        "accepted": 3,
+        "final_measure": 3,
+        "final_u": 0.571429,
+        "history": [
+          {
+            "measure": 7,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          2,
+          3,
+          4
+        ],
+        "queries": 16,
+        "status": "locally-irreducible"
+      },
+      "greedy": {
+        "accepted": 4,
+        "final_measure": 3,
+        "final_u": 0.571429,
+        "history": [
+          {
+            "measure": 7,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          2,
+          3,
+          4
+        ],
+        "queries": 11,
+        "status": "locally-irreducible"
+      }
+    },
+    "sw-dev-03": {
+      "ddmin": {
+        "accepted": 2,
+        "final_measure": 3,
+        "final_u": 0.7,
+        "history": [
+          {
+            "measure": 10,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 1,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          5,
+          6,
+          7
+        ],
+        "queries": 9,
+        "status": "locally-irreducible"
+      },
+      "greedy": {
+        "accepted": 7,
+        "final_measure": 3,
+        "final_u": 0.7,
+        "history": [
+          {
+            "measure": 10,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          5,
+          6,
+          7
+        ],
+        "queries": 14,
+        "status": "locally-irreducible"
+      }
+    },
+    "sw-dev-04": {
+      "ddmin": {
+        "accepted": 3,
+        "final_measure": 3,
+        "final_u": 0.727273,
+        "history": [
+          {
+            "measure": 11,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 1,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          2,
+          3,
+          4
+        ],
+        "queries": 14,
+        "status": "locally-irreducible"
+      },
+      "greedy": {
+        "accepted": 8,
+        "final_measure": 3,
+        "final_u": 0.727273,
+        "history": [
+          {
+            "measure": 11,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 10,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          2,
+          3,
+          4
+        ],
+        "queries": 15,
+        "status": "locally-irreducible"
+      }
+    },
+    "sw-dev-05": {
+      "ddmin": {
+        "accepted": 2,
+        "final_measure": 3,
+        "final_u": 0.727273,
+        "history": [
+          {
+            "measure": 11,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 1,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          6,
+          7,
+          8
+        ],
+        "queries": 9,
+        "status": "locally-irreducible"
+      },
+      "greedy": {
+        "accepted": 8,
+        "final_measure": 3,
+        "final_u": 0.727273,
+        "history": [
+          {
+            "measure": 11,
+            "reason": "ok-incumbent",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 10,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 9,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 8,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 7,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 6,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 5,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 4,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 3,
+            "reason": "ok-preserved",
+            "verdict": "preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "witness-lost-agree",
+            "verdict": "not_preserved"
+          },
+          {
+            "measure": 2,
+            "reason": "observation-missing",
+            "verdict": "not_preserved"
+          }
+        ],
+        "kept_atoms": [
+          6,
+          7,
+          8
+        ],
+        "queries": 15,
+        "status": "locally-irreducible"
+      }
+    }
+  },
+  "usable_by": [
+    "arm-A",
+    "arm-B",
+    "arm-C",
+    "future-arm"
+  ],
+  "version": "RPR-CTX/1"
+}

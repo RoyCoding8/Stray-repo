@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any
 
@@ -22,7 +23,7 @@ from .common import Command, CommandResult, ResultCode, SettlementError
 
 STAGE_MAX_BYTES = 64 * 1024 * 1024
 STAGE_MAX_FILES = 1024
-_ARCHIVE_SUFFIXES = (".tar.gz", ".tgz", ".tar")
+_TMP_GRACE_S = 3600
 
 _VISIBLE = {
     "public": ("public",),
@@ -79,7 +80,8 @@ def _check_manifest(manifest: dict) -> list[dict]:
 def _scope_used(dsn: str, scope: str) -> int:
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT COALESCE(SUM(size), 0) AS used FROM artifact_versions WHERE scope = %s",
+            cur.execute("SELECT COALESCE(SUM(size), 0) AS used FROM artifact_versions"
+                        " WHERE scope = %s AND retention_state != 'purged'",
                         (scope,))
             conn.commit()
             return int(cur.fetchone()["used"])
@@ -97,10 +99,22 @@ def _check_budget(dsn: str | None, scope: str, size: int) -> None:
         raise SettlementError(f"scope {scope!r} over quota: staged {size} exceeds budget")
 
 
+def _contained(root: Path, rel: str) -> Path:
+    base = Path(os.path.realpath(root))
+    target = base / rel
+    parent = Path(os.path.realpath(target.parent))
+    if parent != base and base not in parent.parents:
+        raise SettlementError(f"rejected path {rel!r}: escapes the staging root")
+    return target
+
+
 def _safe_write(root: Path, rel: str, raw: bytes) -> Path:
-    target = root / rel
+    target = _contained(root, rel)
     target.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+    try:
+        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+    except OSError as exc:
+        raise SettlementError(f"rejected path {rel!r}: {exc.strerror or exc}")
     try:
         with os.fdopen(fd, "wb") as handle:
             handle.write(raw)
@@ -121,6 +135,16 @@ def _unpacked_size(dest: Path) -> int:
     return sum(p.stat().st_size for p in dest.rglob("*") if p.is_file() and not p.is_symlink())
 
 
+def _reject_untrusted_extraction(dest: Path) -> None:
+    for dirpath, dirnames, filenames in os.walk(dest, followlinks=False):
+        for name in dirnames + filenames:
+            found = Path(dirpath) / name
+            if found.is_symlink() or not (found.is_file() or found.is_dir()):
+                raise SettlementError(
+                    f"rejected archive member {found.relative_to(dest)}: links and"
+                    " special files are never materialized")
+
+
 def _unpack_archive_isolated(archive: Path, dest: Path) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     listed = exec_profile.run_local_process(
@@ -130,10 +154,12 @@ def _unpack_archive_isolated(archive: Path, dest: Path) -> None:
     for line in listed.stdout.splitlines():
         _check_relpath(_strip_dot_prefix(line.strip()) or ".")
     result = exec_profile.run_local_process(
-        ["tar", "-xzf", str(archive), "-C", str(dest)], timeout_ms=60_000,
+        ["tar", "-xzf", str(archive), "-C", str(dest),
+         "--no-same-owner", "--no-same-permissions"], timeout_ms=60_000,
         max_output_bytes=1_048_576)
     if result.returncode != 0:
         raise SettlementError(f"archive unpack failed: {result.stderr[:200]}")
+    _reject_untrusted_extraction(dest)
     if _unpacked_size(dest) > STAGE_MAX_BYTES:
         raise SettlementError("unpacked archive exceeds staging byte bound")
 
@@ -166,7 +192,7 @@ def stage_package(dsn: str | None, staging_root: str | Path, *, manifest: dict,
     stage_dir.mkdir(parents=True, exist_ok=True)
     for entry in entries:
         if entry.get("kind") == "dir":
-            (stage_dir / entry["path"]).mkdir(parents=True, exist_ok=True)
+            _contained(stage_dir, entry["path"]).mkdir(parents=True, exist_ok=True)
     for rel, raw in files.items():
         _safe_write(stage_dir, rel, raw)
         if by_path[rel].get("kind") == "archive" and by_path[rel].get("unpack"):
@@ -224,11 +250,20 @@ def _write_final_bytes(artifacts_root: Path, receipt: dict, stage_dir: Path) -> 
     return final
 
 
+def _manifest_size(manifest: dict) -> int:
+    return sum(int(entry.get("size") or 0) for entry in manifest.get("files", [])
+               if entry.get("kind", "file") != "dir")
+
+
 def publish_package(dsn: str, cmd: Command, artifacts_root: str | Path, receipt: dict) -> CommandResult:
     roots = Path(artifacts_root)
     stage_dir = Path(receipt.get("staging_dir", ""))
     if not stage_dir.is_dir():
         raise SettlementError("staging receipt has no staging dir")
+    for entry in receipt.get("manifest", {}).get("files", []):
+        _check_relpath(entry.get("path", ""))
+    if int(receipt.get("size", -1)) != _manifest_size(receipt.get("manifest", {})):
+        raise SettlementError("staging receipt size does not match its manifest")
     _write_final_bytes(roots, receipt, stage_dir)
 
     def _fn(cur, control):
@@ -265,16 +300,23 @@ def reconcile_staging(dsn: str, staging_root: str | Path, artifacts_root: str | 
                             ([p.name for p in orphans],))
                 known = {row["digest"] for row in cur.fetchall()}
             conn.commit()
-    receipts = {}
+    receipts: dict[str, dict] = {}
     if staged.is_dir():
         for receipt_path in staged.glob("*/_receipt.json"):
             try:
-                receipts[json.loads(receipt_path.read_text())["digest"]] = receipt_path.parent
+                doc = json.loads(receipt_path.read_text())
+                receipts[doc["digest"]] = doc
             except (ValueError, KeyError, OSError):
                 continue
     with db.connect(dsn) as conn:
         for orphan in orphans:
-            if orphan.name in known or not orphan.is_file() or orphan.suffix == ".tmp":
+            if orphan.name in known or not orphan.is_file():
+                continue
+            if orphan.suffix == ".tmp":
+                if time.time() - orphan.stat().st_mtime < _TMP_GRACE_S:
+                    continue
+                orphan.unlink()
+                reclaimed.append(orphan.name)
                 continue
             with open(orphan, "rb") as handle:
                 digest = _digest_bytes(handle.read())
@@ -282,13 +324,14 @@ def reconcile_staging(dsn: str, staging_root: str | Path, artifacts_root: str | 
                 orphan.unlink()
                 reclaimed.append(orphan.name)
                 continue
+            manifest = receipts[digest].get("manifest")
+            if not isinstance(manifest, dict) or not isinstance(manifest.get("files"), list):
+                continue
             with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO artifact_versions (digest, size, manifest, availability, path)"
                     " VALUES (%s, %s, %s, 'available', %s) ON CONFLICT (digest) DO NOTHING",
-                    (digest, orphan.stat().st_size,
-                     Json(json.loads((receipts[digest] / "_receipt.json").read_text())),
-                     digest),
+                    (digest, _manifest_size(manifest), Json(manifest), digest),
                 )
             registered.append(digest)
         conn.commit()
@@ -418,6 +461,8 @@ def verify_bytes(dsn: str, artifacts_root: str | Path, digest: str) -> dict:
         return {"digest": digest, "ok": True}
     target = Path(artifacts_root) / digest
     reason = "missing bytes" if not target.exists() else "digest mismatch"
+    if not _known_digest(dsn, digest):
+        return {"digest": digest, "ok": False, "reason": "unknown digest"}
 
     def _fn(cur, control):
         cur.execute("UPDATE artifact_versions SET availability = 'invalid' WHERE digest = %s",
@@ -431,6 +476,15 @@ def verify_bytes(dsn: str, artifacts_root: str | Path, digest: str) -> dict:
     from .common import new_id
     store.transact(dsn, Command(request_id=new_id("req"), payload={}), _fn)
     return {"digest": digest, "ok": False, "reason": reason}
+
+
+def _known_digest(dsn: str, digest: str) -> bool:
+    with db.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM artifact_versions WHERE digest = %s", (digest,))
+            found = cur.fetchone() is not None
+            conn.commit()
+            return found
 
 
 def bytes_match(artifacts_root: str | Path, digest: str) -> bool:

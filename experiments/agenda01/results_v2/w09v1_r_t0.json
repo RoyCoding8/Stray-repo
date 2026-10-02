@@ -1,0 +1,1342 @@
+{
+  "arm": "R",
+  "backend": "AgendaBackend",
+  "complete": true,
+  "db": "agenda01_w09v1_r_t0",
+  "drained_products": [],
+  "end_reason": "horizon",
+  "family": 2,
+  "grade": {
+    "correct": 5,
+    "eval_cost": 8,
+    "per_task": {
+      "w09-t0": {
+        "answer": false,
+        "correct": true
+      },
+      "w09-t1": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w09-t2": {
+        "answer": true,
+        "correct": true
+      },
+      "w09-t3": {
+        "answer": false,
+        "correct": true
+      },
+      "w09-t4": {
+        "answer": true,
+        "correct": true
+      },
+      "w09-t5": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w09-t6": {
+        "answer": true,
+        "correct": true
+      },
+      "w09-t7": {
+        "answer": "unknown",
+        "correct": false
+      }
+    },
+    "total": 8
+  },
+  "ledger": {
+    "allocations": [
+      {
+        "authorized": 88,
+        "consumed": 0,
+        "id": "ag01:w09v1_r_t0",
+        "parent_id": null,
+        "reserved": 0
+      },
+      {
+        "authorized": 8,
+        "consumed": 8,
+        "id": "ag01:w09v1_r_t0:eval",
+        "parent_id": "ag01:w09v1_r_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 64,
+        "consumed": 26,
+        "id": "ag01:w09v1_r_t0:explore",
+        "parent_id": "ag01:w09v1_r_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 16,
+        "consumed": 0,
+        "id": "ag01:w09v1_r_t0:recovery",
+        "parent_id": "ag01:w09v1_r_t0",
+        "reserved": 0
+      }
+    ],
+    "conflicts": 0,
+    "cursor": {
+      "dep_versions": {
+        "d0": 1,
+        "d1": 1,
+        "instrument:scope2": 1
+      },
+      "epoch": 14,
+      "rotation": 14,
+      "tick": 14
+    },
+    "decisions": [
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m0"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m0-m0",
+          "cost": 2,
+          "input_digest": "04514ebfdb64ad87466b87ced6078b03e45d84507a8dec0a8ba1576cd6894a34",
+          "kind": "initial",
+          "option_id": "s-m0",
+          "option_revision": 1,
+          "ownership_generation": 1,
+          "policy_version": "AG01-R-1",
+          "probe": "m0"
+        },
+        "tick": 1
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m4"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m4-m4",
+          "cost": 2,
+          "input_digest": "8d6f7efdf34fa8d802786069e3e483b75386d673191366ced102d5f5d7d57b78",
+          "kind": "initial",
+          "option_id": "s-m4",
+          "option_revision": 1,
+          "ownership_generation": 2,
+          "policy_version": "AG01-R-1",
+          "probe": "m4"
+        },
+        "tick": 2
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m6"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m6-m6",
+          "cost": 2,
+          "input_digest": "cf1dcaef26daf7f12f966c88c92582c58d5448a1034c36cb45586ba52d41242f",
+          "kind": "initial",
+          "option_id": "s-m6",
+          "option_revision": 1,
+          "ownership_generation": 3,
+          "policy_version": "AG01-R-1",
+          "probe": "m6"
+        },
+        "tick": 3
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 4
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 5
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 6
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 7
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 8
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 9
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 10
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 11
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 12
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-deep"
+        ],
+        "selection": {
+          "attempt_id": "att-s-deep-deep",
+          "cost": 4,
+          "input_digest": "601c734d997eff4f3199eba83de97f2fdd5e3e1b6354b277073b8a652ef52749",
+          "kind": "initial",
+          "option_id": "s-deep",
+          "option_revision": 1,
+          "ownership_generation": 4,
+          "policy_version": "AG01-R-1",
+          "probe": "deep"
+        },
+        "tick": 13
+      },
+      {
+        "policy": "AG01-R-1",
+        "reasons": [
+          "selected:s-m4"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m4-m4-1",
+          "cost": 2,
+          "input_digest": "3cea830aab83071042812ae8dadf53e95b4dbc7e442a6e1889733e6cfa174979",
+          "kind": "initial",
+          "option_id": "s-m4",
+          "option_revision": 1,
+          "ownership_generation": 5,
+          "policy_version": "AG01-R-1",
+          "probe": "m4"
+        },
+        "tick": 14
+      }
+    ],
+    "links": [
+      {
+        "attempt_id": "att-s-deep-deep",
+        "effect_identity": "ac8f9aa2183ac3191ec4bde5ffa8ee1970605561fb47d3802ebed10b2c12eaa0",
+        "intended_decision": "execute-deep",
+        "operation_id": "ag01:w09v1_r_t0:probe:13",
+        "option_id": "s-deep",
+        "probe": "deep",
+        "replication_slot": null,
+        "reservation_id": "ag01:w09v1_r_t0:probe:13:r",
+        "state": "settled",
+        "trajectory": "w09v1_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m0-m0",
+        "effect_identity": "e7f91db45503b2620113bfd8d93f2e5827a4eb143acaa504b7f8d9ebba801e2d",
+        "intended_decision": "execute-m0",
+        "operation_id": "ag01:w09v1_r_t0:probe:1",
+        "option_id": "s-m0",
+        "probe": "m0",
+        "replication_slot": null,
+        "reservation_id": "ag01:w09v1_r_t0:probe:1:r",
+        "state": "settled",
+        "trajectory": "w09v1_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m4-m4",
+        "effect_identity": "92805da259bc5dac7cd743e419e2ced28b464eba6302dfa3dd890129d20f8ec7",
+        "intended_decision": "execute-m4",
+        "operation_id": "ag01:w09v1_r_t0:probe:2",
+        "option_id": "s-m4",
+        "probe": "m4",
+        "replication_slot": null,
+        "reservation_id": "ag01:w09v1_r_t0:probe:2:r",
+        "state": "settled",
+        "trajectory": "w09v1_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m4-m4-1",
+        "effect_identity": "b78daf38df019903c923060620409bb251edfa2d6f92b1b5914188a69f84b4d0",
+        "intended_decision": "execute-m4",
+        "operation_id": "ag01:w09v1_r_t0:probe:14",
+        "option_id": "s-m4",
+        "probe": "m4",
+        "replication_slot": null,
+        "reservation_id": "ag01:w09v1_r_t0:probe:14:r",
+        "state": "settled",
+        "trajectory": "w09v1_r_t0"
+      },
+      {
+        "attempt_id": "att-s-m6-m6",
+        "effect_identity": "4a63f33a4086f2485d876371b73a0153805b4ae9cb18f2645f5ae0abbd8413b6",
+        "intended_decision": "execute-m6",
+        "operation_id": "ag01:w09v1_r_t0:probe:3",
+        "option_id": "s-m6",
+        "probe": "m6",
+        "replication_slot": null,
+        "reservation_id": "ag01:w09v1_r_t0:probe:3:r",
+        "state": "settled",
+        "trajectory": "w09v1_r_t0"
+      }
+    ],
+    "ops": [
+      {
+        "attempt_id": "att-s-m0-m0",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w09v1_r_t0:probe:1"
+      },
+      {
+        "attempt_id": "att-s-deep-deep",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w09v1_r_t0:probe:13"
+      },
+      {
+        "attempt_id": "att-s-m4-m4-1",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w09v1_r_t0:probe:14"
+      },
+      {
+        "attempt_id": "att-s-m4-m4",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w09v1_r_t0:probe:2"
+      },
+      {
+        "attempt_id": "att-s-m6-m6",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w09v1_r_t0:probe:3"
+      }
+    ],
+    "outcomes": [
+      {
+        "epoch": 13,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 13,
+          "kind": "observation",
+          "prop": "p2",
+          "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p2",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-deep-deep",
+          "value": "true"
+        },
+        "option_id": "s-deep",
+        "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p2",
+        "scored": true
+      },
+      {
+        "epoch": 13,
+        "observation": {
+          "dep": "d1",
+          "dep_version": 1,
+          "epoch": 13,
+          "kind": "observation",
+          "prop": "p3",
+          "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p3",
+          "scope": "s1",
+          "simulated": true,
+          "source_attempt": "att-s-deep-deep",
+          "value": "false"
+        },
+        "option_id": "s-deep",
+        "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p3",
+        "scored": true
+      },
+      {
+        "epoch": 2,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 2,
+          "kind": "observation",
+          "prop": "p0",
+          "receipt": "w09v1_r_t0:rc:att-s-m0-m0:p0",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m0-m0",
+          "value": "false"
+        },
+        "option_id": "s-m0",
+        "receipt": "w09v1_r_t0:rc:att-s-m0-m0:p0",
+        "scored": true
+      },
+      {
+        "epoch": 14,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 14,
+          "kind": "observation",
+          "prop": "p4",
+          "receipt": "w09v1_r_t0:rc:att-s-m4-m4-1:p4",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m4-m4-1",
+          "value": "true"
+        },
+        "option_id": "s-m4",
+        "receipt": "w09v1_r_t0:rc:att-s-m4-m4-1:p4",
+        "scored": true
+      },
+      {
+        "epoch": 2,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 2,
+          "kind": "observation",
+          "prop": "p4",
+          "receipt": "w09v1_r_t0:rc:att-s-m4-m4:p4",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m4-m4",
+          "value": "true"
+        },
+        "option_id": "s-m4",
+        "receipt": "w09v1_r_t0:rc:att-s-m4-m4:p4",
+        "scored": true
+      },
+      {
+        "epoch": 3,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 3,
+          "kind": "observation",
+          "prop": "p6",
+          "receipt": "w09v1_r_t0:rc:att-s-m6-m6:p6",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m6-m6",
+          "value": "true"
+        },
+        "option_id": "s-m6",
+        "receipt": "w09v1_r_t0:rc:att-s-m6-m6:p6",
+        "scored": true
+      }
+    ],
+    "receipts": [
+      {
+        "content_digest": "da5ccfdd642fa5a39cb84e1e0389c98f27990f5bce0ab9abebcb20b52e8c0dcb",
+        "operation_id": "ag01:w09v1_r_t0:probe:13",
+        "outcome": "success",
+        "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p2"
+      },
+      {
+        "content_digest": "883bd9ad0a90c3cf1e34c97b55012e5c154ec94c1506c9edad83265af8bd296b",
+        "operation_id": "ag01:w09v1_r_t0:probe:13",
+        "outcome": "success",
+        "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p3"
+      },
+      {
+        "content_digest": "3e7b8a36be1654dedc26b5f98cbeaef748e14cb4de0041fbc78ba334fda01335",
+        "operation_id": "ag01:w09v1_r_t0:probe:1",
+        "outcome": "success",
+        "receipt": "w09v1_r_t0:rc:att-s-m0-m0:p0"
+      },
+      {
+        "content_digest": "9d80b635903f1d9da0f35f99480d0957fe598ff218cdb7bbd13088240a0d9b7b",
+        "operation_id": "ag01:w09v1_r_t0:probe:14",
+        "outcome": "success",
+        "receipt": "w09v1_r_t0:rc:att-s-m4-m4-1:p4"
+      },
+      {
+        "content_digest": "dcaca338eafdba19c20ab59533f53b1f84e0ea6a414be286c99325645130cff4",
+        "operation_id": "ag01:w09v1_r_t0:probe:2",
+        "outcome": "success",
+        "receipt": "w09v1_r_t0:rc:att-s-m4-m4:p4"
+      },
+      {
+        "content_digest": "d68616681a0c613e4a0ac323ed957092c62eec29124bd05be66ed38f32835590",
+        "operation_id": "ag01:w09v1_r_t0:probe:3",
+        "outcome": "success",
+        "receipt": "w09v1_r_t0:rc:att-s-m6-m6:p6"
+      }
+    ],
+    "reservations": [
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:10:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:10",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:11:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:11",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:12:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:12",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:13:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:13",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:14:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:14",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:1:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:2:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:3:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:4:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:4",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:5:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:5",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:6:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:6",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:7:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:7",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:8:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:8",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 1,
+        "id": "ag01:w09v1_r_t0:dec:9:r",
+        "operation_id": "ag01:w09v1_r_t0:dec:9",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:eval",
+        "amount": 8,
+        "id": "ag01:w09v1_r_t0:eval-final:res",
+        "operation_id": "ag01:w09v1_r_t0:eval-final",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 4,
+        "id": "ag01:w09v1_r_t0:probe:13:r",
+        "operation_id": "ag01:w09v1_r_t0:probe:13",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w09v1_r_t0:probe:14:r",
+        "operation_id": "ag01:w09v1_r_t0:probe:14",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w09v1_r_t0:probe:1:r",
+        "operation_id": "ag01:w09v1_r_t0:probe:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w09v1_r_t0:probe:2:r",
+        "operation_id": "ag01:w09v1_r_t0:probe:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w09v1_r_t0:explore",
+        "amount": 2,
+        "id": "ag01:w09v1_r_t0:probe:3:r",
+        "operation_id": "ag01:w09v1_r_t0:probe:3",
+        "state": "settled"
+      }
+    ]
+  },
+  "manifest_sha256": "99e9d5f61a9e7c1ddaea37df24073cc8b23d999c3cddecefc7acaaebbb01ab70",
+  "observations": [
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 13,
+      "prop": "p2",
+      "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p2",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-deep-deep",
+      "value": true
+    },
+    {
+      "dep": "d1",
+      "dep_version": 1,
+      "epoch": 13,
+      "prop": "p3",
+      "receipt": "w09v1_r_t0:rc:att-s-deep-deep:p3",
+      "scope": "s1",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-deep-deep",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p0",
+      "receipt": "w09v1_r_t0:rc:att-s-m0-m0:p0",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m0-m0",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 14,
+      "prop": "p4",
+      "receipt": "w09v1_r_t0:rc:att-s-m4-m4-1:p4",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m4-m4-1",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p4",
+      "receipt": "w09v1_r_t0:rc:att-s-m4-m4:p4",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m4-m4",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 3,
+      "prop": "p6",
+      "receipt": "w09v1_r_t0:rc:att-s-m6-m6:p6",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m6-m6",
+      "value": true
+    }
+  ],
+  "option_spend": {
+    "s-deep": 4,
+    "s-m0": 2,
+    "s-m4": 4,
+    "s-m6": 2
+  },
+  "pending_drained": [],
+  "policy_version": "AG01-R-1",
+  "products": {},
+  "rng_seed": 1009,
+  "ticks": [
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:1",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m4",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w09v1_r_t0:probe:1",
+      "tick": 0,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:2",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m4",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m4",
+        "reason": "selected:s-m4"
+      },
+      "eligible": [
+        "s-m4",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": "ag01:w09v1_r_t0:probe:2",
+      "tick": 1,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:3",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m6",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m6",
+        "reason": "selected:s-m6"
+      },
+      "eligible": [
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": "ag01:w09v1_r_t0:probe:3",
+      "tick": 2,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:4",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 3,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:5",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 4,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:6",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 5,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:7",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 6,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:8",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 7,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:9",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 8,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:10",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 9,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:11",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 10,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:12",
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          }
+        ],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 11,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:13",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": "ineligible"
+          },
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-m0",
+        "s-deep"
+      ],
+      "events": [],
+      "probe_op": "ag01:w09v1_r_t0:probe:13",
+      "tick": 12,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w09v1_r_t0:dec:14",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m4",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m4",
+        "reason": "selected:s-m4"
+      },
+      "eligible": [
+        "s-m4",
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": "ag01:w09v1_r_t0:probe:14",
+      "tick": 13,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 14,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 15,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 16,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 17,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 18,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 19,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 20,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 21,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 22,
+      "wakes": []
+    },
+    {
+      "dec_op": null,
+      "decision": {
+        "action": "idle",
+        "evaluated": [
+          {
+            "id": "s-deep",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": "duplicate-effect:s-deep",
+        "option_key": "s-deep",
+        "reason": "selected:s-deep"
+      },
+      "eligible": [
+        "s-deep",
+        "s-m6",
+        "s-m0"
+      ],
+      "events": [],
+      "probe_op": null,
+      "tick": 23,
+      "wakes": []
+    }
+  ],
+  "tie": 0,
+  "totals": {
+    "eval_spent": 8,
+    "explore_spent": 26,
+    "feasible_waiting": 9,
+    "idle_ticks": 19,
+    "liabilities": [],
+    "recovery_spent": 0
+  },
+  "traj_id": "w09v1_r_t0",
+  "variant": 1,
+  "world_id": "w09"
+}

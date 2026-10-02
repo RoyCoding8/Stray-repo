@@ -1,0 +1,32 @@
+{
+  "id": "development-02-prompt-pilot",
+  "implementation": "a1d2525a37571abf45a54de45c3dfcdad4aaaf9f",
+  "model": "claude-opus-4-6-thinking",
+  "max_requests": 2,
+  "max_tokens": 512,
+  "timeout_seconds": 120,
+  "retries": 0,
+  "order": [
+    "diagnose",
+    "construct"
+  ],
+  "prompts": {
+    "diagnose": "{\"episode\": \"episode\", \"phase\": \"diagnose\", \"packet_id\": \"pkt_review\", \"packet\": \"packet pkt_review\\nkind diagnose\\npolicy d02-seed-v1\\npurpose diagnose the development failures\\n== mandatory ==\\n[development_inputs]\\n{\\\"bottleneck\\\":\\\"off-by-one\\\",\\\"predicted_effect\\\":\\\"\\\",\\\"trigger_refs\\\":[{\\\"family\\\":\\\"off_by_one\\\",\\\"task_id\\\":\\\"dev-sum\\\"}]}\\n[attempted_behaviors]\\n{\\\"attempts\\\":[],\\\"observations\\\":[{\\\"content\\\":{\\\"grade_op\\\":\\\"grade-1\\\",\\\"outcome\\\":\\\"success\\\",\\\"task_id\\\":\\\"dev-sum\\\"},\\\"receipt_id\\\":\\\"obs-1\\\"}]}\\n[outcomes]\\n{\\\"costs\\\":{},\\\"receipts\\\":[{\\\"content\\\":{\\\"text\\\":\\\"def sum_to(n): return sum(range(n+1))\\\"},\\\"operation_id\\\":\\\"infer-1\\\",\\\"outcome\\\":\\\"success\\\"},{\\\"content\\\":{\\\"passed\\\":3},\\\"operation_id\\\":\\\"grade-1\\\",\\\"outcome\\\":\\\"success\\\"}]}\\n[task_specs]\\n{\\\"objective\\\":\\\"Repair inclusive summation\\\",\\\"scope\\\":{}}\\n[unresolved_observations]\\n{\\\"open\\\":[{\\\"content\\\":{\\\"grade_op\\\":\\\"grade-1\\\",\\\"outcome\\\":\\\"success\\\",\\\"task_id\\\":\\\"dev-sum\\\"},\\\"receipt_id\\\":\\\"obs-1\\\"}]}\\n[output_contract]\\n{\\\"contract\\\":{\\\"entry\\\":\\\"diagnose-bottleneck\\\",\\\"response_shape\\\":{\\\"explanations\\\":[{\\\"cause\\\":\\\"str\\\",\\\"counterevidence\\\":[\\\"ref\\\"],\\\"support\\\":[\\\"ref\\\"]}],\\\"probe\\\":\\\"str|null\\\"},\\\"rules\\\":[\\\"cite only delivered refs\\\",\\\"mark unresolved outcomes explicitly\\\",\\\"abstain when required inputs are missing\\\"]},\\\"policy_version\\\":\\\"d02-seed-v1\\\"}\\n== evidence ==\\n== gaps ==\\n[]\\n\", \"ceilings\": {\"explanations\": 2}, \"ask\": \"explanations and one intervention\"}",
+    "construct": "{\"episode\": \"episode\", \"phase\": \"construct\", \"slot\": 0, \"packet_id\": \"pkt_review\", \"packet\": \"packet pkt_review\\nkind construct\\npolicy d02-seed-v1\\npurpose diagnose the development failures\\n== mandatory ==\\n[intervention]\\n{\\\"intervention\\\":{\\\"action\\\":\\\"construct a repair procedure\\\"},\\\"predicted_effect\\\":\\\"\\\"}\\n[examples]\\n{\\\"claims\\\":[{\\\"access_label\\\":\\\"candidate\\\",\\\"claim_id\\\":\\\"episode-exp-dev-sum-claim\\\",\\\"scope\\\":{\\\"episode\\\":\\\"episode\\\"}}]}\\n[development_feedback]\\n{\\\"checks\\\":[],\\\"explanations\\\":[{\\\"cause\\\":\\\"exclusive endpoint\\\"}],\\\"probe_ops\\\":[]}\\n[invocation_contract]\\n{\\\"invocation\\\":{\\\"entry\\\":\\\"candidate.py\\\",\\\"verify_args\\\":[\\\"--selftest\\\"]},\\\"source\\\":\\\"entry-declared-pre-candidate\\\",\\\"version\\\":\\\"\\\"}\\n[applicability]\\n{\\\"applicability\\\":{\\\"family\\\":\\\"off_by_one\\\"},\\\"source\\\":\\\"entry-declared-pre-candidate\\\",\\\"version\\\":\\\"\\\"}\\n[effect_envelope]\\n{\\\"effect\\\":{\\\"sandbox\\\":\\\"local-uncontained\\\"},\\\"resource\\\":{},\\\"source\\\":\\\"entry-declared-pre-candidate\\\",\\\"version\\\":\\\"\\\"}\\n[revision_budget]\\n{\\\"allocation\\\":{},\\\"ceilings\\\":{\\\"max_candidates\\\":2,\\\"max_explanations\\\":0,\\\"max_probes\\\":0},\\\"episode_state\\\":\\\"\\\",\\\"used\\\":{\\\"probes_used\\\":0}}\\n[candidate_lineage]\\n{\\\"candidates\\\":[],\\\"state\\\":\\\"no-prior-candidates\\\"}\\n== evidence ==\\n{\\\"access_label\\\":\\\"candidate\\\",\\\"alternative_routes\\\":[],\\\"claim_id\\\":\\\"episode-exp-dev-sum-claim\\\",\\\"disposition\\\":\\\"supported\\\",\\\"opposition\\\":[],\\\"premise_content\\\":[],\\\"proposition\\\":{\\\"broken\\\":\\\"def sum_to(n):\\\\n    return sum(range(n))\\\\n\\\",\\\"cases\\\":[{\\\"args\\\":[5],\\\"expected\\\":15,\\\"fn\\\":\\\"sum_to\\\"}],\\\"family\\\":\\\"off_by_one\\\",\\\"model_text\\\":\\\"def sum_to(n):\\\\n    return sum(range(n+1))\\\\n\\\",\\\"outcome\\\":\\\"success\\\",\\\"task_id\\\":\\\"dev-sum\\\"},\\\"qualifications\\\":[],\\\"scope\\\":{\\\"episode\\\":\\\"episode\\\",\\\"family\\\":\\\"off_by_one\\\"},\\\"selected_route\\\":{\\\"derivation\\\":\\\"warrant\\\",\\\"premises\\\":[]}}\\n== gaps ==\\n[]\\n\", \"response_shape\": {\"code\": \"<utf8 source honoring the access policy>\", \"no_candidate\": \"reason|null\"}, \"ask\": \"candidate bytes honoring the access policy\"}"
+  },
+  "apparatus_hashes": {
+    "development_02_prompt_pilot.py": "c761f2ab5f3f5b53d6c8dd99a2c46a2068b69dbe05146e0264cf0fa083698705",
+    "test_development_02_acceptance.py": "c884c4d01726c2b874ff30effbcb5970ad51fb0eb6ef8e3ece77a9d6d529d699"
+  },
+  "checks": [
+    "finish reason",
+    "strict JSON parse",
+    "diagnosis intervention present",
+    "constructor code present"
+  ],
+  "limits": [
+    "independent prompt checks over synthetic database-shaped records",
+    "production packet rendering and constructor prompt assembly; diagnosis wrapper transcribed from production",
+    "not sequential live episode, DB, broker, billing, sandbox, learning or generated-code validation"
+  ]
+}

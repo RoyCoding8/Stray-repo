@@ -12,10 +12,16 @@ Git carries the specification, implementation and written reviews. The human ini
 | `codex/review-s0-s3-01` | First reviewer branch, created from the exact implementation commit being reviewed. Contains review findings and any justified design clarifications. |
 | `codex/development-design-01` | Design role's roadmap and learning-model handoff, based on `be1730d`. Documentation only. |
 | `codex/implementation-development-01` | Implementation coordinator's bounded development episode. Integrates the design handoff and preserves the S0-S3 implementation lineage. |
+| `codex/development-design-02` | Design role's bounded episode-readiness assessment, memory/context design and independent model pilot, based on `e1b95a6`. |
+| `codex/implementation-development-02` | Implementation coordinator's experience/context materialization and complete subsequent-use slice. |
+| `codex/development-02-assessment` | Design role's bounded assessment of `a1d2525`, independent prompt checks and stage 8.4 conceptual refinement. |
+| `codex/development-02-live-evidence` | Design role's campaign assessment at `3857ec4`, independent grader controls, whole-repository worker mandate and cognitive design/research checkpoint for stages 8.4–8.7. |
+| `codex/agenda-design-01` | Design role's closure acceptance and Agenda 01 contract, based on `913bda7`. Documentation only. |
+| `codex/implementation-agenda-01` | Implementation coordinator's durable agenda slice and frozen trajectory experiment. Starts from the agenda design handoff. |
 
 Increment the review suffix for subsequent passes. The review branch is not a second implementation line. Do not let two agents concurrently write the same branch.
 
-The current assignment is `WORKER-DEVELOPMENT-01-PROMPT.md`. Merge that design packet into the new implementation branch; do not automatically reopen completed S0-S3 review findings. Keep `docs/design/REFINEMENT-ROADMAP.md` current at handoff. For this stage, reviews distinguish experiment-blocking defects, controlled prototype limitations and later operational qualification. A positive learning result is not an acceptance requirement.
+The next assignment is `WORKER-AGENDA-01.md`. Integrate `codex/agenda-design-01` into the separate `codex/implementation-agenda-01` branch and implement its bounded contract. The earlier whole-repository audit and closure are baseline evidence, not an active parallel assignment. Keep `docs/design/REFINEMENT-ROADMAP.md` current at handoff. The worker owns implementation, affected-path fixes and integrated verification. A positive experimental result is not an acceptance requirement.
 
 The human authorizes parallel implementation specialists. [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) defines task contracts, worktrees, isolated test resources, shared-file ownership, internal review and integration gates. This document governs the external implementation/reviewer exchange. The integration coordinator remains responsible for the complete result produced by its specialists.
 
@@ -29,6 +35,7 @@ The implementation agent maintains these files:
 - `reports/IMPLEMENTATION-STATUS.md`: S0-S3 status, implemented paths, entry points, setup/run commands, remaining work, and environment limitations.
 - `reports/VERIFICATION.md`: requirement-to-check map, exact commands, tested source revision, real/fake dependencies, results, reproduction instructions, and experiment method/results. Link bounded evidence files rather than pasting unlimited logs.
 - `reports/DECISIONS.md`: material deviations or resolved ambiguities, each with an identifier, affected requirement, reason, evidence and consequence. Record “None” when there are none.
+- `reports/ENGINEERING-REVIEW.md`: current audit index linking complete coverage, findings/dispositions and specialist evidence.
 - `reviews/REQUEST.md`: a compact review request using the template below.
 
 After committing those files, push and compare the remote branch SHA with local HEAD. Supply the final SHA to the human. Do not write that reporting commit's own hash into itself: the file can identify the prior implementation tip, and its containing commit identifies the report snapshot.

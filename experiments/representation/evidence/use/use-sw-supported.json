@@ -1,0 +1,136 @@
+{
+  "c_attempt": {
+    "composition_id": "rpr-C-source-v1",
+    "costs": {
+      "elapsed_s": 3.513,
+      "invocations_used": 11,
+      "model_calls": 0,
+      "model_tokens": {
+        "in": 0,
+        "out": 0
+      },
+      "queries_used": 5,
+      "validation_used": 2,
+      "wall_s": 3.591
+    },
+    "disposition": "improved",
+    "invocations": [
+      {
+        "action": "advance",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:advance:0001",
+        "seq": 1
+      },
+      {
+        "action": "advance",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:advance:0002",
+        "seq": 2
+      },
+      {
+        "action": "advance",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:advance:0003",
+        "seq": 3
+      },
+      {
+        "action": "advance",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:advance:0004",
+        "seq": 4
+      },
+      {
+        "action": "decode",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:decode:0000",
+        "seq": 0
+      },
+      {
+        "action": "decode",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:decode:0001",
+        "seq": 1
+      },
+      {
+        "action": "decode",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:decode:0002",
+        "seq": 2
+      },
+      {
+        "action": "decode",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:decode:0003",
+        "seq": 3
+      },
+      {
+        "action": "decode",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:decode:0004",
+        "seq": 4
+      },
+      {
+        "action": "encode",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:encode:0000",
+        "seq": 0
+      },
+      {
+        "action": "start",
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:start:0000",
+        "seq": 0
+      }
+    ],
+    "queries": [
+      {
+        "measure": 4,
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:check:0000",
+        "reason": "observation-missing",
+        "verdict": "not_preserved"
+      },
+      {
+        "measure": 6,
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:check:0001",
+        "reason": "ok-preserved",
+        "verdict": "preserved"
+      },
+      {
+        "measure": 5,
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:check:0002",
+        "reason": "ok-preserved",
+        "verdict": "preserved"
+      },
+      {
+        "measure": 4,
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:check:0003",
+        "reason": "observation-missing",
+        "verdict": "not_preserved"
+      },
+      {
+        "measure": 5,
+        "op_id": "rpr:rprD-main-use-C-use-sw-supported:use-sw-supported:check:0004",
+        "reason": "ok-preserved",
+        "verdict": "preserved"
+      }
+    ],
+    "reason": "final proposal checked",
+    "trial_only": true,
+    "u": 0.285714,
+    "verified": true
+  },
+  "checker_version": "rpr-checker/1",
+  "fallback": {
+    "delivered_digest": "4e88897d9cd6f5be3ae5972b5eb478e332993b735ca8c2c90a22e27685adb62b",
+    "procedure": "greedy",
+    "queries": 11,
+    "u": 0.571429
+  },
+  "family": "software",
+  "inputs_digest": {
+    "adapter": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+    "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+    "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+    "core": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "fixture": "b5cbc3d58e75a9aaf9ea801635206cb209061340b2bb9e5ef547d9f1f7ef201a",
+    "package": "78d9b9962ec592decb0068b09c14ed324b6e9a2f662bbaf79984d084746df9bc"
+  },
+  "manifest_sha256": "4674f918e7b9d46ad1ae6fa37436494a1ee1cc80194bdee4c82cf4fe1c025a7f",
+  "release": "none: representation unreleased",
+  "selected": {
+    "delivered_digest": "4e88897d9cd6f5be3ae5972b5eb478e332993b735ca8c2c90a22e27685adb62b",
+    "reason": "no-release-trial-only",
+    "route": "A-fallback"
+  },
+  "stage": "subsequent-use",
+  "task_id": "use-sw-supported"
+}

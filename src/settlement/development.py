@@ -23,18 +23,35 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
-from . import artifacts, broker, capabilities, db, experiment, store, trials
+from . import artifacts, broker, capabilities, context, db, evidence, experiment, store, trials
 from .common import Command, CommandResult, ResultCode, SettlementError
 
 CEIL_EXPLANATIONS = 2
 CEIL_PROBES = 1
 CEIL_CANDIDATES = 2
+
+PACKET_BUDGET = {"input_chars": 24000, "output_reserve": 2000}
+
+
+def packet_budget() -> dict:
+    raw = os.environ.get("SETTLEMENT_PACKET_BUDGET_CHARS", "")
+    if not raw:
+        return dict(PACKET_BUDGET)
+    try:
+        chars = int(raw)
+    except ValueError:
+        raise SettlementError(f"SETTLEMENT_PACKET_BUDGET_CHARS={raw!r} is not an integer")
+    if chars <= 0:
+        raise SettlementError(
+            f"SETTLEMENT_PACKET_BUDGET_CHARS={raw!r} must be a positive integer")
+    return {"input_chars": chars, "output_reserve": PACKET_BUDGET["output_reserve"]}
 
 STATES = ("observed", "proposed", "admitted", "diagnosed",
           "constructed", "checked", "selected", "bound")
@@ -42,6 +59,61 @@ STATES = ("observed", "proposed", "admitted", "diagnosed",
 _JSON_FIELDS = ("trigger_refs", "access_policy", "explanations",
                 "intervention", "probe_ops", "candidates",
                 "comparison_policy", "checks", "selection", "bindings")
+
+METHOD_ABI = {
+    "staged_as": "method.py",
+    "companion": "broken.py",
+    "invoke": "python method.py <in-dir>/broken.py <out-dir>/fixed.py",
+    "reads": "broken source from input_path argv[1]",
+    "writes": "fixed source to output_path argv[2], read back as fixed.py",
+    "selftest": "argv ['--selftest'] exits 0 printing typed JSON {status: ok}",
+    "effects": "sandbox-only",
+    "shape": "reusable file-to-file procedure,"
+             " never the repaired task function",
+}
+
+RESPONSE_FORMAT = (
+    "Respond with raw JSON only: no prose, no commentary. "
+    "A single ```json fenced block with nothing outside it is tolerated. "
+    "Prose around the block, multiple blocks, or non-JSON output is invalid. "
+    "A deliberate abstention stays honest: construct returns "
+    '{"no_candidate": "<reason>"} and consumes no candidate slot.'
+)
+
+
+def _single_fence(stripped: str) -> str | None:
+    if len(stripped) < 6 or not stripped.startswith("```") \
+            or not stripped.endswith("```"):
+        return None
+    inner = stripped[3:-3]
+    if "```" in inner:
+        return None
+    text = inner.strip()
+    if not text:
+        return None
+    head, sep, tail = text.partition("\n")
+    if sep:
+        if head.strip().lower() not in ("json", "jsonc"):
+            return None
+        return tail.strip()
+    if text.lower().startswith("json") and text[4:5] in \
+            ("", " ", "\t", "{", "["):
+        return text[4:].strip()
+    return text
+
+
+def _parse_envelope(text: str | None) -> Any:
+    try:
+        return json.loads(text or "")
+    except ValueError:
+        pass
+    fenced = _single_fence((text or "").strip())
+    if fenced is None:
+        return None
+    try:
+        return json.loads(fenced)
+    except ValueError:
+        return None
 
 
 def _j(value: Any) -> Json:
@@ -74,6 +146,50 @@ def _require_episode(dsn: str, episode_id: str) -> dict:
 
 def dev_protocol_id(episode_id: str) -> str:
     return f"{episode_id}-dev"
+
+
+def panel_protocol_id(episode_id: str) -> str:
+    return f"{episode_id}-panel"
+
+
+def eval_protocol_id(episode_id: str) -> str:
+    return f"{panel_protocol_id(episode_id)}-eval"
+
+
+def panel_policy_for(dev_ids: list[str], panel_ids: list[str],
+                     transfer_ids: list[str], *, families: list[str],
+                     evaluator_version: str = "v1") -> dict:
+    groups = [
+        {"name": "development", "kind": "development",
+         "tasks": list(dev_ids)},
+        {"name": "panel", "kind": "visible-regression",
+         "tasks": list(panel_ids)},
+        {"name": "transfer", "kind": "visible-regression",
+         "tasks": list(transfer_ids)},
+        {"name": "protected-eval", "kind": "protected-eval",
+         "evaluator_version": evaluator_version},
+    ]
+    return {
+        "task_groups": groups,
+        "access": {"families": sorted(set(families))},
+        "outcomes": {"metrics": ["success_rate"],
+                     "grades": ["success", "failure"]},
+        "thresholds": {"release_label": "observed-gain"},
+        "stopping": {"rule": "fixed-panel"},
+        "release": {"fallback": "baseline-v0",
+                    "quarantine_excludes": True},
+        "evaluator_version": evaluator_version,
+    }
+
+
+def _norm_groups(groups: Any) -> list[tuple]:
+    rows = []
+    for group in groups or []:
+        if not isinstance(group, dict):
+            raise SettlementError("panel policy groups must be objects")
+        rows.append((group.get("name", ""), group.get("kind", ""),
+                     tuple(group.get("tasks") or [])))
+    return sorted(rows)
 
 
 def _applied(result: CommandResult, what: str) -> CommandResult:
@@ -172,7 +288,8 @@ def admit(dsn: str, cmd: Command, *, episode_id: str,
           reference_version: str, access_policy: dict,
           allocation_id: str, max_explanations: int = CEIL_EXPLANATIONS,
           max_probes: int = CEIL_PROBES,
-          max_candidates: int = CEIL_CANDIDATES) -> CommandResult:
+          max_candidates: int = CEIL_CANDIDATES,
+          panel_policy: dict | None = None) -> CommandResult:
     if not reference_version:
         raise SettlementError("admission needs a reference version")
     if not isinstance(access_policy, dict) or not access_policy:
@@ -209,6 +326,16 @@ def admit(dsn: str, cmd: Command, *, episode_id: str,
             (reference_version, _j(access_policy), allocation_id,
              max_explanations, max_probes, max_candidates,
              dev_protocol_id(episode_id), episode_id))
+        if panel_policy is not None:
+            if not isinstance(panel_policy, dict) or not panel_policy.get("task_groups"):
+                raise SettlementError(
+                    "admission panel policy needs task groups")
+            _norm_groups(panel_policy["task_groups"])
+            cur.execute(
+                "UPDATE development_episodes SET comparison_policy = %s,"
+                " updated_at = now() WHERE id = %s",
+                (_j({"panel_protocol": panel_protocol_id(episode_id),
+                     "panel": panel_policy}), episode_id))
         return (ResultCode.APPLIED, f"episode {episode_id} admitted",
                 {"episode_id": episode_id, "state": "admitted"},
                 [("development.episode_admitted",
@@ -226,7 +353,139 @@ def admit(dsn: str, cmd: Command, *, episode_id: str,
             evaluator_version="", task_groups=_dev_groups(),
             budgets={}, metrics=["success_rate"], stopping={}, exclusions=[],
             uncertainty={})
+        frozen = episode.get("comparison_policy") or {}
+        if frozen.get("panel_protocol") and frozen.get("panel"):
+            panel = frozen["panel"]
+            trials.freeze_protocol(
+                dsn, Command(request_id=f"devpanel-{episode_id}", payload={}),
+                protocol_id=panel_protocol_id(episode_id),
+                candidate_version="",
+                reference_version=episode["reference_version"],
+                evaluator_version=str(panel.get("evaluator_version", "")),
+                task_groups=panel["task_groups"],
+                budgets={"per_task_sandbox_ms": experiment.GRADER_TIMEOUT_MS,
+                         "per_task_tokens": experiment.MODEL_TOKENS},
+                metrics=["success_rate"], stopping=dict(panel.get("stopping", {})),
+                exclusions=[], uncertainty={"treatment": "finite-panel-only"},
+                supported_scope=dict(panel.get("access", {})))
     return result
+
+
+def _collect_task(dsn: str, episode: dict, adapter: Any, launcher: Any,
+                  model: str, task: dict, grader_path: str,
+                  allocation_id: str, investigation_id: str,
+                  transcripts: dict, claims: list) -> None:
+    episode_id = episode["id"]
+    task_id = str(task["id"])
+    tag = f"{episode_id}-exp-{task_id}"
+    attempt_id = experiment._fresh_worker(
+        dsn, tag=tag, investigation_id=investigation_id,
+        allocation_id=allocation_id)
+    infer_op = f"{tag}-infer"
+    _, text, _ = experiment._infer_via_broker(
+        dsn, adapter, operation_id=infer_op, model=model,
+        prompt=json.dumps({"arm": "DEV", "task_id": task_id,
+                           "prompt": task["broken"],
+                           "response_contract":
+                               experiment.SOLVER_SOURCE_CONTRACT}),
+        allocation_id=allocation_id, attempt_id=attempt_id)
+    experiment._settle_costs(dsn, [dev_protocol_id(episode_id)], infer_op,
+                             "construction",
+                             f"experience inference {episode_id} {task_id}")
+    validation, grade_op, staged = experiment.begin_solver_grade(
+        dsn, launcher, model_op=infer_op, raw=text, cases=task["cases"],
+        tag=tag, allocation_id=allocation_id, attempt_id=attempt_id,
+        grader_path=grader_path)
+    finished = experiment.finish_solver_grade(
+        dsn, launcher, grade_op, len(task["cases"]), staged)
+    outcome = finished["outcome"]
+    experiment._settle_costs(dsn, [dev_protocol_id(episode_id)], grade_op,
+                             "construction" if outcome == "success"
+                             else "failed_trials",
+                             f"experience grade {episode_id} {task_id}")
+    obs = evidence.register_observation(
+        dsn, Command(request_id=f"{tag}-obs", payload={}), attempt_id,
+        {"task_id": task_id, "family": task.get("family", ""),
+         "outcome": outcome, "grade_op": grade_op, "model_op": infer_op},
+        source_identity=f"dev-batch-grade:{grade_op}")
+    receipt_id = obs.data["receipt_id"]
+    claim_id = f"{tag}-claim"
+    evidence.propose_claim(
+        dsn, Command(request_id=f"{tag}-claim", payload={}), claim_id,
+        {"task_id": task_id, "family": task.get("family", ""),
+         "broken": task["broken"], "cases": task["cases"],
+         "model_text": (text or "")[:2000], "outcome": outcome,
+         "solver_status": validation["status"],
+         "grade_class": finished["grade_class"],
+         "grade_op": grade_op, "model_op": infer_op},
+        scope={"episode": episode_id,
+               "family": task.get("family", "")},
+        access_label="candidate")
+    evidence.admit_warrant(
+        dsn, Command(request_id=f"{tag}-warrant", payload={}),
+        f"{tag}-warrant", claim_id, "dev-batch-grade", "v1",
+        [[(receipt_id, "observation")]],
+        scope={"episode": episode_id})
+    claims.append(claim_id)
+    transcripts[task_id] = {
+        "task_id": task_id, "family": task.get("family", ""),
+        "broken": task["broken"], "model_text": text, "outcome": outcome,
+        "model_op": infer_op, "grade_op": grade_op,
+        "solver_status": validation["status"],
+        "grade_class": finished["grade_class"]}
+
+
+def collect_experience(dsn: str, cmd: Command, adapter: Any,
+                       launcher: Any, *, episode_id: str, model: str,
+                       dev_tasks: list[dict], grader_path: str) -> dict:
+    episode = _require_episode(dsn, episode_id)
+    if episode["state"] != "admitted":
+        raise SettlementError(
+            f"episode {episode_id} is {episode['state']},"
+            " experience collects in admitted before diagnosis")
+    if not isinstance(dev_tasks, list) or not dev_tasks or not all(
+            isinstance(t, dict) and t.get("id") and t.get("broken") is not None
+            and isinstance(t.get("cases"), list) for t in dev_tasks):
+        raise SettlementError(
+            f"episode {episode_id} experience needs tasks with broken code and cases")
+    trigger_ids = [ref["task_id"] for ref in episode["trigger_refs"]]
+    if sorted(t["id"] for t in dev_tasks) != sorted(trigger_ids):
+        raise SettlementError(
+            f"episode {episode_id} experience batch must cover exactly"
+            " the admitted trigger tasks")
+    allocation_id = episode["allocation_id"]
+    investigation_id = episode["investigation_id"]
+    transcripts: dict[str, dict] = {}
+    claims: list[str] = []
+    try:
+        for task in dev_tasks:
+            _collect_task(dsn, episode, adapter, launcher, model, task,
+                          grader_path, allocation_id, investigation_id,
+                          transcripts, claims)
+    except SettlementError as exc:
+        if _refused_before_dispatch(exc):
+            _mark(dsn, episode_id, "budget-exhausted",
+                  "development.episode-budget-exhausted")
+        raise
+
+    linked = {task["id"]: claim for task, claim in zip(dev_tasks, claims)}
+    refs = [dict(ref, claim_id=linked[str(ref.get("task_id"))])
+            if str(ref.get("task_id")) in linked else dict(ref)
+            for ref in episode["trigger_refs"]]
+
+    def _fn(cur, control):
+        cur.execute("UPDATE development_episodes SET trigger_refs = %s,"
+                    " updated_at = now() WHERE id = %s", (_j(refs), episode_id))
+        return (ResultCode.APPLIED,
+                f"episode {episode_id} experience collected",
+                {"episode_id": episode_id, "claims": claims},
+                [("development.experience_collected",
+                  {"episode_id": episode_id, "claims": claims})], [])
+    _applied(store.transact(dsn, cmd, _fn),
+             f"episode {episode_id} experience")
+    return {"episode_id": episode_id, "state": "admitted",
+            "transcripts": transcripts, "claims": claims,
+            "trigger_refs": refs}
 
 
 def _gateway_receipt(dsn: str, operation_id: str) -> dict | None:
@@ -264,6 +523,40 @@ def _refused_before_dispatch(exc: SettlementError) -> bool:
     return "refused before dispatch" in str(exc)
 
 
+def _packet_for(dsn: str, episode: dict, kind: str,
+                contract: dict | None = None) -> dict:
+    decision: dict[str, Any] = {
+        "decision_kind": kind,
+        "purpose": f"{kind} {episode['id']} bottleneck",
+        "required_inputs": [],
+        "allowed_actions": ["propose-intervention"],
+        "access": "candidate",
+        "budget": packet_budget(),
+        "current_versions": {
+            "reference_version": episode["reference_version"]},
+        "investigation_id": episode["investigation_id"],
+        "episode_id": episode["id"],
+    }
+    if contract is not None:
+        decision["candidate_contract"] = contract
+    made = context.build_packet(
+        dsn, Command(request_id=f"{episode['id']}-pkt-{kind}", payload={}),
+        decision=decision)
+    data = made.data
+    if data["outcome"] != "ready":
+        raise SettlementError(
+            f"{kind} for {episode['id']} refused: context packet"
+            f" {data['outcome']}: {data['gaps']}")
+    return data
+
+
+def _bind_packet(dsn: str, packet: dict, operation_id: str) -> None:
+    _applied(context.bind_packet_invocation(
+        dsn, Command(request_id=f"{operation_id}-pktbind", payload={}),
+        packet["packet_id"], operation_id),
+        f"packet {packet['packet_id']} bind")
+
+
 def diagnose(dsn: str, cmd: Command, adapter: Any, *, episode_id: str,
              model: str, attempt_id: str | None = None,
              probe: dict | None = None,
@@ -274,11 +567,16 @@ def diagnose(dsn: str, cmd: Command, adapter: Any, *, episode_id: str,
             f"episode {episode_id} is {episode['state']}, needs admitted")
     allocation_id = episode["allocation_id"]
     ceiling = int(episode["max_explanations"])
+    packet = _packet_for(dsn, episode, "diagnose")
     prompt = json.dumps({"episode": episode_id, "phase": "diagnose",
-                         "trigger_refs": episode["trigger_refs"],
-                         "allowed": episode["access_policy"],
+                         "packet_id": packet["packet_id"],
+                         "packet": packet["rendered"],
                          "ceilings": {"explanations": ceiling},
-                         "ask": "explanations and one intervention"})
+                         "response_contract": context._OUTPUT_CONTRACTS[
+                             "diagnose"]["response_shape"],
+                         "format": RESPONSE_FORMAT,
+                         "ask": "explanations and one intervention"
+                                " as raw JSON"})
     op_id = f"{episode_id}-explain"
     try:
         _, text, _ = experiment._infer_via_broker(
@@ -292,9 +590,9 @@ def diagnose(dsn: str, cmd: Command, adapter: Any, *, episode_id: str,
     provenance = _provenance(dsn, op_id, model)
     experiment._settle_costs(dsn, [dev_protocol_id(episode_id)], op_id,
                              "construction", f"diagnosis inference {episode_id}")
-    try:
-        body = json.loads(text or "")
-    except ValueError:
+    _bind_packet(dsn, packet, op_id)
+    body = _parse_envelope(text)
+    if body is None:
         raise SettlementError(
             f"diagnosis for {episode_id} is not typed JSON")
     if not isinstance(body, dict):
@@ -349,14 +647,9 @@ def diagnose(dsn: str, cmd: Command, adapter: Any, *, episode_id: str,
     return {"episode_id": episode_id, "state": "diagnosed",
             "explanations": explanations, "intervention": intervention,
             "probes_used": probes_used, "provenance": provenance,
+            "packet_id": packet["packet_id"],
+            "rendered_digest": packet["rendered_digest"],
             "result": result.detail}
-
-
-def _allowed_experience(episode: dict) -> dict:
-    return {"trigger_refs": episode["trigger_refs"],
-            "explanations": episode["explanations"],
-            "intervention": episode["intervention"],
-            "access_policy": episode["access_policy"]}
 
 
 def _check_policy_scope(episode: dict) -> None:
@@ -426,9 +719,29 @@ def construct(dsn: str, cmd: Command, adapter: Any, launcher: Any, *,
             f"episode {episode_id} candidate slots exhausted"
             f" ({slot}/{episode['max_candidates']})")
     allocation_id = episode["allocation_id"]
+    access = episode["access_policy"] or {}
+    abi = dict(METHOD_ABI, entry=entry)
+    packet = _packet_for(dsn, episode, "construct", contract={
+        "invocation": {"entry": entry, "verify_args": ["--selftest"],
+                       "invoke_args": ["<in-dir>/broken.py",
+                                       "<out-dir>/fixed.py"],
+                       "reads": abi["reads"], "writes": abi["writes"],
+                       "selftest": abi["selftest"], "effects": abi["effects"],
+                       "shape": abi["shape"]},
+        "applicability": dict(access.get("applicability")
+                              or {"family": family}),
+        "effect": {"sandbox": launcher.profile},
+        "resource": {},
+    })
     prompt = json.dumps({"episode": episode_id, "phase": "construct",
-                         "slot": slot, "experience": _allowed_experience(episode),
-                         "ask": "candidate bytes honoring the access policy"})
+                         "slot": slot, "packet_id": packet["packet_id"],
+                         "packet": packet["rendered"],
+                         "file_abi": abi,
+                         "response_shape": context._OUTPUT_CONTRACTS[
+                             "construct"]["response_shape"],
+                         "format": RESPONSE_FORMAT,
+                         "ask": "candidate procedure bytes honoring the"
+                                " access policy as raw JSON"})
     model_op = f"{episode_id}-construct-{slot}"
     try:
         _, text, _ = experiment._infer_via_broker(
@@ -443,10 +756,8 @@ def construct(dsn: str, cmd: Command, adapter: Any, launcher: Any, *,
     experiment._settle_costs(dsn, [dev_protocol_id(episode_id)], model_op,
                              "construction",
                              f"candidate construction {episode_id} slot {slot}")
-    try:
-        body = json.loads(text or "")
-    except ValueError:
-        body = None
+    _bind_packet(dsn, packet, model_op)
+    body = _parse_envelope(text)
     if isinstance(body, dict) and body.get("no_candidate") is not None:
         _mark(dsn, episode_id, "no-candidate",
               "development.episode-no-candidate")
@@ -481,11 +792,15 @@ def construct(dsn: str, cmd: Command, adapter: Any, launcher: Any, *,
     experiment._settle_costs(dsn, [dev_protocol_id(episode_id)], stage_op,
                              "construction",
                              f"candidate staging {episode_id} slot {slot}")
-    if (receipt or {}).get("outcome") != "success":
+    worker = (((receipt or {}).get("content") or {}).get("data")
+              or {}).get("worker") or {}
+    if (receipt or {}).get("outcome") != "success" \
+            or worker.get("status") != "ok":
         entry_rec = {"slot": slot, "status": "invalid-output",
                      "model_op": model_op, "stage_op": stage_op,
                      "code_digest": digest, "provenance": provenance,
-                     "detail": "staged selftest did not succeed"}
+                     "detail": "staged selftest did not succeed"
+                               " (need exit 0 with typed JSON status ok)"}
         _record_candidate(dsn, cmd, episode_id, entry_rec, "constructed",
                           "invalid-output", "development.episode-invalid-output")
         return {"status": "invalid-output", "slot_consumed": True,
@@ -536,6 +851,8 @@ def construct(dsn: str, cmd: Command, adapter: Any, launcher: Any, *,
     return {"status": "constructed", "slot": slot, "version_id": version_id,
             "artifact_digest": receipt_pkg["digest"], "code_digest": digest,
             "stage_op": stage_op, "model_op": model_op,
+            "packet_id": packet["packet_id"],
+            "rendered_digest": packet["rendered_digest"],
             "provenance": provenance}
 
 
@@ -634,8 +951,31 @@ def freeze_comparison(dsn: str, cmd: Command, *, episode_id: str,
         raise SettlementError(
             f"episode {episode_id} is {episode['state']},"
             " comparison freezes in checked before selection")
+    frozen = episode.get("comparison_policy") or {}
+    panel_pid = frozen.get("panel_protocol")
+    panel = frozen.get("panel")
+    if not panel_pid or not panel:
+        raise SettlementError(
+            f"episode {episode_id}: the finite-panel policy must be frozen"
+            " at admission before development feedback")
+    if _norm_groups(policy.get("task_groups")) != _norm_groups(
+            panel.get("task_groups")):
+        raise SettlementError(
+            f"episode {episode_id}: submitted comparison groups differ from"
+            " the admission-frozen panel policy: declare an amendment")
+    eval_pid = eval_protocol_id(episode_id)
+    try:
+        trials.amend_protocol(
+            dsn, Command(request_id=f"{eval_pid}-freeze", payload={}),
+            protocol_id=eval_pid, supersedes=panel_pid,
+            evaluator_version=str(policy.get("evaluator_version")
+                                  or panel.get("evaluator_version", "")))
+    except SettlementError as exc:
+        if "already exists" not in str(exc):
+            raise
     return _step(dsn, cmd, episode_id, ("checked",), None,
-                 {"comparison_policy": policy},
+                 {"comparison_policy": {**frozen, "eval_protocol": eval_pid,
+                                        "frozen_policy": policy}},
                  "development.comparison_frozen")
 
 
@@ -644,7 +984,7 @@ def select(dsn: str, cmd: Command, *, episode_id: str) -> dict:
     if episode["state"] != "checked":
         raise SettlementError(
             f"episode {episode_id} is {episode['state']}, needs checked")
-    if not episode["comparison_policy"]:
+    if not (episode.get("comparison_policy") or {}).get("eval_protocol"):
         raise SettlementError(
             f"episode {episode_id}: comparison policy must be frozen"
             " before development-only selection")
@@ -676,6 +1016,18 @@ def bind(dsn: str, cmd: Command, *, episode_id: str) -> dict:
                 "development_protocol": dev_protocol_id(episode_id),
                 "comparison_policy": episode["comparison_policy"],
                 "selection": selection}
+    eval_pid = (episode.get("comparison_policy") or {}).get("eval_protocol")
+    if eval_pid:
+        bound_pid = f"{eval_pid}-bound"
+        try:
+            trials.amend_protocol(
+                dsn, Command(request_id=f"{bound_pid}-freeze", payload={}),
+                protocol_id=bound_pid, supersedes=eval_pid,
+                candidate_version=selection.get("version_id") or "")
+        except SettlementError as exc:
+            if "already exists" not in str(exc):
+                raise
+        bindings["comparison_protocol"] = bound_pid
     if selection.get("version_id"):
         found = next((c for c in episode["candidates"]
                       if c.get("version_id") == selection["version_id"]), {})

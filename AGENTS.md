@@ -3,10 +3,10 @@
 ## Scope and authority
 
 - This checkout implements the committed Settlement design.
-- The human's current assignment takes precedence over historical design notes. The current assignment is `WORKER-DEVELOPMENT-01-PROMPT.md`; `WORKER-PROMPT.md` and numbered review prompts describe earlier assignments. See `docs/design/REFINEMENT-ROADMAP.md` for maintained stage status.
+- The human's current assignment takes precedence over historical design notes. The next worker assignment is `WORKER-AGENDA-01-THREE-GATES.md`: close the three remaining acceptance gates against `051811f`, preserving the original Agenda 01 contract and experiment history. Earlier correction prompts supply context, not a new whole-repository audit. Representation invention/transfer design can advance independently; its implementation, adaptive teams and learner revision remain outside this worker assignment. See `docs/design/REFINEMENT-ROADMAP.md` for maintained stage status.
 - Commit and push to the assigned branch are authorized. No force-push, history rewriting, unrelated checkout edits, or automatic merge into another agent's branch.
 - The design/review role evaluates results and records findings; it does not take over implementation unless the human requests that change of role.
-- Parallel subagents and Git worktrees are authorized for implementation assignments, including Development 01. Follow `IMPLEMENTATION-WORKFLOW.md`; do not ask again for that permission. Each delegation must name its worktree, owned paths, requirement IDs and exact skills/design sections to load. Review available skills and project context, but do not require uncommitted local skills or memories to understand the assignment.
+- Parallel subagents and Git worktrees are authorized for implementation assignments, including Development 02. Follow `IMPLEMENTATION-WORKFLOW.md`; do not ask again for that permission. Each delegation must name its worktree, owned paths, requirement IDs and exact skills/design sections to load. Review available skills and project context, but do not require uncommitted local skills or memories to understand the assignment.
 
 ## Work quality
 

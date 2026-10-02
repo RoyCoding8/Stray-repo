@@ -1,0 +1,195 @@
+{
+  "arm": "C",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "adapter_digest": "e6add5a4a3c344f517a2e435c368df006138c07f835fd07e232f608363c9279a",
+    "checker_id": "rpr-gr-checker/1",
+    "composition_id": "rpr-C-transfer-v1",
+    "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "native": false,
+    "package_digest": "40ffcbc10c1e9205e13519d9acb224a102093d96db369498d2d210e84dcf477a",
+    "role": "transfer"
+  },
+  "costs": {
+    "elapsed_s": 3.345,
+    "invocations_used": 11,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 5,
+    "validation_used": 2,
+    "wall_s": 3.425
+  },
+  "family": "graph",
+  "initial": {
+    "measure": 19
+  },
+  "inputs_digest": {
+    "adapter": "e6add5a4a3c344f517a2e435c368df006138c07f835fd07e232f608363c9279a",
+    "checker": "1e98cf51e93e4ddfb977192d6bdd93431348ecf2c518322d1a9d639642728966",
+    "context": "6fd3e9c9a7bdf31a2e3be976f56f9436b5071162fa1c386a45c3301c0ccec1d9",
+    "core": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "fixture": "39b314d6b703566aa72045d1e78693b550e441991b599d6d50022eaede105aec",
+    "package": "40ffcbc10c1e9205e13519d9acb224a102093d96db369498d2d210e84dcf477a"
+  },
+  "invocations": [
+    {
+      "action": "advance",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:advance:0001",
+      "seq": 1
+    },
+    {
+      "action": "advance",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:advance:0002",
+      "seq": 2
+    },
+    {
+      "action": "advance",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:advance:0003",
+      "seq": 3
+    },
+    {
+      "action": "advance",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:advance:0004",
+      "seq": 4
+    },
+    {
+      "action": "decode",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:decode:0000",
+      "seq": 0
+    },
+    {
+      "action": "decode",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:decode:0001",
+      "seq": 1
+    },
+    {
+      "action": "decode",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:decode:0002",
+      "seq": 2
+    },
+    {
+      "action": "decode",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:decode:0003",
+      "seq": 3
+    },
+    {
+      "action": "decode",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:decode:0004",
+      "seq": 4
+    },
+    {
+      "action": "encode",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:encode:0000",
+      "seq": 0
+    },
+    {
+      "action": "start",
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:start:0000",
+      "seq": 0
+    }
+  ],
+  "manifest_sha256": "4674f918e7b9d46ad1ae6fa37436494a1ee1cc80194bdee4c82cf4fe1c025a7f",
+  "operator": {
+    "budget": {
+      "elapsed_max_s": 120.0,
+      "invocations_max": 64,
+      "invocations_used": 11,
+      "queries_max": 16,
+      "queries_used": 5
+    },
+    "composition": {
+      "adapter_digest": "e6add5a4a3c344f517a2e435c368df006138c07f835fd07e232f608363c9279a",
+      "composition_id": "rpr-C-transfer-v1",
+      "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "package_digest": "40ffcbc10c1e9205e13519d9acb224a102093d96db369498d2d210e84dcf477a",
+      "role": "transfer"
+    },
+    "disposition": "complete",
+    "next_action": "done",
+    "result": {
+      "best_measure": 14,
+      "records": 18,
+      "verified_candidate": true
+    },
+    "run_id": "rprD-main-C-gr-dev-02",
+    "task_id": "gr-dev-02",
+    "witness": {
+      "checker_id": "rpr-gr-checker/1",
+      "domain_spec": {
+        "family": "graph",
+        "measure": "vertices-edges",
+        "witness": "triangle-free-non-bipartite"
+      },
+      "last_measure": 14,
+      "last_verdict": "preserved"
+    }
+  },
+  "oracle_queries": [
+    {
+      "measure": 10,
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:check:0000",
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 15,
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:check:0001",
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 13,
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:check:0002",
+      "reason": "witness-lost-bipartite",
+      "verdict": "not_preserved"
+    },
+    {
+      "measure": 14,
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:check:0003",
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 14,
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:check:0004",
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    }
+  ],
+  "oracle_validations": [
+    {
+      "measure": 19,
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:validate:0000",
+      "reason": "ok-incumbent",
+      "verdict": "preserved"
+    },
+    {
+      "measure": 14,
+      "op_id": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:validate:0001",
+      "reason": "ok-preserved",
+      "verdict": "preserved"
+    }
+  ],
+  "result": {
+    "best_measure": 14,
+    "delivered_digest": "92d1c978a481b1e4574a7bac51915faeacc875f45f8c65b7cc601e0441ab2364",
+    "disposition": "improved",
+    "improvement_u": 0.263158,
+    "reason": "final proposal checked",
+    "verified": true
+  },
+  "stage": "mechanics",
+  "task_id": "gr-dev-02",
+  "trial": [
+    {
+      "assignment_id": "rpr-acq-C:candidate:gr-dev-02",
+      "invocation_ref": "rpr:rprD-main-C-gr-dev-02:gr-dev-02:advance:0001",
+      "outcome": "success",
+      "protocol_id": "rpr-acq-C"
+    }
+  ],
+  "trial_group": "development"
+}

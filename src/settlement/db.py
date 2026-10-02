@@ -18,6 +18,15 @@ def connect(dsn: str, **kwargs):
     return psycopg.connect(dsn, **kwargs)
 
 
+READ_CONNECT_TIMEOUT_S = 10
+READ_STATEMENT_TIMEOUT = "60s"
+
+
+def read_connect(dsn: str):
+    return connect(dsn, connect_timeout=READ_CONNECT_TIMEOUT_S,
+                   options=f"-c statement_timeout={READ_STATEMENT_TIMEOUT}")
+
+
 def apply_migrations(dsn: str, migrations_dir: str | Path) -> list[str]:
     files = sorted(Path(migrations_dir).glob("*.sql"))
     applied: list[str] = []

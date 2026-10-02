@@ -1,0 +1,1005 @@
+{
+  "ablation_noop": {},
+  "accounting": {
+    "reserved": 159932,
+    "settled": 1998,
+    "tokens": {
+      "input": 3387,
+      "output": 28997
+    },
+    "unresolved": 0
+  },
+  "accounting_scope": "harness-only: comparison-harness operations; excludes collection, diagnosis, construction, checks and subsequent use; simulated flag applies",
+  "arms": {
+    "A": {
+      "panel-batcher": "failure",
+      "panel-staircase": "failure",
+      "panel-triangular": "failure",
+      "transfer-discount": "failure",
+      "transfer-sign": "failure"
+    },
+    "B": {
+      "panel-batcher": "failure",
+      "panel-staircase": "failure",
+      "panel-triangular": "failure",
+      "transfer-discount": "failure",
+      "transfer-sign": "failure"
+    },
+    "C": {
+      "panel-batcher": "failure",
+      "panel-staircase": "failure",
+      "panel-triangular": "failure",
+      "transfer-discount": "failure",
+      "transfer-sign": "failure"
+    }
+  },
+  "budgets": {
+    "A": {
+      "ledger_by_category": {
+        "construction": 0,
+        "coordination": 0,
+        "evaluation": 0,
+        "failed_trials": 2220,
+        "retrieval": 0,
+        "selection": 0,
+        "use": 0
+      },
+      "matched_caps": {
+        "sandbox_ms": 30000,
+        "tokens": 512
+      },
+      "reservations": 41878,
+      "settled_usage": 555,
+      "token_estimates": {
+        "basis": "token-length estimate; not a monetary ceiling",
+        "input_tokens": 528,
+        "output_tokens": 8344
+      },
+      "unique_op_cost": 555,
+      "unresolved_exposure": 0
+    },
+    "B": {
+      "ledger_by_category": {
+        "construction": 0,
+        "coordination": 0,
+        "evaluation": 0,
+        "failed_trials": 1110,
+        "retrieval": 0,
+        "selection": 0,
+        "use": 0
+      },
+      "matched_caps": {
+        "sandbox_ms": 30000,
+        "tokens": 512
+      },
+      "reservations": 42584,
+      "settled_usage": 555,
+      "token_estimates": {
+        "basis": "token-length estimate; not a monetary ceiling",
+        "input_tokens": 1605,
+        "output_tokens": 8649
+      },
+      "unique_op_cost": 555,
+      "unresolved_exposure": 0
+    },
+    "C": {
+      "ledger_by_category": {
+        "construction": 0,
+        "coordination": 0,
+        "evaluation": 0,
+        "failed_trials": 1110,
+        "retrieval": 0,
+        "selection": 0,
+        "use": 0
+      },
+      "matched_caps": {
+        "sandbox_ms": 30000,
+        "tokens": 512
+      },
+      "reservations": 41945,
+      "settled_usage": 555,
+      "token_estimates": {
+        "basis": "token-length estimate; not a monetary ceiling",
+        "input_tokens": 603,
+        "output_tokens": 7900
+      },
+      "unique_op_cost": 555,
+      "unresolved_exposure": 0
+    }
+  },
+  "development": {
+    "acquisition": {
+      "off_by_one": {
+        "artifact_digest": null,
+        "attempts": [
+          {
+            "grade_op": "grade-liveb-ep-02-exp-dev-sum",
+            "model_op": "liveb-ep-02-exp-dev-sum-infer",
+            "outcome": "failure",
+            "task_id": "dev-sum"
+          },
+          {
+            "grade_op": "grade-liveb-ep-02-exp-dev-collect",
+            "model_op": "liveb-ep-02-exp-dev-collect-infer",
+            "outcome": "failure",
+            "task_id": "dev-collect"
+          },
+          {
+            "grade_op": "grade-liveb-ep-02-exp-dev-series",
+            "model_op": "liveb-ep-02-exp-dev-series-infer",
+            "outcome": "failure",
+            "task_id": "dev-series"
+          }
+        ],
+        "provenance": "synthesized-from-dev-transcripts",
+        "status": "no-successful-transcript",
+        "version_id": null
+      }
+    },
+    "lesson_provenance": "model-authored",
+    "methods": {},
+    "outcomes": {
+      "dev-collect": "failure",
+      "dev-series": "failure",
+      "dev-sum": "failure"
+    }
+  },
+  "disposition": {
+    "decision": "fallback",
+    "reason": "no observed gain eligible for release",
+    "selected": "baseline-v0 (incumbent fallback)"
+  },
+  "environment": {
+    "allocation": "liveb-alloc-liveb2-cap",
+    "entry_point": "experiments/run_dev_episode.py",
+    "episode": "liveb-ep-02",
+    "episode_bindings": {
+      "comparison_policy": {
+        "eval_protocol": "liveb-ep-02-panel-eval",
+        "frozen_policy": {
+          "access": {
+            "families": [
+              "off_by_one"
+            ]
+          },
+          "evaluator_version": "v1",
+          "outcomes": {
+            "grades": [
+              "success",
+              "failure"
+            ],
+            "metrics": [
+              "success_rate"
+            ]
+          },
+          "release": {
+            "fallback": "baseline-v0",
+            "quarantine_excludes": true
+          },
+          "stopping": {
+            "rule": "fixed-panel"
+          },
+          "task_groups": [
+            {
+              "kind": "development",
+              "name": "development",
+              "tasks": [
+                "dev-sum",
+                "dev-collect",
+                "dev-series"
+              ]
+            },
+            {
+              "kind": "visible-regression",
+              "name": "panel",
+              "tasks": [
+                "panel-triangular",
+                "panel-batcher",
+                "panel-staircase"
+              ]
+            },
+            {
+              "kind": "visible-regression",
+              "name": "transfer",
+              "tasks": [
+                "transfer-discount",
+                "transfer-sign"
+              ]
+            },
+            {
+              "evaluator_version": "v1",
+              "kind": "protected-eval",
+              "name": "protected-eval"
+            }
+          ],
+          "thresholds": {
+            "release_label": "observed-gain"
+          }
+        },
+        "panel": {
+          "access": {
+            "families": [
+              "off_by_one"
+            ]
+          },
+          "evaluator_version": "v1",
+          "outcomes": {
+            "grades": [
+              "success",
+              "failure"
+            ],
+            "metrics": [
+              "success_rate"
+            ]
+          },
+          "release": {
+            "fallback": "baseline-v0",
+            "quarantine_excludes": true
+          },
+          "stopping": {
+            "rule": "fixed-panel"
+          },
+          "task_groups": [
+            {
+              "kind": "development",
+              "name": "development",
+              "tasks": [
+                "dev-sum",
+                "dev-collect",
+                "dev-series"
+              ]
+            },
+            {
+              "kind": "visible-regression",
+              "name": "panel",
+              "tasks": [
+                "panel-triangular",
+                "panel-batcher",
+                "panel-staircase"
+              ]
+            },
+            {
+              "kind": "visible-regression",
+              "name": "transfer",
+              "tasks": [
+                "transfer-discount",
+                "transfer-sign"
+              ]
+            },
+            {
+              "evaluator_version": "v1",
+              "kind": "protected-eval",
+              "name": "protected-eval"
+            }
+          ],
+          "thresholds": {
+            "release_label": "observed-gain"
+          }
+        },
+        "panel_protocol": "liveb-ep-02-panel"
+      },
+      "comparison_protocol": "liveb-ep-02-panel-eval-bound",
+      "development_protocol": "liveb-ep-02-dev",
+      "reference_version": "baseline-v0",
+      "selection": {
+        "basis": "development-checks",
+        "check": {
+          "applied": [
+            {
+              "detail": "method invocation invoke-liveb-ep-02-check-0-dev-sum failed",
+              "invoke_op": "invoke-liveb-ep-02-check-0-dev-sum",
+              "invoke_outcome": "failed",
+              "task": "dev-sum"
+            },
+            {
+              "detail": "method invocation invoke-liveb-ep-02-check-0-dev-collect failed",
+              "invoke_op": "invoke-liveb-ep-02-check-0-dev-collect",
+              "invoke_outcome": "failed",
+              "task": "dev-collect"
+            },
+            {
+              "detail": "method invocation invoke-liveb-ep-02-check-0-dev-series failed",
+              "invoke_op": "invoke-liveb-ep-02-check-0-dev-series",
+              "invoke_outcome": "failed",
+              "task": "dev-series"
+            }
+          ],
+          "candidate": "liveb2-cand-s0",
+          "grade_ops": [],
+          "grade_outcome": "failure",
+          "repair": {}
+        },
+        "comparison_policy_ref": "frozen-before-selection",
+        "decision": "reject",
+        "version_id": null
+      },
+      "version_id": null
+    },
+    "episode_built": {
+      "off_by_one": {
+        "status": "constructed",
+        "version_id": "liveb2-cand-s0"
+      }
+    },
+    "evaluator": "s3-eval@v1",
+    "fixer_version": "",
+    "grant_units": 10000000,
+    "investigation": "liveb-inv-02",
+    "launcher": "local-process",
+    "model": "muse-spark-1.3-contributor-free",
+    "protocol_prefix": "liveb2"
+  },
+  "episode": "liveb-ep-02",
+  "episode_costs": {
+    "phases": {
+      "checks": {
+        "ops": [
+          "invoke-liveb-ep-02-check-0-dev-sum",
+          "invoke-liveb-ep-02-check-0-dev-collect",
+          "invoke-liveb-ep-02-check-0-dev-series"
+        ],
+        "reserved": 333,
+        "settled": 333,
+        "unresolved": 0
+      },
+      "collection": {
+        "ops": [
+          "liveb-ep-02-exp-dev-sum-infer",
+          "grade-liveb-ep-02-exp-dev-sum",
+          "liveb-ep-02-exp-dev-collect-infer",
+          "grade-liveb-ep-02-exp-dev-collect",
+          "liveb-ep-02-exp-dev-series-infer",
+          "grade-liveb-ep-02-exp-dev-series"
+        ],
+        "reserved": 25046,
+        "settled": 333,
+        "unresolved": 0
+      },
+      "comparison-A": {
+        "ops": [
+          "model-liveb2-A-panel-triangular-1",
+          "grade-liveb2-A-panel-triangular-1",
+          "model-liveb2-A-panel-batcher-4",
+          "grade-liveb2-A-panel-batcher-4",
+          "model-liveb2-A-panel-staircase-7",
+          "grade-liveb2-A-panel-staircase-7",
+          "model-liveb2-A-transfer-discount-10",
+          "grade-liveb2-A-transfer-discount-10",
+          "model-liveb2-A-transfer-sign-13",
+          "grade-liveb2-A-transfer-sign-13"
+        ],
+        "reserved": 41878,
+        "settled": 555,
+        "unresolved": 0
+      },
+      "comparison-B": {
+        "ops": [
+          "model-liveb2-B-panel-triangular-2",
+          "grade-liveb2-B-panel-triangular-2",
+          "model-liveb2-B-panel-batcher-5",
+          "grade-liveb2-B-panel-batcher-5",
+          "model-liveb2-B-panel-staircase-8",
+          "grade-liveb2-B-panel-staircase-8",
+          "model-liveb2-B-transfer-discount-11",
+          "grade-liveb2-B-transfer-discount-11",
+          "model-liveb2-B-transfer-sign-14",
+          "grade-liveb2-B-transfer-sign-14"
+        ],
+        "reserved": 42584,
+        "settled": 555,
+        "unresolved": 0
+      },
+      "comparison-C": {
+        "ops": [
+          "model-liveb2-C-panel-triangular-3",
+          "grade-liveb2-C-panel-triangular-3",
+          "model-liveb2-C-panel-batcher-6",
+          "grade-liveb2-C-panel-batcher-6",
+          "model-liveb2-C-panel-staircase-9",
+          "grade-liveb2-C-panel-staircase-9",
+          "model-liveb2-C-transfer-discount-12",
+          "grade-liveb2-C-transfer-discount-12",
+          "model-liveb2-C-transfer-sign-15",
+          "grade-liveb2-C-transfer-sign-15"
+        ],
+        "reserved": 41945,
+        "settled": 555,
+        "unresolved": 0
+      },
+      "comparison-shared": {
+        "ops": [
+          "liveb-ep-02-exp-dev-sum-infer",
+          "grade-liveb-ep-02-exp-dev-sum",
+          "liveb-ep-02-exp-dev-collect-infer",
+          "grade-liveb-ep-02-exp-dev-collect",
+          "liveb-ep-02-exp-dev-series-infer",
+          "grade-liveb-ep-02-exp-dev-series",
+          "liveb2-DEV-lesson"
+        ],
+        "reserved": 33525,
+        "settled": 333,
+        "unresolved": 0
+      },
+      "construction": {
+        "ops": [
+          "liveb-ep-02-construct-0",
+          "liveb-ep-02-stage-0",
+          "cap-verify-liveb2-cand-s0"
+        ],
+        "reserved": 12012,
+        "settled": 222,
+        "unresolved": 0
+      },
+      "diagnosis": {
+        "ops": [
+          "liveb-ep-02-explain"
+        ],
+        "reserved": 11961,
+        "settled": 0,
+        "unresolved": 0
+      },
+      "subsequent-use": {
+        "ops": [
+          "grade-liveb2-use-transfer-discount",
+          "model-liveb2-use-transfer-discount"
+        ],
+        "reserved": 8372,
+        "settled": 111,
+        "unresolved": 0
+      }
+    },
+    "scope": "whole-episode-unique-operation-union",
+    "shared_ops": [
+      "grade-liveb-ep-02-exp-dev-collect",
+      "grade-liveb-ep-02-exp-dev-series",
+      "grade-liveb-ep-02-exp-dev-sum",
+      "liveb-ep-02-exp-dev-collect-infer",
+      "liveb-ep-02-exp-dev-series-infer",
+      "liveb-ep-02-exp-dev-sum-infer"
+    ],
+    "totals": {
+      "reserved": 192610,
+      "settled": 2664,
+      "tokens": {
+        "input": 11856,
+        "output": 37930
+      },
+      "unresolved": 0
+    },
+    "unique_op_count": 46,
+    "unique_ops": [
+      "liveb-ep-02-exp-dev-sum-infer",
+      "grade-liveb-ep-02-exp-dev-sum",
+      "liveb-ep-02-exp-dev-collect-infer",
+      "grade-liveb-ep-02-exp-dev-collect",
+      "liveb-ep-02-exp-dev-series-infer",
+      "grade-liveb-ep-02-exp-dev-series",
+      "liveb-ep-02-explain",
+      "liveb-ep-02-construct-0",
+      "liveb-ep-02-stage-0",
+      "cap-verify-liveb2-cand-s0",
+      "invoke-liveb-ep-02-check-0-dev-sum",
+      "invoke-liveb-ep-02-check-0-dev-collect",
+      "invoke-liveb-ep-02-check-0-dev-series",
+      "liveb2-DEV-lesson",
+      "model-liveb2-A-panel-triangular-1",
+      "grade-liveb2-A-panel-triangular-1",
+      "model-liveb2-A-panel-batcher-4",
+      "grade-liveb2-A-panel-batcher-4",
+      "model-liveb2-A-panel-staircase-7",
+      "grade-liveb2-A-panel-staircase-7",
+      "model-liveb2-A-transfer-discount-10",
+      "grade-liveb2-A-transfer-discount-10",
+      "model-liveb2-A-transfer-sign-13",
+      "grade-liveb2-A-transfer-sign-13",
+      "model-liveb2-B-panel-triangular-2",
+      "grade-liveb2-B-panel-triangular-2",
+      "model-liveb2-B-panel-batcher-5",
+      "grade-liveb2-B-panel-batcher-5",
+      "model-liveb2-B-panel-staircase-8",
+      "grade-liveb2-B-panel-staircase-8",
+      "model-liveb2-B-transfer-discount-11",
+      "grade-liveb2-B-transfer-discount-11",
+      "model-liveb2-B-transfer-sign-14",
+      "grade-liveb2-B-transfer-sign-14",
+      "model-liveb2-C-panel-triangular-3",
+      "grade-liveb2-C-panel-triangular-3",
+      "model-liveb2-C-panel-batcher-6",
+      "grade-liveb2-C-panel-batcher-6",
+      "model-liveb2-C-panel-staircase-9",
+      "grade-liveb2-C-panel-staircase-9",
+      "model-liveb2-C-transfer-discount-12",
+      "grade-liveb2-C-transfer-discount-12",
+      "model-liveb2-C-transfer-sign-15",
+      "grade-liveb2-C-transfer-sign-15",
+      "grade-liveb2-use-transfer-discount",
+      "model-liveb2-use-transfer-discount"
+    ],
+    "unresolved_exposure": 0
+  },
+  "phases": [
+    {
+      "detail": {
+        "allocation": "liveb-alloc-liveb2-cap",
+        "bindings": {
+          "comparison_policy": {
+            "eval_protocol": "liveb-ep-02-panel-eval",
+            "frozen_policy": {
+              "access": {
+                "families": [
+                  "off_by_one"
+                ]
+              },
+              "evaluator_version": "v1",
+              "outcomes": {
+                "grades": [
+                  "success",
+                  "failure"
+                ],
+                "metrics": [
+                  "success_rate"
+                ]
+              },
+              "release": {
+                "fallback": "baseline-v0",
+                "quarantine_excludes": true
+              },
+              "stopping": {
+                "rule": "fixed-panel"
+              },
+              "task_groups": [
+                {
+                  "kind": "development",
+                  "name": "development",
+                  "tasks": [
+                    "dev-sum",
+                    "dev-collect",
+                    "dev-series"
+                  ]
+                },
+                {
+                  "kind": "visible-regression",
+                  "name": "panel",
+                  "tasks": [
+                    "panel-triangular",
+                    "panel-batcher",
+                    "panel-staircase"
+                  ]
+                },
+                {
+                  "kind": "visible-regression",
+                  "name": "transfer",
+                  "tasks": [
+                    "transfer-discount",
+                    "transfer-sign"
+                  ]
+                },
+                {
+                  "evaluator_version": "v1",
+                  "kind": "protected-eval",
+                  "name": "protected-eval"
+                }
+              ],
+              "thresholds": {
+                "release_label": "observed-gain"
+              }
+            },
+            "panel": {
+              "access": {
+                "families": [
+                  "off_by_one"
+                ]
+              },
+              "evaluator_version": "v1",
+              "outcomes": {
+                "grades": [
+                  "success",
+                  "failure"
+                ],
+                "metrics": [
+                  "success_rate"
+                ]
+              },
+              "release": {
+                "fallback": "baseline-v0",
+                "quarantine_excludes": true
+              },
+              "stopping": {
+                "rule": "fixed-panel"
+              },
+              "task_groups": [
+                {
+                  "kind": "development",
+                  "name": "development",
+                  "tasks": [
+                    "dev-sum",
+                    "dev-collect",
+                    "dev-series"
+                  ]
+                },
+                {
+                  "kind": "visible-regression",
+                  "name": "panel",
+                  "tasks": [
+                    "panel-triangular",
+                    "panel-batcher",
+                    "panel-staircase"
+                  ]
+                },
+                {
+                  "kind": "visible-regression",
+                  "name": "transfer",
+                  "tasks": [
+                    "transfer-discount",
+                    "transfer-sign"
+                  ]
+                },
+                {
+                  "evaluator_version": "v1",
+                  "kind": "protected-eval",
+                  "name": "protected-eval"
+                }
+              ],
+              "thresholds": {
+                "release_label": "observed-gain"
+              }
+            },
+            "panel_protocol": "liveb-ep-02-panel"
+          },
+          "comparison_protocol": "liveb-ep-02-panel-eval-bound",
+          "development_protocol": "liveb-ep-02-dev",
+          "reference_version": "baseline-v0",
+          "selection": {
+            "basis": "development-checks",
+            "check": {
+              "applied": [
+                {
+                  "detail": "method invocation invoke-liveb-ep-02-check-0-dev-sum failed",
+                  "invoke_op": "invoke-liveb-ep-02-check-0-dev-sum",
+                  "invoke_outcome": "failed",
+                  "task": "dev-sum"
+                },
+                {
+                  "detail": "method invocation invoke-liveb-ep-02-check-0-dev-collect failed",
+                  "invoke_op": "invoke-liveb-ep-02-check-0-dev-collect",
+                  "invoke_outcome": "failed",
+                  "task": "dev-collect"
+                },
+                {
+                  "detail": "method invocation invoke-liveb-ep-02-check-0-dev-series failed",
+                  "invoke_op": "invoke-liveb-ep-02-check-0-dev-series",
+                  "invoke_outcome": "failed",
+                  "task": "dev-series"
+                }
+              ],
+              "candidate": "liveb2-cand-s0",
+              "grade_ops": [],
+              "grade_outcome": "failure",
+              "repair": {}
+            },
+            "comparison_policy_ref": "frozen-before-selection",
+            "decision": "reject",
+            "version_id": null
+          },
+          "version_id": null
+        },
+        "episode_id": "liveb-ep-02",
+        "grant_units": 10000000
+      },
+      "phase": "admit",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "explanations": 2,
+        "lesson_digest": "818367315010e12d",
+        "lesson_provenance": "model-authored",
+        "probes_used": 0
+      },
+      "phase": "diagnose",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "acquisition": {
+          "off_by_one": {
+            "artifact_digest": null,
+            "attempts": [
+              {
+                "grade_op": "grade-liveb-ep-02-exp-dev-sum",
+                "model_op": "liveb-ep-02-exp-dev-sum-infer",
+                "outcome": "failure",
+                "task_id": "dev-sum"
+              },
+              {
+                "grade_op": "grade-liveb-ep-02-exp-dev-collect",
+                "model_op": "liveb-ep-02-exp-dev-collect-infer",
+                "outcome": "failure",
+                "task_id": "dev-collect"
+              },
+              {
+                "grade_op": "grade-liveb-ep-02-exp-dev-series",
+                "model_op": "liveb-ep-02-exp-dev-series-infer",
+                "outcome": "failure",
+                "task_id": "dev-series"
+              }
+            ],
+            "provenance": "synthesized-from-dev-transcripts",
+            "status": "no-successful-transcript",
+            "version_id": null
+          }
+        },
+        "built": {
+          "off_by_one": "liveb2-cand-s0"
+        }
+      },
+      "phase": "construct",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "grade_outcome": "failure",
+        "outcomes": {
+          "dev-collect": "failure",
+          "dev-series": "failure",
+          "dev-sum": "failure"
+        }
+      },
+      "phase": "check",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "episode_selection": {
+          "basis": "development-checks",
+          "check": {
+            "applied": [
+              {
+                "detail": "method invocation invoke-liveb-ep-02-check-0-dev-sum failed",
+                "invoke_op": "invoke-liveb-ep-02-check-0-dev-sum",
+                "invoke_outcome": "failed",
+                "task": "dev-sum"
+              },
+              {
+                "detail": "method invocation invoke-liveb-ep-02-check-0-dev-collect failed",
+                "invoke_op": "invoke-liveb-ep-02-check-0-dev-collect",
+                "invoke_outcome": "failed",
+                "task": "dev-collect"
+              },
+              {
+                "detail": "method invocation invoke-liveb-ep-02-check-0-dev-series failed",
+                "invoke_op": "invoke-liveb-ep-02-check-0-dev-series",
+                "invoke_outcome": "failed",
+                "task": "dev-series"
+              }
+            ],
+            "candidate": "liveb2-cand-s0",
+            "grade_ops": [],
+            "grade_outcome": "failure",
+            "repair": {}
+          },
+          "comparison_policy_ref": "frozen-before-selection",
+          "decision": "reject",
+          "version_id": null
+        },
+        "group_candidate": {
+          "panel-B": "lessons-v1",
+          "panel-C": "",
+          "transfer-B": "lessons-v1",
+          "transfer-C": ""
+        },
+        "method_set": {}
+      },
+      "phase": "select",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "protocols": [
+          "liveb2-dev",
+          "liveb2-panel-B",
+          "liveb2-panel-C",
+          "liveb2-transfer-B",
+          "liveb2-transfer-C"
+        ]
+      },
+      "phase": "freeze",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "ablation_noop": {},
+        "arms": {
+          "A": {
+            "panel-batcher": "failure",
+            "panel-staircase": "failure",
+            "panel-triangular": "failure",
+            "transfer-discount": "failure",
+            "transfer-sign": "failure"
+          },
+          "B": {
+            "panel-batcher": "failure",
+            "panel-staircase": "failure",
+            "panel-triangular": "failure",
+            "transfer-discount": "failure",
+            "transfer-sign": "failure"
+          },
+          "C": {
+            "panel-batcher": "failure",
+            "panel-staircase": "failure",
+            "panel-triangular": "failure",
+            "transfer-discount": "failure",
+            "transfer-sign": "failure"
+          }
+        },
+        "verdicts": {
+          "panel-B": {
+            "candidate_successes": 0,
+            "groups": {
+              "panel": {
+                "candidate": 0,
+                "reference": 0
+              }
+            },
+            "label": "inconclusive",
+            "protocol_id": "liveb2-panel-B",
+            "reference_successes": 0,
+            "regressed_groups": []
+          },
+          "panel-C": {
+            "candidate_successes": 0,
+            "groups": {
+              "panel": {
+                "candidate": 0,
+                "reference": 0
+              }
+            },
+            "label": "inconclusive",
+            "protocol_id": "liveb2-panel-C",
+            "reference_successes": 0,
+            "regressed_groups": []
+          },
+          "transfer-B": {
+            "candidate_successes": 0,
+            "groups": {
+              "transfer": {
+                "candidate": 0,
+                "reference": 0
+              }
+            },
+            "label": "inconclusive",
+            "protocol_id": "liveb2-transfer-B",
+            "reference_successes": 0,
+            "regressed_groups": []
+          },
+          "transfer-C": {
+            "candidate_successes": 0,
+            "groups": {
+              "transfer": {
+                "candidate": 0,
+                "reference": 0
+              }
+            },
+            "label": "inconclusive",
+            "protocol_id": "liveb2-transfer-C",
+            "reference_successes": 0,
+            "regressed_groups": []
+          }
+        }
+      },
+      "phase": "compare",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "disposition": {
+          "decision": "fallback",
+          "reason": "no observed gain eligible for release",
+          "selected": "baseline-v0 (incumbent fallback)"
+        },
+        "releases": {
+          "panel-C": {
+            "candidate": "",
+            "label": "inconclusive",
+            "protocol_id": "liveb2-panel-C",
+            "status": "ineligible"
+          },
+          "transfer-C": {
+            "candidate": "",
+            "label": "inconclusive",
+            "protocol_id": "liveb2-transfer-C",
+            "status": "ineligible"
+          }
+        }
+      },
+      "phase": "dispose",
+      "status": "complete"
+    },
+    {
+      "detail": {
+        "disposition": {
+          "decision": "fallback",
+          "reason": "no observed gain eligible for release",
+          "selected": "baseline-v0 (incumbent fallback)"
+        },
+        "launcher": "local-process",
+        "method": "incumbent",
+        "ops": {
+          "grade_op": "grade-liveb2-use-transfer-discount",
+          "model_op": "model-liveb2-use-transfer-discount"
+        },
+        "outcome": "failure",
+        "prior_exposure": "transfer-comparison",
+        "protocol_id": "liveb2-use-transfer-discount",
+        "reason": "unreleased-no-release-for-wrong_operator",
+        "releases": {},
+        "task_id": "transfer-discount",
+        "trial": false,
+        "use_disposition": {
+          "released": {},
+          "router_policies": {},
+          "trial": false
+        },
+        "version_id": ""
+      },
+      "phase": "use",
+      "status": "complete"
+    }
+  ],
+  "revision": "976cee16eb02ebb3adccc734002afbbe6d4eba32",
+  "simulated": false,
+  "verdicts": {
+    "panel-B": {
+      "candidate_successes": 0,
+      "groups": {
+        "panel": {
+          "candidate": 0,
+          "reference": 0
+        }
+      },
+      "label": "inconclusive",
+      "protocol_id": "liveb2-panel-B",
+      "reference_successes": 0,
+      "regressed_groups": []
+    },
+    "panel-C": {
+      "candidate_successes": 0,
+      "groups": {
+        "panel": {
+          "candidate": 0,
+          "reference": 0
+        }
+      },
+      "label": "inconclusive",
+      "protocol_id": "liveb2-panel-C",
+      "reference_successes": 0,
+      "regressed_groups": []
+    },
+    "transfer-B": {
+      "candidate_successes": 0,
+      "groups": {
+        "transfer": {
+          "candidate": 0,
+          "reference": 0
+        }
+      },
+      "label": "inconclusive",
+      "protocol_id": "liveb2-transfer-B",
+      "reference_successes": 0,
+      "regressed_groups": []
+    },
+    "transfer-C": {
+      "candidate_successes": 0,
+      "groups": {
+        "transfer": {
+          "candidate": 0,
+          "reference": 0
+        }
+      },
+      "label": "inconclusive",
+      "protocol_id": "liveb2-transfer-C",
+      "reference_successes": 0,
+      "regressed_groups": []
+    }
+  }
+}

@@ -116,12 +116,22 @@ def assign(dsn: str, cmd: Command, protocol_id: str, task_id: str, task_group: s
     if arm not in ("candidate", "reference"):
         raise SettlementError(f"unknown arm {arm!r}")
     protocol = _protocol(dsn, protocol_id)
+    if not protocol.get("frozen"):
+        raise SettlementError(f"protocol {protocol_id} is not frozen: assignments refused")
     if task_group not in _group_names(protocol):
         raise SettlementError(f"task group {task_group!r} not in protocol {protocol_id}")
     blind_key = new_id("blind")
     assignment_id = f"{protocol_id}:{arm}:{task_id}"
 
     def _fn(cur, control):
+        cur.execute("SELECT blind_key FROM trial_assignments WHERE id = %s",
+                    (assignment_id,))
+        prior = cur.fetchone()
+        if prior is not None:
+            return (ResultCode.ALREADY_APPLIED,
+                    f"assignment {assignment_id} already exists",
+                    {"assignment_id": assignment_id,
+                     "blind_key": prior["blind_key"]}, [], [])
         cur.execute("INSERT INTO trial_assignments (id, protocol_id, task_id, task_group,"
                     " arm, blind_key, instance) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                     (assignment_id, protocol_id, task_id, task_group, arm,

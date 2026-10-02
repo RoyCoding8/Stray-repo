@@ -65,5 +65,8 @@ Base commit: `be7956d`. Integration branch: `codex/implementation-s0-s3`.
 
 - PostgreSQL 16 locally (deployment target PG18, see D-001).
 - No Docker/`runsc` on this host: gVisor profile reports incompatible (D-002).
-- No live inference endpoint: gateway checks pass discovery/auth/inference
-  separation only with fake/stub adapters; live gate unverified.
+- Live inference endpoint was available during the engineering audit:
+  one bounded baseline smoke (panel-triangular, local-process uncontained,
+  finite grant) succeeded with 3/3 grade cases and reconciled settlement
+  (`reports/evidence/eng-close2/`). Standing live capability is not
+  claimed; provider smoke and selected-method transfer remain unexercised.

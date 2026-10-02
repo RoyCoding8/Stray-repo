@@ -1,0 +1,27 @@
+{
+  "action_or_option_differences": 0,
+  "all_pair_grades_tied": true,
+  "all_pair_resource_vectors_tied": true,
+  "empty_directory_accepted": true,
+  "irrelevant_citation_qualification": {
+    "qualified": true,
+    "reasons": [
+      "q1:decision-change:unrelated:s1:dep-a@3=true"
+    ],
+    "route": "Q1"
+  },
+  "mutation_checker_reasons": {
+    "false_policy_version": [],
+    "marked_incomplete": [],
+    "missing_decision_operations": [],
+    "missing_eval_reservations": []
+  },
+  "original_checker": {
+    "ok": true,
+    "pairs": 64,
+    "traces": 128
+  },
+  "runtime_operation_rows": 0,
+  "scope": "preserved artifacts and pure Python; no PostgreSQL or live trajectory replay",
+  "source": "29496a04d5f1d7754a7ea7b623e4a1d0f1b1c25e"
+}

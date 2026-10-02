@@ -50,7 +50,8 @@ from settlement.gateway import GatewayAdapter, GatewayError, ModelResponse, Usag
 from settlement.gateway_http import HttpGatewayAdapter
 from settlement.launcher_local import LocalLauncher
 
-from run_live_abc import _bind_grant_cap, _parse_ids, _select_launcher
+from run_live_abc import (_bind_grant_cap, _bundle_manifest, _effective_config,
+                            _parse_ids, _select_launcher, _source_fingerprint)
 
 LIVE_MISSING = ("live dev episode blocked: set SETTLEMENT_GATEWAY_ENDPOINT, "
                 "SETTLEMENT_GATEWAY_KEY, and SETTLEMENT_GRANT_UNITS "
@@ -61,15 +62,6 @@ LIVE_COMMAND = ("uv run python experiments/run_dev_episode.py --dsn $SETTLEMENT_
                 " --runsc-image sha256:<pinned>")
 EPISODE_PHASES = ("admit", "diagnose", "construct", "check", "select",
                   "freeze", "compare", "dispose", "use")
-
-
-def _revision() -> str:
-    try:
-        out = subprocess.run(["git", "-C", str(WORKTREE), "rev-parse", "HEAD"],
-                             capture_output=True, text=True, timeout=10)
-    except (OSError, subprocess.SubprocessError):
-        return "unknown"
-    return out.stdout.strip() or "unknown"
 
 
 def _fixture_double():
@@ -154,13 +146,25 @@ def _live_adapter(args: argparse.Namespace):
         return None, ("live dev episode blocked: grant must be positive and --model"
                       " (or SETTLEMENT_MODEL) must select the episode model"), 2
     try:
+        experiment.model_token_budget()
+        development.packet_budget()
+    except SettlementError as exc:
+        return None, f"live dev episode blocked: {exc}", 2
+    try:
         launcher = _select_launcher(args)
     except SettlementError as exc:
         return None, str(exc), 3
-    adapter = HttpGatewayAdapter(
-        endpoint=os.environ.get("SETTLEMENT_GATEWAY_ENDPOINT",
-                                os.environ.get("SETTLEMENT_GATEWAY_URL", "")),
-        api_key=os.environ.get("SETTLEMENT_GATEWAY_KEY", ""))
+    try:
+        from settlement.gateway_http import gateway_timeout_overrides
+
+        adapter = HttpGatewayAdapter(
+            endpoint=os.environ.get("SETTLEMENT_GATEWAY_ENDPOINT",
+                                    os.environ.get("SETTLEMENT_GATEWAY_URL", "")),
+            api_key=os.environ.get("SETTLEMENT_GATEWAY_KEY", ""),
+            api=os.environ.get("SETTLEMENT_GATEWAY_API", "chat"),
+            **gateway_timeout_overrides())
+    except ValueError as exc:
+        return None, f"live dev episode blocked: {exc}", 2
     status = adapter.check_discovery()
     if isinstance(status, GatewayError):
         return None, f"live dev episode blocked: discovery failed: {status}", 3
@@ -234,10 +238,21 @@ def _run_episode(dsn: str, args: argparse.Namespace, adapter: Any,
         dsn, _req(prefix, "ep", "propose"), episode_id=episode_id,
         uncertainty=("fixture-driven construction; no live hypothesis"
                      if model == "scripted" else "model-proposed intervention"))
+    panel_policy = development.panel_policy_for(
+        dev_ids, panel_ids, transfer_ids, families=families,
+        evaluator_version=args.evaluator_version)
     development.admit(
         dsn, _req(prefix, "ep", "admit"), episode_id=episode_id,
         reference_version=args.reference_version,
-        access_policy={"families": families}, allocation_id=run_allocation)
+        access_policy={"families": families}, allocation_id=run_allocation,
+        panel_policy=panel_policy)
+    dev_tasks = [{"id": i, "family": by_id[i]["family"],
+                  "broken": by_id[i]["broken"], "cases": by_id[i]["cases"]}
+                 for i in dev_ids]
+    gathered = development.collect_experience(
+        dsn, _req(prefix, "ep", "gather"), adapter, launcher,
+        episode_id=episode_id, model=model, dev_tasks=dev_tasks,
+        grader_path=str(EXPERIMENTS / "run_tests.py"))
     diagnosed = development.diagnose(
         dsn, _req(prefix, "ep", "diagnose"), adapter, episode_id=episode_id,
         model=model)
@@ -258,49 +273,143 @@ def _run_episode(dsn: str, args: argparse.Namespace, adapter: Any,
             made = {"status": "slots-exhausted", "detail": str(exc)}
         if made["status"] == "constructed":
             built[family] = made
-    broken_to_family = {by_id[i]["broken"]: by_id[i]["family"]
-                        for i in dev_ids}
-
     def synthesize(transcripts: list[dict]) -> str | None:
-        fams = {broken_to_family.get(t.get("broken", ""), "")
-                for t in transcripts}
-        fams.discard("")
-        fam = next((f for f in families if f in fams),
-                   families[0] if len(families) == 1 else "")
-        rec = built.get(fam, None) if fam else None
-        if rec is None:
+        vid = bindings.get("version_id")
+        digest = bindings.get("artifact_digest", "")
+        if not vid or not digest:
             return None
-        return _episode_code(args.artifacts_root, rec["artifact_digest"])
+        return _episode_code(args.artifacts_root, digest)
 
     checked: dict = {"status": "skipped", "reason": "no constructed candidate"}
     selected: dict = {"status": "skipped", "reason": "no constructed candidate"}
     bindings: dict = {}
     if built:
-        dev_tasks = [{"id": i, "broken": by_id[i]["broken"],
-                      "cases": by_id[i]["cases"]} for i in dev_ids]
         checked = development.check(
             dsn, _req(prefix, "ep", "check"), launcher, episode_id=episode_id,
             artifacts_root=args.artifacts_root,
             grader_path=str(EXPERIMENTS / "run_tests.py"), tasks=dev_tasks)
         development.freeze_comparison(
             dsn, _req(prefix, "ep", "freeze"), episode_id=episode_id,
-            policy={"task_groups": {"development": list(dev_ids),
-                                    "panel": list(panel_ids),
-                                    "transfer": list(transfer_ids)}})
+            policy={**panel_policy,
+                    "evaluator_version": args.evaluator_version})
         selected = development.select(dsn, _req(prefix, "ep", "select"),
                                       episode_id=episode_id)
         bound = development.bind(dsn, _req(prefix, "ep", "bind"),
                                  episode_id=episode_id)
         bindings = bound["bindings"]
     return {"episode_id": episode_id, "version_stem": version_stem,
-            "fixer_version": (bindings.get("version_id") or version_stem),
+            "fixer_version": bindings.get("version_id") or "",
+            "panel_eval_protocol": development.eval_protocol_id(episode_id),
+            "panel_groups": panel_policy["task_groups"],
             "diagnosed": diagnosed, "built": built, "checked": checked,
             "selected": selected, "bindings": bindings,
-            "synthesize": synthesize}
+            "gathered": gathered, "synthesize": synthesize}
+
+
+def _use_disposition(releases: dict) -> dict:
+    released, policies = {}, {}
+    for rel in (releases or {}).values():
+        if not isinstance(rel, dict) or rel.get("status") != "released":
+            continue
+        policy = rel.get("router_policy", "")
+        for family, route in (rel.get("routed") or {}).items():
+            vid = (route or {}).get("version_id")
+            if vid and policy:
+                released[family] = vid
+                policies[family] = policy
+    return {"released": released, "router_policies": policies, "trial": False}
+
+
+def _episode_phase_ops(ep: dict, report: dict, use: dict) -> dict:
+    transcripts = ((ep.get("gathered") or {}).get("transcripts") or {})
+    collection = [op for item in transcripts.values()
+                  for op in (item.get("model_op"), item.get("grade_op")) if op]
+    diagnosed = ep.get("diagnosed") or {}
+    diagnosis = [((diagnosed.get("provenance") or {}).get("op")) or ""]
+    if diagnosed.get("probes_used"):
+        diagnosis.append(f"{ep['episode_id']}-probe")
+    construction = []
+    for rec in (ep.get("built") or {}).values():
+        if not isinstance(rec, dict):
+            continue
+        prov = rec.get("provenance") or {}
+        if prov.get("op"):
+            construction.append(prov["op"])
+        if rec.get("stage_op"):
+            construction.append(rec["stage_op"])
+        if rec.get("version_id"):
+            construction.append(f"cap-verify-{rec['version_id']}")
+    checked = ep.get("checked") or {}
+    checks = [op for app in (checked.get("applied") or [])
+              for op in (app.get("invoke_op"), app.get("grade_op")) if op]
+    repair_op = (checked.get("repair") or {}).get("invoke_op")
+    if repair_op:
+        checks.append(repair_op)
+    acct = (report.get("accounting") or {}).get("ops") or {}
+    phases = {"collection": [op for op in collection if op],
+              "diagnosis": [op for op in diagnosis if op],
+              "construction": construction, "checks": checks,
+              "comparison-shared": [op for op, entry in acct.items()
+                                    if entry.get("arm") == "dev"]}
+    for arm in ("A", "B", "C"):
+        phases[f"comparison-{arm}"] = [
+            op for op, entry in acct.items() if entry.get("arm") == arm]
+    phases["subsequent-use"] = [op for op in
+                                (use.get("ops") or {}).values() if op]
+    return phases
+
+
+def _run_subsequent_use(args: argparse.Namespace,
+                        run_allocation: str, report: dict) -> dict:
+    from fault_tasks import BY_ID
+
+    transfer = [i for i in BY_ID if i.startswith("transfer")]
+    panel = [i for i in BY_ID if i.startswith("panel")]
+    dev = [i for i in BY_ID if i.startswith("dev-")]
+    if args.use_task:
+        use_task_id = args.use_task
+    elif transfer:
+        use_task_id = transfer[0]
+    elif panel:
+        use_task_id = panel[0]
+    else:
+        use_task_id = dev[0]
+    if use_task_id in transfer:
+        prior = "transfer-comparison"
+    elif use_task_id in panel:
+        prior = "panel-comparison"
+    elif use_task_id in dev:
+        prior = "development-batch"
+    else:
+        prior = "none"
+    disposition = _use_disposition(report.get("releases") or {})
+    cmd = [sys.executable, str(EXPERIMENTS / "run_use.py"),
+           "--dsn", args.dsn, "--artifacts-root", args.artifacts_root,
+           "--allocation", run_allocation,
+           "--investigation", args.investigation, "--episode", args.episode,
+           "--use-task", use_task_id, "--prior-exposure", prior,
+           "--protocol-prefix", args.protocol_prefix,
+           "--disposition-json", json.dumps(disposition),
+           "--gateway", args.gateway, "--launcher", args.launcher]
+    if args.allow_uncontained:
+        cmd.append("--allow-uncontained")
+    for flag in ("--runsc-image", "--runsc-python", "--model"):
+        value = getattr(args, flag.strip("-").replace("-", "_"), "")
+        if value:
+            cmd.extend([flag, value])
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise SettlementError(f"subsequent use did not run: {exc}")
+    if proc.returncode != 0:
+        raise SettlementError(
+            f"subsequent use refused: {proc.stdout.strip()}"
+            f" {proc.stderr.strip()}")
+    return json.loads(proc.stdout)
 
 
 def _summarize(report: dict, run_allocation: str, revision: str,
-               environment: dict, ep: dict) -> dict:
+               environment: dict, ep: dict, use: dict, dsn: str) -> dict:
     development = report["development"]
     selection = report["selection"]
     protocols = sorted({v["protocol_id"] for v in
@@ -327,6 +436,21 @@ def _summarize(report: dict, run_allocation: str, revision: str,
                     ("release_id", "candidate", "router_policy", "routed",
                      "reuse_attempt") if k in rel}
              for name, rel in releases.items() if rel.get("status") == "released"}
+    use_outcome = use.get("outcome", "")
+    use_status = "complete" if use_outcome in ("success", "failure") else "blocked"
+    use_detail = {"task_id": use.get("task_id", ""),
+                  "method": use.get("method", ""),
+                  "version_id": use.get("version_id", ""),
+                  "outcome": use_outcome, "ops": use.get("ops", {}),
+                  "protocol_id": use.get("protocol_id", ""),
+                  "prior_exposure": use.get("prior_exposure", ""),
+                  "launcher": use.get("launcher", ""),
+                  "reason": use.get("reason", ""),
+                  "trial": use.get("trial", False),
+                  "use_disposition": use.get("disposition", {}),
+                  "releases": reuse, "disposition": disposition,
+                  "source": use.get("source", {}),
+                  "effective_config": use.get("effective_config", {})}
     phases = [
         _phase("admit", "complete",
                {"allocation": run_allocation,
@@ -359,17 +483,19 @@ def _summarize(report: dict, run_allocation: str, revision: str,
                 "ablation_noop": report["ablation_noop"]}),
         _phase("dispose", "complete",
                {"releases": releases, "disposition": disposition}),
-        _phase("use", "complete",
-               reuse if reuse else
-               {"selected": disposition.get("selected",
-                                            "baseline-v0 (incumbent fallback)"),
-                "reason": disposition.get("reason", "")}),
+        _phase("use", use_status, use_detail),
     ]
     return {"episode": environment["episode"], "revision": revision,
             "environment": environment, "phases": phases,
             "arms": arms, "ablation_noop": report["ablation_noop"],
             "verdicts": report["verdicts"], "budgets": report["budgets"],
             "accounting": report["accounting"]["totals"],
+            "accounting_scope": "harness-only: comparison-harness operations;"
+                                " excludes collection, diagnosis,"
+                                " construction, checks and subsequent use;"
+                                " simulated flag applies",
+            "episode_costs": experiment.episode_cost_union(
+                dsn, _episode_phase_ops(ep, report, use)),
             "development": {"outcomes": {k: v["outcome"] for k, v in
                                          development["outcomes"].items()},
                             "lesson_provenance":
@@ -402,6 +528,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dev", default="")
     parser.add_argument("--panel", default="")
     parser.add_argument("--transfer", default="")
+    parser.add_argument("--use-task", default="")
     parser.add_argument("--reference-version", default="baseline-v0")
     args = parser.parse_args(argv)
     grant_units = 0
@@ -455,7 +582,16 @@ def main(argv: list[str] | None = None) -> int:
             fixer_version=ep["fixer_version"],
             evaluator_id=args.evaluator_id,
             evaluator_version=args.evaluator_version, simulated=simulated,
-            model=model, synthesize=ep["synthesize"])
+            model=model, synthesize=ep["synthesize"],
+            dev_transcripts=ep["gathered"]["transcripts"],
+            panel_protocol={"eval_protocol": ep["panel_eval_protocol"],
+                            "groups": ep["panel_groups"],
+                            "evaluator_version": args.evaluator_version})
+        use = _run_subsequent_use(args, run_allocation, report)
+        fingerprint = _source_fingerprint()
+        effective = _effective_config(
+            adapter=adapter, launcher=launcher, model=model,
+            grant_units=grant_units, run_allocation=run_allocation, args=args)
     except SettlementError as exc:
         print(f"dev episode refused: {exc}")
         return 3
@@ -472,13 +608,22 @@ def main(argv: list[str] | None = None) -> int:
                                            "status": rec["status"]}
                                      for fam, rec in ep["built"].items()},
                    "fixer_version": ep["fixer_version"]}
-    record = _summarize(report, run_allocation, _revision(), environment,
-                        ep)
+    record = _summarize(report, run_allocation, fingerprint["revision"],
+                        environment, ep, use, args.dsn)
+    record["source"] = fingerprint
+    record["effective_config"] = effective
     roots = Path(args.artifacts_root)
     roots.mkdir(parents=True, exist_ok=True)
-    (roots / f"{args.protocol_prefix}-episode.json").write_text(
-        json.dumps(record, indent=2, sort_keys=True))
-    print(json.dumps(record, indent=2, sort_keys=True))
+    record_name = f"{args.protocol_prefix}-episode.json"
+    record_text = json.dumps(record, indent=2, sort_keys=True)
+    (roots / record_name).write_text(record_text)
+    manifest = _bundle_manifest(
+        entry_point="experiments/run_dev_episode.py", record_name=record_name,
+        record_text=record_text, artifacts_root=args.artifacts_root,
+        protocol_prefix=args.protocol_prefix, effective_config=effective)
+    (roots / f"{args.protocol_prefix}-manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True))
+    print(record_text)
     return 0
 
 

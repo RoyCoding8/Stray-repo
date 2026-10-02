@@ -1,0 +1,197 @@
+{
+  "task": "panel-triangular",
+  "reference_sha256": "042c915d433330d25cd5e8f6ce6917fb386cb92c836a43b95eca3b6bfc81befe",
+  "effective_config": {
+    "api": "responses",
+    "endpoint_host": "http://localhost:6446/v1",
+    "endpoint_env": "SETTLEMENT_GATEWAY_URL",
+    "key_env": "META_API_KEY",
+    "model_env": "SETTLEMENT_MODEL",
+    "model_requested": "muse-spark-1.3-contributor-free",
+    "model_token_cap": 8192,
+    "model_token_cap_env": "SETTLEMENT_MODEL_TOKENS",
+    "grant_units": 2000000,
+    "launcher": "local --allow-uncontained (explicit smoke LS-01)",
+    "launcher_profile": "local-process",
+    "grader": "experiments/run_tests.py",
+    "source_revision": "35c3fef26333927d48e0f7d3a5c5d2c544642a64",
+    "worktree_dirty_at_run": "",
+    "solver_contract": "experiment.SOLVER_SOURCE_CONTRACT",
+    "solver_contract_sha256": "770e258b3ce62824c3c566a35a5a61208a2d36fb9e3e3ae8dc4ccdc178663aae",
+    "gateway_timeouts_ms": {
+      "connect": 5000,
+      "read": 60000,
+      "total": 300000
+    },
+    "discovery": "GatewayStatus.REACHABLE",
+    "auth": "GatewayStatus.AUTHENTICATED"
+  },
+  "request_prompt": {
+    "arm": "A",
+    "task_id": "panel-triangular",
+    "prompt": "def triangular(n):\n    \"\"\"Triangular number T(n) = n*(n+1)/2.\"\"\"\n    if n <= 0:\n        return 0\n    return sum(range(n))\n",
+    "response_contract": "Respond with Python source only: the complete repaired module as raw source bytes. No prose, no Markdown fences, no commentary, no JSON wrapper. The response bytes are written verbatim to candidate.py and graded; anything that is not parseable Python is a format error, not a task result.",
+    "tools": {
+      "grade_selfcheck": {
+        "timeout_ms": 30000,
+        "max_output_bytes": 65536,
+        "model_tokens": 512
+      }
+    }
+  },
+  "model_receipts": [
+    {
+      "operation_id": "model-close2-use-panel-triangular",
+      "outcome": "success",
+      "content": {
+        "text": "def triangular(n):\n    \"\"\"Triangular number T(n) = n*(n+1)/2.\"\"\"\n    if n <= 0:\n        return 0\n    return n*(n+1)//2\n",
+        "usage": {
+          "billed": false,
+          "charge_units": 0,
+          "input_tokens": 172,
+          "output_tokens": 605,
+          "provider_enforced_ceiling": false
+        },
+        "model_meta": {
+          "model": "muse-spark-1.3-contributor-free",
+          "adapter": "http",
+          "contract": "settlement-gateway/http-responses-v1",
+          "endpoint": "http://localhost:6446/v1"
+        },
+        "stop_reason": "stop"
+      }
+    }
+  ],
+  "raw_transport_note": "adapter captures decoded logical output text only; raw provider transport bytes are not retained",
+  "accepted_source": "def triangular(n):\n    \"\"\"Triangular number T(n) = n*(n+1)/2.\"\"\"\n    if n <= 0:\n        return 0\n    return n*(n+1)//2\n",
+  "solver_status": "ok",
+  "solver_detail": "response is parseable Python",
+  "grade_class": "pass",
+  "grade_detail": "3/3 cases passed",
+  "grade_receipts": [
+    {
+      "operation_id": "grade-close2-use-panel-triangular",
+      "outcome": "success",
+      "content": {
+        "argv": [
+          "/tmp/asv2-close2/.venv/bin/python",
+          "/tmp/close2-smoke-7rb4a9wq/grade-close2-use-panel-triangular_exec-default.work/inputs/grader.py",
+          "/tmp/close2-smoke-7rb4a9wq/grade-close2-use-panel-triangular_exec-default.work/inputs/candidate.py",
+          "/tmp/close2-smoke-7rb4a9wq/grade-close2-use-panel-triangular_exec-default.work/inputs/cases.json",
+          "28000"
+        ],
+        "data": {
+          "worker": {
+            "data": {
+              "total": 3,
+              "failed": 0,
+              "passed": 3,
+              "failures": []
+            },
+            "error": "",
+            "status": "ok"
+          },
+          "wall_ms": 177,
+          "timed_out": false,
+          "supervised": true
+        },
+        "parse": "typed-json",
+        "profile": "local-process",
+        "_verdict": "success",
+        "truncated": false,
+        "containment": false
+      }
+    }
+  ],
+  "outcome": "success",
+  "accounting": {
+    "grade-close2-use-panel-triangular": {
+      "operation_id": "grade-close2-use-panel-triangular",
+      "dispatch_state": "observed",
+      "reserved": 111,
+      "settled": 111,
+      "unresolved": 0,
+      "outcome": "success",
+      "tokens": {
+        "input": 0,
+        "output": 0
+      },
+      "billed": false,
+      "provider_charge_units": null
+    },
+    "model-close2-use-panel-triangular": {
+      "operation_id": "model-close2-use-panel-triangular",
+      "dispatch_state": "observed",
+      "reserved": 8344,
+      "settled": 8344,
+      "unresolved": 0,
+      "outcome": "success",
+      "tokens": {
+        "input": 172,
+        "output": 605
+      },
+      "billed": false,
+      "provider_charge_units": null
+    }
+  },
+  "reservations": {
+    "grade-close2-use-panel-triangular": [
+      {
+        "id": "res-grade-close2-use-panel-triangular",
+        "amount": 111,
+        "state": "settled",
+        "allocation_id": "close2-alloc"
+      }
+    ],
+    "model-close2-use-panel-triangular": [
+      {
+        "id": "res-model-close2-use-panel-triangular",
+        "amount": 8344,
+        "state": "settled",
+        "allocation_id": "close2-alloc"
+      }
+    ]
+  },
+  "expenditures": [
+    {
+      "protocol_id": "close2-use-panel-triangular",
+      "category": "use",
+      "amount": 8344,
+      "note": "subsequent incumbent inference panel-triangular [model-close2-use-panel-triangular]"
+    },
+    {
+      "protocol_id": "close2-use-panel-triangular",
+      "category": "use",
+      "amount": 111,
+      "note": "subsequent grade panel-triangular [grade-close2-use-panel-triangular]"
+    }
+  ],
+  "allocation_before": {
+    "id": "close2-alloc",
+    "parent_id": null,
+    "domain": "close2",
+    "epoch": 0,
+    "authorized": 2000000,
+    "amount_scale": 1,
+    "consumed": 0,
+    "reserved": 0,
+    "occupancy": 0,
+    "max_occupancy": 64,
+    "owner_scope": "",
+    "created_at": "2026-09-11 15:01:46.120988+00:00"
+  },
+  "allocation_after": {
+    "id": "close2-alloc",
+    "parent_id": null,
+    "domain": "close2",
+    "epoch": 0,
+    "authorized": 2000000,
+    "amount_scale": 1,
+    "consumed": 8455,
+    "reserved": 0,
+    "occupancy": 1,
+    "max_occupancy": 64,
+    "owner_scope": "",
+    "created_at": "2026-09-11 15:01:46.120988+00:00"
+  }
+}

@@ -137,6 +137,9 @@ def node_index(comp: Composition) -> dict[str, Node]:
 
 
 def validate_composition(comp: Composition) -> Composition:
+    if _depth(comp.root) > comp.max_depth:
+        raise InvalidComposition(
+            f"composition depth exceeds max depth {comp.max_depth}")
     seen: set[str] = set()
     for node in _walk(comp.root):
         if node.node_id in seen:
@@ -372,7 +375,7 @@ def check_eligibility(dsn: str, attempt_id: str, comp: Composition) -> dict[str,
 
     reasons: list[str] = []
     authority = store.get_control(dsn)["authority_version"]
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT lifecycle, investigation_id FROM attempts WHERE id = %s",
                         (attempt_id,))
@@ -434,7 +437,7 @@ def migrate_continuation(dsn: str, attempt_id: str, old_ref: str, cont: Continua
 def operation_outcome(dsn: str, operation_id: str) -> dict[str, Any]:
     from psycopg.rows import dict_row
 
-    with db.connect(dsn) as conn:
+    with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT dispatch_state, reconcile_state, cancel_state, settled,"
                         " attempt_id FROM operations WHERE id = %s", (operation_id,))

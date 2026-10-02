@@ -71,3 +71,25 @@ def test_amend_allocation_and_repair_scan(client):
 def test_inspect_unknown_operation_is_refused(client):
     body = client.post("/commands/inspect", data={"operation_id": "nope"}).text
     assert "refused" in body
+
+
+def test_cancel_forwards_to_gateway(migrated_db):
+    dsn = migrated_db
+    store.seed_allocation(dsn, _cmd({"allocation_id": "a1", "domain": "cpu", "authorized": 100}))
+    store.admit_commitment(dsn, _cmd({"investigation_id": "i1", "objective": "o"}))
+    store.acquire_work(dsn, _cmd({"attempt_id": "w1", "investigation_id": "i1",
+                                  "allocation_id": "a1"}))
+    store.prepare_operation(dsn, _cmd({"operation_id": "op1", "attempt_id": "w1",
+                                       "operation": {"effect": "note"}}))
+    calls: list[str] = []
+
+    class RecordingGateway:
+        def cancel(self, operation_id: str) -> bool:
+            calls.append(operation_id)
+            return True
+
+    app = api.create_app(dsn, gateway=RecordingGateway(), token="test-token")
+    client = TestClient(app, headers={"x-operator-token": "test-token"})
+    body = client.post("/commands/cancel", data={"operation_id": "op1"}).text
+    assert "accepted" in body
+    assert calls == ["op1"]

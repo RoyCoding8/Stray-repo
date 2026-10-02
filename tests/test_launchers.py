@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
+import time
 
 import pytest
 
@@ -74,12 +74,26 @@ def test_worker_bytes_never_executed(tmp_path):
     assert not marker.exists()
 
 
+def _wait_pid_gone(pid: int, deadline_s: float = 5.0) -> bool:
+    end = time.monotonic() + deadline_s
+    while time.monotonic() < end:
+        try:
+            os.kill(pid, 0)
+        except (ProcessLookupError, PermissionError, OSError):
+            return True
+        time.sleep(0.05)
+    return False
+
+
 def test_timeout_kills_whole_process_group(tmp_path):
     pgid_file = tmp_path / "pgid"
+    grandchild_file = tmp_path / "grandchild.pid"
     argv = ["python3", "-c",
             "import os, subprocess, time; "
             f"open({str(pgid_file)!r}, 'w').write(str(os.getpgrp())); "
-            "subprocess.Popen(['sleep', '30']); time.sleep(30)"]
+            "subprocess.Popen(['python3', '-c', "
+            f"\"import os, time; open({str(grandchild_file)!r}, 'w').write(str(os.getpid())); "
+            "time.sleep(30)\"]); time.sleep(30)"]
     launcher = LocalLauncher(run_dir=tmp_path / "runs", grace_ms=200)
     out = launcher.dispatch(_op("op-kill", payload={"profile": "local-process", "argv": argv,
                                                     "timeout_ms": 800, "max_output_bytes": 4096}))
@@ -88,8 +102,9 @@ def test_timeout_kills_whole_process_group(tmp_path):
     pgid = int(pgid_file.read_text())
     with pytest.raises((ProcessLookupError, PermissionError, OSError)):
         os.killpg(pgid, 0)
-    orphans = subprocess.run(["pgrep", "-f", "sleep 30"], capture_output=True, text=True)
-    assert orphans.stdout.strip() == ""
+    assert grandchild_file.exists(), "grandchild never started; test is void"
+    grandchild = int(grandchild_file.read_text().strip())
+    assert _wait_pid_gone(grandchild), f"grandchild {grandchild} survived group kill"
 
 
 def test_result_files_support_recovery_inspection(tmp_path):

@@ -1,0 +1,119 @@
+{
+  "altered_manifest_accepted": true,
+  "decision_deficits": [
+    {
+      "decisions": 24,
+      "paid_decisions": 7,
+      "trajectory": "w08v0_q_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 7,
+      "trajectory": "w08v0_q_t1"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 7,
+      "trajectory": "w08v0_r_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 7,
+      "trajectory": "w08v0_r_t1"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 14,
+      "trajectory": "w09v1_q_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 14,
+      "trajectory": "w09v1_q_t1"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 14,
+      "trajectory": "w09v1_r_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 14,
+      "trajectory": "w09v1_r_t1"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w10v2_q_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w10v2_q_t1"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w10v2_r_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w10v2_r_t1"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w11v3_q_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w11v3_q_t1"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w11v3_r_t0"
+    },
+    {
+      "decisions": 24,
+      "paid_decisions": 4,
+      "trajectory": "w11v3_r_t1"
+    }
+  ],
+  "driver_save": {
+    "idle_count": 1,
+    "in_memory_ticks_after_save": 1,
+    "next_tick": 1,
+    "recorded_ticks": 0
+  },
+  "duplicate_trace_accepted": {
+    "ok": true,
+    "traces": 129
+  },
+  "free_decisions": 268,
+  "mutation_checker_reasons": {
+    "marked_incomplete": [],
+    "missing_decision_references": []
+  },
+  "operation_rows": 614,
+  "resume_flag_in_existing_test_command": false,
+  "scope": "stored traces, pure checker/CLI parser, actual driver with a memory backend double; no PostgreSQL replay",
+  "source": "051811fd59ab6d1de0f85a1be8849e94b638ebf5",
+  "strict_checker": {
+    "ok": true,
+    "pairs": 64,
+    "traces": 128
+  },
+  "totals": {
+    "Q": {
+      "exploration": 2128,
+      "grade": 284
+    },
+    "R": {
+      "exploration": 2144,
+      "grade": 284
+    }
+  }
+}

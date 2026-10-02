@@ -88,6 +88,15 @@ class EpisodeDouble(GatewayAdapter):
         except (ValueError, IndexError, TypeError):
             return GatewayError("protocol", "episode double needs a JSON body",
                                 False, request.operation_id)
+        if body.get("arm") in ("DEV", "A"):
+            self.calls.append({"arm": body["arm"],
+                               "task_id": body.get("task_id")})
+            return ModelResponse(
+                request.operation_id,
+                json.dumps({"dev_attempt": body.get("task_id")}),
+                dict(self.meta),
+                Usage(input_tokens=20, output_tokens=40,
+                      charge_units=60), "stop")
         phase = body.get("phase")
         if phase not in ("diagnose", "construct"):
             return GatewayError("protocol", "episode double needs a known phase",
@@ -122,7 +131,13 @@ def _cmd(tag):
     return Command(request_id=f"{tag}-{unique('c')}", payload={})
 
 
-def _admit(dsn, tag, allocation_id=None, investigation_id=None, **limits):
+PANEL_DEV = ["dev-sum"]
+PANEL_PANEL = ["panel-triangular"]
+PANEL_TRANSFER = ["transfer-discount"]
+
+
+def _admit(dsn, tag, allocation_id=None, investigation_id=None, panel=False,
+           **limits):
     env = seed_env(dsn, tag)
     allocation = allocation_id or env["allocation_id"]
     investigation = investigation_id or env["investigation_id"]
@@ -133,10 +148,30 @@ def _admit(dsn, tag, allocation_id=None, investigation_id=None, **limits):
     development.propose(dsn, _cmd(f"{tag}-prop"), episode_id=ep,
                         predicted_effect="inclusive bound fixes dev-sum",
                         competing="spec ambiguity")
+    policy = (development.panel_policy_for(
+        PANEL_DEV, PANEL_PANEL, PANEL_TRANSFER, families=["off_by_one"])
+        if panel else None)
     development.admit(dsn, _cmd(f"{tag}-adm"), episode_id=ep,
                       reference_version="baseline-v0", access_policy=POLICY,
-                      allocation_id=allocation, **limits)
+                      allocation_id=allocation, panel_policy=policy, **limits)
     return env, ep
+
+
+def _frozen_panel(dsn, ep):
+    row = development.get_episode(dsn, ep)
+    panel = dict(row["comparison_policy"]["panel"])
+    panel["evaluator_version"] = "v1"
+    return panel
+
+
+COLLECT_TASKS = [{**task, "family": "off_by_one"} for task in TASKS]
+
+
+def _collect(dsn, tag, ep, launcher, double=None):
+    return development.collect_experience(
+        dsn, _cmd(f"{tag}-ex"), double or EpisodeDouble(), launcher,
+        episode_id=ep, model="scripted", dev_tasks=COLLECT_TASKS,
+        grader_path=GRADER)
 
 
 def _diagnose(dsn, tag, ep, double=None):
@@ -254,10 +289,13 @@ def _receipt_meta(dsn, operation_id):
     return content.get("model_meta", {})
 
 
-def test_model_backed_diagnose_marks_provenance(migrated_db):
+def test_model_backed_diagnose_marks_provenance(migrated_db, launcher):
     dsn = migrated_db
     tag = unique("dep")
     _, ep = _admit(dsn, tag)
+    gathered = _collect(dsn, tag, ep, launcher)
+    assert gathered["transcripts"]["dev-sum"]["outcome"] in ("success", "failure")
+    assert gathered["claims"] == [f"{ep}-exp-dev-sum-claim"]
     out = _diagnose(dsn, tag, ep)
     assert out["state"] == "diagnosed"
     assert len(out["explanations"]) == 2
@@ -274,6 +312,7 @@ def test_model_backed_diagnose_marks_provenance(migrated_db):
     assert len(row["explanations"]) == 2
     tag2 = unique("dep")
     _, ep2 = _admit(dsn, tag2, max_explanations=1)
+    _collect(dsn, tag2, ep2, launcher)
     with pytest.raises(SettlementError, match="ceiling is 1"):
         development.diagnose(dsn, _cmd(tag2), EpisodeDouble(explanations=2),
                              episode_id=ep2, model="scripted")
@@ -281,6 +320,7 @@ def test_model_backed_diagnose_marks_provenance(migrated_db):
     assert ledger["by_category"]["construction"] > 0
     tag3 = unique("dep")
     _, ep3 = _admit(dsn, tag3)
+    _collect(dsn, tag3, ep3, launcher)
     live_like = EpisodeDouble(meta={"model": "live-m"})
     out3 = development.diagnose(dsn, _cmd(tag3), live_like, episode_id=ep3,
                                 model="live-m")
@@ -292,6 +332,7 @@ def test_diagnose_probe_bound(migrated_db, launcher):
     dsn = migrated_db
     tag = unique("dep")
     _, ep = _admit(dsn, tag)
+    _collect(dsn, tag, ep, launcher)
     out = development.diagnose(dsn, _cmd(tag), EpisodeDouble(), episode_id=ep,
                                model="scripted", launcher=launcher,
                                probe={"code": PROBE_CODE})
@@ -299,6 +340,7 @@ def test_diagnose_probe_bound(migrated_db, launcher):
     assert development.get_episode(dsn, ep)["probes_used"] == 1
     tag2 = unique("dep")
     _, ep2 = _admit(dsn, tag2, max_probes=0)
+    _collect(dsn, tag2, ep2, launcher)
     with pytest.raises(SettlementError, match="no diagnostic probe"):
         development.diagnose(dsn, _cmd(tag2), EpisodeDouble(), episode_id=ep2,
                              model="scripted", launcher=launcher,
@@ -309,6 +351,7 @@ def test_construct_stages_verifies_and_packages(migrated_db, launcher, tmp_roots
     dsn = migrated_db
     tag = unique("dep")
     _, ep = _admit(dsn, tag)
+    _collect(dsn, tag, ep, launcher)
     _diagnose(dsn, tag, ep)
     out = _construct(dsn, tag, ep, launcher, tmp_roots)
     assert out["status"] == "constructed"
@@ -341,6 +384,7 @@ def test_construct_stages_verifies_and_packages(migrated_db, launcher, tmp_roots
 
 
 def _happy_to_checked(dsn, tag, ep, launcher, tmp_roots, double=None):
+    _collect(dsn, tag, ep, launcher, double)
     _diagnose(dsn, tag, ep, double)
     _construct(dsn, tag, ep, launcher, tmp_roots, double)
     return development.check(dsn, _cmd(f"{tag}-ck"), launcher, episode_id=ep,
@@ -353,7 +397,7 @@ def test_two_freeze_selection_and_no_construction_retry(migrated_db, launcher,
                                                        tmp_roots):
     dsn = migrated_db
     tag = unique("dep")
-    _, ep = _admit(dsn, tag)
+    _, ep = _admit(dsn, tag, panel=True)
     checked = _happy_to_checked(dsn, tag, ep, launcher, tmp_roots)
     assert checked["grade_outcome"] == "success"
     assert checked["repair"]["match"] is True
@@ -361,9 +405,11 @@ def test_two_freeze_selection_and_no_construction_retry(migrated_db, launcher,
         development.select(dsn, _cmd(tag), episode_id=ep)
     with pytest.raises(SettlementError, match="task groups"):
         development.freeze_comparison(dsn, _cmd(tag), episode_id=ep, policy={})
-    policy = {"task_groups": ["panel"], "budgets": {"units": 1000},
-              "scoring": "success_rate", "frozen_at": "development-only"}
-    development.freeze_comparison(dsn, _cmd(tag), episode_id=ep, policy=policy)
+    development.freeze_comparison(dsn, _cmd(tag), episode_id=ep,
+                                  policy=_frozen_panel(dsn, ep))
+    row = development.get_episode(dsn, ep)
+    assert row["comparison_policy"]["eval_protocol"] == \
+        development.eval_protocol_id(ep)
     selected = development.select(dsn, _cmd(tag), episode_id=ep)
     assert selected["selection"]["decision"] == "select"
     assert selected["selection"]["basis"] == "development-checks"
@@ -379,6 +425,7 @@ def test_two_freeze_selection_and_no_construction_retry(migrated_db, launcher,
     assert kinds == ["development.episode_observed",
                      "development.episode_proposed",
                      "development.episode_admitted",
+                     "development.experience_collected",
                      "development.episode_diagnosed",
                      "development.episode_constructed",
                      "development.episode_checked",
@@ -397,6 +444,7 @@ def test_revision_consumes_a_candidate_slot(migrated_db, launcher, tmp_roots):
     dsn = migrated_db
     tag = unique("dep")
     _, ep = _admit(dsn, tag)
+    _collect(dsn, tag, ep, launcher)
     _diagnose(dsn, tag, ep)
     first = _construct(dsn, tag, ep, launcher, tmp_roots)
     development.check(dsn, _cmd(f"{tag}-c0"), launcher, episode_id=ep,
@@ -425,6 +473,7 @@ def test_no_candidate_is_truthful(migrated_db, launcher, tmp_roots):
     dsn = migrated_db
     tag = unique("dep")
     env, ep = _admit(dsn, tag)
+    _collect(dsn, tag, ep, launcher)
     _diagnose(dsn, tag, ep)
     out = _construct(dsn, tag, ep, launcher, tmp_roots,
                      double=EpisodeDouble(mode="no-candidate"))
@@ -444,6 +493,7 @@ def test_invalid_output_consumes_a_slot(migrated_db, launcher, tmp_roots):
     dsn = migrated_db
     tag = unique("dep")
     _, ep = _admit(dsn, tag)
+    _collect(dsn, tag, ep, launcher)
     _diagnose(dsn, tag, ep)
     double = EpisodeDouble(mode="invalid")
     out = _construct(dsn, tag, ep, launcher, tmp_roots, double=double)
@@ -466,7 +516,7 @@ def test_invalid_output_consumes_a_slot(migrated_db, launcher, tmp_roots):
     assert retry["slot"] == 1
 
 
-def test_budget_exhaustion_refuses_before_dispatch(migrated_db):
+def test_budget_exhaustion_refuses_before_dispatch(migrated_db, launcher):
     dsn = migrated_db
     tag = unique("dep")
     env = seed_env(dsn, tag)
@@ -476,8 +526,8 @@ def test_budget_exhaustion_refuses_before_dispatch(migrated_db):
     _, ep = _admit(dsn, tag, allocation_id=f"{tag}-tiny",
                    investigation_id=env["investigation_id"])
     with pytest.raises(SettlementError, match="refused before dispatch"):
-        _diagnose(dsn, tag, ep)
-    assert broker.read_operation(dsn, f"{ep}-explain") is None
+        _collect(dsn, tag, ep, launcher)
+    assert broker.read_operation(dsn, f"{ep}-exp-dev-sum-infer") is None
     row = development.get_episode(dsn, ep)
     assert row["state"] == "admitted"
     assert row["disposition"] == "budget-exhausted"
@@ -491,6 +541,7 @@ def test_construct_after_drain_marks_budget_exhausted(migrated_db, launcher,
     dsn = migrated_db
     tag = unique("dep")
     env, ep = _admit(dsn, tag)
+    _collect(dsn, tag, ep, launcher)
     _diagnose(dsn, tag, ep)
     status = store.allocation_status(dsn, env["allocation_id"])
     free = int(status["authorized"]) - int(status["consumed"]) - \
@@ -513,7 +564,8 @@ def test_interruption_after_publication_resumes_without_rebuild(
         migrated_db, launcher, tmp_roots):
     dsn = migrated_db
     tag = unique("dep")
-    _, ep = _admit(dsn, tag)
+    _, ep = _admit(dsn, tag, panel=True)
+    _collect(dsn, tag, ep, launcher)
     _diagnose(dsn, tag, ep)
     built = _construct(dsn, tag, ep, launcher, tmp_roots)
     fresh = EpisodeDouble()
@@ -533,7 +585,7 @@ def test_interruption_after_publication_resumes_without_rebuild(
     assert checked["grade_outcome"] == "success"
     development.freeze_comparison(
         dsn, _cmd(f"{tag}-frz"), episode_id=ep,
-        policy={"task_groups": ["panel"], "budgets": {}, "scoring": "ok"})
+        policy=_frozen_panel(dsn, ep))
     development.select(dsn, _cmd(f"{tag}-sel"), episode_id=ep)
     bound = development.bind(dsn, _cmd(f"{tag}-bnd"), episode_id=ep)
     assert bound["bindings"]["artifact_digest"] == built["artifact_digest"]

@@ -1,0 +1,49 @@
+[backend] name=demo-premerge note=pre-merge local durable backend; agenda commands missing: propose_option,select_and_admit,record_outcome,submit_continuation,set_dormant,answer_option,retire_option,process_wake,explain_eligibility; merge-conformance is coordinator-verified
+[demo] scratch journey on a fresh deterministic state
+[propose] result=applied reason=recorded revision r1 under ag01-propose-q-bottleneck-r1
+[check] propose opens r1: held
+[propose-replay] result=already_applied reason=recorded revision r1 under ag01-propose-q-bottleneck-r1
+[check] stable request replays one result: held
+[propose-stale] result=stale_revision reason=stale expected revision: q-bottleneck is at r1, expected r0
+[check] stale expected revision refuses: held
+[admit] result=applied reason=funded att-q-bottleneck-probe-route-a: revision r1 rechecked, exposure 4 reserved as demo:demo-traj:probe:1; decision charged as demo:demo-traj:dec:1
+[check] admit funds attempt A: held
+[admit-duplicate] result=already_applied reason=duplicate intended effect: probe probe-route-a for q-bottleneck already bound to att-q-bottleneck-probe-route-a; no second effect
+[check] same probe slot creates no effect: held
+[observe] result=applied reason=linked rc-1 to att-q-bottleneck-probe-route-a at epoch 1; probe exposure settled as demo:demo-traj:probe:1
+[check] decisive outcome links and settles probe exposure: held
+[continue] result=applied reason=useful continuation: Q2 discriminating probe: two possible outcomes carry different declared consequences and current evidence does not settle the distinction: att-q-bottleneck-probe-route-b addresses route-B-congested; exposure 2 reserved as demo:demo-traj:probe:2c; decision charged as demo:demo-traj:dec:2
+[check] useful continuation admitted with a qualification route: held
+[check] continuation names its Q route: held
+[observe] result=applied reason=linked rc-2 to att-q-bottleneck-probe-route-b at epoch 1; unresolved result remains unknown: probe exposure retained as outstanding liability
+[check] unknown outcome preserves uncertainty and retains exposure: held
+[continue] result=invalid_input reason=justified refusal: unresolved result remains unknown (rc-2); an unknown observation justifies no probe; decision charged as demo:demo-traj:dec:3
+[check] unknown support yields a justified refusal, not a probe: held
+[decline] result=applied reason=q-bottleneck is now dormant at v2: waiting on fresher dependency evidence. wake when evidence-change:dep-seed
+[check] decline parks the option dormant with a typed wake condition: held
+[wake] result=applied reason=ignored: event ev-noise carries no typed evidence; condition needs evidence-change:dep-seed
+[check] untyped events leave dormancy untouched: held
+[wake] result=applied reason=q-bottleneck reopened at v3: relevant evidence-change: dep-seed moved v3 to v4, matching the typed wake condition
+[check] a relevant event reopens the dormant question with a reason: held
+[wake] result=already_applied reason=duplicate delivery of ev-dep-v4 ignored; wake log dedups (option, event)
+[check] duplicate wake delivery creates no duplicate effect: held
+[resume-fresh] subprocess resume output:
+[backend] name=demo-premerge note=pre-merge local durable backend; agenda commands missing: propose_option,select_and_admit,record_outcome,submit_continuation,set_dormant,answer_option,retire_option,process_wake,explain_eligibility; merge-conformance is coordinator-verified
+[resume] fresh process on postgresql://ubuntu@/agenda01_demo?host=/var/run/postgresql: cursor advanced to tick=3 (decided=3)
+[resumable] open q-bottleneck at r1: eligible: open at r1; deps at {"dep-seed": 3}; budget remaining 55 covers a probe; pending effects keep liability: ['demo:demo-traj:probe:2c']
+[resumable] outstanding liability carries over: ['demo:demo-traj:probe:2c']
+[costs] decisions=3 probes_settled=4 outstanding_liability=2 budget_remaining=55
+[check] fresh process resumes the reopened option from durable state: held
+[option] id=q-bottleneck scope=transfer revision=r1 disposition=open version=v3
+[eligibility] eligible: open at r1; deps at {"dep-seed": 3}; budget remaining 55 covers a probe; pending effects keep liability: ['demo:demo-traj:probe:2c']
+[continuation] basis=Q2 discriminating probe: two possible outcomes carry different declared consequences and current evidence does not settle the distinction: att-q-bottleneck-probe-route-b addresses route-B-congested; exposure 2 reserved as demo:demo-traj:probe:2c cites=['rc-1', 'rc-2']
+[wake] condition={"dep": "dep-seed", "type": "evidence-change", "observed_version": 3}
+[attempts] att-q-bottleneck-probe-route-a [admitted] probe=probe-route-a decision=shift load to route B, att-q-bottleneck-probe-route-b [admitted] probe=probe-route-b decision=continue-route-B-congested
+[observations] rc-1:route-A-congested=true, rc-2:route-B-congested=unknown
+[costs] decisions=3 probes_settled=4 outstanding_liability=2 budget_remaining=55
+[cursor] trajectory=demo-traj tick=3
+[check] unknown probe exposure survives as outstanding liability: held
+[check] budget reconstructs from durable cost records: held
+[check] one cursor tick per paid decision: held
+[check] journey ends with the option open: held
+[demo] journey complete: propose replayed, admit funded, outcomes linked, continuation qualified once and refused once with reasons, dormancy waited on a typed condition, wake reopened on relevant evidence only, and a fresh process resumed from durable records

@@ -44,6 +44,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -56,6 +58,20 @@ from .common import Command, ResultCode, SettlementError, payload_digest
 GRADER_TIMEOUT_MS = 30_000
 GRADER_MAX_BYTES = 65_536
 MODEL_TOKENS = 512
+
+
+def model_token_budget() -> int:
+    raw = os.environ.get("SETTLEMENT_MODEL_TOKENS", "")
+    if not raw:
+        return MODEL_TOKENS
+    try:
+        budget = int(raw)
+    except ValueError:
+        raise SettlementError(f"SETTLEMENT_MODEL_TOKENS={raw!r} is not an integer")
+    if budget <= 0:
+        raise SettlementError(
+            f"SETTLEMENT_MODEL_TOKENS={raw!r} must be a positive integer")
+    return budget
 
 LIVE_COMMAND = ("uv run python experiments/run_live_abc.py --dsn $SETTLEMENT_DSN"
                 " --allocation live-abc --artifacts-root $ARTIFACT_ROOT")
@@ -131,6 +147,122 @@ def _authenticated(receipt: dict | None, total: int) -> bool:
         data.get("failed", 1) == 0 and not data.get("failures")
 
 
+SOLVER_SOURCE_CONTRACT = (
+    "Respond with Python source only: the complete repaired module as raw "
+    "source bytes. No prose, no Markdown fences, no commentary, no JSON "
+    "wrapper. The response bytes are written verbatim to candidate.py and "
+    "graded; anything that is not parseable Python is a format error, not "
+    "a task result.")
+
+SOLVER_OK = "ok"
+SOLVER_TRANSPORT = "transport"
+SOLVER_TRUNCATED = "truncated"
+SOLVER_FORMAT = "format"
+
+GRADE_PASS = "pass"
+GRADE_TIMEOUT = "timeout"
+GRADE_IMPORT_EXECUTION = "import-execution"
+GRADE_WRONG_ANSWER = "wrong-answer"
+GRADE_UNGRADED = "ungraded"
+
+_EXECUTION_RE = re.compile(
+    r"^[A-Za-z_][A-Za-z0-9_.]*(Error|Exception|Interrupt|Exit)\b")
+
+
+def validate_solver_output(raw: Any, *, stop_reason: str = "") -> dict:
+    stop = stop_reason or ""
+    if raw is None or not isinstance(raw, str):
+        return {"status": SOLVER_TRANSPORT,
+                "detail": "no usable model text reached the solver stage",
+                "source": ""}
+    if stop == "length" or stop.startswith("incomplete"):
+        return {"status": SOLVER_TRUNCATED,
+                "detail": f"provider stop reason {stop!r} signals truncation",
+                "source": raw}
+    if not raw.strip():
+        return {"status": SOLVER_FORMAT,
+                "detail": "empty response carries no source",
+                "source": raw}
+    try:
+        compile(raw, "<solver-response>", "exec")
+    except (SyntaxError, ValueError, RecursionError) as exc:
+        return {"status": SOLVER_FORMAT,
+                "detail": f"response is not parseable Python: {exc}",
+                "source": raw}
+    return {"status": SOLVER_OK,
+            "detail": "response is parseable Python",
+            "source": raw}
+
+
+def _looks_like_execution(actual: Any) -> bool:
+    if not isinstance(actual, str):
+        return False
+    if actual in ("timeout", "error"):
+        return True
+    if actual.startswith("candidate "):
+        return True
+    if actual in ("unparseable candidate channel output",
+                  "malformed candidate envelope"):
+        return True
+    return _EXECUTION_RE.match(actual) is not None
+
+
+def attribute_grade_receipt(receipt: dict | None,
+                            total_cases: int) -> tuple[str, str, str]:
+    if _authenticated(receipt, total_cases):
+        return ("success", GRADE_PASS,
+                f"{total_cases}/{total_cases} cases passed")
+    content = dict((receipt or {}).get("content") or {})
+    data = dict(content.get("data") or {})
+    if (receipt or {}).get("outcome") == "failure" and data.get("timed_out"):
+        return ("timeout", GRADE_TIMEOUT,
+                "grader exceeded its sandbox budget")
+    worker = data.get("worker") or {}
+    result = worker.get("data") if isinstance(worker, dict) else None
+    failures = result.get("failures") if isinstance(result, dict) else None
+    if not isinstance(failures, list) or not failures:
+        return ("failure", GRADE_UNGRADED,
+                "grader receipt carries no case payload")
+    if any(_looks_like_execution(f.get("actual")) for f in failures
+           if isinstance(f, dict)):
+        return ("failure", GRADE_IMPORT_EXECUTION,
+                "at least one case failed in import or execution")
+    return ("failure", GRADE_WRONG_ANSWER,
+            "every failed case executed and returned a wrong value")
+
+
+def model_stop_reason(dsn: str, operation_id: str) -> str:
+    receipt = _sandbox_receipt(dsn, operation_id)
+    content = dict((receipt or {}).get("content") or {})
+    stop = content.get("stop_reason", "")
+    return stop if isinstance(stop, str) else ""
+
+
+def begin_solver_grade(dsn: str, launcher: Any, *, model_op: str, raw: Any,
+                       cases: list, tag: str, allocation_id: str,
+                       attempt_id: str | None, grader_path: str) -> tuple:
+    validation = validate_solver_output(
+        raw, stop_reason=model_stop_reason(dsn, model_op))
+    operation_id, staged = _prepare_grade(
+        dsn, launcher, validation["source"], cases, tag, allocation_id,
+        attempt_id, grader_path)
+    return (validation, operation_id, staged)
+
+
+def finish_solver_grade(dsn: str, launcher: Any, operation_id: str,
+                        total_cases: int,
+                        staged: dict | None = None) -> dict:
+    if staged:
+        _verify_staged(operation_id, staged)
+    broker.dispatch_operation(dsn, operation_id,
+                              launchers={launcher.profile: launcher})
+    receipt = _sandbox_receipt(dsn, operation_id)
+    outcome, grade_class, detail = attribute_grade_receipt(
+        receipt, total_cases)
+    return {"outcome": outcome, "grade_class": grade_class,
+            "grade_detail": detail}
+
+
 def _prepare_grade(dsn: str, launcher: Any, candidate_code: str,
                    cases: list, tag: str, allocation_id: str,
                    attempt_id: str | None, grader_path: str,
@@ -166,17 +298,8 @@ def _verify_staged(operation_id: str, staged: dict) -> None:
 
 def _dispatch_grade(dsn: str, launcher: Any, operation_id: str,
                     total_cases: int, staged: dict | None = None) -> str:
-    if staged:
-        _verify_staged(operation_id, staged)
-    broker.dispatch_operation(dsn, operation_id,
-                              launchers={launcher.profile: launcher})
-    receipt = _sandbox_receipt(dsn, operation_id)
-    if _authenticated(receipt, total_cases):
-        return "success"
-    if (receipt or {}).get("outcome") == "failure" and \
-            dict((receipt.get("content") or {}).get("data", {})).get("timed_out"):
-        return "timeout"
-    return "failure"
+    return finish_solver_grade(
+        dsn, launcher, operation_id, total_cases, staged)["outcome"]
 
 
 def _grade(dsn: str, launcher: Any, workdir: Any, candidate_code: str,
@@ -321,7 +444,7 @@ def _infer_via_broker(dsn: str, adapter: Any, *, operation_id: str, model: str,
         dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
         payload={"model": model,
                  "messages": [{"role": "user", "content": prompt}],
-                 "max_output_tokens": MODEL_TOKENS, "deadline_ms": 300_000},
+                 "max_output_tokens": model_token_budget(), "deadline_ms": 300_000},
         allocation_id=allocation_id, attempt_id=attempt_id)
     if ensured.code == ResultCode.INSUFFICIENT_RESOURCES:
         raise SettlementError(
@@ -359,19 +482,27 @@ def _op_accounting(dsn: str, operation_id: str) -> dict:
     if op is None:
         return {"operation_id": operation_id, "dispatch_state": "missing",
                 "reserved": 0, "settled": 0, "unresolved": 0,
-                "outcome": "missing", "tokens": tokens}
+                "outcome": "missing", "tokens": tokens,
+                "billed": False, "provider_charge_units": None}
     terms = [r for r in receipts if r["outcome"] in ("success", "failure")]
     if reservation is not None and reservation["state"] == "settled" and terms:
         usage = dict((terms[-1].get("content") or {}).get("usage") or {})
-        settled = int(usage["charge_units"]) if "charge_units" in usage else reserved
+        raw_charge = usage.get("charge_units")
+        verified = (bool(usage.get("billed")) and isinstance(raw_charge, int)
+                    and not isinstance(raw_charge, bool)
+                    and 0 <= raw_charge <= reserved)
+        charge = raw_charge if verified else None
+        settled = charge if verified else reserved
         return {"operation_id": operation_id,
                 "dispatch_state": op["dispatch_state"], "reserved": reserved,
                 "settled": settled, "unresolved": 0, "outcome": terms[-1]["outcome"],
-                "tokens": _receipt_tokens(terms[-1])}
+                "tokens": _receipt_tokens(terms[-1]),
+                "billed": verified, "provider_charge_units": charge}
     outcome = receipts[-1]["outcome"] if receipts else op["dispatch_state"]
     return {"operation_id": operation_id, "dispatch_state": op["dispatch_state"],
             "reserved": reserved, "settled": 0, "unresolved": reserved,
-            "outcome": outcome, "tokens": tokens}
+            "outcome": outcome, "tokens": tokens,
+            "billed": False, "provider_charge_units": None}
 
 
 def _receipt_tokens(receipt: dict | None) -> dict[str, int]:
@@ -440,37 +571,67 @@ def _run_development(dsn: str, *, launcher: Any, adapter: Any, model: str,
                      grader_path: str, protocol_prefix: str,
                      supplied_lessons: dict | None,
                      method_version: str, protocols: list[str],
-                     synthesize: Any = None) -> dict:
+                     synthesize: Any = None,
+                     dev_transcripts: dict | None = None) -> dict:
     by_id = {t["id"]: t for t in tasks}
+    reused = dict(dev_transcripts or {})
     development: dict[str, Any] = {"outcomes": {}, "ops": [], "methods": {},
-                                   "reused": [], "acquisition": {},
+                                   "reused": sorted(reused),
+                                   "acquisition": {},
                                    "transcripts": {}}
     for dev_id in dev_ids:
         task = by_id[dev_id]
+        if dev_id in reused:
+            prior = reused[dev_id]
+            development["ops"].extend(
+                [op for op in (prior.get("model_op"), prior.get("grade_op"))
+                 if op])
+            development["outcomes"][dev_id] = {
+                "outcome": prior["outcome"], "grade_op": prior["grade_op"],
+                "model_op": prior["model_op"],
+                "solver_status": prior.get("solver_status"),
+                "grade_class": prior.get("grade_class")}
+            development["transcripts"][dev_id] = {
+                "task_id": dev_id, "family": task["family"],
+                "broken": task["broken"],
+                "model_text": prior.get("model_text"),
+                "outcome": prior["outcome"], "model_op": prior["model_op"],
+                "grade_op": prior["grade_op"],
+                "solver_status": prior.get("solver_status"),
+                "grade_class": prior.get("grade_class")}
+            continue
         tag = f"{protocol_prefix}-DEV-{dev_id}"
         attempt_id = _fresh_worker(dsn, tag=tag, investigation_id=investigation_id,
                                    allocation_id=allocation_id)
         model_op, text, _ = _infer_via_broker(
             dsn, adapter, operation_id=f"model-{tag}", model=model,
             prompt=json.dumps({"arm": "DEV", "task_id": dev_id,
-                               "prompt": task["broken"]}),
+                               "prompt": task["broken"],
+                               "response_contract": SOLVER_SOURCE_CONTRACT}),
             allocation_id=allocation_id, attempt_id=attempt_id)
         development["ops"].append(model_op)
         _settle_costs(dsn, protocols, model_op, "construction",
                       f"development inference {dev_id}")
-        code = text if isinstance(text, str) and text else task["broken"]
-        op_id, outcome = _grade(dsn, launcher, workdir, code, task["cases"],
-                                tag, allocation_id, attempt_id, grader_path)
+        validation, op_id, staged = begin_solver_grade(
+            dsn, launcher, model_op=model_op, raw=text, cases=task["cases"],
+            tag=tag, allocation_id=allocation_id, attempt_id=attempt_id,
+            grader_path=grader_path)
+        finished = finish_solver_grade(
+            dsn, launcher, op_id, len(task["cases"]), staged)
+        outcome = finished["outcome"]
         development["ops"].append(op_id)
         _settle_costs(dsn, protocols, op_id,
                       "construction" if outcome == "success" else "failed_trials",
                       f"development grade {dev_id}")
-        development["outcomes"][dev_id] = {"outcome": outcome, "grade_op": op_id,
-                                           "model_op": model_op}
+        development["outcomes"][dev_id] = {
+            "outcome": outcome, "grade_op": op_id, "model_op": model_op,
+            "solver_status": validation["status"],
+            "grade_class": finished["grade_class"]}
         development["transcripts"][dev_id] = {
             "task_id": dev_id, "family": task["family"], "broken": task["broken"],
             "model_text": text, "outcome": outcome, "model_op": model_op,
-            "grade_op": op_id}
+            "grade_op": op_id, "solver_status": validation["status"],
+            "grade_class": finished["grade_class"]}
     if supplied_lessons:
         lessons, provenance = dict(supplied_lessons), "supplied"
     else:
@@ -547,18 +708,44 @@ def _run_development(dsn: str, *, launcher: Any, adapter: Any, model: str,
 
 
 def _freeze_eval_protocol(dsn: str, pid: str, candidate: str, group: str,
-                          evaluator_version: str) -> None:
-    trials.freeze_protocol(
+                          evaluator_version: str, supersedes: str | None = None,
+                          frozen_groups: list | None = None,
+                          group_tasks: tuple = ()) -> None:
+    if supersedes is None:
+        trials.freeze_protocol(
+            dsn, Command(request_id=f"{pid}-freeze"), protocol_id=pid,
+            candidate_version=candidate, reference_version="baseline-v0",
+            evaluator_version=evaluator_version,
+            task_groups=[{"name": "development", "kind": "development"},
+                         {"name": group, "kind": "protected-eval"}],
+            budgets={"per_task_sandbox_ms": GRADER_TIMEOUT_MS,
+                     "per_task_tokens": MODEL_TOKENS,
+                     "amortization_horizon": {"tasks": 50}},
+            metrics=["success_rate"], stopping={"rule": "fixed-panel"},
+            exclusions=[], uncertainty={"treatment": "finite-panel-only"})
+        return
+    wanted = sorted(group_tasks)
+    for frozen in frozen_groups or []:
+        if not isinstance(frozen, dict):
+            continue
+        if frozen.get("name") == group:
+            if sorted(frozen.get("tasks") or []) != wanted:
+                raise SettlementError(
+                    f"protocol {pid}: {group} tasks differ from the"
+                    " admission-frozen panel policy")
+    development_group = {"name": "development", "kind": "development",
+                         "tasks": [t for frozen in frozen_groups or []
+                                   if isinstance(frozen, dict)
+                                   and frozen.get("name") == "development"
+                                   for t in (frozen.get("tasks") or [])]}
+    protected = {"name": "protected-eval", "kind": "protected-eval",
+                 "evaluator_version": evaluator_version}
+    trials.amend_protocol(
         dsn, Command(request_id=f"{pid}-freeze"), protocol_id=pid,
-        candidate_version=candidate, reference_version="baseline-v0",
-        evaluator_version=evaluator_version,
-        task_groups=[{"name": "development", "kind": "development"},
-                     {"name": group, "kind": "protected-eval"}],
-        budgets={"per_task_sandbox_ms": GRADER_TIMEOUT_MS,
-                 "per_task_tokens": MODEL_TOKENS,
-                 "amortization_horizon": {"tasks": 50}},
-        metrics=["success_rate"], stopping={"rule": "fixed-panel"},
-        exclusions=[], uncertainty={"treatment": "finite-panel-only"})
+        supersedes=supersedes, candidate_version=candidate,
+        task_groups=[development_group,
+                     {"name": group, "kind": "visible-regression",
+                      "tasks": list(group_tasks)}, protected])
 
 
 def _group_candidate(group_ids: list[str], by_id: dict,
@@ -579,14 +766,17 @@ def _arm_prompt(harness_arm: str, task: dict, lessons_map: dict,
         return {"arm": "C", "task_id": task["id"], "prompt": task["broken"],
                 "retained_method": (retained or {}).get("source"),
                 "retained_invocation": (retained or {}).get("invocation"),
+                "response_contract": SOLVER_SOURCE_CONTRACT,
                 "tools": tools}
     if harness_arm == "B":
         return {"arm": "B", "task_id": task["id"],
                 "prompt": lessons_map.get(task["family"], "") + "\n"
                 + task["broken"],
+                "response_contract": SOLVER_SOURCE_CONTRACT,
                 "tools": tools}
     return {"arm": harness_arm, "task_id": task["id"],
-            "prompt": task["broken"], "tools": tools}
+            "prompt": task["broken"],
+            "response_contract": SOLVER_SOURCE_CONTRACT, "tools": tools}
 
 
 def _maybe_release(dsn: str, *, artifacts_root: Path, allocation_id: str,
@@ -650,6 +840,191 @@ def _maybe_release(dsn: str, *, artifacts_root: Path, allocation_id: str,
     return releases
 
 
+def episode_cost_union(dsn: str, phases: dict[str, list[str]]) -> dict:
+    claimed: dict[str, list[str]] = {}
+    ordered: list[str] = []
+    for phase, ops in (phases or {}).items():
+        for op in ops or []:
+            if not op:
+                continue
+            claimed.setdefault(op, []).append(phase)
+            if op not in ordered:
+                ordered.append(op)
+    entries = {op: _op_accounting(dsn, op) for op in ordered}
+    totals = {key: sum(entry[key] for entry in entries.values())
+              for key in ("reserved", "settled", "unresolved")}
+    tokens = {"input": sum(entry["tokens"]["input"]
+                           for entry in entries.values()),
+              "output": sum(entry["tokens"]["output"]
+                            for entry in entries.values())}
+    sums = {}
+    for phase, ops in (phases or {}).items():
+        unique = [op for op in dict.fromkeys(ops or []) if op]
+        sums[phase] = {
+            "ops": unique,
+            "reserved": sum(entries[op]["reserved"] for op in unique),
+            "settled": sum(entries[op]["settled"] for op in unique),
+            "unresolved": sum(entries[op]["unresolved"] for op in unique)}
+    return {"scope": "whole-episode-unique-operation-union",
+            "unique_ops": ordered, "unique_op_count": len(ordered),
+            "shared_ops": sorted(op for op, owners in claimed.items()
+                                 if len(owners) > 1),
+            "phases": sums, "totals": {**totals, "tokens": tokens},
+            "unresolved_exposure": totals["unresolved"]}
+
+
+def _resolve_use_selection(dsn: str, *, artifacts_root: str | Path,
+                           task_family: str, disposition: dict | None,
+                           bindings: dict | None) -> tuple[str, dict | None, str]:
+    disp = dict(disposition or {})
+    if disp.get("trial") is True:
+        version = str((bindings or {}).get("version_id") or "")
+        candidate = capabilities.get_version(dsn, version) if version else None
+        if candidate is None:
+            return ("incumbent", None,
+                    f"trial-unavailable-unknown-{version or 'none'}")
+        if capabilities.quarantine_status(dsn, candidate["id"]) is not None:
+            return ("incumbent", None,
+                    f"trial-unavailable-quarantined-{version}")
+        if not artifacts.artifact_available(
+                dsn, artifacts_root, candidate.get("artifact_digest", "")):
+            return ("incumbent", None,
+                    f"trial-unavailable-missing-bytes-{version}")
+        return ("trial", candidate, f"explicit-trial-{version}")
+    version = (disp.get("released") or {}).get(task_family)
+    if not version:
+        return ("incumbent", None, f"unreleased-no-release-for-{task_family}")
+    policy = (disp.get("router_policies") or {}).get(task_family)
+    if not policy:
+        return ("incumbent", None,
+                f"unreleased-no-router-policy-for-{task_family}")
+    try:
+        routed = capabilities.route(dsn, policy, task_family)
+    except SettlementError:
+        return ("incumbent", None,
+                f"unreleased-router-refused-{task_family}")
+    if routed.get("decision") != "select" \
+            or routed.get("version_id") != version:
+        detail = routed.get("reason") or f"got-{routed.get('version_id')}"
+        return ("incumbent", None,
+                f"unreleased-router-diverged-{task_family}-{detail}")
+    candidate = capabilities.get_version(dsn, version)
+    if candidate is None:
+        return ("incumbent", None, f"unreleased-unknown-version-{version}")
+    if capabilities.quarantine_status(dsn, version) is not None:
+        return ("incumbent", None, f"unreleased-quarantined-{version}")
+    scope = dict(candidate.get("applicability")
+                 or candidate.get("scope") or {})
+    if scope.get("family", task_family) != task_family:
+        return ("incumbent", None,
+                f"unreleased-wrong-scope-{version}-for-{task_family}")
+    if not artifacts.artifact_available(
+            dsn, artifacts_root, candidate.get("artifact_digest", "")):
+        return ("incumbent", None, f"unreleased-missing-bytes-{version}")
+    return ("selected", candidate, f"released-{version}-via-{policy}")
+
+
+def run_subsequent_use(dsn: str, *, artifacts_root: str | Path,
+                       launcher: Any, adapter: Any, model: str,
+                       allocation_id: str, investigation_id: str,
+                       episode_id: str, bindings: dict, use_task: dict,
+                       grader_path: str, protocol_prefix: str,
+                       prior_exposure: str = "",
+                       disposition: dict | None = None) -> dict:
+    task_id = str(use_task["id"])
+    tag = f"{protocol_prefix}-use-{task_id}"
+    attempt_id = _fresh_worker(dsn, tag=tag,
+                               investigation_id=investigation_id,
+                               allocation_id=allocation_id)
+    use_pid = f"{protocol_prefix}-use-{task_id}"
+    trials.freeze_protocol(
+        dsn, Command(request_id=f"{use_pid}-freeze"), protocol_id=use_pid,
+        candidate_version=str((bindings or {}).get("version_id") or ""),
+        reference_version="baseline-v0", evaluator_version="v1",
+        task_groups=[{"name": f"use-{task_id}", "kind": "development",
+                      "tasks": [task_id]},
+                     {"name": "protected-eval", "kind": "protected-eval"}],
+        budgets={"per_task_sandbox_ms": GRADER_TIMEOUT_MS,
+                 "per_task_tokens": MODEL_TOKENS},
+        metrics=["success_rate"], stopping={"rule": "fixed-panel"},
+        exclusions=[], uncertainty={"treatment": "finite-panel-only"})
+    evaluation.propose_hidden_answer(
+        dsn, Command(request_id=f"{use_pid}-answer"),
+        task_id, {"cases": use_task["cases"]})
+    roots = Path(artifacts_root)
+    method, capability, reason = _resolve_use_selection(
+        dsn, artifacts_root=roots, task_family=str(use_task.get("family", "")),
+        disposition=disposition, bindings=bindings)
+    trial = bool((disposition or {}).get("trial") is True)
+    ops: dict[str, str] = {}
+    solver: dict[str, Any] = {"solver_status": None, "solver_detail": "",
+                              "grade_class": None, "grade_detail": "",
+                              "raw_text": None}
+    if capability is None:
+        method = "incumbent"
+        model_op, text, _ = _infer_via_broker(
+            dsn, adapter, operation_id=f"model-{tag}", model=model,
+            prompt=json.dumps(_arm_prompt("A", use_task, {}, None)),
+            allocation_id=allocation_id, attempt_id=attempt_id)
+        ops["model_op"] = model_op
+        _settle_costs(dsn, [use_pid], model_op, "use",
+                      f"subsequent incumbent inference {task_id}")
+        validation, grade_op, staged = begin_solver_grade(
+            dsn, launcher, model_op=model_op, raw=text,
+            cases=use_task["cases"], tag=tag, allocation_id=allocation_id,
+            attempt_id=attempt_id, grader_path=grader_path)
+        finished = finish_solver_grade(
+            dsn, launcher, grade_op, len(use_task["cases"]), staged)
+        outcome = finished["outcome"]
+        solver = {"solver_status": validation["status"],
+                  "solver_detail": validation["detail"],
+                  "grade_class": finished["grade_class"],
+                  "grade_detail": finished["grade_detail"],
+                  "raw_text": text}
+    else:
+        capabilities.pin_capability(dsn, attempt_id, capability["id"])
+        fixed, _ = _invoke_method(
+            dsn, launcher, roots, capability, use_task["broken"], tag,
+            allocation_id, attempt_id)
+        ops["invoke_op"] = f"invoke-{tag}"
+        _settle_costs(dsn, [use_pid], ops["invoke_op"], "use",
+                      f"subsequent {'trial' if method == 'trial' else 'method'}"
+                      f" invocation {task_id}")
+        grade_op, outcome = _grade(dsn, launcher, None, fixed,
+                                   use_task["cases"], tag, allocation_id,
+                                   attempt_id, grader_path)
+        _, grade_class, grade_detail = attribute_grade_receipt(
+            _sandbox_receipt(dsn, grade_op), len(use_task["cases"]))
+        solver = {"solver_status": None, "solver_detail": "",
+                  "grade_class": grade_class, "grade_detail": grade_detail,
+                  "raw_text": None}
+    ops["grade_op"] = grade_op
+    _settle_costs(dsn, [use_pid], grade_op,
+                  "use" if outcome == "success" else "failed_trials",
+                  f"subsequent grade {task_id}")
+    recon = store.restart_reconciliation(dsn)
+    settled_disp = {"released": dict((disposition or {}).get("released") or {}),
+                    "router_policies": dict((disposition or {}).get(
+                        "router_policies") or {}),
+                    "trial": trial}
+    use = {"episode_id": episode_id, "task_id": task_id,
+           "method": method,
+           "version_id": capability["id"] if capability is not None else "",
+           "outcome": outcome, "reason": reason, "trial": trial,
+           "disposition": settled_disp, "ops": ops, "protocol_id": use_pid,
+           "prior_exposure": prior_exposure, **solver,
+           "pending_operations": sorted(
+               str(op.get("id", "")) for op in
+               recon.get("unfinished_operations", []))}
+
+    def _fn(cur, control):
+        return (ResultCode.APPLIED, f"episode {episode_id} subsequent use",
+                dict(use),
+                [("development.subsequent_use", dict(use))], [])
+    store.transact(dsn, Command(request_id=f"{tag}-record", payload={}), _fn)
+    return use
+
+
 def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
              allocation_id: str, investigation_id: str, tasks: list[dict],
              dev_ids: list[str], panel_ids: list[str], transfer_ids: list[str],
@@ -658,7 +1033,9 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
              grader_path: str, protocol_prefix: str = "abc",
              fixer_version: str = "", evaluator_id: str = "s3-eval",
              evaluator_version: str = "v1", simulated: bool = True,
-             model: str = "scripted", synthesize: Any = None) -> dict:
+             model: str = "scripted", synthesize: Any = None,
+             dev_transcripts: dict | None = None,
+             panel_protocol: dict | None = None) -> dict:
     adapter = double if double is not None else gateway
     if adapter is None:
         raise SettlementError("run_abcs needs a gateway adapter via gateway= or double=")
@@ -685,9 +1062,11 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
         investigation_id=investigation_id, tasks=tasks, dev_ids=dev_ids,
         grader_path=grader_path, protocol_prefix=protocol_prefix,
         supplied_lessons=lessons, method_version=method_version,
-        protocols=[dev_pid], synthesize=synthesize)
+        protocols=[dev_pid], synthesize=synthesize,
+        dev_transcripts=dev_transcripts)
     group_tasks = {"panel": panel_ids, "transfer": transfer_ids}
     group_candidate, group_families, protocols = {}, {}, {}
+    frozen = panel_protocol or {}
     for name in ("panel-B", "panel-C", "transfer-B", "transfer-C"):
         group = "panel" if name.startswith("panel") else "transfer"
         cand = "lessons-v1" if name.endswith("-B") else _group_candidate(
@@ -696,7 +1075,11 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
         group_families[name] = sorted({by_id[i]["family"]
                                        for i in group_tasks[group]})
         pid = f"{protocol_prefix}-{name}"
-        _freeze_eval_protocol(dsn, pid, cand, group, evaluator_version)
+        _freeze_eval_protocol(
+            dsn, pid, cand, group, evaluator_version,
+            supersedes=frozen.get("eval_protocol"),
+            frozen_groups=frozen.get("groups"),
+            group_tasks=tuple(group_tasks[group]))
         protocols[name] = pid
     lessons_map = development["lessons"]
     report: dict[str, Any] = {"arms": {}, "verdicts": {}, "budgets": {},
@@ -758,10 +1141,10 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
                 dsn, adapter, operation_id=f"model-{tag}", model=model,
                 prompt=prompt, allocation_id=allocation_id, attempt_id=attempt_id)
             report["model_ops"].setdefault(harness_arm, {})[task_id] = model_op
-            code = text if isinstance(text, str) and text else task["broken"]
-            op_id, staged = _prepare_grade(dsn, launcher, code,
-                                           task["cases"], tag, allocation_id,
-                                           attempt_id, grader_path)
+            validation, op_id, staged = begin_solver_grade(
+                dsn, launcher, model_op=model_op, raw=text,
+                cases=task["cases"], tag=tag, allocation_id=allocation_id,
+                attempt_id=attempt_id, grader_path=grader_path)
             report["grade_ops"].setdefault(harness_arm, {})[task_id] = op_id
             pids = [protocols[f"{group}{suffix}"]
                     for suffix in (("-B", "-C") if harness_arm == "A" else
@@ -769,15 +1152,17 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
             suffixes = (("-B", "-C") if harness_arm == "A" else
                         (("-B",) if harness_arm == "B" else ("-C",)))
             assignment_ids = [
-                _open_assignment(dsn, pid, task, group, harness_arm, code,
+                _open_assignment(dsn, pid, task, group, harness_arm,
+                                 validation["source"],
                                  f"{tag}{suffix}", evaluator_id,
                                  evaluator_version, op_id,
                                  executable_digest=staged["grader.py"][1],
                                  input_digest=staged["cases.json"][1],
                                  method=actual)
                 for suffix, pid in zip(suffixes, pids)]
-            outcome = _dispatch_grade(dsn, launcher, op_id, len(task["cases"]),
-                                      staged)
+            finished = finish_solver_grade(dsn, launcher, op_id,
+                                           len(task["cases"]), staged)
+            outcome = finished["outcome"]
             model_entry = _settle_costs(dsn, pids, model_op, "evaluation",
                                         f"{harness_arm} inference {task_id}")
             report["accounting"]["ops"][model_op] = {
@@ -806,7 +1191,13 @@ def run_abcs(dsn: str, *, launcher: Any, artifacts_root: str | Path,
                                "artifact_digest": (actual or {}).get("artifact_digest")})
             report["arms"].setdefault(harness_arm, {})[task_id] = {
                 "outcome": outcome, "grade_op": op_id, "model_op": model_op,
-                "simulated": simulated}
+                "simulated": simulated,
+                "solver_status": validation["status"],
+                "solver_detail": validation["detail"],
+                "grade_class": finished["grade_class"],
+                "grade_detail": finished["grade_detail"],
+                "raw_text": text,
+                "source_digest": staged["candidate.py"][1]}
             if harness_arm == "C" and actual is not None:
                 _run_noop_ablation(
                     dsn, launcher=launcher, roots=roots, task=task, group=group,

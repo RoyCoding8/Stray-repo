@@ -70,7 +70,13 @@ def test_checkpoint_writes_consistent_recovery_set(migrated_db, tmp_path):
                                       "0003_s3_learning.sql", "0004_leases.sql",
                                       "0005_eval_binding.sql",
                                       "0006_recovery_fence.sql",
-                                      "0007_dev_episodes.sql"]
+                                      "0007_dev_episodes.sql",
+                                      "0008_context_packets.sql",
+                                      "0009_packet_input_binding.sql",
+                                      "0010_agenda01.sql",
+                                      "0011_agenda01_correction.sql",
+                                      "0012_agenda01_resume.sql",
+                                      "0013_agenda01_epoch.sql"]
     assert set(manifest["control"]) == {"admission_epoch", "authority_version",
                                         "evidence_epoch", "release_epoch", "event_epoch"}
     assert manifest["control"]["authority_version"] == 1

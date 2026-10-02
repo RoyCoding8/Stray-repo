@@ -232,38 +232,67 @@ def test_barrier_pauses_and_resume_reopens(migrated_db):
                    "ownership_generation": env["generation"]}, "go")).code == ResultCode.APPLIED
 
 
+def _conn_params(dsn: str) -> dict:
+    import urllib.parse
+
+    if "://" in dsn:
+        parts = urllib.parse.urlsplit(dsn)
+        params = dict(urllib.parse.parse_qsl(parts.query))
+        if parts.hostname:
+            params.setdefault("host", parts.hostname)
+        if parts.port:
+            params.setdefault("port", str(parts.port))
+        if parts.username:
+            params.setdefault("user", parts.username)
+        if parts.password:
+            params.setdefault("password", parts.password)
+        params["dbname"] = parts.path.lstrip("/") or params.get("dbname", "")
+        return params
+    params = {}
+    for token in dsn.split():
+        if "=" in token:
+            key, value = token.split("=", 1)
+            params[key] = value
+    return params
+
+
 def _sibling_dsn(name: str) -> str:
     import os
     import urllib.parse
 
     dsn = os.environ["SETTLEMENT_TEST_DSN"]
-    parts = urllib.parse.urlsplit(dsn)
-    path = f"/{name}"
-    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, path, parts.query, ""))
+    if "://" in dsn:
+        parts = urllib.parse.urlsplit(dsn)
+        if parts.netloc:
+            return urllib.parse.urlunsplit(
+                (parts.scheme, parts.netloc, f"/{name}", parts.query, ""))
+        base = f"{parts.scheme}:///{name}"
+        return f"{base}?{parts.query}" if parts.query else base
+    params = _conn_params(dsn)
+    params["dbname"] = name
+    return " ".join(f"{key}={value}" for key, value in params.items() if value != "")
 
 
 def _make_database(target: str) -> None:
-    import urllib.parse
-
     from settlement import db as _db
     from psycopg import errors as _pgerrors
 
-    parts = urllib.parse.urlsplit(target)
-    admin = urllib.parse.urlunsplit(
-        (parts.scheme, parts.netloc, "/postgres", parts.query, ""))
+    params = _conn_params(target)
+    name = params.pop("dbname", "")
+    admin = " ".join(f"{key}={value}" for key, value in
+                     {**params, "dbname": "postgres"}.items() if value != "")
     with _db.connect(admin, autocommit=True) as conn:
         with conn.cursor() as cur:
             try:
-                cur.execute(f'CREATE DATABASE "{parts.path.lstrip("/")}"')
+                cur.execute(f'CREATE DATABASE "{name}"')
             except _pgerrors.DuplicateDatabase:
                 pass
 
 
 def _base_name() -> str:
     import os
-    import urllib.parse
 
-    return urllib.parse.urlsplit(os.environ["SETTLEMENT_TEST_DSN"]).path.lstrip("/")
+    return _conn_params(os.environ["SETTLEMENT_TEST_DSN"]).get("dbname", "")
 
 
 @pytest.fixture(scope="module")
@@ -280,6 +309,11 @@ def companion_dsn():
 
 @pytest.fixture(scope="module")
 def dbos_sys_dsn():
+    import os
+
+    if "://" not in os.environ["SETTLEMENT_TEST_DSN"]:
+        pytest.skip("DBOS system-store tests need URL-form SETTLEMENT_TEST_DSN"
+                    " (DBOS database_url is SQLAlchemy-parsed)")
     target = _sibling_dsn(f"{_base_name()}_dbos")
     _make_database(target)
     broker.init_dbos(target)

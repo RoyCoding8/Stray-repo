@@ -1,6 +1,6 @@
 # Parallel implementation workflow
 
-The human authorizes parallel subagents and Git worktrees for the S0-S3 implementation. Token expenditure is not a reason to avoid useful design comparisons, adversarial review, or investigation. Concurrency should follow independent work and available execution resources. Do not invent busywork to fill agent slots.
+The human authorizes parallel subagents and Git worktrees for implementation. The current handoff is [Agenda 01](WORKER-AGENDA-01.md); earlier audit and S0-S3 examples below are historical. Its coordinator owns `codex/implementation-agenda-01`, and its contract controls scope, requirements and gates. Token expenditure is not a reason to avoid useful design comparisons, adversarial review, or investigation. Concurrency should follow independent work and available execution resources. Do not invent busywork to fill agent slots.
 
 ## 1. What kind of assignment this is
 
@@ -43,11 +43,13 @@ The coordinator first translates the practical specification into a dependency g
 - Artifact publication/reference interface and evidence-admission interface.
 - Test environment naming, common fixtures and configuration/lock ownership.
 
-The baseline must describe actual interfaces needed by S0-S3, not speculative extension layers. A signature whose transaction or failure meaning is unclear is not a settled contract. Use focused design comparisons for the ambiguous boundaries, choose one, and record the decision.
+The baseline must describe actual interfaces needed by the current assignment, not speculative extension layers. During an audit, map the existing contracts first and revise only those that require repair. A signature whose transaction or failure meaning is unclear is not a settled contract. Use focused design comparisons for the ambiguous boundaries, choose one, and record the decision.
 
 Assign one owner for each migration sequence and shared file, including the dependency lock, project configuration and exported types. Other tasks request changes through that owner. The coordinator can reassign ownership explicitly. Do not ask every specialist to independently scaffold the repository or design the database.
 
 ## 4. Dependency-aware waves
+
+The table below is the historical S0-S3 build example. For Agenda 01, derive waves from the state/admission, policy/wakeup, experiment/validation and operator dependencies in its worker assignment. Historical audit priorities do not commission another audit.
 
 | Wave | Work that can proceed in parallel | Integration condition |
 |---|---|---|
@@ -62,9 +64,9 @@ The task/evaluator specialist should establish expected outcomes and contaminati
 
 ## 5. Worktree and branch protocol
 
-The coordinator alone writes `codex/implementation-s0-s3`. Each implementation task gets a unique branch, such as `codex/task-s1-broker`, and a separate worktree created from a recorded integration commit. These are implementation-team task branches, distinct from the later external reviewer branches in `COLLABORATION.md`.
+The coordinator alone writes the assigned integration branch, currently `codex/implementation-agenda-01`. Each implementation task gets a unique branch, such as `codex/task-ag01-state`, and a separate worktree created from a recorded integration commit. These are implementation-team task branches, distinct from the later external reviewer branches in `COLLABORATION.md`.
 
-For example, after recording and committing the common base, the coordinator can create worktrees with:
+Historical S0-S3 example: after recording and committing the common base, the coordinator could create worktrees with the commands below. For the current assignment use its actual integration branch and unique audit task names:
 
 ```bash
 git worktree add -b codex/task-s1-state ../Agent-Society-v2-s1-state codex/implementation-s0-s3
@@ -106,10 +108,10 @@ Require a short finding report when a contract is inconsistent. The coordinator 
 
 No self-certified “all green” summaries. The final coordinator verifies the integrated result and distinguishes independently executed checks from inspected reports. Token availability supports more scrutiny; duplicated tests against the wrong environment do not improve confidence.
 
-At S3, commit the consolidated reports and review request, push the integration branch, and stop at the external review boundary. The architecture/review agent then follows `COLLABORATION.md`.
+Complete the current assignment's coverage, fixes and internal review gates before the external handoff. For the whole-repository audit, independently inspect the final integrated behavior and resolve discovered defects across all priorities; do not stop after each finding to wait for the design reviewer. Then commit reports and the review request, push the owned integration branch and hand off under `COLLABORATION.md`.
 
 ## 8. Resource and scope boundaries
 
 The human's free-token statement applies to implementation effort. Use reasoning, specialist work and review when valuable. It does not remove finite CPU/RAM, database, port or disk capacity, and does not change the autonomous runtime's requirement for explicit resource grants and honest experimental accounting.
 
-This workflow changes how S0-S3 is built. It does not authorize extending the assignment to S4-S7 or implementing features merely to occupy additional agents.
+The current audit covers all existing first-party functionality, tests, operations and active documentation, including older completed slices. It does not authorize implementing pending research stages or speculative features merely to occupy additional agents. Its ranked priorities sequence the work; they do not exclude lower-priority repair.

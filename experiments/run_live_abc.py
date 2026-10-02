@@ -26,10 +26,16 @@ Command:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import subprocess
 import sys
 import tempfile
+from pathlib import Path
+
+HERE = Path(__file__).resolve()
+WORKTREE = HERE.parent.parent
 
 sys.path.insert(0, "src")
 sys.path.insert(0, "experiments")
@@ -137,6 +143,102 @@ def _demo_double():
     return ScriptedDouble(competence, fixes, broken), DEV_IDS, PANEL_IDS, TRANSFER_IDS
 
 
+def _git_output(*argv: str) -> bytes:
+    try:
+        out = subprocess.run(["git", "-C", str(WORKTREE), *argv],
+                             capture_output=True, timeout=30, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return b""
+    return out.stdout if out.returncode == 0 else b""
+
+
+def _source_fingerprint() -> dict:
+    revision = _git_output("rev-parse", "HEAD").decode().strip() or "unknown"
+    status = _git_output("status", "--porcelain=v1")
+    diff = _git_output("diff", "HEAD", "--no-color", "--no-ext-diff")
+    dirty = bool(status)
+    digest = hashlib.sha256(status + b"\x00" + diff).hexdigest() if dirty else ""
+    return {"revision": revision, "dirty": dirty, "tree_hash": digest,
+            "dirty_files": len(status.splitlines()) if dirty else 0}
+
+
+def _effective_config(*, adapter, launcher, model: str,
+                      grant_units: int | None, run_allocation: str,
+                      args) -> dict:
+    from settlement import development, experiment
+    from settlement.gateway_http import gateway_timeout_overrides
+
+    api = getattr(adapter, "api", "") or "fixture"
+    simulated = api == "fixture"
+    requested = model or "scripted"
+    timeouts = gateway_timeout_overrides()
+    grant: dict = {"grant_units": grant_units, "allocation": run_allocation}
+    if grant_units is None:
+        grant["note"] = "grant cap pinned in the parent episode record"
+    profile = getattr(launcher, "profile", "") or "unknown"
+    return {
+        "source": _source_fingerprint(),
+        "gateway": {
+            "api": api,
+            "endpoint_configured": bool(os.environ.get(
+                "SETTLEMENT_GATEWAY_ENDPOINT",
+                os.environ.get("SETTLEMENT_GATEWAY_URL", ""))),
+            "key_configured": bool(os.environ.get("SETTLEMENT_GATEWAY_KEY", "")),
+            "timeouts_ms": timeouts,
+        },
+        "model": {
+            "requested": requested,
+            "returned": requested if simulated else None,
+            "returned_source": ("simulated: no provider model id" if simulated
+                                else "per-call provider ids live in receipts"),
+        },
+        "budgets": {
+            "model_tokens": experiment.model_token_budget(),
+            "packet_chars": development.packet_budget(),
+            "sandbox_ms": experiment.GRADER_TIMEOUT_MS,
+            "sandbox_max_bytes": experiment.GRADER_MAX_BYTES,
+        },
+        "grant": grant,
+        "launcher": {
+            "profile": profile,
+            "requested": getattr(args, "launcher", ""),
+            "allow_uncontained": bool(getattr(args, "allow_uncontained", False)),
+            "exposure": "contained" if profile == "gvisor" else "uncontained",
+            "runsc_image": getattr(args, "runsc_image", "") or "",
+        },
+    }
+
+
+def _bundle_manifest(*, entry_point: str, record_name: str, record_text: str,
+                     artifacts_root: str, protocol_prefix: str,
+                     effective_config: dict) -> dict:
+    root = Path(artifacts_root)
+    try:
+        artifact_files = sorted(p.name for p in root.iterdir() if p.is_file())
+    except OSError:
+        artifact_files = []
+    dump_file = f"{protocol_prefix}-dump.sql"
+    return {
+        "bundle": "d02-evidence-bundle-v1",
+        "entry_point": entry_point,
+        "record_file": record_name,
+        "record_sha256": hashlib.sha256(record_text.encode()).hexdigest(),
+        "artifacts_root": str(root),
+        "artifact_files": artifact_files,
+        "db_dump": {
+            "file": dump_file,
+            "captured": False,
+            "command": (f"pg_dump \"$SETTLEMENT_DSN\" --no-owner "
+                        f"--no-privileges > {dump_file}"),
+        },
+        "layout": [f"{record_name}: entry record with effective_config",
+                   f"{protocol_prefix}-manifest.json: this manifest",
+                   f"{dump_file}: pg_dump of the run database",
+                   "remaining files: staged candidates and grader outputs"],
+        "effective_config": effective_config,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dsn", required=True)
@@ -178,11 +280,25 @@ def main() -> int:
                   " must select the comparison model")
             return 2
         try:
+            experiment.model_token_budget()
+        except SettlementError as exc:
+            print(f"live A/B/C blocked: {exc}")
+            return 2
+        try:
             launcher = _select_launcher(args)
         except SettlementError as exc:
             print(exc)
             return 3
-        adapter = HttpGatewayAdapter(endpoint=url, api_key=key)
+        try:
+            from settlement.gateway_http import gateway_timeout_overrides
+
+            adapter = HttpGatewayAdapter(
+                endpoint=url, api_key=key,
+                api=os.environ.get("SETTLEMENT_GATEWAY_API", "chat"),
+                **gateway_timeout_overrides())
+        except ValueError as exc:
+            print(f"live A/B/C blocked: {exc}")
+            return 2
         status = adapter.check_discovery()
         if isinstance(status, GatewayError):
             print(f"live A/B/C blocked: discovery failed: {status}")
@@ -242,26 +358,43 @@ def main() -> int:
             evaluator_id=args.evaluator_id,
             evaluator_version=args.evaluator_version, simulated=simulated,
             model=model)
+        effective = _effective_config(
+            adapter=adapter, launcher=launcher, model=model,
+            grant_units=grant_units, run_allocation=run_allocation, args=args)
     except SettlementError as exc:
         print(f"live A/B/C refused: {exc}")
         return 3
-    print(json.dumps({"verdicts": report["verdicts"],
-                      "budgets": {arm: {
-                          "settled_usage_units_billed_money_only": b["settled_usage"],
-                          "unresolved_exposure": b["unresolved_exposure"],
-                          "token_estimates_never_a_monetary_ceiling":
-                              b["token_estimates"]}
-                          for arm, b in report["budgets"].items()},
-                      "accounting": report["accounting"]["totals"],
-                      "allocation": run_allocation,
-                      "launcher": launcher.profile,
-                      "development": {
-                          "outcomes": {k: v["outcome"] for k, v in
-                                       report["development"]["outcomes"].items()},
-                          "lesson_provenance": report["development"]["lesson_provenance"],
-                          "methods": report["development"]["methods"],
-                          "acquisition": report["development"]["acquisition"]},
-                      "simulated": report["simulated"]}, indent=2))
+    record = {"verdicts": report["verdicts"],
+              "budgets": {arm: {
+                  "settled_usage_units_billed_money_only": b["settled_usage"],
+                  "unresolved_exposure": b["unresolved_exposure"],
+                  "token_estimates_never_a_monetary_ceiling":
+                      b["token_estimates"]}
+                  for arm, b in report["budgets"].items()},
+              "accounting": report["accounting"]["totals"],
+              "allocation": run_allocation,
+              "launcher": launcher.profile,
+              "development": {
+                  "outcomes": {k: v["outcome"] for k, v in
+                               report["development"]["outcomes"].items()},
+                  "lesson_provenance": report["development"]["lesson_provenance"],
+                  "methods": report["development"]["methods"],
+                  "acquisition": report["development"]["acquisition"]},
+              "simulated": report["simulated"],
+              "source": effective["source"],
+              "effective_config": effective}
+    text = json.dumps(record, indent=2)
+    print(text)
+    roots = Path(args.artifacts_root)
+    roots.mkdir(parents=True, exist_ok=True)
+    record_name = f"{args.protocol_prefix}-abc.json"
+    (roots / record_name).write_text(text)
+    manifest = _bundle_manifest(
+        entry_point="experiments/run_live_abc.py", record_name=record_name,
+        record_text=text, artifacts_root=args.artifacts_root,
+        protocol_prefix=args.protocol_prefix, effective_config=effective)
+    (roots / f"{args.protocol_prefix}-manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True))
     return 0
 
 

@@ -1,0 +1,91 @@
+{
+  "family": "software",
+  "fault": "stale-read",
+  "ops": [
+    {
+      "op": "clear"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "id": "o0",
+      "key": "c",
+      "op": "get"
+    },
+    {
+      "key": "a",
+      "op": "del"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "id": "o1",
+      "key": "b",
+      "op": "get"
+    },
+    {
+      "id": "o2",
+      "key": "b",
+      "op": "get"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "id": "o3",
+      "key": "a",
+      "op": "get"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+    },
+    {
+      "id": "o4",
+      "key": "a",
+      "op": "get"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "key": "b",
+      "op": "set",
+      "value": "v3"
+    }
+  ],
+  "seed": 1101,
+  "task_id": "sw-dev-00",
+  "witness": {
+    "faulty": {
+      "type": "str",
+      "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+      "type": "str",
+      "value": "v3"
+    }
+  }
+}

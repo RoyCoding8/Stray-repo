@@ -1,0 +1,213 @@
+{
+  "id": "context-pilot-01",
+  "model": "claude-opus-4-6-thinking",
+  "max_requests": 8,
+  "max_output_tokens_per_request": 2048,
+  "timeout_seconds": 120,
+  "max_input_characters_per_request": 32768,
+  "retries": 0,
+  "arms": [
+    "full-context",
+    "dependency-context"
+  ],
+  "order": [
+    [
+      "pending-effect",
+      "full-context"
+    ],
+    [
+      "pending-effect",
+      "dependency-context"
+    ],
+    [
+      "alternative-support",
+      "dependency-context"
+    ],
+    [
+      "alternative-support",
+      "full-context"
+    ],
+    [
+      "negative-transfer",
+      "full-context"
+    ],
+    [
+      "negative-transfer",
+      "dependency-context"
+    ],
+    [
+      "missing-bytes",
+      "dependency-context"
+    ],
+    [
+      "missing-bytes",
+      "full-context"
+    ]
+  ],
+  "cases": [
+    {
+      "id": "pending-effect",
+      "request": {
+        "question": "Resume the outstanding write operation.",
+        "allowed_actions": [
+          "repeat",
+          "reconcile",
+          "declare_done"
+        ],
+        "required_refs": [
+          "objective",
+          "current-operation"
+        ]
+      },
+      "records": [
+        {
+          "id": "objective",
+          "text": "Complete one write, preserving its identity.",
+          "refs": [
+            "current-operation"
+          ]
+        },
+        {
+          "id": "current-operation",
+          "text": "Operation w17 was sent; receipt absent; outcome unknown.",
+          "refs": [
+            "old-operation"
+          ]
+        },
+        {
+          "id": "old-operation",
+          "text": "Different operation w02 failed before dispatch last week."
+        }
+      ],
+      "expected": "reconcile",
+      "decisive": [
+        "current-operation"
+      ]
+    },
+    {
+      "id": "alternative-support",
+      "request": {
+        "question": "Is claim C supported for the declared finite domain?",
+        "allowed_actions": [
+          "supported",
+          "unsupported",
+          "universal_theorem"
+        ],
+        "required_refs": [
+          "claim-C"
+        ]
+      },
+      "records": [
+        {
+          "id": "claim-C",
+          "text": "C concerns exactly inputs 1 through 10. Routes: A AND B, OR D.",
+          "refs": [
+            "premise-A",
+            "premise-B",
+            "route-D"
+          ]
+        },
+        {
+          "id": "premise-A",
+          "text": "A remains valid in the declared domain."
+        },
+        {
+          "id": "premise-B",
+          "text": "B was retracted; its former evidence was invalid."
+        },
+        {
+          "id": "route-D",
+          "text": "D is an independently checked exhaustive verification of C on 1 through 10; current, valid, no dependencies on A or B."
+        }
+      ],
+      "expected": "supported",
+      "decisive": [
+        "route-D"
+      ]
+    },
+    {
+      "id": "negative-transfer",
+      "request": {
+        "question": "Choose the method for input -2 within the available budget.",
+        "allowed_actions": [
+          "new_method",
+          "incumbent",
+          "declare_done"
+        ],
+        "required_refs": [
+          "new-method",
+          "incumbent-method"
+        ]
+      },
+      "records": [
+        {
+          "id": "new-method",
+          "text": "Released fast method M2 is supported only for nonnegative integers. Read linked opposition before selecting.",
+          "refs": [
+            "negative-case"
+          ]
+        },
+        {
+          "id": "negative-case",
+          "text": "Verified counterexample: M2 returns a wrong value on -2. It remains quarantined for negative inputs."
+        },
+        {
+          "id": "incumbent-method",
+          "text": "M1 is available, authorized, within the task budget, and verified for integers -10 through 10."
+        }
+      ],
+      "expected": "incumbent",
+      "decisive": [
+        "negative-case"
+      ]
+    },
+    {
+      "id": "missing-bytes",
+      "request": {
+        "question": "Can the next worker invoke the exact selected method now?",
+        "allowed_actions": [
+          "invoke",
+          "invent_replacement",
+          "needs_information"
+        ],
+        "required_refs": [
+          "selected-method"
+        ]
+      },
+      "records": [
+        {
+          "id": "selected-method",
+          "text": "Use exact artifact digest abc123. Its byte content is required; no replacement version is admitted.",
+          "refs": [
+            "artifact-state",
+            "method-summary"
+          ]
+        },
+        {
+          "id": "artifact-state",
+          "text": "Artifact abc123 metadata exists, but its bytes are unavailable in the declared store."
+        },
+        {
+          "id": "method-summary",
+          "text": "An old summary describes abc123 as a successful sorting method. This is a summary, not executable bytes."
+        }
+      ],
+      "expected": "needs_information",
+      "decisive": [
+        "artifact-state"
+      ]
+    }
+  ],
+  "instruction": "Choose the next action from the request's allowed_actions using only its records. Treat this as a closed-world operational decision. A pending external effect must be reconciled before repeating it. A claim can have alternative support routes; one defeated route does not defeat another valid route. Respect method scope and registered counterexamples. Required artifact content cannot be replaced by a summary when bytes are unavailable. Missing required information must remain explicit. Return only JSON with decision (one allowed action), basis (all decisive record IDs), and a brief explanation. No external actions are authorized.",
+  "source_digest": "b2e3a7528a5b4597d777e1e3e0f7709d232eb0eb5599f4c2c68b2be263c1af92",
+  "limits": [
+    "synthetic hand-authored cases",
+    "fixed explicit dependency links",
+    "not a learned policy",
+    "no repeated sampling or inferential claim",
+    "not repository runtime validation",
+    "reported usage is not verified billing"
+  ],
+  "primary_metric": "exact allowed decision equals frozen expected decision",
+  "secondary_metric": "decisive source IDs present and all cited IDs delivered"
+}

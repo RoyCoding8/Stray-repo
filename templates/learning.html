@@ -2,8 +2,6 @@
 {% block content %}
 <h1>learning</h1>
 {% if view.pending %}<p>learning slice pending: candidate and reference outcomes need the trial tables</p>{% endif %}
-<h2>demonstrated gains</h2><p>none recorded</p>
-<h2>experimental alternatives</h2><p>none recorded</p>
 {% if not view.pending %}
 <h2>comparisons</h2>
 <ul>{% for c in view.comparisons %}<li>{{ c.protocol_id }}: {{ c.candidate_version }} vs {{ c.reference_version }} (eval {{ c.evaluator_version }}) | arms {{ c.arms }} | spend {{ c.expenditure }} | excluded {{ c.exclusions }} | uncertainty {{ c.uncertainty }}</li>{% endfor %}</ul>

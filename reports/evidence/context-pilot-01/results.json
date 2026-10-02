@@ -1,0 +1,663 @@
+{
+  "protocol_digest": "7a81ee94008d995420039ad5b98daabb3ad5f05a49ed3ce4492d6b5defd4004a",
+  "model": "claude-opus-4-6-thinking",
+  "calls": [
+    {
+      "case": "pending-effect",
+      "arm": "full-context",
+      "input_chars": 5920,
+      "packet_digest": "34e34a8b1599e11d3ea2d8d5d33380a4ff084894cc755d705e416c2643144abf",
+      "packet": {
+        "request": {
+          "question": "Resume the outstanding write operation.",
+          "allowed_actions": [
+            "repeat",
+            "reconcile",
+            "declare_done"
+          ],
+          "required_refs": [
+            "objective",
+            "current-operation"
+          ]
+        },
+        "records": [
+          {
+            "id": "unrelated-0",
+            "text": "Archived unrelated investigation 0: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-1",
+            "text": "Archived unrelated investigation 1: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-2",
+            "text": "Archived unrelated investigation 2: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-3",
+            "text": "Archived unrelated investigation 3: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-4",
+            "text": "Archived unrelated investigation 4: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-5",
+            "text": "Archived unrelated investigation 5: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-6",
+            "text": "Archived unrelated investigation 6: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-7",
+            "text": "Archived unrelated investigation 7: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "objective",
+            "text": "Complete one write, preserving its identity.",
+            "refs": [
+              "current-operation"
+            ]
+          },
+          {
+            "id": "current-operation",
+            "text": "Operation w17 was sent; receipt absent; outcome unknown.",
+            "refs": [
+              "old-operation"
+            ]
+          },
+          {
+            "id": "old-operation",
+            "text": "Different operation w02 failed before dispatch last week."
+          },
+          {
+            "id": "unrelated-8",
+            "text": "Archived unrelated investigation 8: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-9",
+            "text": "Archived unrelated investigation 9: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-10",
+            "text": "Archived unrelated investigation 10: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-11",
+            "text": "Archived unrelated investigation 11: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-12",
+            "text": "Archived unrelated investigation 12: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-13",
+            "text": "Archived unrelated investigation 13: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-14",
+            "text": "Archived unrelated investigation 14: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-15",
+            "text": "Archived unrelated investigation 15: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 137,
+        "total_tokens": 1408,
+        "prompt_tokens": 1271
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"reconcile\",\n  \"basis\": [\"objective\", \"current-operation\", \"old-operation\"],\n  \"explanation\": \"Operation w17 was sent but its receipt is absent and outcome is unknown. This is a pending external effect that must be reconciled before it can be repeated or declared done. Repeating w17 without knowing whether it succeeded risks duplicating the write (violating identity preservation). Declaring done is unsupported since there is no confirmation of success. The correct next step is to reconcile the pending operation w17 to determine its actual outcome.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 6.89
+    },
+    {
+      "case": "pending-effect",
+      "arm": "dependency-context",
+      "input_chars": 1156,
+      "packet_digest": "730db97723fd887a852e0c2adc43d264cd36e8a5b11e83263060cb9992796ac6",
+      "packet": {
+        "request": {
+          "question": "Resume the outstanding write operation.",
+          "allowed_actions": [
+            "repeat",
+            "reconcile",
+            "declare_done"
+          ],
+          "required_refs": [
+            "objective",
+            "current-operation"
+          ]
+        },
+        "records": [
+          {
+            "id": "objective",
+            "text": "Complete one write, preserving its identity.",
+            "refs": [
+              "current-operation"
+            ]
+          },
+          {
+            "id": "current-operation",
+            "text": "Operation w17 was sent; receipt absent; outcome unknown.",
+            "refs": [
+              "old-operation"
+            ]
+          },
+          {
+            "id": "old-operation",
+            "text": "Different operation w02 failed before dispatch last week."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 120,
+        "total_tokens": 383,
+        "prompt_tokens": 263
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"reconcile\",\n  \"basis\": [\"objective\", \"current-operation\"],\n  \"explanation\": \"Operation w17 was sent but its receipt is absent and outcome is unknown. This constitutes a pending external effect that must be reconciled before it can be repeated, per the rule: 'A pending external effect must be reconciled before repeating it.' We cannot declare_done because the outcome is unknown, and we cannot repeat because the unresolved effect has not yet been reconciled.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 4.375
+    },
+    {
+      "case": "alternative-support",
+      "arm": "dependency-context",
+      "input_chars": 1273,
+      "packet_digest": "ada3f04ccd350d5db1f988a40ea42e4092f64446c010f1e24c32e207a1d9e8d8",
+      "packet": {
+        "request": {
+          "question": "Is claim C supported for the declared finite domain?",
+          "allowed_actions": [
+            "supported",
+            "unsupported",
+            "universal_theorem"
+          ],
+          "required_refs": [
+            "claim-C"
+          ]
+        },
+        "records": [
+          {
+            "id": "claim-C",
+            "text": "C concerns exactly inputs 1 through 10. Routes: A AND B, OR D.",
+            "refs": [
+              "premise-A",
+              "premise-B",
+              "route-D"
+            ]
+          },
+          {
+            "id": "premise-A",
+            "text": "A remains valid in the declared domain."
+          },
+          {
+            "id": "premise-B",
+            "text": "B was retracted; its former evidence was invalid."
+          },
+          {
+            "id": "route-D",
+            "text": "D is an independently checked exhaustive verification of C on 1 through 10; current, valid, no dependencies on A or B."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 123,
+        "total_tokens": 441,
+        "prompt_tokens": 318
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"supported\",\n  \"basis\": [\"claim-C\", \"route-D\"],\n  \"explanation\": \"Claim C has two alternative support routes: (A AND B) or D. Although premise B was retracted, defeating the first route, route D is an independently verified, current, and valid exhaustive verification of C over exactly inputs 1 through 10. Since one valid support route suffices and a defeated alternative route does not defeat another valid route, C is supported for the declared finite domain.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 4.953
+    },
+    {
+      "case": "alternative-support",
+      "arm": "full-context",
+      "input_chars": 6037,
+      "packet_digest": "38cb9397615df5b6c2c203732175e5009571211a43c7c57e5ab928f592643f63",
+      "packet": {
+        "request": {
+          "question": "Is claim C supported for the declared finite domain?",
+          "allowed_actions": [
+            "supported",
+            "unsupported",
+            "universal_theorem"
+          ],
+          "required_refs": [
+            "claim-C"
+          ]
+        },
+        "records": [
+          {
+            "id": "unrelated-0",
+            "text": "Archived unrelated investigation 0: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-1",
+            "text": "Archived unrelated investigation 1: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-2",
+            "text": "Archived unrelated investigation 2: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-3",
+            "text": "Archived unrelated investigation 3: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-4",
+            "text": "Archived unrelated investigation 4: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-5",
+            "text": "Archived unrelated investigation 5: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-6",
+            "text": "Archived unrelated investigation 6: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-7",
+            "text": "Archived unrelated investigation 7: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "claim-C",
+            "text": "C concerns exactly inputs 1 through 10. Routes: A AND B, OR D.",
+            "refs": [
+              "premise-A",
+              "premise-B",
+              "route-D"
+            ]
+          },
+          {
+            "id": "premise-A",
+            "text": "A remains valid in the declared domain."
+          },
+          {
+            "id": "premise-B",
+            "text": "B was retracted; its former evidence was invalid."
+          },
+          {
+            "id": "route-D",
+            "text": "D is an independently checked exhaustive verification of C on 1 through 10; current, valid, no dependencies on A or B."
+          },
+          {
+            "id": "unrelated-8",
+            "text": "Archived unrelated investigation 8: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-9",
+            "text": "Archived unrelated investigation 9: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-10",
+            "text": "Archived unrelated investigation 10: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-11",
+            "text": "Archived unrelated investigation 11: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-12",
+            "text": "Archived unrelated investigation 12: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-13",
+            "text": "Archived unrelated investigation 13: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-14",
+            "text": "Archived unrelated investigation 14: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-15",
+            "text": "Archived unrelated investigation 15: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 123,
+        "total_tokens": 1449,
+        "prompt_tokens": 1326
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"supported\",\n  \"basis\": [\"claim-C\", \"route-D\"],\n  \"explanation\": \"Claim C has two alternative support routes: (A AND B) or D. Although route A\u2227B is defeated because premise B was retracted, route D is an independently checked exhaustive verification of C on inputs 1\u201310 that is current, valid, and has no dependencies on A or B. Since one valid alternative support route suffices, C is supported for its declared finite domain.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 7.469
+    },
+    {
+      "case": "negative-transfer",
+      "arm": "full-context",
+      "input_chars": 6058,
+      "packet_digest": "ed033341831f4b7d289dc76b74f34e19c5a64cc80bf77be7be628fd0facaddbd",
+      "packet": {
+        "request": {
+          "question": "Choose the method for input -2 within the available budget.",
+          "allowed_actions": [
+            "new_method",
+            "incumbent",
+            "declare_done"
+          ],
+          "required_refs": [
+            "new-method",
+            "incumbent-method"
+          ]
+        },
+        "records": [
+          {
+            "id": "unrelated-0",
+            "text": "Archived unrelated investigation 0: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-1",
+            "text": "Archived unrelated investigation 1: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-2",
+            "text": "Archived unrelated investigation 2: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-3",
+            "text": "Archived unrelated investigation 3: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-4",
+            "text": "Archived unrelated investigation 4: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-5",
+            "text": "Archived unrelated investigation 5: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-6",
+            "text": "Archived unrelated investigation 6: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-7",
+            "text": "Archived unrelated investigation 7: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "new-method",
+            "text": "Released fast method M2 is supported only for nonnegative integers. Read linked opposition before selecting.",
+            "refs": [
+              "negative-case"
+            ]
+          },
+          {
+            "id": "negative-case",
+            "text": "Verified counterexample: M2 returns a wrong value on -2. It remains quarantined for negative inputs."
+          },
+          {
+            "id": "incumbent-method",
+            "text": "M1 is available, authorized, within the task budget, and verified for integers -10 through 10."
+          },
+          {
+            "id": "unrelated-8",
+            "text": "Archived unrelated investigation 8: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-9",
+            "text": "Archived unrelated investigation 9: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-10",
+            "text": "Archived unrelated investigation 10: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-11",
+            "text": "Archived unrelated investigation 11: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-12",
+            "text": "Archived unrelated investigation 12: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-13",
+            "text": "Archived unrelated investigation 13: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-14",
+            "text": "Archived unrelated investigation 14: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-15",
+            "text": "Archived unrelated investigation 15: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 122,
+        "total_tokens": 1436,
+        "prompt_tokens": 1314
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"incumbent\",\n  \"basis\": [\"incumbent-method\", \"new-method\", \"negative-case\"],\n  \"explanation\": \"The input is -2. M2 (new_method) has a verified counterexample showing it returns a wrong value on -2 and is quarantined for negative inputs. M1 (incumbent) is verified for integers -10 through 10, which covers -2, and is authorized and within budget. Therefore M1 is the correct choice.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 5.25
+    },
+    {
+      "case": "negative-transfer",
+      "arm": "dependency-context",
+      "input_chars": 1294,
+      "packet_digest": "7bc378e3d0c8e81d26f225a2b5996b2d16e45182ec1e059d02aef1cabce1004e",
+      "packet": {
+        "request": {
+          "question": "Choose the method for input -2 within the available budget.",
+          "allowed_actions": [
+            "new_method",
+            "incumbent",
+            "declare_done"
+          ],
+          "required_refs": [
+            "new-method",
+            "incumbent-method"
+          ]
+        },
+        "records": [
+          {
+            "id": "new-method",
+            "text": "Released fast method M2 is supported only for nonnegative integers. Read linked opposition before selecting.",
+            "refs": [
+              "negative-case"
+            ]
+          },
+          {
+            "id": "negative-case",
+            "text": "Verified counterexample: M2 returns a wrong value on -2. It remains quarantined for negative inputs."
+          },
+          {
+            "id": "incumbent-method",
+            "text": "M1 is available, authorized, within the task budget, and verified for integers -10 through 10."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 113,
+        "total_tokens": 419,
+        "prompt_tokens": 306
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"incumbent\",\n  \"basis\": [\"new-method\", \"negative-case\", \"incumbent-method\"],\n  \"explanation\": \"M2 has a verified counterexample showing it returns a wrong value on -2 and is quarantined for negative inputs. M1 is authorized, within budget, and verified for the range -10 through 10, which covers the input -2. Therefore M1 (incumbent) is the correct choice.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 6.515
+    },
+    {
+      "case": "missing-bytes",
+      "arm": "dependency-context",
+      "input_chars": 1296,
+      "packet_digest": "714d6ccccc8554ff7eb2c43f4f5579415dafc1e7c5b450853c5e2b3717a7ac03",
+      "packet": {
+        "request": {
+          "question": "Can the next worker invoke the exact selected method now?",
+          "allowed_actions": [
+            "invoke",
+            "invent_replacement",
+            "needs_information"
+          ],
+          "required_refs": [
+            "selected-method"
+          ]
+        },
+        "records": [
+          {
+            "id": "selected-method",
+            "text": "Use exact artifact digest abc123. Its byte content is required; no replacement version is admitted.",
+            "refs": [
+              "artifact-state",
+              "method-summary"
+            ]
+          },
+          {
+            "id": "artifact-state",
+            "text": "Artifact abc123 metadata exists, but its bytes are unavailable in the declared store."
+          },
+          {
+            "id": "method-summary",
+            "text": "An old summary describes abc123 as a successful sorting method. This is a summary, not executable bytes."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 134,
+        "total_tokens": 428,
+        "prompt_tokens": 294
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"needs_information\",\n  \"basis\": [\"selected-method\", \"artifact-state\", \"method-summary\"],\n  \"explanation\": \"The selected method requires the exact byte content of artifact abc123, but the artifact store reports its bytes are unavailable. The existing summary (method-summary) cannot substitute for the required bytes per the method's own constraint ('no replacement version is admitted'). Therefore, invocation is impossible and inventing a replacement is not permitted. The missing byte content must remain explicitly unresolved: needs_information is the only valid action.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 5.0
+    },
+    {
+      "case": "missing-bytes",
+      "arm": "full-context",
+      "input_chars": 6060,
+      "packet_digest": "b578346c037279de92906b9ef1158377c45369aac7a17f0d3398a2d99ee823c6",
+      "packet": {
+        "request": {
+          "question": "Can the next worker invoke the exact selected method now?",
+          "allowed_actions": [
+            "invoke",
+            "invent_replacement",
+            "needs_information"
+          ],
+          "required_refs": [
+            "selected-method"
+          ]
+        },
+        "records": [
+          {
+            "id": "unrelated-0",
+            "text": "Archived unrelated investigation 0: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-1",
+            "text": "Archived unrelated investigation 1: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-2",
+            "text": "Archived unrelated investigation 2: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-3",
+            "text": "Archived unrelated investigation 3: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-4",
+            "text": "Archived unrelated investigation 4: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-5",
+            "text": "Archived unrelated investigation 5: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-6",
+            "text": "Archived unrelated investigation 6: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-7",
+            "text": "Archived unrelated investigation 7: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "selected-method",
+            "text": "Use exact artifact digest abc123. Its byte content is required; no replacement version is admitted.",
+            "refs": [
+              "artifact-state",
+              "method-summary"
+            ]
+          },
+          {
+            "id": "artifact-state",
+            "text": "Artifact abc123 metadata exists, but its bytes are unavailable in the declared store."
+          },
+          {
+            "id": "method-summary",
+            "text": "An old summary describes abc123 as a successful sorting method. This is a summary, not executable bytes."
+          },
+          {
+            "id": "unrelated-8",
+            "text": "Archived unrelated investigation 8: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-9",
+            "text": "Archived unrelated investigation 9: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-10",
+            "text": "Archived unrelated investigation 10: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-11",
+            "text": "Archived unrelated investigation 11: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-12",
+            "text": "Archived unrelated investigation 12: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-13",
+            "text": "Archived unrelated investigation 13: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-14",
+            "text": "Archived unrelated investigation 14: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          },
+          {
+            "id": "unrelated-15",
+            "text": "Archived unrelated investigation 15: a worker considered indexing, formatting and naming choices. Its local benchmark improved after a cache adjustment; the record makes no claim about the current task, its methods, evidence, operations, or artifact availability."
+          }
+        ]
+      },
+      "response_model": "claude-opus-4-6-thinking",
+      "usage": {
+        "completion_tokens": 172,
+        "total_tokens": 1474,
+        "prompt_tokens": 1302
+      },
+      "finish_reason": "stop",
+      "response": "```json\n{\n  \"decision\": \"needs_information\",\n  \"basis\": [\"selected-method\", \"artifact-state\", \"method-summary\"],\n  \"explanation\": \"The selected method ('selected-method') requires the exact byte content of artifact abc123, and no replacement is admitted. Record 'artifact-state' confirms the artifact's bytes are unavailable in the declared store. Record 'method-summary' only provides a summary, which cannot substitute for the required bytes per the constraint that 'required artifact content cannot be replaced by a summary when bytes are unavailable.' Therefore, invocation is impossible now, and inventing a replacement is disallowed by the method's stipulation. The missing required information\u2014the actual bytes of artifact abc123\u2014must remain explicit.\"\n}\n```",
+      "decision_correct": true,
+      "basis_correct": true,
+      "elapsed_seconds": 5.609
+    }
+  ],
+  "complete": true
+}

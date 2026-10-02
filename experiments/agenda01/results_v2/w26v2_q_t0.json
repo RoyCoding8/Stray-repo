@@ -1,0 +1,1218 @@
+{
+  "arm": "Q",
+  "backend": "AgendaBackend",
+  "complete": true,
+  "db": "agenda01_w26v2_q_t0",
+  "drained_products": [],
+  "end_reason": "horizon",
+  "family": 6,
+  "grade": {
+    "correct": 4,
+    "eval_cost": 8,
+    "per_task": {
+      "w26-t0": {
+        "answer": false,
+        "correct": true
+      },
+      "w26-t1": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w26-t2": {
+        "answer": false,
+        "correct": true
+      },
+      "w26-t3": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w26-t4": {
+        "answer": false,
+        "correct": true
+      },
+      "w26-t5": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w26-t6": {
+        "answer": false,
+        "correct": true
+      },
+      "w26-t7": {
+        "answer": "unknown",
+        "correct": false
+      }
+    },
+    "total": 8
+  },
+  "ledger": {
+    "allocations": [
+      {
+        "authorized": 88,
+        "consumed": 0,
+        "id": "ag01:w26v2_q_t0",
+        "parent_id": null,
+        "reserved": 0
+      },
+      {
+        "authorized": 8,
+        "consumed": 8,
+        "id": "ag01:w26v2_q_t0:eval",
+        "parent_id": "ag01:w26v2_q_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 64,
+        "consumed": 34,
+        "id": "ag01:w26v2_q_t0:explore",
+        "parent_id": "ag01:w26v2_q_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 16,
+        "consumed": 0,
+        "id": "ag01:w26v2_q_t0:recovery",
+        "parent_id": "ag01:w26v2_q_t0",
+        "reserved": 0
+      }
+    ],
+    "conflicts": 0,
+    "cursor": {
+      "dep_versions": {
+        "d0": 1,
+        "d1": 1
+      },
+      "epoch": 24,
+      "rotation": 24,
+      "tick": 24
+    },
+    "decisions": [
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "selected:s-m0"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m0-m0",
+          "cost": 2,
+          "input_digest": "3a9bea6cbfefd5cdfb376b1544efe93b823a425209b85f6f682930e9d225c604",
+          "kind": "initial",
+          "option_id": "s-m0",
+          "option_revision": 1,
+          "ownership_generation": 1,
+          "policy_version": "AG01-Q-2",
+          "probe": "m0"
+        },
+        "tick": 1
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "selected:s-m2"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m2-m2",
+          "cost": 2,
+          "input_digest": "8d2f289ebe766f924c40baa9ff4adf3a2ae3b5f15c762a5912a56a7edf357272",
+          "kind": "initial",
+          "option_id": "s-m2",
+          "option_revision": 1,
+          "ownership_generation": 2,
+          "policy_version": "AG01-Q-2",
+          "probe": "m2"
+        },
+        "tick": 2
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "selected:s-slow"
+        ],
+        "selection": {
+          "attempt_id": "att-s-slow-slow",
+          "cost": 4,
+          "input_digest": "0406552429bcb259f2e3e178fc1ce7dfec5001a102b965e1fb05a715be8b17cf",
+          "kind": "initial",
+          "option_id": "s-slow",
+          "option_revision": 1,
+          "ownership_generation": 3,
+          "policy_version": "AG01-Q-2",
+          "probe": "slow"
+        },
+        "tick": 3
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "selected:s-m4"
+        ],
+        "selection": {
+          "attempt_id": "att-s-m4-m4",
+          "cost": 2,
+          "input_digest": "4ed38e31f1aa45bf15828479225f0f0f784d116a4a397666849654a420b2d4b4",
+          "kind": "initial",
+          "option_id": "s-m4",
+          "option_revision": 1,
+          "ownership_generation": 4,
+          "policy_version": "AG01-Q-2",
+          "probe": "m4"
+        },
+        "tick": 4
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 5
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 6
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 7
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 8
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 9
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 10
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 11
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 12
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 13
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 14
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 15
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 16
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 17
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 18
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 19
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 20
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 21
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 22
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 23
+      },
+      {
+        "policy": "AG01-Q-2",
+        "reasons": [
+          "idle:no-selectable-candidate"
+        ],
+        "selection": {
+          "decision": "idle"
+        },
+        "tick": 24
+      }
+    ],
+    "links": [
+      {
+        "attempt_id": "att-s-m0-m0",
+        "effect_identity": "5dd1dda52f55f1969c05822f0080ecf25c5864c8a6137dfd9569e386adba0310",
+        "intended_decision": "execute-m0",
+        "operation_id": "ag01:w26v2_q_t0:probe:1",
+        "option_id": "s-m0",
+        "probe": "m0",
+        "replication_slot": null,
+        "reservation_id": "ag01:w26v2_q_t0:probe:1:r",
+        "state": "settled",
+        "trajectory": "w26v2_q_t0"
+      },
+      {
+        "attempt_id": "att-s-m2-m2",
+        "effect_identity": "b503e89637632ec08f31b2f8934caf44b2e59d7522c444b316c1406488dc0aad",
+        "intended_decision": "execute-m2",
+        "operation_id": "ag01:w26v2_q_t0:probe:2",
+        "option_id": "s-m2",
+        "probe": "m2",
+        "replication_slot": null,
+        "reservation_id": "ag01:w26v2_q_t0:probe:2:r",
+        "state": "settled",
+        "trajectory": "w26v2_q_t0"
+      },
+      {
+        "attempt_id": "att-s-m4-m4",
+        "effect_identity": "1690bb74b9b2334ea245aa5c344694c8eb76328c851ea74a893430e527b7fe71",
+        "intended_decision": "execute-m4",
+        "operation_id": "ag01:w26v2_q_t0:probe:4",
+        "option_id": "s-m4",
+        "probe": "m4",
+        "replication_slot": null,
+        "reservation_id": "ag01:w26v2_q_t0:probe:4:r",
+        "state": "settled",
+        "trajectory": "w26v2_q_t0"
+      },
+      {
+        "attempt_id": "att-s-slow-slow",
+        "effect_identity": "28bbfca3e41ea8ccfccdbabc2e2776d06db2441e6e992775e6aa97801a4756c2",
+        "intended_decision": "execute-slow",
+        "operation_id": "ag01:w26v2_q_t0:probe:3",
+        "option_id": "s-slow",
+        "probe": "slow",
+        "replication_slot": null,
+        "reservation_id": "ag01:w26v2_q_t0:probe:3:r",
+        "state": "settled",
+        "trajectory": "w26v2_q_t0"
+      }
+    ],
+    "ops": [
+      {
+        "attempt_id": "att-s-m0-m0",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w26v2_q_t0:probe:1"
+      },
+      {
+        "attempt_id": "att-s-m2-m2",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w26v2_q_t0:probe:2"
+      },
+      {
+        "attempt_id": "att-s-slow-slow",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w26v2_q_t0:probe:3"
+      },
+      {
+        "attempt_id": "att-s-m4-m4",
+        "dispatch_state": "observed",
+        "execution_version": "AG01-OP-1",
+        "id": "ag01:w26v2_q_t0:probe:4"
+      }
+    ],
+    "outcomes": [
+      {
+        "epoch": 2,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 2,
+          "kind": "observation",
+          "prop": "p0",
+          "receipt": "w26v2_q_t0:rc:att-s-m0-m0:p0",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m0-m0",
+          "value": "false"
+        },
+        "option_id": "s-m0",
+        "receipt": "w26v2_q_t0:rc:att-s-m0-m0:p0",
+        "scored": true
+      },
+      {
+        "epoch": 2,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 2,
+          "kind": "observation",
+          "prop": "p2",
+          "receipt": "w26v2_q_t0:rc:att-s-m2-m2:p2",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m2-m2",
+          "value": "false"
+        },
+        "option_id": "s-m2",
+        "receipt": "w26v2_q_t0:rc:att-s-m2-m2:p2",
+        "scored": true
+      },
+      {
+        "epoch": 4,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 4,
+          "kind": "observation",
+          "prop": "p4",
+          "receipt": "w26v2_q_t0:rc:att-s-m4-m4:p4",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-m4-m4",
+          "value": "false"
+        },
+        "option_id": "s-m4",
+        "receipt": "w26v2_q_t0:rc:att-s-m4-m4:p4",
+        "scored": true
+      },
+      {
+        "epoch": 4,
+        "observation": {
+          "dep": "d0",
+          "dep_version": 1,
+          "epoch": 4,
+          "kind": "observation",
+          "prop": "p6",
+          "receipt": "w26v2_q_t0:rc:att-s-slow-slow:p6",
+          "scope": "s0",
+          "simulated": true,
+          "source_attempt": "att-s-slow-slow",
+          "value": "false"
+        },
+        "option_id": "s-slow",
+        "receipt": "w26v2_q_t0:rc:att-s-slow-slow:p6",
+        "scored": true
+      }
+    ],
+    "receipts": [
+      {
+        "content_digest": "9d5623b963fc836878fe744b68f0fa54d48f13640aefec417896a88eec272870",
+        "operation_id": "ag01:w26v2_q_t0:probe:1",
+        "outcome": "success",
+        "receipt": "w26v2_q_t0:rc:att-s-m0-m0:p0"
+      },
+      {
+        "content_digest": "f4147a336a9c313e3fa08f66fad775b41cc657d91aed0a18dd0448e9b63a7836",
+        "operation_id": "ag01:w26v2_q_t0:probe:2",
+        "outcome": "success",
+        "receipt": "w26v2_q_t0:rc:att-s-m2-m2:p2"
+      },
+      {
+        "content_digest": "c164db628f230a834d0f12eff7b62ead5da1c4b70a4d9cc86cb3aab6c6acd270",
+        "operation_id": "ag01:w26v2_q_t0:probe:4",
+        "outcome": "success",
+        "receipt": "w26v2_q_t0:rc:att-s-m4-m4:p4"
+      },
+      {
+        "content_digest": "45d111af864925cc835f4fb048200eb6cc2c3d42efcbeae209433a6b4b8f6271",
+        "operation_id": "ag01:w26v2_q_t0:probe:3",
+        "outcome": "success",
+        "receipt": "w26v2_q_t0:rc:att-s-slow-slow:p6"
+      }
+    ],
+    "reservations": [
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:10:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:10",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:11:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:11",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:12:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:12",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:13:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:13",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:14:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:14",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:15:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:15",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:16:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:16",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:17:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:17",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:18:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:18",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:19:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:19",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:1:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:20:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:20",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:21:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:21",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:22:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:22",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:23:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:23",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:24:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:24",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:2:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:3:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:4:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:4",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:5:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:5",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:6:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:6",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:7:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:7",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:8:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:8",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w26v2_q_t0:dec:9:r",
+        "operation_id": "ag01:w26v2_q_t0:dec:9",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:eval",
+        "amount": 8,
+        "id": "ag01:w26v2_q_t0:eval-final:res",
+        "operation_id": "ag01:w26v2_q_t0:eval-final",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 2,
+        "id": "ag01:w26v2_q_t0:probe:1:r",
+        "operation_id": "ag01:w26v2_q_t0:probe:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 2,
+        "id": "ag01:w26v2_q_t0:probe:2:r",
+        "operation_id": "ag01:w26v2_q_t0:probe:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 4,
+        "id": "ag01:w26v2_q_t0:probe:3:r",
+        "operation_id": "ag01:w26v2_q_t0:probe:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w26v2_q_t0:explore",
+        "amount": 2,
+        "id": "ag01:w26v2_q_t0:probe:4:r",
+        "operation_id": "ag01:w26v2_q_t0:probe:4",
+        "state": "settled"
+      }
+    ]
+  },
+  "manifest_sha256": "99e9d5f61a9e7c1ddaea37df24073cc8b23d999c3cddecefc7acaaebbb01ab70",
+  "observations": [
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p0",
+      "receipt": "w26v2_q_t0:rc:att-s-m0-m0:p0",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m0-m0",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p2",
+      "receipt": "w26v2_q_t0:rc:att-s-m2-m2:p2",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m2-m2",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 4,
+      "prop": "p4",
+      "receipt": "w26v2_q_t0:rc:att-s-m4-m4:p4",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m4-m4",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 4,
+      "prop": "p6",
+      "receipt": "w26v2_q_t0:rc:att-s-slow-slow:p6",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-slow-slow",
+      "value": false
+    }
+  ],
+  "option_spend": {
+    "s-m0": 2,
+    "s-m2": 2,
+    "s-m4": 2,
+    "s-slow": 4
+  },
+  "pending_drained": [],
+  "policy_version": "AG01-Q-2",
+  "products": {},
+  "rng_seed": 1026,
+  "ticks": [
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:1",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m0",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m2",
+        "s-slow",
+        "s-m4"
+      ],
+      "events": [],
+      "probe_op": "ag01:w26v2_q_t0:probe:1",
+      "tick": 0,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:2",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m2",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m2",
+        "reason": "selected:s-m2"
+      },
+      "eligible": [
+        "s-m2",
+        "s-slow",
+        "s-m4"
+      ],
+      "events": [],
+      "probe_op": "ag01:w26v2_q_t0:probe:2",
+      "tick": 1,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:3",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-slow",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-slow",
+        "reason": "selected:s-slow"
+      },
+      "eligible": [
+        "s-slow",
+        "s-m4"
+      ],
+      "events": [],
+      "probe_op": "ag01:w26v2_q_t0:probe:3",
+      "tick": 2,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:4",
+      "decision": {
+        "action": "probe",
+        "evaluated": [
+          {
+            "id": "s-m4",
+            "kind": "initial",
+            "skipped": null
+          }
+        ],
+        "idle_reason": null,
+        "option_key": "s-m4",
+        "reason": "selected:s-m4"
+      },
+      "eligible": [
+        "s-m4"
+      ],
+      "events": [],
+      "probe_op": "ag01:w26v2_q_t0:probe:4",
+      "tick": 3,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:5",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 4,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:6",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 5,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:7",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 6,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:8",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 7,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:9",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 8,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:10",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 9,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:11",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 10,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:12",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 11,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:13",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 12,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:14",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 13,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:15",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 14,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:16",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 15,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:17",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 16,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:18",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 17,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:19",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 18,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:20",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 19,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:21",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 20,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:22",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 21,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:23",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 22,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w26v2_q_t0:dec:24",
+      "decision": {
+        "action": "idle",
+        "evaluated": [],
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 23,
+      "wakes": []
+    }
+  ],
+  "tie": 0,
+  "totals": {
+    "eval_spent": 8,
+    "explore_spent": 34,
+    "feasible_waiting": 0,
+    "idle_ticks": 20,
+    "liabilities": [],
+    "recovery_spent": 0
+  },
+  "traj_id": "w26v2_q_t0",
+  "variant": 2,
+  "world_id": "w26"
+}

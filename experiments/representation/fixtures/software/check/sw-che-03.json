@@ -1,0 +1,56 @@
+{
+  "family": "software",
+  "fault": "stale-read",
+  "ops": [
+    {
+      "op": "clear"
+    },
+    {
+      "op": "clear"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "id": "o0",
+      "key": "c",
+      "op": "get"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "op": "clear"
+    },
+    {
+      "op": "clear"
+    },
+    {
+      "key": "a",
+      "op": "set",
+      "value": "v1"
+    }
+  ],
+  "seed": 1204,
+  "task_id": "sw-che-03",
+  "witness": {
+    "faulty": {
+      "type": "str",
+      "value": "v4"
+    },
+    "observation": "o0",
+    "ref": {
+      "type": "str",
+      "value": "v2"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE packet_invocations ADD COLUMN IF NOT EXISTS input_digest TEXT NOT NULL DEFAULT '';

@@ -1,0 +1,711 @@
+{
+  "arm": "Q",
+  "backend": "AgendaBackend",
+  "complete": true,
+  "db": "agenda01_w17v1_q_t0",
+  "drained_products": [],
+  "end_reason": "horizon",
+  "family": 4,
+  "grade": {
+    "correct": 4,
+    "eval_cost": 8,
+    "per_task": {
+      "w17-t0": {
+        "answer": false,
+        "correct": true
+      },
+      "w17-t1": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w17-t2": {
+        "answer": true,
+        "correct": true
+      },
+      "w17-t3": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w17-t4": {
+        "answer": false,
+        "correct": true
+      },
+      "w17-t5": {
+        "answer": "unknown",
+        "correct": false
+      },
+      "w17-t6": {
+        "answer": true,
+        "correct": true
+      },
+      "w17-t7": {
+        "answer": "unknown",
+        "correct": false
+      }
+    },
+    "total": 8
+  },
+  "ledger": {
+    "allocations": [
+      {
+        "authorized": 88,
+        "consumed": 0,
+        "id": "ag01:w17v1_q_t0",
+        "parent_id": null,
+        "reserved": 0
+      },
+      {
+        "authorized": 8,
+        "consumed": 8,
+        "id": "ag01:w17v1_q_t0:eval",
+        "parent_id": "ag01:w17v1_q_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 64,
+        "consumed": 32,
+        "id": "ag01:w17v1_q_t0:explore",
+        "parent_id": "ag01:w17v1_q_t0",
+        "reserved": 0
+      },
+      {
+        "authorized": 16,
+        "consumed": 0,
+        "id": "ag01:w17v1_q_t0:recovery",
+        "parent_id": "ag01:w17v1_q_t0",
+        "reserved": 0
+      }
+    ],
+    "ops": [],
+    "reservations": [
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:10:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:10",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:11:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:11",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:12:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:12",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:13:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:13",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:14:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:14",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:15:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:15",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:16:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:16",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:17:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:17",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:18:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:18",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:19:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:19",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:1:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:20:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:20",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:21:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:21",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:22:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:22",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:23:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:23",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:24:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:24",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:2:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:3:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:4:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:4",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:5:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:5",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:6:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:6",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:7:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:7",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:8:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:8",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 1,
+        "id": "ag01:w17v1_q_t0:dec:9:r",
+        "operation_id": "ag01:w17v1_q_t0:dec:9",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:eval",
+        "amount": 8,
+        "id": "ag01:w17v1_q_t0:eval-final:res",
+        "operation_id": "ag01:w17v1_q_t0:eval-final",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 2,
+        "id": "ag01:w17v1_q_t0:probe:1:r",
+        "operation_id": "ag01:w17v1_q_t0:probe:1",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 2,
+        "id": "ag01:w17v1_q_t0:probe:2:r",
+        "operation_id": "ag01:w17v1_q_t0:probe:2",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 2,
+        "id": "ag01:w17v1_q_t0:probe:3:r",
+        "operation_id": "ag01:w17v1_q_t0:probe:3",
+        "state": "settled"
+      },
+      {
+        "allocation_id": "ag01:w17v1_q_t0:explore",
+        "amount": 2,
+        "id": "ag01:w17v1_q_t0:probe:4:r",
+        "operation_id": "ag01:w17v1_q_t0:probe:4",
+        "state": "settled"
+      }
+    ]
+  },
+  "manifest_sha256": "a52f3ed74a294e1aaa3930befe28feefc90af5c95c73264030a26f4f13fa3843",
+  "observations": [
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 1,
+      "prop": "p4",
+      "receipt": "w17v1_q_t0:rc:att-s-n1-n1:p4",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-n1-n1",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 2,
+      "prop": "p0",
+      "receipt": "w17v1_q_t0:rc:att-s-m0-m0:p0",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m0-m0",
+      "value": false
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 3,
+      "prop": "p2",
+      "receipt": "w17v1_q_t0:rc:att-s-m2-m2:p2",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m2-m2",
+      "value": true
+    },
+    {
+      "dep": "d0",
+      "dep_version": 1,
+      "epoch": 4,
+      "prop": "p6",
+      "receipt": "w17v1_q_t0:rc:att-s-m6-m6:p6",
+      "scope": "s0",
+      "scored": true,
+      "simulated": true,
+      "source_attempt": "att-s-m6-m6",
+      "value": true
+    }
+  ],
+  "option_spend": {
+    "s-m0": 2,
+    "s-m2": 2,
+    "s-m6": 2,
+    "s-n1": 2
+  },
+  "pending_drained": [],
+  "policy_version": "AG01-Q-1",
+  "products": {},
+  "rng_seed": 1017,
+  "ticks": [
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:1",
+      "decision": {
+        "action": "probe",
+        "idle_reason": null,
+        "option_key": "s-n1",
+        "reason": "selected:s-n1"
+      },
+      "eligible": [
+        "s-n1",
+        "s-m0",
+        "s-m2",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w17v1_q_t0:probe:1",
+      "tick": 0,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:2",
+      "decision": {
+        "action": "probe",
+        "idle_reason": null,
+        "option_key": "s-m0",
+        "reason": "selected:s-m0"
+      },
+      "eligible": [
+        "s-m0",
+        "s-m2",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w17v1_q_t0:probe:2",
+      "tick": 1,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:3",
+      "decision": {
+        "action": "probe",
+        "idle_reason": null,
+        "option_key": "s-m2",
+        "reason": "selected:s-m2"
+      },
+      "eligible": [
+        "s-m2",
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w17v1_q_t0:probe:3",
+      "tick": 2,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:4",
+      "decision": {
+        "action": "probe",
+        "idle_reason": null,
+        "option_key": "s-m6",
+        "reason": "selected:s-m6"
+      },
+      "eligible": [
+        "s-m6"
+      ],
+      "events": [],
+      "probe_op": "ag01:w17v1_q_t0:probe:4",
+      "tick": 3,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:5",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 4,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:6",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 5,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:7",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 6,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:8",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 7,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:9",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 8,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:10",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 9,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:11",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 10,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:12",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 11,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:13",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 12,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:14",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 13,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:15",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 14,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:16",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 15,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:17",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 16,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:18",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 17,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:19",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 18,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:20",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 19,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:21",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 20,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:22",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 21,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:23",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 22,
+      "wakes": []
+    },
+    {
+      "dec_op": "ag01:w17v1_q_t0:dec:24",
+      "decision": {
+        "action": "idle",
+        "idle_reason": "idle:no-selectable-candidate",
+        "option_key": null,
+        "reason": "idle:no-selectable-candidate"
+      },
+      "eligible": [],
+      "events": [],
+      "probe_op": null,
+      "tick": 23,
+      "wakes": []
+    }
+  ],
+  "tie": 0,
+  "totals": {
+    "eval_spent": 8,
+    "explore_spent": 32,
+    "feasible_waiting": 0,
+    "idle_ticks": 20,
+    "liabilities": [],
+    "recovery_spent": 0
+  },
+  "traj_id": "w17v1_q_t0",
+  "variant": 1,
+  "world_id": "w17"
+}

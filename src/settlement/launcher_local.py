@@ -5,8 +5,12 @@ inspects the run directory (pid and result files) before any new spawn.
 Every result is labeled containment=False. Worker bytes are parsed as typed
 JSON only, never executed. Stops use process-group kill. Children run with a scrubbed environment and
 never inherit the controller working directory: payload `cwd` selects an
-existing isolated directory, otherwise the launcher run directory, which the
-caller must create outside the repository.
+existing isolated directory, otherwise the operation work directory, which
+keeps run state (pid, result, generation files) out of the worker's listing.
+A detached deadline supervisor outlives the dispatching process and kills
+the worker group past its admitted bound; it signals only a starttime-verified
+process group. This profile is still explicitly not containment: use gvisor
+where the threat model needs it.
 """
 
 from __future__ import annotations
@@ -24,7 +28,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from .broker import BrokerOp, LaunchOutcome, ReceiptProposal
-from .exec_profile import scrub_env
+from .exec_profile import proc_starttime, reap_supervisor, scrub_env, spawn_deadline_supervisor
 
 PROFILE = "local-process"
 
@@ -39,6 +43,13 @@ class WorkerOutput(BaseModel):
 
 def _sanitize(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]", "_", value)
+
+
+def _check_relpath(relpath: str) -> str:
+    if (not isinstance(relpath, str) or not relpath or relpath.startswith("/")
+            or ".." in relpath.split("/")):
+        raise ValueError(f"refusing unsafe artifact relpath {relpath!r}")
+    return relpath
 
 
 def native_id(operation_id: str, execution_version: str) -> str:
@@ -61,7 +72,8 @@ class LocalLauncher:
     def _paths(self, operation_id: str, execution_version: str) -> dict[str, Path]:
         base = self.run_dir / self.native_id(operation_id, execution_version)
         return {"pid": base.with_suffix(".pid"), "result": base.with_suffix(".result.json"),
-                "spawns": base.with_suffix(".spawns"), "generation": base.with_suffix(".gen")}
+                "spawns": base.with_suffix(".spawns"), "generation": base.with_suffix(".gen"),
+                "supervise": base.with_suffix(".supervise.json")}
 
     def _work_dirs(self, operation_id: str,
                    execution_version: str) -> dict[str, Path]:
@@ -70,9 +82,7 @@ class LocalLauncher:
 
     def stage_input(self, operation_id: str, execution_version: str,
                     relpath: str, data: bytes) -> Path:
-        if (not isinstance(relpath, str) or not relpath or relpath.startswith("/")
-                or ".." in relpath.split("/")):
-            raise ValueError(f"refusing unsafe artifact relpath {relpath!r}")
+        _check_relpath(relpath)
         target = self._work_dirs(operation_id, execution_version)["inputs"]
         target.mkdir(parents=True, exist_ok=True)
         dest = target / relpath
@@ -93,7 +103,7 @@ class LocalLauncher:
     def read_output(self, operation_id: str, execution_version: str,
                     relpath: str) -> bytes:
         return (self._work_dirs(operation_id, execution_version)["outputs"]
-                / relpath).read_bytes()
+                / _check_relpath(relpath)).read_bytes()
 
     def _recorded_generation(self, path: Path) -> int | None:
         try:
@@ -185,6 +195,18 @@ class LocalLauncher:
         except OSError:
             return False
 
+    def _supervise(self, paths: dict[str, Path], pid: int, timeout_ms: int) -> Any:
+        grace_s = max(self.grace_ms / 1000, 1)
+        try:
+            paths["supervise"].write_text(json.dumps(
+                {"pid": pid, "deadline_epoch": time.time() + timeout_ms / 1000 + grace_s,
+                 "grace_s": grace_s, "result": paths["result"].name}))
+        except OSError:
+            return None
+        return spawn_deadline_supervisor(
+            pid, pid, proc_starttime(pid), str(paths["result"]),
+            timeout_ms / 1000 + grace_s + 1, grace_s)
+
     def dispatch(self, op: BrokerOp) -> LaunchOutcome:
         paths = self._paths(op.operation_id, op.execution_version)
         if paths["result"].exists():
@@ -199,6 +221,10 @@ class LocalLauncher:
             return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
         recorded = self._recorded_generation(paths["generation"])
         if recorded is not None and recorded > generation:
+            try:
+                paths["pid"].unlink()
+            except OSError:
+                pass
             return LaunchOutcome(sent=False, refused_reason="superseded-generation")
         paths["generation"].write_text(str(generation))
         if self._recorded_generation(paths["generation"]) != generation:
@@ -207,9 +233,12 @@ class LocalLauncher:
         timeout_ms = int(payload.get("timeout_ms", 30_000))
         max_bytes = int(payload.get("max_output_bytes", 1_048_576))
         argv = list(payload["argv"])
+        work = self._work_dirs(op.operation_id, op.execution_version)
+        work["inputs"].mkdir(parents=True, exist_ok=True)
+        work["outputs"].mkdir(parents=True, exist_ok=True)
         requested = payload.get("cwd")
         child_cwd = str(requested) if isinstance(requested, str) and \
-            Path(requested).is_dir() else str(self.run_dir)
+            Path(requested).is_dir() else str(work["work"])
         try:
             seen = int(paths["spawns"].read_text().strip()) if paths["spawns"].exists() else 0
         except (ValueError, OSError):
@@ -228,6 +257,7 @@ class LocalLauncher:
                 receipt_identity=f"local:{paths['result'].stem}", content=_base(False, argv, {
                     "spawn_error": str(exc)}), outcome="failure", provenance=self.launcher_id))
         paths["pid"].write_text(str(proc.pid))
+        supervisor = self._supervise(paths, proc.pid, timeout_ms)
         try:
             raw_out, raw_err = proc.communicate(timeout=timeout_ms / 1000)
             timed_out = False
@@ -252,10 +282,16 @@ class LocalLauncher:
                              err.decode("utf-8", "replace"), out_cut or err_cut,
                              timed_out, wall_ms, argv)
         paths["result"].write_text(json.dumps({"outcome": content["_verdict"], **content}))
+        content["data"]["supervised"] = supervisor is not None
         try:
             paths["pid"].unlink()
         except OSError:
             pass
+        try:
+            paths["supervise"].unlink()
+        except OSError:
+            pass
+        reap_supervisor(supervisor)
         receipt = ReceiptProposal(
             receipt_identity=f"local:{paths['result'].stem}", content=content,
             outcome=content["_verdict"], provenance=self.launcher_id)

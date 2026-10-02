@@ -1,0 +1,99 @@
+{
+  "arm": "C",
+  "checker_version": "rpr-checker/1",
+  "composition": {
+    "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+    "checker_id": "rpr-sw-checker/1",
+    "composition_id": "rpr-C-source-v1",
+    "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "native": false,
+    "package_digest": "78d9b9962ec592decb0068b09c14ed324b6e9a2f662bbaf79984d084746df9bc",
+    "role": "source"
+  },
+  "control_pass": true,
+  "costs": {
+    "elapsed_s": 0.295,
+    "invocations_used": 1,
+    "model_calls": 0,
+    "model_tokens": {
+      "in": 0,
+      "out": 0
+    },
+    "queries_used": 0,
+    "validation_used": 1,
+    "wall_s": 0.316
+  },
+  "family": "software",
+  "initial": {
+    "measure": 16
+  },
+  "inputs_digest": {
+    "adapter": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+    "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
+    "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
+    "core": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "fixture": "9bbbc960e340bd6f9861c620acc2be5308cc0c8ee3cfb31fe510ac8aadc54b4a",
+    "package": "78d9b9962ec592decb0068b09c14ed324b6e9a2f662bbaf79984d084746df9bc"
+  },
+  "invocations": [
+    {
+      "action": "encode",
+      "op_id": "rpr:rprD-main-C-ctrl-sw-invalid:ctrl-sw-invalid:encode:0000",
+      "seq": 0
+    }
+  ],
+  "manifest_sha256": "4674f918e7b9d46ad1ae6fa37436494a1ee1cc80194bdee4c82cf4fe1c025a7f",
+  "operator": {
+    "budget": {
+      "elapsed_max_s": 120.0,
+      "invocations_max": 64,
+      "invocations_used": 1,
+      "queries_max": 16,
+      "queries_used": 0
+    },
+    "composition": {
+      "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "composition_id": "rpr-C-source-v1",
+      "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "package_digest": "78d9b9962ec592decb0068b09c14ed324b6e9a2f662bbaf79984d084746df9bc",
+      "role": "source"
+    },
+    "disposition": "unsupported",
+    "next_action": "done",
+    "result": {
+      "best_measure": null,
+      "records": 2,
+      "verified_candidate": false
+    },
+    "run_id": "rprD-main-C-ctrl-sw-invalid",
+    "task_id": "ctrl-sw-invalid",
+    "witness": {
+      "checker_id": "",
+      "domain_spec": {
+        "family": "software",
+        "measure": "ops",
+        "witness": "value-disagreement"
+      },
+      "last_measure": null,
+      "last_verdict": null
+    }
+  },
+  "oracle_queries": [],
+  "oracle_validations": [
+    {
+      "measure": null,
+      "op_id": "rpr:rprD-main-C-ctrl-sw-invalid:ctrl-sw-invalid:validate:0001",
+      "reason": "invalid-task",
+      "verdict": "invalid"
+    }
+  ],
+  "result": {
+    "delivered_digest": "be530e9f332b449cca4364db4c68d0b85d9d534ba204ed2a14df4b50dc9843c6",
+    "disposition": "unsupported",
+    "improvement_u": 0.0,
+    "reason": "invalid-task",
+    "verified": false
+  },
+  "stage": "control",
+  "task_id": "ctrl-sw-invalid"
+}

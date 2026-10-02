@@ -26,7 +26,8 @@ DOMAIN_COMMAND = "domain-command"
 
 EFFECTS = (MODEL_INFERENCE, SANDBOX_EXEC, ARTIFACT_IO, OBSERVATION_ADAPTER, DOMAIN_COMMAND)
 
-ADMITTED_OBSERVATION_ADAPTERS = ("clock",)
+ADMITTED_OBSERVATION_ADAPTERS = ("clock", "agenda-probe")
+AG01_PROBE_ADAPTER = "agenda-probe"
 ADMITTED_DOMAIN_COMMANDS = ("note",)
 
 
@@ -245,6 +246,10 @@ def ensure_operation(
     execution_version: str = "",
     retries: int = 0,
 ) -> CommandResult:
+    if isinstance(retries, bool) or not isinstance(retries, int) or retries < 0:
+        return CommandResult(code=ResultCode.INVALID_INPUT,
+                             request_id=f"broker-prep-{operation_id}",
+                             detail="retries must be a non-negative integer", data={})
     try:
         clean = validate_effect(effect, payload)
     except InvalidEffect as exc:
@@ -360,6 +365,13 @@ def dispatch_operation(
     body = row["payload"]
     effect = body.get("effect")
     payload = body.get("payload", {})
+    if effect == OBSERVATION_ADAPTER and (payload.get("adapter") or "") != "clock":
+        return _send_adapter(dsn, row, BrokerOp(operation_id=operation_id, effect=effect,
+                                                payload=payload,
+                                                execution_version=row["execution_version"],
+                                                attempt_id=row["attempt_id"]),
+                             launchers or {}, ownership_generation, grant_version,
+                             _crash_after_send)
     routes = {MODEL_INFERENCE: _send_model, SANDBOX_EXEC: _send_sandbox,
               OBSERVATION_ADAPTER: _run_inline, DOMAIN_COMMAND: _run_inline}
     if effect == ARTIFACT_IO:
@@ -433,7 +445,10 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                            deadline_ms=op.payload["deadline_ms"],
                            operation_id=op.operation_id,
                            dispatch_generation=generation)
-    response = gateway.infer(request)
+    try:
+        response = gateway.infer(request)
+    except Exception:
+        response = None
     if response is None or isinstance(response, GatewayError):
         admit_launcher_receipt(dsn, op.operation_id, ReceiptProposal(
             receipt_identity=f"gw:{op.operation_id}:unknown",
@@ -458,6 +473,38 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
             actual_cost=usage.charge_units if usage.billed else None)),
         generation)
     return outcome
+
+
+def _send_adapter(dsn: str, row: dict, op: BrokerOp, launchers: dict,
+                  ownership_generation: int | None, grant_version: int | None,
+                  crash: bool) -> DispatchStatus:
+    launcher = launchers.get(f"adapter:{op.payload.get('adapter', '')}")
+    if launcher is None:
+        return _status_of(dsn, op.operation_id, decision="awaiting-launcher")
+    advanced = _advance(dsn, op.operation_id, launcher.launcher_id, "",
+                        ownership_generation, grant_version)
+    if advanced.code == ResultCode.ALREADY_APPLIED:
+        return _status_of(dsn, op.operation_id)
+    if advanced.code != ResultCode.APPLIED:
+        return _refusal(dsn, op.operation_id, advanced)
+    generation = int((advanced.data or {}).get("dispatch_generation", 0))
+    held = _revalidate(dsn, op.operation_id, launcher.launcher_id, "",
+                       ownership_generation, grant_version, generation)
+    if held is not None:
+        return held
+    if launcher.prior_send(op.operation_id):
+        _deliver(dsn, f"dispatch:{op.operation_id}")
+        return _status_of(dsn, op.operation_id, decision="needs-reconciliation")
+    try:
+        outcome = launcher.dispatch(op.model_copy(update={"dispatch_generation": generation}))
+    except Exception as exc:
+        return _status_of(dsn, op.operation_id, decision=f"launcher-error-{exc}")
+    if not outcome.sent:
+        return _status_of(dsn, op.operation_id,
+                          decision=outcome.refused_reason or "launcher-refused")
+    if crash:
+        return _status_of(dsn, op.operation_id, sent_this_call=True)
+    return _finish_send(dsn, op.operation_id, outcome, generation)
 
 
 def _run_inline(dsn: str, row: dict, op: BrokerOp, launchers: dict,
@@ -531,7 +578,8 @@ def _finish_send(dsn: str, operation_id: str, outcome: LaunchOutcome,
 
 
 def request_cancel(dsn: str, operation_id: str,
-                   launchers: dict[str, Any] | None = None) -> CommandResult:
+                   launchers: dict[str, Any] | None = None,
+                   gateway: Any | None = None) -> CommandResult:
     result = store.request_cancellation(
         dsn, Command(request_id=f"broker-cancel-{operation_id}",
                      payload={"operation_id": operation_id}))
@@ -546,6 +594,12 @@ def request_cancel(dsn: str, operation_id: str,
             continue
     if stopped:
         result.data["workers_stopped"] = stopped
+    if gateway is not None:
+        try:
+            if gateway.cancel(operation_id):
+                result.data["gateway_cancelled"] = True
+        except Exception:
+            pass
     return result
 
 
@@ -1046,6 +1100,7 @@ def attempt_workflow(dsn: str, attempt_id: str, ownership_generation: int,
     from . import run as runmod
 
     comp = runmod.Composition.model_validate(composition)
+    runmod.validate_composition(comp)
     wfid = f"attempt:{attempt_id}:gen{ownership_generation}"
     for round_no in range(max(int(max_rounds), 1)):
         snap = DBOS.run_step(None, wf_snapshot, dsn, attempt_id)

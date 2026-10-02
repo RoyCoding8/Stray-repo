@@ -326,7 +326,7 @@ def test_overview_uses_bounded_projection(migrated_db, monkeypatch):
     assert len(view["attempts"]) <= 50
     assert set(view["next_decisions"]) == {a["id"] for a in view["attempts"]}
     assert counts["connects"] <= 6
-    assert counts["executes"] <= 12
+    assert counts["executes"] <= 18
 
 
 def test_overview_query_cost_independent_of_history(migrated_db, monkeypatch):

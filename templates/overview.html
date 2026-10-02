@@ -13,6 +13,9 @@
 {% for o in view.unresolved_operations %}<tr><td><a href="/operations/{{ o.id }}">{{ o.id }}</a></td><td>{{ o.dispatch_state }}</td><td>{{ o.reconcile_state }}</td></tr>{% endfor %}</table>
 <h2>due deadlines</h2>
 <ul>{% for a in view.due %}<li>{{ a.id }} due {{ a.deadline }}</li>{% endfor %}</ul>
+<h2>decision packets</h2>
+<table><tr><th>packet</th><th>decision</th><th>outcome</th><th>digest</th><th>gaps</th><th>next action</th></tr>
+{% for p in view.packets %}<tr><td>{{ p.packet_id }}</td><td>{{ p.decision_kind }}: {{ p.purpose }}</td><td>{{ p.outcome }}</td><td>{{ p.rendered_digest }}</td><td>{{ p.gaps | length }}</td><td>{{ p.next_action }}</td></tr>{% endfor %}</table>
 <h2>commands</h2>
 <form method="post" action="/commands/admit"><input name="request_id" placeholder="request id"><input name="investigation_id" placeholder="investigation"><input name="objective" placeholder="objective"><button>admit</button></form>
 <form method="post" action="/commands/pause"><input name="request_id" placeholder="request id"><input name="attempt_id" placeholder="attempt"><button>pause</button></form>

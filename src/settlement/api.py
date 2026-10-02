@@ -79,15 +79,19 @@ def _rows(dsn: str, sql: str, args: tuple = ()) -> list[dict]:
 
 
 def overview_data(dsn: str) -> dict[str, Any]:
+    from . import context as _context
+
     snap = agenda.agenda_snapshot(dsn)
     nexts = agenda.next_decisions_for(dsn, [a["id"] for a in snap["attempts"]])
     control = store.get_control(dsn)
+    packets = _context.recent_packets(dsn)
     return {"obligations": snap["obligations"], "attempts": snap["attempts"],
             "attempt_total": snap["attempt_total"], "attempt_limit": snap["attempt_limit"],
             "unresolved_operations": snap["unresolved_operations"], "capacity": snap["capacity"],
             "due": snap["due"], "next_decisions": nexts,
             "authority_version": control.get("authority_version"),
-            "evidence_epoch": control.get("evidence_epoch")}
+            "evidence_epoch": control.get("evidence_epoch"),
+            "packets": packets}
 
 
 def investigation_data(dsn: str, iid: str) -> dict[str, Any] | None:
@@ -369,7 +373,8 @@ _COMMANDS = ("admit", "pause", "resume", "cancel", "quarantine", "amend-allocati
 
 
 def run_command(dsn: str, action: str, form: dict[str, Any],
-                launchers: dict[str, Any] | None = None) -> dict[str, Any]:
+                launchers: dict[str, Any] | None = None,
+                gateway: Any | None = None) -> dict[str, Any]:
     request_id = str(form.get("request_id") or
                      f"ui-{action}-{os.urandom(4).hex()}")
     expected = form.get("expected_revision")
@@ -386,7 +391,7 @@ def run_command(dsn: str, action: str, form: dict[str, Any],
             result = store.resume_attempt(dsn, cmd)
         elif action == "cancel":
             result = broker.request_cancel(dsn, cmd.payload.get("operation_id", ""),
-                                           launchers or {})
+                                           launchers or {}, gateway)
         elif action == "quarantine":
             result = steward.quarantine_subject(dsn, cmd)
         elif action == "amend-allocation":
@@ -506,7 +511,8 @@ def create_app(dsn: str, gateway: Any | None = None, token: str | None = None,
                                        "request_id": "", "note": "", "data": {}}},
                            status=400)
         return _render("result.html",
-                       {"result": run_command(state["dsn"], action, form, state["launchers"])})
+                       {"result": run_command(state["dsn"], action, form, state["launchers"],
+                                                  state["gateway"])})
 
     return app
 

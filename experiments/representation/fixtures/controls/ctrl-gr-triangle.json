@@ -1,0 +1,29 @@
+{
+  "edges": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      2,
+      3
+    ]
+  ],
+  "family": "graph",
+  "seed": 3101,
+  "task_id": "ctrl-gr-triangle",
+  "vertices": [
+    0,
+    1,
+    2,
+    3
+  ]
+}

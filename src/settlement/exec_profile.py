@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -121,6 +122,29 @@ def _limit_resources(cpu_seconds: int | None, memory_bytes: int | None) -> None:
         resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
 
 
+def _child_session(cpu_seconds: int | None, memory_bytes: int | None) -> None:
+    _limit_resources(cpu_seconds, memory_bytes)
+    os.setsid()
+
+
+def _kill_group(pid: int, grace_ms: int) -> None:
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError, OSError):
+        return
+    deadline = time.monotonic() + max(int(grace_ms), 0) / 1000
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(pid, 0)
+        except (ProcessLookupError, PermissionError, OSError):
+            return
+        time.sleep(0.05)
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError, OSError):
+        pass
+
+
 def run_local_process(
     argv: list[str],
     timeout_ms: int = 30_000,
@@ -129,6 +153,7 @@ def run_local_process(
     max_output_bytes: int = 1_048_576,
     extra_env: dict[str, str] | None = None,
     cwd: str | None = None,
+    grace_ms: int = 2000,
 ) -> ExecResult:
     started = time.monotonic()
     try:
@@ -138,7 +163,7 @@ def run_local_process(
             stderr=subprocess.PIPE,
             env=scrub_env(extra_env),
             cwd=cwd,
-            preexec_fn=lambda: _limit_resources(cpu_seconds, memory_bytes),
+            preexec_fn=lambda: _child_session(cpu_seconds, memory_bytes),
         )
     except OSError as exc:
         return ExecResult(
@@ -158,10 +183,7 @@ def run_local_process(
             raw_out, raw_err = proc.communicate(timeout=timeout_ms / 1000)
             timed_out = False
         except subprocess.TimeoutExpired:
-            try:
-                proc.kill()
-            except OSError:
-                pass
+            _kill_group(proc.pid, grace_ms)
             raw_out, raw_err = proc.communicate()
             timed_out = True
         out, out_truncated = _cap(raw_out or b"", max_output_bytes)
@@ -172,10 +194,7 @@ def run_local_process(
             proc.wait(timeout=timeout_ms / 1000)
             timed_out = False
         except subprocess.TimeoutExpired:
-            try:
-                proc.kill()
-            except OSError:
-                pass
+            _kill_group(proc.pid, grace_ms)
             proc.wait()
             timed_out = True
         out, out_truncated, err, err_truncated = _finish_pumps(
@@ -339,6 +358,83 @@ def spawn_supervisor(docker: str, name: str, wait_s: float,
         return subprocess.Popen(
             [sys.executable, "-c", _SUPERVISOR_SCRIPT,
              docker, name, repr(float(wait_s)), str(grace_s)],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError:
+        return None
+
+
+def proc_starttime(pid: int) -> str | None:
+    try:
+        with open(f"/proc/{int(pid)}/stat") as handle:
+            fields = handle.read().rsplit(")", 1)[1].split()
+    except (ValueError, OSError):
+        return None
+    return fields[19] if len(fields) > 19 else None
+
+
+_LOCAL_SUPERVISOR_SCRIPT = (
+    "import os,signal,sys,time\n"
+    "pid=int(sys.argv[1])\n"
+    "pgid=int(sys.argv[2])\n"
+    "start=sys.argv[3]\n"
+    "done=sys.argv[4]\n"
+    "wait=float(sys.argv[5])\n"
+    "grace=float(sys.argv[6])\n"
+    "def _settled():\n"
+    "    try:\n"
+    "        return os.path.exists(done)\n"
+    "    except OSError:\n"
+    "        return False\n"
+    "def _alive():\n"
+    "    try:\n"
+    "        with open('/proc/%d/stat' % pid) as h:\n"
+    "            cur=h.read().rsplit(')',1)[1].split()\n"
+    "    except (ValueError,OSError):\n"
+    "        return False\n"
+    "    if len(cur) <= 19 or (start != 'none' and cur[19] != start):\n"
+    "        return False\n"
+    "    try:\n"
+    "        os.kill(pid,0)\n"
+    "    except OSError:\n"
+    "        return False\n"
+    "    return True\n"
+    "deadline=time.monotonic()+max(wait,0.0)\n"
+    "while time.monotonic() < deadline:\n"
+    "    if _settled() or not _alive():\n"
+    "        sys.exit(0)\n"
+    "    time.sleep(min(0.2,max(deadline-time.monotonic(),0.0)))\n"
+    "if _settled() or not _alive():\n"
+    "    sys.exit(0)\n"
+    "try:\n"
+    "    os.killpg(pgid,signal.SIGTERM)\n"
+    "except OSError:\n"
+    "    pass\n"
+    "quiet=time.monotonic()+max(grace,0.0)\n"
+    "while time.monotonic() < quiet:\n"
+    "    if _settled() or not _alive():\n"
+    "        sys.exit(0)\n"
+    "    time.sleep(min(0.2,max(quiet-time.monotonic(),0.0)))\n"
+    "if _settled() or not _alive():\n"
+    "    sys.exit(0)\n"
+    "try:\n"
+    "    os.killpg(pgid,signal.SIGKILL)\n"
+    "except OSError:\n"
+    "    pass\n"
+)
+
+
+def spawn_deadline_supervisor(pid: int, pgid: int, starttime: str | None,
+                              done_file: str, wait_s: float,
+                              grace_s: float = 1.0) -> Any:
+    try:
+        return subprocess.Popen(
+            [sys.executable, "-c", _LOCAL_SUPERVISOR_SCRIPT,
+             str(int(pid)), str(int(pgid)), starttime or "none",
+             str(done_file), repr(float(wait_s)), repr(float(grace_s))],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

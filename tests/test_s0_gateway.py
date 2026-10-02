@@ -67,6 +67,8 @@ class StubHandler(BaseHTTPRequestHandler):
             return self.wfile.write(raw)
         if state.mode == "empty_choices":
             return self._send(200, {"usage": {"prompt_tokens": 1, "completion_tokens": 1}})
+        if self.path == "/responses":
+            return self._send_responses(body, state)
         request = json.loads(body)
         if "messages" not in request or "model" not in request:
             return self._send(400, {"error": "bad request"})
@@ -77,6 +79,36 @@ class StubHandler(BaseHTTPRequestHandler):
                 "model": "stub-model",
                 "usage": {"prompt_tokens": 7, "completion_tokens": 5},
             },
+        )
+
+
+    def _send_responses(self, body, state):
+        request = json.loads(body)
+        if "input" not in request or "model" not in request:
+            return self._send(400, {"error": "bad request"})
+        if state.mode == "responses-failed":
+            return self._send(
+                200,
+                {"status": "failed", "error": {"message": "provider exploded"},
+                 "output": [], "usage": {}},
+            )
+        if state.mode == "responses-truncated":
+            return self._send(
+                200,
+                {"status": "incomplete", "incomplete_details": {"reason": "max_output_tokens"},
+                 "output": [{"type": "message",
+                             "content": [{"type": "output_text", "text": "stub-resp-part"}]}],
+                 "model": "stub-model",
+                 "usage": {"input_tokens": 7, "output_tokens": 5}},
+            )
+        return self._send(
+            200,
+            {"status": "completed",
+             "output": [{"type": "reasoning", "encrypted_content": "zzz"},
+                        {"type": "message",
+                         "content": [{"type": "output_text", "text": "stub-resp"}]}],
+             "model": "stub-model",
+             "usage": {"input_tokens": 7, "output_tokens": 5}},
         )
 
 
@@ -242,3 +274,92 @@ def test_fake_adapter_never_reports_live():
     result = fake.infer(_request())
     assert isinstance(result, ModelResponse)
     assert result.model_meta.get("simulated") is True
+
+
+@pytest.fixture()
+def responses_stub():
+    from settlement import gateway_http
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), StubHandler)
+    server.state = StubState()
+    server.state.mode = "ok"
+    server.state.posts = 0
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    adapter = gateway_http.HttpGatewayAdapter(
+        endpoint=f"http://127.0.0.1:{server.server_port}", api_key="test-key", api="responses")
+    yield adapter, server.state
+    server.shutdown()
+    thread.join()
+
+
+def test_responses_api_decodes_output_text_and_usage(responses_stub):
+    adapter, _ = responses_stub
+    result = adapter.infer(_request())
+    assert isinstance(result, ModelResponse)
+    assert result.text == "stub-resp"
+    assert (result.usage.input_tokens, result.usage.output_tokens) == (7, 5)
+    assert result.stop_reason == "stop"
+
+
+def test_responses_api_truncation_maps_to_length(responses_stub):
+    adapter, state = responses_stub
+    state.mode = "responses-truncated"
+    result = adapter.infer(_request())
+    assert isinstance(result, ModelResponse)
+    assert result.text == "stub-resp-part"
+    assert result.stop_reason == "length"
+
+
+def test_responses_api_failure_is_protocol_error(responses_stub):
+    adapter, state = responses_stub
+    state.mode = "responses-failed"
+    result = adapter.infer(_request())
+    assert isinstance(result, GatewayError)
+    assert result.kind == GatewayErrorKind.PROTOCOL
+    assert result.retryable is False
+
+
+def test_unknown_gateway_api_refused():
+    from settlement import gateway_http
+
+    try:
+        gateway_http.HttpGatewayAdapter(endpoint="http://127.0.0.1:1", api="soap")
+    except ValueError:
+        return
+    raise AssertionError("unknown gateway api was not refused")
+
+
+def test_gateway_timeout_overrides_default_without_env(monkeypatch):
+    from settlement import gateway_http
+
+    for name in ("SETTLEMENT_GATEWAY_TIMEOUT_CONNECT_MS",
+                 "SETTLEMENT_GATEWAY_TIMEOUT_READ_MS",
+                 "SETTLEMENT_GATEWAY_TIMEOUT_TOTAL_MS"):
+        monkeypatch.delenv(name, raising=False)
+    assert gateway_http.gateway_timeout_overrides() == {
+        "timeout_connect_ms": 5_000, "timeout_read_ms": 60_000,
+        "timeout_total_ms": 300_000}
+
+
+def test_gateway_timeout_overrides_honor_env(monkeypatch):
+    from settlement import gateway_http
+
+    monkeypatch.setenv("SETTLEMENT_GATEWAY_TIMEOUT_READ_MS", "300000")
+    monkeypatch.setenv("SETTLEMENT_GATEWAY_TIMEOUT_TOTAL_MS", "1200000")
+    overrides = gateway_http.gateway_timeout_overrides()
+    assert overrides["timeout_read_ms"] == 300_000
+    assert overrides["timeout_total_ms"] == 1_200_000
+    assert overrides["timeout_connect_ms"] == 5_000
+
+
+def test_gateway_timeout_overrides_refuse_bad_values(monkeypatch):
+    from settlement import gateway_http
+
+    for bad in ("nope", "0", "-5"):
+        monkeypatch.setenv("SETTLEMENT_GATEWAY_TIMEOUT_READ_MS", bad)
+        try:
+            gateway_http.gateway_timeout_overrides()
+        except ValueError:
+            continue
+        raise AssertionError(f"bad timeout {bad!r} was not refused")

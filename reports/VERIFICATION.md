@@ -141,6 +141,11 @@ the DSN database name to contain `settlement_t1broker`; they create and use
 
 - Process-group kill timing (`test_launchers.py` timeout case): 2 sightings total
   across the program under parallel load; passes alone and in full-suite reruns.
+- 3rd sighting: `test_timeout_kills_whole_process_group` failed once in the
+  DEVELOPMENT-02-LIVE full suite (`8221d35`, 1 failed / 516 passed in
+  743.72s); green in isolation (1.42s) and file-level (8 passed) on the
+  same revision and DB. `pgrep -f "sleep 30"` raced the kill grace window
+  under full-suite load. File untouched by both D2A lanes. No open defect.
 - T6 reported one full-suite-only failure it could not reproduce; same signature
   family (timing under load), no open defect.
 - `test_stop_uses_kill_fallback_and_clears_tracking`: failed once in the
@@ -175,6 +180,124 @@ in 6.71s, slowest `test_supervisor_terminates_container_after_broker_death`
 4.78s (real process supervision). Follow-up: shard the suite across
 disposable DBs so truncate fixtures parallelize.
 
+## Development-02 episode (tested code revision `56f7bba`)
+
+Same full-suite command and environment as Development-01.
+
+Result: **509 passed, 0 failed** in 686.79s (explicit terminal summary).
+First run on `8648d8e` was 508 passed, 1 failed: the new operator packet
+region pushed `test_overview_uses_bounded_projection` from 6 to 7 DB
+connections. Fixed in `56f7bba` by folding the table check into the single
+packet query (`recent_packets` returns `[]` on a missing table); the exact
+red test plus packet/UI neighbors re-run green (33 passed), then the full
+suite re-ran green end to end. Targeted greens on the final tree:
+`test_dev02_episode.py` 13 passed, `test_dev02_context.py` 12 passed,
+`test_dev01_episode.py` 12 passed, `test_dev01_ops.py` 9 passed (incl. the
+full fixture CLI end to end asserting the fresh-process use phase from
+receipts). The four characterization probes
+(`test_development_01_readiness.py`) were retired to
+`reviews/probes/historical_test_development_01_readiness.py` with
+per-probe correspondence after the repaired contracts made three of them
+fail (stale harnesses) and the fourth's property moved into the maintained
+suite.
+
+Still unverified: live finite-panel comparison with held-out groups, live
+model conditioning, real runsc containment, PostgreSQL 18.
+disposable DBs so truncate fixtures parallelize.
+
 Still unverified: live model run (no endpoint/key/grant in this
 environment), empirical learning comparison, real runsc containment,
 PostgreSQL 18.
+
+## DEVELOPMENT-02-LIVE integration (tested code revision `8221d35`)
+
+Merges L-EP (`5867da6`: D2A-001 file-ABI constructor + envelope policy,
+D2A-002 collect-claim linkage, D2A-003 disposition-gated use, cost
+union) and L-CTX (`556467f`: D2A-004 inference-only binding +
+input digest, D2A-005 nothing-stripped budget staging) at `3cb7346`,
+plus `8221d35` migrating 4 stale limitation-probes to fixed-behavior
+gates. Lane detail in `reports/workstreams/d02live-ep.md`,
+`d02live-ctx.md`; merge record in `reports/workstreams/
+d02live-integration.md` (count reconciliation, overlap hunk, probe
+correspondence).
+
+Full-suite command (real PostgreSQL 16, real subprocesses,
+fake/simulated models only; URL-form DSN):
+
+```
+SETTLEMENT_TEST_DSN="postgresql://ubuntu@/settlement_t1d02live?host=/var/run/postgresql" \
+  uv run pytest tests/ -q -p no:cacheprovider
+```
+
+Result: **1 failed, 516 passed in 743.72s** (517 collected = 512 L-EP
++ 5 L-CTX; per-file test counts prove zero add/remove/rename in
+pre-existing files, +25 new-file defs). Acceptance probes separately:
+**6 passed** (mock-only). The single failure is the known
+process-group-kill load flake (3rd sighting above; green in isolation
+and file-level on the same revision). `ruff` not installed in the
+venv — could not run (no CI gate).
+
+Still unverified: live finite-panel comparison, provider smoke, real
+runsc containment, PG18, held-out transfer use. No live inference
+claimed anywhere; recorded live-pilot bytes are fixed test vectors.
+
+## ENGINEERING-REVIEW audit (tested code revision `46427f4` + template fix; this section committed on top without code changes)
+
+Full-suite command (real PostgreSQL 16, real subprocesses,
+fake/simulated models only; host-param URL DSN — keyword `dbname=` DSN
+breaks the pre-existing `_swap_db` urlunsplit fixture and SQLAlchemy
+sibling-DB paths in `test_broker_dbos.py`, `test_r02_authority.py`,
+`test_r03_flow.py`, `test_r01_recovery.py`; environmental, identical on
+base, not code):
+
+```
+SETTLEMENT_TEST_DSN="postgresql://localhost/settlement_fullsuite?host=/var/run/postgresql" \
+  .venv/bin/python -m pytest tests/ -q -p no:cacheprovider -rfE --tb=short
+```
+
+Result: **579 passed, 0 failed, 0 errors in 820.86s** (13:40). An
+earlier run under keyword DSN showed 2 failed + 8 errors, every one
+reproduced as DSN-form environmental and green in isolation under the
+correct DSN; no code fix needed. Per-lane gates rerun post-merge by the
+coordinator on scratch DBs (dropped after): PROV 33, INV-A 77+17,
+INV-C 85, INV-B 24+145+3, UI wire-up 7 (new test red-checked).
+
+Still unverified: live finite-panel comparison, provider smoke
+(zero releases; selected-method transfer unexercised), real runsc
+containment (shim only), PG18. Responses-path billing semantics
+deliberately unchanged (ENG-INVB-10: no live billing oracle to validate
+against). No live inference claimed; recorded live-pilot bytes are fixed
+test vectors.
+
+## Final integrated suite (closure source, after CLOSE-1/2 + coordinator fixes)
+
+Same command and DSN form as above, solo run on a quiet host, log saved.
+Result: **590 passed, 0 failed, 0 errors in 838.45s** (13:58). The 11
+tests over the earlier 579 are the CLOSE-1 regressions, the cancel-forward
+regression and the read-timeout mechanism test. No reruns; no flakes.
+
+## Closure live baseline smoke (recorded run on repaired tree `35c3fef`, clean)
+
+One bounded run, panel-triangular, local-process uncontained profile,
+finite grant, responses API via local gateway. Outcome: success —
+solver ok, grade 3/3 passed, 2 unique operations, reserved == settled per
+operation (model 8344, grade 111), allocation consumed 0 → 8455,
+settled sum == ledger sum == 8455, reconciled. Bundle:
+`reports/evidence/eng-close2/` (smoke_close2.json, reconciliation.json,
+PROVENANCE.md, NOTE-historical-smoke.md, run_smoke.py,
+check_reconcile.py). Historical `eng-solv/smoke_result.json` preserved
+untouched; its 8344/111/111/8455 lane-state reading is annotated, not
+recomputed. No live inference beyond this run; no campaign; protected
+tasks untouched. This smoke does not establish acquired-method benefit,
+held-out transfer, or provider monetary charges.
+
+## Agenda 01 (branch `codex/implementation-agenda-01`)
+
+Full suite **653 passed, 0 failed** on real PostgreSQL 16
+(`SETTLEMENT_TEST_DSN="postgresql://ubuntu@/agenda01_exp?host=/var/run/postgresql" .venv/bin/python -m pytest tests/ -q`;
+agenda slice 63: state 14, policy 27, experiment 18, demo 4). Frozen
+experiment: manifest `a52f3ed7`, 128/128 trajectories complete, checker
+`ok=True`, 0 violations; verdict and pair table in `reports/AGENDA-01.md`,
+traces in `experiments/agenda01/results/`. Post-freeze touchdown: one
+freeze-test cleanup fix, re-verified standalone (experiment file 18/18) with
+the frozen manifest byte-intact.

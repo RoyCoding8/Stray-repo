@@ -1,0 +1,52 @@
+{
+  "family": "software",
+  "fault": "stale-read",
+  "ops": [
+    {
+      "id": "o0",
+      "key": "a",
+      "op": "get"
+    },
+    {
+      "op": "clear"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v1"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+    },
+    {
+      "id": "o1",
+      "key": "c",
+      "op": "get"
+    },
+    {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+    },
+    {
+      "id": "o2",
+      "key": "c",
+      "op": "get"
+    }
+  ],
+  "seed": 1301,
+  "task_id": "sw-eva-00",
+  "witness": {
+    "faulty": {
+      "type": "str",
+      "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+      "type": "str",
+      "value": "v3"
+    }
+  }
+}

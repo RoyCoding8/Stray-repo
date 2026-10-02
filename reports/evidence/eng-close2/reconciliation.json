@@ -1,0 +1,50 @@
+{
+  "unique_operations": [
+    "grade-close2-use-panel-triangular",
+    "model-close2-use-panel-triangular"
+  ],
+  "unique_operation_count": 2,
+  "per_operation": {
+    "grade-close2-use-panel-triangular": {
+      "reserved": 111,
+      "settled": 111,
+      "unresolved": 0,
+      "parts_sum_to_reserved": true,
+      "reservation_rows": [
+        {
+          "id": "res-grade-close2-use-panel-triangular",
+          "amount": 111,
+          "state": "settled",
+          "allocation_id": "close2-alloc"
+        }
+      ]
+    },
+    "model-close2-use-panel-triangular": {
+      "reserved": 8344,
+      "settled": 8344,
+      "unresolved": 0,
+      "parts_sum_to_reserved": true,
+      "reservation_rows": [
+        {
+          "id": "res-model-close2-use-panel-triangular",
+          "amount": 8344,
+          "state": "settled",
+          "allocation_id": "close2-alloc"
+        }
+      ]
+    }
+  },
+  "consumed_before": 0,
+  "consumed_after": 8455,
+  "consumed_delta": 8455,
+  "settled_sum": 8455,
+  "expenditure_ledger_sum": 8455,
+  "reconciled": true,
+  "historical_lane_state": {
+    "model_reserved": 8344,
+    "grade_reserved": 111,
+    "per_op_settled_sum": 111,
+    "consumed_delta": 8455,
+    "arithmetic": "8455 == 8344 + 111; per-op settled sum 111 != 8455 because the earlier lane state debited the released model reservation to consumed without a settled charge, while its per-operation record read settled 0 / unresolved 0. Preserved as observed; not recomputed."
+  }
+}

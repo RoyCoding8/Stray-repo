@@ -494,3 +494,139 @@ def test_cancelled_inference_stays_distinct_from_timeout():
     result = adapter.infer(request)
     assert result.kind == GatewayErrorKind.CANCELLED
     assert adapter.cancel_status("op-cancel") == "confirmed"
+
+
+def test_model_token_budget_defaults_without_env(monkeypatch):
+    from settlement import experiment
+
+    monkeypatch.delenv("SETTLEMENT_MODEL_TOKENS", raising=False)
+    assert experiment.model_token_budget() == experiment.MODEL_TOKENS == 512
+
+
+def test_model_token_budget_honors_env_override(monkeypatch):
+    from settlement import experiment
+
+    monkeypatch.setenv("SETTLEMENT_MODEL_TOKENS", "8192")
+    assert experiment.model_token_budget() == 8192
+
+
+def test_model_token_budget_refuses_bad_values(monkeypatch):
+    from settlement import experiment
+    from settlement.common import SettlementError
+
+    for bad in ("nope", "0", "-5"):
+        monkeypatch.setenv("SETTLEMENT_MODEL_TOKENS", bad)
+        try:
+            experiment.model_token_budget()
+        except SettlementError:
+            continue
+        raise AssertionError(f"bad token budget {bad!r} was not refused")
+
+
+def test_packet_budget_defaults_without_env(monkeypatch):
+    from settlement import development
+
+    monkeypatch.delenv("SETTLEMENT_PACKET_BUDGET_CHARS", raising=False)
+    assert development.packet_budget() == {"input_chars": 24000, "output_reserve": 2000}
+
+
+def test_packet_budget_honors_env_override(monkeypatch):
+    from settlement import development
+
+    monkeypatch.setenv("SETTLEMENT_PACKET_BUDGET_CHARS", "65536")
+    assert development.packet_budget() == {"input_chars": 65536, "output_reserve": 2000}
+
+
+def test_packet_budget_refuses_bad_values(monkeypatch):
+    from settlement import development
+    from settlement.common import SettlementError
+
+    for bad in ("nope", "0", "-100"):
+        monkeypatch.setenv("SETTLEMENT_PACKET_BUDGET_CHARS", bad)
+        try:
+            development.packet_budget()
+        except SettlementError:
+            continue
+        raise AssertionError(f"bad packet budget {bad!r} was not refused")
+
+
+def _accounting_cmd(payload):
+    from settlement.common import Command
+
+    _accounting_cmd.seq += 1
+    return Command(request_id=f"eng-acct-{_accounting_cmd.seq}", payload=payload)
+
+
+_accounting_cmd.seq = 0
+
+
+def _seed_unbilled_op(dsn):
+    from settlement import store
+
+    store.seed_allocation(
+        dsn, _accounting_cmd({"allocation_id": "eng-acct-a", "domain": "cpu",
+                              "authorized": 5000}))
+    store.prepare_operation(
+        dsn, _accounting_cmd({"operation_id": "eng-acct-unbilled",
+                              "allocation_id": "eng-acct-a",
+                              "reservation_id": "res-eng-acct-unbilled",
+                              "exposure": 1000, "operation": {"kind": "model"}}))
+    store.admit_receipt(
+        dsn, _accounting_cmd({"operation_id": "eng-acct-unbilled",
+                              "receipt_identity": "rc-eng-acct-unbilled",
+                              "content": {"text": "done", "usage": {
+                                  "input_tokens": 10, "output_tokens": 20,
+                                  "charge_units": 0, "billed": False}},
+                              "outcome": "success"}))
+
+
+def _seed_billed_op(dsn):
+    from settlement import store
+
+    store.seed_allocation(
+        dsn, _accounting_cmd({"allocation_id": "eng-acct-b", "domain": "cpu",
+                              "authorized": 5000}))
+    store.prepare_operation(
+        dsn, _accounting_cmd({"operation_id": "eng-acct-billed",
+                              "allocation_id": "eng-acct-b",
+                              "reservation_id": "res-eng-acct-billed",
+                              "exposure": 1000, "operation": {"kind": "model"}}))
+    store.admit_receipt(
+        dsn, _accounting_cmd({"operation_id": "eng-acct-billed",
+                              "receipt_identity": "rc-eng-acct-billed",
+                              "content": {"text": "done", "usage": {
+                                  "input_tokens": 5, "output_tokens": 7,
+                                  "charge_units": 42, "billed": True}},
+                              "outcome": "success", "actual_cost": 42}))
+
+
+def test_unbilled_settlement_reports_conservative_debit(migrated_db):
+    from settlement import experiment, store
+
+    dsn = migrated_db
+    _seed_unbilled_op(dsn)
+    status = store.allocation_status(dsn, "eng-acct-a")
+    assert (status["consumed"], status["reserved"]) == (1000, 0)
+    entry = experiment._op_accounting(dsn, "eng-acct-unbilled")
+    assert entry["reserved"] == 1000
+    assert entry["settled"] == status["consumed"] == 1000
+    assert entry["unresolved"] == 0
+    assert entry["billed"] is False
+    assert entry["provider_charge_units"] is None
+    assert entry["tokens"] == {"input": 10, "output": 20}
+
+
+def test_billed_settlement_reports_verified_charge(migrated_db):
+    from settlement import experiment, store
+
+    dsn = migrated_db
+    _seed_billed_op(dsn)
+    status = store.allocation_status(dsn, "eng-acct-b")
+    assert (status["consumed"], status["reserved"]) == (42, 0)
+    entry = experiment._op_accounting(dsn, "eng-acct-billed")
+    assert entry["reserved"] == 1000
+    assert entry["settled"] == status["consumed"] == 42
+    assert entry["unresolved"] == 0
+    assert entry["billed"] is True
+    assert entry["provider_charge_units"] == 42
+    assert entry["tokens"] == {"input": 5, "output": 7}
