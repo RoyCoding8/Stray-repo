@@ -197,7 +197,9 @@ def run_simulated(argv: list[str]) -> ExecResult:
 def dispatch(profile: str, argv: list[str], **kwargs: Any) -> ExecResult:
     if profile == GVISOR:
         probe = probe_gvisor()
-        raise IncompatibleVersion(probe.reason)
+        if not probe.available:
+            raise IncompatibleVersion(probe.reason)
+        raise IncompatibleVersion("gvisor runtime present but no admitted launcher is implemented")
     if profile == LOCAL_PROCESS:
         return run_local_process(argv, **kwargs)
     if profile == SIMULATED:

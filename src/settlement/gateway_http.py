@@ -227,10 +227,20 @@ class HttpGatewayAdapter(GatewayAdapter):
                 GatewayErrorKind.PROTOCOL, "gateway response has no message content", False,
                 operation_id,
             )
-        usage_raw = body.get("usage") or {}
+        usage_raw = body.get("usage")
+        if not isinstance(usage_raw, dict):
+            usage_raw = {}
+        try:
+            input_tokens = int(usage_raw.get("prompt_tokens", 0))
+            output_tokens = int(usage_raw.get("completion_tokens", 0))
+        except (TypeError, ValueError):
+            return _error(
+                GatewayErrorKind.PROTOCOL, "gateway returned non-numeric usage", False,
+                operation_id,
+            )
         usage = Usage(
-            input_tokens=int(usage_raw.get("prompt_tokens", 0)),
-            output_tokens=int(usage_raw.get("completion_tokens", 0)),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
             provider_enforced_ceiling=False,
         )
         stop = first.get("finish_reason", "stop") if isinstance(first, dict) else "stop"
@@ -254,4 +264,6 @@ class HttpGatewayAdapter(GatewayAdapter):
     def cancel_status(self, operation_id: str) -> str:
         if operation_id in self._cancel_confirmed:
             return _CANCELLATION_CONFIRMED
-        return _CANCELLATION_REQUESTED
+        if operation_id in self._cancelled:
+            return _CANCELLATION_REQUESTED
+        return "unknown"
