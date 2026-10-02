@@ -190,7 +190,7 @@ def _take_reservation(cur, allocation_id: str, reservation_id: str, amount: int,
     )
 
 
-def _settle_amount(cur, reservation_id: str, outcome: str) -> tuple[bool, str]:
+def _settle_amount(cur, reservation_id: str, outcome: str, actual: Any = None) -> tuple[bool, str, int]:
     cur.execute("SELECT * FROM reservations WHERE id = %s", (reservation_id,))
     res = cur.fetchone()
     if res is None:
@@ -198,26 +198,49 @@ def _settle_amount(cur, reservation_id: str, outcome: str) -> tuple[bool, str]:
     if outcome not in _OUTCOMES:
         raise SettlementError(f"unknown outcome {outcome}")
     if res["state"] == "settled":
-        return False, "already settled"
+        return False, "already settled", 0
     if res["state"] == "released":
         raise SettlementError(f"reservation {reservation_id} was released")
     if outcome == "unknown":
         if res["state"] != "uncertain":
             cur.execute("UPDATE reservations SET state = 'uncertain' WHERE id = %s", (reservation_id,))
-        return False, "uncertain exposure retained"
+        return False, "uncertain exposure retained", 0
+    amount = int(res["amount"])
+    if actual is None:
+        consumed = amount
+    else:
+        try:
+            consumed = int(actual)
+        except (TypeError, ValueError):
+            raise SettlementError(f"actual cost {actual!r} is not an integer")
+        if consumed < 0 or consumed > amount:
+            raise SettlementError(f"actual cost {actual} outside reserved {amount}")
     cur.execute(
         "UPDATE allocations SET reserved = reserved - %s, consumed = consumed + %s WHERE id = %s",
-        (int(res["amount"]), int(res["amount"]), res["allocation_id"]),
+        (amount, consumed, res["allocation_id"]),
     )
     cur.execute("UPDATE reservations SET state = 'settled' WHERE id = %s", (reservation_id,))
-    return True, "settled"
+    return True, "settled", consumed
 
 
 def get_control(dsn: str) -> dict:
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("INSERT INTO control (id) VALUES (1) ON CONFLICT DO NOTHING")
             cur.execute("SELECT * FROM control WHERE id = 1")
+            conn.commit()
             return dict(cur.fetchone())
+
+
+def allocation_status(dsn: str, allocation_id: str) -> dict:
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM allocations WHERE id = %s", (allocation_id,))
+            row = cur.fetchone()
+            conn.commit()
+            if row is None:
+                raise SettlementError(f"unknown allocation {allocation_id}")
+            return {k: (dict(v) if isinstance(v, dict) else v) for k, v in dict(row).items()}
 
 
 def seed_grant(dsn: str, cmd: Command) -> CommandResult:
@@ -364,9 +387,12 @@ def reserve(dsn: str, cmd: Command) -> CommandResult:
 
 def settle_reservation(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
-        settled, detail = _settle_amount(cur, cmd.payload["reservation_id"], cmd.payload.get("outcome", "success"))
+        settled, detail, consumed = _settle_amount(
+            cur, cmd.payload["reservation_id"], cmd.payload.get("outcome", "success"),
+            cmd.payload.get("actual_cost"))
         code = ResultCode.APPLIED if settled else ResultCode.ALREADY_APPLIED
-        return (code, detail, {"reservation_id": cmd.payload["reservation_id"], "settled": settled},
+        data = {"reservation_id": cmd.payload["reservation_id"], "settled": settled, "consumed": consumed}
+        return (code, detail, data,
                 [("resources.settled", {"reservation_id": cmd.payload["reservation_id"], "settled": settled})], [])
     return transact(dsn, cmd, _fn)
 
@@ -659,7 +685,7 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
                     [("operation.receipted", {"operation_id": op["id"]})], [])
         settled = False
         if op["reservation_id"] is not None and outcome in ("success", "failure"):
-            settled, _ = _settle_amount(cur, op["reservation_id"], outcome)
+            settled, _, _ = _settle_amount(cur, op["reservation_id"], outcome, p.get("actual_cost"))
         elif op["reservation_id"] is not None:
             _settle_amount(cur, op["reservation_id"], "unknown")
         state = "observed" if outcome in ("success", "failure") else "unresolved"
