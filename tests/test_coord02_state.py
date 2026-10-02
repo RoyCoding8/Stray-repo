@@ -120,6 +120,10 @@ def _admit_model_op(dsn: str, operation_id: str, allocation_id: str,
                  "max_output_tokens": 16, "deadline_ms": 10_000},
         allocation_id=allocation_id, attempt_id=None)
     assert ensured.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+    broker.dispatch_operation(
+        dsn, operation_id, launchers={},
+        gateway=FakeGatewayAdapter(text="t-state"),
+        _crash_after_send=True)
     if usage is None:
         return
     admitted = broker.admit_launcher_receipt(

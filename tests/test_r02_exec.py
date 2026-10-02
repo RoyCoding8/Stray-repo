@@ -600,16 +600,16 @@ def _seed_billed_op(dsn):
                               "outcome": "success", "actual_cost": 42}))
 
 
-def test_unbilled_settlement_reports_conservative_debit(migrated_db):
+def test_unbilled_settlement_reports_measured_debit(migrated_db):
     from settlement import experiment, store
 
     dsn = migrated_db
     _seed_unbilled_op(dsn)
     status = store.allocation_status(dsn, "eng-acct-a")
-    assert (status["consumed"], status["reserved"]) == (1000, 0)
+    assert (status["consumed"], status["reserved"]) == (30, 0)
     entry = experiment._op_accounting(dsn, "eng-acct-unbilled")
     assert entry["reserved"] == 1000
-    assert entry["settled"] == status["consumed"] == 1000
+    assert entry["settled"] == status["consumed"] == 30
     assert entry["unresolved"] == 0
     assert entry["billed"] is False
     assert entry["provider_charge_units"] is None

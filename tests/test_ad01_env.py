@@ -7,20 +7,17 @@ PG tests; no model inference seam exists, so no doubles.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 FREEZE_ID = "ad01"
-
-
-def _digest(raw: bytes) -> str:
-    return hashlib.sha256(raw).hexdigest()
 
 
 def test_freeze_id_is_ad01():
@@ -472,3 +469,29 @@ def test_agency_surface_records_interventions():
     assert updated["charter"]["interventions"]["set_by"] == "human"
     blob = json.loads(json.dumps(updated))
     assert blob == updated
+
+
+def test_r_schedule_missing_task_raises_without_assert(monkeypatch):
+    import pytest
+    from experiments.ad01 import rotation
+    monkeypatch.setattr(
+        "experiments.ad01.worlds.world_membership",
+        lambda root: {"0": {"dev": {"software": ["ad01-w0-dev-sw-00"],
+                                    "graph": []}}})
+    with pytest.raises(ValueError, match="missing in world"):
+        rotation.r_schedule(0)
+
+
+def test_checker_reports_bad_domain_without_crash():
+    from experiments.ad01 import checker, worlds
+    record = {"record_id": "r", "world": 0, "arm": "I",
+              "task_id": "ad01-w0-within-sw-00", "domain": "bogus",
+              "freeze": worlds.FREEZE_ID,
+              "freeze_digest": checker.freeze_digest(worlds.FROZEN_DIR),
+              "verdict": "preserved", "initial_measure": 5,
+              "final_measure": 4, "normalized_reduction": 0.2,
+              "output": {},
+              "costs": {"tokens": 0, "witness_queries": 0,
+                        "sandbox_ops": 0}}
+    out = checker.verify_use_records([record], worlds.FROZEN_DIR)
+    assert "domain-mismatch r" in out["problems"]

@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from settlement import broker, store
-from settlement.common import Command, ResultCode
+from settlement.common import Command, ResultCode, SettlementError
 from settlement.gateway import GatewayError, GatewayErrorKind, ModelResponse, Usage
 
 from experiments.team01 import panel
@@ -28,6 +28,14 @@ def live_db():
     if not dsn:
         pytest.skip("SETTLEMENT_TEST_DSN is not configured")
     db.apply_migrations(dsn, ROOT / "migrations")
+    with db.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+                " AND tablename != 'schema_migrations'")
+            for row in cur.fetchall():
+                cur.execute(f'TRUNCATE TABLE "{row[0]}" CASCADE')
+        conn.commit()
     yield dsn
 
 
@@ -193,7 +201,11 @@ def test_continuity_resume_submits_remaining_child_once(live_db, tmp_path):
     assert record["resumed"] is True
     assert record["resubmitted"] == []
     with open(state_path.parent / "continuity.json") as handle:
-        _ = json.load(handle)
+        persisted = json.load(handle)
+    assert persisted["submitted"] == ["w1"]
+    assert persisted["pending"] == ["w2"]
+    assert persisted["plan_id"] == state["plan_id"]
+    assert persisted["task_id"] == "team01-t05"
     from settlement import db as _db
     from psycopg.rows import dict_row
 
@@ -253,7 +265,7 @@ def test_template_build_cap_refuses_third_attempt(live_db, tmp_path):
                                       allocation_id=alloc, tag=tag + "b")
     assert first["builds_attempted"] == ["build-2-bind-first-with-probe"]
     assert second["builds_attempted"] == ["build-2-bind-first-with-probe"]
-    with pytest.raises(Exception):
+    with pytest.raises(SettlementError, match="at most"):
         live.build_live_template(dsn, gateway, dev, tmp_path / "ev",
                                  allocation_id=alloc, tag=tag + "c")
 
@@ -265,7 +277,7 @@ def test_budget_ledger_stops_at_boundary():
                                 "eval_episodes": 48, "transfer_episodes": 24,
                                 "probe_calls": 2})
     ledger.spend("dev_episodes")
-    with pytest.raises(Exception):
+    with pytest.raises(SettlementError, match="envelope exhausted"):
         ledger.spend("dev_episodes")
     assert ledger.used("dev_episodes") == 1
     assert ledger.remaining("eval_episodes") == 48

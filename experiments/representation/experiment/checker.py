@@ -43,7 +43,8 @@ def _canon(value) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
 
-def load_manifest(name: str = "manifest.json") -> tuple:
+def load_manifest(name: str = "manifest.json",
+                  historical: bool = False) -> tuple:
     try:
         raw = (EXPERIMENT / name).read_bytes()
     except OSError:
@@ -62,6 +63,8 @@ def load_manifest(name: str = "manifest.json") -> tuple:
         if path in seen:
             problems.append("duplicate-file %s" % path)
         seen.add(path)
+        if historical:
+            continue
         target = ROOT / path
         if not target.is_file():
             problems.append("missing-file %s" % path)
@@ -107,11 +110,52 @@ def _check_costs(record: dict, where: str, problems: list) -> None:
                 problems.append("nonzero-model-tokens %s" % where)
 
 
+def _derived_pin(comp_id, pinned_comp):
+    if not isinstance(comp_id, str):
+        return None
+    best = None
+    for base in pinned_comp:
+        if not isinstance(base, str):
+            continue
+        if comp_id == base or comp_id.startswith(base + "-"):
+            if best is None or len(base) > len(best):
+                best = base
+    return pinned_comp.get(best) if best is not None else None
+
+
+def _check_campaign_binding(record: dict, comp: dict, where: str,
+                            problems: list) -> None:
+    comp_id = comp.get("composition_id")
+    parts = comp_id.split("-") if isinstance(comp_id, str) else []
+    stage = parts[2] if len(parts) >= 5 and parts[:2] == ["rpr", "C"] else ""
+    slot = parts[-1] if parts else ""
+    shaped = stage in ("source", "transfer") and len(parts) >= 5 \
+        and slot.startswith("s") and slot[1:].isdigit() \
+        and comp.get("role") == stage
+    if not shaped:
+        problems.append("unbound-composition-id %s" % where)
+        return
+    inputs = record.get("inputs_digest", {})
+    for in_key, comp_key, problem in (
+            ("core", "core_digest", "composition-drift-core"),
+            ("adapter", "adapter_digest", "composition-drift-adapter"),
+            ("package", "package_digest", "composition-drift-package")):
+        if inputs.get(in_key) != comp.get(comp_key):
+            problems.append("%s %s" % (problem, where))
+
+
 def check_evidence(evidence_root: Path, manifest: dict,
-                   manifest_sha: str) -> tuple:
+                   manifest_sha: str,
+                   historical: bool = False) -> tuple:
     problems: list = []
     arm_dir = evidence_root / "arm_task"
     records: dict = {}
+    by_task = {e.get("task_id"): e.get("digest")
+               for e in manifest.get("files", []) if e.get("task_id")}
+    by_comp = {e.get("component"): e.get("digest")
+               for e in manifest.get("files", []) if e.get("component")}
+    pinned_comp = {c.get("composition_id"): c
+                   for c in manifest.get("compositions", [])}
     for path in sorted(arm_dir.glob("*.json")):
         try:
             record = json.loads(path.read_bytes())
@@ -166,6 +210,19 @@ def check_evidence(evidence_root: Path, manifest: dict,
                         "package_digest"):
                 if not comp.get(key):
                     problems.append("unbound-composition-%s %s" % (key, where))
+            pinned = pinned_comp.get(comp.get("composition_id"))
+            if pinned is None and not historical:
+                pinned = _derived_pin(comp.get("composition_id"),
+                                      pinned_comp)
+            if pinned is None and not historical:
+                _check_campaign_binding(record, comp, where, problems)
+            elif pinned is None:
+                problems.append("unbound-composition-id %s" % where)
+            else:
+                if comp.get("core_digest") != pinned.get("core_digest"):
+                    problems.append("composition-drift-core %s" % where)
+                if comp.get("adapter_digest") != pinned.get("adapter_digest"):
+                    problems.append("composition-drift-adapter %s" % where)
             if not record.get("invocations"):
                 problems.append("missing-invocations %s" % where)
             if not record.get("oracle_queries"):
@@ -184,6 +241,23 @@ def check_evidence(evidence_root: Path, manifest: dict,
                     problems.append("unbound-trial-%s %s" % (key, where))
         if not record.get("inputs_digest", {}).get("fixture"):
             problems.append("missing-input-digest %s" % where)
+        else:
+            inputs = record.get("inputs_digest", {})
+            family = record.get("family")
+            if family == "software":
+                context_key, checker_key = "source_context", "sw_checker"
+            elif family == "graph":
+                context_key, checker_key = "transfer_context", "gr_checker"
+            else:
+                context_key, checker_key = None, None
+            if task_id in by_task and inputs.get("fixture") != by_task[task_id]:
+                problems.append("input-drift-fixture %s" % where)
+            if context_key is not None and context_key in by_comp \
+                    and inputs.get("context") != by_comp[context_key]:
+                problems.append("input-drift-context %s" % where)
+            if checker_key is not None and checker_key in by_comp \
+                    and inputs.get("checker") != by_comp[checker_key]:
+                problems.append("input-drift-checker %s" % where)
     return records, problems
 
 
@@ -438,11 +512,14 @@ def cross_check_db(dsn: str, evidence_root: Path, records: dict,
 
 
 def check_all(evidence_root: Path, dsn: str = "",
-              manifest_name: str = "manifest.json") -> dict:
-    manifest, manifest_sha, problems = load_manifest(manifest_name)
+              manifest_name: str = "manifest.json",
+              historical: bool = False) -> dict:
+    manifest, manifest_sha, problems = load_manifest(
+        manifest_name, historical=historical)
     records, controls_summary, use_summary, rule = {}, {}, {}, {}
     if manifest is not None:
-        records, more = check_evidence(evidence_root, manifest, manifest_sha)
+        records, more = check_evidence(evidence_root, manifest, manifest_sha,
+                                       historical=historical)
         problems.extend(more)
         check_barrier(records, manifest, problems)
         controls_summary = check_controls(evidence_root, problems)

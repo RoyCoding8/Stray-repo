@@ -4,7 +4,6 @@ import json
 import os
 import shutil
 import sys
-import uuid
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,6 @@ from checkpoint import run_checkpoint
 from restore import run_restore
 
 from settlement import broker, db, store
-from settlement.common import Command
 from settlement.launcher_local import LocalLauncher
 from test_rec_checkpoint import seed_state
 
@@ -36,10 +34,6 @@ def fence():
                 cur.execute(f'TRUNCATE TABLE "{table}" CASCADE')
         conn.commit()
     yield FENCE_DSN
-
-
-def _cmd(payload: dict, tag: str = "") -> Command:
-    return Command(request_id=f"rec_{tag}_{uuid.uuid4().hex[:10]}", payload=payload)
 
 
 def _take_checkpoint(dsn, art: Path, tag: str, out: Path) -> Path:

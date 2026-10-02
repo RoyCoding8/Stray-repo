@@ -867,9 +867,13 @@ def test_verif_learning_union_failed_cancelled_shared_exact():
     assert union["attribution"]["verif-shared-op"] == \
         ["verif-m1", "verif-m2"]
     assert union["by_kind"] == {"episode": 1, "failed": 1, "cancelled": 1}
-    assert union["totals"]["model_tokens_in"] == "unknown"
-    assert union["totals"]["model_calls"] == "unknown"
-    assert union["totals"]["sandbox_ops"] == "unknown" or True
+    assert union["totals"]["model_tokens_in"] == \
+        shared_usage["input_tokens"] + 1
+    assert union["totals"]["model_calls"] == \
+        shared_usage["model_calls"] + 1
+    by_op = {r["operation_id"]: r for r in union["records"]}
+    assert by_op["verif-cancelled-op"]["usage"] is None
+    assert by_op["verif-cancelled-op"]["settlement"] == "cancelled"
     solo = SE.reconcile_campaign_union(
         [{"cell_id": "verif-m1", "operations": [shared, failed]}])
     assert solo["totals"]["model_tokens_in"] == \

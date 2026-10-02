@@ -14,7 +14,6 @@ sys.path.insert(0, str(ROOT))
 
 from settlement import broker, store, team
 from settlement.common import Command, ResultCode, SettlementError
-from settlement.gateway import GatewayError
 from settlement.launcher_local import LocalLauncher
 
 from experiments.team01 import oracle, panel, register, template

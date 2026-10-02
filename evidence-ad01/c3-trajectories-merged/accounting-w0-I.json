@@ -1,0 +1,87 @@
+{
+ "acquisition": {
+  "charge_units": 0,
+  "model_calls": 3,
+  "sandbox_ops": 0,
+  "tokens": 30,
+  "witness_queries": 7
+ },
+ "campaign_id": "ad01-w0-I-00",
+ "mechanism": {
+  "boundaries": 3,
+  "no_candidate": 0,
+  "rejected": 2,
+  "retained": 1
+ },
+ "operations": {
+  "ad01-ad01-w0-I-00-b0-ad01-w0-dev-sw-01-construct-l1-init": {
+   "charge_units": 0,
+   "model_calls": 1,
+   "sandbox_ops": 0,
+   "tokens": 10
+  },
+  "ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-init": {
+   "charge_units": 0,
+   "model_calls": 1,
+   "sandbox_ops": 0,
+   "tokens": 10
+  },
+  "ad01-ad01-w0-I-00-b1-ad01-w0-dev-sw-00-construct-l1-repair": {
+   "charge_units": 0,
+   "model_calls": 1,
+   "sandbox_ops": 0,
+   "tokens": 10
+  },
+  "ad01-ad01-w0-I-00-use-ad01-w0-transfer-sw-00": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w0-I-00-use-ad01-w0-transfer-sw-01": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w0-I-00-use-ad01-w0-transfer-sw-02": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w0-I-00-use-ad01-w0-within-sw-00": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w0-I-00-use-ad01-w0-within-sw-01": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w0-I-00-use-ad01-w0-within-sw-02": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  }
+ },
+ "shared_operations": [],
+ "total": {
+  "charge_units": 0,
+  "model_calls": 3,
+  "sandbox_ops": 6,
+  "tokens": 30,
+  "witness_queries": 31
+ },
+ "use": {
+  "charge_units": 0,
+  "model_calls": 0,
+  "sandbox_ops": 6,
+  "tokens": 0,
+  "witness_queries": 24
+ }
+}

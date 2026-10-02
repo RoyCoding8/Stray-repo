@@ -1,0 +1,2082 @@
+[
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 8,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 8,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-within-sw-00",
+   "template": "stale-read-2chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v2"
+    }
+   }
+  },
+  "record_id": "ad01-w1-I-00-I-ad01-w1-within-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-sw-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 13,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5402,
+   "task_id": "ad01-w1-within-sw-01",
+   "template": "stale-clear-core",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v3"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w1-I-00-I-ad01-w1-within-sw-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-sw-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 11,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 11,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-transfer-sw-00",
+   "template": "stale-read-3chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "str",
+     "value": "v4"
+    }
+   }
+  },
+  "record_id": "ad01-w1-I-00-I-ad01-w1-transfer-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-transfer-sw-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 12,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     3,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-within-gr-00",
+   "template": "C5+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "record_id": "ad01-w1-I-00-I-ad01-w1-within-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-gr-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 16,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     6,
+     7
+    ]
+   ],
+   "family": "graph",
+   "seed": 5502,
+   "task_id": "ad01-w1-within-gr-01",
+   "template": "C7+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "record_id": "ad01-w1-I-00-I-ad01-w1-within-gr-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-gr-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 20,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     5,
+     9
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-transfer-gr-00",
+   "template": "C9+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w1-I-00-I-ad01-w1-transfer-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-transfer-gr-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 8,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 8,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-within-sw-00",
+   "template": "stale-read-2chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v2"
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-sw-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 13,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5402,
+   "task_id": "ad01-w1-within-sw-01",
+   "template": "stale-clear-core",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v3"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-sw-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-sw-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 11,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 11,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-transfer-sw-00",
+   "template": "stale-read-3chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "str",
+     "value": "v4"
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-transfer-sw-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 12,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     3,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-within-gr-00",
+   "template": "C5+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-gr-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 16,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     6,
+     7
+    ]
+   ],
+   "family": "graph",
+   "seed": 5502,
+   "task_id": "ad01-w1-within-gr-01",
+   "template": "C7+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-gr-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-within-gr-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 20,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     5,
+     9
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-transfer-gr-00",
+   "template": "C9+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w1-transfer-gr-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 13,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "id": "o1",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    }
+   ],
+   "seed": 5501,
+   "task_id": "ad01-w2-within-sw-00",
+   "template": "stale-read-2chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v2"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "record_id": "ad01-w2-I-00-I-ad01-w2-within-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-sw-00",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5502,
+   "task_id": "ad01-w2-within-sw-01",
+   "template": "stale-clear-core",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v3"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w2-I-00-I-ad01-w2-within-sw-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-sw-01",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o2",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5501,
+   "task_id": "ad01-w2-transfer-sw-00",
+   "template": "stale-read-3chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "record_id": "ad01-w2-I-00-I-ad01-w2-transfer-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-transfer-sw-00",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 12,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     4,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5601,
+   "task_id": "ad01-w2-within-gr-00",
+   "template": "C5+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "record_id": "ad01-w2-I-00-I-ad01-w2-within-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-gr-00",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 16,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     3,
+     7
+    ]
+   ],
+   "family": "graph",
+   "seed": 5602,
+   "task_id": "ad01-w2-within-gr-01",
+   "template": "C7+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "record_id": "ad01-w2-I-00-I-ad01-w2-within-gr-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-gr-01",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "I",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 20,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     0,
+     9
+    ]
+   ],
+   "family": "graph",
+   "seed": 5601,
+   "task_id": "ad01-w2-transfer-gr-00",
+   "template": "C9+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w2-I-00-I-ad01-w2-transfer-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-transfer-gr-00",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 13,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "id": "o1",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    }
+   ],
+   "seed": 5501,
+   "task_id": "ad01-w2-within-sw-00",
+   "template": "stale-read-2chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v2"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "record_id": "ad01-w2-R-00-R-ad01-w2-within-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-sw-00",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5502,
+   "task_id": "ad01-w2-within-sw-01",
+   "template": "stale-clear-core",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v3"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w2-R-00-R-ad01-w2-within-sw-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-sw-01",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "software",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for software",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 10,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o2",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5501,
+   "task_id": "ad01-w2-transfer-sw-00",
+   "template": "stale-read-3chain",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v3"
+    }
+   }
+  },
+  "record_id": "ad01-w2-R-00-R-ad01-w2-transfer-sw-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-transfer-sw-00",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 12,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     4,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5601,
+   "task_id": "ad01-w2-within-gr-00",
+   "template": "C5+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ]
+  },
+  "record_id": "ad01-w2-R-00-R-ad01-w2-within-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-gr-00",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 16,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ],
+    [
+     3,
+     7
+    ]
+   ],
+   "family": "graph",
+   "seed": 5602,
+   "task_id": "ad01-w2-within-gr-01",
+   "template": "C7+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "record_id": "ad01-w2-R-00-R-ad01-w2-within-gr-01",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-within-gr-01",
+  "verdict": "preserved",
+  "world": 2
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "no eligible repertoire member for graph",
+  "final_measure": 20,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     0,
+     9
+    ]
+   ],
+   "family": "graph",
+   "seed": 5601,
+   "task_id": "ad01-w2-transfer-gr-00",
+   "template": "C9+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w2-R-00-R-ad01-w2-transfer-gr-00",
+  "requested": "incumbent",
+  "selected": "incumbent",
+  "task_id": "ad01-w2-transfer-gr-00",
+  "verdict": "preserved",
+  "world": 2
+ }
+]

@@ -112,13 +112,15 @@ def test_manifest_frozen():
 
 
 def test_register_freeze_and_hidden_answers(migrated_db):
+    from settlement.common import Unauthorized
+
     dsn = migrated_db
     foundation = register.ensure_foundation(dsn)
     assert foundation["problems"] == []
     got = evaluation.hidden_answer(dsn, "team01-t01", "evaluator")
     assert got["task_id"] == "team01-t01"
     assert len(got["cases"]) >= 4
-    with pytest.raises(Exception):
+    with pytest.raises(Unauthorized):
         evaluation.hidden_answer(dsn, "team01-t01", "candidate")
     leaked = [c for c in evaluation.candidate_view(dsn) if "team01-t" in str(c)]
     assert leaked == []

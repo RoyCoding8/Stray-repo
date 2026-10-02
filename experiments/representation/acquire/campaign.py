@@ -461,7 +461,8 @@ def execute_candidate(dsn: str, launcher, artifacts_root: Path, slot: dict,
     task, _ = panel_run.load_task(SELECTION_TASK[slot["stage"]])
     try:
         composed = panel_run.run_composition(
-            dsn, launcher, artifacts_root, tag="%s-sel" % tag, task=task,
+            dsn, launcher, artifacts_root,
+            tag="%s-sel-s%d" % (tag, slot["slot"]), task=task,
             composition_id=slot["composition_id"], manifest=manifest,
             allocation_id=allocation_id, attempt_id=attempt_id)
     except SettlementError as exc:

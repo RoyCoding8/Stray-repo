@@ -70,6 +70,8 @@ class TrialError(ValueError):
 
 def _req_nonneg(values: dict, key: str) -> Any:
     value = values.get(key, None)
+    if value == UNKNOWN and key in TOKEN_MAP:
+        return UNKNOWN
     if value is None and key in NULLABLE_COSTS:
         return None
     if isinstance(value, bool) or not isinstance(value, (int, float)):
@@ -439,7 +441,11 @@ STORE_SETTLEMENT_BY_STATE = {
 
 def _full_usage(receipts: list) -> dict | None:
     for receipt in receipts:
-        seen = (receipt.get("content") or {}).get("usage") or {}
+        content = dict(receipt.get("content") or {})
+        if isinstance(content.get("model_meta"), dict) and content[
+                "model_meta"].get("simulated"):
+            continue
+        seen = content.get("usage") or {}
         if all(isinstance(seen.get(field), int)
                and not isinstance(seen.get(field), bool)
                and seen[field] >= 0 for field in USAGE_FIELDS):
@@ -501,6 +507,48 @@ def costs_for_operations(dsn: str, op_ids: list) -> dict:
             "calls": sum(u["model_calls"] for u in seen.values())}
 
 
+def _cell_kind(operation_id: str, effect: str) -> str:
+    if effect == broker.MODEL_INFERENCE:
+        return "child_inference" if ":work:model" in operation_id \
+            else "a_interpretation"
+    if effect == broker.OBSERVATION_ADAPTER:
+        return "probe"
+    if effect == broker.SANDBOX_EXEC:
+        if operation_id.endswith(":check"):
+            return "check"
+        if ":step:" in operation_id:
+            return "policy_step"
+        return "episode"
+    return "episode"
+
+
+def cell_operation_ids(dsn: str, *, run_id: str, task_id: str,
+                       plan_id: str | None = None) -> dict:
+    from psycopg.rows import dict_row
+
+    found: dict = {}
+    with db.connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT id, payload FROM operations WHERE id LIKE %s"
+                        " ORDER BY id",
+                        ("coord:%s:%s:%%" % (run_id, task_id),))
+            for row in cur.fetchall():
+                effect = (dict(row.get("payload") or {})).get("effect", "")
+                found[row["id"]] = {"kind": _cell_kind(row["id"], effect),
+                                    "effect": effect}
+            if plan_id:
+                cur.execute("SELECT id, payload FROM operations WHERE id"
+                            " LIKE %s ORDER BY id", ("%s:%%" % plan_id,))
+                for row in cur.fetchall():
+                    effect = (dict(row.get("payload") or {})
+                              ).get("effect", "")
+                    found[row["id"]] = {"kind": _cell_kind(row["id"],
+                                                           effect),
+                                        "effect": effect}
+            conn.commit()
+    return found
+
+
 def reconcile_campaign_union_from_store(dsn: str, cells: list,
                                         *, kinds: dict | None = None) -> dict:
     from psycopg.rows import dict_row
@@ -557,6 +605,14 @@ def reconcile_campaign_union_from_store(dsn: str, cells: list,
 def _operation_costs(record: dict) -> dict:
     usage = record.get("usage") or {}
     costs = {field: 0 for field in COST_FIELDS}
+    costs.update({
+        "tool_invocations": int(record["effect"] == broker.OBSERVATION_ADAPTER),
+        "sandbox_ops": int(record["effect"] == broker.SANDBOX_EXEC),
+        "policy_exec_ops": int(record["kind"] == "policy_step"),
+        "protected_check_ops": int(record["kind"] == "check"),
+        "abandoned_ops": int(record["settlement"] == "cancelled"),
+        **dict.fromkeys(NULLABLE_COSTS),
+    })
     for trial_field, usage_field in TOKEN_MAP.items():
         costs[trial_field] = usage.get(usage_field, 0)
     return costs
@@ -598,7 +654,9 @@ def reconcile_campaign_union(cells: list) -> dict:
     costs_union = reconcile_cost_union(
         [{"operation_id": op_id, "kind": flat[op_id].get("kind"),
           "costs": _operation_costs(flat[op_id])} for op_id in order])
-    unknown = any(flat[op_id].get("usage") is None for op_id in order)
+    unknown = any(flat[op_id].get("usage") is None
+                  and flat[op_id].get("effect") == broker.MODEL_INFERENCE
+                  for op_id in order)
     totals = dict(costs_union["totals"])
     if unknown:
         for field in NULLABLE_COSTS:
@@ -608,7 +666,8 @@ def reconcile_campaign_union(cells: list) -> dict:
     return {"n_operations": costs_union["n_operations"],
             "operation_ids": costs_union["operation_ids"],
             "attribution": attribution,
-            "totals": totals, "by_kind": costs_union["by_kind"]}
+            "totals": totals, "by_kind": costs_union["by_kind"],
+            "records": [flat[op_id] for op_id in order]}
 
 
 def reconcile_cost_union(operations: list) -> dict:

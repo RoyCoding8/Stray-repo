@@ -34,6 +34,14 @@ def live_db():
     if not dsn:
         pytest.skip("SETTLEMENT_TEST_DSN is not configured")
     db.apply_migrations(dsn, ROOT / "migrations")
+    with db.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+                " AND tablename != 'schema_migrations'")
+            for row in cur.fetchall():
+                cur.execute(f'TRUNCATE TABLE "{row[0]}" CASCADE')
+        conn.commit()
     yield dsn
 
 
@@ -258,11 +266,9 @@ def test_incompatible_pair_repaired_or_refused(live_db, tmp_path):
         repair_rounds=1)
     assert "w2" in record["controls"]["authored"]
     assert record["shape"] == "decompose"
-    if record["outcome"] == "success":
-        assert record["repairs"] >= 1
-        assert record["protected"]["failed"] == 0
-    else:
-        assert record["outcome"] in ("failure", "refused")
+    assert record["outcome"] == "success"
+    assert record["repairs"] >= 1
+    assert record["protected"]["failed"] == 0
 
 
 def test_P_selects_passing_attempt(live_db, tmp_path):
@@ -302,6 +308,13 @@ def test_P_rejects_rewritten_spec(live_db, tmp_path):
     assert "w1,w2" in record["reason"]
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="acquire2.py was never committed; executed source is unrecoverable "
+           "(reports/workstreams/ec02-D.md). Recovery provenance: only orphaned "
+           "bytecode survives. This test preserves the surviving API contract "
+           "(build_template returning directive/error/digest) so recovered "
+           "source lands against it.")
 def test_build_returns_none_on_empty_replies(live_db, tmp_path):
     from experiments.team01 import acquire2
     gw = ScriptedGateway(["", "   "])

@@ -132,7 +132,7 @@ def test_run_cell_records_child_repair_bytes_through_submit():
     assert any(tree[pp] != snap[pp] for pp in owned)
 
 
-def test_shared_child_path_stages_model_bytes_verbatim():
+def test_shared_child_path_stages_model_bytes_verbatim(monkeypatch):
     assert "live" not in DSN
     db.apply_migrations(DSN, MIGRATIONS)
     with db.connect(DSN) as conn:
@@ -155,6 +155,11 @@ def test_shared_child_path_stages_model_bytes_verbatim():
                                  "checks": ["public"]},
              "input_bindings": {"base_%d" % i: p
                                 for i, p in enumerate(owned)}}
+
+    def refuse_overlay(*args, **kwargs):
+        raise RuntimeError("protected-reference-read")
+
+    monkeypatch.setattr(oracle, "overlay_files", refuse_overlay)
     staged = entry.dispatch_admitted_child(
         DSN, gateway=gw, model="bexec-recording", task_id=TASK,
         node="w1", child=child, rendered={},

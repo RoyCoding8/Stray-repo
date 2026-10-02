@@ -52,13 +52,6 @@ def _ok(result, what: str):
     return result
 
 
-def _agenda_script(migrations_dir: Path) -> str:
-    parts = []
-    for path in sorted(migrations_dir.glob("*.sql")):
-        parts.append(path.read_text())
-    return "\n".join(parts)
-
-
 class AgendaBackend:
     def __init__(self, dsn: str, traj: str, sim: launcher.AgendaProbeLauncher) -> None:
         self.dsn = dsn

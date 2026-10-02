@@ -37,12 +37,6 @@ def _seed_grant(dsn: str) -> None:
     assert result.code == ResultCode.APPLIED
 
 
-def _contexts() -> tuple:
-    source = json.loads((ACQUIRE / "source_context.json").read_bytes())
-    transfer = json.loads((ACQUIRE / "transfer_context.json").read_bytes())
-    return source, transfer
-
-
 def _need() -> int:
     need, _ = campaign.required_grant_for_contexts()
     return need

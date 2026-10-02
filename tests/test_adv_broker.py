@@ -286,3 +286,102 @@ def test_kill_restart_after_send_reconciles_without_resend(migrated_db, tmp_path
     assert decision.decision == "receipt-admitted"
     assert broker.read_operation(dsn, "drv2-op")["dispatch_state"] == "observed"
     assert (run_dir / "drv2-op_exec-default.spawns").read_text().strip() == "1"
+
+
+def test_unresolved_without_decision_retries_exactly_once(migrated_db, tmp_path):
+    dsn = migrated_db
+    alloc, gen = _env(dsn, "k7")
+    _sandbox((dsn, "k7-op"), alloc, attempt="k7-att")
+    store.advance_dispatch(dsn, _cmd({"operation_id": "k7-op", "launcher_id": "gone",
+                                      "provider_id": ""}, "k7adv"))
+    assert broker.reconcile(dsn, "k7-op", {}).decision == "unresolved-liability"
+    assert broker.read_operation(dsn, "k7-op")["dispatch_state"] == "unresolved"
+    launcher = LocalLauncher(tmp_path / "runs")
+    generation = int(broker.read_operation(dsn, "k7-op")["payload"]["_dispatch_generation"])
+    status = broker.redispatch_after_reset(dsn, "k7-op", {"local-process": launcher},
+                                           ownership_generation=gen,
+                                           expected_generation=generation)
+    assert status.sent_this_call is True
+    assert broker.read_operation(dsn, "k7-op")["dispatch_state"] == "observed"
+    assert (tmp_path / "runs" / "k7-op_exec-default.spawns").read_text().strip() == "1"
+    refused = broker.redispatch_after_reset(dsn, "k7-op", {"local-process": launcher},
+                                            ownership_generation=gen,
+                                            expected_generation=generation + 1)
+    assert refused.sent_this_call is False
+    assert (tmp_path / "runs" / "k7-op_exec-default.spawns").read_text().strip() == "1"
+
+
+def test_unresolved_unknown_receipt_retries_with_provenance(migrated_db, tmp_path):
+    dsn = migrated_db
+    alloc, gen = _env(dsn, "k8")
+    _sandbox((dsn, "k8-op"), alloc, attempt="k8-att")
+    store.advance_dispatch(dsn, _cmd({"operation_id": "k8-op", "launcher_id": "local-1",
+                                      "provider_id": ""}, "k8adv"))
+    lost = broker.admit_launcher_receipt(dsn, "k8-op", ReceiptProposal(
+        receipt_identity="lost:k8-op", content={"lost": True},
+        outcome="unknown", provenance="broker"))
+    assert lost.code == ResultCode.APPLIED
+    assert broker.read_operation(dsn, "k8-op")["dispatch_state"] == "unresolved"
+    launcher = LocalLauncher(tmp_path / "runs")
+    generation = int(broker.read_operation(dsn, "k8-op")["payload"]["_dispatch_generation"])
+    status = broker.redispatch_after_reset(dsn, "k8-op", {"local-process": launcher},
+                                           ownership_generation=gen,
+                                           expected_generation=generation)
+    assert status.sent_this_call is True
+    assert broker.read_operation(dsn, "k8-op")["dispatch_state"] == "observed"
+    receipts = {r["receipt_identity"] for r in store.operation_receipts(dsn, "k8-op")}
+    assert "lost:k8-op" in receipts
+
+
+def test_receipt_on_never_dispatched_operation_refused(migrated_db):
+    dsn = migrated_db
+    alloc, _ = _env(dsn, "k9")
+    _sandbox((dsn, "k9-op"), alloc, attempt="k9-att")
+    before = store.allocation_status(dsn, alloc)
+    refused = broker.admit_launcher_receipt(dsn, "k9-op", ReceiptProposal(
+        receipt_identity="forged:k9-op", content={"text": "never ran"},
+        outcome="success", provenance="anyone"))
+    assert refused.code == ResultCode.INVALID_INPUT
+    assert broker.read_operation(dsn, "k9-op")["dispatch_state"] == "prepared"
+    assert store.operation_receipts(dsn, "k9-op") == []
+    after = store.allocation_status(dsn, alloc)
+    assert (after["consumed"], after["reserved"]) == (before["consumed"], before["reserved"])
+
+
+def test_workflow_ensure_conflict_never_dispatches_stale_bytes(migrated_db, tmp_path):
+    dsn = migrated_db
+    alloc, gen = _env(dsn, "k10")
+    assert broker.ensure_operation(
+        dsn, operation_id="k10-att:n1", effect=broker.SANDBOX_EXEC,
+        payload={"profile": "local-process", "argv": ["/bin/true"],
+                 "timeout_ms": 5000, "max_output_bytes": 1024},
+        allocation_id=alloc, attempt_id="k10-att").code == ResultCode.APPLIED
+    run_dir = tmp_path / "runs"
+    broker.ATTEMPT_WORKFLOW_RESOURCES["k10-att"] = {
+        "launchers": {"local-process": LocalLauncher(run_dir)}, "gateway": None}
+    try:
+        summary = broker.wf_ensure_dispatch(
+            dsn, {"operation_id": "k10-att:n1", "effect": broker.SANDBOX_EXEC,
+                  "payload": {"profile": "local-process", "argv": ["/bin/false"],
+                              "timeout_ms": 5000, "max_output_bytes": 1024},
+                  "allocation_id": alloc, "attempt_id": "k10-att",
+                  "execution_version": ""},
+            0, gen, "n1", "k10-att")
+    finally:
+        broker.ATTEMPT_WORKFLOW_RESOURCES.pop("k10-att", None)
+    assert summary["next_decision"] == "ensure-refused-invalid_input"
+    assert summary["failed_try"] is False
+    assert list(run_dir.glob("*")) == []
+    stored = broker.read_operation(dsn, "k10-att:n1")
+    assert stored["dispatch_state"] == "prepared"
+    assert stored["payload"]["payload"]["argv"] == ["/bin/true"]
+
+
+def test_prove_never_sent_sees_result_and_supervise_files(tmp_path):
+    launcher = LocalLauncher(tmp_path / "runs")
+    assert launcher.prove_never_sent("zv-op") is True
+    (tmp_path / "runs" / "zv-op_exec-default.result.json").write_text("{}")
+    assert launcher.prove_never_sent("zv-op") is False
+    (tmp_path / "runs" / "zv-op_exec-default.result.json").unlink()
+    (tmp_path / "runs" / "zv-op_exec-default.supervise.json").write_text("{}")
+    assert launcher.prove_never_sent("zv-op") is False

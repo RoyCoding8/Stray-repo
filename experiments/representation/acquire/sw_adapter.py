@@ -93,7 +93,7 @@ def _decode(req):
                      "fault": task["fault"],
                      "ops": [ops[i] for i in kept],
                      "witness": task["witness"], "seed": task.get("seed")}
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, AttributeError):
         return _refuse(req, "malformed", "undecodable proposal")
     out = _base(req)
     out.update({"status": "ok", "result": {"candidate_source": candidate}})

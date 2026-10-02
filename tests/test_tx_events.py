@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import threading
-import time
 import uuid
 
 from settlement import db, store
@@ -98,4 +97,3 @@ def test_concurrent_transitions_keep_total_order(migrated_db):
     assert errors == []
     got = store.read_events(dsn, limit=100)["events"]
     assert [e["epoch"] for e in got] == [1, 2, 3, 4, 5, 6]
-    time.sleep(0)

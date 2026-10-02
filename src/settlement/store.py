@@ -235,6 +235,9 @@ def _alloc_available(row: dict, children: int) -> int:
     return int(row["authorized"]) - int(row["consumed"]) - int(row["reserved"]) - children
 
 
+free_of = _alloc_available
+
+
 def _get_alloc(cur, allocation_id: str) -> dict:
     cur.execute("SELECT * FROM allocations WHERE id = %s", (allocation_id,))
     row = cur.fetchone()
@@ -291,6 +294,20 @@ def _settle_amount(cur, reservation_id: str, outcome: str, actual: Any = None) -
     )
     cur.execute("UPDATE reservations SET state = 'settled' WHERE id = %s", (reservation_id,))
     return True, "settled", consumed
+
+
+def allocation_free(dsn: str, allocation_id: str) -> int:
+    with db.read_connect(dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT * FROM allocations WHERE id = %s", (allocation_id,))
+            row = cur.fetchone()
+            if row is None:
+                raise SettlementError(f"unknown allocation {allocation_id}")
+            cur.execute("SELECT COALESCE(SUM(authorized), 0) AS total FROM allocations"
+                        " WHERE parent_id = %s", (allocation_id,))
+            children = int(cur.fetchone()["total"])
+            conn.commit()
+            return free_of(dict(row), children)
 
 
 def get_control(dsn: str) -> dict:
@@ -967,7 +984,17 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
         settled = False
         if op["reservation_id"] is not None and outcome in ("success", "failure"):
             try:
-                settled, _, _ = _settle_amount(cur, op["reservation_id"], outcome, p.get("actual_cost"))
+                actual = p.get("actual_cost")
+                if actual is None:
+                    usage = (content or {}).get("usage") or {}
+                    if usage.get("billed") is False:
+                        inbound = usage.get("input_tokens")
+                        outbound = usage.get("output_tokens")
+                        if isinstance(inbound, int) and not isinstance(inbound, bool) \
+                                and isinstance(outbound, int) and not isinstance(outbound, bool) \
+                                and inbound >= 0 and outbound >= 0:
+                            actual = inbound + outbound
+                settled, _, _ = _settle_amount(cur, op["reservation_id"], outcome, actual)
             except SettlementError as exc:
                 cur.execute(
                     "UPDATE operations SET dispatch_state = 'observed', reconcile_state = 'unresolved',"
@@ -1019,7 +1046,7 @@ def confirm_cancellation(dsn: str, cmd: Command) -> CommandResult:
 def operation_receipts(dsn: str, operation_id: str) -> list[dict]:
     with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT receipt_identity, outcome FROM receipts WHERE operation_id = %s"
+            cur.execute("SELECT receipt_identity, outcome, content FROM receipts WHERE operation_id = %s"
                         " ORDER BY receipt_identity", (operation_id,))
             rows = [dict(r) for r in cur.fetchall()]
             conn.commit()
@@ -1032,12 +1059,15 @@ def reset_dispatch(dsn: str, cmd: Command) -> CommandResult:
         op = cur.fetchone()
         if op is None:
             raise SettlementError(f"unknown operation {cmd.payload['operation_id']}")
-        if op["dispatch_state"] != "dispatching":
+        if op["dispatch_state"] not in ("dispatching", "unresolved"):
             raise SettlementError(f"operation {op['id']} is {op['dispatch_state']}, not dispatching")
         if (op["cancel_state"] or "none") != "none":
             raise SettlementError(f"operation {op['id']} has cancel activity; explicit reconcile only")
-        cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s", (op["id"],))
-        if cur.fetchone() is not None:
+        cur.execute("SELECT outcome FROM receipts WHERE operation_id = %s", (op["id"],))
+        outcomes = {r["outcome"] for r in cur.fetchall()}
+        if outcomes & {"success", "failure"}:
+            raise SettlementError(f"operation {op['id']} already has a decided receipt")
+        if op["dispatch_state"] == "dispatching" and outcomes:
             raise SettlementError(f"operation {op['id']} already has receipts")
         stored = dict(op["payload"] or {})
         if cmd.payload.get("expected_generation") is not None \

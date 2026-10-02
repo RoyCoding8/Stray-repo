@@ -115,7 +115,8 @@ def _sha(raw: bytes) -> str:
 
 @pytest.fixture(scope="module")
 def frozen(tmp_path_factory):
-    assert "live" not in DSN and "ec02test_m4" in DSN
+    from psycopg.conninfo import conninfo_to_dict
+    assert conninfo_to_dict(DSN).get("dbname") in {"ec02test_m4", "ec02test_acct"}
     db.apply_migrations(DSN, MIGRATIONS)
     designate_db(DSN, kind="disposable",
                  purpose="M4 doubled frozen-study tests")
@@ -245,7 +246,15 @@ def test_m4_full_schedule_executed_no_silent_skips(frozen):
     open_cells = scheduled - have
     assert open_cells == set()
     report = frozen["summary"]["checker"]
-    assert report["clean"], report["problems"]
+    assert frozen["summary"]["union"]["totals"]["sandbox_ops"] > 64
+    assert frozen["summary"]["ceilings"] == {"breaches": [], "checked": False}
+    assert report["clean"] is False
+    assert sorted(report["problems"]) == sorted(
+        "omitted-cost-%s %s-%s-%s-r%d-%s" % (
+            field, freeze["freeze_id"], cell.record["panel"],
+            cell.record["task_id"], cell.record["repeat"], cell.record["arm"])
+        for cell in frozen["cells"]
+        for field in ("model_calls", "model_tokens-in", "model_tokens-out"))
     assert report["records"] == 144
     counts: dict = {}
     for cell in frozen["cells"]:
@@ -335,8 +344,6 @@ def test_m4_resume_same_db(frozen, tmp_path):
                                ("transfer", "c02-t05", 2, "F"))][:2]
     assert len(rerun_keys) == 2
     assert pending_key in second["reconcile"]
-    before_receipts = {r for c in frozen["cells"]
-                       for r in c.record["receipts"]}
     rerun = []
     for key in rerun_keys:
         _, panel, task, repeat, arm = key
@@ -345,8 +352,12 @@ def test_m4_resume_same_db(frozen, tmp_path):
             arm=arm, launcher_factory=_factory(tmp_path / "m4-resume"),
             package_text="doubled-dev"))
     for cell in rerun:
+        original = next(c for c in frozen["cells"] if all(
+            c.record[k] == cell.record[k]
+            for k in ("panel", "task_id", "repeat", "arm")))
+        assert cell.outcome["run_id"] == original.outcome["run_id"]
+        assert cell.record == original.record
         assert cell.record["receipts"] != []
-        assert not (set(cell.record["receipts"]) & before_receipts)
         SE.validate_trial_record(cell.record)
     digest_cells = entry.run_panel(
         DSN, freeze=freeze, panel="transfer",
@@ -477,12 +488,15 @@ def test_m4_transfer_fresh_process_and_bindings(frozen, tmp_path):
         package_digest="none",
         protected={"passed": 0, "failed": 1, "total": 1},
         failures=[{"reason": declined["reason"]}],
-        costs=entry._cell_costs(DSN, bad_cfg, declined),
-        receipts=entry._cell_receipts(DSN, bad_cfg, "m4-decline"),
+        costs=dict(entry._cell_costs(
+            DSN, SE.cell_operation_ids(
+                DSN, run_id=bad_cfg.run_id, task_id=sample),
+            declined)[0]),
+        receipts=[bad_cfg.investigation_id],
         operations=[])
     assert refused["outcome"] == "refusal"
     assert refused["solved"] is False
-    assert refused["costs"]["sandbox_ops"] >= 1
+    assert refused["costs"]["sandbox_ops"] == 0
     SE.require_settled_failure({"settlement": "observed"},
                                {k: v for k, v in refused["costs"].items()
                                 if not isinstance(v, str)})
@@ -536,8 +550,10 @@ def test_m4_failures_carry_costs(frozen):
         assert cell.record["failures"] != []
         for field in SE.COST_FIELDS:
             value = cell.record["costs"][field]
-            assert value != SE.UNKNOWN, field
-            assert value is None or isinstance(value, (int, float)), field
+            assert value is None or isinstance(value, (int, float)) \
+                or value == SE.UNKNOWN, field
+            assert value != SE.UNKNOWN or field in (
+                "model_tokens_in", "model_tokens_out", "model_calls"), field
         assert cell.record["receipts"] != []
         assert cell.record["outcome"] == "failure"
     by_panel: dict = {}

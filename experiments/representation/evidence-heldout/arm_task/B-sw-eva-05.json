@@ -51,7 +51,7 @@
     "fixture": "08744959079cf211225f82606e3bc239bd25559b068f630baa519a15880851e8"
   },
   "invocations": [],
-  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "manifest_sha256": "ac2bf9b99159c3d1a60ce0ce5ed04035d0239455fbfc0d06ca2a95e783be917f",
   "native_detail": {
     "accepted": 13,
     "final_verdict": {
@@ -152,7 +152,7 @@
     "reason": "budget-exhausted",
     "verified": true
   },
-  "stage": "mechanics",
+  "stage": "evaluation",
   "task_id": "sw-eva-05",
   "trial": [
     {

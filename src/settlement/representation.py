@@ -114,6 +114,14 @@ def request_bytes(request: dict) -> bytes:
     return raw
 
 
+def _invoke_intent(request: dict) -> dict:
+    return {k: v for k, v in dict(request or {}).items() if k != "budget"}
+
+
+def _intent_digest(request: dict) -> str:
+    return sha_hex(canonical_bytes(_invoke_intent(request)))
+
+
 def _bounded_reason(value: Any) -> str:
     if not isinstance(value, str) or not value or len(value) > MAX_REASON_CHARS:
         raise ProfileRefusal("malformed", "reason must be a bounded string")
@@ -456,6 +464,11 @@ def _invoke_entry(dsn: str, launcher: Any, *, run_id: str, task_id: str,
     recorded = _find_receipt(_receipts(dsn, op_id), f"rpr-step:{op_id}")
     if recorded is not None:
         content = dict(recorded.get("content") or {})
+        if content.get("intent_digest") != _intent_digest(request) or \
+                content.get("entry_digest") != sha_hex(entry_bytes):
+            raise SettlementError(
+                f"representation step {op_id} intent changed;"
+                " recorded bytes are stale")
         return {"op_id": op_id, "reused": True,
                 "timed_out": bool(content.get("timed_out", False)),
                 "transport_lost": bool(content.get("transport_lost", False)),
@@ -493,6 +506,8 @@ def _invoke_entry(dsn: str, launcher: Any, *, run_id: str, task_id: str,
         content = {"kind": "rpr-step", "run_id": run_id, "task_id": task_id,
                    "action": action, "seq": seq, "role": role, "op_id": op_id,
                    "request_digest": sha_hex(raw_request),
+                   "intent_digest": _intent_digest(request),
+                   "entry_digest": sha_hex(entry_bytes),
                    "request": json.loads(raw_request.decode("utf-8")),
                    "response": None, "timed_out": timed_out,
                    "transport_lost": lost}
@@ -509,6 +524,8 @@ def _invoke_entry(dsn: str, launcher: Any, *, run_id: str, task_id: str,
         content = {"kind": "rpr-step", "run_id": run_id, "task_id": task_id,
                    "action": action, "seq": seq, "role": role, "op_id": op_id,
                    "request_digest": sha_hex(raw_request),
+                   "intent_digest": _intent_digest(request),
+                   "entry_digest": sha_hex(entry_bytes),
                    "request": json.loads(raw_request.decode("utf-8")),
                    "response": None, "timed_out": False,
                    "transport_lost": False,
@@ -519,6 +536,8 @@ def _invoke_entry(dsn: str, launcher: Any, *, run_id: str, task_id: str,
     content = {"kind": "rpr-step", "run_id": run_id, "task_id": task_id,
                "action": action, "seq": seq, "role": role, "op_id": op_id,
                "request_digest": sha_hex(raw_request),
+               "intent_digest": _intent_digest(request),
+               "entry_digest": sha_hex(entry_bytes),
                "request": json.loads(raw_request.decode("utf-8")),
                "response": parsed, "timed_out": False,
                "transport_lost": False}
@@ -565,11 +584,16 @@ def run_checker(dsn: str, launcher: Any, *, run_id: str, task_id: str,
     op_id = (check_op_id(run_id, task_id, seq) if namespace == "check"
              else validation_op_id(run_id, task_id, seq))
     record_id = f"rpr-{namespace}:{op_id}"
+    candidate_raw = canonical_bytes(candidate_doc)
     recorded = _find_receipt(_receipts(dsn, op_id), record_id)
     if recorded is not None:
         content = dict(recorded.get("content") or {})
+        if content.get("checker_digest") != sha_hex(checker_bytes) or \
+                content.get("candidate_digest") != sha_hex(candidate_raw):
+            raise SettlementError(
+                f"representation check {op_id} intent changed;"
+                " recorded verdict is stale")
         return {"op_id": op_id, "reused": True, **dict(content["verdict"])}
-    candidate_raw = canonical_bytes(candidate_doc)
     if len(candidate_raw) > MAX_MESSAGE_BYTES:
         return {"op_id": op_id, "reused": False, "verdict": "invalid",
                 "measure": None, "reason": "oversize"}

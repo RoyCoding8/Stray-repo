@@ -30,7 +30,7 @@
     "fixture": "ef583fa8aaed9d0d4fee586e5f3c50232ff008dc72a26073f25dde64b096aec3"
   },
   "invocations": [],
-  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "manifest_sha256": "ac2bf9b99159c3d1a60ce0ce5ed04035d0239455fbfc0d06ca2a95e783be917f",
   "native_detail": {
     "accepted": 4,
     "final_verdict": {
@@ -106,7 +106,7 @@
     "reason": "locally-irreducible",
     "verified": true
   },
-  "stage": "mechanics",
+  "stage": "evaluation",
   "task_id": "sw-eva-00",
   "trial": [
     {

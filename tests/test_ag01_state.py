@@ -452,7 +452,7 @@ def test_fresh_process_resume(migrated_db):
              " 'options': [(o['option_id'], o['disposition']) for o in snap['options']]}))")
     env = dict(os.environ, PYTHONPATH="src")
     first = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True,
-                           timeout=120, cwd="/tmp/asv2-agenda01", env=env)
+                           timeout=120, cwd=ROOT, env=env)
     assert first.returncode == 0, first.stderr
     import json as _json
     assert _json.loads(first.stdout) == {"tick": 1, "remaining": 64 - 1 - 4,
@@ -465,7 +465,7 @@ def test_fresh_process_resume(migrated_db):
               " 'revision': 1, 'allocation_root': 'agenda-root', 'body': {}}));"
               "print(r.code.value)")
     second = subprocess.run([sys.executable, "-c", replay], capture_output=True, text=True,
-                            timeout=120, cwd="/tmp/asv2-agenda01", env=env)
+                            timeout=120, cwd=ROOT, env=env)
     assert second.returncode == 0, second.stderr
     assert second.stdout.strip() == "already_applied"
 
@@ -480,7 +480,7 @@ def test_killed_writer_leaves_no_partial_state(migrated_db):
               " \" VALUES ('q-ghost', 'agenda-root')\");"
               "os._exit(9)")
     proc = subprocess.run([sys.executable, "-c", killer], capture_output=True, timeout=120,
-                          cwd="/tmp/asv2-agenda01",
+                          cwd=ROOT,
                           env=dict(os.environ, PYTHONPATH="src"))
     assert proc.returncode != 0
     with db.connect(migrated_db) as conn:

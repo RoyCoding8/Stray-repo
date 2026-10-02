@@ -120,7 +120,7 @@ class LocalLauncher:
         if not self.run_dir.is_dir():
             return False
         base = _sanitize(operation_id)
-        for suffix in (".pid", ".result", ".spawns", ".gen"):
+        for suffix in (".pid", ".result.json", ".spawns", ".gen", ".supervise.json"):
             if any(self.run_dir.glob(f"{base}_*{suffix}")):
                 return False
         return True

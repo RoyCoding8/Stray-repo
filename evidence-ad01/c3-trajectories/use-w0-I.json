@@ -4,21 +4,43 @@
   "costs": {
    "sandbox_ops": 0,
    "tokens": 0,
-   "witness_queries": 14
+   "witness_queries": 4
   },
   "domain": "software",
-  "executed": "seed-sw-greedy",
-  "executed_source": "greedy",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
   "fallback_reason": "",
-  "final_measure": 3,
+  "final_measure": 8,
   "freeze": "ad01",
   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
   "initial_measure": 10,
-  "normalized_reduction": 0.7,
+  "normalized_reduction": 0.2,
   "output": {
    "family": "software",
    "fault": "stale-read",
    "ops": [
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
     {
      "key": "a",
      "op": "set",
@@ -50,8 +72,8 @@
    }
   },
   "record_id": "ad01-w0-I-00-I-ad01-w0-within-sw-00",
-  "requested": "seed-sw-greedy",
-  "selected": "seed-sw-greedy",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
   "task_id": "ad01-w0-within-sw-00",
   "verdict": "preserved",
   "world": 0
@@ -61,21 +83,41 @@
   "costs": {
    "sandbox_ops": 0,
    "tokens": 0,
-   "witness_queries": 16
+   "witness_queries": 4
   },
   "domain": "software",
-  "executed": "seed-sw-greedy",
-  "executed_source": "greedy",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
   "fallback_reason": "",
-  "final_measure": 3,
+  "final_measure": 10,
   "freeze": "ad01",
   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
   "initial_measure": 13,
-  "normalized_reduction": 0.7692307692307693,
+  "normalized_reduction": 0.23076923076923078,
   "output": {
    "family": "software",
    "fault": "stale-clear",
    "ops": [
+    {
+     "id": "o0",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
     {
      "key": "b",
      "op": "set",
@@ -88,6 +130,20 @@
      "id": "o1",
      "key": "b",
      "op": "get"
+    },
+    {
+     "id": "o2",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "id": "o3",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "del"
     }
    ],
    "seed": 5302,
@@ -105,8 +161,8 @@
    }
   },
   "record_id": "ad01-w0-I-00-I-ad01-w0-within-sw-01",
-  "requested": "seed-sw-greedy",
-  "selected": "seed-sw-greedy",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
   "task_id": "ad01-w0-within-sw-01",
   "verdict": "preserved",
   "world": 0
@@ -116,21 +172,34 @@
   "costs": {
    "sandbox_ops": 0,
    "tokens": 0,
-   "witness_queries": 15
+   "witness_queries": 4
   },
   "domain": "software",
-  "executed": "seed-sw-greedy",
-  "executed_source": "greedy",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
   "fallback_reason": "",
-  "final_measure": 3,
+  "final_measure": 8,
   "freeze": "ad01",
   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
   "initial_measure": 11,
-  "normalized_reduction": 0.7272727272727273,
+  "normalized_reduction": 0.2727272727272727,
   "output": {
    "family": "software",
    "fault": "stale-read",
    "ops": [
+    {
+     "op": "clear"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
     {
      "key": "b",
      "op": "set",
@@ -144,6 +213,15 @@
     {
      "id": "o0",
      "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "id": "o1",
+     "key": "a",
      "op": "get"
     }
    ],
@@ -162,8 +240,8 @@
    }
   },
   "record_id": "ad01-w0-I-00-I-ad01-w0-within-sw-02",
-  "requested": "seed-sw-greedy",
-  "selected": "seed-sw-greedy",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
   "task_id": "ad01-w0-within-sw-02",
   "verdict": "preserved",
   "world": 0
@@ -391,21 +469,40 @@
   "costs": {
    "sandbox_ops": 0,
    "tokens": 0,
-   "witness_queries": 16
+   "witness_queries": 4
   },
   "domain": "software",
-  "executed": "seed-sw-greedy",
-  "executed_source": "greedy",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
   "fallback_reason": "",
-  "final_measure": 3,
+  "final_measure": 11,
   "freeze": "ad01",
   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
   "initial_measure": 14,
-  "normalized_reduction": 0.7857142857142857,
+  "normalized_reduction": 0.21428571428571427,
   "output": {
    "family": "software",
    "fault": "stale-read",
    "ops": [
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v3"
+    },
     {
      "key": "c",
      "op": "set",
@@ -420,6 +517,24 @@
      "id": "o0",
      "key": "c",
      "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
     }
    ],
    "seed": 5301,
@@ -437,8 +552,8 @@
    }
   },
   "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-sw-00",
-  "requested": "seed-sw-greedy",
-  "selected": "seed-sw-greedy",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
   "task_id": "ad01-w0-transfer-sw-00",
   "verdict": "preserved",
   "world": 0
@@ -448,25 +563,59 @@
   "costs": {
    "sandbox_ops": 0,
    "tokens": 0,
-   "witness_queries": 16
+   "witness_queries": 4
   },
   "domain": "software",
-  "executed": "seed-sw-greedy",
-  "executed_source": "greedy",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
   "fallback_reason": "",
-  "final_measure": 3,
+  "final_measure": 11,
   "freeze": "ad01",
   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
   "initial_measure": 14,
-  "normalized_reduction": 0.7857142857142857,
+  "normalized_reduction": 0.21428571428571427,
   "output": {
    "family": "software",
    "fault": "stale-clear",
    "ops": [
     {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
      "key": "c",
      "op": "set",
      "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "del"
     },
     {
      "op": "clear"
@@ -474,6 +623,11 @@
     {
      "id": "o2",
      "key": "c",
+     "op": "get"
+    },
+    {
+     "id": "o3",
+     "key": "a",
      "op": "get"
     }
    ],
@@ -492,8 +646,8 @@
    }
   },
   "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-sw-01",
-  "requested": "seed-sw-greedy",
-  "selected": "seed-sw-greedy",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
   "task_id": "ad01-w0-transfer-sw-01",
   "verdict": "preserved",
   "world": 0
@@ -503,21 +657,39 @@
   "costs": {
    "sandbox_ops": 0,
    "tokens": 0,
-   "witness_queries": 13
+   "witness_queries": 4
   },
   "domain": "software",
-  "executed": "seed-sw-greedy",
-  "executed_source": "greedy",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
   "fallback_reason": "",
-  "final_measure": 3,
+  "final_measure": 7,
   "freeze": "ad01",
   "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
   "initial_measure": 9,
-  "normalized_reduction": 0.6666666666666666,
+  "normalized_reduction": 0.2222222222222222,
   "output": {
    "family": "software",
    "fault": "stale-read",
    "ops": [
+    {
+     "op": "clear"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
     {
      "key": "a",
      "op": "set",
@@ -549,8 +721,8 @@
    }
   },
   "record_id": "ad01-w0-I-00-I-ad01-w0-transfer-sw-02",
-  "requested": "seed-sw-greedy",
-  "selected": "seed-sw-greedy",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
   "task_id": "ad01-w0-transfer-sw-02",
   "verdict": "preserved",
   "world": 0

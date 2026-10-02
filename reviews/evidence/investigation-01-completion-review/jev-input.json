@@ -1,0 +1,64 @@
+{
+  "state": {
+    "review": "7941ab4 Investigation 01 completion. Worker says live grant is the sole remaining dependency. This review should accept useful progress and avoid expanding scope or demanding positive learning.",
+    "accepted": [
+      "DecisionConsumer is actually called by the public AD01 trajectory for both software and graph.",
+      "Construction now subdivides parent authority; unbound-store refusal is implemented.",
+      "Generated method result envelope is explicit and enforced.",
+      "New broker validation crash tests are present, not independently rerun here."
+    ],
+    "observed": [
+      {
+        "id": "study_entry",
+        "facts": "Real CLI rejects --model. scripts/inv01_study.py _run_trajectory always constructs InvCQualificationDouble and passes MODEL='inv01-study-double'. No CLI option for endpoint mode/model/study root/grant. It self-authorizes each trajectory, clears disposable DB on startup, and uses process-local StudyBudget checked only before trajectories, not use. Report says run this entry with a live model label."
+      },
+      {
+        "id": "recovery",
+        "facts": "Real DecisionConsumer with one stored correction supplied by read double restores count=1 but initializes prior=None and required_target=None. Real admission accepts graph target after stored rejected software target; next packet has no prior_failure. Re-entering actual accepted graph diagnostic boundary runs14 queries twice. No DB crash tested in reviewer probe. note_phase/phase_status have only test callers."
+      },
+      {
+        "id": "exports",
+        "facts": "Actual export_campaign on controlled stored rows containing learner-0 and learner-0-c1 retains both top-level operations but transition filter includes only learner-0. recompute_accounting sums transition counters, returns1 model call instead of2. Actual recompute_study accepts corpus with0 use records against accounting claiming24 and wrong witness_queries999999; rc0. Synthetic corpus, exact intended validation counterexample, not claim of observed live undercharge."
+      }
+    ],
+    "constraints": "No local study DB configured; no full pilot or full DB suite independently run. No historical positive-learning requirement. Need finish only existing behavior/experimental validity blockers, preserve accepted fixes."
+  },
+  "questions": {
+    "closure": {
+      "type": "choice",
+      "instructions": "Which disposition is best supported without treating mocked storage as full integration proof?",
+      "criteria": {
+        "close": "Technical delivery complete; grant only.",
+        "partial": "Accept delivered core improvements; study entry and specific recovery/export contracts still need completion.",
+        "reject_all": "Reject all implementation and restart architecture."
+      }
+    },
+    "priority": {
+      "type": "choice",
+      "instructions": "Which next step best respects the preference against endless minor hardening?",
+      "criteria": {
+        "bounded": "One bounded finalization batch for actual live runner/authority, mid-correction/diagnostic resume, and complete receipt/panel validation.",
+        "audit": "Another exhaustive whole repository audit and style pass.",
+        "grant": "Grant the proposed live study immediately to see whether it works."
+      }
+    },
+    "inference_limit": {
+      "type": "boolean",
+      "instructions": "Do the probes justify claiming actual live overspend occurred?",
+      "criteria": {
+        "true": "They establish observed live overspend.",
+        "false": "They establish implementation/evidence gaps without observing live spend."
+      }
+    },
+    "remaining_risks": {
+      "type": "score",
+      "instructions": "Rate whether reported gaps threaten the intended study, as opposed to cosmetic code quality.",
+      "criteria": [
+        "cosmetic",
+        "minor nonblocking",
+        "material mechanism or evidence gap",
+        "material live readiness and evidence gaps"
+      ]
+    }
+  }
+}

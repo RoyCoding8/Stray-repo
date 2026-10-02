@@ -1,0 +1,53 @@
+{
+  "state": {
+    "context": "Follow-up review of 44f1f7c. The first Jev input incorrectly said construction text was truncated at8192 chars. Inspection and the executed probe establish there is NO such truncation; 8192 is only used to size a fresh allocation. Correct that premise. This request supplies concrete probe results and code observations; Jev is not a code runner and may not grant authority.",
+    "observed": {
+      "source": "44f1f7c",
+      "shared_loop_calls": "All eight run_boundary call sites under tests; public AD01 still calls trajectory._run_boundary. Both software/graph already share that AD01 trajectory. It is insufficient to require a new helper's name; evaluate actual unified semantics.",
+      "allocation": "Spy on real _construction_allocation emitted two independent seed_allocation commands in different DSNs, each16384 authorized, neither parent_id. No database executed in reviewer probe. Worker DB-backed test explicitly asserts duplicate calls and equal newly authorized amount on DSN2.",
+      "rejection": "Real public run_campaign with a callback that rejects first and stops second advances boundary0→1. Unique refusal reason absent from next packet; retained as fallback_reason in episode. This is a DB-free diagnostic probe, not proof of gateway-backed behavior.",
+      "abi": "Real trusted-fixture subprocess executes actual _DRIVER: bare task returned by method causes KeyError candidate; wrapped {'candidate':task} succeeds. Both pass verify_member. Contract renderer describes candidate and helper return shapes but never explicitly declares the method's result envelope.",
+      "prompt": "One12000-char observation yields15981-char construction prompt and broker exposure6044 estimated-budget units vs cap sheet per-call assumption4097. No model called.",
+      "resume": "test_kill_resume_reuses_settled_results first completes _run(), then calls resume in subprocess. No kill occurs and no diagnostic-complete/candidate-validated pending phase is interrupted. Source persists accepted decision and final boundary, no diagnostic-completed checkpoint before constructor.",
+      "tests": "Reviewer12passed,1environmentfailure on missing Linux PostgreSQL socket; no full DB/live qualification."
+    }
+  },
+  "questions": {
+    "priority": {
+      "type": "choice",
+      "instructions": "Which is the strongest overall evidence-supported response?",
+      "criteria": {
+        "complete": "Accept complete implementation and request live grant now.",
+        "finish_path": "Accept contract/feedback progress but finish actual unified path, authority and transition recovery before live.",
+        "rewrite_all": "Discard existing broker/store and rewrite all infrastructure."
+      }
+    },
+    "abi": {
+      "type": "choice",
+      "instructions": "Does the subprocess probe prove the live model would fail every time?",
+      "criteria": {
+        "universal": "Yes, all live constructions must fail.",
+        "contract_gap": "No. It establishes an undocumented runtime shape and a concrete failure mode, not any live outcome.",
+        "no_gap": "No actionable discrepancy exists because helpers happen to return the expected shape."
+      }
+    },
+    "resume": {
+      "type": "choice",
+      "instructions": "How should the described test be labeled?",
+      "criteria": {
+        "interrupted_phase": "Kill/resume after diagnostic or validation is demonstrated.",
+        "completed_replay": "Fresh-process replay of completed boundaries is demonstrated; interrupted-phase recovery remains unproven.",
+        "no_evidence": "It proves no restart behavior whatsoever."
+      }
+    },
+    "claim_origin": {
+      "type": "choice",
+      "instructions": "Delivery says 'System-chosen: packet shapes, envelope sequencing, sweep claims, acquired reducer, refusal dispositions'. Runtime learner has no demonstrated code-editing path and doubles provide canned methods. How should report attribute these?",
+      "criteria": {
+        "learner_discovery": "Attribute all to autonomous runtime discoveries.",
+        "separate": "Attribute engineering to implementation worker, scripted behavior to fixtures, and genuine runtime selections only to traced policy outputs.",
+        "omit": "Delete all attribution and just report tests."
+      }
+    }
+  }
+}

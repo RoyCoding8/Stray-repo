@@ -16,10 +16,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from experiments.representation.acquire import run as panel_run
 from experiments.representation.experiment import checker, freeze
 
 REP = ROOT / "experiments" / "representation"
+
+
+def _historical(manifest_file: str) -> bool:
+    return Path(manifest_file).name != "manifest.json"
+
+
+def _verify_manifest(manifest_file: str) -> list:
+    if _historical(manifest_file):
+        return freeze.verify_history(manifest_file)
+    return freeze.verify_committed(manifest_file)
 
 
 def main(argv):
@@ -35,13 +44,15 @@ def main(argv):
     parser.add_argument("--manifest-file", default="manifest.json")
     args = parser.parse_args(argv)
     import os
-    problems = freeze.verify_committed()
+    historical = _historical(args.manifest_file)
+    problems = _verify_manifest(args.manifest_file)
     if problems:
         print(json.dumps({"refused": problems}, indent=2))
         return 1
     if args.mode == "check":
         report = checker.check_all(Path(args.evidence_root),
-                                   manifest_name=args.manifest_file)
+                                   manifest_name=args.manifest_file,
+                                   historical=historical)
         print(json.dumps({"clean": report["clean"],
                           "problems": report["problems"],
                           "records": report["records"],
@@ -51,12 +62,14 @@ def main(argv):
     if not dsn:
         print("no DSN: pass --dsn or set SETTLEMENT_TEST_DSN")
         return 2
+    from experiments.representation.acquire import run as panel_run
     index = panel_run.run_panel(
         dsn, tag=args.tag, artifacts_root=Path(args.artifacts_root),
         staging_root=Path(args.staging_root), runs_root=Path(args.runs_root),
         evidence_root=Path(args.evidence_root))
     report = checker.check_all(Path(args.evidence_root), dsn=dsn,
-                               manifest_name=args.manifest_file)
+                               manifest_name=args.manifest_file,
+                               historical=historical)
     print(json.dumps({"pairs": index["pairs"], "clean": report["clean"],
                       "problems": report["problems"],
                       "pilot_rule": report["pilot_rule"]}, indent=2))

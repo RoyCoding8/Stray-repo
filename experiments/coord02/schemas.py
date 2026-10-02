@@ -12,7 +12,7 @@ import json
 from typing import Any
 
 from settlement.common import SettlementError
-from settlement.representation import canonical_bytes, sha_hex
+from settlement.representation import canonical_bytes
 
 PROFILE = "coordination-procedure/1"
 PROFILE_VERSION = "coordination-procedure/1"

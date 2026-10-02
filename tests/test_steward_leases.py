@@ -126,7 +126,7 @@ def test_quarantine_degrades_cleanly_without_t5_tables(migrated_db, monkeypatch)
     dsn = migrated_db
     result = steward.quarantine_subject(dsn, _cmd({"subject": "cap-v3"}))
     assert result.code == ResultCode.UNAVAILABLE_DEPENDENCY
-    assert "subject" not in result.data or True
+    assert result.data == {}
     again = steward.quarantine_subject(
         dsn, Command(request_id=result.request_id, payload={"subject": "cap-v3"}))
     assert again.code == ResultCode.UNAVAILABLE_DEPENDENCY

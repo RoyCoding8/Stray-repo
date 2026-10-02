@@ -1,4 +1,4 @@
-"""AGENDA-4 one-shot scheduler: wakeups plus the periodic repair scan.
+"""AGENDA-4 one-shot scheduler: wakeups plus one single-driver sweep.
 
 Runs once and exits; schedule externally (cron/systemd) for the periodic
 cadence. Performs no model inference: gateway is always None, so model ops
@@ -28,27 +28,15 @@ def run_once(dsn: str, run_dir: str | Path, rounds: int = 3) -> dict:
     launcher = LocalLauncher(Path(run_dir))
     launchers = {"local-process": launcher, launcher.launcher_id: launcher}
     wakeups = agenda.collect_wakeups(dsn)
-    rounds_done, last = 0, None
-    totals: dict[str, list[str]] = {"dispatched": [], "delivered": [], "repaired": [],
-                                    "deferred_model": []}
-    for _ in range(max(1, rounds)):
-        last = agenda.repair_scan(dsn, launchers)
-        rounds_done += 1
-        for key in totals:
-            for item in getattr(last, key):
-                if item not in totals[key]:
-                    totals[key].append(item)
-        if not last.repaired:
-            break
-        broker.dispatch_pending(dsn, launchers)
-    assert last is not None
+    passed = broker.sweep(dsn, launchers, gateway=None, repair=True, wake=True)
     return {"wakeups": wakeups["wakeups"],
             "cursor_epoch": wakeups["cursor_epoch"],
             "cursor_ordinal": wakeups["cursor_ordinal"],
-            "rounds": rounds_done,
-            "dispatched": totals["dispatched"], "delivered": totals["delivered"],
-            "repaired": totals["repaired"], "deferred_model": totals["deferred_model"],
-            "next_decision": last.next_decision}
+            "rounds": 1,
+            "dispatched": list(passed.dispatched), "delivered": list(passed.delivered),
+            "repaired": list(passed.repaired),
+            "deferred_model": list(passed.deferred_model),
+            "next_decision": passed.next_decision}
 
 
 def redispatch_reset(dsn: str, run_dir: str | Path, operation_id: str,

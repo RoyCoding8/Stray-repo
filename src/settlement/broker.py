@@ -334,8 +334,27 @@ def _revalidate(dsn: str, operation_id: str, launcher_id: str, provider_id: str,
     return _refusal(dsn, operation_id, current)
 
 
+def _decided_receipt(dsn: str, operation_id: str) -> bool:
+    return any(r["outcome"] in ("success", "failure")
+               for r in store.operation_receipts(dsn, operation_id))
+
+
+def _park_decided(dsn: str, operation_id: str) -> DispatchStatus:
+    _deliver(dsn, f"dispatch:{operation_id}")
+    return _status_of(dsn, operation_id, decision="needs-reconciliation")
+
+
 def admit_launcher_receipt(dsn: str, operation_id: str, receipt: ReceiptProposal) -> CommandResult:
     from .common import payload_digest
+
+    row = read_operation(dsn, operation_id)
+    if row is not None and row["dispatch_state"] == "prepared" \
+            and int((row["payload"] or {}).get("_dispatch_generation", 0)) == 0:
+        return CommandResult(code=ResultCode.INVALID_INPUT,
+                             request_id=f"broker-rc-{receipt.receipt_identity}",
+                             detail=f"operation {operation_id} was never dispatched;"
+                                    " receipt refused",
+                             data={"operation_id": operation_id})
 
     payload: dict[str, Any] = {"operation_id": operation_id,
                                "receipt_identity": receipt.receipt_identity,
@@ -350,6 +369,42 @@ def admit_launcher_receipt(dsn: str, operation_id: str, receipt: ReceiptProposal
 def _deliver(dsn: str, workflow_identity: str) -> None:
     store.record_delivery(dsn, Command(request_id=f"broker-del-{workflow_identity}",
                                        payload={"workflow_identity": workflow_identity}))
+
+
+def _resume_dispatching(dsn: str, row: dict[str, Any], operation_id: str,
+                          launchers: dict[str, Any] | None,
+                          gateway: Any | None,
+                          ownership_generation: int | None,
+                          grant_version: int | None) -> DispatchStatus:
+    if row["dispatch_state"] != "dispatching":
+        return _status_of(dsn, operation_id)
+    if store.operation_receipts(dsn, operation_id):
+        return _status_of(dsn, operation_id)
+    body = row["payload"]
+    effect = body.get("effect")
+    payload = body.get("payload", {})
+    if effect == SANDBOX_EXEC:
+        launcher = (launchers or {}).get(payload.get("profile"))
+    elif effect == OBSERVATION_ADAPTER and (payload.get("adapter") or "") != "clock":
+        launcher = (launchers or {}).get("adapter:%s" % payload.get("adapter", ""))
+    else:
+        return _status_of(dsn, operation_id)
+    if launcher is None:
+        return _status_of(dsn, operation_id)
+    if launcher.read_result(operation_id) is not None:
+        return _status_of(dsn, operation_id)
+    if _is_live(launcher, operation_id):
+        return _status_of(dsn, operation_id)
+    prove = getattr(launcher, "prove_never_sent", None)
+    if prove is not None:
+        if not prove(operation_id):
+            return _status_of(dsn, operation_id)
+    elif launcher.prior_send(operation_id):
+        return _status_of(dsn, operation_id)
+    return redispatch_after_reset(
+        dsn, operation_id, launchers or {},
+        int(body.get("_dispatch_generation", 0)), gateway,
+        ownership_generation, grant_version)
 
 
 def dispatch_operation(
@@ -367,7 +422,9 @@ def dispatch_operation(
         return DispatchStatus(operation_id=operation_id, dispatch_state="unknown",
                               next_decision="not-found")
     if row["dispatch_state"] != "prepared":
-        return _status_of(dsn, operation_id)
+        return _resume_dispatching(dsn, row, operation_id, launchers,
+                                   gateway, ownership_generation,
+                                   grant_version)
     body = row["payload"]
     effect = body.get("effect")
     payload = body.get("payload", {})
@@ -409,6 +466,8 @@ def _send_sandbox(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                        ownership_generation, grant_version, generation)
     if held is not None:
         return held
+    if _decided_receipt(dsn, op.operation_id):
+        return _park_decided(dsn, op.operation_id)
     if launcher.prior_send(op.operation_id):
         _deliver(dsn, f"dispatch:{op.operation_id}")
         return _status_of(dsn, op.operation_id, decision="needs-reconciliation")
@@ -443,6 +502,8 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                        ownership_generation, grant_version, generation)
     if held is not None:
         return held
+    if _decided_receipt(dsn, op.operation_id):
+        return _park_decided(dsn, op.operation_id)
     from .gateway import GatewayError, ModelRequest
 
     request = ModelRequest(model=op.payload["model"],
@@ -473,11 +534,13 @@ def _send_model(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                      "stop_reason": response.stop_reason,
                      "usage": {"input_tokens": usage.input_tokens,
                                "output_tokens": usage.output_tokens,
+                               "model_calls": 1,
                                "charge_units": usage.charge_units,
                                "billed": bool(usage.billed),
                                "provider_enforced_ceiling": usage.provider_enforced_ceiling}},
             outcome="success", provenance="gateway",
-            actual_cost=usage.charge_units if usage.billed else None)),
+            actual_cost=usage.charge_units if usage.billed else (
+                usage.input_tokens + usage.output_tokens))),
         generation)
     return outcome
 
@@ -499,6 +562,8 @@ def _send_adapter(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                        ownership_generation, grant_version, generation)
     if held is not None:
         return held
+    if _decided_receipt(dsn, op.operation_id):
+        return _park_decided(dsn, op.operation_id)
     if launcher.prior_send(op.operation_id):
         _deliver(dsn, f"dispatch:{op.operation_id}")
         return _status_of(dsn, op.operation_id, decision="needs-reconciliation")
@@ -615,12 +680,13 @@ def note_worker_stopped(dsn: str, operation_id: str) -> CommandResult:
         cur.execute("SELECT cancel_state FROM operations WHERE id = %s", (operation_id,))
         row = cur.fetchone()
         if row is None:
-            raise _missing(operation_id)
+            raise SettlementError(f"unknown operation {operation_id}")
         if row["cancel_state"] == "worker_stopped":
             return (ResultCode.ALREADY_APPLIED, "worker already recorded stopped",
                     {"operation_id": operation_id}, [], [])
         if row["cancel_state"] not in ("requested",):
-            raise _cancel_order(operation_id, row["cancel_state"])
+            raise SettlementError(
+                f"operation {operation_id} cancel state is {row['cancel_state']}, not requested")
         cur.execute("UPDATE operations SET cancel_state = 'worker_stopped',"
                     " updated_at = now() WHERE id = %s", (operation_id,))
         return (ResultCode.APPLIED, "worker stopped",
@@ -629,18 +695,6 @@ def note_worker_stopped(dsn: str, operation_id: str) -> CommandResult:
 
     return store.transact(dsn, Command(request_id=f"broker-stopped-{operation_id}",
                                        payload={"operation_id": operation_id}), _fn)
-
-
-def _missing(operation_id: str):
-    from .common import SettlementError
-
-    return SettlementError(f"unknown operation {operation_id}")
-
-
-def _cancel_order(operation_id: str, state: str):
-    from .common import SettlementError
-
-    return SettlementError(f"operation {operation_id} cancel state is {state}, not requested")
 
 
 def confirm_cancel(dsn: str, operation_id: str) -> CommandResult:
@@ -706,6 +760,10 @@ def reconcile(dsn: str, operation_id: str, launchers: dict[str, Any],
     if row["dispatch_state"] == "prepared":
         return ReconcileDecision(operation_id=operation_id, decision="awaiting-dispatch",
                                  next="dispatch")
+    if row["dispatch_state"] == "unresolved":
+        return ReconcileDecision(operation_id=operation_id, decision="unresolved-liability",
+                                 detail="already parked; exposure retained",
+                                 next="retry-later")
     store.reconcile_operation(dsn, Command(request_id=f"broker-recon-{operation_id}",
                                            payload={"operation_id": operation_id,
                                                     "resolution": "unresolved"}))
@@ -744,7 +802,25 @@ def scan_prepared(dsn: str, limit: int = 50) -> list[dict[str, Any]]:
 def dispatch_pending(dsn: str, launchers: dict[str, Any], gateway: Any | None = None,
                      ownership_generation: int | None = None,
                      grant_version: int | None = None, limit: int = 50) -> HeartbeatReport:
+    return sweep(dsn, launchers, gateway, ownership_generation, grant_version,
+                 limit, repair=False, wake=False)
+
+
+def sweep(dsn: str, launchers: dict[str, Any], gateway: Any | None = None,
+            ownership_generation: int | None = None, grant_version: int | None = None,
+            limit: int = 50, repair: bool = False, wake: bool = True) -> HeartbeatReport:
+    """One driver over prepared work, the outbox, unfinished ops and continuations.
+
+    Every operation is decided at most once per sweep: a claim set dedupes the
+    prepared scan, the outbox pass and the repair pass, and an operation joins
+    ``repaired`` only when this sweep transitioned its durable state. All
+    legacy drivers delegate here, so overlapping scans can never double-claim.
+    """
+    for attempt in store.attempts_with_continuations(dsn):
+        if attempt["id"] not in ATTEMPT_WORKFLOW_RESOURCES:
+            restore_workflow_resources(dsn, attempt["id"], launchers, gateway)
     report = HeartbeatReport()
+    claimed: set[str] = set()
     for item in scan_prepared(dsn, limit):
         if item["effect"] == MODEL_INFERENCE:
             if item["operation_id"] not in report.deferred_model:
@@ -756,21 +832,24 @@ def dispatch_pending(dsn: str, launchers: dict[str, Any], gateway: Any | None = 
                                     gateway=gateway,
                                     ownership_generation=ownership_generation,
                                     grant_version=grant_version)
-        if status.sent_this_call and item["operation_id"] not in report.dispatched:
-            report.dispatched.append(item["operation_id"])
+        if status.sent_this_call:
+            claimed.add(item["operation_id"])
+            if item["operation_id"] not in report.dispatched:
+                report.dispatched.append(item["operation_id"])
     for intent in store.scan_outbox(dsn, limit):
         identity = intent["workflow_identity"]
         if not identity.startswith("dispatch:"):
             continue
         operation_id = identity.split(":", 1)[1]
-        claimed = store.claim_outbox(dsn, Command(request_id=f"broker-claim-{identity}",
+        checked = store.claim_outbox(dsn, Command(request_id=f"broker-claim-{identity}",
                                                   payload={"workflow_identity": identity}))
-        if claimed.data.get("delivered"):
+        if checked.data.get("delivered"):
             continue
         row = read_operation(dsn, operation_id)
         if row is None:
             _deliver(dsn, identity)
-            report.delivered.append(operation_id)
+            if operation_id not in report.delivered:
+                report.delivered.append(operation_id)
             continue
         if row["payload"].get("effect") == MODEL_INFERENCE and row["dispatch_state"] in (
                 "prepared", "dispatching", "sent"):
@@ -783,23 +862,71 @@ def dispatch_pending(dsn: str, launchers: dict[str, Any], gateway: Any | None = 
                                         ownership_generation=ownership_generation,
                                         grant_version=grant_version)
             if status.sent_this_call:
-                report.dispatched.append(operation_id)
-                report.delivered.append(operation_id)
+                claimed.add(operation_id)
+                if operation_id not in report.dispatched:
+                    report.dispatched.append(operation_id)
+                if operation_id not in report.delivered:
+                    report.delivered.append(operation_id)
             continue
         if row["dispatch_state"] in ("observed", "reconciled", "cancelled"):
             _deliver(dsn, identity)
-            report.delivered.append(operation_id)
+            if operation_id not in report.delivered:
+                report.delivered.append(operation_id)
             continue
+        if operation_id in claimed:
+            continue
+        before = row["dispatch_state"]
+        before_receipts = len(store.operation_receipts(dsn, operation_id))
         decision = reconcile(dsn, operation_id, launchers)
-        if decision.decision != "still-running":
-            _deliver(dsn, identity)
+        claimed.add(operation_id)
+        if decision.decision == "still-running":
+            continue
+        _deliver(dsn, identity)
+        if operation_id not in report.delivered:
             report.delivered.append(operation_id)
+        if _transitioned(dsn, operation_id, before, before_receipts):
             report.repaired.append(operation_id)
+    if repair:
+        state = store.restart_reconciliation(dsn)
+        for op in state["unfinished_operations"]:
+            if op["id"] in claimed:
+                continue
+            claimed.add(op["id"])
+            row = read_operation(dsn, op["id"])
+            if row is not None and row["payload"].get("effect") == MODEL_INFERENCE:
+                if op["id"] not in report.deferred_model:
+                    report.deferred_model.append(op["id"])
+                continue
+            before = (row or {}).get("dispatch_state", "")
+            before_receipts = len(store.operation_receipts(dsn, op["id"]))
+            decision = reconcile(dsn, op["id"], launchers)
+            if decision.decision != "still-running" \
+                    and _transitioned(dsn, op["id"], before, before_receipts):
+                report.repaired.append(op["id"])
+        if report.repaired and report.next_decision == "idle":
+            report.next_decision = "repair-done"
     if report.dispatched or report.repaired:
         report.next_decision = "work-done"
     elif report.deferred_model:
         report.next_decision = "model-dispatch-deferred"
+    if wake:
+        woken = _wake_waiting_workflows(dsn, launchers, gateway)
+        for aid in woken["woken"]:
+            if f"wake:{aid}" not in report.repaired:
+                report.repaired.append(f"wake:{aid}")
+        if woken["woken"] and report.next_decision == "idle":
+            report.next_decision = "work-done"
     return report
+
+
+def _transitioned(dsn: str, operation_id: str, before: str,
+                    before_receipts: int) -> bool:
+    row = read_operation(dsn, operation_id)
+    if row is None:
+        return before != "missing"
+    if row["dispatch_state"] != before:
+        return True
+    return len(store.operation_receipts(dsn, operation_id)) > before_receipts
 
 
 def redispatch_after_reset(dsn: str, operation_id: str, launchers: dict[str, Any],
@@ -835,6 +962,12 @@ def _stored_composition(resources_key: str) -> dict[str, Any] | None:
 def wake_waiting_workflows(dsn: str, launchers: dict[str, Any] | None = None,
                            gateway: Any | None = None,
                            limit: int = 200) -> dict[str, Any]:
+    return _wake_waiting_workflows(dsn, launchers, gateway, limit)
+
+
+def _wake_waiting_workflows(dsn: str, launchers: dict[str, Any] | None = None,
+                            gateway: Any | None = None,
+                            limit: int = 200) -> dict[str, Any]:
     from . import run as runmod
 
     woken: list[str] = []
@@ -888,39 +1021,19 @@ def wake_waiting_workflows(dsn: str, launchers: dict[str, Any] | None = None,
 
 def heartbeat(dsn: str, launchers: dict[str, Any], gateway: Any | None = None,
               ownership_generation: int | None = None, repair_due: bool = False,
-              limit: int = 50) -> HeartbeatReport:
-    for attempt in store.attempts_with_continuations(dsn):
-        if attempt["id"] not in ATTEMPT_WORKFLOW_RESOURCES:
-            restore_workflow_resources(dsn, attempt["id"], launchers, gateway)
-    report = dispatch_pending(dsn, launchers, gateway, ownership_generation, None, limit)
-    if repair_due:
-        state = store.restart_reconciliation(dsn)
-        for op in state["unfinished_operations"]:
-            if op["id"] in report.repaired or op["id"] in report.dispatched:
-                continue
-            row = read_operation(dsn, op["id"])
-            if row is not None and row["payload"].get("effect") == MODEL_INFERENCE:
-                if op["id"] not in report.deferred_model:
-                    report.deferred_model.append(op["id"])
-                continue
-            decision = reconcile(dsn, op["id"], launchers)
-            if decision.decision != "still-running":
-                report.repaired.append(op["id"])
-        if report.repaired and report.next_decision == "idle":
-            report.next_decision = "repair-done"
-    woken = wake_waiting_workflows(dsn, launchers, gateway)
-    for aid in woken["woken"]:
-        if f"wake:{aid}" not in report.repaired:
-            report.repaired.append(f"wake:{aid}")
-    if woken["woken"] and report.next_decision == "idle":
-        report.next_decision = "work-done"
-    return report
+              limit: int = 50, grant_version: int | None = None) -> HeartbeatReport:
+    return sweep(dsn, launchers, gateway, ownership_generation, grant_version,
+                 limit, repair=repair_due, wake=True)
 
 
 def recover(dsn: str, launchers: dict[str, Any]) -> HeartbeatReport:
     report = HeartbeatReport()
+    claimed: set[str] = set()
     state = store.restart_reconciliation(dsn)
     for op in state["unfinished_operations"]:
+        if op["id"] in claimed:
+            continue
+        claimed.add(op["id"])
         decision = reconcile(dsn, op["id"], launchers)
         report.repaired.append(f"{op['id']}:{decision.decision}")
     live = state["live_attempts"]
@@ -1017,11 +1130,16 @@ def wf_ensure_dispatch(dsn: str, op_args: dict[str, Any], retries: int,
         return {"node_id": node_id, "operation_id": op_args["operation_id"],
                 "dispatch_state": prior["dispatch_state"],
                 "next_decision": "already-failed", "failed_try": True}
-    ensure_operation(dsn, operation_id=op_args["operation_id"], effect=op_args["effect"],
-                     payload=op_args["payload"], allocation_id=op_args["allocation_id"],
-                     attempt_id=op_args.get("attempt_id"),
-                     execution_version=op_args.get("execution_version", ""),
-                     retries=retries)
+    ensured = ensure_operation(dsn, operation_id=op_args["operation_id"], effect=op_args["effect"],
+                               payload=op_args["payload"], allocation_id=op_args["allocation_id"],
+                               attempt_id=op_args.get("attempt_id"),
+                               execution_version=op_args.get("execution_version", ""),
+                               retries=retries)
+    if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        return {"node_id": node_id, "operation_id": op_args["operation_id"],
+                "dispatch_state": prior["dispatch_state"] if prior["found"] else "unknown",
+                "next_decision": f"ensure-refused-{ensured.code.value}",
+                "ensure_refused": ensured.detail, "failed_try": False}
     status = dispatch_operation(dsn, op_args["operation_id"],
                                 launchers=res.get("launchers", {}),
                                 gateway=res.get("gateway"),

@@ -69,7 +69,8 @@ def test_admit_refuses_invented_basis_refs():
     from experiments.ad01.trajectory import admit_investigation
     invented = {"basis_references": ["obs-never-recorded"],
                 "question": "why",
-                "next_action": {"kind": "diagnostic"},
+                "next_action": {"kind": "diagnostic",
+                                "task_id": "ad01-w0-dev-sw-00"},
                 "requested_resources": {"diagnostic_queries": 1}}
     outcome = admit_investigation(invented, EXPERIENCE, CHARTER)
     assert outcome["decision"] == "refused"
@@ -81,7 +82,8 @@ def test_admit_accepts_explicit_exploratory_option():
     exploratory = {"basis_references": [],
                    "question": "unknown witness behavior on transfer tasks",
                    "unknown": "whether reversed priority preserves the witness",
-                   "next_action": {"kind": "diagnostic"},
+                   "next_action": {"kind": "diagnostic",
+                                "task_id": "ad01-w0-dev-sw-00"},
                    "requested_resources": {"diagnostic_queries": 1}}
     outcome = admit_investigation(exploratory, EXPERIENCE, CHARTER)
     assert outcome["decision"] == "admitted"
@@ -164,16 +166,22 @@ def test_run_campaign_terminates_with_episodes_and_stop():
 def test_kill_at_recorded_decision_resumes_same_campaign(pg):
     from experiments.ad01 import trajectory
     cid = trajectory.campaign_id(0, "I", 10)
-    trajectory.ensure_campaign(pg, cid, 0, "I", CHARTER, CAPS)
-    decision = {"action": "investigate", "question": "q0",
+    trajectory.authorize_campaign(pg, cid, authorized=1000)
+    trajectory.ensure_campaign(pg, cid, 0, "I", CHARTER, CAPS,
+                               tasks=["ad01-w0-dev-sw-00"])
+    decision = {"basis_references": ["obs-ad01-w0-dev-sw-00-seed"],
+                "question": "q0",
                 "next_action": {"kind": "diagnostic",
                                 "diagnostic": "diagnostic_resolves",
                                 "task_id": "ad01-w0-dev-sw-00"}}
     did = trajectory.record_decision(pg, cid, 0, decision)
-    resumed = trajectory.resume_campaign(pg, cid, CHARTER, CAPS)
+    resumed = trajectory.resume_campaign(
+        pg, cid, CHARTER, CAPS, tasks=["ad01-w0-dev-sw-00"])
     assert resumed["campaign_id"] == cid
     assert resumed["boundaries"][0]["decision_id"] == did
-    assert resumed["queries"] == resumed["boundaries"][0]["spend"]
+    assert resumed["boundaries"][0]["decision"] == decision
+    assert resumed["episodes"][0]["disposition"] == "inspected"
+    assert resumed["queries"] == resumed["boundaries"][0]["spend"] == 1
     direct = trajectory.run_campaign(
         0, "I", CHARTER, dict(CAPS, max_boundaries=1),
         tasks=["ad01-w0-dev-sw-00"], campaign_seq=11)
@@ -183,10 +191,11 @@ def test_kill_at_recorded_decision_resumes_same_campaign(pg):
 def test_i_and_r_arms_run_one_world_without_sharing():
     from experiments.ad01 import rotation, trajectory
     order = [s["task_id"] for s in rotation.r_schedule(0)]
-    arm_i = trajectory.run_campaign(0, "I", CHARTER, dict(CAPS),
+    rotation_caps = dict(CAPS, diagnostic_queries=160)
+    arm_i = trajectory.run_campaign(0, "I", CHARTER, rotation_caps,
                                     tasks=[t for t in order
                                            if "-sw-" in t])
-    arm_r = trajectory.run_campaign(0, "R", CHARTER, dict(CAPS),
+    arm_r = trajectory.run_campaign(0, "R", CHARTER, rotation_caps,
                                     tasks=order)
     assert [b["task_id"] for b in arm_r["boundaries"]] == order[:6]
     assert arm_i["stop"]["reason"] and arm_r["stop"]["reason"]
@@ -240,14 +249,24 @@ def test_recording_double_proposal_enters_through_campaign():
         tasks=["ad01-w0-dev-sw-01"], propose=double)
     assert len(double.calls) == 1
     assert campaign["boundaries"][0]["task_id"] == "ad01-w0-dev-sw-01"
-    assert campaign["episodes"][0]["disposition"] in ("retained",
-                                                      "no-candidate")
+    assert campaign["episodes"][0]["disposition"] == "inspected"
 
 
 def test_use_phase_selects_frozen_repertoire_and_falls_back(tmp_path):
     from experiments.ad01 import checker, trajectory
+
+    def develop(experience, charter):
+        seed = experience["observations"][0]
+        return {"basis_references": [seed["observation_id"]],
+                "question": "develop the visible task",
+                "next_action": {"kind": "development",
+                                "diagnostic": "software",
+                                "task_id": "ad01-w0-dev-sw-00"},
+                "requested_resources": {"diagnostic_queries": 1}}
+
     campaign = trajectory.run_campaign(0, "I", CHARTER, dict(CAPS),
-                                       tasks=["ad01-w0-dev-sw-00"])
+                                       tasks=["ad01-w0-dev-sw-00"],
+                                       propose=develop)
     frozen = tmp_path / "repertoire.json"
     trajectory.freeze_repertoire(campaign, frozen)
     repertoire = trajectory.load_repertoire(frozen)
@@ -320,7 +339,8 @@ def test_protected_use_feedback_cannot_drive_development():
          "verdict": "preserved"}]}
     outcome = trajectory.admit_investigation(
         {"basis_references": ["use-ad01-w0-I-ad01-w0-within-sw-00"],
-         "question": "q", "next_action": {"kind": "diagnostic"},
+         "question": "q", "next_action": {"kind": "diagnostic",
+                                "task_id": "ad01-w0-dev-sw-00"},
          "requested_resources": {}}, feedback, CHARTER)
     assert outcome["decision"] == "refused"
     assert "protected-use" in outcome["reason"]
@@ -334,28 +354,51 @@ def test_fresh_process_resumes_published_campaign(pg, tmp_path):
     run = subprocess.run(
         [sys.executable, "-m", "experiments.ad01.cli", "run",
          "--dsn", dsn, "--world", "0", "--arm", "I", "--seq", "20",
-         "--max-boundaries", "1",
-         "--tasks", "ad01-w0-dev-sw-00,ad01-w0-dev-sw-01"],
+         "--max-boundaries", "1", "--agenda-authorized", "1000",
+         "--tasks", "ad01-w0-dev-sw-02,ad01-w0-dev-sw-00"],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300)
     assert run.returncode == 0, run.stderr
     first = json.loads(run.stdout)
     resume = subprocess.run(
         [sys.executable, "-m", "experiments.ad01.cli", "resume",
          "--dsn", dsn, "--campaign", first["campaign_id"],
-         "--max-boundaries", "2",
-         "--tasks", "ad01-w0-dev-sw-00,ad01-w0-dev-sw-01"],
+         "--max-boundaries", "6"],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300)
     assert resume.returncode == 0, resume.stderr
     resumed = json.loads(resume.stdout)
     assert resumed["campaign_id"] == first["campaign_id"]
+    assert [b["task_id"] for b in resumed["boundaries"]] == [
+        "ad01-w0-dev-sw-02", "ad01-w0-dev-sw-00"]
     assert [b["seq"] for b in resumed["boundaries"]] == [0, 1]
     assert resumed["queries"] == first["queries"] + next(
         b["spend"] for b in resumed["boundaries"] if b["seq"] == 1)
 
 
+@pytest.mark.parametrize("replacement", [[], ["ad01-w0-dev-sw-01"]])
+def test_resume_refuses_schedule_change_before_new_boundary(pg, replacement):
+    from experiments.ad01 import trajectory
+    from settlement.common import ConflictPayload
+    trajectory.authorize_campaign(
+        pg, trajectory.campaign_id(0, "I", 12), authorized=1000)
+    first = trajectory.run_campaign(
+        0, "I", CHARTER, dict(CAPS, max_boundaries=1),
+        tasks=["ad01-w0-dev-sw-02", "ad01-w0-dev-sw-00"],
+        campaign_seq=12, dsn=pg)
+    with pytest.raises(ConflictPayload):
+        trajectory.resume_campaign(
+            pg, first["campaign_id"], CHARTER, CAPS, tasks=replacement)
+    settled, pending = trajectory._read_campaign(pg, first["campaign_id"])
+    assert list(settled) == [0]
+    assert pending == {}
+    resumed = trajectory.resume_campaign(pg, first["campaign_id"], CHARTER, CAPS)
+    assert [b["task_id"] for b in resumed["boundaries"]] == [
+        "ad01-w0-dev-sw-02", "ad01-w0-dev-sw-00"]
+
+
 def test_kill_after_publication_resumes_without_duplicate_spend(pg):
     from experiments.ad01 import trajectory
     cid = trajectory.campaign_id(0, "I", 12)
+    trajectory.authorize_campaign(pg, cid, authorized=1000)
     first = trajectory.run_campaign(
         0, "I", CHARTER, dict(CAPS, max_boundaries=1),
         tasks=["ad01-w0-dev-sw-00", "ad01-w0-dev-sw-01"],
@@ -372,3 +415,110 @@ def test_kill_after_publication_resumes_without_duplicate_spend(pg):
         tasks=["ad01-w0-dev-sw-00", "ad01-w0-dev-sw-01"],
         campaign_seq=13)
     assert resumed["queries"] == direct["queries"]
+
+
+def test_mismatched_diagnostic_family_refuses_without_crash():
+    from experiments.ad01 import trajectory
+
+    def mismatch(experience, charter):
+        seed = experience["observations"][0]
+        return {"basis_references": [seed["observation_id"]],
+                "question": "software diagnostic on a graph task",
+                "next_action": {"kind": "diagnostic",
+                                "diagnostic": "software",
+                                "task_id": "ad01-w0-dev-gr-00"},
+                "requested_resources": {"diagnostic_queries": 1}}
+
+    campaign = trajectory.run_campaign(
+        0, "I", CHARTER, dict(CAPS, max_boundaries=1),
+        tasks=["ad01-w0-dev-gr-00"], propose=mismatch)
+    assert campaign["episodes"][0]["disposition"] == "no-candidate"
+    assert "mismatches" in campaign["episodes"][0]["fallback_reason"]
+
+
+def test_mismatched_development_diagnostic_family_refuses_without_crash():
+    from experiments.ad01 import trajectory
+
+    def mismatch(experience, charter):
+        seed = experience["observations"][0]
+        return {"basis_references": [seed["observation_id"]],
+                "question": "development with software diagnostic on graph",
+                "next_action": {"kind": "development",
+                                "diagnostic": "software",
+                                "task_id": "ad01-w0-dev-gr-00"},
+                "requested_resources": {"diagnostic_queries": 1}}
+
+    campaign = trajectory.run_campaign(
+        0, "I", CHARTER, dict(CAPS, max_boundaries=1),
+        tasks=["ad01-w0-dev-gr-00"], propose=mismatch)
+    assert campaign["episodes"][0]["disposition"] == "no-candidate"
+    assert "mismatches" in campaign["episodes"][0]["fallback_reason"]
+
+
+def test_learner_instruction_binds_curriculum_item():
+    from experiments.ad01.learner import (
+        LEARNER_INSTRUCTION, LearnerRefused, validate_proposal)
+    assert "curriculum_item" in LEARNER_INSTRUCTION
+    with pytest.raises(LearnerRefused):
+        validate_proposal(
+            {"basis_references": [], "question": "q",
+             "next_action": {"task_id": "ad01-w0-dev-sw-00"},
+             "requested_resources": {}})
+
+
+def test_learner_instruction_requires_exact_basis_refs():
+    from experiments.ad01.learner import LEARNER_INSTRUCTION
+    assert "character for character" in LEARNER_INSTRUCTION
+
+
+def test_parse_entry_accepts_fenced_json():
+    import json
+    from experiments.ad01.construct import _parse_entry
+    body = json.dumps({"entry": "def ENTRY(task, oracle, max_queries=16):\n    return None",
+                       "notes": "n"})
+    source, problem = _parse_entry("```json\n%s\n```" % body)
+    assert problem == ""
+    assert source.startswith("def ENTRY")
+
+
+def test_unknown_scheduled_task_refuses_without_crash():
+    from experiments.ad01 import trajectory
+    with pytest.raises(ValueError, match="unknown task"):
+        trajectory.run_campaign(
+            0, "I", CHARTER, dict(CAPS, max_boundaries=1),
+            tasks=["not-a-task"])
+    with pytest.raises(ValueError, match="unknown task"):
+        trajectory.run_use({"campaign_id": "ad01-w0-I-00", "members": []},
+                           0, "I", ["not-a-task"], {})
+
+
+def test_malformed_campaign_id_refuses_without_crash():
+    from experiments.ad01 import trajectory
+    with pytest.raises(ValueError, match="malformed campaign id"):
+        trajectory.resume_campaign(
+            "dbname=ec02test_adtr", "foo", CHARTER, CAPS)
+
+
+def test_cli_rejects_bad_world_arm_and_campaign(capsys):
+    from experiments.ad01 import cli
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["run", "--dsn", "x", "--world", "99", "--arm", "I"])
+    assert exc.value.code == 2
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["run", "--dsn", "x", "--world", "0", "--arm", "Z"])
+    assert exc.value.code == 2
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["resume", "--dsn", "x", "--campaign", "foo"])
+    assert exc.value.code == 2
+
+
+def test_acquired_repertoire_without_bytes_refuses_without_crash(tmp_path):
+    import json
+    from experiments.ad01 import trajectory
+    frozen = tmp_path / "repertoire.json"
+    frozen.write_text(json.dumps(
+        {"campaign_id": "c", "queries": 0,
+         "members": [{"capability_id": "acquired-sw-x", "authored": False,
+                      "method_source": "", "source_digest": "zzz"}]}) + "\n")
+    with pytest.raises(ValueError, match="no executable bytes"):
+        trajectory.load_repertoire(frozen)

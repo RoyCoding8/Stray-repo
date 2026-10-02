@@ -97,16 +97,19 @@ def _ensure_sandbox_op(dsn: str, launcher: Any, operation_id: str,
                        argv: list[str], allocation_id: str,
                        attempt_id: str | None, timeout_ms: int,
                        execution_version: str = "") -> str:
-    ensured = broker.ensure_operation(
-        dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
+    from . import loop as _loop
+
+    granted = _loop.admit_effect(
+        dsn, allocation_id=allocation_id, operation_id=operation_id,
+        effect=broker.SANDBOX_EXEC,
         payload={"profile": launcher.profile, "argv": argv,
                  "timeout_ms": timeout_ms,
                  "max_output_bytes": GRADER_MAX_BYTES},
-        allocation_id=allocation_id, attempt_id=attempt_id,
-        execution_version=execution_version)
-    if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        attempt_id=attempt_id, execution_version=execution_version,
+        kind="construction")
+    if isinstance(granted, _loop.Refusal):
         raise SettlementError(
-            f"operation {operation_id} not admitted: {ensured.detail}")
+            f"operation {operation_id} not admitted: {granted.detail}")
     return operation_id
 
 
@@ -440,17 +443,18 @@ def _fresh_worker(dsn: str, *, tag: str, investigation_id: str,
 def _infer_via_broker(dsn: str, adapter: Any, *, operation_id: str, model: str,
                       prompt: str, allocation_id: str,
                       attempt_id: str | None) -> tuple[str, str | None, int]:
-    ensured = broker.ensure_operation(
-        dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
+    from . import loop as _loop
+
+    granted = _loop.admit_effect(
+        dsn, allocation_id=allocation_id, operation_id=operation_id,
+        effect=broker.MODEL_INFERENCE,
         payload={"model": model,
                  "messages": [{"role": "user", "content": prompt}],
                  "max_output_tokens": model_token_budget(), "deadline_ms": 300_000},
-        allocation_id=allocation_id, attempt_id=attempt_id)
-    if ensured.code == ResultCode.INSUFFICIENT_RESOURCES:
+        attempt_id=attempt_id, kind="diagnostic")
+    if isinstance(granted, _loop.Refusal):
         raise SettlementError(
-            f"operation {operation_id} refused before dispatch: {ensured.detail}")
-    if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-        raise SettlementError(f"operation {operation_id} not admitted: {ensured.detail}")
+            f"operation {operation_id} refused before dispatch: {granted.detail}")
     broker.dispatch_operation(dsn, operation_id, gateway=adapter)
     receipt = _sandbox_receipt(dsn, operation_id)
     if receipt is None:
@@ -493,6 +497,14 @@ def _op_accounting(dsn: str, operation_id: str) -> dict:
                     and 0 <= raw_charge <= reserved)
         charge = raw_charge if verified else None
         settled = charge if verified else reserved
+        if charge is None and usage.get("billed") is False:
+            inbound = usage.get("input_tokens")
+            outbound = usage.get("output_tokens")
+            if isinstance(inbound, int) and not isinstance(inbound, bool) \
+                    and isinstance(outbound, int) \
+                    and not isinstance(outbound, bool) \
+                    and inbound >= 0 and outbound >= 0:
+                settled = inbound + outbound
         return {"operation_id": operation_id,
                 "dispatch_state": op["dispatch_state"], "reserved": reserved,
                 "settled": settled, "unresolved": 0, "outcome": terms[-1]["outcome"],

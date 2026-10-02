@@ -1,0 +1,12 @@
+{
+  "reviewed_commit": "1d90c2e6c553f6ad1b03cfd6145fe4cad86c7821",
+  "checks": {
+    "identity_supported": 28,
+    "changed_instrument_unsupported": 28
+  },
+  "recorded_instruments": {
+    "diagnostic": 23,
+    "development": 5
+  },
+  "scope": "Exact recorded actions versus changed instruments. No alternate execution, policy ranking, provider calls or database effects."
+}

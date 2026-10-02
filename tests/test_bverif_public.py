@@ -102,7 +102,9 @@ def test_public_panel_path_exports_model_repair_bytes_verbatim(tmp_path):
         package_digest="none", package_text="doubled-dev",
         source_sha="bverif-base", config_digest="entry-bverif",
         gateway=gw, model="bverif-public-double")
-    assert any("coord02-child" in c.operation_id for c in gw.calls), \
+    assert cell.outcome.get("plan_id"), "no admitted plan on the outcome"
+    assert any(c.operation_id.startswith(cell.outcome["plan_id"])
+               and c.operation_id.endswith(":work:model") for c in gw.calls), \
         "public path never reached the admitted child dispatch"
     summary = entry.write_evidence([cell], freeze=freeze,
                                     evidence_root=tmp_path / "evidence",

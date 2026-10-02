@@ -5,8 +5,8 @@ from pathlib import Path
 from experiments.coord02 import schemas_evidence as SE
 from experiments.coord02 import experience as E
 from experiments.coord02.controller import seed_episode
-from settlement import broker, db
-from settlement.common import ResultCode
+from settlement import broker, db, store
+from settlement.common import Command, ResultCode
 
 DSN = os.environ.get("EC02_BAUTH_DSN",
                      "dbname=ec02test_bauth host=/var/run/postgresql user=ubuntu")
@@ -22,6 +22,12 @@ def _settle_model_op(dsn: str, operation_id: str, allocation_id: str,
                  "max_output_tokens": 16, "deadline_ms": 10_000},
         allocation_id=allocation_id)
     assert ensured.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+    advanced = store.advance_dispatch(
+        DSN, Command(request_id="bauth-adv-%s" % operation_id,
+                     payload={"operation_id": operation_id,
+                              "launcher_id": "gateway",
+                              "provider_id": "b-auth-probe"}))
+    assert advanced.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
     admitted = broker.admit_launcher_receipt(
         dsn, operation_id, broker.ReceiptProposal(
             receipt_identity="bauth:%s" % operation_id,

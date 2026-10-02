@@ -213,8 +213,7 @@ def test_pilot_rule_honest_negative():
 def test_both_freezes_verify_independently():
     from experiments.representation.experiment import freeze
     assert freeze.verify_committed() == []
-    assert freeze.verify_committed("manifest_acq1.json",
-                                   regenerate=False) == []
+    assert freeze.verify_history("manifest_acq1.json") == []
     acq1 = json.loads((EXPERIMENT / "manifest_acq1.json").read_bytes())
     current = json.loads((EXPERIMENT / "manifest.json").read_bytes())
     assert acq1["version"] == "RPR-ACQ/1"

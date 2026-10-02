@@ -1,0 +1,45 @@
+{
+ "admitted": true,
+ "grant": {
+  "episodes": 48,
+  "construction_calls": 4
+ }
+}
+{
+ "campaign": "c2live8",
+ "grant": {
+  "episodes": 48,
+  "construction_calls": 4
+ },
+ "selection": {
+  "selection": "none",
+  "selector": "coord02-dev-select/1",
+  "ordering": [
+   "valid-execution",
+   "solved-tasks",
+   "model-tokens",
+   "sandbox-ops",
+   "canonical-bytes"
+  ],
+  "ranking": [
+   1,
+   2
+  ],
+  "reason": "neither candidate executable under the contract"
+ },
+ "accounting": {
+  "calls_used": 2,
+  "calls_refused": 0,
+  "ceiling": 4,
+  "study_ceiling": 4,
+  "live_calls_used": 2,
+  "live_calls_authorized": 4,
+  "label": "LIVE",
+  "lineages": [
+   1,
+   2
+  ]
+ }
+}
+ledger: {"calls_used": 2, "calls_refused": 0, "ceiling": 4, "study_ceiling": 4, "live_calls_used": 2, "live_calls_authorized": 4, "label": "LIVE", "lineages": [1, 2]}
+EXIT=0

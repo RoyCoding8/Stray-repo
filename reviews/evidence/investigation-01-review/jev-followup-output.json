@@ -1,0 +1,93 @@
+{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "priority": {
+      "type": "choice",
+      "choice": "finish_path",
+      "probabilities": {
+        "rewrite_all": 0,
+        "finish_path": 1,
+        "complete": 0
+      },
+      "confidence": 1
+    },
+    "abi": {
+      "type": "choice",
+      "choice": "contract_gap",
+      "probabilities": {
+        "contract_gap": 1,
+        "no_gap": 0,
+        "universal": 0
+      },
+      "confidence": 1
+    },
+    "resume": {
+      "type": "choice",
+      "choice": "completed_replay",
+      "probabilities": {
+        "completed_replay": 1,
+        "no_evidence": 0,
+        "interrupted_phase": 0
+      },
+      "confidence": 1
+    },
+    "claim_origin": {
+      "type": "choice",
+      "choice": "separate",
+      "probabilities": {
+        "learner_discovery": 0,
+        "omit": 0,
+        "separate": 1
+      },
+      "confidence": 1
+    }
+  },
+  "usage": {
+    "inputTokens": 1206,
+    "outputTokens": 170
+  },
+  "providerMetadata": {
+    "typesafe": {
+      "confidence": {
+        "priority": 1,
+        "abi": 1,
+        "resume": 1,
+        "claim_origin": 1
+      }
+    },
+    "gateway": {
+      "routing": {
+        "originalModelId": "typesafe-ai/jev",
+        "resolvedProvider": "typesafe-ai",
+        "fallbacksAvailable": [],
+        "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+        "canonicalSlug": "typesafe-ai/jev",
+        "finalProvider": "typesafe-ai",
+        "modelAttemptCount": 1,
+        "modelAttempts": [
+          {
+            "canonicalSlug": "typesafe-ai/jev",
+            "success": true,
+            "providerAttemptCount": 1,
+            "providerAttempts": [
+              {
+                "provider": "typesafe-ai",
+                "credentialType": "system",
+                "success": true,
+                "startTime": 1789890317637,
+                "endTime": 1789890317799,
+                "statusCode": 200
+              }
+            ]
+          }
+        ],
+        "totalProviderAttemptCount": 1
+      },
+      "cost": "0",
+      "marketCost": "0.000050652",
+      "surchargeCost": "0",
+      "gatewayCost": "0",
+      "generationId": "gen_01M2YWDK3CE819T0JE0NDX5YMS"
+    }
+  }
+}

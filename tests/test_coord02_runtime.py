@@ -203,7 +203,9 @@ class Constructor:
         self.calls: list = []
         self.gateway = gateway or FakeGatewayAdapter()
 
-    def __call__(self, node: str, child: dict, rendered: dict):
+    def __call__(self, node: str, child: dict, rendered: dict,
+                 operation_id: str | None = None,
+                 attempt_id: str | None = None):
         assert self.gateway.check_auth() is not None
         self.calls.append(node)
         value = self.outputs.get(node, "missing")
@@ -518,10 +520,12 @@ def test_ec07_kill_after_one_child_resumes(dsn, tmp_path):
     launchers = _launchers(tmp_path)
     inner = Constructor({"w1": GOOD_A, "w2": GOOD_B})
 
-    def _killer(node, child, rendered):
+    def _killer(node, child, rendered, operation_id=None,
+                attempt_id=None):
         if node == "w2":
             raise KillSim("kill after one accepted child")
-        return inner(node, child, rendered)
+        return inner(node, child, rendered, operation_id=operation_id,
+                     attempt_id=attempt_id)
 
     with pytest.raises(KillSim):
         C.run_episode(dsn, cfg, launchers, _killer)

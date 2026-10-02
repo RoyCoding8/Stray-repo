@@ -155,21 +155,6 @@ def _submit_outputs(dsn, plan_id, outputs):
     return out
 
 
-def _submit_all(dsn, seed, proposed, outputs):
-    plan_id = proposed.data["plan_id"]
-    digests = _submit_outputs(dsn, plan_id, outputs)
-    results = {}
-    for child in _children(proposed.data["composition"]["shape"]):
-        node = child["node_id"]
-        attempt = team.child_attempt(dsn, plan_id, node)
-        results[node] = team.submit_child(
-            dsn, _cmd(), plan_revision=1, node_id=node,
-            input_digests=team.expected_inputs(dsn, plan_id, node),
-            ownership_generation=attempt["ownership_generation"],
-            output_digest=digests[node], receipt_refs=[f"rc:{plan_id}:{node}"])
-    return results
-
-
 class FakeLauncher:
     launcher_id = "fake-team"
     profile = "local-process"

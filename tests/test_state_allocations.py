@@ -127,6 +127,14 @@ def test_random_reserve_settle_sequences_preserve_invariant(ops):
     if not dsn:
         pytest.skip("SETTLEMENT_TEST_DSN is not configured")
     db.apply_migrations(dsn, Path(__file__).parent.parent / "migrations")
+    with db.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+                " AND tablename != 'schema_migrations'")
+            for row in cur.fetchall():
+                cur.execute(f'TRUNCATE TABLE "{row[0]}" CASCADE')
+        conn.commit()
     aid = f"h_{uuid.uuid4().hex[:8]}"
     store.seed_allocation(dsn, _cmd({"allocation_id": aid, "domain": "cpu", "authorized": 100}))
     for n, (amount, action) in enumerate(ops):

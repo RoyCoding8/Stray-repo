@@ -32,7 +32,6 @@ from pathlib import Path
 
 from settlement import broker, team
 from settlement.common import Command, ResultCode, SettlementError
-from settlement.launcher_local import LocalLauncher
 
 from . import oracle
 from . import panel as _panel

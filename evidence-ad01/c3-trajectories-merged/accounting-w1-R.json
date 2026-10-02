@@ -1,0 +1,99 @@
+{
+ "acquisition": {
+  "charge_units": 0,
+  "model_calls": 2,
+  "sandbox_ops": 0,
+  "tokens": 20,
+  "witness_queries": 11
+ },
+ "campaign_id": "ad01-w1-R-00",
+ "mechanism": {
+  "boundaries": 3,
+  "no_candidate": 0,
+  "rejected": 1,
+  "retained": 2
+ },
+ "operations": {
+  "ad01-ad01-w1-R-00-b0-ad01-w1-dev-sw-00-construct-l1-init": {
+   "charge_units": 0,
+   "model_calls": 1,
+   "sandbox_ops": 0,
+   "tokens": 10
+  },
+  "ad01-ad01-w1-R-00-b1-ad01-w1-dev-gr-00-construct-l1-init": {
+   "charge_units": 0,
+   "model_calls": 1,
+   "sandbox_ops": 0,
+   "tokens": 10
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-transfer-sw-00": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-transfer-sw-01": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-transfer-sw-02": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-within-gr-00": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-within-gr-01": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-within-gr-02": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-within-sw-00": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-within-sw-01": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  },
+  "ad01-ad01-w1-R-00-use-ad01-w1-within-sw-02": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0
+  }
+ },
+ "shared_operations": [],
+ "total": {
+  "charge_units": 0,
+  "model_calls": 2,
+  "sandbox_ops": 9,
+  "tokens": 20,
+  "witness_queries": 47
+ },
+ "use": {
+  "charge_units": 0,
+  "model_calls": 0,
+  "sandbox_ops": 9,
+  "tokens": 0,
+  "witness_queries": 36
+ }
+}

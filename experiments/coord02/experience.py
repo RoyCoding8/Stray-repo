@@ -31,11 +31,12 @@ from settlement.representation import canonical_bytes, sha_hex
 
 from . import freeze as freeze_mod
 from . import oracle
-from . import schemas as wire
+from . import packet
+from . import packet
+from . import preflight
 from .controller import (
     EpisodeConfig,
     build_experience_packet,
-    construction_call_spec,
     list_probe_observations,
     list_step_receipts,
     load_frozen_package,
@@ -53,7 +54,7 @@ SELECTOR_VERSION = "coord02-dev-select/1"
 DEV_PROTOCOL = "coord02-dev-v1"
 
 MAX_LINEAGES = 2
-MAX_CONSTRUCTION_CALLS = 4
+MAX_CONSTRUCTION_CALLS = preflight.CONSTRUCTION_CALLS
 
 CONSTRUCTION_CONTENT_BUDGET_BYTES = 128 * 1024
 CONSTRUCTION_MAX_OUTPUT_TOKENS = 65536
@@ -65,6 +66,14 @@ LIVE_MODEL = "configured-live-model"
 
 def live_model() -> str:
     return os.environ.get("TEAM01_LIVE_MODEL", LIVE_MODEL)
+
+
+def live_reasoning_effort() -> str:
+    effort = os.environ.get("EC02_REASONING_EFFORT",
+                            CONSTRUCTION_REASONING_EFFORT)
+    if effort not in ("low", "medium", "high"):
+        raise ValueError("EC02_REASONING_EFFORT must be low|medium|high")
+    return effort
 CONSTRUCTION_LABEL = "DOUBLED"
 LIVE_LABEL = "LIVE"
 DOUBLED_NOTE = ("DOUBLED: fake-gateway stand-in; no live grant in this "
@@ -93,6 +102,27 @@ class EvidenceDBProtected(SettlementError):
     def __init__(self, detail: str) -> None:
         super().__init__("destructive setup refused on evidence DB: "
                          f"{detail}")
+
+
+_DOUBLE_MODEL_HINTS = ("doubl", "recording", "simulat", "fake")
+
+
+def _is_live_gateway(gateway: Any | None) -> bool:
+    if gateway is None or isinstance(gateway, FakeGatewayAdapter):
+        return False
+    if str(getattr(gateway, "label", "") or ""):
+        return False
+    model = str(getattr(gateway, "model", "") or "")
+    if model and any(h in model.lower() for h in _DOUBLE_MODEL_HINTS):
+        return False
+    return True
+
+
+def _grant_version(dsn: str) -> int | None:
+    try:
+        return int(store.get_control(dsn)["authority_version"])
+    except Exception:
+        return None
 
 
 def provenance(gateway: Any | None = None) -> dict:
@@ -146,14 +176,6 @@ def assert_no_protected_feedback(value: Any, where: str = "repair") -> None:
     if hits:
         raise SettlementError(
             f"{where} carries protected-feedback markers {sorted(set(hits))}")
-
-
-def _snapshot_digest_of(snapshot: dict) -> str:
-    try:
-        return team.snapshot_digest(
-            {k: v for k, v in snapshot.items() if isinstance(v, str)})
-    except Exception:
-        return sha_hex(canonical_bytes(snapshot))
 
 
 def _count_operations(dsn: str, like: str) -> int:
@@ -231,7 +253,8 @@ def experience_packet(dsn: str, *, run_id: str, task_id: str,
         "versioned_inputs": {
             "task_snapshot": dict(task_snapshot or {}),
             "interface_contract": dict(interface_contract or {}),
-            "snapshot_digest": _snapshot_digest_of(task_snapshot or {})},
+            "snapshot_digest": packet.snapshot_digest_of(
+                task_snapshot or {})},
         "failed_joins": [j for j in joins if not j.get("passed", True)],
         "revisions": sorted({p.get("revision") for p in plans
                              if p.get("revision") is not None}),
@@ -255,7 +278,13 @@ def construction_budget(*,
                         reasoning_effort: str =
                         CONSTRUCTION_REASONING_EFFORT,
                         deadline_ms: int = 300_000,
-                        timeout_ms: int = 60_000) -> dict:
+                        timeout_ms: int = 60_000,
+                        live_calls_authorized: int =
+                        MAX_CONSTRUCTION_CALLS) -> dict:
+    if not 0 < int(live_calls_authorized) <= MAX_CONSTRUCTION_CALLS:
+        raise ValueError("live_calls_authorized must be within the "
+                         "%d-call construction ceiling"
+                         % MAX_CONSTRUCTION_CALLS)
     prov = provenance()
     return {"budget_version": BUDGET_VERSION, "model": prov["model"],
             "max_output_tokens": int(max_output_tokens),
@@ -263,89 +292,8 @@ def construction_budget(*,
             "deadline_ms": int(deadline_ms), "timeout_ms": int(timeout_ms),
             "finite": True, "label": prov["label"],
             "doubled": prov["doubled"],
-            "live_calls_authorized": MAX_CONSTRUCTION_CALLS,
+            "live_calls_authorized": int(live_calls_authorized),
             "live_calls_used": 0}
-
-
-def _wire_schema() -> dict:
-    return {"profile": wire.PROFILE,
-            "profile_version": wire.PROFILE_VERSION,
-            "phases": dict(wire.ALLOWED),
-            "actions": list(wire.ACTIONS),
-            "request_fields": ["profile", "profile_version", "decision_id",
-                               "package_digest", "source_digest",
-                               "plan_revision", "phase", "allowed_actions",
-                               "state", "task"],
-            "response_fields": ["profile", "profile_version", "decision_id",
-                                "package_digest", "source_digest",
-                                "plan_revision", "phase", "proposal",
-                                "state"],
-            "limits": {"max_state_bytes": wire.MAX_STATE_BYTES,
-                       "max_message_bytes": wire.MAX_MESSAGE_BYTES,
-                       "max_probe_calls": wire.MAX_PROBE_CALLS,
-                       "max_reason_chars": wire.MAX_REASON_CHARS,
-                       "max_policy_steps": wire.MAX_POLICY_STEPS}}
-
-
-def _transport_specimen() -> dict:
-    decision_id = "specimen-decision"
-    package_digest = "specimen-package"
-    source_digest = "specimen-source"
-    plan_revision = 0
-    phase = wire.PHASE_PRE_PLAN
-    allowed = list(wire.ALLOWED[phase])
-    request = wire.build_request(
-        decision_id=decision_id, package_digest=package_digest,
-        source_digest=source_digest, plan_revision=plan_revision,
-        phase=phase, allowed=allowed, state={},
-        task={"specimen": True})
-    response = {"profile": wire.PROFILE,
-                "profile_version": wire.PROFILE_VERSION,
-                "decision_id": decision_id,
-                "package_digest": package_digest,
-                "source_digest": source_digest,
-                "plan_revision": plan_revision, "phase": phase,
-                "proposal": {"action": "stop",
-                             "reason": "specimen decline carries no policy"},
-                "state": {}}
-    wire.validate_response(
-        dict(response), decision_id=decision_id,
-        package_digest=package_digest, source_digest=source_digest,
-        plan_revision=plan_revision, phase=phase, allowed=allowed)
-    return {"decision_id": decision_id, "package_digest": package_digest,
-            "source_digest": source_digest, "plan_revision": plan_revision,
-            "phase": phase, "allowed": allowed, "request": request,
-            "response": response}
-
-
-def _episode_contents(episode: dict) -> dict:
-    packet = episode.get("packet", episode)
-    inputs = packet.get("versioned_inputs", {}) or {}
-    return {"task_id": episode.get("task_id", packet.get("task_id", "")),
-            "run_id": episode.get("episode", {}).get("run_id",
-                                                     packet.get("run_id",
-                                                                "")),
-            "source": inputs.get("task_snapshot", {}),
-            "contracts": inputs.get("interface_contract", {}),
-            "initial_state": {
-                "snapshot_digest": inputs.get("snapshot_digest", "")},
-            "proposals": list(packet.get("decisions", [])),
-            "admissions": list(packet.get("plans", [])),
-            "observed_outputs": list(packet.get("probe_observations", [])),
-            "child_artifacts": packet.get("actual_artifacts", {}),
-            "failed_joins": list(packet.get("failed_joins",
-                                            [j for j in packet.get(
-                                                "joins", [])
-                                             if not j.get("passed",
-                                                          True)])),
-            "revisions": list(packet.get("revisions", [])),
-            "costs": packet.get("cost", {})}
-
-
-def _as_episode_list(episodes: Any) -> list[dict]:
-    if isinstance(episodes, dict):
-        return [episodes]
-    return list(episodes)
 
 
 def construction_request(episodes: Any, budget: dict, *,
@@ -361,78 +309,34 @@ def construction_request(episodes: Any, budget: dict, *,
         failure["lineage"] = int(lineage)
     else:
         failure = None
-    listed = _as_episode_list(episodes)
-    contents = [_episode_contents(e) for e in listed]
-    wire_schema = _wire_schema()
-    specimen = _transport_specimen()
-    sized = canonical_bytes({"contents": contents, "wire": wire_schema,
-                             "specimen": specimen})
-    if len(sized) > CONSTRUCTION_CONTENT_BUDGET_BYTES:
-        raise ConstructionRequestTooLarge(
-            f"{len(sized)} bytes over "
-            f"{CONSTRUCTION_CONTENT_BUDGET_BYTES} for "
-            f"{len(contents)} episodes: narrow the selection")
-    packet = listed[0].get("packet", listed[0]) if listed else {}
-    spec = construction_call_spec(
-        {"probe_observations": packet.get("probe_observations", [])},
-        dict(budget))
     prov = provenance()
-    return {"request_version": REQUEST_VERSION,
-            "lineage": int(lineage), "attempt": attempt,
-            "abi": spec["abi"],
-            "action_semantics": spec["action_semantics"],
-            "wire_schema": wire_schema,
-            "transport_specimen": specimen,
-            "episode_contents": contents,
-            "content_bytes": len(sized),
-            "content_budget_bytes": CONSTRUCTION_CONTENT_BUDGET_BYTES,
-            "required_response": {
-                "format": "one JSON object with a single string field",
-                "field": "entry",
-                "entry": "complete python policy source honoring the "
-                         "abi above (argv/request/response, proposal "
-                         "actions, 16 KiB state limit); no other "
-                         "top-level fields"},
-            "response_example": {"entry": (
-                "import json, sys\n"
-                "req = json.load(open(sys.argv[1]))\n"
-                "proposal = {'action': 'probe', 'invocations': []}\n"
-                "json.dump({'profile': req['profile'], "
-                "'profile_version': req['profile_version'], "
-                "'decision_id': req['decision_id'], "
-                "'package_digest': req['package_digest'], "
-                "'source_digest': req['source_digest'], "
-                "'plan_revision': req['plan_revision'], "
-                "'phase': req['phase'], 'proposal': proposal, "
-                "'state': {}}, open(sys.argv[2], 'w'))\n")},
-            "budget": spec["budget"], "label": prov["label"],
-            "doubled": prov["doubled"], "prior_failure": failure,
-            "packet_digest": sha_hex(canonical_bytes(
-                [e.get("packet", e) for e in listed]))}
+    try:
+        made = packet.construction_packet(
+            episodes, budget, lineage=lineage, attempt=attempt,
+            prior_failure=failure,
+            content_budget_bytes=CONSTRUCTION_CONTENT_BUDGET_BYTES)
+    except SettlementError as exc:
+        if "exceeds content budget" in str(exc):
+            raise ConstructionRequestTooLarge(str(exc))
+        raise
+    made["request_version"] = REQUEST_VERSION
+    made["label"] = prov["label"]
+    made["doubled"] = prov["doubled"]
+    ordered = {"request_version": made.pop("request_version")}
+    ordered.update(made)
+    prior_failure_out = ordered.pop("prior_failure")
+    packet_digest_out = ordered.pop("packet_digest")
+    label_out = ordered.pop("label")
+    doubled_out = ordered.pop("doubled")
+    ordered["label"] = label_out
+    ordered["doubled"] = doubled_out
+    ordered["prior_failure"] = prior_failure_out
+    ordered["packet_digest"] = packet_digest_out
+    return ordered
 
 
 def render_construction_prompt(request: dict) -> str:
-    sections = {
-        "ABI": request.get("abi", {}),
-        "ACTION SEMANTICS": request.get("action_semantics", {}),
-        "WIRE SCHEMA": request.get("wire_schema", {}),
-        "TRANSPORT SPECIMEN": request.get("transport_specimen", {}),
-        "DEVELOPMENT EPISODES": request.get("episode_contents", []),
-        "REQUIRED RESPONSE": request.get("required_response", {}),
-        "RESPONSE EXAMPLE": request.get("response_example", {}),
-    }
-    lines = ["Build a python policy program for the coordinator ABI below.",
-             "Reply with ONLY one JSON object of the form "
-             '{"entry": "<complete python source>"}; no other text.',
-             ""]
-    for title, body in sections.items():
-        if body:
-            lines += ["", title + ": " + canonical_bytes(body).decode()]
-    prior = request.get("prior_failure")
-    if prior:
-        lines += ["", "PRIOR FAILURE (repair it): " +
-                  canonical_bytes(prior).decode()]
-    return "\n".join(lines)
+    return packet.render_construction_prompt(request)
 
 
 def _construction_text(dsn: str, operation_id: str) -> tuple[str, dict]:
@@ -488,8 +392,16 @@ class ConstructionLedger:
     attempt_prefix: str = "coord02-L-construct"
     calls: list[dict] = field(default_factory=list)
     refused: int = 0
+    authorized_calls: int = MAX_CONSTRUCTION_CALLS
 
     def __post_init__(self) -> None:
+        if not 0 < int(self.authorized_calls) <= MAX_CONSTRUCTION_CALLS:
+            raise ValueError("authorized_calls must be within the "
+                             "%d-call construction ceiling"
+                             % MAX_CONSTRUCTION_CALLS)
+        _acquisition_step(
+            self.dsn, f"coord02:L-construction-{self.allocation_id}:identity",
+            {"attempt_prefix": self.attempt_prefix}, lambda: {})
         self._hydrate()
 
     def _hydrate(self) -> None:
@@ -526,7 +438,7 @@ class ConstructionLedger:
                                "reasoning_effort")}}
 
     def remaining(self) -> int:
-        return MAX_CONSTRUCTION_CALLS - self.calls_used()
+        return self.authorized_calls - self.calls_used()
 
     def calls_used(self) -> int:
         return len(_operation_ids(self.dsn, self.attempt_prefix))
@@ -543,10 +455,16 @@ class ConstructionLedger:
         return out
 
     def _reconcile_pending(self, gateway: Any) -> list[str]:
+        pending = self.unresolved_effects()
+        if pending and _is_live_gateway(gateway):
+            preflight.require_live(
+                panels=("development",),
+                construction_calls=self.authorized_calls)
         still = []
-        for operation_id in self.unresolved_effects():
+        for operation_id in pending:
             status = broker.dispatch_operation(
-                self.dsn, operation_id, launchers={}, gateway=gateway)
+                self.dsn, operation_id, launchers={}, gateway=gateway,
+                grant_version=_grant_version(self.dsn))
             if status.dispatch_state not in TERMINAL_OPERATION_STATES:
                 still.append(operation_id)
         self._hydrate()
@@ -577,7 +495,8 @@ class ConstructionLedger:
                 raise SettlementError(
                     f"lineage {lineage} repair needs exactly one prior init")
 
-    def _serialized(self, gateway: Any, request: dict) -> dict:
+    def _serialized(self, gateway: Any, request: dict, *,
+                    replay: bool = False) -> dict:
         lineage = int(request.get("lineage", 0))
         attempt = str(request.get("attempt", ""))
         with db.connect(self.dsn) as conn:
@@ -593,7 +512,18 @@ class ConstructionLedger:
                         "unresolved effects hold construction capacity: %s"
                         % ",".join(sorted(still)))
                 self._hydrate()
-                if self.calls_used() >= MAX_CONSTRUCTION_CALLS:
+                if replay:
+                    prior = next((c for c in self.calls
+                                  if c["lineage"] == lineage
+                                  and c["attempt"] == attempt), None)
+                    if prior is not None:
+                        return self._record_of(prior["operation_id"])
+                prov = provenance(gateway)
+                if _is_live_gateway(gateway):
+                    preflight.require_live(
+                        panels=("development",),
+                        construction_calls=self.authorized_calls)
+                if self.calls_used() >= self.authorized_calls:
                     self.refused += 1
                     raise ConstructionBudgetExhausted()
                 seq = self.calls_used() + 1
@@ -605,7 +535,6 @@ class ConstructionLedger:
                     self._hydrate()
                     raise
                 budget = request.get("budget", {}) or {}
-                prov = provenance(gateway)
                 operation_id = (f"{self.attempt_prefix}-l-{lineage}"
                                 f"-{attempt}-{seq}")
                 ensured = broker.ensure_operation(
@@ -636,7 +565,8 @@ class ConstructionLedger:
                                 (self.attempt_prefix,))
                     conn.commit()
         status = broker.dispatch_operation(
-            self.dsn, operation_id, launchers={}, gateway=gateway)
+            self.dsn, operation_id, launchers={}, gateway=gateway,
+            grant_version=_grant_version(self.dsn))
         text, usage = _construction_text(self.dsn, operation_id)
         record = {"lineage": lineage, "attempt": attempt,
                   "operation_id": operation_id,
@@ -650,27 +580,29 @@ class ConstructionLedger:
         return record
 
     def request_call(self, request: dict, *,
-                     gateway: Any | None = None) -> dict:
+                     gateway: Any | None = None,
+                     replay: bool = False) -> dict:
         return self._serialized(gateway or FakeGatewayAdapter(),
-                                dict(request))
+                                dict(request), replay=replay)
 
     def repair_call(self, episodes: Any, budget: dict, *, lineage: int,
-                    prior_failure: dict,
-                    gateway: Any | None = None) -> dict:
+                    prior_failure: dict, gateway: Any | None = None,
+                    replay: bool = False) -> dict:
         return self.request_call(
             construction_request(episodes, budget, lineage=lineage,
                                  attempt="repair",
                                  prior_failure=prior_failure),
-            gateway=gateway)
+            gateway=gateway, replay=replay)
 
     def accounting(self) -> dict:
         live_used = sum(1 for c in self.calls if c.get("live"))
         labels = {c.get("label") for c in self.calls if c.get("label")}
         return {"calls_used": self.calls_used(),
                 "calls_refused": self.refused,
-                "ceiling": MAX_CONSTRUCTION_CALLS,
+                "ceiling": self.authorized_calls,
+                "study_ceiling": MAX_CONSTRUCTION_CALLS,
                 "live_calls_used": live_used,
-                "live_calls_authorized": MAX_CONSTRUCTION_CALLS,
+                "live_calls_authorized": self.authorized_calls,
                 "label": next(iter(labels), CONSTRUCTION_LABEL),
                 "lineages": sorted({c["lineage"] for c in self.calls
                                     if c.get("valid", True)
@@ -678,7 +610,9 @@ class ConstructionLedger:
 
 
 def construction_allocation_units(budget: dict) -> int:
-    return MAX_CONSTRUCTION_CALLS * (
+    authorized = int(budget.get("live_calls_authorized",
+                                MAX_CONSTRUCTION_CALLS))
+    return authorized * (
         CONSTRUCTION_CONTENT_BUDGET_BYTES // 4
         + int(budget.get("max_output_tokens",
                          CONSTRUCTION_MAX_OUTPUT_TOKENS)))
@@ -772,16 +706,9 @@ def keep_response(record: dict) -> dict:
     if not text.strip():
         return {"usable": False, "reason": "empty-response",
                 "entry_bytes": b"", "response_bytes": b"", **base}
-    try:
-        payload = json.loads(text)
-    except ValueError as exc:
-        return {"usable": False,
-                "reason": f"unparsable-response: {exc}",
-                "entry_bytes": b"",
-                "response_bytes": text.encode("utf-8"), **base}
-    entry = payload.get("entry") if isinstance(payload, dict) else None
-    if not isinstance(entry, str) or not entry.strip():
-        return {"usable": False, "reason": "missing-entry",
+    entry, problem = packet.parse_construction_entry(text)
+    if problem:
+        return {"usable": False, "reason": problem,
                 "entry_bytes": b"",
                 "response_bytes": text.encode("utf-8"), **base}
     return {"usable": True, "reason": "",
@@ -820,7 +747,7 @@ def check_candidate(dsn: str, artifacts_root: Any, *, receipt: dict,
             version_id=version_id, requires=dict(requires))
     except SettlementError as exc:
         return {"ok": False, "reason": str(exc), "version_id": version_id}
-    if staged.code != ResultCode.APPLIED:
+    if staged.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
         return {"ok": False, "reason": staged.detail,
                 "version_id": version_id}
     try:
@@ -888,12 +815,10 @@ def valid_tree_outputs(task_id: str, owned: list) -> dict:
 
 
 def dev_constructor(task_id: str, *, solved: bool = True) -> Callable:
-    def _build(node: str, child: dict, rendered: dict) -> dict:
-        owned = list(child.get("owned_paths", []))
-        if solved:
-            return valid_tree_outputs(task_id, owned)
-        snap = snapshot_files(task_id)
-        return {p: snap[p] for p in owned if p in snap}
+    def _build(node: str, child: dict, rendered: dict,
+               operation_id: str | None = None,
+               attempt_id: str | None = None) -> dict | None:
+        return None
     return _build
 
 
@@ -1038,16 +963,35 @@ def _run_dev_episode(dsn: str, tag: str, task_id: str, snapshot: dict,
             "outcome": outcome}
 
 
+def _acquisition_step(dsn: str, identity: str, payload: dict,
+                      run: Callable) -> dict:
+    with db.connect(dsn) as conn:
+        row = conn.execute(
+            "SELECT result_data FROM command_journal WHERE request_id = %s",
+            (identity,)).fetchone()
+    data = row[0] if row is not None else run()
+    result = store.transact(
+        dsn, Command(request_id=identity, payload=payload),
+        lambda cur, control: (ResultCode.APPLIED, "", data, [], []))
+    if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        raise SettlementError(f"acquisition step refused: {result.detail}")
+    return result.data
+
+
 def acquire_episodes(dsn: str, scratch: Path, *, task_ids: list[str],
                      launcher_factory: Callable,
-                     constructor: Callable) -> list[dict]:
+                     constructor: Callable | None = None,
+                     campaign_root: str | None = None) -> list[dict]:
     episodes = []
+    root = campaign_root or uuid.uuid4().hex
     for pos, task_id in enumerate(task_ids):
-        tag = f"L-acquire-{task_id}-{pos}-{uuid.uuid4().hex[:6]}"
+        tag = f"L-acquire-{root}-{task_id}-{pos}"
         payload = oracle.build_solver_payload(task_id)
         snapshot = snapshot_files(task_id)
-        made = _run_dev_episode(dsn, tag, task_id, snapshot, payload,
-                                launcher_factory, constructor)
+        made = _acquisition_step(
+            dsn, f"coord02:{tag}:episode", {"snapshot": snapshot},
+            lambda: _run_dev_episode(dsn, tag, task_id, snapshot, payload,
+                                     launcher_factory, constructor))
         packet = experience_packet(
             dsn, run_id=made["run_id"], task_id=made["task_id"],
             investigation_id=made["investigation_id"],
@@ -1059,20 +1003,20 @@ def acquire_episodes(dsn: str, scratch: Path, *, task_ids: list[str],
 
 
 def _profile_check(dsn: str, *, entry_bytes: bytes, requires: dict,
-                   launcher_factory: Callable) -> dict:
+                   launcher_factory: Callable, identity: str | None = None) -> dict:
     parsed = parse_candidate(entry_bytes)
     if not parsed["ok"]:
         return {"ok": False, "reason": parsed["reason"]}
     with tempfile.TemporaryDirectory(
             prefix="coord02-validate-profile-") as tmp:
         root = Path(tmp)
-        seed = seed_episode(dsn, f"validate-profile-{uuid.uuid4().hex[:6]}",
-                            {"m": "1"})
-        launcher = launcher_factory("validate-profile")["local-process"]
+        identity = identity or uuid.uuid4().hex
+        seed = seed_episode(dsn, f"validate-profile-{identity}", {"m": "1"})
+        launcher = launcher_factory(f"validate-profile-{identity}")["local-process"]
         gated = stage_gate(
             dsn, root / "staging", root / "artifacts",
             entry_bytes=entry_bytes, requires=dict(requires),
-            version_id=f"coord02-validate-{uuid.uuid4().hex}",
+            version_id=f"coord02-validate-{identity}",
             launcher=launcher, allocation_id=seed["allocation_id"],
             description="coord02 development-profile check")
     if not gated["ok"]:
@@ -1089,12 +1033,23 @@ def _candidate_admitted(outcome: dict) -> bool:
 def validate_on_development(dsn: str, *, entry_bytes: bytes,
                             requires: dict, task_ids: list[str],
                             launcher_factory: Callable,
-                            constructor: Callable,
-                            costs: dict | None = None) -> dict:
+                            constructor: Callable | None = None,
+                            constructor_factory: Callable | None = None,
+                            costs: dict | None = None,
+                            validation_root: str | None = None) -> dict:
+    root = validation_root if validation_root is not None else uuid.uuid4().hex
+    if not isinstance(root, str) or not root.strip():
+        raise ValueError("validation_root must be a nonempty string")
+    identity = f"coord02:L-validate-{root}"
+    _acquisition_step(
+        dsn, f"{identity}:request",
+        {"entry_digest": sha_hex(entry_bytes), "requires": requires,
+         "task_ids": list(task_ids), "costs": dict(costs or {})}, lambda: {})
     parsed = parse_candidate(entry_bytes)
-    profile = _profile_check(dsn, entry_bytes=entry_bytes,
-                             requires=requires,
-                             launcher_factory=launcher_factory)
+    profile = _acquisition_step(
+        dsn, f"{identity}:profile", {"entry_digest": sha_hex(entry_bytes)},
+        lambda: _profile_check(dsn, entry_bytes=entry_bytes, requires=requires,
+                               launcher_factory=launcher_factory, identity=identity))
     solved: list[str] = []
     fallbacks: list[str] = []
     admitted: list[str] = []
@@ -1102,12 +1057,15 @@ def validate_on_development(dsn: str, *, entry_bytes: bytes,
     executed: list[str] = []
     run_ids: list[str] = []
     for pos, task_id in enumerate(task_ids):
-        tag = f"L-validate-{pos}-{uuid.uuid4().hex[:6]}"
+        tag = f"L-validate-{root}-{task_id}-{pos}"
         payload = oracle.build_solver_payload(task_id)
         snapshot = snapshot_files(task_id)
-        made = _run_dev_episode(dsn, tag, task_id, snapshot, payload,
-                                launcher_factory, constructor,
-                                entry=entry_bytes)
+        build = constructor_factory(task_id) \
+            if constructor_factory is not None else constructor
+        made = _acquisition_step(
+            dsn, f"coord02:{tag}:episode", {"snapshot": snapshot},
+            lambda: _run_dev_episode(dsn, tag, task_id, snapshot, payload,
+                                     launcher_factory, build, entry=entry_bytes))
         outcome = made["outcome"]
         executed.append(task_id)
         run_ids.append(made["run_id"])
@@ -1155,9 +1113,9 @@ def _ordering_key(result: dict) -> tuple:
 
 def select_candidate(dev_results: list[dict]) -> dict:
     ranked = sorted(dev_results, key=_ordering_key)
-    best = ranked[0]
+    best = ranked[0] if ranked else None
     ranking = [r["lineage"] for r in ranked]
-    if not best["validation"]["valid_execution"]:
+    if best is None or not best["validation"]["valid_execution"]:
         return {"selection": "none", "selector": SELECTOR_VERSION,
                 "ordering": list(ORDERING), "ranking": ranking,
                 "reason": "neither candidate executable under the contract"}
@@ -1175,22 +1133,40 @@ def exposure_manifest(lineage: int, exposure: list) -> dict:
             "recorded": True}
 
 
+def validation_stages(rec: dict) -> list:
+    if isinstance(rec.get("repair_kept"), dict) \
+            and rec["repair_kept"].get("usable"):
+        return ["init", "repair"]
+    return ["init"]
+
+
 def construct_lineages(episodes: list[dict], budget: dict, *,
                         ledger: ConstructionLedger,
-                        gateway: Any | None = None) -> list[dict]:
+                        gateway: Any | None = None,
+                        launcher_factory: Callable) -> list[dict]:
     gateway = gateway or FakeGatewayAdapter()
     lineages: list[dict] = []
     for lineage in (1, 2):
         prior = [copy.deepcopy(r) for r in lineages]
         init = ledger.request_call(
             construction_request(episodes, budget, lineage=lineage,
-                                 attempt="init"), gateway=gateway)
+                                 attempt="init"), gateway=gateway, replay=True)
         kept = keep_response(init)
         parsed = parse_candidate(kept["entry_bytes"])
+        profile = _acquisition_step(
+            ledger.dsn, f"{init['operation_id']}:profile",
+            {"entry_digest": sha_hex(kept["entry_bytes"])},
+            lambda: _profile_check(
+                ledger.dsn, entry_bytes=kept["entry_bytes"], requires={},
+                identity=init["operation_id"],
+                launcher_factory=launcher_factory)) \
+            if kept["usable"] and parsed["ok"] else None
         rec: dict = {"lineage": lineage, "init": init,
                      "kept": kept, "parsed": parsed,
+                     "profile": profile,
                      "repair": None, "repair_kept": None,
-                     "repair_parsed": None, "rejections": [],
+                     "repair_parsed": None, "repair_profile": None,
+                     "rejections": [],
                      "exposure_manifest": exposure_manifest(lineage, prior)}
         if not kept["usable"]:
             rec["rejections"].append({"stage": "keep",
@@ -1200,16 +1176,28 @@ def construct_lineages(episodes: list[dict], budget: dict, *,
             rec["rejections"].append({"stage": "parse",
                                       "reason": parsed["reason"],
                                       "operation_id": init["operation_id"]})
-        if not kept["usable"] or not parsed["ok"]:
-            failure = {"kind": "parse" if kept["usable"] else "empty",
-                       "reason": parsed.get("reason") or kept.get("reason"),
-                       "operation_id": init["operation_id"],
-                       "lineage": lineage,
-                       "stage": "parse" if kept["usable"] else "keep"}
+        elif profile is not None and not profile["ok"]:
+            rec["rejections"].append({"stage": "profile",
+                                      "reason": profile["reason"],
+                                      "operation_id": init["operation_id"]})
+        if not kept["usable"] or not parsed["ok"] \
+                or (profile is not None and not profile["ok"]):
+            if profile is not None and not profile["ok"]:
+                failure = {"kind": "profile",
+                           "reason": profile["reason"],
+                           "operation_id": init["operation_id"],
+                           "lineage": lineage, "stage": "profile"}
+            else:
+                failure = {"kind": "parse" if kept["usable"] else "empty",
+                           "reason": parsed.get("reason")
+                           or kept.get("reason"),
+                           "operation_id": init["operation_id"],
+                           "lineage": lineage,
+                           "stage": "parse" if kept["usable"] else "keep"}
             rec["repair_failure"] = failure
             rec["repair"] = ledger.repair_call(
                 episodes, budget, lineage=lineage, prior_failure=failure,
-                gateway=gateway)
+                gateway=gateway, replay=True)
             rec["repair_kept"] = keep_response(rec["repair"])
             rec["repair_parsed"] = parse_candidate(
                 rec["repair_kept"]["entry_bytes"])
@@ -1223,30 +1211,55 @@ def construct_lineages(episodes: list[dict], budget: dict, *,
                     "stage": "repair-parse",
                     "reason": rec["repair_parsed"]["reason"],
                     "operation_id": rec["repair"]["operation_id"]})
+            else:
+                rec["repair_profile"] = _acquisition_step(
+                    ledger.dsn, f"{rec['repair']['operation_id']}:profile",
+                    {"entry_digest": sha_hex(rec["repair_kept"]["entry_bytes"])},
+                    lambda: _profile_check(
+                        ledger.dsn,
+                        entry_bytes=rec["repair_kept"]["entry_bytes"],
+                        identity=rec["repair"]["operation_id"],
+                        requires={}, launcher_factory=launcher_factory))
+                if not rec["repair_profile"]["ok"]:
+                    rec["rejections"].append({
+                        "stage": "repair-profile",
+                        "reason": rec["repair_profile"]["reason"],
+                        "operation_id": rec["repair"]["operation_id"]})
         lineages.append(rec)
     return lineages
 
 
 def acquire(dsn: str, scratch: Path, *, task_ids: list[str],
-            launcher_factory: Callable, constructor: Callable,
+            launcher_factory: Callable,
+            constructor: Callable | None = None,
             construction_gateway: Any | None = None,
             budget: dict | None = None,
             attempt_prefix: str | None = None,
             campaign_root: str | None = None) -> dict:
+    if not isinstance(campaign_root, str) or not campaign_root.strip():
+        raise ValueError("campaign_root must be a nonempty string")
     budget = dict(budget) if budget is not None \
         else construction_budget()
+    root = campaign_root
+    prefix = attempt_prefix or f"coord02-L-construct-{root}"
+    _acquisition_step(
+        dsn, f"coord02:L-acquire-{root}:campaign",
+        {"task_ids": list(task_ids), "budget": budget, "attempt_prefix": prefix},
+        lambda: {})
     episodes = acquire_episodes(
-        dsn, scratch, task_ids=list(task_ids),
+        dsn, scratch, task_ids=list(task_ids), campaign_root=root,
         launcher_factory=launcher_factory, constructor=constructor)
     packet = _merged_packet(episodes)
-    root = campaign_root or uuid.uuid4().hex[:6]
     seed = seed_construction_campaign(dsn, root, budget)
     ledger = ConstructionLedger(dsn, seed["allocation_id"],
-                                attempt_prefix=attempt_prefix
-                                or f"coord02-L-construct-{root}")
+                                attempt_prefix=prefix,
+                                authorized_calls=int(budget.get(
+                                    "live_calls_authorized",
+                                    MAX_CONSTRUCTION_CALLS)))
     lineages = construct_lineages(
         episodes, budget, ledger=ledger,
-        gateway=construction_gateway or FakeGatewayAdapter())
+        gateway=construction_gateway or FakeGatewayAdapter(),
+        launcher_factory=launcher_factory)
     return {"episodes": episodes, "packet": packet, "lineages": lineages,
             "ledger": ledger, "budget": budget,
             "accounting": ledger.accounting(), "campaign_root": root}

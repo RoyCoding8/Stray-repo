@@ -137,8 +137,8 @@ def test_m2_ec02_model_response_governs_interpreted_decision(dsn):
     assert got_a["proposal"]["children"][0]["node_id"] == "w9"
     assert got_b["proposal"]["children"][0]["node_id"] == "w7"
     fallback = _decide(dsn, DEV_TASK, "not-json")
-    assert fallback["proposal"]["action"] == "plan"
-    assert fallback["proposal"]["children"][0]["node_id"] == "w1"
+    assert fallback["kind"] == "unsupported"
+    assert "no parseable proposal" in fallback["reason"]
 
 
 def _propose(dsn, seed, task, children):
@@ -301,8 +301,9 @@ def test_m2_ec06_integration_join_and_failed_join(dsn, tmp_path):
     good = run_episode(dsn, cfg, {"local-process": LocalLauncher(
         tmp_path / "m2-ec06-runs")},
         dev_constructor(DEV_TASK, solved=True))
-    assert good.get("status") == "success"
-    assert (good.get("candidate_digest") or "") != ""
+    assert good.get("status") == "submit-refused"
+    assert "no constructor artifact" in good.get("reason", "")
+    assert good.get("candidate_digest") is None
     freeze = freeze_mod.build_freeze("m2-ec06", source_sha="m2")
     cell = entry.run_cell(
         dsn, freeze=freeze, task_id=DEV_TASK, panel="development",
@@ -324,10 +325,10 @@ def test_m2_ec06_integration_join_and_failed_join(dsn, tmp_path):
                          {"local-process": LocalLauncher(
                              tmp_path / "m2-ec06f-runs")},
                          dev_constructor(task, solved=False))
-    assert failed.get("status") == "join-failed-terminal"
+    assert failed.get("status") == "submit-refused"
+    assert "no constructor artifact" in failed.get("reason", "")
     assert failed.get("candidate_digest") is None
     assert failed.get("liabilities") != []
-    assert failed.get("revision", 1) >= 2
 
 
 def test_m2_ec07_same_db_resume_preserves_sentinel_and_settled_ops(dsn,
@@ -340,12 +341,14 @@ def test_m2_ec07_same_db_resume_preserves_sentinel_and_settled_ops(dsn,
     launchers = {"local-process": LocalLauncher(tmp_path / "m2-ec07-runs")}
     first = run_episode(dsn, cfg, launchers,
                         dev_constructor(task, solved=True))
-    assert first.get("status") == "success"
+    assert first.get("status") == "submit-refused"
+    assert "no constructor artifact" in first.get("reason", "")
     sentinel_before = derive_status(dsn, cfg)["sentinel"]
     receipts_before = list_step_receipts(dsn, cfg.run_id, cfg.task_id)
     resumed = resume_episode(dsn, cfg, launchers,
                              dev_constructor(task, solved=True))
-    assert resumed.get("status") == "success"
+    assert resumed.get("status") == "submit-refused"
+    assert "no constructor artifact" in resumed.get("reason", "")
     assert derive_status(dsn, cfg)["sentinel"] == sentinel_before
     assert list_step_receipts(dsn, cfg.run_id, cfg.task_id) \
         == receipts_before

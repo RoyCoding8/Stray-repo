@@ -338,6 +338,29 @@ def test_preflight_admits_with_full_grant():
                                 "construction_calls": 4}
 
 
+def test_preflight_refuses_construction_grant_below_demand():
+    env = {"SETTLEMENT_GATEWAY_ENDPOINT": "http://localhost:6446/v1",
+           "TEAM01_LIVE_API_KEY": "grant", "TEAM01_LIVE_MODEL": "m",
+           "EC02_LIVE_GRANT_EPISODES": "144", "EC02_LIVE_GRANT_CALLS": "2"}
+    verdict = P.preflight_live(env=env,
+                               construction_calls=P.CONSTRUCTION_CALLS)
+    assert verdict["admitted"] is False
+    assert any("construction grant covers 2 calls" in p
+               for p in verdict["problems"])
+    with pytest.raises(PermissionError):
+        P.require_live(env=env, construction_calls=P.CONSTRUCTION_CALLS)
+
+
+def test_construction_budget_binds_the_authorized_ceiling():
+    from experiments.coord02 import experience as X
+    assert X.construction_budget(
+        live_calls_authorized=2)["live_calls_authorized"] == 2
+    with pytest.raises(ValueError):
+        X.construction_budget(live_calls_authorized=0)
+    with pytest.raises(ValueError):
+        X.construction_budget(live_calls_authorized=5)
+
+
 def _table(suffix: str) -> str:
     return "coord02_e_%s_%s" % (suffix, uuid.uuid4().hex[:8])
 
@@ -494,8 +517,10 @@ def test_entry_arms_differ_only_as_declared(tmp_path):
     assert seen["L"] == b"pkg"
     with pytest.raises(ValueError):
         EN.arm_policy_entry("L")
-    with pytest.raises(ValueError):
-        EN.arm_child_factory("Z", DEV_TASK)
+    with pytest.raises(ValueError, match="unknown arm"):
+        EN.run_cell("unused-dsn", freeze={"freeze_id": "x"},
+                    task_id=DEV_TASK, panel="development", repeat=1,
+                    arm="Z", launcher_factory=lambda tag: {})
 
 
 def test_entry_refuses_live_without_grant(tmp_path):
@@ -528,11 +553,19 @@ def test_entry_write_evidence_round_trip(dsn, tmp_path):
     summary = EN.write_evidence(cells, freeze=freeze,
                                 evidence_root=tmp_path / "ev", dsn=DSN)
     assert summary["records"] == 12 * 2 * 4
-    assert summary["checker"]["clean"], summary["checker"]["problems"]
+    problems = summary["checker"]["problems"]
+    unknown_costs = sorted(
+        "omitted-cost-%s %s-%s-%s-r%d-%s" % (
+            field, freeze["freeze_id"], c.record["panel"],
+            c.record["task_id"], c.record["repeat"], c.record["arm"])
+        for c in cells
+        for field in ("model_calls", "model_tokens-in",
+                      "model_tokens-out"))
+    assert sorted(problems) == unknown_costs
     view = EN.status_view(DSN, freeze=freeze,
                           evidence_root=tmp_path / "ev",
                           panels=("development",))
-    assert view["evidence"]["clean"]
+    assert view["evidence"]["problems"] == problems
 
 
 def test_entry_pair_identity_unique(dsn, tmp_path):

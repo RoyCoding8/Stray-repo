@@ -19,7 +19,7 @@
   },
   "costs_by_arm": {
     "A": {
-      "elapsed_s": 0.021,
+      "elapsed_s": 0.022,
       "invocations": 0,
       "queries": 247
     },
@@ -29,7 +29,7 @@
       "queries": 256
     },
     "C": {
-      "elapsed_s": 52.309,
+      "elapsed_s": 54.025,
       "invocations": 176,
       "queries": 80
     }
@@ -43,23 +43,23 @@
       },
       "hypothetical": {
         "1": {
-          "elapsed_s": 0.021,
+          "elapsed_s": 0.022,
           "invocations": 0,
           "queries": 536
         },
         "10": {
-          "elapsed_s": 0.21,
+          "elapsed_s": 0.22,
           "invocations": 0,
           "queries": 2759
         },
         "100": {
-          "elapsed_s": 2.1,
+          "elapsed_s": 2.2,
           "invocations": 0,
           "queries": 24989
         }
       },
       "panel": {
-        "elapsed_s": 0.021,
+        "elapsed_s": 0.022,
         "invocations": 0,
         "queries": 247
       }
@@ -101,30 +101,30 @@
       },
       "hypothetical": {
         "1": {
-          "elapsed_s": 52.309,
+          "elapsed_s": 54.025,
           "invocations": 176,
           "queries": 369
         },
         "10": {
-          "elapsed_s": 523.09,
+          "elapsed_s": 540.25,
           "invocations": 1760,
           "queries": 1089
         },
         "100": {
-          "elapsed_s": 5230.9,
+          "elapsed_s": 5402.5,
           "invocations": 17600,
           "queries": 8289
         }
       },
       "panel": {
-        "elapsed_s": 52.309,
+        "elapsed_s": 54.025,
         "invocations": 176,
         "queries": 80
       }
     }
   },
   "live": "blocked: see live_blocker.json",
-  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "manifest_sha256": "ac2bf9b99159c3d1a60ce0ce5ed04035d0239455fbfc0d06ca2a95e783be917f",
   "means": {
     "A-graph": 0.299312,
     "A-software": 0.731506,
@@ -173,8 +173,8 @@
   },
   "unchanged_core": {
     "equal": true,
-    "source": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
-    "transfer": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46"
+    "source": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9",
+    "transfer": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9"
   },
   "use_records": 4,
   "use_selected": {
@@ -183,5 +183,5 @@
     "use-sw-out-of-scope": "incumbent",
     "use-sw-supported": "A-fallback"
   },
-  "wall_s": 82.968
+  "wall_s": 85.165
 }

@@ -2,8 +2,8 @@
 
 No new tables: capacity rides admitted allocations tagged by owner_scope,
 ordering is a pure function over eligible proposals, and wakeups are derived
-from the domain event log plus attempt deadlines. The repair scan calls
-broker.heartbeat with repair_due and never runs model inference.
+from the domain event log plus attempt deadlines. The repair scan runs one
+broker sweep with repair and never runs model inference.
 """
 
 from __future__ import annotations
@@ -112,21 +112,14 @@ def renew_proposal(prior: dict[str, Any], changed: str, **updates: Any) -> dict[
 def collect_wakeups(dsn: str, cursor_epoch: int = 0, cursor_ordinal: int = -1,
                     messages: list[dict[str, Any]] | None = None,
                     now: datetime | None = None) -> dict[str, Any]:
-    page = store.read_events(dsn, cursor_epoch, cursor_ordinal, limit=500)
-    wakeups = [{"kind": "completed-op" if str(e["kind"]).startswith("work.completed") else "event",
-                "ref": f"{e['epoch']}:{e['ordinal']}",
-                "detail": f"{e['kind']} {e['payload']}"} for e in page["events"]]
-    wakeups.extend({"kind": "deadline", "ref": a["id"],
-                    "detail": f"attempt {a['id']} past deadline {a.get('deadline')}"}
-                   for a in steward.due_attempts(dsn, now))
-    wakeups.extend({"kind": "message", "ref": m.get("id", str(i)), "detail": m.get("text", "")}
-                   for i, m in enumerate(messages or []))
-    return {"wakeups": wakeups, "cursor_epoch": page["cursor_epoch"],
-            "cursor_ordinal": page["cursor_ordinal"]}
+    from . import loop as _loop
+
+    return _loop.collect_wakeup_events(dsn, cursor_epoch, cursor_ordinal,
+                                       messages, now)
 
 
 def repair_scan(dsn: str, launchers: dict[str, Any]) -> broker.HeartbeatReport:
-    return broker.heartbeat(dsn, launchers, gateway=None, repair_due=True)
+    return broker.sweep(dsn, launchers, gateway=None, repair=True, wake=True)
 
 
 def propose_team(benefit: str, members: list[str],

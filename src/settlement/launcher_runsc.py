@@ -276,6 +276,10 @@ class RunscLauncher:
             return False
         if any(self.run_dir.glob(f"{base}_*.spawns")):
             return False
+        if any(self.run_dir.glob(f"{base}_*.gen")):
+            return False
+        if any(self.run_dir.glob(f"{base}_*.supervise.json")):
+            return False
         found = self._ps_names(base)
         return found is not None and not found
 

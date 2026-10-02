@@ -237,3 +237,25 @@ def test_budget_state_machine(_machine_dsn):
     run_state_machine_as_test(
         Bound, settings=settings(max_examples=12, deadline=None,
                                  suppress_health_check=list(HealthCheck)))
+
+
+def test_heartbeat_enforces_held_grant(migrated_db, tmp_path):
+    from settlement import broker
+    from settlement.launcher_local import LocalLauncher
+
+    dsn = migrated_db
+    alloc, inv = _env(dsn, "hb", authorized=100_000)
+    store.acquire_work(dsn, _cmd({"attempt_id": "hb-att",
+                                  "investigation_id": inv}, "hbq"))
+    broker.ensure_operation(
+        dsn, operation_id="hb-op", effect=broker.SANDBOX_EXEC,
+        payload={"profile": "local-process", "argv": ["/bin/true"],
+                 "timeout_ms": 5000, "max_output_bytes": 1024},
+        allocation_id=alloc, attempt_id="hb-att")
+    launcher = LocalLauncher(tmp_path / "runs")
+    stale = broker.heartbeat(dsn, {"local-process": launcher}, grant_version=99)
+    assert "hb-op" not in stale.dispatched
+    assert broker.read_operation(dsn, "hb-op")["dispatch_state"] == "prepared"
+    fresh = broker.heartbeat(dsn, {"local-process": launcher}, grant_version=1)
+    assert "hb-op" in fresh.dispatched
+    assert broker.read_operation(dsn, "hb-op")["dispatch_state"] == "observed"

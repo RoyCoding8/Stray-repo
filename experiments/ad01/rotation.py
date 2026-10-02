@@ -20,11 +20,9 @@ def r_schedule(world: int) -> list:
         for domain in DOMAINS:
             want = "ad01-w%d-dev-%s-%02d" % (
                 world, "sw" if domain == "software" else "gr", index)
-            assert want in dev[domain], (world, want)
+            if want not in dev[domain]:
+                raise ValueError("R schedule task %r missing in world %d"
+                                 % (want, world))
             steps.append({"seq": len(steps), "task_id": want,
                           "domain": domain})
     return steps
-
-
-def full_rotation() -> dict:
-    return {world: r_schedule(world) for world in worlds.WORLDS}

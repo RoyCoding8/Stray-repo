@@ -34,11 +34,13 @@ def test_manifest_locked_versions_match_installed():
 
 
 def test_manifest_reports_this_hosts_sandbox_gap():
+    import shutil
+
     from scripts import manifest
 
     data = manifest.build_manifest()
-    assert data["sandbox"]["runsc_present"] is False
-    assert data["sandbox"]["docker_present"] is False
+    assert data["sandbox"]["runsc_present"] is (shutil.which("runsc") is not None)
+    assert data["sandbox"]["docker_present"] is (shutil.which("docker") is not None)
 
 
 def test_manifest_prints_no_secrets(monkeypatch, capsys):

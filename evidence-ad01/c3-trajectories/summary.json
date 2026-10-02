@@ -1,6 +1,10 @@
 {
+ "dsn_label": "doubled",
  "trajectories": [
   {
+   "acquired": [
+    "acquired-sw-58d90427"
+   ],
    "arm": "I",
    "dispatched": [
     "ad01-w0-dev-sw-01",
@@ -12,10 +16,15 @@
     "no-candidate",
     "retained"
    ],
+   "model_calls": 1,
    "use": 12,
    "world": 0
   },
   {
+   "acquired": [
+    "acquired-gr-9fac7a86",
+    "acquired-sw-58d90427"
+   ],
    "arm": "R",
    "dispatched": [
     "ad01-w0-dev-sw-00",
@@ -27,10 +36,14 @@
     "retained",
     "retained"
    ],
+   "model_calls": 2,
    "use": 12,
    "world": 0
   },
   {
+   "acquired": [
+    "acquired-sw-58d90427"
+   ],
    "arm": "I",
    "dispatched": [
     "ad01-w1-dev-sw-01",
@@ -42,10 +55,15 @@
     "no-candidate",
     "retained"
    ],
+   "model_calls": 1,
    "use": 12,
    "world": 1
   },
   {
+   "acquired": [
+    "acquired-gr-9fac7a86",
+    "acquired-sw-58d90427"
+   ],
    "arm": "R",
    "dispatched": [
     "ad01-w1-dev-sw-00",
@@ -57,10 +75,14 @@
     "retained",
     "retained"
    ],
+   "model_calls": 2,
    "use": 12,
    "world": 1
   },
   {
+   "acquired": [
+    "acquired-sw-58d90427"
+   ],
    "arm": "I",
    "dispatched": [
     "ad01-w2-dev-sw-01",
@@ -72,10 +94,15 @@
     "no-candidate",
     "retained"
    ],
+   "model_calls": 1,
    "use": 12,
    "world": 2
   },
   {
+   "acquired": [
+    "acquired-gr-9fac7a86",
+    "acquired-sw-58d90427"
+   ],
    "arm": "R",
    "dispatched": [
     "ad01-w2-dev-sw-00",
@@ -87,6 +114,7 @@
     "retained",
     "retained"
    ],
+   "model_calls": 2,
    "use": 12,
    "world": 2
   }

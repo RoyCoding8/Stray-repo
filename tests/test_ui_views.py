@@ -5,7 +5,7 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-from settlement import api, store
+from settlement import api, evidence, store
 from settlement.common import Command
 
 
@@ -25,6 +25,8 @@ def client(migrated_db):
                                        "operation": {"effect": "note"}}))
     store.submit_observation(dsn, _cmd({"attempt_id": "w1",
                                         "content": {"text": "<script>evil()</script>"}}))
+    evidence.register_observation(dsn, _cmd({}), "w1", {"text": "<script>evil()</script>"},
+                                  source_identity="sensor-1")
     app = api.create_app(dsn, gateway=None, token="test-token")
     return TestClient(app, headers={"x-operator-token": "test-token"})
 
@@ -38,7 +40,8 @@ def test_overview_renders_from_durable_records_with_gateway_down(client, migrate
     assert "models unavailable" in body
     assert "obligations: 1" in body
     assert "w1" in body and "op1" in body
-    assert "a1" not in body or "capacity" in body
+    assert "a1" not in body
+    assert "capacity" in body
 
 
 def test_investigation_view_escapes_generated_content(client):
@@ -50,7 +53,8 @@ def test_investigation_view_escapes_generated_content(client):
 
 def test_evidence_view_reads_durable_records(client):
     body = client.get("/evidence").text
-    assert "&lt;script&gt;" in body or "observations" in body
+    assert "observations" in body
+    assert "&lt;script&gt;" in body
     assert "<script>evil" not in body
 
 

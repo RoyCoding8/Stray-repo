@@ -6,8 +6,10 @@ Any load error prints ``{"status": "error", ...}``.
 
 Candidate code NEVER runs in this process. Each case executes in a transient
 child process that receives only that case's function name and arguments over
-stdin. That child runs isolated (`-I`, scrubbed environment, private working
-directory): repository files are unavailable to it. The cases file is removed
+stdin. That child runs isolated (`-I -S`, scrubbed environment, private working
+directory) on the bare interpreter and standard library, so neither repository
+files nor host site-packages (editable installs included) are importable. The
+cases file is removed
 after loading, candidate stdout is captured rather than trusted, and the
 evaluator compares actuals against expected values itself before owning this
 receipt.
@@ -77,7 +79,8 @@ def _probe(candidate_path: str, case: dict, timeout_s: float,
            child_cwd: str, child_env: dict[str, str]) -> dict:
     req = json.dumps({"path": candidate_path, "fn": case["fn"], "args": case["args"]})
     try:
-        proc = subprocess.run([sys.executable, "-I", "-c", _RUNNER], input=req,
+        proc = subprocess.run([sys.executable, "-I", "-S", "-c", _RUNNER],
+                              input=req,
                               capture_output=True, text=True, timeout=timeout_s,
                               cwd=child_cwd, env=child_env)
     except subprocess.TimeoutExpired:
@@ -95,8 +98,17 @@ def _probe(candidate_path: str, case: dict, timeout_s: float,
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) < 2:
+        print("usage: run_tests.py <candidate.py> <cases.json> [budget_ms]",
+              file=sys.stderr)
+        return 2
     candidate_path, cases_path = argv[0], argv[1]
-    budget_ms = float(argv[2]) if len(argv) > 2 else DEFAULT_BUDGET_MS
+    try:
+        budget_ms = float(argv[2]) if len(argv) > 2 else DEFAULT_BUDGET_MS
+    except ValueError:
+        print(f"run_tests refused: budget {argv[2]!r} is not a number",
+              file=sys.stderr)
+        return 2
     try:
         with open(cases_path, encoding="utf-8") as handle:
             cases = json.load(handle)

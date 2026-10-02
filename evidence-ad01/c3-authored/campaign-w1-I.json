@@ -1,0 +1,215 @@
+{
+ "arm": "I",
+ "boundaries": [
+  {
+   "decision": {
+    "action": "stop",
+    "reason": "no admissible work remains"
+   },
+   "observation_id": "obs-c4-diagnostic-ad01-w1-dev-sw-01",
+   "seq": 0,
+   "spend": 15,
+   "task_id": "ad01-w1-dev-sw-01"
+  },
+  {
+   "decision": {
+    "action": "investigate",
+    "evidence_digest": [
+     [
+      "ad01-w1-dev-sw-01",
+      "seed-sw-greedy",
+      "'not_preserved-vs-not_preserved'"
+     ]
+    ],
+    "next_action": {
+     "capability_id": "seed-sw-greedy",
+     "kind": "diagnostic",
+     "task_id": "ad01-w1-dev-sw-01"
+    },
+    "question": "why did seed-sw-greedy on ad01-w1-dev-sw-01 yield 'not_preserved-vs-not_preserved'"
+   },
+   "observation_id": "obs-c4-diagnostic-ad01-w1-dev-sw-00",
+   "seq": 1,
+   "spend": 1,
+   "task_id": "ad01-w1-dev-sw-00"
+  },
+  {
+   "decision": {
+    "action": "investigate",
+    "evidence_digest": [
+     [
+      "ad01-w1-dev-sw-00",
+      "seed-sw-greedy",
+      "'preserved-vs-not_preserved'"
+     ],
+     [
+      "ad01-w1-dev-sw-01",
+      "seed-sw-greedy",
+      "'not_preserved-vs-not_preserved'"
+     ]
+    ],
+    "next_action": {
+     "capability_id": "seed-sw-greedy",
+     "kind": "diagnostic",
+     "task_id": "ad01-w1-dev-sw-00"
+    },
+    "question": "why did seed-sw-greedy on ad01-w1-dev-sw-00 yield 'preserved-vs-not_preserved'"
+   },
+   "observation_id": "obs-c4-diagnostic-ad01-w1-dev-sw-02",
+   "seq": 2,
+   "spend": 12,
+   "task_id": "ad01-w1-dev-sw-02"
+  }
+ ],
+ "campaign_id": "ad01-w1-I-00",
+ "charter": "smaller valid explanatory examples",
+ "episodes": [
+  {
+   "candidate": {
+    "family": "software",
+    "fault": "stale-clear",
+    "ops": [
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "op": "clear"
+     },
+     {
+      "id": "o0",
+      "key": "c",
+      "op": "get"
+     }
+    ],
+    "seed": 5202,
+    "task_id": "ad01-w1-dev-sw-01",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v4"
+     },
+     "observation": "o0",
+     "ref": {
+      "type": "missing",
+      "value": null
+     }
+    }
+   },
+   "check": {
+    "initial_measure": 10,
+    "measure": 3,
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   "disposition": "retained",
+   "executable": {
+    "authored": true,
+    "capability_id": "seed-sw-greedy",
+    "method": "greedy",
+    "params": {
+     "max_queries": 16
+    },
+    "qualified_on": "ad01-w1-dev-sw-01",
+    "scope": {
+     "family": "software"
+    }
+   },
+   "final_size": 3,
+   "initial_size": 10,
+   "lineage": [
+    {
+     "authored": true,
+     "capability_id": "seed-sw-greedy"
+    }
+   ],
+   "queries": 14,
+   "task_id": "ad01-w1-dev-sw-01"
+  },
+  {
+   "disposition": "no-candidate",
+   "fallback": "incumbent",
+   "fallback_reason": "zero construction budget",
+   "initial_size": 14,
+   "lineage": [
+    {
+     "authored": true,
+     "capability_id": "seed-sw-greedy"
+    }
+   ],
+   "queries": 0,
+   "task_id": "ad01-w1-dev-sw-00"
+  },
+  {
+   "candidate": {
+    "family": "software",
+    "fault": "stale-read",
+    "ops": [
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v1"
+     },
+     {
+      "id": "o2",
+      "key": "c",
+      "op": "get"
+     }
+    ],
+    "seed": 5203,
+    "task_id": "ad01-w1-dev-sw-02",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v3"
+     },
+     "observation": "o2",
+     "ref": {
+      "type": "str",
+      "value": "v1"
+     }
+    }
+   },
+   "check": {
+    "initial_measure": 7,
+    "measure": 3,
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   "disposition": "retained",
+   "executable": {
+    "authored": true,
+    "capability_id": "seed-sw-greedy",
+    "method": "greedy",
+    "params": {
+     "max_queries": 16
+    },
+    "qualified_on": "ad01-w1-dev-sw-02",
+    "scope": {
+     "family": "software"
+    }
+   },
+   "final_size": 3,
+   "initial_size": 7,
+   "lineage": [
+    {
+     "authored": true,
+     "capability_id": "seed-sw-greedy"
+    }
+   ],
+   "queries": 11,
+   "task_id": "ad01-w1-dev-sw-02"
+  }
+ ],
+ "queries": 28,
+ "stop": {
+  "reason": "no admissible work remains"
+ },
+ "world": 1
+}

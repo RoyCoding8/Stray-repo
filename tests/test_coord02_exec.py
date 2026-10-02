@@ -18,7 +18,10 @@ from experiments.coord02 import oracle
 from experiments.coord02.experience import snapshot_files
 from settlement import db
 from settlement.gateway import (
+    FakeGatewayAdapter,
     GatewayAdapter,
+    GatewayError,
+    GatewayErrorKind,
     GatewayStatus,
     ModelResponse,
     Usage,
@@ -123,8 +126,9 @@ def test_recording_model_output_changes_submitted_bytes(dsn, tmp_path):
 
 
 def _run(dsn, tmp_path, task, arm, proposal, **kw):
-    freeze = freeze_mod.build_freeze("coord02-exec-%s" % arm,
-                                     source_sha="exec-base")
+    freeze = freeze_mod.build_freeze(
+        "coord02-exec-%s-%s" % (arm, proposal["action"]),
+        source_sha="exec-base")
     gw = RecordingAdapter(proposal)
 
     def launcher_factory(tag: str) -> dict:
@@ -275,6 +279,68 @@ def test_l_without_package_takes_attributed_s_fallback(dsn, tmp_path):
     assert cell.record["arm"] == "L"
     assert any("none-selection:S-fallback" in str(f) for f in
                cell.record["failures"])
+
+
+class DeadGateway(FakeGatewayAdapter):
+    def check_discovery(self):
+        return GatewayError(GatewayErrorKind.TRANSPORT, "endpoint down",
+                            True, "opaque")
+
+    def check_auth(self):
+        return GatewayError(GatewayErrorKind.AUTH, "no credentials",
+                            False, "opaque")
+
+
+def test_dead_gateway_discovery_and_auth_refuse_without_spend():
+    dead = DeadGateway()
+    with pytest.raises(ConnectionError, match="gateway discovery failed"):
+        entry.refuse_gateway_error(dead.check_discovery(),
+                                   check="discovery")
+    with pytest.raises(ConnectionError, match="gateway auth failed"):
+        entry.refuse_gateway_error(dead.check_auth(), check="auth")
+    assert entry.refuse_gateway_error(
+        FakeGatewayAdapter().check_discovery(),
+        check="discovery") is not None
+    from experiments.coord02 import run_live_acquisition as live
+    assert live.refuse_gateway_error is entry.refuse_gateway_error
+
+
+class EmptyDecisionAdapter(RepairRecordingAdapter):
+    def infer(self, request):
+        if "a-decision" in request.operation_id:
+            self.calls.append(request)
+            return ModelResponse(request.operation_id, "",
+                                 {"empty-decision": True},
+                                 Usage(input_tokens=7, output_tokens=0),
+                                 "stop")
+        return super().infer(request)
+
+
+def test_unparseable_a_decision_takes_attributed_s_fallback(dsn, tmp_path):
+    task = DEV_TASK
+    owned = sorted(oracle.worker_files(task))
+    marker = "EMPTY_DECISION_FALLBACK = 1\n"
+    gw = EmptyDecisionAdapter(task, marker)
+    freeze = freeze_mod.build_freeze("coord02-exec-empty-decision",
+                                     source_sha="exec-base")
+
+    def launcher_factory(tag: str) -> dict:
+        return {"local-process": LocalLauncher(tmp_path / tag)}
+
+    cell = entry.run_cell(
+        dsn, freeze=freeze, task_id=task, panel="development",
+        repeat=1, arm="A", launcher_factory=launcher_factory,
+        package_digest="none", package_text="doubled-dev",
+        source_sha="exec-base", config_digest="entry-exec",
+        gateway=gw, model="recording-double")
+    assert cell.record["arm"] == "A"
+    assert cell.record["executed_treatment"] == "S-fallback"
+    assert cell.record["fallback_reason"] == "model-unsupported:S-fallback"
+    assert any("model-unsupported" in str(f) for f in
+               cell.record["failures"])
+    tree = entry.restage_tree(dsn, cell.outcome)
+    assert tree is not None
+    assert any(marker.strip() in tree.get(p, "") for p in owned)
 
 
 def test_over_budget_attempt_dispenses_nothing(dsn, tmp_path):

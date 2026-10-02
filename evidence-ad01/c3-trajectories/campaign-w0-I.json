@@ -6,9 +6,10 @@
     "action": "stop",
     "reason": "no admissible work remains"
    },
+   "decision_id": "att-ad01-w0-I-00-0",
    "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-01",
    "seq": 0,
-   "spend": 17,
+   "spend": 5,
    "task_id": "ad01-w0-dev-sw-01"
   },
   {
@@ -28,6 +29,7 @@
     },
     "question": "why did seed-sw-greedy on ad01-w0-dev-sw-01 yield 'not_preserved-vs-not_preserved'"
    },
+   "decision_id": "att-ad01-w0-I-00-1",
    "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-00",
    "seq": 1,
    "spend": 1,
@@ -55,20 +57,51 @@
     },
     "question": "why did seed-sw-greedy on ad01-w0-dev-sw-00 yield 'preserved-vs-not_preserved'"
    },
+   "decision_id": "att-ad01-w0-I-00-2",
    "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-02",
    "seq": 2,
-   "spend": 15,
+   "spend": 5,
    "task_id": "ad01-w0-dev-sw-02"
   }
  ],
  "campaign_id": "ad01-w0-I-00",
  "charter": "smaller valid explanatory examples",
+ "construction_calls": 1,
+ "dev_episodes": 3,
  "episodes": [
   {
    "candidate": {
     "family": "software",
     "fault": "stale-clear",
     "ops": [
+     {
+      "key": "c",
+      "op": "del"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "c",
+      "op": "del"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v1"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v2"
+     },
      {
       "key": "a",
       "op": "set",
@@ -81,6 +114,26 @@
       "id": "o0",
       "key": "a",
       "op": "get"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "a",
+      "op": "set",
+      "value": "v4"
      }
     ],
     "seed": 5102,
@@ -99,43 +152,73 @@
    },
    "check": {
     "initial_measure": 16,
-    "measure": 3,
+    "measure": 13,
     "reason": "ok-preserved",
     "verdict": "preserved"
    },
+   "construction_calls": 1,
    "disposition": "retained",
    "executable": {
-    "authored": true,
-    "capability_id": "seed-sw-greedy",
-    "method": "greedy",
+    "authored": false,
+    "capability_id": "acquired-sw-58d90427",
+    "construction": {
+     "calls_made": 1,
+     "campaign_id": "ad01-w0-I-00",
+     "init_failure": null,
+     "init_operation": "ad01-ad01-w0-I-00-construct-l1-init",
+     "lineage": 1,
+     "repair_operation": null
+    },
+    "entry": "acquired_order",
+    "method_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
     "params": {
-     "max_queries": 16
+     "max_queries": 4
     },
     "qualified_on": "ad01-w0-dev-sw-01",
     "scope": {
      "family": "software"
-    }
+    },
+    "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
    },
-   "final_size": 3,
+   "final_size": 13,
    "initial_size": 16,
    "lineage": [
     {
-     "authored": true,
-     "capability_id": "seed-sw-greedy"
+     "authored": false,
+     "capability_id": "acquired-sw-58d90427",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-I-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null
+     },
+     "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
     }
    ],
-   "queries": 16,
+   "queries": 4,
    "task_id": "ad01-w0-dev-sw-01"
   },
   {
+   "construction_calls": 0,
    "disposition": "no-candidate",
    "fallback": "incumbent",
    "fallback_reason": "zero construction budget",
    "initial_size": 14,
    "lineage": [
     {
-     "authored": true,
-     "capability_id": "seed-sw-greedy"
+     "authored": false,
+     "capability_id": "acquired-sw-58d90427",
+     "construction": {
+      "calls_made": 0,
+      "campaign_id": "ad01-w0-I-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null
+     },
+     "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
     }
    ],
    "queries": 0,
@@ -146,6 +229,28 @@
     "family": "software",
     "fault": "stale-read",
     "ops": [
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "a",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v2"
+     },
+     {
+      "key": "b",
+      "op": "del"
+     },
+     {
+      "op": "clear"
+     },
      {
       "key": "c",
       "op": "set",
@@ -178,36 +283,57 @@
    },
    "check": {
     "initial_measure": 10,
-    "measure": 3,
+    "measure": 8,
     "reason": "ok-preserved",
     "verdict": "preserved"
    },
+   "construction_calls": 0,
    "disposition": "retained",
    "executable": {
-    "authored": true,
-    "capability_id": "seed-sw-greedy",
-    "method": "greedy",
+    "authored": false,
+    "capability_id": "acquired-sw-58d90427",
+    "construction": {
+     "calls_made": 0,
+     "campaign_id": "ad01-w0-I-00",
+     "init_failure": null,
+     "init_operation": "ad01-ad01-w0-I-00-construct-l1-init",
+     "lineage": 1,
+     "repair_operation": null
+    },
+    "entry": "acquired_order",
+    "method_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
     "params": {
-     "max_queries": 16
+     "max_queries": 4
     },
     "qualified_on": "ad01-w0-dev-sw-02",
     "scope": {
      "family": "software"
-    }
+    },
+    "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
    },
-   "final_size": 3,
+   "final_size": 8,
    "initial_size": 10,
    "lineage": [
     {
-     "authored": true,
-     "capability_id": "seed-sw-greedy"
+     "authored": false,
+     "capability_id": "acquired-sw-58d90427",
+     "construction": {
+      "calls_made": 0,
+      "campaign_id": "ad01-w0-I-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-I-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null
+     },
+     "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
     }
    ],
-   "queries": 14,
+   "queries": 4,
    "task_id": "ad01-w0-dev-sw-02"
   }
  ],
- "queries": 33,
+ "model_calls": 1,
+ "queries": 11,
  "stop": {
   "reason": "no admissible work remains"
  },

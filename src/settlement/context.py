@@ -24,7 +24,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from . import artifacts, broker, db, evidence, store
-from .common import Command, CommandResult, ResultCode, SettlementError, new_id
+from .common import Command, CommandResult, ResultCode, SettlementError
 
 _LATEST_VERSION = 1
 

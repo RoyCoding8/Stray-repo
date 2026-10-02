@@ -92,7 +92,10 @@ def _verify_record(record: dict, root, unevaluable: list) -> list:
     if record["task_id"] not in members:
         problems.append("membership-not-use %s" % rid)
         return problems
-    family = {"software": "software", "graph": "graph"}[record["domain"]]
+    family = record.get("domain")
+    if family not in ("software", "graph"):
+        problems.append("domain-mismatch %s" % rid)
+        return problems
     if task["family"] != family:
         problems.append("domain-mismatch %s" % rid)
         return problems

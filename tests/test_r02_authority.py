@@ -260,7 +260,9 @@ def _sibling_dsn(name: str) -> str:
     import os
     import urllib.parse
 
-    dsn = os.environ["SETTLEMENT_TEST_DSN"]
+    dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
+    if not dsn:
+        pytest.skip("SETTLEMENT_TEST_DSN is not configured")
     if "://" in dsn:
         parts = urllib.parse.urlsplit(dsn)
         if parts.netloc:
@@ -292,7 +294,10 @@ def _make_database(target: str) -> None:
 def _base_name() -> str:
     import os
 
-    return _conn_params(os.environ["SETTLEMENT_TEST_DSN"]).get("dbname", "")
+    dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
+    if not dsn:
+        pytest.skip("SETTLEMENT_TEST_DSN is not configured")
+    return _conn_params(dsn).get("dbname", "")
 
 
 @pytest.fixture(scope="module")
@@ -311,7 +316,10 @@ def companion_dsn():
 def dbos_sys_dsn():
     import os
 
-    if "://" not in os.environ["SETTLEMENT_TEST_DSN"]:
+    dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
+    if not dsn:
+        pytest.skip("SETTLEMENT_TEST_DSN is not configured")
+    if "://" not in dsn:
         pytest.skip("DBOS system-store tests need URL-form SETTLEMENT_TEST_DSN"
                     " (DBOS database_url is SQLAlchemy-parsed)")
     target = _sibling_dsn(f"{_base_name()}_dbos")
@@ -387,6 +395,10 @@ def test_clean_process_resume_consumes_delayed_success_once(
                                 run.Composition.model_validate(comp), env["attempt"]),
                             {"n": "r02m-att:n"})
     run.record_continuation(dsn, env["attempt"], cont, "r02m:setup", None)
+    assert store.advance_dispatch(
+        dsn, _cmd({"operation_id": "r02m-att:n", "launcher_id": "local-process",
+                   "ownership_generation": env["generation"]}, "r02madv")).code \
+        == ResultCode.APPLIED
     assert broker.admit_launcher_receipt(
         dsn, "r02m-att:n", broker.ReceiptProposal(
             receipt_identity="delayed:r02m-att:n", content={"ok": True},
@@ -432,7 +444,7 @@ def test_failed_invocation_terminates_at_retry_budget(migrated_db, tmp_path, mon
     assert len(list((tmp_path / "runs").glob("*.spawns"))) == 1
 
 
-def test_unbilled_usage_settles_full_reservation(migrated_db):
+def test_unbilled_usage_settles_measured_tokens(migrated_db):
     dsn = migrated_db
     env = _seed(dsn, "r02o")
     op = "r02o-model"
@@ -442,13 +454,12 @@ def test_unbilled_usage_settles_full_reservation(migrated_db):
                  "max_output_tokens": 50, "deadline_ms": 10000},
         allocation_id=env["allocation"], attempt_id=env["attempt"])
     assert prepared.code == ResultCode.APPLIED
-    exposure = int(prepared.data["exposure"])
     status = broker.dispatch_operation(dsn, op, gateway=FakeGatewayAdapter(),
                                        ownership_generation=env["generation"])
     assert status.dispatch_state == "observed" and status.sent_this_call
     receipt = store.operation_receipts(dsn, op)
     assert receipt and store.allocation_status(
-        dsn, env["allocation"])["consumed"] == exposure
+        dsn, env["allocation"])["consumed"] == 0
 
 
 def test_transact_bounded_under_contention(migrated_db):

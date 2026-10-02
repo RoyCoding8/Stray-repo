@@ -53,7 +53,8 @@ def _grant_int(raw: str, name: str, problems: list) -> int | None:
 
 
 def preflight_live(*, panels: tuple = ("evaluation", "transfer"),
-                   env: dict | None = None) -> dict:
+                   env: dict | None = None,
+                   construction_calls: int | None = CONSTRUCTION_CALLS) -> dict:
     live = live_env(env)
     problems: list = []
     if not live["endpoint"]:
@@ -76,6 +77,11 @@ def preflight_live(*, panels: tuple = ("evaluation", "transfer"),
     if grant_episodes is not None and grant_episodes < wanted:
         problems.append("grant covers %d episodes but %d cells are "
                         "requested" % (grant_episodes, wanted))
+    if construction_calls is not None and grant_calls is not None \
+            and grant_calls < construction_calls:
+        problems.append("construction grant covers %d calls but %d are "
+                        "demanded (EC02_LIVE_GRANT_CALLS)" % (
+                            grant_calls, construction_calls))
     if problems:
         return {"admitted": False, "problems": problems,
                 "blocked_command": blocked_live_command(env),
@@ -92,8 +98,10 @@ def preflight_live(*, panels: tuple = ("evaluation", "transfer"),
 
 
 def require_live(*, panels: tuple = ("evaluation", "transfer"),
-                 env: dict | None = None) -> dict:
-    verdict = preflight_live(panels=panels, env=env)
+                 env: dict | None = None,
+                 construction_calls: int | None = CONSTRUCTION_CALLS) -> dict:
+    verdict = preflight_live(panels=panels, env=env,
+                             construction_calls=construction_calls)
     if not verdict["admitted"]:
         raise PermissionError(
             "live panels blocked: %s; run %s once the grant exists"

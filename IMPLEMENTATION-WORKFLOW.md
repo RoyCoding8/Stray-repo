@@ -2,7 +2,7 @@
 
 The current human assignment and its linked specification define scope. Older assignment names, audit instructions and task graphs below are historical examples. Every coordinator and specialist must read section 9 and apply the relevant counterchecks; it records recurring failures from actual handoffs.
 
-The human authorizes parallel subagents and Git worktrees for implementation. The current handoff is [Agenda 01](WORKER-AGENDA-01.md); earlier audit and S0-S3 examples below are historical. Its coordinator owns `codex/implementation-agenda-01`, and its contract controls scope, requirements and gates. Token expenditure is not a reason to avoid useful design comparisons, adversarial review, or investigation. Concurrency should follow independent work and available execution resources. Do not invent busywork to fill agent slots.
+The human authorizes parallel subagents and Git worktrees for implementation. The current handoff is [stage 8 closeout and stage 9 start](WORKER-STAGE-08-CLOSE-STAGE-09-START.md), written for a new worker chat. Its coordinator owns `codex/implementation-stage-08-close-stage-09-start`, and its contract controls scope, requirements and gates. Earlier assignment names and branch examples below are historical. Token expenditure is not a reason to avoid useful design comparisons, adversarial review, or investigation. Concurrency should follow independent work and available execution resources. Do not invent busywork to fill agent slots.
 
 ## 1. What kind of assignment this is
 
@@ -51,7 +51,7 @@ Assign one owner for each migration sequence and shared file, including the depe
 
 ## 4. Dependency-aware waves
 
-The table below is the historical S0-S3 build example. For Agenda 01, derive waves from the state/admission, policy/wakeup, experiment/validation and operator dependencies in its worker assignment. Historical audit priorities do not commission another audit.
+The table below is the historical S0-S3 build example. For Investigation 01, derive waves from the contracts/domain interfaces, shared state/resource continuation and independent verification/export dependencies in its worker assignment. Historical audit priorities do not commission another audit.
 
 | Wave | Work that can proceed in parallel | Integration condition |
 |---|---|---|

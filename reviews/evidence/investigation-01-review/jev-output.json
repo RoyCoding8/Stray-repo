@@ -1,0 +1,94 @@
+{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "shared_path": {
+      "type": "choice",
+      "choice": "partial",
+      "probabilities": {
+        "uncertain": 0,
+        "complete": 0,
+        "partial": 1
+      },
+      "confidence": 0.99
+    },
+    "authority_test": {
+      "type": "choice",
+      "choice": "opposite",
+      "probabilities": {
+        "opposite": 0.78,
+        "irrelevant": 0.01,
+        "substantiates": 0.21
+      },
+      "confidence": 0.67
+    },
+    "pilot_readiness": {
+      "type": "choice",
+      "choice": "technical_gaps",
+      "probabilities": {
+        "technical_gaps": 1,
+        "unknown": 0,
+        "grant_only": 0
+      },
+      "confidence": 1
+    },
+    "priority": {
+      "type": "choice",
+      "choice": "integration",
+      "probabilities": {
+        "live_now": 0.01,
+        "integration": 0.99,
+        "model_upgrade": 0,
+        "broad_audit": 0
+      },
+      "confidence": 0.99
+    }
+  },
+  "usage": {
+    "inputTokens": 1381,
+    "outputTokens": 176
+  },
+  "providerMetadata": {
+    "typesafe": {
+      "confidence": {
+        "shared_path": 0.99,
+        "authority_test": 0.67,
+        "pilot_readiness": 1,
+        "priority": 0.99
+      }
+    },
+    "gateway": {
+      "routing": {
+        "originalModelId": "typesafe-ai/jev",
+        "resolvedProvider": "typesafe-ai",
+        "fallbacksAvailable": [],
+        "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+        "canonicalSlug": "typesafe-ai/jev",
+        "finalProvider": "typesafe-ai",
+        "modelAttemptCount": 1,
+        "modelAttempts": [
+          {
+            "canonicalSlug": "typesafe-ai/jev",
+            "success": true,
+            "providerAttemptCount": 1,
+            "providerAttempts": [
+              {
+                "provider": "typesafe-ai",
+                "credentialType": "system",
+                "success": true,
+                "startTime": 1789890065421,
+                "endTime": 1789890065627,
+                "statusCode": 200
+              }
+            ]
+          }
+        ],
+        "totalProviderAttemptCount": 1
+      },
+      "cost": "0",
+      "marketCost": "0.000058002",
+      "surchargeCost": "0",
+      "gatewayCost": "0",
+      "generationId": "gen_01M2YW5WNZJJNJJJFNXRZP9Z4X"
+    }
+  }
+}

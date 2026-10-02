@@ -2,16 +2,16 @@
   "arm": "C",
   "checker_version": "rpr-checker/1",
   "composition": {
-    "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+    "adapter_digest": "c663d2829126f9c7279eb65bbbc51a0653ef03c74a25dd82d6de37cd97c8b2ac",
     "checker_id": "rpr-sw-checker/1",
     "composition_id": "rpr-C-source-v1",
-    "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "core_digest": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9",
     "native": false,
-    "package_digest": "78d9b9962ec592decb0068b09c14ed324b6e9a2f662bbaf79984d084746df9bc",
+    "package_digest": "ad219483cd8b04372552ba19d7a74d3f612560f0aa70213ead43bfc6bc6d09e0",
     "role": "source"
   },
   "costs": {
-    "elapsed_s": 3.158,
+    "elapsed_s": 3.358,
     "invocations_used": 11,
     "model_calls": 0,
     "model_tokens": {
@@ -20,19 +20,19 @@
     },
     "queries_used": 5,
     "validation_used": 2,
-    "wall_s": 3.237
+    "wall_s": 3.437
   },
   "family": "software",
   "initial": {
     "measure": 9
   },
   "inputs_digest": {
-    "adapter": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+    "adapter": "c663d2829126f9c7279eb65bbbc51a0653ef03c74a25dd82d6de37cd97c8b2ac",
     "checker": "9ff84ce1e7a949a97acbda0dec829b0e63c09507bdc7b9cd8198bd79fdf96241",
     "context": "5e94e611466a06b668400ce9f6949dcca9a6b0c390b3bee3af4c481c327a896a",
-    "core": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+    "core": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9",
     "fixture": "a0b918241b37236a0d224d85e6dc0f280769dbd98124bb2fcac77e9011bdbbe6",
-    "package": "78d9b9962ec592decb0068b09c14ed324b6e9a2f662bbaf79984d084746df9bc"
+    "package": "ad219483cd8b04372552ba19d7a74d3f612560f0aa70213ead43bfc6bc6d09e0"
   },
   "invocations": [
     {
@@ -91,7 +91,7 @@
       "seq": 0
     }
   ],
-  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "manifest_sha256": "ac2bf9b99159c3d1a60ce0ce5ed04035d0239455fbfc0d06ca2a95e783be917f",
   "operator": {
     "budget": {
       "elapsed_max_s": 120.0,
@@ -101,10 +101,10 @@
       "queries_used": 5
     },
     "composition": {
-      "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "adapter_digest": "c663d2829126f9c7279eb65bbbc51a0653ef03c74a25dd82d6de37cd97c8b2ac",
       "composition_id": "rpr-C-source-v1",
-      "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
-      "package_digest": "78d9b9962ec592decb0068b09c14ed324b6e9a2f662bbaf79984d084746df9bc",
+      "core_digest": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9",
+      "package_digest": "ad219483cd8b04372552ba19d7a74d3f612560f0aa70213ead43bfc6bc6d09e0",
       "role": "source"
     },
     "disposition": "complete",
@@ -181,7 +181,7 @@
     "reason": "final proposal checked",
     "verified": true
   },
-  "stage": "mechanics",
+  "stage": "evaluation",
   "task_id": "sw-eva-06",
   "trial": [
     {

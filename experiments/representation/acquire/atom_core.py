@@ -75,7 +75,7 @@ def main(argv):
         atoms = enc["atoms"]
         if not isinstance(atoms, list) or not atoms or \
                 any(not isinstance(a, int) for a in atoms):
-            return _finish(req, _refuse(req, "malformed",
+            return _finish(resp_path, _refuse(req, "malformed",
                                         "encoded atoms must be a nonempty int list"))
         tun = _tunables(enc.get("tunables"))
         if tun is None:

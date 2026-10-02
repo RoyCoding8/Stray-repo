@@ -165,10 +165,11 @@ def novel_order_unproductive(task_id: str, budget: int = 8) -> dict:
     runs = {}
     for name, priority in (("seed", order),
                            ("novel", list(reversed(order)))):
-        oracle = checkers.GraphOracle(task, max_queries=budget)
+        share = max(1, budget // 2)
+        oracle = checkers.GraphOracle(task, max_queries=share)
         result = reducers.greedy_reduce(
             count, build, lambda c, o=oracle: o.query(c),
-            priority=priority, max_queries=budget)
+            priority=priority, max_queries=share)
         candidate = build(result["kept"])
         verdict = checkers.check_graph(task, candidate)["verdict"]
         runs[name] = {"final": len(candidate["vertices"])
@@ -177,6 +178,7 @@ def novel_order_unproductive(task_id: str, budget: int = 8) -> dict:
                       "status": result["status"]}
     decision = compare(runs["seed"], runs["novel"])
     decision.update(task_id=task_id, budget=budget,
+                    queries=sum(r["queries"] for r in runs.values()),
                     seed_verdict=runs["seed"]["verdict"],
                     novel_verdict=runs["novel"]["verdict"])
     return _record("c3-novel-unproductive", **decision)

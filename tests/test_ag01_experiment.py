@@ -159,6 +159,28 @@ def test_wrong_answer_control_fails_grading():
         assert result["correct"] == 0
 
 
+def test_database_prerequisite_explicit():
+    probe = f"agenda01_prereq_{os.getpid()}"
+    try:
+        runner.drop_db(BASE_DSN, probe)
+    except Exception:
+        pass
+    try:
+        runner.create_db(BASE_DSN, probe)
+    except Exception as exc:
+        pytest.fail(
+            "missing database prerequisite: CREATE DATABASE failed"
+            f" via BASE_DSN={BASE_DSN}"
+            f" ({type(exc).__name__}: {exc})")
+    try:
+        runner.drop_db(BASE_DSN, probe)
+    except Exception as exc:
+        pytest.fail(
+            "missing database prerequisite: DROP DATABASE failed"
+            f" via BASE_DSN={BASE_DSN}"
+            f" ({type(exc).__name__}: {exc})")
+
+
 def test_positive_control_R(tmp_path):
     for wid in worlds.CONTROL_WORLDS:
         trace = durable(wid, "R", tmp_path)
@@ -767,7 +789,7 @@ def test_duplicate_effect_decisions_charged(tmp_path):
         bad = checker.check_trace(trace, MANIFEST, MHASH, world, manifest.BUDGETS)
         assert bad == [], bad
     finally:
-        runner.drop_db(BASE_DSN, f"agenda01_{trace['db']}")
+        runner.drop_db(BASE_DSN, trace["db"])
 
 
 def test_receipt_timing_matches_declared_clock(tmp_path):
@@ -838,3 +860,88 @@ def test_checker_rejects_gate_mutations(tmp_path):
                    for vs in duped["violations"].values() for v in vs)
     finally:
         twin.unlink()
+
+
+def _lane_experiments():
+    lane = str(ROOT / "experiments")
+    if lane not in sys.path:
+        sys.path.insert(0, lane)
+    import doubles
+    import fault_tasks
+    return doubles, fault_tasks
+
+
+def _adapter_run(script: str, action: str, payload: dict, tmp_path):
+    req = {"profile": "representation-01/1", "profile_version": "1",
+           "task_id": "t", "composition_id": "c", "core_digest": "d",
+           "adapter_digest": "a", "action": action, "payload": payload}
+    request_path = tmp_path / "req.json"
+    response_path = tmp_path / "resp.json"
+    request_path.write_text(json.dumps(req))
+    proc = subprocess.run(
+        [sys.executable,
+         str(ROOT / "experiments" / "representation" / "acquire" / script),
+         str(request_path), str(response_path)],
+        capture_output=True, text=True, timeout=120)
+    envelope = json.loads(response_path.read_text()) \
+        if response_path.is_file() else None
+    return proc, envelope
+
+
+def test_doubles_lesson_counts_real_transcript_shape():
+    doubles, fault_tasks = _lane_experiments()
+    from settlement.gateway import ModelRequest, ModelResponse
+
+    tasks = {t["id"]: t for t in fault_tasks.TASKS}
+    double = doubles.ScriptedDouble(
+        {("DEV", "dev-sum"): True},
+        {i: t["fixed"] for i, t in tasks.items()},
+        {i: t["broken"] for i, t in tasks.items()})
+    record = [
+        {"task_id": "dev-sum", "family": "off_by_one",
+         "outcome": "success",
+         "model_text": tasks["dev-sum"]["fixed"][:2000]},
+        {"task_id": "dev-collect", "family": "off_by_one",
+         "outcome": "success", "model_text": "repaired"},
+        {"task_id": "dev-series", "family": "off_by_one",
+         "outcome": "failure", "model_text": "still broken"}]
+    request = ModelRequest(
+        model="scripted",
+        messages=({"role": "user",
+                   "content": json.dumps({"author_lesson": True,
+                                          "dev_transcripts": record})},),
+        max_output_tokens=100, deadline_ms=1000, operation_id="op-lesson")
+    response = double.infer(request)
+    assert isinstance(response, ModelResponse)
+    assert "Authored from 2/3 successful development repairs." in response.text
+
+
+def test_sw_adapter_decode_refuses_nondict_aux(tmp_path):
+    task = {"family": "software", "task_id": "t", "fault": "stale-read",
+            "ops": [{"op": "set", "key": "a", "value": "v1"},
+                    {"op": "get", "key": "a", "id": "o0"}],
+            "witness": {"observation": "o0", "ref": 1, "faulty": 2},
+            "seed": 1}
+    proc, envelope = _adapter_run(
+        "sw_adapter.py", "decode",
+        {"proposal": {"kept": [0]}, "source_task": task, "aux": [1, 2]},
+        tmp_path)
+    assert proc.returncode == 0, proc.stderr
+    assert envelope is not None, "refusing adapter must still write an envelope"
+    assert envelope["status"] == "refuse"
+    assert envelope["reason"] == "malformed"
+
+
+def test_atom_core_malformed_atoms_reports_cause(tmp_path):
+    proc, envelope = _adapter_run(
+        "atom_core.py", "start",
+        {"encoded_object": {"atoms": [],
+                            "tunables": {"chunk_frac": 2,
+                                         "max_proposals": 4,
+                                         "order": "tail"}}},
+        tmp_path)
+    assert proc.returncode == 0, proc.stderr
+    assert envelope is not None
+    assert envelope["status"] == "refuse"
+    assert envelope["reason"] == "malformed"
+    assert envelope["detail"] == "encoded atoms must be a nonempty int list"

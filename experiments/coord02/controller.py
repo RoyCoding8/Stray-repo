@@ -15,7 +15,12 @@ from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from settlement import artifacts, broker, capabilities, store, team
-from settlement.common import Command, ResultCode, SettlementError
+from settlement.common import (
+    Command,
+    CommandResult,
+    ResultCode,
+    SettlementError,
+)
 from settlement.representation import canonical_bytes, sha_hex
 
 from .policy_exec import (
@@ -72,15 +77,21 @@ def _cmd(payload: Any = None) -> Command:
 
 def seed_episode(dsn: str, tag: str, snapshot: dict,
                  authorized: int = 100000) -> dict:
-    store.seed_allocation(dsn, _cmd({"allocation_id": f"{tag}-root",
-                                    "domain": "cpu",
-                                    "authorized": authorized,
-                                    "max_occupancy": 16}))
-    store.admit_commitment(dsn, _cmd({"investigation_id": f"{tag}-inv",
-                                     "objective": f"coord02 {tag}",
-                                     "obligations": {"repair": True}}))
-    snap = team.register_snapshot(dsn, _cmd(), dict(snapshot))
-    if snap.code != ResultCode.APPLIED:
+    for name, apply, payload in (
+            ("allocation", store.seed_allocation,
+             {"allocation_id": f"{tag}-root", "domain": "cpu",
+              "authorized": authorized, "max_occupancy": 16}),
+            ("commitment", store.admit_commitment,
+             {"investigation_id": f"{tag}-inv", "objective": f"coord02 {tag}",
+              "obligations": {"repair": True}})):
+        result = apply(dsn, Command(request_id=f"coord02:{tag}:{name}",
+                                    payload=payload))
+        if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+            raise SettlementError(f"{name} refused: {result.detail}")
+    snap = team.register_snapshot(
+        dsn, Command(request_id=f"coord02:{tag}:snapshot", payload=dict(snapshot)),
+        dict(snapshot))
+    if snap.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
         raise SettlementError(f"snapshot refused: {snap.detail}")
     return {"allocation_id": f"{tag}-root",
             "investigation_id": f"{tag}-inv",
@@ -90,24 +101,15 @@ def seed_episode(dsn: str, tag: str, snapshot: dict,
 def render_task_input(cfg: EpisodeConfig, *, observations: list,
                       accepted_plan: dict | None,
                       residual: dict, remaining: dict) -> dict:
-    return {"task_snapshot": dict(cfg.snapshot),
-            "public_contract": dict(cfg.interface_contract),
-            "interface_bindings": [dict(b) for b in cfg.bindings],
-            "accepted_plan": accepted_plan,
-            "observations": list(observations),
-            "residual_obligations": dict(residual),
-            "remaining_allocation": dict(remaining),
-            "dependency_versions": {b["name"]: b.get("version", "")
-                                    for b in cfg.bindings}}
+    from . import packet as _packet
+    return _packet.render_task_input(
+        cfg, observations=observations, accepted_plan=accepted_plan,
+        residual=residual, remaining=remaining)
 
 
 def render_child_obligation(child: dict, observations: list) -> dict:
-    return {"node_id": child["node_id"], "obligation": child["obligation"],
-            "owned_paths": list(child["owned_paths"]),
-            "input_bindings": dict(child["input_bindings"]),
-            "output_contract": dict(child["output_contract"]),
-            "admitted_observations": [o.get("interface") for o in observations
-                                      if isinstance(o, dict)]}
+    from . import packet as _packet
+    return _packet.render_child_obligation(child, observations)
 
 
 def check_bindings(snapshot: dict, bindings: list, requires: dict,
@@ -157,8 +159,24 @@ def publish_package_version(dsn: str, artifacts_root: Any, receipt: dict,
                             version_id: str, requires: dict) -> Any:
     staged = artifacts.publish_package(
         dsn, _cmd(), artifacts_root, receipt)
-    if staged.code != ResultCode.APPLIED:
+    if staged.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
         return staged
+    existing = capabilities.get_version(dsn, version_id) or {}
+    if existing:
+        if existing.get("artifact_digest") != receipt["digest"]:
+            return CommandResult(
+                code=ResultCode.INVALID_INPUT,
+                request_id=staged.request_id,
+                detail=f"package version {version_id} already retains"
+                       " different bytes",
+                data={"version_id": version_id})
+        return CommandResult(
+            code=ResultCode.ALREADY_APPLIED,
+            request_id=staged.request_id,
+            detail=f"package version {version_id} already retained",
+            data={"version_id": version_id,
+                  "package_digest": str(
+                      existing.get("artifact_digest") or "")})
     return capabilities.publish_candidate(
         dsn, _cmd(), artifacts_root, launcher, allocation_id,
         version_id=version_id, family="coordination",
@@ -365,7 +383,7 @@ def _take_step(dsn: str, cfg: EpisodeConfig, launchers: dict, status: dict,
 def _run_probes(dsn: str, cfg: EpisodeConfig, launchers: dict, status: dict,
                 proposal: dict) -> list[dict]:
     launcher = launchers["local-process"]
-    seq = status["steps_used"] - 1
+    seq = status["steps_used"]
     out = []
     for idx, call in enumerate(proposal["invocations"]):
         name = call["interface"]
@@ -420,8 +438,13 @@ def _dispatch_children(dsn: str, cfg: EpisodeConfig, launchers: dict,
         if _cancelled_op(dsn, op_id):
             raise Halted(f"cancelled:{op_id}")
         gen = team.child_attempt(dsn, plan_id, node)["ownership_generation"]
+        try:
+            grant = int(store.get_control(dsn)["authority_version"])
+        except Exception:
+            grant = None
         broker.dispatch_operation(dsn, op_id, launchers=launchers,
-                                  ownership_generation=gen)
+                                  ownership_generation=gen,
+                                  grant_version=grant)
         if _cancelled_op(dsn, op_id):
             raise Halted(f"cancelled:{op_id}")
         hits = [r["receipt_identity"] for r in
@@ -447,20 +470,53 @@ def _submit_missing(dsn: str, cfg: EpisodeConfig, plan_id: str, revision: int,
     except LookupError:
         have = set()
     results = {}
+    plan = team.plan_summary(dsn, plan_id)
+    submissions = team.team_state(dsn, cfg.investigation_id)["submissions"]
     for node in team.child_nodes(dsn, plan_id):
         if node in have:
             continue
-        child = next(c for c in team.plan_summary(dsn, plan_id)["children"]
-                     if c["node_id"] == node)
-        rendered = render_child_obligation(
-            child, list_probe_observations(dsn, cfg.run_id, cfg.task_id))
-        produced = child_factory(node, child, rendered)
+        child = next(c for c in plan["children"] if c["node_id"] == node)
+        current = team._snapshot_of(dsn, plan["snapshot_digest"])
+        prior = [s for s in submissions if s["plan_id"] == plan_id
+                 and s["node_id"] == node and s["plan_revision"] < revision
+                 and s["accepted"]]
+        if prior:
+            current.update(team._output_of(
+                dsn, max(prior, key=lambda s: s["plan_revision"])["output_digest"]))
+        rendered = {
+            **render_child_obligation(
+                child, list_probe_observations(dsn, cfg.run_id, cfg.task_id)),
+            "plan_id": plan_id, "plan_revision": revision,
+            "public_contract": plan["interface_contract"],
+            "snapshot_digest": plan["snapshot_digest"],
+            "input_digests": child["input_digests"],
+            "current_source": current}
+        model_operation_id = "%s:model" % team.child_operation(
+            dsn, plan_id, node)
+        attempt = team.child_attempt(dsn, plan_id, node)
+        try:
+            grant = int(store.get_control(dsn)["authority_version"])
+        except Exception:
+            grant = None
+        try:
+            produced = child_factory(
+                node, child, rendered,
+                operation_id=model_operation_id,
+                attempt_id=attempt["attempt_id"],
+                ownership_generation=int(
+                    attempt["ownership_generation"]),
+                grant_version=grant)
+        except TypeError as exc:
+            if "unexpected keyword" not in str(exc):
+                raise
+            produced = child_factory(node, child, rendered,
+                                     operation_id=model_operation_id,
+                                     attempt_id=attempt["attempt_id"])
         if produced is None:
             return {"refused": f"no constructor artifact for {node}"}
         reg = team.register_output(dsn, _cmd(), dict(produced))
         if reg.code != ResultCode.APPLIED:
             return {"refused": f"output for {node} refused: {reg.detail}"}
-        attempt = team.child_attempt(dsn, plan_id, node)
         done = team.submit_child(
             dsn, _cmd({"plan_id": plan_id}), plan_revision=revision,
             node_id=node,
@@ -582,6 +638,18 @@ def run_episode(dsn: str, cfg: EpisodeConfig, launchers: dict,
         _note(status)
         if status["frozen"] and status["join_passed"]:
             return _outcome("success", cfg, status)
+        last = status["decisions"][-1] if status["decisions"] else {}
+        if last.get("action") in ("stop", "unsupported"):
+            action, proposal = last["action"], last["proposal"]
+            if status["plan_id"] is None:
+                prior = "stopped" if action == "stop" else "unsupported"
+                return run_s_fallback(
+                    dsn, cfg, launchers, prior,
+                    proposal.get("reason", action))
+            return _outcome("stopped", cfg, status,
+                            reason=proposal.get("reason", action),
+                            liable=[_liable("policy", action,
+                                            status["plan_id"])])
         if status["plan_id"] is not None and status["phase"] == "executing":
             stale = _revalidate(dsn, cfg, status)
             if stale is not None:
@@ -646,8 +714,7 @@ def run_episode(dsn: str, cfg: EpisodeConfig, launchers: dict,
         action, proposal = taken["action"], taken["proposal"]
         if action == "probe":
             try:
-                _run_probes(dsn, cfg, launchers, derive_status(dsn, cfg),
-                            proposal)
+                _run_probes(dsn, cfg, launchers, status, proposal)
             except PolicyError as exc:
                 return _outcome("policy-invalid", cfg,
                                 derive_status(dsn, cfg),
@@ -656,16 +723,7 @@ def run_episode(dsn: str, cfg: EpisodeConfig, launchers: dict,
                                                 taken["op_id"])])
             continue
         if action in ("stop", "unsupported"):
-            if status["plan_id"] is None:
-                prior = "stopped" if action == "stop" else "unsupported"
-                return run_s_fallback(
-                    dsn, cfg, launchers, prior,
-                    proposal.get("reason", action))
-            base = derive_status(dsn, cfg)
-            return _outcome("stopped", cfg, base,
-                            reason=proposal.get("reason", action),
-                            liable=[_liable("policy", action,
-                                            base["plan_id"] or "")])
+            continue
         if action == "plan":
             if status["plan_id"] is not None:
                 base = derive_status(dsn, cfg)
@@ -782,31 +840,5 @@ def build_experience_packet(dsn: str, *, run_id: str, task_id: str,
 
 
 def construction_call_spec(packet: dict, budget: dict) -> dict:
-    return {"abi": {"argv": ["python", "<entry>", "<request.json>",
-                             "<response.json>"],
-                    "request_fields": ["profile", "profile_version",
-                                       "decision_id", "package_digest",
-                                       "source_digest", "plan_revision",
-                                       "phase", "allowed_actions", "state",
-                                       "task"],
-                    "response_fields": ["profile", "profile_version",
-                                        "decision_id", "package_digest",
-                                        "source_digest", "plan_revision",
-                                        "phase", "proposal", "state"],
-                    "actions": ["probe", "plan", "rework", "stop",
-                                "unsupported"],
-                    "state_limit_bytes": 16 * 1024},
-            "action_semantics": {
-                "probe": "up to four bounded JSON calls of bound interfaces",
-                "plan": "one single|alternatives|decompose team for admission",
-                "rework": "name failed-join children for fresh attempts",
-                "stop": "end intervention preserving residual obligation",
-                "unsupported": "decline for a missing binding or scope"},
-            "transport_examples": {
-                "probe": {"action": "probe",
-                          "invocations": [{"interface": "<bound-name>",
-                                           "input": {}}]},
-                "plan": {"action": "plan", "shape": "single", "children": []},
-                "rework": {"action": "rework", "rework": ["<node>"]}},
-            "development_observations": packet.get("probe_observations", []),
-            "budget": dict(budget)}
+    from .packet import construction_call_spec as _spec
+    return _spec(packet, budget)

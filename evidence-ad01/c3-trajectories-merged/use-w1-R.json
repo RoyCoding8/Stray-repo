@@ -1,0 +1,982 @@
+[
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 5,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 8,
+  "normalized_reduction": 0.375,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-within-sw-00"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-within-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v2"
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-sw-00",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
+  "task_id": "ad01-w1-within-sw-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 13,
+  "normalized_reduction": 0.23076923076923078,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-within-sw-01"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v4"
+    }
+   ],
+   "seed": 5402,
+   "task_id": "ad01-w1-within-sw-01",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v3"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-sw-01",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
+  "task_id": "ad01-w1-within-sw-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 8,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 11,
+  "normalized_reduction": 0.2727272727272727,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-within-sw-02"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "id": "o1",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "id": "o2",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "id": "o3",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o4",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5403,
+   "task_id": "ad01-w1-within-sw-02",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v2"
+    },
+    "observation": "o4",
+    "ref": {
+     "type": "str",
+     "value": "v4"
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-sw-02",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
+  "task_id": "ad01-w1-within-sw-02",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "acquired-gr-9fac7a86",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 10,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.16666666666666666,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-within-gr-00"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-within-gr-00",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-gr-00",
+  "requested": "acquired-gr-9fac7a86",
+  "selected": "acquired-gr-9fac7a86",
+  "task_id": "ad01-w1-within-gr-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "acquired-gr-9fac7a86",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 14,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 16,
+  "normalized_reduction": 0.125,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-within-gr-01"
+  ],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     0,
+     6
+    ]
+   ],
+   "family": "graph",
+   "seed": 5502,
+   "task_id": "ad01-w1-within-gr-01",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-gr-01",
+  "requested": "acquired-gr-9fac7a86",
+  "selected": "acquired-gr-9fac7a86",
+  "task_id": "ad01-w1-within-gr-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "graph",
+  "executed": "acquired-gr-9fac7a86",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 12,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 19,
+  "normalized_reduction": 0.3684210526315789,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-within-gr-02"
+  ],
+  "output": {
+   "edges": [
+    [
+     3,
+     4
+    ],
+    [
+     3,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     3,
+     8
+    ]
+   ],
+   "family": "graph",
+   "seed": 5503,
+   "task_id": "ad01-w1-within-gr-02",
+   "vertices": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-within-gr-02",
+  "requested": "acquired-gr-9fac7a86",
+  "selected": "acquired-gr-9fac7a86",
+  "task_id": "ad01-w1-within-gr-02",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 8,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 11,
+  "normalized_reduction": 0.2727272727272727,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-transfer-sw-00"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "del"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    }
+   ],
+   "seed": 5401,
+   "task_id": "ad01-w1-transfer-sw-00",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o1",
+    "ref": {
+     "type": "str",
+     "value": "v4"
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-sw-00",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
+  "task_id": "ad01-w1-transfer-sw-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 11,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 14,
+  "normalized_reduction": 0.21428571428571427,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-transfer-sw-01"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-clear",
+   "ops": [
+    {
+     "op": "clear"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o0",
+     "key": "b",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "id": "o1",
+     "key": "a",
+     "op": "get"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "key": "a",
+     "op": "del"
+    },
+    {
+     "op": "clear"
+    },
+    {
+     "id": "o2",
+     "key": "c",
+     "op": "get"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    }
+   ],
+   "seed": 5402,
+   "task_id": "ad01-w1-transfer-sw-01",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v1"
+    },
+    "observation": "o2",
+    "ref": {
+     "type": "missing",
+     "value": null
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-sw-01",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
+  "task_id": "ad01-w1-transfer-sw-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 1,
+   "tokens": 0,
+   "witness_queries": 4
+  },
+  "domain": "software",
+  "executed": "acquired-sw-58d90427",
+  "executed_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+  "fallback_reason": "",
+  "final_measure": 9,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 12,
+  "normalized_reduction": 0.25,
+  "operation_ids": [
+   "ad01-ad01-w1-R-00-use-ad01-w1-transfer-sw-02"
+  ],
+  "output": {
+   "family": "software",
+   "fault": "stale-read",
+   "ops": [
+    {
+     "op": "clear"
+    },
+    {
+     "key": "b",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "b",
+     "op": "del"
+    },
+    {
+     "key": "a",
+     "op": "set",
+     "value": "v3"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v2"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v4"
+    },
+    {
+     "key": "c",
+     "op": "set",
+     "value": "v1"
+    },
+    {
+     "id": "o0",
+     "key": "c",
+     "op": "get"
+    }
+   ],
+   "seed": 5403,
+   "task_id": "ad01-w1-transfer-sw-02",
+   "witness": {
+    "faulty": {
+     "type": "str",
+     "value": "v4"
+    },
+    "observation": "o0",
+    "ref": {
+     "type": "str",
+     "value": "v1"
+    }
+   }
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-sw-02",
+  "requested": "acquired-sw-58d90427",
+  "selected": "acquired-sw-58d90427",
+  "task_id": "ad01-w1-transfer-sw-02",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "member execution failed: refused: allocation ad01-campaign-ad01-w1-R-00 cannot cover 111",
+  "final_measure": 20,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 20,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     4,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     0,
+     8
+    ],
+    [
+     5,
+     9
+    ]
+   ],
+   "family": "graph",
+   "seed": 5501,
+   "task_id": "ad01-w1-transfer-gr-00",
+   "template": "C9+tree",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-gr-00",
+  "requested": "acquired-gr-9fac7a86",
+  "selected": "acquired-gr-9fac7a86",
+  "task_id": "ad01-w1-transfer-gr-00",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "member execution failed: refused: allocation ad01-campaign-ad01-w1-R-00 cannot cover 111",
+  "final_measure": 17,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 17,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     0,
+     5
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     1,
+     7
+    ]
+   ],
+   "family": "graph",
+   "seed": 5502,
+   "task_id": "ad01-w1-transfer-gr-01",
+   "template": "C5+shared-edge",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-gr-01",
+  "requested": "acquired-gr-9fac7a86",
+  "selected": "acquired-gr-9fac7a86",
+  "task_id": "ad01-w1-transfer-gr-01",
+  "verdict": "preserved",
+  "world": 1
+ },
+ {
+  "arm": "R",
+  "costs": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 0,
+   "tokens": 0,
+   "witness_queries": 0
+  },
+  "domain": "graph",
+  "executed": "incumbent",
+  "executed_source": "incumbent",
+  "fallback_reason": "member execution failed: refused: allocation ad01-campaign-ad01-w1-R-00 cannot cover 111",
+  "final_measure": 21,
+  "freeze": "ad01",
+  "freeze_digest": "15e588a86c12cb68974a376352dcb6408ea524629ad6d3d98493b6e19ce07862",
+  "initial_measure": 21,
+  "normalized_reduction": 0.0,
+  "operation_ids": [],
+  "output": {
+   "edges": [
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     2,
+     3
+    ],
+    [
+     3,
+     4
+    ],
+    [
+     0,
+     4
+    ],
+    [
+     5,
+     6
+    ],
+    [
+     6,
+     7
+    ],
+    [
+     7,
+     8
+    ],
+    [
+     8,
+     9
+    ],
+    [
+     5,
+     9
+    ],
+    [
+     0,
+     5
+    ]
+   ],
+   "family": "graph",
+   "seed": 5503,
+   "task_id": "ad01-w1-transfer-gr-02",
+   "template": "C5+joined-by-path",
+   "vertices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ]
+  },
+  "record_id": "ad01-w1-R-00-R-ad01-w1-transfer-gr-02",
+  "requested": "acquired-gr-9fac7a86",
+  "selected": "acquired-gr-9fac7a86",
+  "task_id": "ad01-w1-transfer-gr-02",
+  "verdict": "preserved",
+  "world": 1
+ }
+]

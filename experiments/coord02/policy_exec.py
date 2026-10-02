@@ -73,6 +73,14 @@ def _sandbox_timed_out(receipts: list[dict]) -> bool:
         return False
 
 
+def _grant_version(dsn: str) -> int | None:
+    try:
+        from settlement import store as _store
+        return int(_store.get_control(dsn)["authority_version"])
+    except Exception:
+        return None
+
+
 def _admit(dsn: str, operation_id: str, identity: str, content: dict) -> None:
     broker.admit_launcher_receipt(
         dsn, operation_id,
@@ -125,7 +133,8 @@ def invoke_policy_step(dsn: str, launcher: Any, *, run_id: str, task_id: str,
     launcher.stage_input(op_id, PROFILE, ENTRY_FILENAME, entry_bytes)
     launcher.stage_input(op_id, PROFILE, REQUEST_FILENAME, raw_request)
     broker.dispatch_operation(dsn, op_id,
-                              launchers={launcher.profile: launcher})
+                              launchers={launcher.profile: launcher},
+                              grant_version=_grant_version(dsn))
     receipts = _receipts(dsn, op_id)
     timed_out = _sandbox_timed_out(receipts)
     try:
@@ -198,7 +207,8 @@ def run_probe_call(dsn: str, launcher: Any, *, run_id: str, task_id: str,
     launcher.stage_input(op_id, PROFILE, "iface.py", interface_bytes)
     launcher.stage_input(op_id, PROFILE, "input.json", raw_input)
     broker.dispatch_operation(dsn, op_id,
-                              launchers={launcher.profile: launcher})
+                              launchers={launcher.profile: launcher},
+                              grant_version=_grant_version(dsn))
     receipts = _receipts(dsn, op_id)
     timed_out = _sandbox_timed_out(receipts)
     try:

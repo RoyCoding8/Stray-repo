@@ -13,10 +13,10 @@
   "compositions": [
     {
       "adapter": "sw_adapter",
-      "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "adapter_digest": "c663d2829126f9c7279eb65bbbc51a0653ef03c74a25dd82d6de37cd97c8b2ac",
       "composition_id": "rpr-C-source-v1",
       "core": "core",
-      "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "core_digest": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9",
       "description": "acquire/descriptions/source.md",
       "role": "source"
     },
@@ -25,13 +25,13 @@
       "adapter_digest": "e6add5a4a3c344f517a2e435c368df006138c07f835fd07e232f608363c9279a",
       "composition_id": "rpr-C-transfer-v1",
       "core": "core",
-      "core_digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "core_digest": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9",
       "description": "acquire/descriptions/transfer.md",
       "role": "transfer"
     },
     {
       "adapter": "sw_adapter",
-      "adapter_digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "adapter_digest": "c663d2829126f9c7279eb65bbbc51a0653ef03c74a25dd82d6de37cd97c8b2ac",
       "composition_id": "rpr-CTRL-nullsw-v1",
       "core": "null_core",
       "core_digest": "7d6e24965d8cdd8233a7488c99ee5a8fa2e9f1d17a2cee3e3e739378bfe0994a",
@@ -50,9 +50,9 @@
   ],
   "files": [
     {
-      "bytes": 4575,
+      "bytes": 4581,
       "component": "core",
-      "digest": "3185f9dd00f4d22cbb342c1bd1c4eb5f6e2f8765bb6491cbea3a495fd91a6d46",
+      "digest": "4b7e2d65446c2ee3f3349d051ff2e013cc278bd363c754379b26656081d4a7d9",
       "path": "experiments/representation/acquire/atom_core.py"
     },
     {
@@ -98,9 +98,9 @@
       "path": "experiments/representation/acquire/source_context.json"
     },
     {
-      "bytes": 4726,
+      "bytes": 4742,
       "component": "sw_adapter",
-      "digest": "de2ca4433dc1073725888354efb8c75ef10e830dadd6b625bd397d6d3803017c",
+      "digest": "c663d2829126f9c7279eb65bbbc51a0653ef03c74a25dd82d6de37cd97c8b2ac",
       "path": "experiments/representation/acquire/sw_adapter.py"
     },
     {

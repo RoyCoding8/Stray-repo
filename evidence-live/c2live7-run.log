@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/coord02/run_live_acquisition.py", line 118, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/coord02/run_live_acquisition.py", line 80, in main
+    acquired = E.acquire(
+               ^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/coord02/experience.py", line 1365, in acquire
+    lineages = construct_lineages(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/coord02/experience.py", line 1304, in construct_lineages
+    rec["repair"] = ledger.repair_call(
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/coord02/experience.py", line 686, in repair_call
+    return self.request_call(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/coord02/experience.py", line 680, in request_call
+    return self._serialized(gateway or FakeGatewayAdapter(),
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/coord02/experience.py", line 611, in _serialized
+    raise ConstructionBudgetExhausted(
+experiments.coord02.experience.ConstructionBudgetExhausted: construction budget exhausted: four calls maximum: unresolved effects hold construction capacity: coord02-L-construct-c2live7-l-1-init-1
+{
+ "admitted": true,
+ "grant": {
+  "episodes": 48,
+  "construction_calls": 4
+ }
+}
+EXIT=1

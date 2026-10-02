@@ -54,7 +54,8 @@ def test_full_panel_is_checker_clean(migrated_db, tmp_path):
 
 def test_committed_evidence_is_checker_clean():
     mechanics = checker.check_all(REP / "evidence",
-                                  manifest_name="manifest_acq1.json")
+                                  manifest_name="manifest_acq1.json",
+                                  historical=True)
     assert mechanics["clean"], mechanics["problems"]
     assert mechanics["records"] == 27
     heldout = checker.check_all(REP / "evidence-heldout")

@@ -138,13 +138,184 @@ def test_acquire_two_dev_tasks(dsn, tmp_path):
         assert made["episode"]["outcome"]["status"] == "stopped"
 
 
+@pytest.mark.parametrize("text,calls,stages", [
+    ("", 4, ("init", "repair")),
+    (json.dumps({"entry": DOUBLED_INERT.decode()}), 2, ("init",)),
+], ids=["empty-response", "valid-profile"])
+def test_acquire_reentry_reuses_campaign_operations(dsn, tmp_path, text, calls, stages):
+    def acquire():
+        return E.acquire(
+            dsn, tmp_path, task_ids=["c02-t16"],
+            campaign_root="reentry", launcher_factory=_factory(tmp_path),
+            construction_gateway=FakeGatewayAdapter(text=text))
+
+    first = acquire()
+    with db.connect(dsn) as conn:
+        before = conn.execute("SELECT id FROM operations ORDER BY id").fetchall()
+        allocations = conn.execute(
+            "SELECT id, authorized FROM allocations ORDER BY id").fetchall()
+    assert first["accounting"]["calls_used"] == calls
+    assert len(first["packet"]["probe_observations"]) == 1
+    second = acquire()
+    assert second["campaign_root"] == "reentry"
+    assert second["episodes"] == first["episodes"]
+    assert second["accounting"]["calls_used"] == calls
+    assert [[r[stage]["operation_id"] for stage in stages]
+            for r in second["lineages"]] == [
+        [r[stage]["operation_id"] for stage in stages]
+        for r in first["lineages"]]
+    with db.connect(dsn) as conn:
+        assert conn.execute("SELECT id FROM operations ORDER BY id").fetchall() == before
+        assert conn.execute(
+            "SELECT id, authorized FROM allocations ORDER BY id").fetchall() == allocations
+
+
+@pytest.mark.parametrize("root", [None, "", "   "])
+def test_acquire_requires_campaign_root(tmp_path, root):
+    with pytest.raises(ValueError, match="campaign_root"):
+        E.acquire("unused", tmp_path, task_ids=["c02-t16"],
+                  campaign_root=root, launcher_factory=_factory(tmp_path))
+
+
+@pytest.mark.parametrize("changed", [
+    {"task_ids": ["c02-t01"]},
+    {"budget": {"label": "changed"}},
+    {"attempt_prefix": "changed"},
+])
+def test_acquire_rejects_changed_campaign_before_work(dsn, tmp_path, monkeypatch, changed):
+    from settlement.common import ConflictPayload
+
+    kwargs = dict(task_ids=["c02-t16"], campaign_root="bound",
+                  launcher_factory=_factory(tmp_path),
+                  construction_gateway=FakeGatewayAdapter(text=""))
+    E.acquire(dsn, tmp_path, **kwargs)
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("campaign conflict must precede episode acquisition")
+
+    monkeypatch.setattr(E, "acquire_episodes", unexpected)
+    with pytest.raises(ConflictPayload):
+        E.acquire(dsn, tmp_path, **(kwargs | changed))
+
+
+def test_acquire_recovers_after_episode_before_checkpoint(dsn, tmp_path, monkeypatch):
+    run = E._run_dev_episode
+    settled = []
+
+    def interrupt(*args, **kwargs):
+        settled.append(run(*args, **kwargs))
+        raise RuntimeError("episode settled before checkpoint")
+
+    kwargs = dict(task_ids=["c02-t16"], campaign_root="episode-crash",
+                  launcher_factory=_factory(tmp_path),
+                  construction_gateway=FakeGatewayAdapter(text=""))
+    monkeypatch.setattr(E, "_run_dev_episode", interrupt)
+    with pytest.raises(RuntimeError, match="episode settled before checkpoint"):
+        E.acquire(dsn, tmp_path, **kwargs)
+    with db.connect(dsn) as conn:
+        before = conn.execute("SELECT id FROM operations ORDER BY id").fetchall()
+    monkeypatch.setattr(E, "_run_dev_episode", run)
+    recovered = E.acquire(dsn, tmp_path, **kwargs)
+    assert recovered["episodes"][0]["episode"] == settled[0]
+    construction_ids = {call["operation_id"] for call in recovered["ledger"].calls}
+    with db.connect(dsn) as conn:
+        after = conn.execute("SELECT id FROM operations ORDER BY id").fetchall()
+    assert [row for row in after if row[0] not in construction_ids] == before
+
+
+def test_acquire_recovers_after_profile_effect_before_checkpoint(dsn, tmp_path, monkeypatch):
+    check = E._profile_check
+
+    def interrupt(*args, **kwargs):
+        result = check(*args, **kwargs)
+        assert result["ok"]
+        raise RuntimeError("profile settled before checkpoint")
+
+    def acquire():
+        return E.acquire(
+            dsn, tmp_path, task_ids=["c02-t16"], campaign_root="profile-crash",
+            launcher_factory=_factory(tmp_path),
+            construction_gateway=FakeGatewayAdapter(
+                text=json.dumps({"entry": DOUBLED_INERT.decode()})))
+
+    monkeypatch.setattr(E, "_profile_check", interrupt)
+    with pytest.raises(RuntimeError, match="profile settled before checkpoint"):
+        acquire()
+    monkeypatch.setattr(E, "_profile_check", check)
+    recovered = acquire()
+    assert recovered["accounting"]["calls_used"] == 2
+    assert all(rec["profile"]["ok"] for rec in recovered["lineages"])
+    with db.connect(dsn) as conn:
+        assert conn.execute(
+            "SELECT count(*) FROM operations WHERE id LIKE 'cap-verify-%'"
+        ).fetchone()[0] == 2
+
+
+@pytest.mark.parametrize("step", ["_profile_check", "_run_dev_episode"])
+def test_validation_recovers_without_repeating_effects(dsn, tmp_path, monkeypatch, step):
+    run = getattr(E, step)
+
+    def interrupt(*args, **kwargs):
+        run(*args, **kwargs)
+        raise RuntimeError("validation settled before checkpoint")
+
+    kwargs = dict(entry_bytes=DOUBLED_INERT, requires=_requires("c02-t16"),
+                  task_ids=["c02-t16"], launcher_factory=_factory(tmp_path),
+                  validation_root="validation-crash")
+    monkeypatch.setattr(E, step, interrupt)
+    with pytest.raises(RuntimeError, match="validation settled before checkpoint"):
+        E.validate_on_development(dsn, **kwargs)
+    with db.connect(dsn) as conn:
+        before = conn.execute("SELECT id FROM operations ORDER BY id").fetchall()
+    monkeypatch.setattr(E, step, run)
+    recovered = E.validate_on_development(dsn, **kwargs)
+    with db.connect(dsn) as conn:
+        settled = conn.execute("SELECT id FROM operations ORDER BY id").fetchall()
+    assert set(before).issubset(set(settled))
+    if step == "_run_dev_episode":
+        assert settled == before
+    with db.connect(dsn) as conn:
+        journal = conn.execute(
+            "SELECT request_id FROM command_journal ORDER BY request_id").fetchall()
+    assert E.validate_on_development(dsn, **kwargs) == recovered
+    with db.connect(dsn) as conn:
+        assert conn.execute(
+            "SELECT request_id FROM command_journal ORDER BY request_id").fetchall() == journal
+        assert conn.execute("SELECT id FROM operations ORDER BY id").fetchall() == settled
+        assert conn.execute(
+            "SELECT count(*) FROM operations WHERE id LIKE 'cap-verify-%'"
+        ).fetchone()[0] == 1
+
+
+@pytest.mark.parametrize("changed", [
+    {"entry_bytes": DOUBLED_EXECUTABLE},
+    {"task_ids": ["c02-t01"]},
+    {"requires": {"changed": {}}},
+])
+def test_validation_rejects_changed_request_before_effects(dsn, tmp_path, monkeypatch, changed):
+    from settlement.common import ConflictPayload
+
+    kwargs = dict(entry_bytes=DOUBLED_INERT, requires=_requires("c02-t16"),
+                  task_ids=["c02-t16"], launcher_factory=_factory(tmp_path),
+                  validation_root="bound-validation")
+    E.validate_on_development(dsn, **kwargs)
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("validation conflict must precede profile execution")
+
+    monkeypatch.setattr(E, "_profile_check", unexpected)
+    with pytest.raises(ConflictPayload):
+        E.validate_on_development(dsn, **(kwargs | changed))
+
+
 def test_construct_both_lineages_init_and_repair(dsn, tmp_path):
     episodes = _episodes(dsn, tmp_path)
     budget = E.construction_budget()
     _, ledger = _campaign(dsn, _tag("m3"), budget)
     gateway = FakeGatewayAdapter(text="")
     lineages = E.construct_lineages(episodes, budget, ledger=ledger,
-                                    gateway=gateway)
+                                    gateway=gateway,
+                                    launcher_factory=_factory(tmp_path))
     assert [r["lineage"] for r in lineages] == [1, 2]
     for rec in lineages:
         assert rec["init"]["operation_id"] != rec["repair"]["operation_id"]
@@ -169,7 +340,7 @@ def test_ledger_attempt_consumption_durable_across_fresh_ledger(dsn,
                                                                 tmp_path):
     episodes = _episodes(dsn, tmp_path)
     budget = E.construction_budget()
-    seed, ledger = _campaign(dsn, _tag("durable-m3"), budget)
+    seed = E.seed_construction_campaign(dsn, _tag("durable-m3"), budget)
     prefix = f"coord02-M3-durable-{uuid.uuid4().hex[:6]}"
     first = E.ConstructionLedger(dsn, seed["allocation_id"],
                                  attempt_prefix=prefix)
@@ -183,7 +354,19 @@ def test_ledger_attempt_consumption_durable_across_fresh_ledger(dsn,
     assert fresh.calls_used() == 1
     assert fresh.remaining() == E.MAX_CONSTRUCTION_CALLS - 1
     assert rec["operation_id"] in {c["operation_id"] for c in fresh.calls}
-    assert ledger.calls_used() == 0
+    assert first.calls_used() == fresh.calls_used()
+
+
+def test_ledger_refuses_second_prefix_on_same_allocation(dsn):
+    from settlement.common import ConflictPayload
+
+    budget = E.construction_budget()
+    seed = E.seed_construction_campaign(dsn, _tag("single-prefix"), budget)
+    E.ConstructionLedger(dsn, seed["allocation_id"],
+                         attempt_prefix="coord02-M3-single-first")
+    with pytest.raises(ConflictPayload):
+        E.ConstructionLedger(dsn, seed["allocation_id"],
+                             attempt_prefix="coord02-M3-single-second")
 
 
 def test_invalid_requests_consume_defined_budget(dsn):
@@ -205,6 +388,39 @@ def test_invalid_requests_consume_defined_budget(dsn):
     fresh = E.ConstructionLedger(dsn, seed["allocation_id"],
                                  attempt_prefix=prefix)
     assert fresh.calls_used() == 1
+
+
+def test_authorized_ceiling_binds_the_ledger_below_the_study_maximum(dsn):
+    budget = E.construction_budget(live_calls_authorized=1)
+    seed = E.seed_construction_campaign(dsn, _tag("grant-1"), budget)
+    ledger = E.ConstructionLedger(
+        dsn, seed["allocation_id"],
+        attempt_prefix=f"coord02-M3-grant1-{uuid.uuid4().hex[:6]}",
+        authorized_calls=1)
+    packet = {"packet_version": "coord02-experience/1",
+              "probe_observations": []}
+    request = E.construction_request(packet, budget, lineage=1,
+                                     attempt="init")
+    first = ledger.request_call(request, gateway=FakeGatewayAdapter(text=""))
+    assert first["operation_id"]
+    with pytest.raises(E.ConstructionBudgetExhausted):
+        second = E.ConstructionLedger(
+            dsn, seed["allocation_id"],
+            attempt_prefix=ledger.attempt_prefix,
+            authorized_calls=1)
+        second.request_call(
+            E.construction_request(packet, budget, lineage=2,
+                                   attempt="init"),
+            gateway=FakeGatewayAdapter(text=""))
+    assert ledger.accounting()["ceiling"] == 1
+    assert ledger.accounting()["study_ceiling"] == 4
+
+
+def test_selection_none_when_no_usable_candidates():
+    assert E.select_candidate([]) == {
+        "selection": "none", "selector": E.SELECTOR_VERSION,
+        "ordering": list(E.ORDERING), "ranking": [],
+        "reason": "neither candidate executable under the contract"}
 
 
 def test_selection_none_when_neither_candidate_executes(dsn, tmp_path):
@@ -254,7 +470,11 @@ def test_selection_winner_links_lineage_exposure_and_accounting(
         task_ids=tasks, launcher_factory=factory,
         constructor=constructor)
     assert good["valid_execution"] is True
-    assert good["solved_count"] >= 1
+    assert good["solved_count"] == 0
+    assert good["failures"] != []
+    assert all(f["status"] == "submit-refused"
+               and "no constructor artifact" in f.get("reason", "")
+               for f in good["failures"])
     inert = E.validate_on_development(
         dsn, entry_bytes=DOUBLED_INERT, requires=requires,
         task_ids=tasks, launcher_factory=factory,
@@ -319,7 +539,8 @@ def test_end_to_end_none_disposition(dsn, tmp_path):
     seed, ledger = _campaign(dsn, _tag("m3e2e"), budget)
     lineages = E.construct_lineages(
         episodes, budget, ledger=ledger,
-        gateway=FakeGatewayAdapter(text=""))
+        gateway=FakeGatewayAdapter(text=""),
+        launcher_factory=_factory(tmp_path))
     assert ledger.accounting()["calls_used"] == 4
     assert ledger.accounting()["live_calls_used"] == 0
     factory = _factory(tmp_path)

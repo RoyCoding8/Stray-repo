@@ -70,7 +70,7 @@ def test_union_nonuniform_shared_replayed_counts_once():
              _op("op-cancel", "cancelled", None, None,
                  settlement="cancelled",
                  refusal={"reason": "over-budget"}),
-             _op("op-unknown", "policy_step", None, None)]
+             _op("op-unknown", "child_inference", None, None)]
     union = E.reconcile_campaign_union(
         [{"cell_id": "cell-a", "operations": ops_a},
          {"cell_id": "cell-b", "operations": ops_b}])

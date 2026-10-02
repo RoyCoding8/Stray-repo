@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/cli.py", line 132, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/cli.py", line 115, in main
+    out = trajectory.run_campaign(
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/trajectory.py", line 489, in run_campaign
+    observation, episode, spend = _run_boundary(
+                                  ^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/trajectory.py", line 283, in _run_boundary
+    observation = run_diagnostic(investigation, seen,
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/trajectory.py", line 840, in run_diagnostic
+    _DIAGNOSTICS[name](action["task_id"], budget))
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/trajectory.py", line 21, in _resolve_sw
+    report = controls.diagnostic_resolves(task_id)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/AI/Agent-Society-v2/experiments/ad01/controls.py", line 189, in diagnostic_resolves
+    assert task["family"] == "software"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+EXIT=1

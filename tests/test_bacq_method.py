@@ -8,6 +8,7 @@ silent incumbent fallback would fail this test.
 
 from __future__ import annotations
 
+import hashlib
 import sys
 from pathlib import Path
 
@@ -27,7 +28,13 @@ def _member() -> dict:
     return {"capability_id": MEMBER_ID, "method_source": METHOD_SOURCE,
             "entry": "acquired_reduce", "params": {"max_queries": 16},
             "scope": {"family": "software"}, "authored": False,
-            "qualified_on": "ad01-w0-dev-sw-00"}
+            "qualified_on": "ad01-w0-dev-sw-00",
+            "source_digest": hashlib.sha256(
+                METHOD_SOURCE.encode("utf-8")).hexdigest(),
+            "lineage": {"campaign_id": "bacq-slice1", "lineage": 1,
+                        "init_operation": "op-init",
+                        "repair_operation": None, "init_failure": None,
+                        "calls_made": 1}}
 
 
 def test_run_use_executes_outside_menu_member_bytes(tmp_path):

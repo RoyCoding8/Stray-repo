@@ -1,0 +1,95 @@
+{
+ "trajectories": [
+  {
+   "arm": "I",
+   "dispatched": [
+    "ad01-w0-dev-sw-01",
+    "ad01-w0-dev-sw-00",
+    "ad01-w0-dev-sw-02"
+   ],
+   "dispositions": [
+    "retained",
+    "no-candidate",
+    "retained"
+   ],
+   "use": 12,
+   "world": 0
+  },
+  {
+   "arm": "R",
+   "dispatched": [
+    "ad01-w0-dev-sw-00",
+    "ad01-w0-dev-gr-00",
+    "ad01-w0-dev-sw-01"
+   ],
+   "dispositions": [
+    "retained",
+    "retained",
+    "retained"
+   ],
+   "use": 12,
+   "world": 0
+  },
+  {
+   "arm": "I",
+   "dispatched": [
+    "ad01-w1-dev-sw-01",
+    "ad01-w1-dev-sw-00",
+    "ad01-w1-dev-sw-02"
+   ],
+   "dispositions": [
+    "retained",
+    "no-candidate",
+    "retained"
+   ],
+   "use": 12,
+   "world": 1
+  },
+  {
+   "arm": "R",
+   "dispatched": [
+    "ad01-w1-dev-sw-00",
+    "ad01-w1-dev-gr-00",
+    "ad01-w1-dev-sw-01"
+   ],
+   "dispositions": [
+    "retained",
+    "retained",
+    "retained"
+   ],
+   "use": 12,
+   "world": 1
+  },
+  {
+   "arm": "I",
+   "dispatched": [
+    "ad01-w2-dev-sw-01",
+    "ad01-w2-dev-sw-00",
+    "ad01-w2-dev-sw-02"
+   ],
+   "dispositions": [
+    "retained",
+    "no-candidate",
+    "retained"
+   ],
+   "use": 12,
+   "world": 2
+  },
+  {
+   "arm": "R",
+   "dispatched": [
+    "ad01-w2-dev-sw-00",
+    "ad01-w2-dev-gr-00",
+    "ad01-w2-dev-sw-01"
+   ],
+   "dispositions": [
+    "retained",
+    "retained",
+    "retained"
+   ],
+   "use": 12,
+   "world": 2
+  }
+ ],
+ "use_records": 72
+}

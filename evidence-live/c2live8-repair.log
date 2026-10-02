@@ -1,0 +1,40 @@
+{
+ "campaign": "c2live8",
+ "grant": {
+  "episodes": 48,
+  "construction_calls": 4
+ },
+ "repair_reason": "candidate parses and profiles but validation on all 6 development tasks ends stopped with reason acquisition probe only: it probes once then stops without ever proposing a plan or solving a task. Repair: author a policy that proposes a plan after probing and solves development tasks.",
+ "effort": "high",
+ "selection": {
+  "selection": "none",
+  "selector": "coord02-dev-select/1",
+  "ordering": [
+   "valid-execution",
+   "solved-tasks",
+   "model-tokens",
+   "sandbox-ops",
+   "canonical-bytes"
+  ],
+  "ranking": [
+   1,
+   2
+  ],
+  "reason": "neither candidate executable under the contract"
+ },
+ "accounting": {
+  "calls_used": 4,
+  "calls_refused": 0,
+  "ceiling": 4,
+  "study_ceiling": 4,
+  "live_calls_used": 4,
+  "live_calls_authorized": 4,
+  "label": "LIVE",
+  "lineages": [
+   1,
+   2
+  ]
+ }
+}
+ledger: {"calls_used": 4, "calls_refused": 0, "ceiling": 4, "study_ceiling": 4, "live_calls_used": 4, "live_calls_authorized": 4, "label": "LIVE", "lineages": [1, 2]}
+EXIT=0

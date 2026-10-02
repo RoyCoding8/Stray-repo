@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from experiments.team01 import checker, entry, panel, template
 from experiments.team01.oracle import SPLITS
+from settlement.common import SettlementError
 
 
 def _synth(where, arm, task, rep, solved, fam="fam-ind",
@@ -58,7 +59,7 @@ def test_template_frozen_dev_evidence_only(tmp_path):
                                    frozen_out=frozen_out, builds=cands)
     assert rec["digest"]
     assert rec["frozen_out"] and rec["frozen_out"][0]["reason"]
-    with pytest.raises(Exception):
+    with pytest.raises(SettlementError, match="development evidence only"):
         bad = dev + [_synth("eval", "T", SPLITS["evaluation"][0], 1, True)]
         template.build_candidates(bad)
 
@@ -155,7 +156,7 @@ def test_finite_panel_rule_accepts_rejects():
 
 
 def test_entry_names_highest_phase_completed(migrated_db, tmp_path):
-    with pytest.raises(Exception):
+    with pytest.raises(SettlementError, match="unknown phase"):
         entry.run_team_panel(migrated_db, tag="bad", evidence_root=tmp_path,
                              runs_root=tmp_path, phases=("nope",))
     status = entry.run_team_panel(

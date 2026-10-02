@@ -1,0 +1,28 @@
+{
+  "campaign_id": "ad01-w0-I-00",
+  "members": [
+    {
+      "authored": false,
+      "capability_id": "acquired-sw-58d90427",
+      "construction": {
+        "calls_made": 1,
+        "campaign_id": "ad01-w0-I-00",
+        "init_failure": null,
+        "init_operation": "ad01-ad01-w0-I-00-b0-ad01-w0-dev-sw-01-construct-l1-init",
+        "lineage": 1,
+        "repair_operation": null
+      },
+      "entry": "acquired_order",
+      "method_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+      "params": {
+        "max_queries": 4
+      },
+      "qualified_on": "ad01-w0-dev-sw-01",
+      "scope": {
+        "family": "software"
+      },
+      "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
+    }
+  ],
+  "queries": 7
+}

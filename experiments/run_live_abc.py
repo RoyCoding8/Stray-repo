@@ -310,13 +310,19 @@ def main() -> int:
         print(f"grant cap: {grant_units} units; gateway: {url}", file=sys.stderr)
         print(f"discovery: {status}; auth: {auth}", file=sys.stderr)
         model, simulated = args.model, False
-        dev_ids, panel_ids, transfer_ids = None, None, None
         from fault_tasks import DEV_IDS, PANEL_IDS, TRANSFER_IDS
 
         dev_ids, panel_ids, transfer_ids = DEV_IDS, PANEL_IDS, TRANSFER_IDS
     dev_ids = _parse_ids(args.dev) or dev_ids
     panel_ids = _parse_ids(args.panel) or panel_ids
     transfer_ids = _parse_ids(args.transfer) or transfer_ids
+    from fault_tasks import BY_ID as _BY_ID
+
+    _unknown = [i for i in (dev_ids + panel_ids + transfer_ids)
+                if i not in _BY_ID]
+    if _unknown:
+        print(f"live A/B/C refused: unknown task {_unknown[0]!r}")
+        return 2
     if args.deterministic:
         launcher = LocalLauncher(tempfile.mkdtemp(prefix="liveabc-runs-"))
         run_allocation = args.allocation
@@ -364,6 +370,9 @@ def main() -> int:
     except SettlementError as exc:
         print(f"live A/B/C refused: {exc}")
         return 3
+    except Exception as exc:
+        print(f"live A/B/C refused: {exc}")
+        return 3
     record = {"verdicts": report["verdicts"],
               "budgets": {arm: {
                   "settled_usage_units_billed_money_only": b["settled_usage"],
@@ -385,16 +394,22 @@ def main() -> int:
               "effective_config": effective}
     text = json.dumps(record, indent=2)
     print(text)
-    roots = Path(args.artifacts_root)
-    roots.mkdir(parents=True, exist_ok=True)
-    record_name = f"{args.protocol_prefix}-abc.json"
-    (roots / record_name).write_text(text)
-    manifest = _bundle_manifest(
-        entry_point="experiments/run_live_abc.py", record_name=record_name,
-        record_text=text, artifacts_root=args.artifacts_root,
-        protocol_prefix=args.protocol_prefix, effective_config=effective)
-    (roots / f"{args.protocol_prefix}-manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True))
+    try:
+        roots = Path(args.artifacts_root)
+        roots.mkdir(parents=True, exist_ok=True)
+        record_name = f"{args.protocol_prefix}-abc.json"
+        (roots / record_name).write_text(text)
+        manifest = _bundle_manifest(
+            entry_point="experiments/run_live_abc.py",
+            record_name=record_name,
+            record_text=text, artifacts_root=args.artifacts_root,
+            protocol_prefix=args.protocol_prefix,
+            effective_config=effective)
+        (roots / f"{args.protocol_prefix}-manifest.json").write_text(
+            json.dumps(manifest, indent=2, sort_keys=True))
+    except OSError as exc:
+        print(f"live A/B/C refused: {exc}")
+        return 3
     return 0
 
 

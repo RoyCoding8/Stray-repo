@@ -29,7 +29,6 @@ from .common import (
     Command,
     CommandResult,
     InsufficientResources,
-    MissingEvidence,
     ResultCode,
     SettlementError,
     StaleRevision,
@@ -482,20 +481,8 @@ def _insert_operation(cur, authority: int, operation_id: str, attempt_id: str | 
     digest = payload_digest(body)
     reservation_id = f"res-{operation_id}" if exposure > 0 else None
     if reservation_id is not None:
-        cur.execute("SELECT authorized, consumed, reserved FROM allocations WHERE id = %s",
-                    (allocation_id,))
-        alloc = cur.fetchone()
-        if alloc is None:
-            raise SettlementError(f"unknown allocation {allocation_id}")
-        free = int(alloc["authorized"]) - int(alloc["consumed"]) - int(alloc["reserved"])
-        if free < exposure:
-            raise InsufficientResources(
-                f"allocation {allocation_id} cannot cover {exposure}")
-        cur.execute("UPDATE allocations SET reserved = reserved + %s WHERE id = %s",
-                    (exposure, allocation_id))
-        cur.execute("INSERT INTO reservations (id, allocation_id, operation_id, amount,"
-                    " state) VALUES (%s, %s, %s, %s, 'reserved')",
-                    (reservation_id, allocation_id, operation_id, exposure))
+        store._take_reservation(cur, allocation_id, reservation_id, exposure,
+                                operation_id)
     stored = dict(body)
     stored["_authority_version"] = int(authority)
     cur.execute(
@@ -542,8 +529,7 @@ def propose_team_plan(dsn: str, cmd: Command, *, parent_obligation: str,
         cur.execute("SELECT COALESCE(SUM(authorized), 0) AS total FROM allocations"
                     " WHERE parent_id = %s", (allocation_id,))
         subdivided = int(cur.fetchone()["total"])
-        free = (int(root["authorized"]) - int(root["consumed"])
-                - int(root["reserved"]) - subdivided)
+        free = store.free_of(dict(root), subdivided)
         kid_exp, check_exp = _planned_exposures(len(cleaned))
         required = sum(kid_exp) + check_exp + CLEANUP_RESERVE
         if free < required:
@@ -1133,8 +1119,7 @@ def revise_team_plan(dsn: str, cmd: Command, *, plan_id: str,
         cur.execute("SELECT authorized, consumed, reserved FROM allocations WHERE id = %s",
                     (plan["allocation_id"],))
         root_funds = cur.fetchone()
-        free = (int(root_funds["authorized"]) - int(root_funds["consumed"])
-                - int(root_funds["reserved"]) - subdivided)
+        free = store.free_of(dict(root_funds), subdivided)
         need = sum(exp for pos, exp in enumerate(kid_exp)
                    if cleaned[pos]["node_id"] not in carried) + check_exp
         if free < need:

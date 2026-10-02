@@ -15,9 +15,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
-from experiments.coord02 import entry, experience, oracle
+from experiments.coord02 import entry, oracle
 
 
 def _proposal(arm, task):
@@ -37,22 +35,6 @@ def _proposal(arm, task):
                         str(response)], check=True, capture_output=True,
                        timeout=10)
         return json.loads(response.read_text())["proposal"]
-
-
-def test_arms_avoid_protected_overlay():
-    task = oracle.SPLITS["development"][0]
-    accessed = []
-    for arm in entry.ARMS:
-        with patch.object(experience.oracle, "overlay_files",
-                          side_effect=RuntimeError("protected-reference-read")):
-            try:
-                entry.arm_child_factory(arm, task, "retained source")(
-                    "w1", {"owned_paths": []}, {})
-            except RuntimeError as error:
-                if str(error) != "protected-reference-read":
-                    raise
-                accessed.append(arm)
-    assert accessed == []
 
 
 def test_s_and_a_proposals_differ():

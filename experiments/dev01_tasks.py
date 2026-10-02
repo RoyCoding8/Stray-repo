@@ -24,7 +24,6 @@ from __future__ import annotations
 
 FAMILY = "missing_guard"
 SOURCE_GROUP = "dev01-guard"
-PROTOCOL_VERSION = "dev01-tasks-v1"
 
 GROUPING_RULE = (
     "source-group split: development uses fault_tasks off_by_one dev IDs, "

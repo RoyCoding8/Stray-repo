@@ -27,7 +27,7 @@
     "fixture": "87d075f89f75112a3fe36acb1e3b85722f3e2203d516447892c5d80d9cb4fe73"
   },
   "invocations": [],
-  "manifest_sha256": "455c777a50fae54070611c1bdd874b624057e9f0b8f0a455cebf745d45b2305f",
+  "manifest_sha256": "ac2bf9b99159c3d1a60ce0ce5ed04035d0239455fbfc0d06ca2a95e783be917f",
   "oracle_queries": [
     {
       "measure": 15,

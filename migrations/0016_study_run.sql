@@ -1,0 +1,22 @@
+CREATE TABLE inv_r1_study_runs (
+  study_root TEXT PRIMARY KEY,
+  allocation_id TEXT NOT NULL,
+  authorized BIGINT NOT NULL CHECK (authorized > 0),
+  ceilings JSONB NOT NULL DEFAULT '{}',
+  model TEXT NOT NULL,
+  reasoning_effort TEXT NOT NULL DEFAULT 'low',
+  provider TEXT NOT NULL DEFAULT 'recording',
+  effective_config JSONB NOT NULL DEFAULT '{}',
+  panel JSONB NOT NULL DEFAULT '{}',
+  deadline_s INT NOT NULL CHECK (deadline_s > 0),
+  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  wall_deadline_at TIMESTAMPTZ NOT NULL,
+  consumed_model_calls INT NOT NULL DEFAULT 0 CHECK (consumed_model_calls >= 0),
+  consumed_construction_calls INT NOT NULL DEFAULT 0 CHECK (consumed_construction_calls >= 0),
+  consumed_witness_queries INT NOT NULL DEFAULT 0 CHECK (consumed_witness_queries >= 0),
+  consumed_execution_units INT NOT NULL DEFAULT 0 CHECK (consumed_execution_units >= 0),
+  pending_model_calls INT NOT NULL DEFAULT 0 CHECK (pending_model_calls >= 0),
+  pending_execution_units INT NOT NULL DEFAULT 0 CHECK (pending_execution_units >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

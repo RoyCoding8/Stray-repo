@@ -1281,3 +1281,161 @@ frozen rotation). Benefit rule recomputed per arm (unchanged rule):
 no-benefit on doubles, as expected — the doubles prove the path, not a
 learning gain. Per-action `max_queries` threading added to `_run_boundary`
 (regression-clean). C4 (live) awaits its separate allocation.
+
+## INTEGRATION FINISH (handoff `WORKER-EC02-AD01-INTEGRATION-FINISH.md`, review `reviews/EC02-AD01-BDF12D5-REVIEW.md`, base `4e36a9a`, branch `codex/implementation-executable-coordination-02`)
+
+Prior C1 PASS / C3 QUALIFIED labels retired until the handoff demonstrations
+pass on the connected public path. Single coordinator-owned serial
+integration; no parallel lanes until a unit contract fixes disjoint seams.
+
+### Units (each: rejecting test, fix, public-path rerun on the merged result)
+
+| ID | Obligation | Rejecting check | Status |
+|---|---|---|---|
+| BDR-01 | Candidate execution outside the trusted host | `tests/test_bdr01_host_boundary.py`: pollution canary, import refusal, wall-clock bound, attributed fallback | landed (`5af6384` red, `55b164f` green; 56-test AD01 battery green) |
+| BDR-02 | Durable child/revision identity, two children + rework, resume without duplicate calls | distinct accepted identities, real responses, restart makes no duplicate calls | landed (`aec2fdd` + carried through merged tip) |
+| BDR-03 | Admission validates full target (world/phase/split/arm); protected/cross-world/unauthorized refuse with zero dependent work | protected target refused pre-effect; legitimate dev target succeeds | landed (`aabdd48`) |
+| EC02-ACCT | `costs_for_operations` wired at the public callers; no constant/synthetic costs | nonuniform + shared + failed + unknown reconstruct from durable rows | landed (`d2e3a78`) |
+| EC02-ACQ | Eligible-repair orchestration: profile-invalid parseable program reaches repair with concrete feedback; missing repair has no row | every attempt row maps to its own admitted call | landed (`8521349`; live repairs remain grant-blocked) |
+| AD01-LEARN | Broker-backed construction + live learner/constructor from the public CLI; recording adapters at the same seams | TBD: outside-menu program reaches later execution; fresh-process use loads frozen bytes | landed (C3 requalified `bfe1006`: 6 trajectories / 72 use, acquired members retained, accounting exports carry acquisition queries; C4 live blocked externally) |
+
+### Decision trail
+
+- BDR-01 (`55b164f`, tested rev `55b164f`): 56 passed (`test_bdr01_host_boundary` 4 + `test_bacq_method` 1 + `test_binit_action` + `test_ad01_env` + `test_ad01_traj`). Exclusions: live gateway, PG-backed EC02 paths (untouched). New module `experiments/ad01/method_exec.py` (subprocess child, stdio oracle-query channel, host authoritative checker + budget, AST gate mirrored from retention, fail-closed framing). Trusted-host `exec` deleted from `trajectory._run_member`. Note: `git stash` in this shared repo pulled a foreign owner's stash entry (`wt/ecr2-evid`) into a conflict on an untouched file; restored via `git restore --source=HEAD`, foreign stash left intact. Never stash here; use `git diff > file` to shelter work.
+
+- BDR-02 (`aec2fdd`, tested rev `aec2fdd`): 3 passed (`test_bdr02_child_identity`: decompose pair carries `plan:r1:w{1,2}:work:model`, rework gets `:r2:` fresh identity through the public run_cell, resume makes no duplicate call). Regressions: `test_bexec_child`, `test_bverif_public`, `test_coord02_exec`, `test_coord02_m2_qualification`, `test_coord02_m3_acquisition`, `test_ec02ad_verif` — 59 passed, 1 stale lock updated to the new scheme. Exclusions: live gateway. Factory protocol: identity is a call argument derived at the `_submit_missing` call site from `team.child_operation`, never a closure. Receipt-first guard in `dispatch_admitted_child` (broker redispatch already dedupes; the guard states resume intent at the seam). `reviews/probes/ad01_bdf12d5_review.py` stays frozen, pinned to pre-fix behavior.
+
+- BDR-03 (`aabdd48`, tested rev `aabdd48`): 6 passed (`test_bdr03_target_admission`: protected/cross-world/unknown/off-curriculum refuse with queries==0 and seed observation retained; curriculum item dispatches; legitimate dev target succeeds). Regressions: `test_ad01_traj` + `test_ad01_env` 50 passed; C3 driver reproduces all 19 committed `evidence-ad01/c3-trajectories/` JSONs byte-identical through the connected code. One `_target_refusal(world/arm/seq)` predicate enforced at admission and at dispatch; R defaults walk the rotation. Frozen `reviews/probes/ad01_bdf12d5_review.py` now errors at its single-identity factory probe (pinned to pre-fix behavior; assertions 1/3/5 intentionally superseded, C3-replay portion verified manually above).
+
+- EC02-ACCT (`d2e3a78`, tested rev `d2e3a78`): 6 passed (`test_acct_store_costs`: measured nonuniform sums incl. rework calls, simulated zero+liability, union==trial reconstruction, shared-op counted once, strict raise). Regressions: `test_bauth_evidence`, `test_bexec_child`, `test_bverif_public`, `test_bdr02_child_identity`, `test_coord02_exec`, `test_coord02_m2_qualification`, `test_coord02_m3_acquisition`, `test_coord02_state`, `test_coord02_experiment`, `test_coord02_workload`, `test_ec02ad_verif` (28), `test_coord02_m4_frozen` (8) green. Exclusions: live gateway; broker suites needing SETTLEMENT_TEST_DSN skip at base (no shared settlement DB on this host). Root causes fixed, not wired around: broker stamps model_calls (old rows stay unknown), simulated usage projects as unmeasured, union unknown-rule narrowed to model effect (sandbox usage-None is normal). Migrated with justification: stale `arm_child_factory` reference (deleted in 0c0245e, red since), m4 declined scaffolding, verif union semantics. Frozen probes `ad01_bdf12d5_review.py` (asserts `_cell_costs(..)==100`) and `ec02_ad01_completion_review.py` (if asserting constants) stay pinned to pre-fix behavior.
+
+- EC02-ACQ (`8521349`, tested rev `8521349`): 3 passed (`test_eacq_repair`: profile-invalid init repaired with stage feedback, clean init leaves no repair row, 3 admitted calls for 3 attempt rows, validation child work submits model bytes). Regressions: `test_coord02_learning`, `test_coord02_m3_acquisition` (28) green. Fixture batteries keep labeled constructors; only the live driver path changed. Incidental root-cause fix in blast radius: `publish_package_version` idempotent on same-version-same-bytes (the `test_frozen_package_use_and_retention` failure reproduces on clean base `4e36a9a` in a detached worktree — pre-existing, now green). Model inference ops now carry their team attempt id end to end.
+
+- C5 integration batch (`repair/ec02-acquire-continuity`, tip `bfe1006`): grant enforcement landed (`666cc07` — preflight refuses construction demand below `EC02_LIVE_GRANT_CALLS`, budget/ledger/allocator bound to the declared grant capped by the four-call study ceiling); construction prompt contract fixed to carry the `--selftest` guard the profile check enforces (root cause of both live profile failures on `ec02test_c2live6`); AD01 diagnostic accounting closed (`7a4f9eb` — graph diagnostics charge the trajectory budget, executed diagnostics retained on cap refusal, fresh-process acquisition queries reconstructed from durable boundary spend); four stale test contracts migrated to the d2e3a78 rules plus grader `-I -S` containment fix and `select_candidate` empty-input none-selection (`dfc78af`, `b69c3b1`, `f3a1830`). C3 requalified at merged tip: 6 trajectories / 72 fresh-process use records, acquired members retained, acquisition queries in every export (`bfe1006`, evidence in `evidence-ad01/c3-trajectories-merged/`). Full serial suite on disposable DBs: 1216 passed, 1 xfailed, 1 pre-existing runsc-shim timing flake deselected (green in isolation and in-file; files untouched this batch). `ec02test_live` receipts remain 16. C5 reports rewritten with per-obligation dispositions. Live C2 repair + C4 allocations remain requested, not granted; gateway reachable and key valid (one health probe, no spend); inference auth is not a grant. No push before this handback is accepted.
+
+# Investigation 01 implementation batch
+
+Handoff: `123c21138b0f15c39303805abf1ca2d1addd7fec` (`origin/codex/investigation-transition-review`).
+Reviewed baseline contained in handoff: `84d2094`.
+Integration branch: `codex/implementation-investigation-01` (coordinator merges serially here).
+Worktree: `.worktrees/investigation-01` (coordinator). Specialist worktrees below.
+Historical plan above preserved unchanged.
+
+## Lanes (disjoint ownership)
+
+| Lane | Scope | Owner worktree/branch | Owned paths | Depends on | Checks |
+|---|---|---|---|---|---|
+| A | Honest baseline: C5 corrections, evidence export, retry/lineage reconciliation | `.worktrees/inv-a` / `wt/inv-a-baseline` | `reports/`, `evidence/**` (additive only) | design briefs | replay of committed evidence reconciles |
+| B1 | Contracts/domain interfaces: task/tool semantics, context materialization, contract rendering | `.worktrees/inv-b1` / `wt/inv-b1-contracts` | contract/domain adapter modules + tests | A (claims to honor) | public-entry agreement tests |
+| B2 | Shared state/resource continuation: one learner/action/result loop, single resource envelope, kill/resume | `.worktrees/inv-b2` / `wt/inv-b2-state` | state/resource/loop modules + tests | B1 contracts | envelope + kill/resume tests |
+| C | Independent qualification: recording doubles, acquired program, replay boundary | `.worktrees/inv-c` / `wt/inv-c-qualify` | qualification harness + tests | B1+B2 merged | full C-lane gate through public entry |
+| E | Reviewed integration: merged checks, replay, bottleneck report | coordinator worktree | merges only | A+B1+B2+C | affected + final suites, remote equality |
+
+Lane D (live qualification) runs only on granted authorization; otherwise one cap-sheet request.
+
+## Assignment status
+
+| Item | Status |
+|---|---|
+| A. Honest baseline | merged (`b9f5480`, gate `reviews/probes/inv_a_baseline_gaps.py` 17-0) |
+| B. Shared investigation path | B1/B2/B4/B3 merged; AG01 prerequisite merged (37-0, 24 prior failures were missing CREATEDB) |
+| C. Qualification | merged (`dab3005`, gate 9-0, all 5 lane gates 40-0 on tip) |
+| D. Live qualification | cap sheet drafted, token floor corrected to 17383, one authorization request pending human grant |
+| E. Reviewed integration | both reviews merged (accept with findings); full suite running; delivery pending suite |
+
+# Investigation 01 completion (base `cd7e156`, baseline `44f1f7c`)
+
+Integration branch: `codex/implementation-investigation-01-completion` (coordinator only).
+Worktree: `.worktrees/inv-completion`. Historical S0-S3 plan above is preserved.
+
+Live authorization: no grant in environment (`SETTLEMENT_GATEWAY_ENDPOINT`/`KEY` absent).
+Finish M1-M6 implementation plus deterministic qualification first, then one concrete request.
+
+| ID | Milestone | Owner branch / worktree | Owned paths | Depends on | Gates (real infra marked *) | Status |
+|---|---|---|---|---|---|---|
+| C0 | coordinator setup | integration / `.worktrees/inv-completion` | `reports/PLAN.md`, shared interfaces, final reports | — | worktree at `cd7e156`, PG online, PLAN committed | in progress |
+| C1 | M1 integrated lifecycle + M4 executable interfaces (merged `2ab42ba`; authority wired `96fe67f`) | `wt/inv-c1-lifecycle` / `.worktrees/inv-c1` | `experiments/ad01/**`, `tests/test_invc1_*.py`, `reports/workstreams/inv-c1.md` | C0 interfaces | real CLI with doubles only at provider/launcher seams*; shared-consumer swap changes/refuses both domains*; independent legal method runs through child process* | pending |
+| C2 | M2 one authority + M3 feedback/recovery (merged `2b16800`, 31 gates green on tip) | `wt/inv-c2-authority` / `.worktrees/inv-c2` | `src/settlement/**`, `tests/test_invc2_*.py`, `reports/workstreams/inv-c2.md` | C0 interfaces | parent exhaustion refuses init/repair/use*; fresh-DB rerun refuses new allocation*; kill after diagnostic and after validation resumes without redo* | pending |
+| C3 | M5 trace/export/replay + M6 runnable study (merged `a851392`; 7 gates green on tip; recording pilot rerun by coordinator) | `wt/inv-c3-study` / `.worktrees/inv-c3` | `scripts/inv01_study.py` (new), `experiments/doubles.py`, `experiments/ad01/records.py`, `experiments/ad01/cli.py`, `tests/test_invc3_*.py`, `reports/workstreams/inv-c3.md` | C1+C2 merged | offline replay of actual export refuses hidden-future/mismatch*; recording-provider study recomputed in fresh process* | pending |
+
+Rules: lanes use disposable databases (`inv_c1_*`, `inv_c2_*`, `inv_c3_*`); never touch
+shared `ec02test_*` databases. No test weakening. Contract changes need justification.
+Coordinator merges serially with `--no-ff` and reruns affected gates.
+
+| D1 | mid-validation dispatch reclaim plus public kill tests (merged `591ceb6`, 24 dispatch gates green on tip) | - | - | done |
+| D2 | unbilled settle at measured usage (merged `9b7d079` plus view fix `45a35ba`) | - | - | done |
+| D3 | prompt envelope guard plus B3 refusal pin (merged `3881b64`, 13 envelope gates green on tip) | - | - | done |
+| C4 | independent re-review accepts M1-M6 (merged `a1565f3`; all prior findings closed) | `wt/inv-rereview` / `.worktrees/inv-rereview` | reviewer verdict | M1-M6 gates | pending |
+| N2/N3 | ledger counts receipt-less held exposure; export caps already persisted (no change) | integration | authority.py, invc2 test | merged |
+
+# Study readiness (base `77b4c62`, baseline `7941ab4`)
+
+Integration branch: `codex/implementation-investigation-01-study-readiness` (coordinator only).
+Worktree: `.worktrees/inv-readiness`. Earlier plans above are preserved.
+
+Live configuration: endpoint plus local key saved in context-mode memory
+(source `live-gateway-config`); endpoint serves 143 models with a free bench.
+Effort high is acceptable to the human. Model survey plus live-path proof run
+as lane R0. No keys in Git.
+
+| ID | Slice | Owner branch / worktree | Owned paths | Depends on | Gates (real infra marked *) | Status |
+|---|---|---|---|---|---|---|
+| R0 | model survey (done: 9 working free models; pilot `nvidia/nemotron-3-ultra-550b-a55b:free`, fallback `nvidia/nemotron-3-super-120b-a12b:free`; adapter surface `/v1/responses` proven by `google/gemma-4-31b-it:free`) | none (report-back only) | config read plus probes | working free-model list with keys redacted | done |
+| R1 | S1 resumable study entry (merged `e879ec1`, 13 gates green on tip with verifier active) | `wt/inv-r1-entry` / `.worktrees/inv-r1` | `scripts/inv01_study.py`, `migrations/0016_study_run.sql` (new), `tests/test_invr1_*.py`, `reports/workstreams/inv-r1.md` | R0 model list | controlled-HTTP live response traced to effect*; missing creds refuse without fallback*; restart keeps one root plus deadline*; exhausted/expired use does zero effects* | done |
+| R2 | S2 interrupted decision meaning (merged `46d03a0`, 18 gates green on tip) | `wt/inv-r2-resume` / `.worktrees/inv-r2` | `experiments/ad01/agenda_policy.py`, `experiments/ad01/trajectory.py` (boundary checkpoint only), `tests/test_invr2_*.py`, `reports/workstreams/inv-r2.md` | — | kill before correction resumes into same target*; kill after diagnostic reuses observation with zero new queries*; validation recovery stays green* | done |
+| R3 | S3 complete export plus verify (merged `68145a3`, 15 gates green on tip incl. CLI) | `wt/inv-r3-export` / `.worktrees/inv-r3` | `experiments/ad01/records.py`, `tests/test_invr3_*.py`, `reports/workstreams/inv-r3.md` | — | correction ops in transitions*; tamper set fails named*; reviewer recomputes without producer summary* | done |
+
+Rules: disposable databases (`inv_r1_*`, `inv_r2_*`, `inv_r3_*`); never touch
+shared `ec02test_*` or other owners' `inv_*` databases. No test weakening.
+Coordinator merges serially with `--no-ff`, reruns affected gates, owns
+`reports/PLAN.md` and the final live run.
+
+Integration fix (coordinator, uncommitted R1 fallout found by full-shape
+recording pilot): the use-phase gate checked root free, which is zero after
+six 100k subdivisions carve an exact-fit 600k grant, so the first full run
+refused at use with `insufficient-authority`. `_v1_admit` now accepts an
+explicit funding allocation and the use gate passes the campaign child that
+`_fresh_use` actually spends. First full pilot rc 0 with 6 exports, 24 use
+records, 75 operations; recompute rc 0 with 39 model calls and 12
+construction calls against the 360/24 ceilings. Completed-study rerun still refuses
+with zero new operations (safe). A broader trajectory-gate change was tried
+and reverted: it let a completed rerun proceed and double-count witness
+queries in the run row, so the trajectory gate stays on root free. Full
+suite at `d0a5c29`: 849 passed, 592 skipped, 2 setup errors in
+`tests/test_broker_dbos.py` from unset `SETTLEMENT_TEST_DSN` only; the same
+file gives 3 passed with URL-form DSN, so the tip is green.
+
+Live qualification (human grant this session, report
+`reports/workstreams/inv-live.md`): bounded pilot rc 0 on `inv_r1_live`
+(ultra, high effort, 7 ops, real token usage, zero charge); full study
+rc 0 on `inv_r1_livefull2` (6 trajectories, 6 exports, 24 uses, 47 ops,
+recompute rc 0, 0 charge). The first full attempt caught a real defect
+at the `verify_study` gate (reported 3 vs ledger 4 construction calls);
+fixed at the source in `construct.py` with a red-first regression
+(committed `a9cd159`), and the rerun above is post-fix green.
+
+# Stage 8 closeout plus stage 9 start (base `4b25d0c`, branch
+# `codex/implementation-stage-08-close-stage-09-start`, worktree
+# `.worktrees/stage89`). Original live evidence in `evidence_inv01_live/`
+# stays byte-identical except nothing; no rewrite is authorized.
+
+| ID | Slice | Owner branch / worktree | Owned paths | Depends on | Gates (real infra marked *) | Status |
+|---|---|---|---|---|---|---|
+| A1 | executable method contract (merged `1590979`, 41 gates green on tip) | `wt/s89-a1-contract` / `.worktrees/s89-a1` | `experiments/ad01/packet.py`, `experiments/ad01/method_exec.py`, `tests/test_s89a1_*.py`, `reports/workstreams/s89-a1.md` | — | independently-written candidate calls each advertised op through child path*; nearby construct/traj suites* | done |
+| A2 | archived failure diagnostics (merged `d6fa877`, post-fix rerun green, 51 gates on tip) | `wt/s89-a2-diagnostic` / `.worktrees/s89-a2` | `scripts/s89_diagnose.py` (new), `tests/test_s89a2_*.py`, `reports/workstreams/s89-a2.md` | A1 merged | 4 archived candidates re-executed unedited*; attempt classification table; no model calls | done |
+| A3 | closeout verify plus report (merged `7179140`, 19 gates green on tip) | coordinator, integration tree | `reports/STAGE-08-CLOSEOUT.md`, full suite | A1+A2 merged | full public path with doubles at model boundary*; honest rejection path*; full suite* | done |
+| B1 | grounding plus alternatives (merged `ea584d6`, lane branch `wt/s89-b1`) | `wt/s89-b1` / `.worktrees/s89-b1` | `reports/workstreams/s89-b1.md` (read-only elsewhere) | Phase A findings | both domain paths traced; two alternatives with usage, ownership, cost | done (preliminary pick alt 1, pending Phase A) |
+| B2 | learning cycle spec (merged `e53ebef`, alt 1 confirmed) | `wt/s89-b2` / `.worktrees/s89-b2` | `docs/design/STAGE-09-ARCHITECTURE.md` (draft), `reports/STAGE-09-FEASIBILITY.md` (draft), `reports/workstreams/s89-b2.md` | B1 | contracts with transitions, identities, failure outcomes | done |
+| B3 | feasibility plus next experiment | coordinator | `reports/STAGE-09-FEASIBILITY.md`, small probes | B1+B2 | risky-assumption probes*; ranked hypotheses; one experiment | pending |
+| B4 | consolidation package | coordinator | `docs/design/STAGE-09-ARCHITECTURE.md`, roadmap | B1-B3 | independent review verdict | pending |
+
+Rules: lanes use disposable `s89_*` databases and drop what they create;
+never touch `ec02test_*`, `inv_r1_*`/`inv_r2_*`/`inv_r3_*` or other owners'
+`inv_*`. No test weakening. Coordinator merges serially with `--no-ff`.
+Live evidence stays unchanged; A2 diagnostics use separate resources.
+
+Full suite at `257ac3c` (delegate run, real Postgres): 869 passed, 592
+skipped, 0 failed, 2 setup errors in `tests/test_broker_dbos.py` from
+unset `SETTLEMENT_TEST_DSN` only; the same file gives 3 passed with
+URL-form DSN, so effective totals are 872 passed, 0 failed. Tree left
+clean, lane databases dropped.

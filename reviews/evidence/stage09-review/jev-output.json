@@ -1,0 +1,39 @@
+{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "disposition": {
+      "type": "choice",
+      "choice": "stage9_refine",
+      "probabilities": {
+        "reopen_stage8": 0,
+        "accept_both": 0,
+        "stage9_refine": 1
+      },
+      "confidence": 1
+    },
+    "revision_claim": {
+      "type": "choice",
+      "choice": "design_gap",
+      "probabilities": {
+        "no_gap": 0,
+        "design_gap": 1,
+        "actual_leak": 0
+      },
+      "confidence": 1
+    },
+    "replay_study": {
+      "type": "choice",
+      "choice": "conformance",
+      "probabilities": {
+        "policy_ranking": 0,
+        "conformance": 1,
+        "neither": 0
+      },
+      "confidence": 1
+    }
+  },
+  "usage": {
+    "inputTokens": 5189,
+    "outputTokens": 139
+  }
+}

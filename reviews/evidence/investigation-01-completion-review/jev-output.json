@@ -1,0 +1,87 @@
+{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "closure": {
+      "type": "choice",
+      "choice": "partial",
+      "probabilities": {
+        "reject_all": 0,
+        "partial": 0.95,
+        "close": 0.05
+      },
+      "confidence": 0.93
+    },
+    "priority": {
+      "type": "choice",
+      "choice": "bounded",
+      "probabilities": {
+        "grant": 0.17,
+        "bounded": 0.83,
+        "audit": 0
+      },
+      "confidence": 0.74
+    },
+    "inference_limit": {
+      "type": "boolean",
+      "probability": 0.05
+    },
+    "remaining_risks": {
+      "type": "score",
+      "score": 2.83,
+      "probabilities": {
+        "0": 0,
+        "1": 0,
+        "2": 0.16,
+        "3": 0.84
+      },
+      "confidence": 0.83
+    }
+  },
+  "usage": {
+    "inputTokens": 1091,
+    "outputTokens": 110
+  },
+  "providerMetadata": {
+    "typesafe": {
+      "confidence": {
+        "closure": 0.93,
+        "priority": 0.74,
+        "remaining_risks": 0.83
+      }
+    },
+    "gateway": {
+      "routing": {
+        "originalModelId": "typesafe-ai/jev",
+        "resolvedProvider": "typesafe-ai",
+        "fallbacksAvailable": [],
+        "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+        "canonicalSlug": "typesafe-ai/jev",
+        "finalProvider": "typesafe-ai",
+        "modelAttemptCount": 1,
+        "modelAttempts": [
+          {
+            "canonicalSlug": "typesafe-ai/jev",
+            "success": true,
+            "providerAttemptCount": 1,
+            "providerAttempts": [
+              {
+                "provider": "typesafe-ai",
+                "credentialType": "system",
+                "success": true,
+                "startTime": 1789930481458,
+                "endTime": 1789930481588,
+                "statusCode": 200
+              }
+            ]
+          }
+        ],
+        "totalProviderAttemptCount": 1
+      },
+      "cost": "0",
+      "marketCost": "0.000045822",
+      "surchargeCost": "0",
+      "gatewayCost": "0",
+      "generationId": "gen_01M302Q9HMPS1M20DS8FXMQRKJ"
+    }
+  }
+}

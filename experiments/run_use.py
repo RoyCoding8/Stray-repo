@@ -67,6 +67,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.use_task not in BY_ID:
         print(f"subsequent use refused: unknown task {args.use_task}")
         return 2
+    if args.disposition_json:
+        try:
+            disposition = json.loads(args.disposition_json)
+        except ValueError:
+            print("subsequent use refused: --disposition-json is not JSON")
+            return 2
+        if not isinstance(disposition, dict):
+            print("subsequent use refused: --disposition-json needs an object")
+            return 2
+    else:
+        disposition = None
     if args.gateway == "fixture":
         adapter, _, _, _ = _fixture_double()
         from settlement.launcher_local import LocalLauncher
@@ -80,32 +91,29 @@ def main(argv: list[str] | None = None) -> int:
             return code
         adapter, launcher, model = (live["adapter"], live["launcher"],
                                     args.model)
-    episode = development.get_episode(args.dsn, args.episode)
+    try:
+        episode = development.get_episode(args.dsn, args.episode)
+    except Exception as exc:
+        print(f"subsequent use refused: {exc}")
+        return 3
     if episode is None:
         print(f"subsequent use refused: unknown episode {args.episode}")
         return 2
     task = BY_ID[args.use_task]
-    if args.disposition_json:
-        try:
-            disposition = json.loads(args.disposition_json)
-        except ValueError:
-            print("subsequent use refused: --disposition-json is not JSON")
-            return 2
-        if not isinstance(disposition, dict):
-            print("subsequent use refused: --disposition-json needs an object")
-            return 2
-    else:
-        disposition = None
-    use = experiment.run_subsequent_use(
-        args.dsn, artifacts_root=args.artifacts_root, launcher=launcher,
-        adapter=adapter, model=model, allocation_id=args.allocation,
-        investigation_id=args.investigation, episode_id=args.episode,
-        bindings=episode.get("bindings") or {},
-        use_task={"id": task["id"], "family": task["family"],
-                  "broken": task["broken"], "cases": task["cases"]},
-        grader_path=str(EXPERIMENTS / "run_tests.py"),
-        protocol_prefix=args.protocol_prefix,
-        prior_exposure=args.prior_exposure, disposition=disposition)
+    try:
+        use = experiment.run_subsequent_use(
+            args.dsn, artifacts_root=args.artifacts_root, launcher=launcher,
+            adapter=adapter, model=model, allocation_id=args.allocation,
+            investigation_id=args.investigation, episode_id=args.episode,
+            bindings=episode.get("bindings") or {},
+            use_task={"id": task["id"], "family": task["family"],
+                      "broken": task["broken"], "cases": task["cases"]},
+            grader_path=str(EXPERIMENTS / "run_tests.py"),
+            protocol_prefix=args.protocol_prefix,
+            prior_exposure=args.prior_exposure, disposition=disposition)
+    except Exception as exc:
+        print(f"subsequent use refused: {exc}")
+        return 3
     use["launcher"] = launcher.profile
     use["model"] = model
     use["source"] = _source_fingerprint()

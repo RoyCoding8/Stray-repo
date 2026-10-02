@@ -282,8 +282,12 @@ def test_selection_ordering_and_none_path(dsn, tmp_path):
         launcher_factory=factory,
         constructor=E.dev_constructor("c02-t16", solved=True))
     assert good["valid_execution"] is True
-    assert good["solved_count"] >= 1
-    assert good["solved_tasks"] and good["executed"] == tasks
+    assert good["solved_count"] == 0
+    assert good["solved_tasks"] == [] and good["executed"] == tasks
+    assert good["failures"] != []
+    assert all(f["status"] == "submit-refused"
+               and "no constructor artifact" in f.get("reason", "")
+               for f in good["failures"])
     bad = E.validate_on_development(
         dsn, entry_bytes=entry_bad, requires=requires, task_ids=tasks,
         launcher_factory=factory,
@@ -327,7 +331,7 @@ def test_selection_ordering_and_none_path(dsn, tmp_path):
 
 def test_lineage_two_exposure_manifest(dsn, tmp_path):
     out = E.acquire(
-        dsn, tmp_path, task_ids=["c02-t16"],
+        dsn, tmp_path, task_ids=["c02-t16"], campaign_root="exposure",
         launcher_factory=_factory(tmp_path),
         constructor=E.dev_constructor("c02-t16", solved=True),
         construction_gateway=FakeGatewayAdapter(text=""),
@@ -545,7 +549,7 @@ def test_invalid_requests_consume_defined_budget(dsn):
 
 def test_repair_carries_lineage_and_concrete_failure(dsn, tmp_path):
     out = E.acquire(
-        dsn, tmp_path, task_ids=["c02-t16"],
+        dsn, tmp_path, task_ids=["c02-t16"], campaign_root="repair-failure",
         launcher_factory=_factory(tmp_path),
         constructor=E.dev_constructor("c02-t16", solved=True),
         construction_gateway=FakeGatewayAdapter(text=""),

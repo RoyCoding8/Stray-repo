@@ -1,0 +1,405 @@
+{
+ "accounting": {
+  "acquisition": {
+   "charge_units": 0,
+   "model_calls": 2,
+   "sandbox_ops": 0,
+   "tokens": 20,
+   "witness_queries": 11
+  },
+  "campaign_id": "ad01-w0-R-00",
+  "mechanism": {
+   "boundaries": 3,
+   "no_candidate": 0,
+   "rejected": 1,
+   "retained": 2
+  },
+  "operations": {
+   "ad01-ad01-w0-R-00-b0-ad01-w0-dev-sw-00-construct-l1-init": {
+    "charge_units": 0,
+    "model_calls": 1,
+    "sandbox_ops": 0,
+    "tokens": 10
+   },
+   "ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-construct-l1-init": {
+    "charge_units": 0,
+    "model_calls": 1,
+    "sandbox_ops": 0,
+    "tokens": 10
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-transfer-sw-00": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-transfer-sw-01": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-transfer-sw-02": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-within-gr-00": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-within-gr-01": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-within-gr-02": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-within-sw-00": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-within-sw-01": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   },
+   "ad01-ad01-w0-R-00-use-ad01-w0-within-sw-02": {
+    "charge_units": 0,
+    "model_calls": 0,
+    "sandbox_ops": 1,
+    "tokens": 0
+   }
+  },
+  "shared_operations": [],
+  "total": {
+   "charge_units": 0,
+   "model_calls": 2,
+   "sandbox_ops": 9,
+   "tokens": 20,
+   "witness_queries": 47
+  },
+  "use": {
+   "charge_units": 0,
+   "model_calls": 0,
+   "sandbox_ops": 9,
+   "tokens": 0,
+   "witness_queries": 36
+  }
+ },
+ "arm": "R",
+ "boundaries": [
+  {
+   "decision": {
+    "basis_references": [
+     "obs-ad01-w0-dev-sw-00-seed"
+    ],
+    "next_action": {
+     "diagnostic": "software",
+     "kind": "development",
+     "max_queries": 4,
+     "task_id": "ad01-w0-dev-sw-00"
+    },
+    "question": "investigate ad01-w0-dev-sw-00",
+    "requested_resources": {
+     "diagnostic_queries": 1
+    }
+   },
+   "decision_id": "att-ad01-w0-R-00-0",
+   "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-00",
+   "seq": 0,
+   "spend": 5,
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  {
+   "decision": {
+    "basis_references": [
+     "obs-c4-diagnostic-ad01-w0-dev-sw-00",
+     "obs-ad01-w0-dev-gr-00-seed"
+    ],
+    "next_action": {
+     "diagnostic": "graph",
+     "kind": "development",
+     "max_queries": 4,
+     "task_id": "ad01-w0-dev-gr-00"
+    },
+    "question": "investigate ad01-w0-dev-gr-00",
+    "requested_resources": {
+     "diagnostic_queries": 1
+    }
+   },
+   "decision_id": "att-ad01-w0-R-00-1",
+   "observation_id": "obs-c3-novel-unproductive-ad01-w0-dev-gr-00",
+   "seq": 1,
+   "spend": 5,
+   "task_id": "ad01-w0-dev-gr-00"
+  },
+  {
+   "decision": {
+    "basis_references": [
+     "obs-c4-diagnostic-ad01-w0-dev-sw-00",
+     "obs-ad01-w0-dev-sw-01-seed"
+    ],
+    "next_action": {
+     "diagnostic": "software",
+     "kind": "development",
+     "max_queries": 4,
+     "task_id": "ad01-w0-dev-sw-01"
+    },
+    "question": "investigate ad01-w0-dev-sw-01",
+    "requested_resources": {
+     "diagnostic_queries": 1
+    }
+   },
+   "decision_id": "att-ad01-w0-R-00-2",
+   "observation_id": "obs-c4-diagnostic-ad01-w0-dev-sw-01",
+   "seq": 2,
+   "spend": 1,
+   "task_id": "ad01-w0-dev-sw-01"
+  }
+ ],
+ "campaign_id": "ad01-w0-R-00",
+ "charter": "smaller valid explanatory examples",
+ "construction_calls": 2,
+ "dev_episodes": 3,
+ "episodes": [
+  {
+   "candidate": {
+    "family": "software",
+    "fault": "stale-read",
+    "ops": [
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "a",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "c",
+      "op": "set",
+      "value": "v4"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v1"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v2"
+     },
+     {
+      "id": "o0",
+      "key": "b",
+      "op": "get"
+     },
+     {
+      "op": "clear"
+     },
+     {
+      "key": "b",
+      "op": "set",
+      "value": "v3"
+     },
+     {
+      "key": "b",
+      "op": "del"
+     },
+     {
+      "id": "o1",
+      "key": "b",
+      "op": "get"
+     }
+    ],
+    "seed": 5101,
+    "task_id": "ad01-w0-dev-sw-00",
+    "witness": {
+     "faulty": {
+      "type": "str",
+      "value": "v1"
+     },
+     "observation": "o0",
+     "ref": {
+      "type": "str",
+      "value": "v2"
+     }
+    }
+   },
+   "check": {
+    "initial_measure": 14,
+    "measure": 11,
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   "construction_calls": 1,
+   "disposition": "retained",
+   "executable": {
+    "authored": false,
+    "capability_id": "acquired-sw-58d90427",
+    "construction": {
+     "calls_made": 1,
+     "campaign_id": "ad01-w0-R-00",
+     "init_failure": null,
+     "init_operation": "ad01-ad01-w0-R-00-b0-ad01-w0-dev-sw-00-construct-l1-init",
+     "lineage": 1,
+     "repair_operation": null
+    },
+    "entry": "acquired_order",
+    "method_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_software(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+    "params": {
+     "max_queries": 4
+    },
+    "qualified_on": "ad01-w0-dev-sw-00",
+    "scope": {
+     "family": "software"
+    },
+    "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
+   },
+   "final_size": 11,
+   "initial_size": 14,
+   "lineage": [
+    {
+     "authored": false,
+     "capability_id": "acquired-sw-58d90427",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-R-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-R-00-b0-ad01-w0-dev-sw-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null
+     },
+     "source_digest": "58d90427eacdf4913f3a67ed8fb3087c710ab6e264759cf3e7c117c218ee19a5"
+    }
+   ],
+   "queries": 4,
+   "task_id": "ad01-w0-dev-sw-00"
+  },
+  {
+   "candidate": {
+    "edges": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      0,
+      4
+     ]
+    ],
+    "family": "graph",
+    "seed": 5201,
+    "task_id": "ad01-w0-dev-gr-00",
+    "vertices": [
+     0,
+     1,
+     2,
+     3,
+     4
+    ]
+   },
+   "check": {
+    "initial_measure": 12,
+    "measure": 10,
+    "reason": "ok-preserved",
+    "verdict": "preserved"
+   },
+   "construction_calls": 1,
+   "disposition": "retained",
+   "executable": {
+    "authored": false,
+    "capability_id": "acquired-gr-9fac7a86",
+    "construction": {
+     "calls_made": 1,
+     "campaign_id": "ad01-w0-R-00",
+     "init_failure": null,
+     "init_operation": "ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-construct-l1-init",
+     "lineage": 1,
+     "repair_operation": null
+    },
+    "entry": "acquired_order",
+    "method_source": "def acquired_order(task, oracle, max_queries=16):\n    return reducers.reduce_graph(task, oracle, method=\"greedy\", max_queries=max_queries)\n",
+    "params": {
+     "max_queries": 4
+    },
+    "qualified_on": "ad01-w0-dev-gr-00",
+    "scope": {
+     "family": "graph"
+    },
+    "source_digest": "9fac7a86713b8ffcb0c31d071b86639e50f0727f8b07aaa355b9931e17fcbc01"
+   },
+   "final_size": 10,
+   "initial_size": 12,
+   "lineage": [
+    {
+     "authored": false,
+     "capability_id": "acquired-gr-9fac7a86",
+     "construction": {
+      "calls_made": 1,
+      "campaign_id": "ad01-w0-R-00",
+      "init_failure": null,
+      "init_operation": "ad01-ad01-w0-R-00-b1-ad01-w0-dev-gr-00-construct-l1-init",
+      "lineage": 1,
+      "repair_operation": null
+     },
+     "source_digest": "9fac7a86713b8ffcb0c31d071b86639e50f0727f8b07aaa355b9931e17fcbc01"
+    }
+   ],
+   "queries": 4,
+   "task_id": "ad01-w0-dev-gr-00"
+  },
+  {
+   "construction_calls": 0,
+   "disposition": "rejected",
+   "initial_size": 16,
+   "lineage": [
+    {
+     "authored": false,
+     "capability_id": "acquired-pending"
+    }
+   ],
+   "queries": 0,
+   "reason": "construction failed: lineage cap reached (2/trajectory)",
+   "task_id": "ad01-w0-dev-sw-01"
+  }
+ ],
+ "model_calls": 2,
+ "queries": 11,
+ "stop": {
+  "reason": "no admissible work remains"
+ },
+ "world": 0
+}

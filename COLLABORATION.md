@@ -21,7 +21,7 @@ Git carries the specification, implementation and written reviews. The human ini
 
 Increment the review suffix for subsequent passes. The review branch is not a second implementation line. Do not let two agents concurrently write the same branch.
 
-The next assignment is `WORKER-AGENDA-01.md`. Integrate `codex/agenda-design-01` into the separate `codex/implementation-agenda-01` branch and implement its bounded contract. The earlier whole-repository audit and closure are baseline evidence, not an active parallel assignment. Keep `docs/design/REFINEMENT-ROADMAP.md` current at handoff. The worker owns implementation, affected-path fixes and integrated verification. A positive experimental result is not an acceptance requirement.
+The current assignment is `WORKER-STAGE-08-CLOSE-STAGE-09-START.md`, self-contained for a fresh worker chat. Create `codex/implementation-stage-08-close-stage-09-start` from the fetched `origin/codex/stage-09-handoff`, which contains implementation `f3d20ac` and evidence `a26408f`. The branch table above records historical ownership, not current work to restart. Keep `docs/design/REFINEMENT-ROADMAP.md` current. The worker first owns bounded stage 8 fixes and verification, then the stage 9 architecture package and feasibility checks. A positive experimental result is not required.
 
 The human authorizes parallel implementation specialists. [IMPLEMENTATION-WORKFLOW.md](IMPLEMENTATION-WORKFLOW.md) defines task contracts, worktrees, isolated test resources, shared-file ownership, internal review and integration gates. This document governs the external implementation/reviewer exchange. The integration coordinator remains responsible for the complete result produced by its specialists.
 
@@ -69,6 +69,10 @@ After committing those files, push and compare the remote branch SHA with local 
 ## Reviewer handoff
 
 The reviewer fetches the implementation branch, records the exact commit under review, and creates a fresh reviewer branch from that commit. It reads the request and verifies the relevant source, tests and evidence. It does not assume a reported test result was independently reproduced.
+
+Worker handoffs must stand alone in a new chat: include the fetched starting ref, implementation branch, reading order, goal, current evidence, scope, environment discovery and completion conditions. Do not rely on prior chat memory or machine-local credentials. Update stale current-assignment pointers when publishing a replacement handoff.
+
+Keep only worktrees needed for active work, unique uncommitted evidence or a still-used runtime. After delivery, remove owned inactive worktrees after checking changes, ignored artifacts and running processes. Retain references to unique commits. Delete obsolete local and remote task branches only when their history is preserved in a retained ref and their ownership/status is clear. Worktree cleanup never authorizes deleting external receipts or databases.
 
 Write `reviews/REVIEW-01.md` containing:
 

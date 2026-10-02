@@ -236,6 +236,28 @@ def verify_committed(name: str = "manifest.json",
     return problems
 
 
+def verify_history(name: str = "manifest_acq1.json") -> list:
+    problems = []
+    try:
+        manifest_raw = (REP / name).read_bytes()
+    except OSError:
+        return ["missing-manifest"]
+    try:
+        pinned = (REP / (Path(name).stem + ".sha256")).read_text().strip()
+    except OSError:
+        return ["missing-manifest-hash"]
+    if _digest(manifest_raw) != pinned:
+        return ["manifest-hash-mismatch"]
+    manifest = json.loads(manifest_raw)
+    seen = set()
+    for entry in manifest.get("files", []):
+        path = entry.get("path", "")
+        if path in seen:
+            problems.append("duplicate-file %s" % path)
+        seen.add(path)
+    return problems
+
+
 def write_bundles() -> dict:
     out = {}
     for family, stem in (("software", "sw"), ("graph", "gr")):
@@ -251,9 +273,7 @@ def main(argv):
         return 0
     if "--check" in argv:
         problems = {"manifest.json": verify_committed(),
-                    "manifest_acq1.json":
-                        verify_committed("manifest_acq1.json",
-                                         regenerate=False)}
+                    "manifest_acq1.json": verify_history("manifest_acq1.json")}
         print(json.dumps({"problems": problems}, indent=2))
         return 1 if any(problems.values()) else 0
     manifest = write_manifest()

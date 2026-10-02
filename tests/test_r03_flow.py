@@ -25,7 +25,10 @@ from settlement.launcher_local import LocalLauncher
 
 
 def _dsn() -> str:
-    return os.environ["SETTLEMENT_TEST_DSN"]
+    dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
+    if not dsn:
+        pytest.skip("SETTLEMENT_TEST_DSN is not configured")
+    return dsn
 
 
 def _swap(dsn: str, name: str) -> str:
@@ -47,7 +50,33 @@ def _fresh_db(stem: str) -> str:
                 cur.execute(f'CREATE DATABASE "{parts.path.lstrip("/")}"')
             except _pgerrors.DuplicateDatabase:
                 pass
+            except _pgerrors.InsufficientPrivilege as exc:
+                pytest.fail(
+                    "missing database prerequisite: role cannot CREATE DATABASE"
+                    f" ({type(exc).__name__}: {exc})")
     return target
+
+
+def test_r03_database_prerequisite_explicit():
+    from settlement import db as _db
+
+    dsn = _dsn()
+    check = _swap(dsn, f"r03flow_prereq_{uuid.uuid4().hex[:8]}")
+    parts = urllib.parse.urlsplit(check)
+    admin = urllib.parse.urlunsplit((parts.scheme, parts.netloc, "/postgres", parts.query, ""))
+    shown = dsn.rsplit("@", 1)[-1] if "@" in dsn else dsn
+    try:
+        with _db.connect(admin, autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f'CREATE DATABASE "{parts.path.lstrip("/")}"')
+        with _db.connect(admin, autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f'DROP DATABASE "{parts.path.lstrip("/")}"')
+    except Exception as exc:
+        pytest.fail(
+            "missing database prerequisite: CREATE/DROP DATABASE failed"
+            f" via SETTLEMENT_TEST_DSN={shown}"
+            f" ({type(exc).__name__}: {exc})")
 
 
 def _fresh_domain() -> str:

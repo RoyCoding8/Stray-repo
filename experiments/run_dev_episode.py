@@ -56,10 +56,6 @@ from run_live_abc import (_bind_grant_cap, _bundle_manifest, _effective_config,
 LIVE_MISSING = ("live dev episode blocked: set SETTLEMENT_GATEWAY_ENDPOINT, "
                 "SETTLEMENT_GATEWAY_KEY, and SETTLEMENT_GRANT_UNITS "
                 "(monetary grant cap)")
-LIVE_COMMAND = ("uv run python experiments/run_dev_episode.py --dsn $SETTLEMENT_DSN"
-                " --allocation <allocation> --artifacts-root $ARTIFACT_ROOT"
-                " --gateway live --model <model> --launcher runsc"
-                " --runsc-image sha256:<pinned>")
 EPISODE_PHASES = ("admit", "diagnose", "construct", "check", "select",
                   "freeze", "compare", "dispose", "use")
 
@@ -557,6 +553,16 @@ def main(argv: list[str] | None = None) -> int:
     dev_ids = _parse_ids(args.dev) or dev_ids
     panel_ids = _parse_ids(args.panel) or panel_ids
     transfer_ids = _parse_ids(args.transfer) or transfer_ids
+    from fault_tasks import BY_ID as _BY_ID
+
+    _unknown = [i for i in (dev_ids + panel_ids + transfer_ids)
+                if i not in _BY_ID]
+    if _unknown:
+        print(f"dev episode refused: unknown task {_unknown[0]!r}")
+        return 2
+    if args.use_task and args.use_task not in _BY_ID:
+        print(f"dev episode refused: unknown task {args.use_task!r}")
+        return 2
     try:
         run_allocation, admit = _admit(args.dsn, args, grant_units,
                                        args.protocol_prefix)
@@ -595,6 +601,9 @@ def main(argv: list[str] | None = None) -> int:
     except SettlementError as exc:
         print(f"dev episode refused: {exc}")
         return 3
+    except Exception as exc:
+        print(f"dev episode refused: {exc}")
+        return 3
     environment = {"episode": args.episode,
                    "protocol_prefix": args.protocol_prefix,
                    "launcher": launcher.profile, "model": model,
@@ -612,17 +621,23 @@ def main(argv: list[str] | None = None) -> int:
                         environment, ep, use, args.dsn)
     record["source"] = fingerprint
     record["effective_config"] = effective
-    roots = Path(args.artifacts_root)
-    roots.mkdir(parents=True, exist_ok=True)
-    record_name = f"{args.protocol_prefix}-episode.json"
-    record_text = json.dumps(record, indent=2, sort_keys=True)
-    (roots / record_name).write_text(record_text)
-    manifest = _bundle_manifest(
-        entry_point="experiments/run_dev_episode.py", record_name=record_name,
-        record_text=record_text, artifacts_root=args.artifacts_root,
-        protocol_prefix=args.protocol_prefix, effective_config=effective)
-    (roots / f"{args.protocol_prefix}-manifest.json").write_text(
-        json.dumps(manifest, indent=2, sort_keys=True))
+    try:
+        roots = Path(args.artifacts_root)
+        roots.mkdir(parents=True, exist_ok=True)
+        record_name = f"{args.protocol_prefix}-episode.json"
+        record_text = json.dumps(record, indent=2, sort_keys=True)
+        (roots / record_name).write_text(record_text)
+        manifest = _bundle_manifest(
+            entry_point="experiments/run_dev_episode.py",
+            record_name=record_name,
+            record_text=record_text, artifacts_root=args.artifacts_root,
+            protocol_prefix=args.protocol_prefix,
+            effective_config=effective)
+        (roots / f"{args.protocol_prefix}-manifest.json").write_text(
+            json.dumps(manifest, indent=2, sort_keys=True))
+    except OSError as exc:
+        print(f"dev episode refused: {exc}")
+        return 3
     print(record_text)
     return 0
 

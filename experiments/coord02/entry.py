@@ -20,12 +20,11 @@ import json
 import os
 import shutil
 import tempfile
-import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
-from settlement.gateway import FakeGatewayAdapter
+from settlement.gateway import FakeGatewayAdapter, GatewayError
 from settlement.launcher_local import LocalLauncher
 
 from . import checker
@@ -213,11 +212,56 @@ def selected_source_text(task_id: str) -> str:
                       sort_keys=True)
 
 
-def _selected_source_with_description(task_id: str) -> str:
-    payload = oracle.build_solver_payload(task_id)
-    public = payload.get("public", [])
-    return json.dumps({"source": selected_source_text(task_id),
-                       "description": public}, sort_keys=True)
+def refuse_gateway_error(status: Any, *, check: str) -> Any:
+    if isinstance(status, GatewayError):
+        raise ConnectionError("gateway %s failed: %s" % (
+            check, status.message))
+    return status
+
+
+_DOUBLE_MODEL_HINTS = ("doubl", "recording", "simulat", "fake")
+
+
+def _is_live_gateway(gateway: Any | None, model: str = "") -> bool:
+    if gateway is None or isinstance(gateway, FakeGatewayAdapter):
+        return False
+    if str(getattr(gateway, "label", "") or ""):
+        return False
+    if isinstance(model, str) and model \
+            and any(h in model.lower() for h in _DOUBLE_MODEL_HINTS):
+        return False
+    return True
+
+
+def _grant_version(dsn: str) -> int | None:
+    from settlement import store as _store
+    try:
+        return int(_store.get_control(dsn)["authority_version"])
+    except Exception:
+        return None
+
+
+def _ownership_of(dsn: str, attempt_id: str | None) -> int | None:
+    if not attempt_id:
+        return None
+    from settlement import db as _db
+    try:
+        with _db.connect(dsn) as _conn:
+            with _conn.cursor() as _cur:
+                _cur.execute("SELECT ownership_generation FROM attempts"
+                             " WHERE id = %s", (attempt_id,))
+                _row = _cur.fetchone()
+                _conn.commit()
+        if _row is None:
+            return None
+        return int(_row[0])
+    except Exception:
+        return None
+
+
+def _require_live_spend(gateway: Any | None, model: str = "") -> None:
+    if _is_live_gateway(gateway, model):
+        preflight.require_live(panels=(), construction_calls=None)
 
 
 def _interpret_with_model(*, gateway: Any, model: str, prompt: str,
@@ -225,18 +269,22 @@ def _interpret_with_model(*, gateway: Any, model: str, prompt: str,
                           allocation_id: str) -> dict:
     from settlement import broker
     from settlement.common import ResultCode
+    from .experience import live_reasoning_effort
+    if _settled_model_text(dsn, operation_id) is None:
+        _require_live_spend(gateway, model)
     ensured = broker.ensure_operation(
         dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
         payload={"model": model,
                  "messages": [{"role": "user", "content": prompt}],
                  "max_output_tokens": 16384, "deadline_ms": 300_000,
-                 "reasoning_effort": "low"},
+                 "reasoning_effort": live_reasoning_effort()},
         allocation_id=allocation_id)
     if ensured.code not in (ResultCode.APPLIED,
                             ResultCode.ALREADY_APPLIED):
         raise ValueError("A decision call not admitted: %s" % ensured.detail)
     broker.dispatch_operation(dsn, operation_id, launchers={},
-                              gateway=gateway)
+                              gateway=gateway,
+                              grant_version=_grant_version(dsn))
     from psycopg.rows import dict_row
     from settlement import db
     with db.connect(dsn) as conn:
@@ -254,7 +302,8 @@ def _interpret_with_model(*, gateway: Any, model: str, prompt: str,
     except ValueError:
         proposal = None
     if not isinstance(proposal, dict) or "action" not in proposal:
-        proposal = {"action": "plan", "shape": "single", "children": []}
+        proposal = {"action": "unsupported",
+                    "reason": "a-decision produced no parseable proposal"}
     return {"proposal": proposal, "usage": usage, "text": text}
 
 
@@ -287,12 +336,14 @@ def arm_decision(arm: str, *, task_id: str, package_entry: bytes | None,
               "Selected source and public description:\n%s\n"
               "Reply with ONLY a JSON proposal object "
               "({\"action\": ...})." % (
-                  task_id, _selected_source_with_description(task_id)))
+                  task_id, json.dumps({
+                      "source": package_entry.decode("utf-8") if package_entry is not None else None,
+                      "description": package_text,
+                      "task": oracle.build_solver_payload(task_id)}, sort_keys=True)))
     decided = _interpret_with_model(
         gateway=gateway, model=model, prompt=prompt,
         operation_id="coord:%s:%s:a-decision" % (run_id, task_id),
         dsn=dsn, allocation_id=allocation_id)
-    from .schemas import parse_response_bytes  # noqa: F401
     proposal = dict(decided["proposal"])
     if proposal.get("action") == "plan" and not proposal.get("children"):
         proposal["children"] = plan_children(task_id, "single")
@@ -311,90 +362,84 @@ def arm_decision(arm: str, *, task_id: str, package_entry: bytes | None,
             "provenance": "model-interpreted-decision"}
 
 
-def dispatch_admitted_child(dsn: str, *, gateway: Any, model: str,
-                               task_id: str, node: str, child: dict,
-                               rendered: dict, allocation_id: str,
-                               operation_id: str) -> dict | None:
-    from settlement import broker
-    from settlement.common import ResultCode
-    owned = list(child.get("owned_paths", []))
-    snap = snapshot_files(task_id)
-    current = {p: snap.get(p, "") for p in owned}
-    prompt = "\n".join([
-        "Repair owned paths for task %s node %s." % (task_id, node),
-        "Obligation: %s" % child.get("obligation", ""),
-        "Admitted observations: %s" % json.dumps(
-            rendered.get("admitted_observations", []), sort_keys=True),
-        "Current bytes: %s" % json.dumps(current, sort_keys=True),
-        "Reply with exactly one JSON object and nothing else, shaped "
-        '{"files": { "<owned relpath>": "<complete file content>" }, '
-        '"notes": "<one or two sentences>"}. '
-        "Include an entry for every owned path, even if unchanged."])
-    ensured = broker.ensure_operation(
-        dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
-        payload={"model": model,
-                 "messages": [{"role": "user", "content": prompt}],
-                 "max_output_tokens": 8192, "deadline_ms": 300_000,
-                 "reasoning_effort": "low"},
-        allocation_id=allocation_id)
-    if ensured.code not in (ResultCode.APPLIED,
-                            ResultCode.ALREADY_APPLIED):
-        return None
-    broker.dispatch_operation(dsn, operation_id, launchers={},
-                              gateway=gateway)
+def _settled_model_text(dsn: str, operation_id: str) -> str | None:
     from psycopg.rows import dict_row
     from settlement import db
     with db.connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT content FROM receipts WHERE operation_id = %s"
-                        " AND receipt_identity = %s",
+                        " AND receipt_identity = %s AND outcome = 'success'",
                         (operation_id, "gw:%s" % operation_id))
             row = cur.fetchone()
             conn.commit()
-    text = str(dict((row or {}).get("content") or {}).get("text", ""))
-    body = text.strip()
-    if body.startswith("```"):
-        lines = body.split("\n")[1:]
-        if lines and lines[-1].strip().startswith("```"):
-            lines = lines[:-1]
-        body = "\n".join(lines)
-    try:
-        data = json.loads(body) if body else None
-    except ValueError:
+    if row is None:
         return None
-    files = None
-    if isinstance(data, dict):
-        files = data.get("files")
-        if files is None and isinstance(data.get("children"), list):
-            plan = [c for c in data["children"]
-                    if isinstance(c, dict)
-                    and c.get("node_id") == node]
-            if plan and isinstance(plan[0].get("files"), dict):
-                files = plan[0]["files"]
-    if not isinstance(files, dict) or set(files) != set(owned):
-        return None
-    if any(not isinstance(v, str) or not v.strip()
-           for v in files.values()):
-        return None
-    return {p: files[p] for p in owned}
+    return str(dict(row.get("content") or {}).get("text", ""))
+
+
+def dispatch_admitted_child(dsn: str, *, gateway: Any, model: str,
+                               task_id: str, node: str, child: dict,
+                               rendered: dict, allocation_id: str,
+                               operation_id: str,
+                               attempt_id: str | None = None,
+                               ownership_generation: int | None = None,
+                               grant_version: int | None = None) -> dict | None:
+    from settlement import broker
+    from settlement.common import ResultCode
+    from . import packet as _packet
+    from .experience import live_reasoning_effort
+    settled = _settled_model_text(dsn, operation_id)
+    if settled is None:
+        _require_live_spend(gateway, model)
+        prompt = _packet.render_child_prompt(task_id, node, rendered)
+        ensured = broker.ensure_operation(
+            dsn, operation_id=operation_id, effect=broker.MODEL_INFERENCE,
+            payload={"model": model,
+                     "messages": [{"role": "user", "content": prompt}],
+                     "max_output_tokens": 8192, "deadline_ms": 300_000,
+                     "reasoning_effort": live_reasoning_effort()},
+            allocation_id=allocation_id, attempt_id=attempt_id)
+        if ensured.code not in (ResultCode.APPLIED,
+                                ResultCode.ALREADY_APPLIED):
+            return None
+        if ownership_generation is None:
+            ownership_generation = _ownership_of(dsn, attempt_id)
+        if grant_version is None:
+            grant_version = _grant_version(dsn)
+        broker.dispatch_operation(dsn, operation_id, launchers={},
+                                  gateway=gateway,
+                                  ownership_generation=ownership_generation,
+                                  grant_version=grant_version)
+        settled = _settled_model_text(dsn, operation_id)
+        if settled is None:
+            return None
+    text = settled
+    files, _ = _packet.parse_child_response(child, text)
+    return files
 
 
 def run_child_factory(dsn: str, *, task_id: str, gateway: Any,
-                      model: str, allocation_id: str,
-                      operation_id: str) -> Callable:
-    def _build(node: str, child: dict, rendered: dict) -> dict | None:
+                      model: str, allocation_id: str) -> Callable:
+    def _build(node: str, child: dict, rendered: dict,
+               operation_id: str, attempt_id: str | None = None,
+               ownership_generation: int | None = None,
+               grant_version: int | None = None,
+               ) -> dict | None:
         return dispatch_admitted_child(
             dsn, gateway=gateway, model=model, task_id=task_id,
             node=node, child=child, rendered=rendered,
-            allocation_id=allocation_id, operation_id=operation_id)
+            allocation_id=allocation_id, operation_id=operation_id,
+            attempt_id=attempt_id,
+            ownership_generation=ownership_generation,
+            grant_version=grant_version)
     return _build
 
 
 def solved_child_factory(task_id: str) -> Callable:
-    def _build(node: str, child: dict, rendered: dict) -> dict:
-        owned = list(child.get("owned_paths", []))
-        snap = snapshot_files(task_id)
-        return {p: snap[p] for p in owned if p in snap}
+    def _build(node: str, child: dict, rendered: dict,
+               operation_id: str | None = None,
+               attempt_id: str | None = None) -> dict | None:
+        return None
 
     return _build
 
@@ -407,24 +452,20 @@ class CellResult:
 
 def check_ceilings(costs: dict, ceilings: dict | None = None) -> list:
     ceilings = ceilings or dict(freeze_mod.CEILINGS)
-    problems = []
-    if costs.get("model_calls", 0) > ceilings["model_calls"]:
-        problems.append("ceiling-breach-model_calls")
-    tokens_in = costs.get("model_tokens_in", 0)
-    tokens_out = costs.get("model_tokens_out", 0)
     nested = costs.get("model_tokens", {})
+    resources = {
+        "model_calls": [costs.get("model_calls", 0)],
+        "input_tokens": [costs.get("model_tokens_in", 0)],
+        "output_tokens": [costs.get("model_tokens_out", 0)],
+        "tool_invocations": [costs.get("tool_invocations", 0)],
+        "sandbox_ops": [costs.get("sandbox_ops", 0)]}
     if isinstance(nested, dict):
-        tokens_in = max(tokens_in, nested.get("in", 0))
-        tokens_out = max(tokens_out, nested.get("out", 0))
-    if tokens_in > ceilings["input_tokens"]:
-        problems.append("ceiling-breach-input_tokens")
-    if tokens_out > ceilings["output_tokens"]:
-        problems.append("ceiling-breach-output_tokens")
-    if costs.get("tool_invocations", 0) > ceilings["tool_invocations"]:
-        problems.append("ceiling-breach-tool_invocations")
-    if costs.get("sandbox_ops", 0) > ceilings["sandbox_ops"]:
-        problems.append("ceiling-breach-sandbox_ops")
-    return problems
+        resources["input_tokens"].append(nested.get("in", 0))
+        resources["output_tokens"].append(nested.get("out", 0))
+    return ["ceiling-breach-%s" % resource
+            for resource, values in resources.items()
+            if any(value != SE.UNKNOWN and value > ceilings[resource]
+                   for value in values)]
 
 
 def _protected_of(outcome: dict) -> dict:
@@ -433,34 +474,43 @@ def _protected_of(outcome: dict) -> dict:
     return {"passed": 1, "failed": 0, "total": 1}
 
 
-def _cell_costs(dsn: str, cfg: EpisodeConfig, outcome: dict,
-                extra: dict | None = None) -> dict:
+def _admit_floor() -> dict:
+    return {"model_tokens_in": 0, "model_tokens_out": 0, "model_calls": 0,
+            "tool_invocations": 0, "sandbox_ops": 1, "policy_exec_ops": 1,
+            "protected_check_ops": 0, "cpu_seconds": 0, "wall_seconds": 0,
+            "elapsed_seconds": 0, "abandoned_ops": 0}
+
+
+def _cell_costs(dsn: str, cell_ops: dict, outcome: dict) -> tuple:
+    from settlement import broker as _broker
+    model_ops = sorted(
+        op_id for op_id, info in cell_ops.items()
+        if info.get("effect") == _broker.MODEL_INFERENCE)
+    unmeasured: list = []
+    measured = {"in": 0, "out": 0, "calls": 0}
+    for op_id in model_ops:
+        try:
+            usage = SE.costs_for_operations(dsn, [op_id])
+        except SE.TrialError:
+            unmeasured.append(op_id)
+        else:
+            for key in measured:
+                measured[key] += usage[key]
+    if unmeasured:
+        measured = dict.fromkeys(measured, SE.UNKNOWN)
     steps = int(outcome.get("steps", 0))
     probes = int(outcome.get("probe_calls", 0))
-    ops = steps + probes + 1
-    costs = {"model_tokens_in": 100, "model_tokens_out": 20,
-             "model_calls": 1, "tool_invocations": probes,
-             "sandbox_ops": ops,
-             "policy_exec_ops": steps, "protected_check_ops": 1,
-             "cpu_seconds": 0, "wall_seconds": 0,
-             "elapsed_seconds": 0, "abandoned_ops": 0}
-    for key, value in dict(extra or {}).items():
-        if isinstance(value, (int, float)) and not isinstance(value, bool):
-            costs[key] = costs.get(key, 0) + value
-    return costs
-
-
-def _cell_receipts(dsn: str, cfg: EpisodeConfig, tag: str) -> list:
-    from .controller import list_step_receipts
-    try:
-        rows = list_step_receipts(dsn, cfg.run_id, cfg.task_id)
-    except (AttributeError, ValueError):
-        rows = []
-    ids = [str(r.get("_operation_id", "")) for r in rows]
-    ids = [i for i in ids if i]
-    if not ids:
-        ids = [cfg.run_id]
-    return ids
+    sandbox = sum(1 for info in cell_ops.values()
+                  if info.get("effect") == _broker.SANDBOX_EXEC)
+    costs = {"model_tokens_in": measured["in"],
+             "model_tokens_out": measured["out"],
+             "model_calls": measured["calls"],
+             "tool_invocations": probes, "sandbox_ops": sandbox,
+             "policy_exec_ops": steps,
+             "protected_check_ops": 1 if sandbox else 0,
+             "cpu_seconds": None, "wall_seconds": None,
+             "elapsed_seconds": None, "abandoned_ops": 0}
+    return costs, unmeasured
 
 
 def stage_assembled_tree(task_id: str, tree: dict, dest: Any) -> Any:
@@ -534,8 +584,8 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
              constructor_label: str = FIXTURE_LABEL) -> CellResult:
     if arm not in ARMS:
         raise ValueError("unknown arm %r" % (arm,))
-    tag = "e-%s-%s-r%d-%s-%s" % (panel, task_id, repeat, arm,
-                                 uuid.uuid4().hex[:6])
+    tag = "e-%s-%s-%s-r%d-%s" % (
+        _sha(freeze["freeze_id"].encode())[:12], panel, task_id, repeat, arm)
     seed = seed_episode(dsn, tag, snapshot_files(task_id))
     if gateway is None:
         gateway = FakeGatewayAdapter(text="")
@@ -593,8 +643,7 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
         bindings=_dev_bindings(requires, snapshot),
         source_interfaces=_dev_source_interfaces(task_id),
         package=package, snapshot_digest=seed["snapshot_digest"])
-    problems = check_ceilings(_cell_costs(dsn, cfg, {"steps": 0,
-                                                    "probe_calls": 0}))
+    problems = check_ceilings(_admit_floor())
     if problems:
         raise ValueError("pre-admit ceiling breach: %s" % problems)
     if constructor_label != FIXTURE_LABEL:
@@ -602,8 +651,7 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
             constructor_label,))
     factory = run_child_factory(
         dsn, task_id=task_id, gateway=gateway, model=model,
-        allocation_id=seed["allocation_id"],
-        operation_id="coord02-child:%s:%s" % (tag, task_id))
+        allocation_id=seed["allocation_id"])
     outcome = run_episode(dsn, cfg, launcher_factory(tag), factory)
     solved = outcome.get("status") == "success"
     protected = _protected_of(outcome)
@@ -617,10 +665,22 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
              or outcome.get("status", "no-outcome"),
              "protected_case": i}
             for i in range(missing)]
-    costs = _cell_costs(dsn, cfg, outcome,
-                        extra=decision.get("usage"))
-    receipts = _cell_receipts(dsn, cfg, tag)
+    cell_ops = SE.cell_operation_ids(
+        dsn, run_id=cfg.run_id, task_id=task_id,
+        plan_id=outcome.get("plan_id"))
+    costs, unmeasured = _cell_costs(dsn, cell_ops, outcome)
+    receipts = sorted(cell_ops)
+    if not receipts:
+        raise SE.TrialError("cell %s left no durable operations to attest"
+                            % cfg.run_id)
     trial_outcome = "success" if solved else "failure"
+    liabilities = list(outcome.get("liabilities") or [])
+    if unmeasured:
+        liabilities = liabilities + [
+            {"party": "campaign",
+             "reason": "model-token usage unmeasured on operations: %s"
+                       % ", ".join(sorted(unmeasured)),
+             "operation": sorted(unmeasured)[0]}]
     trial = SE.build_trial_record(
         freeze_id=freeze["freeze_id"], panel=panel, task_id=task_id,
         repeat=repeat, arm=scheduled_arm, source_sha=source_sha,
@@ -630,9 +690,9 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
                    "failed": int(protected.get("failed", 0)),
                    "total": int(protected.get("total", 0))},
         failures=failures, costs=costs, receipts=receipts,
-        operations=[{"operation_id": r, "kind": "episode"}
+        operations=[{"operation_id": r, "kind": cell_ops[r]["kind"]}
                     for r in receipts],
-        liabilities=outcome.get("liabilities") or [],
+        liabilities=liabilities,
         executed_treatment=executed_treatment,
         fallback_reason=fallback_note or None)
     problems = check_ceilings(trial["costs"])
@@ -698,7 +758,7 @@ def restage_tree(dsn: str, outcome: dict) -> dict | None:
 
 
 def write_evidence(cells: list, *, freeze: dict, evidence_root: Any,
-                   dsn: str = "") -> dict:
+                   dsn: str) -> dict:
     root = Path(evidence_root)
     records = []
     for cell in cells:
@@ -719,11 +779,27 @@ def write_evidence(cells: list, *, freeze: dict, evidence_root: Any,
                       (c.record for c in cells)})
     report = checker.check_evidence(root, freeze_path,
                                     panels=tuple(present))
-    union = SE.reconcile_cost_union(
-        [{"operation_id": r, "kind": "episode",
-          "costs": dict(cell.record["costs"])} for cell in cells
-         for r in cell.record["receipts"]])
-    return {"records": len(records), "checker": report, "union": union}
+    union_cells = []
+    for cell, record in zip(cells, records):
+        pair = "%s-%s-%s-%s-r%d" % (record["freeze_id"], record["panel"],
+                                    record["arm"], record["task_id"],
+                                    record["repeat"])
+        union_cells.append({
+            "cell_id": pair,
+            "operation_ids": [o["operation_id"]
+                              for o in cell.record["operations"]]})
+    union = SE.reconcile_campaign_union_from_store(
+        dsn, union_cells,
+        kinds={o["operation_id"]: o["kind"] for cell in cells
+               for o in cell.record["operations"]})
+    campaign_budgets = freeze.get("campaign_budgets")
+    breaches = (check_ceilings(union["totals"], campaign_budgets)
+                if campaign_budgets is not None else [])
+    report["problems"] = list(dict.fromkeys(report["problems"] + breaches))
+    report["clean"] = not report["problems"]
+    return {"records": len(records), "checker": report, "union": union,
+            "ceilings": {"breaches": breaches,
+                         "checked": campaign_budgets is not None}}
 
 
 def status_view(dsn: str, *, freeze: dict, evidence_root: Any,
@@ -763,20 +839,19 @@ def main(argv: list | None = None) -> int:
     parser.add_argument("--doubled", action="store_true",
                         help="prove the harness on the fake gateway")
     args = parser.parse_args(argv)
-    if args.panel in ("evaluation", "transfer") and not args.doubled:
+    label = DOUBLED_LABEL if args.doubled or not args.model \
+        else "LIVE"
+    if not args.doubled and (label == "LIVE"
+                             or args.panel in ("evaluation", "transfer")):
         try:
             preflight.require_live(panels=(args.panel,))
         except PermissionError as exc:
             print("blocked: %s" % exc)
             return 2
-    label = DOUBLED_LABEL if args.doubled or not args.model \
-        else "LIVE"
-    if label == "LIVE" and not args.model:
-        raise ValueError("live execution requires an explicit --model")
     if label == "LIVE":
         os.environ["TEAM01_LIVE_MODEL"] = args.model
     gateway = gateway_factory(doubled=(label == DOUBLED_LABEL))
-    assert gateway.check_discovery() is not None
+    refuse_gateway_error(gateway.check_discovery(), check="discovery")
     freeze = freeze_mod.build_freeze(args.freeze_id,
                                      source_sha=args.source_sha)
     panel_cells = [c for c in freeze["schedule"]

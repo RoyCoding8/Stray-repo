@@ -1,0 +1,41 @@
+{
+  "campaign_id": "ad01-w1-R-00",
+  "members": [
+    {
+      "authored": true,
+      "capability_id": "seed-sw-greedy",
+      "method": "greedy",
+      "params": {
+        "max_queries": 16
+      },
+      "qualified_on": "ad01-w1-dev-sw-00",
+      "scope": {
+        "family": "software"
+      }
+    },
+    {
+      "authored": true,
+      "capability_id": "seed-gr-greedy",
+      "method": "greedy",
+      "params": {
+        "max_queries": 16
+      },
+      "qualified_on": "ad01-w1-dev-gr-00",
+      "scope": {
+        "family": "graph"
+      }
+    },
+    {
+      "authored": true,
+      "capability_id": "seed-sw-greedy",
+      "method": "greedy",
+      "params": {
+        "max_queries": 16
+      },
+      "qualified_on": "ad01-w1-dev-sw-01",
+      "scope": {
+        "family": "software"
+      }
+    }
+  ]
+}

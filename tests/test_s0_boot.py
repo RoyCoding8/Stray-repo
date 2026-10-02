@@ -48,6 +48,13 @@ def live_endpoint():
     thread.join()
 
 
+def _dsn() -> str:
+    dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
+    if not dsn:
+        pytest.skip("SETTLEMENT_TEST_DSN is not configured")
+    return dsn
+
+
 def _settings(endpoint: str, tmp_path, dsn: str) -> Settings:
     return Settings(
         dsn=dsn,
@@ -72,7 +79,7 @@ def test_boot_full_stack_reports_exercised(tmp_path, live_endpoint):
     from settlement import boot
     from settlement.gateway_http import HttpGatewayAdapter
 
-    dsn = os.environ["SETTLEMENT_TEST_DSN"]
+    dsn = _dsn()
     _ensure_migrations_table(dsn)
     (tmp_path / "artifacts").mkdir()
     (tmp_path / "staging").mkdir()
@@ -92,7 +99,7 @@ def test_boot_gateway_down_narrows_to_inspection(tmp_path, live_endpoint):
     from settlement import boot
     from settlement.gateway_http import HttpGatewayAdapter
 
-    dsn = os.environ["SETTLEMENT_TEST_DSN"]
+    dsn = _dsn()
     _ensure_migrations_table(dsn)
     (tmp_path / "artifacts").mkdir()
     (tmp_path / "staging").mkdir()
@@ -111,7 +118,7 @@ def test_boot_gvisor_unavailable_on_this_host(tmp_path, live_endpoint):
     from settlement import boot
     from settlement.gateway_http import HttpGatewayAdapter
 
-    dsn = os.environ["SETTLEMENT_TEST_DSN"]
+    dsn = _dsn()
     (tmp_path / "artifacts").mkdir()
     (tmp_path / "staging").mkdir()
     settings = _settings(live_endpoint, tmp_path, dsn)
@@ -127,7 +134,7 @@ def test_boot_fake_gateway_never_enables_live_inference(tmp_path):
     from settlement import boot
     from settlement.gateway import FakeGatewayAdapter
 
-    dsn = os.environ["SETTLEMENT_TEST_DSN"]
+    dsn = _dsn()
     (tmp_path / "artifacts").mkdir()
     (tmp_path / "staging").mkdir()
     settings = _settings("", tmp_path, dsn)
