@@ -102,11 +102,14 @@ admitted — the two paths are distinguishable by whether a candidate existed.
 
 **CI, first honest full-suite run.** Run 37146141390. The `suite-py3.13-2`
 shard reports **68 distinct failure lines**, and the identical baseline run
-37145838731 reports 68 with **zero added** by this batch's commits. **55 of the
-68 carry one identical refusal** — `MethodExecutionError: refused: execution
-needs explicit authority and identity` — which is the 13 bare call sites the
-repaired executor gate names, now failing as tests instead of being invisible to
-a blind gate. `tests/test_invd3_envelope.py::test_documented_envelope_example_runs_through_child`
+37145838731 reports 68 with **zero added** by this batch's commits. **12 of the
+68 distinct failure lines carry one identical refusal** —
+`MethodExecutionError: refused: execution needs explicit authority and identity`
+— which is the 13 bare call sites the repaired executor gate names, now failing
+as tests instead of being invisible to a blind gate. (An earlier entry here said
+55; that was the raw occurrence count in `suite.log`, where a traceback repeats
+the string. Count distinct `FAILED` lines, not matches in the log.)
+`tests/test_invd3_envelope.py::test_documented_envelope_example_runs_through_child`
 is confirmed already red at tip, so the gate had been reading green over failing
 tests. One guard fired on new information:
 `test_the_reader_census_is_not_vacuous_inside_a_lane_worktree` reports
