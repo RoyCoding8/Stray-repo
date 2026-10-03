@@ -22,6 +22,19 @@ not deleted, and not left red. What each became:
     file, so it went green while the condition it names was violated three
     files over. Re-aimed at the whole test tree, where it is RED.
 
+  - Z2-02a, a second repair. The re-aimed guard was still blind, for a
+    different reason than the first. It named `run_policy_step` and
+    `_shared_assessment_arm`, and neither is a guarded executor: the two
+    functions that raise `refused: execution needs explicit authority and
+    identity` are `run_step_out_of_process` and `run_member_out_of_process`,
+    and a guard reading neither cannot see a single call site of either. It
+    reported zero files over 84 call sites and read as green. `EXECUTORS` is
+    now derived from the guarded executors and their forwarders, and the
+    scope is `rglob`, which reaches the 85 files under
+    `tests/_heavy_archived/` that the top-level glob skipped. It is RED, and
+    it is no longer reading green over tests that are failing for exactly
+    this reason.
+
   - Z2-02b. The authority is still forwarded, through a `**splat` of
     `_step_authority(...)` rather than three keywords, and `{kw.arg for kw in
     node.keywords}` reads a splat as `{None}`. `_construct_policy_revision` no
@@ -57,11 +70,72 @@ sys.path.insert(0, str(ROOT / "src"))
 DEAD = "S09_STUDY_CALLS_ALREADY_SPENT"
 KNOWN_READER = "scripts/s09_pilot.py"
 AUTHORITY = ("dsn", "allocation_id", "operation_id")
-EXECUTORS = ("run_policy_step", "_shared_assessment_arm")
+
+#: The production names that launch or stage bounded child execution, and so
+#: are guarded on the authority triple. Derived, not chosen.
+#:
+#: Two seeds, both carrying all three keys as named parameters and both raising
+#: `refused: execution needs explicit authority and identity` before a byte is
+#: staged: `method_exec.run_step_out_of_process` and
+#: `method_exec.run_member_out_of_process`. A third guard of the same shape
+#: lives at `improve_channel._run_source`, which takes the pair as one
+#: `authority` dict rather than as keywords; it is excluded here because no
+#: test calls it, and `tests/test_inv_a8_improve_authority.py` already owns its
+#: boundary.
+#:
+#: The four middle names are the forwarders: each carries all three keys as
+#: named parameters and each forwards them by keyword into a seed, so a bare
+#: call to one drops the authority just as surely as a bare call to a seed.
+#: `trajectory._run_member` is in the set for the same reason the seeds are.
+#::
+#: The earlier tuple here was `("run_policy_step", "_shared_assessment_arm")`.
+#: Only `run_policy_step` is a forwarder and neither is a seed, so the tuple
+#: could not see a single call site of either guarded executor. It reported
+#: zero files over 84 real call sites. A44's "34 sites across 10 files" was
+#: measured against the same blind tuple.
+EXECUTORS = (
+    "run_member_out_of_process",
+    "run_step_out_of_process",
+    "_run_member",
+    "run_policy_step",
+    "_check_source",
+    "_policy_evaluate",
+)
+
+#: What each forwarder forwards into. Measured off the production bodies: every
+#: one of these names appears as the callee of a guarded executor, once.
+FORWARDS_TO = {
+    "run_member_out_of_process": (),
+    "run_step_out_of_process": (),
+    "_run_member": ("run_member_out_of_process",),
+    "run_policy_step": ("run_step_out_of_process",),
+    "_check_source": ("run_member_out_of_process",),
+    "_policy_evaluate": ("run_step_out_of_process",),
+}
+
+
+def _reaches(name: str) -> set[str]:
+    """`name` plus every executor it forwards into."""
+    reached = {name}
+    pending = [name]
+    while pending:
+        for callee in FORWARDS_TO.get(pending.pop(), ()):
+            if callee not in reached:
+                reached.add(callee)
+                pending.append(callee)
+    return reached
 
 
 def _test_files() -> list[Path]:
-    return sorted((ROOT / "tests").glob("test_*.py"))
+    """Every test module, at any depth.
+
+    `tests/_heavy_archived/` holds 85 files that CI runs one at a time, so it is
+    part of the suite and not a graveyard. The top-level glob missed all of them,
+    and `tests/conftest_isolation.scan` reaches them with `rglob`, which is the
+    resolution this gate adopts: a file's location does not change what kind of
+    call site it is.
+    """
+    return sorted((ROOT / "tests").rglob("test_*.py"))
 
 
 def _parsed(path: Path) -> ast.Module:
@@ -174,18 +248,60 @@ def test_the_census_scans_the_repository_rather_than_the_directory_it_lives_in()
 # --- Z2-02: every executor call carries its execution authority -----------
 
 
-def _bare_executor_calls(tree: ast.Module) -> list[str]:
-    """Every call that reaches the executor with no dsn/allocation/operation.
+def _executor_call_shape(tree: ast.Module, node: ast.Call) -> str:
+    """Which of the three legitimate forms this bare call site is in.
 
-    Read off the parse so the claim is about the call site rather than about
-    one run of it. A `**splat` is not reported: the caller's dictionary is not
-    visible from here, and reporting it would be a guess rather than a finding.
+    Lane A17's resolution: a test may assert the refusal, assert the effect
+    under real authority, or be a helper. Only the second is a defect, and the
+    predicate has to tell the three apart or the gate reports a contract test's
+    own evidence as a defect. The classification is mechanical, from the parse:
+    a `pytest.raises` block owns the call, and a `monkeypatch.setattr` of the
+    executor or of anything it forwards into means the call never reaches the
+    real child.
+    """
+    line = node.lineno
+    name = getattr(node.func, "attr", None) or getattr(node.func, "id", None)
+    enclosing = None
+    for candidate in ast.walk(tree):
+        if isinstance(candidate, (ast.FunctionDef, ast.AsyncFunctionDef)) \
+                and candidate.lineno <= line <= (candidate.end_lineno or line):
+            if enclosing is None or candidate.lineno > enclosing.lineno:
+                enclosing = candidate
 
-    Two of the nine live sites are not calls in this file at all. They are
-    policy-step invocations written into a `subprocess` probe's source, which
-    `ast` sees only as a string constant. A guard that reads `Call` nodes alone
-    counts seven of nine and would be trusted for the two it missed, so the
-    embedded scripts are scanned too.
+    for block in ast.walk(tree):
+        if not isinstance(block, ast.With):
+            continue
+        if not any("pytest.raises" in ast.unparse(item.context_expr)
+                   for item in block.items):
+            continue
+        if block.body[0].lineno <= line <= block.body[-1].end_lineno:
+            return "asserts-the-refusal"
+
+    for call in ast.walk(tree):
+        if not isinstance(call, ast.Call):
+            continue
+        if "setattr" not in ast.unparse(call.func):
+            continue
+        if call.lineno > line:
+            continue
+        patched = {target for argument in call.args
+                   for target in _reaches(name)
+                   if target in ast.unparse(argument)}
+        if patched:
+            return "executor-patched-out"
+
+    if enclosing is not None and enclosing.name.startswith("test_"):
+        return "asserts-the-effect"
+    return "helper"
+
+
+def _executor_census(tree: ast.Module) -> list[tuple[str, int, str]]:
+    """Every bare call to an executor, each with the form it is in.
+
+    Returns `(name, line, shape)`. The shape is A17's three-form resolution, so
+    the census is a record of all of them rather than of the defects alone: a
+    reader who disagrees with one classification can see the other sites and
+    the rule that sorted them.
     """
     found = []
     for node in ast.walk(tree):
@@ -196,9 +312,17 @@ def _bare_executor_calls(tree: ast.Module) -> list[str]:
             continue
         if any(kw.arg is None for kw in node.keywords):
             continue
-        if not {kw.arg for kw in node.keywords} & set(AUTHORITY):
-            found.append("%s:%d" % (name, node.lineno))
+        if {kw.arg for kw in node.keywords} & set(AUTHORITY):
+            continue
+        found.append((name, node.lineno, _executor_call_shape(tree, node)))
     return sorted(set(found))
+
+
+def _bare_executor_calls(tree: ast.Module) -> list[str]:
+    """The bare call sites that assert an effect rather than the refusal."""
+    return ["%s:%d" % (name, line)
+            for name, line, shape in _executor_census(tree)
+            if shape == "asserts-the-effect"]
 
 
 def _bare_executor_scripts(tree: ast.Module, docstrings: set[int]) -> list[str]:
@@ -240,38 +364,53 @@ def _docstring_lines(tree: ast.Module) -> set[int]:
 def test_no_test_calls_the_executor_without_execution_authority():
     """No test in the tree may execute policy source with no authority.
 
-    `method_exec.run_step_out_of_process` refuses at line 1412 when any of
+    `method_exec.run_step_out_of_process` refuses at line 1595 when any of
     `dsn`, `allocation_id` or `operation_id` is missing, before it stages a
-    byte. A test that calls it with none of them is therefore asserting
-    against the refusal rather than against the behaviour it names.
+    byte, and `run_member_out_of_process` refuses at line 1120 the same way.
+    A test that calls either with none of them is asserting against the refusal
+    rather than against the behaviour it names.
 
-    The original guard scanned `tests/test_m1_shared_executor.py` alone. That
-    file was migrated, so the guard went green, and green there said nothing
-    about the other files. Scoped to the tree it is RED, and the reds are
-    real: nine tests across three files fail on exactly this refusal.
+    Two things this gate got wrong before, both measured rather than argued.
+    Its `EXECUTORS` named no guarded executor, so it could not see a call site
+    of either; it reported zero files over 84 real ones. And its scope was a
+    top-level glob, which excluded all 85 files under `tests/_heavy_archived/`
+    that CI runs. Corrected, it reads 31 bare sites across 12 files: 13 assert
+    the refusal on purpose, 3 are helpers, 2 call an executor the test has
+    monkeypatched away, and 13 are defects -- a test asserting an effect
+    against a refusal it never reaches.
 
     This is deliberately left red. The condition it names is true.
     """
     bare = {}
+    excused = {}
     for path in _test_files():
         try:
             tree = _parsed(path)
-            found = _bare_executor_calls(tree)
-            found += _bare_executor_scripts(tree, _docstring_lines(tree))
+            census = _executor_census(tree)
+            scripts = _bare_executor_scripts(tree, _docstring_lines(tree))
         except SyntaxError as exc:
             bare.setdefault("unparseable", []).append(
                 "%s: %s" % (path.name, exc))
             continue
-        if found:
-            bare[path.name] = sorted(found)
+        offenders = ["%s:%d" % (name, line)
+                     for name, line, shape in census
+                     if shape == "asserts-the-effect"]
+        if offenders or scripts:
+            bare[path.name] = sorted(offenders + scripts)
+        allowed = ["%s:%d (%s)" % (name, line, shape)
+                   for name, line, shape in census
+                   if shape != "asserts-the-effect"]
+        if allowed:
+            excused[path.name] = sorted(allowed)
 
     assert not bare, (
         "these call sites execute policy source with no authority, so the "
-        "tests around them measure the refusal at method_exec.py:1412 rather "
+        "tests around them measure the refusal at method_exec.py:1595 rather "
         "than the behaviour they were written to pin: %r. Supply dsn/"
-        "allocation_id/operation_id and their assertions become meaningful "
-        "again. Two of these are policy steps written into a subprocess "
-        "probe rather than a call in the test body." % (bare,))
+        "allocation_id/operation_id -- tests.execution_authority.mint exists "
+        "for exactly this -- and their assertions become meaningful again. "
+        "Bare sites that are NOT defects, excluded by form: %r"
+        % (bare, excused))
 
 
 def _keys_forwarded_by_helper(module_source: str, helper: str) -> set[str]:
