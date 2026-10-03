@@ -42,7 +42,7 @@ FORBIDDEN_SOURCE = "import os\n" + METHOD_SOURCE
 
 def _policy_source(method_id: str, task_id: str = USE_TASK) -> str:
     return (
-        "def policy(view, state):\n"
+        "def STEP(view, state):\n"
         "    return {'action': {'kind': 'use_method',\n"
         "                      'target': %r,\n"
         "                      'inputs': {'method_id': %r, 'max_queries': 16},\n"
