@@ -68,28 +68,51 @@ jobs:
 
       - name: Collect
         run: |
-          set -o pipefail
-          python -m pytest --collect-only -q 2>&1 | tail -5
+          python -m pytest --collect-only -q > collect.log 2>&1
+          tail -3 collect.log
 
       - name: Suite
-        # pipefail, or `| tail` returns tail's status and an INTERNALERROR at
-        # collection reads as a green run with zero tests executed.
-        # The whole suite exceeds one job's timeout, so 3.13 is split into
-        # four shards; 3.12 and 3.14 run whole as the version bounds.
+        # Exit code is pytest's, never a pipe's. `pytest | tail` returns tail's
+        # status, and an INTERNALERROR at collection then reads as a green run
+        # with zero tests executed.
+        #
+        # The full log is the record; the console only shows a bounded slice.
+        # Deriving "my file is absent from the failures" from a tail is
+        # unsound - a py3.12 run reported 65 failed and kept 16 FAILED lines,
+        # a 3.13 shard reported 23 failed and kept 2. Every count read off the
+        # console is a floor, so the artifact below is what counts.
         run: |
-          set -o pipefail
           if [ -n "${{ matrix.group }}" ]; then
-            python -m pytest -q -p no:cacheprovider --splits 4 --group "${{ matrix.group }}" 2>&1 | tee suite.log | tail -80
+            args="--splits 4 --group ${{ matrix.group }}"
           else
-            python -m pytest -q -p no:cacheprovider 2>&1 | tee suite.log | tail -80
+            args=""
           fi
-          exit ${PIPESTATUS[0]}
+          rc=0
+          python -m pytest -q -p no:cacheprovider $args > suite.log 2>&1 || rc=$?
+          grep -E '^(FAILED|ERROR)' suite.log | sort -u > failures.txt || true
+          echo "distinct failure lines: $(wc -l < failures.txt)"
+          head -150 failures.txt
+          echo "--- tail of suite.log ---"
+          tail -25 suite.log
+          exit $rc
+
+      - name: Upload suite log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-py${{ matrix.python }}-${{ matrix.group }}
+          path: |
+            suite.log
+            failures.txt
+          retention-days: 14
 
   heavy:
     name: heavy archived
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    needs: [suite]
+    # Independent of the suite on purpose. Under `needs: [suite]` this job
+    # reported `skipped` for every red suite run, so the 25 archived files had
+    # never executed in CI and nothing here had ever been checked.
 
     services:
       postgres:
@@ -124,13 +147,36 @@ jobs:
           pip install pytest-split
 
       - name: Heavy archived, one file at a time
+        # `exit` belongs after the loop, not inside it: inside, the first
+        # failure ended the job green and the remaining 24 files never ran.
         run: |
-          set -o pipefail
+          rc=0
+          : > heavy-failures.txt
           for f in tests/_heavy_archived/test_*.py; do
             echo "=== $f"
-            python -m pytest -q -p no:cacheprovider "$f" 2>&1 | tail -3
-            exit ${PIPESTATUS[0]}
+            if python -m pytest -q -p no:cacheprovider "$f" > heavy.log 2>&1; then
+              tail -2 heavy.log
+            else
+              rc=1
+              echo "=== $f FAILED" | tee -a heavy-failures.txt
+              grep -E '^(FAILED|ERROR)' heavy.log | sort -u | tee -a heavy-failures.txt
+              tail -30 heavy.log
+            fi
           done
+          echo "files run: $(ls tests/_heavy_archived/test_*.py | wc -l)"
+          echo "files failing: $(grep -c 'FAILED$' heavy-failures.txt || true)"
+          if [ "$(wc -l < heavy-failures.txt)" -eq 0 ] && [ "$rc" -eq 0 ]; then
+            test -s heavy.log || echo "::error::no archived file produced a result"
+          fi
+          exit $rc
+
+      - name: Upload heavy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: heavy-archived
+          path: heavy-failures.txt
+          retention-days: 14
 
   consistency:
     name: line endings and migration currency
