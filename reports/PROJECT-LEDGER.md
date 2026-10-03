@@ -31,13 +31,46 @@ is null across 14 rows" came from an uncommitted disposable database that did
 not survive — no committed artifact has 14 policy rows, the bundles account for
 16/12/8, and `s09_pilot.py` never reads `accepted_action` at all.
 
-**Chain status: unresolved, and the coordinator's own report of it was measured
-on a broken tree.** The first end-to-end rehearsal reported 5 of 7 stages not
-running, but it ran against the `NameError` above. A second lane, checking
-committed bundles, found 12 of 16 and 8 of 16 episodes admitting a candidate and
-a non-null `next_action` reaching `accept_action`. Both readings predate the
-repairs. `WORKER-PROMPT.md` §A names the acceptance chain; it has not been
-demonstrated on a repaired tree.
+**Chain status: all seven stages ran, on a repaired tree.** `WORKER-PROMPT.md`
+§A names the acceptance chain; it is now demonstrated. Three runs at `904afd6`,
+zero crashes, counts reproduced exactly on a second fresh store, read from rows
+rather than from the terminal:
+
+| Stage | Evidence |
+|---|---|
+| permitted experience | 24 investigations, 17 attempts, 34 attempt_observations, 17 policy rows |
+| program decision | **17 of 17 `next_action` non-null**, 0 null; three STEP kinds emitted (`construct_method`, `diagnose`, `propose_revision`) |
+| admitted effect | 80 operations, **80 settled**, 80 reservations; 0 campaigns holding work |
+| observation | 17 boundary rows, 10 distinct observation ids |
+| checked artifact | 12 episodes carry a check, verdict union `{preserved}` |
+| retention/binding | **5 capability_releases**: 4 method + 1 policy |
+| fresh-process use | 24 records, 24 operation ids; 8 executed `acquired-sw-3834317f` |
+
+Method release and policy identity are separate as §A requires: the four method
+releases carry digest suffix `3834317f66d4`, matching the member 8 use records
+executed out of process, while each record separately carries a policy digest
+(`4296a3634b8f`), and the policy release carries `policy_version='ad01-policy-step-v1'`
+where the method releases carry `''`. The bundle's own verifier returns
+`status: "pass"` with an empty problems list, against `fail` with eight
+`policy-actions-unobservable` on the pre-fix tree.
+
+**What this does not establish.** Doubles only: `model_requests 13` counts
+durable `model-inference` operations served by the **fixture gateway**, not live
+acquisition. No credential exists on this host, so no live-route leg ran and
+nothing here bears on live acquisition. **One arm is missing** — P1 is
+`available`/`bound`, P2 is `unavailable` (`policy constructor unavailable: model
+call cap reached`) — so the learner-improvement comparison of §C has no P2
+cohort and this run cannot speak to it. Two figures are not obviously healthy:
+17 boundary rows carry 10 distinct observation ids (`obs-c4-diagnostic-ad01-w0-dev-sw-00`
+appears 4 times), and `consolidation_proposals` is 0 rows despite four releases
+existing.
+
+The earlier "5 of 7 stages did not run" reading is retracted on both counts. It
+was taken on a tree crashing at `_method_panel`, and its stage-5 claim read
+`effect_record.check` when `check` is nested at `effect_record.episode.check` —
+stage 5 was running. The store-poisoning mechanism that reading implied was
+never measured and does not exist: `in_flight` is scoped per investigation and
+`execute_pending` drains a held entry.
 
 **Open owner decisions, deliberately unforced.** `checker._verify_refusal`
 requires all four fields read `refused` while the refusal record deliberately
