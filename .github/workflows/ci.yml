@@ -15,32 +15,23 @@ concurrency:
 
 jobs:
   suite:
-    name: suite (py${{ matrix.python-version }})
-    runs-on: ${{ matrix.os }}
+    name: suite (py${{ matrix.python }}${{ matrix.group }})
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # One axis, fully enumerated. A `python-version` axis plus `include`
+      # entries multiplies them, and GitHub substitutes a missing key to the
+      # empty string before the shell runs - which produced a literal
+      # `--splits 4 --group ` and silently ran the whole suite unsharded.
       matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.12", "3.13", "3.14"]
         include:
-          - python-version: "3.12"
-            token: "b3120000"
-          - python-version: "3.13"
-            token: "b3130000"
-          - python-version: "3.14"
-            token: "b3140000"
-          - python-version: "3.13"
-            token: "b31300a1"
-            shard: "1"
-          - python-version: "3.13"
-            token: "b31300a2"
-            shard: "2"
-          - python-version: "3.13"
-            token: "b31300a3"
-            shard: "3"
-          - python-version: "3.13"
-            token: "b31300a4"
-            shard: "4"
+          - { python: "3.12", token: "b3120000", group: "" }
+          - { python: "3.13", token: "b3130000", group: "" }
+          - { python: "3.14", token: "b3140000", group: "" }
+          - { python: "3.13", token: "b31300a1", group: "1" }
+          - { python: "3.13", token: "b31300a2", group: "2" }
+          - { python: "3.13", token: "b31300a3", group: "3" }
+          - { python: "3.13", token: "b31300a4", group: "4" }
     timeout-minutes: 100
 
     services:
@@ -67,7 +58,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
 
       - name: Install
         run: |
@@ -87,12 +78,11 @@ jobs:
         # four shards; 3.12 and 3.14 run whole as the version bounds.
         run: |
           set -o pipefail
-          if [ -n "${{ matrix.shard }}" ]; then
-            opts="--splits 4 --group ${{ matrix.shard }}"
+          if [ -n "${{ matrix.group }}" ]; then
+            python -m pytest -q -p no:cacheprovider --splits 4 --group "${{ matrix.group }}" 2>&1 | tee suite.log | tail -80
           else
-            opts=""
+            python -m pytest -q -p no:cacheprovider 2>&1 | tee suite.log | tail -80
           fi
-          python -m pytest -q -p no:cacheprovider $opts 2>&1 | tee suite.log | tail -80
           exit ${PIPESTATUS[0]}
 
   heavy:
