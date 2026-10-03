@@ -22,6 +22,8 @@ import hashlib
 import json
 import os
 
+from dataclasses import dataclass
+
 try:
     import fcntl
 except ImportError:  # Windows has no fcntl; msvcrt provides the same lock.
@@ -68,6 +70,68 @@ INSTRUMENTS = ("boolean-rule-v1", "deliberation")
 
 class Refused(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class StoreIdentity:
+    """Where the store's unresolved work lives durably, and under whose name.
+
+    A frontier store is JSON on disk and is not going to stop being that. The
+    admitted-unrun effect it holds is a different thing from the whole
+    document, and that effect is what the mission entry's `in_flight` column
+    is for. Routing it there needs two names that only the durable side can
+    answer: the connection and the investigation whose row owns the column.
+
+    Carrying them here is what makes the store addressable rather than
+    merely informed. Before this, `improve_channel` held a `dsn` and
+    `_admit_and_spend` had no way to reach it, so the effect could only be
+    written where the caller already was.
+
+    `dsn` is a connection string, so it is deliberately never persisted into
+    the document: the identity stored in the JSON is `investigation_id`, and
+    `dsn` is the capability to reach that row, held for the process that was
+    handed it.
+    """
+
+    investigation_id: str
+    dsn: str | None = None
+
+    @property
+    def durable(self) -> bool:
+        """Whether the store can address the durable owner at all."""
+        return self.dsn is not None
+
+
+def _validated_identity(identity) -> StoreIdentity | None:
+    """A partial identity names nothing, so it is a refusal, not a default.
+
+    `None` is the one argument that yields no identity. Anything else must be
+    a `StoreIdentity` with both fields present and non-empty. The type is
+    checked rather than read with `getattr`, because a caller passing a bare
+    investigation id where an identity belongs is a caller that believes it
+    supplied an owner while the store carries none.
+    """
+    if identity is None:
+        return None
+    if not isinstance(identity, StoreIdentity):
+        raise Refused("a store identity is a StoreIdentity, not %r"
+                      % type(identity).__name__)
+    if identity.investigation_id is None or identity.dsn is None:
+        raise Refused("a store names its durable work by investigation_id"
+                      " and dsn together; one of them identifies nothing")
+    if not isinstance(identity.investigation_id, str) \
+            or not identity.investigation_id.strip():
+        raise Refused("a store identity needs an investigation id")
+    if not isinstance(identity.dsn, str) or not identity.dsn.strip():
+        raise Refused("a store identity needs a dsn")
+    return identity
+
+
+def _identity_record_is_valid(recorded) -> bool:
+    return (isinstance(recorded, dict)
+            and set(recorded) == {"investigation_id"}
+            and isinstance(recorded.get("investigation_id"), str)
+            and recorded["investigation_id"].strip() != "")
 
 
 def canonical(data) -> str:
@@ -758,7 +822,7 @@ def _check_opportunity(opportunity: dict) -> dict:
 
 
 def _blank_doc(namespace: str, environments: list, authority: dict,
-               mission: dict) -> dict:
+               mission: dict, identity: StoreIdentity = None) -> dict:
     """A new store's document.
 
     `mission` is the declaration read from the durable mission entry
@@ -766,6 +830,11 @@ def _blank_doc(namespace: str, environments: list, authority: dict,
     carried forward only so a STEP view can name the objective and so a
     reopened store can still be recognised as the same mission; it is no
     longer a second authority over the mission.
+
+    `identity` is recorded as the investigation id alone. A store opened
+    without one gets `"identity": null` rather than an absent key, so a
+    JSON-only store says it has no durable owner instead of leaving that to
+    be inferred from what the key happens to be.
 
     The previous version also wrote `mission` and a `mission_projection`
     digest of it, and `_validate_document` refused the store if either had
@@ -776,6 +845,8 @@ def _blank_doc(namespace: str, environments: list, authority: dict,
     return {
         "namespace": namespace,
         "frontier_version": FRONTIER_VERSION,
+        "identity": (None if identity is None else
+                     {"investigation_id": identity.investigation_id}),
         "mission": {
             "objective": mission["objective"],
             "environments": list(environments)},
@@ -808,13 +879,41 @@ def _blank_doc(namespace: str, environments: list, authority: dict,
 
 
 class FrontierStore:
-    def __init__(self, path) -> None:
+    def __init__(self, path, identity: StoreIdentity = None) -> None:
         self.path = str(path)
+        self.identity = _validated_identity(identity)
         doc = _read_document(self.path)
+        self._check_identity(doc)
         self._digest = _document_digest(doc)
         self._doc = doc
         self._validate_document()
         self._validate_active_package()
+
+    def _check_identity(self, doc: dict) -> None:
+        """The store opens under the investigation that wrote it.
+
+        A document records which investigation owns its unresolved work, and
+        a store that opens under a different one is a store whose effects
+        would be routed to another investigation's row. That is the same
+        fault as accepting an identity and ignoring it, so it is refused
+        rather than reconciled. A document with no recorded identity is one
+        written before this field existed; it is only readable by a store
+        that supplies none, and cannot be adopted by naming an
+        investigation after the fact.
+        """
+        recorded = (doc.get("identity") or {}).get("investigation_id")
+        if self.identity is None:
+            if recorded is not None:
+                raise Refused("store %s is owned by investigation %r; a"
+                              " nameless store cannot address it"
+                              % (self.path, recorded))
+            return
+        if recorded != self.identity.investigation_id:
+            raise Refused("store %s is owned by investigation %r, not %r"
+                          % (self.path, recorded,
+                             self.identity.investigation_id))
+        if not _identity_record_is_valid(doc.get("identity")):
+            raise Refused("store %s has a malformed identity" % self.path)
 
     def _lock(self):
         """Hold the store's exclusive lock for the length of one transaction.
@@ -852,6 +951,7 @@ class FrontierStore:
 
     def _reload_under_lock(self) -> None:
         doc = _read_document(self.path)
+        self._check_identity(doc)
         digest = _document_digest(doc)
         if digest != self._digest:
             self._doc = doc
@@ -2203,7 +2303,8 @@ class FrontierStore:
 
 
 def create_store(path, *, namespace: str, mission: dict,
-                 authority: dict) -> FrontierStore:
+                 authority: dict,
+                 identity: StoreIdentity = None) -> FrontierStore:
     """Open a new store over a mission declared elsewhere.
 
     `mission` is the durable entry's declaration
@@ -2212,6 +2313,12 @@ def create_store(path, *, namespace: str, mission: dict,
     what a reopened store is recognised by. It does not keep the six things a
     mission holds, so there is no second copy to fall out of step with the
     row that owns them.
+
+    `identity` names the investigation whose `in_flight` row would own this
+    store's admitted-unrun effects, and is recorded in the document so a
+    later open cannot come in under a different name. A caller with no
+    `dsn` in scope gets a store with no durable owner, and that absence is
+    recorded as absence rather than left unstated.
     """
     if namespace != NAMESPACE:
         raise Refused("lane stores live in namespace %s" % NAMESPACE)
@@ -2224,9 +2331,11 @@ def create_store(path, *, namespace: str, mission: dict,
             authority.get("queries")) or not _is_count(
             authority.get("steps")):
         raise Refused("authority needs nonnegative query/step totals")
+    owned = _validated_identity(identity)
     store = FrontierStore.__new__(FrontierStore)
     store.path = str(path)
+    store.identity = owned
     store._doc = _blank_doc(namespace, mission["environments"], authority,
-                            mission)
+                            mission, identity=owned)
     store.save()
     return store
