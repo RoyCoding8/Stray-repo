@@ -1168,8 +1168,36 @@ def _construct_policy_revision(investigation: dict, seen: dict, seed_obs: dict,
                    "queries": episode.get("queries", 0),
                    "detail": {"proposal_id": proposal["proposal_id"],
                               "kind": "policy_revision",
-                              "reason": episode.get("reason", "")}}
+                              "reason": _disposition_reason(episode)}}
     return observation, episode, int(episode.get("queries", 0))
+
+
+def _disposition_reason(episode: dict) -> str:
+    """Why this episode reached its disposition, in words.
+
+    A refusal always has one, and it is kept verbatim. `bound` is the
+    disposition that has none - nothing was refused, the assessment
+    came back `bind` and the durable binding took - and projecting it as
+    `""` writes a recorded outcome with no stated reason, which is the
+    one thing an auditor cannot act on: an empty string cannot be
+    distinguished from a reason that was meant and lost. The archived
+    `invl02-r123` run carries exactly that shape, so it is a shape this
+    code has already produced.
+
+    The reason for a binding is therefore the binding itself, named. This
+    says nothing about whether the bound bytes can execute; a reason
+    states what was decided, and a verdict that carries none of its own
+    is not auditable whether or not its program runs.
+    """
+    reason = episode.get("reason")
+    if reason:
+        return str(reason)
+    disposition = str(episode.get("disposition") or "")
+    if disposition == "bound":
+        return ("bound: assessment outcome was bind and the durable "
+                "binding took under release %r"
+                % (episode.get("release_id", ""),))
+    return disposition or "no disposition recorded"
 
 
 def _frozen_policy_origin(dsn: str, candidate_digest: str,

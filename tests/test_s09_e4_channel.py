@@ -117,10 +117,38 @@ def _probe_step(x_expression: str) -> str:
 
 
 def test_prose_is_refused_as_not_executable():
+    """Pinned to the branch it names, so it can fail.
+
+    This asserted only `eligibility != ELIGIBLE` and a truthy `reason`,
+    which any refusal at all satisfies - a view list of `[]` refuses for
+    `no-boundary-action` and the test would still pass. A guard that
+    cannot be made to fail is not a guard, so the refusal is pinned to
+    `prose-recommendation` and to the phrase that carries it.
+
+    `PROSE` is not Python, so it is refused before any of the questions
+    that need bytes, which is the branch the name claims. The sibling
+    test below asserts the neighbouring branch stays where it is, so
+    neither can be satisfied by the other.
+    """
     verdict = channel.classify_revision(PROSE, views=[_view()])
 
-    assert verdict["eligibility"] != channel.ELIGIBLE
-    assert verdict["reason"]
+    assert verdict["eligibility"] == channel.INELIGIBLE_PROSE
+    assert "not executable STEP" in verdict["reason"]
+
+
+def test_prose_is_refused_before_the_boundary_question_is_asked():
+    """The ordering the previous test cannot see.
+
+    `classify_revision` answers the executability question before it
+    asks whether a learner view exists. Prose is refused for not being
+    executable whether or not a view was supplied, which is the ordering
+    that keeps a malformed program from being reported as a boundary
+    problem - the cheaper verdict must not hide behind the first one.
+    """
+    verdict = channel.classify_revision(PROSE, views=[])
+
+    assert verdict["eligibility"] == channel.INELIGIBLE_PROSE, (
+        "prose was refused for a later reason instead: %r" % (verdict,))
 
 
 def test_eligibility_needs_at_least_one_learner_view():
