@@ -87,6 +87,19 @@ class StudyGuardRefusal(RuntimeError):
     pass
 
 
+class BundleVerificationRefusal(ValueError):
+    """A bundle its own verifier rejected, carried with the verdict.
+
+    The refusal used to raise a bare message while the bundle carried no
+    verdict at all, so a caller that caught it could not read why and a
+    caller that did not catch it never learned the study failed.
+    """
+
+    def __init__(self, message: str, bundle: dict):
+        super().__init__(message)
+        self.bundle = bundle
+
+
 class _BufferedResponse:
     def __init__(self, response, raw):
         self.status_code = response.status_code
@@ -1357,11 +1370,13 @@ def run_study(dsn: str, out_dir, *,
             json.dumps(bundle[name], sort_keys=True, indent=1,
                        default=str) + "\n")
     verdict = _verify.verify_bundle(bundle)
+    bundle["verdict"] = verdict
     (out / "verify.json").write_text(
         json.dumps(verdict, sort_keys=True, indent=1) + "\n")
-    if verdict["status"] != "pass" and report["complete"]:
-        raise ValueError("pilot bundle fails verification: %s" %
-                         verdict["problems"])
+    if verdict["status"] != "pass":
+        raise BundleVerificationRefusal(
+            "pilot bundle fails verification: %s" % verdict["problems"],
+            bundle)
     return bundle
 
 
