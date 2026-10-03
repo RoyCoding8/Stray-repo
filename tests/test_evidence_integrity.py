@@ -147,6 +147,10 @@ def _write_synthetic_authority(out, e12):
     return operations, child_receipts
 
 
+_E3_FIXTURE_IDENTITY = frontier.StoreIdentity(
+    investigation_id="invl02-e12-fixture", dsn="dbname=invl02-e3-fixture")
+
+
 def _bound_acquired_store(path, arm="P1"):
     from settlement.gateway import ModelRequest, ModelResponse, Usage
 
@@ -159,6 +163,7 @@ def _bound_acquired_store(path, arm="P1"):
 
     store = frontier.create_store(
         path, namespace=frontier.NAMESPACE,
+        identity=_E3_FIXTURE_IDENTITY,
         mission={"objective": "m", "environments": [{"split": "dev",
                                                      "seed": 4}]},
         authority={"queries": 16, "steps": 12})
@@ -189,8 +194,9 @@ def _bound_acquired_store(path, arm="P1"):
                     "control_id": package["control_id"],
                     "package_digest": package["package_digest"],
                     "response_digest": package["response_digest"]},
-        rules.make_task("dev", 4))
-    return frontier.FrontierStore(str(path)), bound
+        rules.make_task("dev", 4), dsn=_E3_FIXTURE_IDENTITY.dsn,
+        investigation_id=_E3_FIXTURE_IDENTITY.investigation_id)
+    return frontier.FrontierStore(str(path), _E3_FIXTURE_IDENTITY), bound
 
 
 def _write_bound_e3_fixture(tmp_path, arm="P1"):
@@ -200,7 +206,8 @@ def _write_bound_e3_fixture(tmp_path, arm="P1"):
     store_path = tmp_path / "frontier.json"
     store, bound = _bound_acquired_store(store_path, arm)
     summary = {"store_path": str(store_path),
-               "store_digest": driver._file_digest(store_path)}
+               "store_digest": driver._file_digest(store_path),
+               "investigation_id": _E3_FIXTURE_IDENTITY.investigation_id}
     e12 = {**_run_identity(freeze),
            "status": "incomplete",
            "execution_status": "incomplete",
@@ -358,16 +365,31 @@ class _FakeDurableE3Authority:
 
 
 def _replace_local_receipt_with_durable_test_seam(out, store, bound):
+    """Stand in for a durable receipt where no live gateway ran.
+
+    The launcher receipt inside `details` is the launcher's own record of the
+    execution, so rebinding the outer identity alone leaves the inner one
+    still saying `local:` — a receipt `frontier._validate_child_receipt` is
+    built to refuse. The inner identity is the launcher's, and a durable
+    receipt is one whose launcher is identified durably, so both are rebound
+    together. This seam is why the mismatch went unnoticed for as long as it
+    did: the guard reads `if launcher.get("receipt_identity") is not None`,
+    and before the launcher was given an identity at all the check was inert.
+    """
     local = store.accepted_revisions[-1]["receipt"]
     details = dict(local["details"])
     raw_payload = dict(details["raw_payload"])
     result = {key: raw_payload[key] for key in ("action", "state")}
     raw_payload["result"] = result
+    durable_identity = "durable:test:%s" % local["operation_id"]
+    launcher = dict(raw_payload["launcher_receipt"])
+    launcher["receipt_identity"] = durable_identity
+    raw_payload["launcher_receipt"] = launcher
     details["raw_payload"] = raw_payload
     durable = frontier.make_evidence_record(
         local["kind"], local["operation_id"], local["outcome"],
         attempt=local["attempt"],
-        receipt_identity="durable:test:%s" % local["operation_id"],
+        receipt_identity=durable_identity,
         arm=local["arm"], task_id=local["task_id"],
         source_digest=local["source_digest"],
         artifact_digest=local["artifact_digest"],
@@ -572,3 +594,135 @@ def test_e3_ignores_forged_bound_summary_without_durable_revision(tmp_path,
     assert result["reason"] == "no eligible revised improver"
     assert result["arm_revisions"]["P1"] == \
         "durable frontier record is missing"
+
+
+def _write_owned_e3_store(tmp_path, arm="P1"):
+    """A store that names its owner, as a real E12 frontier store does.
+
+    It carries no accepted revision, so `run_e3` stops at the revision-binding
+    check rather than further on. What this fixture exists to reach is the
+    store open itself, which a bound fixture cannot reach on its own: binding
+    a revision needs a live execution and a database.
+    """
+    store_path = tmp_path / "owned.json"
+    identity = frontier.StoreIdentity(
+        investigation_id="invl02-e12-%s" % arm, dsn="dbname=e3-owner")
+    store = frontier.create_store(
+        store_path, namespace=frontier.NAMESPACE,
+        mission={"objective": "m", "environments": [{"split": "dev",
+                                                     "seed": 4}]},
+        authority={"queries": 16, "steps": 12}, identity=identity)
+    store.bind_active(channel.make_control("low"))
+    store.save()
+    return store_path, identity
+
+
+def _write_adopted_e3_store(tmp_path, arm="P1"):
+    """An owned store holding an active, retained acquired revision.
+
+    No database: the gateway is a stub and the package is built from its own
+    dispatch evidence, so this reaches as far into `run_e3` as a run without
+    PostgreSQL can. The dispatch-provenance guard is one step further on and
+    needs a child receipt, which only a real execution mints — the bound
+    fixture reaches it under a live database and no fixture can reach it
+    without one.
+    """
+    from settlement.gateway import ModelRequest, ModelResponse, Usage
+
+    store_path = tmp_path / "owned.json"
+    identity = frontier.StoreIdentity(
+        investigation_id="invl02-e12-%s" % arm, dsn="dbname=e3-owner")
+    store = frontier.create_store(
+        store_path, namespace=frontier.NAMESPACE,
+        mission={"objective": "m", "environments": [{"split": "dev",
+                                                     "seed": 4}]},
+        authority={"queries": 16, "steps": 12}, identity=identity)
+    base = channel.make_control("low")
+    store.bind_active(base)
+
+    class Gateway:
+        def infer(self, request):
+            return ModelResponse(
+                request.operation_id,
+                json.dumps({"entry": channel.IMPROVE_LOW_SOURCE}),
+                {}, Usage(), "stop")
+
+    guard = live.LiveGuard(Gateway(), pinned_model="test-model", ceiling=1)
+    operation_id = "op-acquire-%s" % arm
+    raw_prompt = "construct"
+    response = guard.infer(ModelRequest(
+        model="test-model", messages=({"role": "user", "content": raw_prompt},),
+        max_output_tokens=8, deadline_ms=1000, operation_id=operation_id),
+        evidence={"arm": arm, "task": rules.make_task("dev", 4)["task_id"],
+                  "attempt": 1, "raw_prompt": raw_prompt})
+    dispatch = guard.provenance(operation_id)
+    package = live.parse_and_build_live_package(
+        dict(base), response.text, "acquired-%s-r1" % arm, dispatch=dispatch)
+    store.record_evidence(dispatch)
+    dispatch = guard.finalize_evidence(
+        operation_id, parse_outcome="accepted",
+        accepted_candidate_digest=package["package_digest"],
+        parsed_source_digest=package["imp_digest"],
+        package_digest=package["package_digest"],
+        parent_digest=package["parent_digest"], round_no=1)
+    live.retain_acquired(store, package, dispatch)
+    live.adopt_live_revision(store, package, arm=arm)
+    return store_path, identity, package
+
+
+def _write_e3_bundle(tmp_path, summary, package_digest, arm="P1"):
+    out = tmp_path / "e12"
+    out.mkdir()
+    freeze = driver.freeze_e12(out)
+    (out / "e12-run.json").write_text(json.dumps({
+        **_run_identity(freeze),
+        "arms": {arm: {"status": "available", "frontier": summary,
+                       "revision": {"disposition": "bound",
+                                    "package_digest": package_digest}},
+                 "P2": {"status": "unavailable"}}}) + "\n")
+    (out / ("frontier-%s.json" % arm)).write_text(
+        json.dumps(summary) + "\n")
+    return out
+
+
+def test_e3_reports_a_summary_with_no_investigation_as_absent(tmp_path,
+                                                               monkeypatch):
+    monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
+    store_path, _identity = _write_owned_e3_store(tmp_path)
+    summary = {"store_path": str(store_path),
+               "store_digest": driver._file_digest(store_path)}
+    out = _write_e3_bundle(tmp_path, summary, "0" * 64)
+    result = driver.run_e3("unused", tmp_path / "e3", out)
+    assert result["arm_revisions"]["P1"] == \
+        "frontier summary names no investigation"
+    assert "unreadable" not in result["arm_revisions"]["P1"]
+
+
+def test_e3_reaches_the_accepted_revision_check_past_the_store_open(
+        tmp_path, monkeypatch):
+    monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
+    store_path, identity, package = _write_adopted_e3_store(tmp_path)
+    summary = {"store_path": str(store_path),
+               "store_digest": driver._file_digest(store_path),
+               "investigation_id": identity.investigation_id}
+    out = _write_e3_bundle(
+        tmp_path, summary, package["package_digest"])
+    result = driver.run_e3("unused", tmp_path / "e3", out)
+    assert result["status"] == "unavailable"
+    assert result["arm_revisions"]["P1"] == \
+        "durable accepted revision evidence is missing"
+
+
+def test_e3_reports_an_owner_mismatch_as_unreadable_not_absent(tmp_path,
+                                                               monkeypatch):
+    monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
+    store_path, _identity = _write_owned_e3_store(tmp_path)
+    summary = {"store_path": str(store_path),
+               "store_digest": driver._file_digest(store_path),
+               "investigation_id": "some-other-investigation"}
+    out = _write_e3_bundle(tmp_path, summary, "0" * 64)
+    result = driver.run_e3("unused", tmp_path / "e3", out)
+    assert result["status"] == "unavailable"
+    assert "durable frontier store is unreadable" in \
+        result["arm_revisions"]["P1"]
+    assert "no investigation" not in result["arm_revisions"]["P1"]

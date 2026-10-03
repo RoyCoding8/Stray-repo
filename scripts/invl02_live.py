@@ -2578,8 +2578,11 @@ def _write_e12_revision_receipts(out: Path, freeze_digest: str,
         store_path = summary.get("store_path")
         if not store_path:
             continue
+        investigation_id = summary.get("investigation_id")
+        if not investigation_id:
+            continue
         store = _live._open_owned_store(str(store_path), dsn,
-                                        summary["investigation_id"])
+                                        investigation_id)
         records = [record for record in store.accepted_revisions
                    if record.get("arm") == arm
                    and isinstance(record.get("receipt"), dict)]
@@ -3009,9 +3012,13 @@ def run_e3(dsn: str, out, e12_dir, *, authority=None) -> dict:
                 or summary.get("store_digest") != _file_digest(store_path)):
             reasons[arm] = "frontier store digest does not match E12"
             continue
+        investigation_id = summary.get("investigation_id")
+        if not investigation_id:
+            reasons[arm] = "frontier summary names no investigation"
+            continue
         try:
             store = _live._open_owned_store(
-                str(store_path), dsn, summary["investigation_id"])
+                str(store_path), dsn, investigation_id)
         except Exception as exc:
             reasons[arm] = "durable frontier store is unreadable: %s" % exc
             continue
