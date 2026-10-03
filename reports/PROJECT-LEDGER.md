@@ -78,9 +78,40 @@ names the admitted method in `requested`/`selected`; both are right about
 different readers. Four further sites compute a verdict and discard it with a
 hardcoded `return 0` (`agenda01/replay.py`, `team01/entry.py`,
 `representation/acquire/experiment.py`, `ad01/experience_axis.py` — the last
-containing both the correct and incorrect form in one file). Five `return` paths
-at `trajectory.py:971-1018` fire before `journal["decision"]` is set, writing
-`accepted_action` as JSON `null` against a `NOT NULL` column.
+containing both the correct and incorrect form in one file).
+
+**A refused boundary's `accepted_action` row is correct, and two refutations
+were needed to establish it.** The first account claimed the column was written
+as JSON `null` against a `NOT NULL` column; `JsonbDumper.dump(Jsonb(None))`
+sends the jsonb *literal* `null`, which satisfies `NOT NULL`, so there was no
+constraint risk at all. The second account held that the five early returns at
+`trajectory.py:971-1018` were a different boundary the contract did not reach.
+CI refuted that. On a target-refused boundary the stored column is
+`json_kind='object'` carrying the real admitted decision —
+`{'kind': 'development', 'task_id': 'ad01-w0-dev-sw-01', 'diagnostic':
+'software', 'max_queries': 4}`. `StepPolicyConsumer.decide` calls
+`persist_step_transition` (`agenda_policy.py:1125`) with the admitted
+investigation *before* returning, which inserts the row through `_s09_accept`
+(`trajectory.py:327`); `_s09_incorporate`'s `INSERT ... ON CONFLICT DO NOTHING`
+at `:425` is then a no-op and its `UPDATE` at `:429` touches only `status`,
+`effect_record` and `effect_id`. Both accounts were derived from a Python value
+rather than the stored row. `effect_record.episode.fallback_reason` survives, so
+the refusal reason is durable, and `tests/test_inv_a_counterexamples.py:559`
+remains correct for the step-exhausted case where no candidate was ever
+admitted — the two paths are distinguishable by whether a candidate existed.
+
+**CI, first honest full-suite run.** Run 37146141390. The `suite-py3.13-2`
+shard reports **68 distinct failure lines**, and the identical baseline run
+37145838731 reports 68 with **zero added** by this batch's commits. **55 of the
+68 carry one identical refusal** — `MethodExecutionError: refused: execution
+needs explicit authority and identity` — which is the 13 bare call sites the
+repaired executor gate names, now failing as tests instead of being invisible to
+a blind gate. `tests/test_invd3_envelope.py::test_documented_envelope_example_runs_through_child`
+is confirmed already red at tip, so the gate had been reading green over failing
+tests. One guard fired on new information:
+`test_the_reader_census_is_not_vacuous_inside_a_lane_worktree` reports
+`scripts/s09_pilot.py:1114` as a reader of `S09_STUDY_CALLS_ALREADY_SPENT`,
+which is exactly what that guard exists to catch.
 
 **Runtime.** Closure checks used WSL, PostgreSQL 18.6 and real POSIX children,
 per `WORKER-PROMPT.md`. From 2026-10-03 the human set Windows-first with CI
