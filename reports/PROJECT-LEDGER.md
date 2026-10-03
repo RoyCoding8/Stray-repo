@@ -1,5 +1,60 @@
 # Project ledger
 
+## Coordinator batch: A–C closure, 2026-10-02 → 2026-10-03
+
+Integration branch `codex/ab-closure-2026-10-02`, from `5349dab`. 46 commits,
+evidence delta empty against `reports/evidence/` and `evidence-ad01/` across
+every one of them. Remotes equal at `904afd6`.
+
+**Five false greens closed, four of them the coordinator's own.** The recurring
+failure this project already names — a check that reads green while matching
+nothing — was concentrated in the gates rather than the mechanisms:
+
+| Defect | Reported as | Measured |
+|---|---|---|
+| `test_inv_z2_red_audit` executor tuple | gate green, 0 files | named neither guarded executor; matched 0 of 31 sites. Now 13 offenders, 18 excused by form |
+| `s09_pilot.run_study` | exit 0, `episodes=16 use=24` | own `verify.json` said `fail` with 52 problems; `report["complete"]` licensed discarding it |
+| `_method_panel` (`trajectory.py:895`) | method release works | `hashlib` read with no import in scope; `NameError` on 6/6 runs, blamed on the repair meant to close the stage |
+| CI `heavy` job | archived tests run in CI | `needs: [suite]` reported `skipped` on every red run, and `exit` sat inside the for-loop |
+| `test_a43_method_release` | lane complete | 6 of 9 red at the merged tip; the coordinator merged without running the lane's tests |
+
+**Six coordinator premises refuted by measurement, recorded because the
+briefs were the defect.** The WSL path in the batch brief omitted the `AI/`
+segment; the decoy path is an empty directory, and an empty directory yields a
+green census and a green test run rather than an error. A claimed store-poisoning
+mechanism does not exist — `in_flight` is scoped per investigation and
+`execute_pending` drains a held entry. The claim that `incumbent_baseline` was
+dropped by `export_campaign` was wrong: that export emits no disposition
+concept to drop it from. A cited pilot bundle with digest `393cdb76` and eight
+`policy-actions-unobservable` problems is not on disk. And "every `next_action`
+is null across 14 rows" came from an uncommitted disposable database that did
+not survive — no committed artifact has 14 policy rows, the bundles account for
+16/12/8, and `s09_pilot.py` never reads `accepted_action` at all.
+
+**Chain status: unresolved, and the coordinator's own report of it was measured
+on a broken tree.** The first end-to-end rehearsal reported 5 of 7 stages not
+running, but it ran against the `NameError` above. A second lane, checking
+committed bundles, found 12 of 16 and 8 of 16 episodes admitting a candidate and
+a non-null `next_action` reaching `accept_action`. Both readings predate the
+repairs. `WORKER-PROMPT.md` §A names the acceptance chain; it has not been
+demonstrated on a repaired tree.
+
+**Open owner decisions, deliberately unforced.** `checker._verify_refusal`
+requires all four fields read `refused` while the refusal record deliberately
+names the admitted method in `requested`/`selected`; both are right about
+different readers. Four further sites compute a verdict and discard it with a
+hardcoded `return 0` (`agenda01/replay.py`, `team01/entry.py`,
+`representation/acquire/experiment.py`, `ad01/experience_axis.py` — the last
+containing both the correct and incorrect form in one file). Five `return` paths
+at `trajectory.py:971-1018` fire before `journal["decision"]` is set, writing
+`accepted_action` as JSON `null` against a `NOT NULL` column.
+
+**Runtime.** Closure checks used WSL, PostgreSQL 18.6 and real POSIX children,
+per `WORKER-PROMPT.md`. From 2026-10-03 the human set Windows-first with CI
+carrying PostgreSQL and Linux/macOS; local WSL runs only when a lane states why
+Windows cannot answer, and is shut down when idle. `os.killpg` has no Windows
+equivalent, so bounded-execution proof stays in CI or WSL by necessity.
+
 ## Surgical closure and recoverable history, 2026-10-02
 
 Current source lives on `codex/agent-society`; the remote default is its snapshot
