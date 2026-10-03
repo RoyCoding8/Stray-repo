@@ -210,14 +210,14 @@ def test_a_store_never_migrated_is_refused_rather_than_read_as_empty() -> None:
     """
     import psycopg
 
-    from experiments.ad01 import s09_run_isolation as iso
+    from tests.conftest_isolation import admin_dsn, dsn_with_dbname
 
-    admin = iso.DEFAULT_ADMIN_DSN
+    admin = admin_dsn()
     name = "s09iso_r10-untouched_000000000000"
     with psycopg.connect(admin, autocommit=True) as conn:
         conn.execute('CREATE DATABASE "%s"' % name)
     try:
-        dsn = "dbname=%s %s" % (name, admin.split(" ", 1)[1])
+        dsn = dsn_with_dbname(admin, name)
         with pytest.raises(Exception) as raised:
             db.verify_current(dsn, MIGRATIONS)
         assert "schema_migrations" in str(raised.value), str(raised.value)

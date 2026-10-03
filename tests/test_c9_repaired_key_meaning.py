@@ -51,12 +51,15 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from tests.conftest_isolation import admin_dsn, dsn_with_dbname  # noqa: E402
 
 from settlement import agenda, broker, store
 from settlement.common import Command
 
 DATABASE = "v3c9_repaired_key"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DATABASE
+DSN = dsn_with_dbname(admin_dsn(), DATABASE)
 MIGRATIONS = ROOT / "migrations"
 
 
@@ -64,8 +67,7 @@ MIGRATIONS = ROOT / "migrations"
 def dsn():
     from settlement import db
 
-    admin = psycopg.connect(
-        "host=/var/run/postgresql user=ubuntu dbname=postgres", autocommit=True)
+    admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.execute("CREATE DATABASE %s" % DATABASE)
     admin.close()
@@ -79,8 +81,7 @@ def dsn():
                 cur.execute('TRUNCATE TABLE "%s" CASCADE' % table)
         conn.commit()
     yield DSN
-    admin = psycopg.connect(
-        "host=/var/run/postgresql user=ubuntu dbname=postgres", autocommit=True)
+    admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.close()
 

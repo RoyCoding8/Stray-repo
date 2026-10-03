@@ -13,13 +13,15 @@ import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from threading import Thread
-from urllib.parse import urlencode
 
 import httpx
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from tests.conftest_isolation import admin_url  # noqa: E402
 
 from experiments.ad01 import s09_study_preflight as preflight
 from experiments.ad01.s09_run_isolation import create_disposable_db, \
@@ -38,7 +40,6 @@ from experiments.ad01.s09_study_preflight import (
     Verdict_,
 )
 
-PG_HOST = "/var/run/postgresql"
 RUN_TOKEN = "preflight"
 MODEL = "frozen-model-under-test"
 OTHER_MODEL = "a-model-the-freeze-never-named"
@@ -49,7 +50,7 @@ DOUBLED_BUNDLE = ROOT / "evidence_s09pilot/doubled-r1"
 
 
 def _study_dsn(name: str) -> str:
-    return "postgresql:///?%s" % urlencode({"host": PG_HOST, "dbname": name})
+    return admin_url(name)
 
 
 @pytest.fixture()

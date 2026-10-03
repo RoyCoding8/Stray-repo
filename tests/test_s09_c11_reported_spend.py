@@ -20,13 +20,15 @@ import json
 import os
 import sys
 from pathlib import Path
-from urllib.parse import urlencode
 
 import psycopg
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from tests.conftest_isolation import admin_url  # noqa: E402
 
 from experiments.ad01 import s09_study_preflight as preflight
 from experiments.ad01.s09_run_isolation import disposable_db
@@ -36,7 +38,6 @@ from experiments.ad01.s09_study_preflight import (
     Verdict,
 )
 
-PG_HOST = "/var/run/postgresql"
 RUN_TOKEN = "c11reported"
 MODEL = "frozen-model-under-test"
 STUDY_ROOT = "s09-m5-pilot"
@@ -48,8 +49,7 @@ DECLARED = "S09_STUDY_CALLS_ALREADY_SPENT"
 def dsn():
     with disposable_db(RUN_TOKEN,
                        migrations_dir=ROOT / "migrations") as database:
-        yield "postgresql:///?%s" % urlencode(
-            {"host": PG_HOST, "dbname": database.name})
+        yield admin_url(database.name)
 
 
 def _freezer() -> preflight.StudyFreeze:
@@ -162,8 +162,7 @@ def test_a_store_the_preflight_could_not_read_spends_nothing(dsn) -> None:
     """
     name = "s09iso_%s-unreadable" % RUN_TOKEN
     refused = preflight.DatabaseObservation(
-        database=preflight.StudyDatabase("postgresql:///%s?dbname=%s"
-                                         % (PG_HOST, name), name),
+        database=preflight.StudyDatabase(admin_url(name), name),
         refused="could not connect to server")
 
     spent = preflight.already_spent_in_store(refused)

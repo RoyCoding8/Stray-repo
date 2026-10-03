@@ -37,7 +37,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import tests.conftest_isolation as iso  # noqa: E402
 
 from tests.conftest_isolation import (  # noqa: E402
-    DEFAULT_ADMIN_DSN,
     FORBIDDEN,
     LOCK_NAMESPACE,
     STALE_AFTER,
@@ -66,7 +65,7 @@ pytestmark = pytest.mark.skipif(
 def _connect():
     import psycopg
 
-    return psycopg.connect(DEFAULT_ADMIN_DSN, autocommit=True)
+    return psycopg.connect(iso.admin_dsn(), autocommit=True)
 
 
 def _create(name: str) -> None:
@@ -137,9 +136,9 @@ def _write_holder_script() -> None:
     HOLDER_SCRIPT.write_text(
         "import os, signal, sys, time\n"
         "sys.path.insert(0, %r)\n"
-        "from tests.conftest_isolation import RunClaim, DEFAULT_ADMIN_DSN\n"
+        "from tests.conftest_isolation import RunClaim, admin_dsn\n"
         "marker = sys.argv[2]\n"
-        "claim = RunClaim(sys.argv[1], DEFAULT_ADMIN_DSN).acquire()\n"
+        "claim = RunClaim(sys.argv[1], admin_dsn()).acquire()\n"
         "previous = {}\n"
         "for signum in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):\n"
         "    previous[signum] = signal.getsignal(signum)\n"
@@ -242,7 +241,7 @@ def test_a_live_run_is_excluded_even_when_its_database_passes_the_age_bound():
     child = _spawn_holder(token)
     try:
         offered = {s.name for s in stale_plan(
-            DEFAULT_ADMIN_DSN, age=timedelta(seconds=0), only=frozenset({name}))}
+            iso.admin_dsn(), age=timedelta(seconds=0), only=frozenset({name}))}
         assert name not in offered, (
             "a database belonging to a live run was offered for dropping "
             "because it passed the age bound; age must never override a lock")
@@ -256,9 +255,9 @@ def test_a_claim_in_this_process_protects_its_own_database():
     name = _name_for(token, "claimed")
     _create(name)
     try:
-        with RunClaim(token, DEFAULT_ADMIN_DSN):
+        with RunClaim(token, iso.admin_dsn()):
             assert _token_is_locked(token)
-            dropped = sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+            dropped = sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                                   only=frozenset({name}))
         assert dropped == [], (
             "the sweep dropped a database whose run was demonstrably live")
@@ -283,12 +282,12 @@ def test_red_the_database_survives_when_the_reclaim_condition_is_false():
     name = _name_for("a11ce0f0", "selneg")
     _create(name)
     try:
-        plan = stale_plan(DEFAULT_ADMIN_DSN, age=timedelta(days=3650),
+        plan = stale_plan(iso.admin_dsn(), age=timedelta(days=3650),
                           only=frozenset({name}))
         assert plan == [], (
             "a ten-year-old bound still offered this database, so the "
             "condition being false is not actually being honoured")
-        assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(days=3650),
+        assert sweep_stale(iso.admin_dsn(), age=timedelta(days=3650),
                            only=frozenset({name})) == []
         assert _exists(name), "the database was dropped with the condition false"
     finally:
@@ -300,7 +299,7 @@ def test_green_the_same_database_is_dropped_once_the_condition_is_restored():
     name = _name_for("a11ce0f0", "selneg")
     _create(name)
     try:
-        dropped = sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        dropped = sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                               only=frozenset({name}))
         assert dropped == [name], (
             "an abandoned database past the age bound was not reclaimed")
@@ -311,7 +310,7 @@ def test_green_the_same_database_is_dropped_once_the_condition_is_restored():
 
 def test_the_sweep_never_offers_a_protected_or_foreign_database():
     offered = {s.name for s in stale_plan(
-        DEFAULT_ADMIN_DSN, age=timedelta(seconds=0))}
+        iso.admin_dsn(), age=timedelta(seconds=0))}
     for name in ("ec02test_live", "postgres", "settlement",
                  "s09iso_c23eval_f3ae73582f28", "s09iso_o-pilot_d66db0dfcfce"):
         assert name not in offered, (
@@ -324,7 +323,7 @@ def test_a_protected_name_is_refused_even_if_it_looked_like_a_candidate():
     name = _name_for("a11ce0f1", "shielded")
     _create(name)
     try:
-        dropped = sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        dropped = sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                               only=frozenset({name}),
                               protected=frozenset({name}))
         assert dropped == [] and _exists(name), (
@@ -337,7 +336,7 @@ def test_a_dry_run_reports_without_dropping():
     name = _name_for("a11ce0f2", "dryrun")
     _create(name)
     try:
-        assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        assert sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                            only=frozenset({name}), dry_run=True) == [name]
         assert _exists(name), "a dry run dropped a database"
     finally:
@@ -351,7 +350,7 @@ def test_only_narrows_the_sweep_to_the_named_set():
     _create(name)
     _create(other)
     try:
-        dropped = sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        dropped = sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                               only=frozenset({name}), dry_run=True)
         assert dropped == [name]
         assert _exists(other), "a narrowed sweep still reached another database"
@@ -391,9 +390,9 @@ def test_a_sigkilled_pytest_run_leaves_a_database_the_next_run_reclaims():
     (victim / "test_killed.py").write_text(
         "import os\n"
         "import psycopg\n"
+        "from tests.conftest_isolation import admin_dsn\n"
         "def test_creates_a_database():\n"
-        "    with psycopg.connect('dbname=postgres host=/var/run/postgresql "
-        "user=ubuntu', autocommit=True) as conn:\n"
+        "    with psycopg.connect(admin_dsn(), autocommit=True) as conn:\n"
         "        conn.execute('CREATE DATABASE \"%s\"' % os.environ['S09ISO_VICTIM_DB'])\n",
         encoding="utf-8")
 
@@ -430,13 +429,13 @@ def test_a_sigkilled_pytest_run_leaves_a_database_the_next_run_reclaims():
         # half of the predicate, which zero preserves and which is the half
         # that must never be wrong: with the claim held the same database must
         # survive, and with the claim gone it must be reclaimed.
-        with RunClaim(token, DEFAULT_ADMIN_DSN):
-            assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        with RunClaim(token, iso.admin_dsn()):
+            assert sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                                only=frozenset({name})) == [], (
                 "a live run's database was offered for reclamation")
             assert _exists(name)
 
-        reclaimed = sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        reclaimed = sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                                 only=frozenset({name}))
         assert reclaimed == [name], (
             "the next run did not reclaim the database the killed run left")
@@ -472,7 +471,7 @@ def test_a_dropped_databases_marker_is_cleared():
     marker = _plant_marker(token)
     _create(name)
     try:
-        assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        assert sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                            only=frozenset({name})) == [name]
         assert not marker.exists(), (
             "the sweep reclaimed the database and left the marker, so a "
@@ -496,7 +495,7 @@ def test_a_live_runs_marker_survives_its_own_sweep():
     marker = _plant_marker(token)
     child = _spawn_holder(token)
     try:
-        assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        assert sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                            only=frozenset({name})) == []
         assert marker.exists(), (
             "the sweep cleared a live run's marker while refusing its "
@@ -513,8 +512,8 @@ def test_a_claim_in_this_process_protects_its_own_marker():
     marker = _plant_marker(token)
     _create(name)
     try:
-        with RunClaim(token, DEFAULT_ADMIN_DSN):
-            assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        with RunClaim(token, iso.admin_dsn()):
+            assert sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                                only=frozenset({name})) == []
         assert marker.exists(), "a claimed run's marker was cleared"
     finally:
@@ -529,7 +528,7 @@ def test_a_marker_is_not_cleared_on_the_age_bound_alone():
     marker = _plant_marker(token)
     _create(name)
     try:
-        assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(days=3650),
+        assert sweep_stale(iso.admin_dsn(), age=timedelta(days=3650),
                            only=frozenset({name})) == []
         assert marker.exists(), (
             "a ten-year-old bound cleared a marker, so the age test is "
@@ -545,7 +544,7 @@ def test_a_dry_run_clears_no_marker():
     marker = _plant_marker(token)
     _create(name)
     try:
-        assert sweep_stale(DEFAULT_ADMIN_DSN, age=timedelta(seconds=0),
+        assert sweep_stale(iso.admin_dsn(), age=timedelta(seconds=0),
                            only=frozenset({name}), dry_run=True) == [name]
         assert marker.exists(), "a dry run removed a marker"
     finally:

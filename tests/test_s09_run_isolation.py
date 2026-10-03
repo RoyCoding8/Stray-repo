@@ -19,10 +19,12 @@ from experiments.ad01 import construct
 from experiments.ad01 import s09_run_isolation as iso
 from settlement import authority, broker, db, store
 
+from tests.conftest_isolation import admin_dsn
+
 LIVE_MODEL = "openrouter/live:1"
 DOUBLES_MODEL = "recorded-double"
 ADAPTER = "settlement.gateway_http.HttpGatewayAdapter"
-PG = "host=/var/run/postgresql user=ubuntu"
+PG = " ".join(f for f in admin_dsn().split() if not f.startswith("dbname="))
 AUTHORIZED = iso.DEFAULT_AUTHORIZED
 REQUEST = {"model": DOUBLES_MODEL,
            "messages": [{"role": "user", "content": "look"}],

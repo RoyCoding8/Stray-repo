@@ -28,7 +28,14 @@ sys.path.insert(0, str(TESTS))
 
 import pytest
 
-from conftest_isolation import dbname_of, derived_name, plan, scan  # noqa: E402
+from conftest_isolation import (  # noqa: E402
+    TESTS_DIR,
+    admin_dsn,
+    dbname_of,
+    derived_name,
+    plan,
+    scan,
+)
 
 PROBE = '''\
 import json
@@ -90,8 +97,7 @@ def _run_probe(scan_dir: Path, *, disable: bool,
 def _surviving_databases(token: str) -> list[str]:
     import psycopg
 
-    with psycopg.connect("dbname=postgres host=/var/run/postgresql user=ubuntu",
-                         autocommit=True) as conn:
+    with psycopg.connect(admin_dsn(), autocommit=True) as conn:
         rows = conn.execute(
             "SELECT datname FROM pg_database WHERE datname LIKE %s",
             ("s09iso\\_%s\\_%%" % token,)).fetchall()
@@ -172,9 +178,13 @@ def test_a_literal_with_no_assertion_is_redirectable(tmp_path, monkeypatch):
     assert seams["ec02test_plain"].mode == "redirectable"
     built = plan(token="a1b2c3d4").env_for(seams["ec02test_plain"])
     assert dbname_of(built) == "s09iso_a1b2c3d4_plain"
+    # The connection fields come from the session's route, so they are equal
+    # here only because this run has no route configured. That is the point:
+    # the default's fields are not consulted at all, which
+    # `test_a_redirected_seam_carries_the_session_route_and_not_the_default`
+    # reads against a CI-shaped environment.
     assert set(built.split()) - {"dbname=s09iso_a1b2c3d4_plain"} \
-        == set(seams["ec02test_plain"].default_dsn.split()) \
-        - {"dbname=ec02test_plain"}
+        == set(admin_dsn().split()) - {"dbname=postgres"}
 
 
 def test_one_variable_shared_by_four_files_moves_all_four(tmp_path, monkeypatch):
@@ -317,3 +327,109 @@ def test_a_shared_store_is_a_seam_whatever_it_is_named():
     assert "INV_R3_DSN" in seams, sorted(seams)
     assert seams["INV_R3_DSN"].db_name == "inv_r3_export"
     assert seams["INV_R3_DSN"].redirectable
+
+
+def test_the_scan_reaches_the_archived_directory():
+    """A file's location is not a property of its default.
+
+    ``scan`` used to ``glob`` the top level, so the twenty-five defaults under
+    ``_heavy_archived`` were invisible to it. Every one of them then bound a
+    shared socket database on any host that has a socket, which is why the
+    first CI run reported a connection failure for a socket that the runner
+    does not have. ``EC02_L_DSN`` is asserted here by name because a seam that
+    silently stops being scanned fails silently in exactly this way.
+    """
+    seams = {s.env_var: s for s in plan(token="a1b2c3d4").seams}
+    assert "EC02_L_DSN" in seams, sorted(seams)
+    assert seams["EC02_L_DSN"].source == "test_coord02_learning.py"
+    assert seams["EC02_L_DSN"].redirectable
+
+
+def test_a_redirected_seam_carries_the_session_route_and_not_the_default(
+        tmp_path, monkeypatch):
+    """The redirect must not inherit the unreachable socket from the default.
+
+    ``env_for`` used to rebuild the DSN from ``seam.default_dsn``, keeping every
+    field but the ``dbname``. A default is an ``os.environ.get`` fallback
+    carrying whatever its author wrote, so every redirected seam inherited a
+    socket that exists only where that author worked, and redirecting it
+    changed the database without changing the route. This reads the built DSN
+    against a CI-shaped environment rather than trusting that.
+    """
+    monkeypatch.setenv("SETTLEMENT_TEST_DSN",
+                       "dbname=postgres host=127.0.0.1 port=5432 user=postgres")
+    monkeypatch.setenv("S09ISO_SCAN_DIR", str(tmp_path))
+    seams = _scanned_seams(
+        tmp_path,
+        'import os\n'
+        'DSN = os.environ.get("TCP_DSN",'
+        ' "dbname=ec02test_tcp host=/var/run/postgresql user=ubuntu")\n'
+        'def test_n():\n    assert DSN\n')
+    built = plan(token="a1b2c3d4").env_for(seams["ec02test_tcp"])
+    assert "/var/run/postgresql" not in built, built
+    assert "host=127.0.0.1" in built, built
+    assert dbname_of(built) == "s09iso_a1b2c3d4_tcp"
+
+
+def test_no_test_module_binds_a_socket_as_a_connection_route():
+    """The sweep that missed this class, run against the real tree.
+
+    Every remaining ``/var/run/postgresql`` in ``tests/`` is either this
+    mechanism's own fallback or a fixture that is parsed rather than
+    connected to. A literal that reaches ``psycopg.connect`` or
+    ``apply_migrations`` connects nowhere on a host without a socket, so this
+    asserts on the AST rather than on the text: the point is that no call is
+    handed such a literal, not that the word is absent.
+    """
+    import ast
+
+    routes = []
+    for path in sorted(TESTS_DIR.glob("**/*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            name = ast.unparse(node.func)
+            if not (name.endswith("connect") or name.endswith("apply_migrations")):
+                continue
+            for literal in ast.walk(node):
+                if (isinstance(literal, ast.Constant) and isinstance(literal.value, str)
+                        and "/var/run/postgresql" in literal.value):
+                    routes.append("%s:%d %s" % (path.name, node.lineno, name))
+    assert routes == [], (
+        "these connect through a literal socket that exists only on the "
+        "author's host: %s" % (routes,))
+
+
+def test_a_bare_dbname_is_not_a_route():
+    """``dbname=x`` with no ``host`` is a socket DSN written without the socket.
+
+    libpq resolves a conninfo carrying no host over the local Unix socket, so a
+    string this short is the same defect spelled differently, and it is not
+    caught by searching for the path. ``tests/test_p2c_ad01_resweep.py`` handed
+    one to ``trajectory._publish_boundary``, which reads the boundary row
+    before it refuses, so the read failed on a host with no socket.
+
+    The assertion is narrower than "no such string exists" because five test
+    modules spell one deliberately and none of them connects through it: two
+    refuse on a parse that precedes any query, one replaces ``psycopg`` with a
+    stub, one raises on an empty migrations directory before opening a
+    connection, and one asserts that the connection it gets is refused. What
+    these share is that they say so. What the repair changed is the file whose
+    read happened for real, and that is what is named here -- the constant a
+    refusal input is built from must carry a route, while its dbname stays the
+    absent one the assertion depends on.
+    """
+    import ast
+    import re
+
+    target = TESTS_DIR / "test_p2c_ad01_resweep.py"
+    source = target.read_text(encoding="utf-8")
+    assigned = re.search(r"UNUSED_DSN = dsn_with_dbname\(\s*admin_dsn\(\),\s*"
+                         r"\"([^\"]+)\"", source)
+    assert assigned is not None, "the refusal input must be built from one route"
+    assert assigned.group(1) == "ec02test_p2c_unused", assigned.group(1)
+    assert 'trajectory.record_decision("dbname=' not in source, (
+        "the absent dbname is passed inline again, which is a route libpq "
+        "resolves over a local socket")
+    ast.parse(source, filename=str(target))
