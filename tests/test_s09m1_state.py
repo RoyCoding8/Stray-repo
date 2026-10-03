@@ -102,7 +102,8 @@ def test_public_use_resolves_repertoire_scoped_selection(store):
         allocation_id=allocation, policy=admit("old"))
     assert resolved["requested"] == "old"
     assert resolved["selected"] == "old"
-    assert resolved["executed"] == "incumbent"
+    assert resolved["status"] == "refused"
+    assert resolved["executed"] == "refused"
     assert "member execution failed" in resolved["fallback_reason"]
     [empty] = trajectory.run_use(
         {"campaign_id": cid, "members": [], "queries": 0},

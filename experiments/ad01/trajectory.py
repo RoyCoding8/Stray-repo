@@ -744,6 +744,160 @@ def _diagnostic_checkpoint(dsn: str, study_root: str,
             "state": saved}
 
 
+METHOD_RELEASE_PROTOCOL = "s09-revision-v1"
+METHOD_EVALUATOR_VERSION = "ad01-method-eval-01"
+"""The evaluator that graded an acquired method, named for the release row.
+
+`bind_revision` requires a pinned evaluator on every row it writes, so a
+method release names the one that graded its bytes. The method assessment
+is `records.assess_frozen`, which runs the frozen bytes over a frozen panel
+through the same checker the use phase verifies with, so this names that
+measurement rather than the policy panel's evaluator: a policy release and
+a method release are separate artifacts and are graded separately.
+"""
+
+METHOD_PANEL_SIZE = 2
+
+
+def method_release_id(cid: str, digest: str) -> str:
+    """The release an acquired method's bytes are pinned under.
+
+    Campaign-scoped, and the shape is the one the policy release already
+    uses: `ad01-<cid>-policy-<digest12>`, with `method` in place of
+    `policy`. The measurement behind reusing that shape rather than a
+    task-shaped or study-shaped one is that this id must name a member
+    that is *retained for the campaign* rather than qualified on one
+    task, and the campaign id is the only identity on this path that
+    spans the boundary from "acquired on task X" to "usable on task Y".
+    The member id is derived from the bytes, not the task
+    (`construct._member_id` hashes the source), so a task-shaped release
+    would name an identity the bytes themselves do not carry and two
+    campaigns acquiring the same bytes would collide.
+
+    The digest is in the id so that a rebind of the same campaign under
+    different bytes is a different release rather than an overwrite of
+    the first, and so a release id names the exact bytes it pins.
+    """
+    return "ad01-%s-method-%s" % (cid, digest[:12])
+
+
+def bind_method_release(construction: dict, member: dict,
+                        observation: dict, *, boundary: dict,
+                        scope: dict, panel_size: int = METHOD_PANEL_SIZE
+                        ) -> dict:
+    """Pin an acquired method's bytes to a durable release.
+
+    Without this the bytes a campaign acquired are pinned to nothing the
+    store holds: `capability_releases` has no row for them and
+    `selection.select_member` reads that table only when a `release_id` is
+    named, so a fresh-process use of a retained method resolves no binding
+    and falls to the family scan. That is the last stage of the chain in
+    milestone A -- retention/binding -- and it was not performed.
+
+    The lifecycle is the one `bind_revision` already enforces, run on the
+    method's behalf: a revision proposal naming the incumbent the acquired
+    bytes revise, the frozen bytes, a sealed assessment of those exact
+    bytes over a panel, and then the durable binding. Each step is the
+    existing machinery rather than a second one. A method that fails any
+    of them is reported as a refusal with its reason, never bound.
+
+    An acquired method has no prior release to name as its parent, so the
+    parent it revises is the seed member for its family: that is the
+    repertoire entry a member with no acquired ancestor would have been,
+    and it is the comparison the incumbent baseline is already measured
+    against.
+    """
+    import hashlib
+
+    from . import records, selection
+
+    dsn = construction["dsn"]
+    cid = construction["cid"]
+    digest = member["source_digest"]
+    protocol_id = METHOD_RELEASE_PROTOCOL
+    parent_digest = hashlib.sha256(
+        ("seed-%s-greedy" % _FAMILY_TAG[scope["family"]]).encode(
+            "utf-8")).hexdigest()
+    failure_record = {"task_id": member["qualified_on"],
+                      "parent_digest": parent_digest,
+                      "capability_id": member["capability_id"],
+                      "source_digest": digest,
+                      "observation_id": observation["observation_id"]}
+    try:
+        proposal = records.open_revision_proposal(
+            dsn, investigation_id=cid, parent_digest=parent_digest,
+            failure_record=failure_record, scope=scope,
+            protocol_id=protocol_id, allocation_id=_alloc_id(cid))
+        freeze = records.freeze_candidate(
+            dsn, proposal_id=proposal["proposal_id"],
+            source_bytes=member["method_source"], entry=member["entry"])
+        panel = _method_panel(scope["family"], construction["world"],
+                              proposal["proposal_id"], panel_size)
+        assessment = records.assess_frozen(
+            dsn, proposal_id=proposal["proposal_id"],
+            tasks=panel["task_ids"], baseline="incumbent",
+            evaluator_version=METHOD_EVALUATOR_VERSION,
+            protocol_id=protocol_id)
+    except ValueError as exc:
+        return {"bound": False, "reason": str(exc)}
+    if assessment.get("outcome") != "bind":
+        return {"bound": False,
+                "reason": "method assessment did not bind: %s"
+                          % assessment.get("reason", ""),
+                "assessment_outcome": assessment.get("outcome"),
+                "proposal_id": proposal["proposal_id"]}
+    release_id = method_release_id(cid, freeze["candidate_digest"])
+    current = selection.active_binding_for(
+        dsn, scope["family"], release_id=release_id)
+    expected = list(current["versions"]) if current else None
+    try:
+        selection.bind_revision(
+            dsn, release_id=release_id,
+            versions=[member["capability_id"]], scope=scope,
+            disposition="default", fallback="incumbent",
+            expected_versions=expected, policy_version="",
+            protocol_id=protocol_id,
+            evaluator_version=METHOD_EVALUATOR_VERSION,
+            evidence_refs=[assessment["attempt_id"]],
+            proposal_id=proposal["proposal_id"],
+            candidate_digest=freeze["candidate_digest"])
+    except (selection.StaleBind, ValueError) as exc:
+        return {"bound": False, "reason": str(exc),
+                "release_id": release_id,
+                "proposal_id": proposal["proposal_id"]}
+    return {"bound": True, "release_id": release_id,
+            "versions": [member["capability_id"]],
+            "candidate_digest": freeze["candidate_digest"],
+            "proposal_id": proposal["proposal_id"],
+            "panel": panel["task_ids"],
+            "assessment_attempt_id": assessment["attempt_id"],
+            "scope": dict(scope)}
+
+
+def _method_panel(family: str, world: int, seed: str, size: int) -> dict:
+    """The development-free tasks a method is assessed over.
+
+    Not the development task the bytes were acquired on. An assessment
+    that included it would grade the bytes on the task that produced them
+    and could report a bind no fresh task confirms, which is the same
+    self-measurement the repertoire already refuses when it declines to
+    offer a member on its own acquisition task.
+    """
+    from . import worlds
+    membership = worlds.world_membership(worlds.FROZEN_DIR)[str(world)]
+    candidates = [task_id for task_id
+                  in list(membership.get("transfer", {}).get(family, []))
+                  + list(membership.get("within", {}).get(family, []))
+                  if task_id not in _dev_task_ids()]
+    if len(candidates) < size:
+        raise ValueError("method assessment needs %d frozen %s tasks, has %d"
+                         % (size, family, len(candidates)))
+    keyed = sorted(candidates, key=lambda task_id: hashlib.sha256(
+        ("%s:%s" % (seed, task_id)).encode("utf-8")).hexdigest())
+    return {"task_ids": keyed[:size], "scope": {"family": family},
+            "world": world}
+
+
 def _run_boundary(task_id: str, capability_id: str, caps: dict,
                   seed_obs: dict, propose=None,
                   charter: dict | None = None,
@@ -991,6 +1145,16 @@ def _run_boundary(task_id: str, capability_id: str, caps: dict,
     episode["construction_calls"] = int(
         (member or {}).get("lineage", {}).get("calls_made", 0))
     episode["queries"] += observation["queries"]
+    if member is not None and episode.get("disposition") == "retained" \
+            and construction is not None and boundary is not None:
+        release = bind_method_release(
+            construction, member, observation, boundary=boundary,
+            scope={"family": member["scope"]["family"]})
+        episode["method_release"] = release
+        if release.get("bound"):
+            episode["method_release_id"] = release["release_id"]
+        else:
+            episode.setdefault("release_reason", release["reason"])
     if state is not None:
         state["dev_episodes"] = int(state.get("dev_episodes", 0)) + 1
     spend = 1 + episode.get("queries", 0)
@@ -1851,6 +2015,63 @@ def _policy_refused_record(repertoire: dict, world: int, arm: str,
     }
 
 
+def _member_refused_record(repertoire: dict, world: int, arm: str,
+                           task_id: str, domain: str, release_id,
+                           reason: str, *, requested: str, selected: str,
+                           operation_ids: list | None = None,
+                           policy_source_digest: str | None = None,
+                           base_costs: dict | None = None) -> dict:
+    """An execution that refused, recorded as a refusal and not as a run.
+
+    `_policy_refused_record` is the shape for a use that never reached a
+    method. This is the other refusal: the method was admitted and named,
+    and then the executor refused it. `requested` and `selected` name that
+    admitted method, because they were real decisions, but `executed` and
+    `executed_source` read `refused` because no bytes ran. `operation_ids`
+    keeps what it found: the refusal can follow a durable operation the
+    current authority owns, and dropping it would lose the receipt of work
+    that did happen.
+    """
+    from . import checker
+    return {
+        "record_id": "%s-%s-%s" % (repertoire["campaign_id"], arm, task_id),
+        "world": world, "arm": arm, "task_id": task_id, "domain": domain,
+        "freeze": worlds.FREEZE_ID,
+        "freeze_digest": checker.freeze_digest(worlds.FROZEN_DIR),
+        "release_id": release_id,
+        "policy_source_digest": policy_source_digest,
+        "status": "refused",
+        "verdict": "refused",
+        "initial_measure": 0, "final_measure": 0,
+        "normalized_reduction": 0.0, "output": {},
+        "operation_ids": list(operation_ids or []),
+        "costs": {**(base_costs or {}), "witness_queries": 0},
+        "requested": requested, "selected": selected,
+        "executed": "refused", "executed_source": "refused",
+        "query_trace": None,
+        "fallback_reason": reason,
+    }
+
+
+def _incumbent_baseline(task: dict) -> dict:
+    """The incumbent, measured under its own name.
+
+    Declared separately so that wanting the fallback does not mean scoring
+    it. This is the same computation the incumbent arm of the study makes,
+    so a reader who wants the fallback reads the same numbers that arm would
+    have recorded, and a reader who wants the admitted method reads a
+    refusal in `executed` rather than this. It costs no query and runs no
+    method, so it carries no cost of its own.
+    """
+    output = controls.incumbent(task)
+    report = _check(task, output)
+    initial, final = _size(task, output)
+    return {"executed": "incumbent", "executed_source": "incumbent",
+            "verdict": report["verdict"], "initial_measure": initial,
+            "final_measure": final, "normalized_reduction": 0.0,
+            "output": output}
+
+
 def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
             base_costs: dict, *, policy=None, policy_source: str | None = None,
             policy_origin: str = "authored-control",
@@ -1907,30 +2128,22 @@ def run_use(repertoire: dict, world: int, arm: str, use_tasks: list,
             if execution and getattr(exc, "operation_current", False) \
                     and execution["operation_id"] not in operation_ids:
                 operation_ids.append(execution["operation_id"])
-            output = controls.incumbent(task)
-            report = _check(task, output)
-            initial, final = _size(task, output)
-            records.append({
-                "record_id": "%s-%s-%s" % (repertoire["campaign_id"],
-                                           arm, task_id),
-                "world": world, "arm": arm, "task_id": task_id,
-                "domain": domain, "freeze": worlds.FREEZE_ID,
-                "freeze_digest": checker.freeze_digest(
-                    worlds.FROZEN_DIR),
-                "release_id": release_id,
-                "policy_source_digest": (policy_record or {}).get(
+            refusal = _member_refused_record(
+                repertoire, world, arm, task_id, domain, release_id,
+                "member execution failed: %s" % exc,
+                requested=requested, selected=selected,
+                operation_ids=operation_ids,
+                policy_source_digest=(policy_record or {}).get(
                     "artifact", {}).get("source_digest"),
-                "verdict": report["verdict"],
-                "initial_measure": initial, "final_measure": final,
-                "normalized_reduction": 0.0,
-                "output": output, "operation_ids": operation_ids,
-                "costs": {**base_costs, "witness_queries": 0},
-                "requested": requested, "selected": selected,
-                "executed": "incumbent",
-                "executed_source": "incumbent",
-                "query_trace": None,
-                "fallback_reason": "member execution failed: %s"
-                                   % exc})
+                base_costs=base_costs)
+            # The incumbent still ran, and it is recorded as itself rather
+            # than as the admitted method. It is a separately declared record
+            # under `incumbent_baseline`, so a reader of `executed` sees a
+            # refusal and a reader who wants the fallback reads that field.
+            # It was never the answer to the use that was admitted, so scoring
+            # it as one would put a measurement nobody made in its place.
+            refusal["incumbent_baseline"] = _incumbent_baseline(task)
+            records.append(refusal)
             continue
         output = result["candidate"]
         queries = result["queries"]
