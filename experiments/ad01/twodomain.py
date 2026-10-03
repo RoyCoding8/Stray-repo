@@ -294,22 +294,6 @@ def _boolean_episode(split: str, seed: int) -> dict:
             "final": result["final"]}
 
 
-def _swe_record(split: str, seed: int) -> tuple[str, str]:
-    """The template and mechanism one SWE seed names.
-
-    A split names a template set and a mechanism set and nothing pairs them,
-    so the pair is derived here once and read by both the episode driver and
-    the state reader. Derived rather than authored, so two readers cannot
-    disagree about which instance an episode ran.
-    """
-    templates = (swe_tasks.DEV_TEMPLATES if split == "dev"
-                 else swe_tasks.HELD_OUT_TEMPLATES)
-    mechanisms = (swe_tasks.DEV_MECHANISMS if split == "dev"
-                  else swe_tasks.HELD_OUT_MECHANISMS)
-    return templates[int(seed) % len(templates)], \
-        mechanisms[int(seed) % len(mechanisms)]
-
-
 def _swe_episode(split: str, seed: int,
                  permitted: list) -> dict:
     """One diagnosis episode on the SWE world, spending what it was given.
@@ -320,8 +304,12 @@ def _swe_episode(split: str, seed: int,
     error, so the episode classifies its own mismatching public tests by
     that rule and records which observations it applied. The bytes it
     produces are the world's.
+
+    The instance is taken from `swe_tasks.instances_for_seed`, which is the
+    same derivation `run_episode` uses, so the driver reads the record the
+    world is about to run rather than a second derivation of it.
     """
-    record = swe_tasks.instance(split, *_swe_record(split, seed))
+    record = swe_tasks.instances_for_seed(split, int(seed))
 
     # The world's own published view, captured from inside the driver for the
     # same reason as the Boolean side: re-running the episode to re-read its

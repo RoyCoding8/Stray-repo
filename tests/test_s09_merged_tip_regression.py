@@ -78,6 +78,10 @@ EXPECTED_ENTRY_POINTS: dict[str, tuple[str, ...]] = {
         "PolicyBinding", "DurableStep", "load_step", "persist_step", "resume_or_step",
     ),
     "experiments.ad01.s09_family_gen": ("canonical_form", "generate", "is_new_family"),
+    "experiments.ad01.independent_units": (
+        "Signature", "software_family_observation", "reachable_software_signatures",
+        "observable_space", "software_report",
+    ),
     "experiments.ad01.s09_m2_rubric": ("Axis", "AcquisitionRecord", "ArmEvidence", "verify_frozen"),
     "experiments.ad01.s09_panel_inventory": (
         "Inventory", "build_inventory", "minimum_clusters_for_alpha",

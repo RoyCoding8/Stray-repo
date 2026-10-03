@@ -12,6 +12,7 @@ from itertools import permutations
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from experiments.ad01 import independent_units
 from experiments.ad01.worlds import FROZEN_DIR
 
 FAMILIES = ("software", "graph")
@@ -127,11 +128,39 @@ class Inventory:
             "isomorphic_dev_within_pair_count": self.isomorphic_pair_count,
             "minimum_p_resolution": resolution,
             "available_family_coverage": self.available_family_coverage(),
+            "observably_distinct_units": self.observably_distinct_units(),
             "verdict": "powered" if all(
                 result["powered"] for result in family_power.values()
             ) else "cannot_be_powered",
             "power": {"all": total, **family_power},
         }
+
+    def observably_distinct_units(self) -> dict[str, Any]:
+        """Cluster counts beside the behaviours those clusters exhibit.
+
+        The cluster rule counts `(family, template)` pairs, and it counts
+        them correctly. What it cannot say is whether those templates are
+        different draws or different names for one draw, because nothing
+        checked. Measured per family and reported beside the count rather
+        than in place of it: a family whose templates share one observable
+        behaviour has fewer independent units than its cluster count, and
+        adding a template to it does not move that number.
+        """
+        measured: dict[str, Any] = {}
+        for family in FAMILIES:
+            if family == "software":
+                observation = independent_units.software_family_observation()
+                measured[family] = observation.as_dict()
+            else:
+                measured[family] = {
+                    "family": family,
+                    "template_count": self.family_cluster_count(family),
+                    "signature_count": None,
+                    "collapses": None,
+                    "note": "no observable-behaviour measure is defined for "
+                            "this family",
+                }
+        return measured
 
 
 def minimum_sign_flip_p(cluster_count: int) -> float | None:
