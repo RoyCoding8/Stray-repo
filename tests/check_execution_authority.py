@@ -13,6 +13,13 @@ have called that green. This asserts the property the edits were for, and it
 is here rather than in the lane's history because the next caller to add a
 `measure(` can get it wrong the same way.
 
+It previously also required CRLF throughout, which made it a check that only
+passed on a Windows checkout: `.gitattributes` leaves `tests/` unnormalised
+and `core.autocrlf=true` materialises CRLF locally, so on Linux every one of
+these files is LF and the guard reported 2676 bare-LF problems against
+correct code. Line endings are the `consistency` job's contract, and it holds
+them to LF. This checks only authority, which is host-independent.
+
 Run it directly: `python tests/check_execution_authority.py` from the
 repository root.
 """
@@ -35,11 +42,6 @@ def main() -> int:
     for name in FILES:
         path = pathlib.Path(name)
         raw = path.read_bytes()
-        crlf = raw.count(b"\r\n")
-        bare = raw.count(b"\n") - crlf
-        if bare:
-            problems.append("%s: %d bare LF, expected CRLF throughout"
-                            % (name, bare))
         text = raw.decode("utf-8").replace("\r\n", "\n")
         tree = ast.parse(text)
         calls = missing = 0
@@ -65,7 +67,7 @@ def main() -> int:
         for problem in problems:
             print("  " + problem)
         return 1
-    print("OK: every call carries authority, every file is CRLF")
+    print("OK: every call carries authority")
     return 0
 
 
