@@ -542,6 +542,8 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
                     experience: dict, state: dict,
                     study_root: str | None = None,
                     construction=None) -> tuple:
+    from . import mission
+
     row = _s09_get(dsn, cid, seq)
     if row is None:
         raise ValueError("no accepted action for %s %d" % (cid, seq))
@@ -568,6 +570,15 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
         # where a silent substitution was not.
         task_id = admitted.task_id or task_id
         capability_id = admitted.capability_id or capability_id
+        # Having taken the entry's task and capability, this run must run the
+        # decision the entry pinned those inputs to. The two digests were
+        # written by `admit_operation` and read back by nobody until here; a
+        # decision that has moved since admission would otherwise run under
+        # inputs the record does not name, and the effect row would file the
+        # result under the admission's identity.
+        mission.require_admitted_identity(admitted, decision=decision,
+                                          task_id=task_id,
+                                          capability_id=capability_id)
     journal = {"dsn": dsn, "cid": cid, "decision": decision}
     observation, episode, spend = _run_boundary(
         task_id, capability_id, caps, seed_obs, charter=charter,
