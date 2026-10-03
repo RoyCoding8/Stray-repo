@@ -381,7 +381,8 @@ def test_fresh_public_source_policy_joins_release_receipts(store, tmp_path):
         {"campaign_id": cid, "members": [revised_member]}, 0, "I",
         [USE_TASK], {}, dsn=store, allocation_id=allocation,
         release_id=revised_release, policy_source=policy_source)
-    assert stale["executed"] == "incumbent"
+    assert stale["status"] == "refused"
+    assert stale["executed"] == "refused"
     assert "member execution failed" in stale["fallback_reason"]
     assert stale["operation_ids"] == [record["operation_ids"][0]]
     with db.connect(store) as conn:
@@ -421,7 +422,8 @@ def test_source_policy_cost_survives_member_refusal(store, monkeypatch):
         {"campaign_id": cid, "members": [member]}, 0, "I", [USE_TASK], {},
         dsn=store, allocation_id=allocation, release_id=release,
         policy_source=policy_source)
-    assert record["executed"] == "incumbent"
+    assert record["status"] == "refused"
+    assert record["executed"] == "refused"
     assert "member execution failed" in record["fallback_reason"]
     assert record["policy_source_digest"] == hashlib.sha256(
         policy_source.encode("utf-8")).hexdigest()
@@ -457,7 +459,8 @@ def test_source_policy_cost_survives_member_refusal(store, monkeypatch):
         {"campaign_id": cid, "members": [member]}, 0, "I", [DEV_TASK], {},
         dsn=store, allocation_id=allocation, release_id=release,
         policy_source=pending_policy)
-    assert pending["executed"] == "incumbent"
+    assert pending["status"] == "refused"
+    assert pending["executed"] == "refused"
     assert len(pending["operation_ids"]) == 2
     assert pending["costs"]["sandbox_ops"] == 2
     pending_member = next(op for op in pending["operation_ids"]

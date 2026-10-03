@@ -188,7 +188,7 @@ def test_store_backed_use_attributes_sandbox_operations():
     assert records[0]["costs"]["sandbox_ops"] == 1
 
 
-def test_failed_member_falls_back_with_attribution():
+def test_failed_member_is_refused_with_attribution():
     from experiments.ad01 import trajectory
     repertoire = {"campaign_id": "bdr01-fallback",
                   "members": [{**CANARY_MEMBER,
@@ -198,6 +198,9 @@ def test_failed_member_falls_back_with_attribution():
         repertoire, 0, "I", ["ad01-w0-within-sw-00"],
         {"tokens": 0, "sandbox_ops": 0},
         policy=_use_policy(CANARY_MEMBER["capability_id"]))
+    assert record["status"] == "refused"
     assert record["requested"] == CANARY_MEMBER["capability_id"]
-    assert record["executed"] == "incumbent"
+    assert record["selected"] == CANARY_MEMBER["capability_id"]
+    assert record["executed"] == "refused"
+    assert record["executed_source"] == "refused"
     assert "imports-forbidden" in record["fallback_reason"]
