@@ -165,8 +165,13 @@ jobs:
           done
           echo "files run: $(ls tests/_heavy_archived/test_*.py | wc -l)"
           echo "files failing: $(grep -c 'FAILED$' heavy-failures.txt || true)"
-          if [ "$(wc -l < heavy-failures.txt)" -eq 0 ] && [ "$rc" -eq 0 ]; then
-            test -s heavy.log || echo "::error::no archived file produced a result"
+          recorded=$(grep -cE '^(=== .* FAILED|FAILED|ERROR)' heavy-failures.txt || true)
+          echo "recorded failure lines: $recorded"
+          if [ "$recorded" -gt 0 ]; then
+            rc=1
+          fi
+          if [ "$rc" -eq 0 ]; then
+            test -s heavy.log || { echo "::error::no archived file produced a result"; rc=1; }
           fi
           exit $rc
 
