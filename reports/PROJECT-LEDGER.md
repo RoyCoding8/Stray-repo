@@ -2,9 +2,19 @@
 
 ## Coordinator batch: A–C closure, 2026-10-02 → 2026-10-03
 
-Integration branch `codex/ab-closure-2026-10-02`, from `5349dab`. 46 commits,
+Integration branch `codex/ab-closure-2026-10-02`, from `5349dab`. 67 commits,
 evidence delta empty against `reports/evidence/` and `evidence-ad01/` across
-every one of them. Remotes equal at `904afd6`.
+every one of them. Remotes equal at `d2486ef`. Worktrees pruned to zero;
+three local branches remain, all `codex/*`; no stray branch on either remote.
+
+**Recovered work from pruned lanes, in `reports/workstreams/recovered/`.**
+Nine pre-batch lanes (c2-labels, r7–r10, c5, c8, c9, c20) held roughly 1,300
+lines of uncommitted work. It is preserved as patches rather than deleted.
+c2-labels carries dated 2026-10-02 corrections to the disposition table: row 6
+is a closed-unrun question rather than a negative and does not govern, and the
+learner-improvement row collapsed two different experiments — `c4-live` never
+ran, while E4 did run and spent 6 of 6 dispatches with 0 of 6 eligible. Those
+corrections are **not** applied here; they are another owner's to land.
 
 **Five false greens closed, four of them the coordinator's own.** The recurring
 failure this project already names — a check that reads green while matching
