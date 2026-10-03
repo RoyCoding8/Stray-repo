@@ -411,6 +411,45 @@ def _wire(decision: dict, task_id: str, capability_id: str) -> dict:
                                          "capability_id": capability_id})}
 
 
+def require_admitted_identity(held: InFlightOperation, *, decision: dict,
+                              task_id: str, capability_id: str) -> None:
+    """Refuse to run a held operation under inputs it was not admitted with.
+
+    Called at the last point before the effect exists, which is the only point
+    at which refusing is free. `admit_operation` wrote these two digests; they
+    were read back by nobody. This is that reader, and it is the only one.
+
+    `decision_digest` and `input_identity` are compared rather than length-
+    checked, and the comparison is a recomputation by `_wire` -- the same rule
+    that wrote them, over inputs that are all durable. A length or non-empty
+    check would accept any 64-hex string, and `frontier.package_digest` and
+    `seed_program_digest` are both 64 hex, so that would be a shape check
+    dressed as an identity check.
+
+    `program_digest` is deliberately not compared here, because there is
+    nothing to compare it against: no registry maps a digest to the bytes that
+    will execute, and `execute_pending` is handed a capability id rather than
+    source. Inventing a second digest to compare would be a second authority.
+    What it does provide is reported -- the effect record names it -- and
+    `admit_operation` is where a digest of the wrong kind should be refused,
+    which is a separate repair this lane does not own.
+
+    A refusal is not a re-admission. The operation stays held with the
+    identity it was admitted under, so the caller may present the right inputs
+    and the same operation runs. Re-admitting under the substituted inputs
+    would make the record agree with the substitution, which is the defect
+    wearing a fix.
+    """
+    wire = _wire(decision, task_id, capability_id)
+    for field in ("decision_digest", "input_identity"):
+        recorded = getattr(held, field)
+        if wire[field] != recorded:
+            raise MissionRefused(
+                "held operation %r was admitted under a different %s:"
+                " recorded %s, this run presents %s"
+                % (held.attempt_id, field, recorded, wire[field]))
+
+
 def admit_operation(dsn: str, investigation_id: str, *, seq: int,
                     attempt_id: str, decision: dict, program_digest: str,
                     task_id: str, capability_id: str) -> InFlightOperation:
