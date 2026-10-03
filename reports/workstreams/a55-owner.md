@@ -117,5 +117,54 @@ checks are in CI on `stray/a55-owner`.
 
 Local red/green, from `.a55-checks.py` against the same code: **4 of 7 green
 before**, **7 of 7 after**. `tests/test_a55_continuation_owner.py` reproduces
-the same seven in place: **3 failed, 4 passed** with `improve_channel.py`
-reverted, **7 passed** with it applied.
+the same seven in place: **3 failed, 5 passed** with `improve_channel.py`
+reverted to `932622b`, **8 passed** with it applied.
+
+One caution for anyone reproducing the red side. `git stash push -- <file>`
+reports success and stashes nothing when the change is already committed, which
+yields eight passing tests against a tree that still contains the fix. Use
+`git checkout <base> -- <file>`.
+
+## CI, read per shard against a clean baseline
+
+Run 37150156122 (`2fbd9a1`, this lane) against run 37151765557 (`bccf677`,
+before any lane in this batch). Same shard only, never summed.
+
+| job | lane | baseline | shared | lane-only |
+|---|---|---|---|---|
+| `suite-py3.13-1` | 27 | 28 | 27 | 0 |
+| `suite-py3.13-2` | 66 | 68 | 65 | 1 |
+| `suite-py3.13-3` | 110 | 108 | 108 | 2 |
+| `heavy archived` | 166 | 165 | 165 | 1 |
+
+Shard 2's one lane-only line was
+`test_m2_frontier_inherit.py::test_fresh_process_inherited_bytes_generate_candidate`,
+whose subprocess runs with `env={PATH: /usr/bin:/bin}` and so has no
+`SETTLEMENT_TEST_DSN`; it fails on the baseline too, for a cause predating
+this batch. What this lane changed was which lines its traceback prints.
+Fixed by naming the owner on the argv surface instead of taking it
+positionally; merged upstream.
+
+Shard 3's two lane-only lines are `test_p2c_ad01_resweep.py` failures on a
+missing `ec02test_p2c_unused` database. They appear in all three trees and
+move between shards, because pytest-split assigns by index and the trees
+differ in file count. Comparing shard-to-shard without unioning first produces
+exactly the phantom attribution this file would otherwise have reported.
+
+Heavy's one lane-only line is
+`test_r02_exec.py::test_stop_uses_kill_fallback_and_clears_tracking`, a
+subprocess test with a 15-second timing deadline. It appears in neither of the
+other two runs and names nothing this lane owns.
+
+## The stale census pin, and whose commit caused it
+
+`EXPECTED_PROD_FILES` reads 467 while the production count is 468. Measured
+across the integration history: pin and count agree at `c414bee` (467/467) and
+disagree from `bccf677` onward (467/468). `bccf677` added
+`experiments/ad01/independent_units.py`.
+
+Confirmed on the `bccf677` tree itself with my files restored to their base
+versions: `measured=468 -> GUARD RED`, and `fresh_round` there reads
+`prod_callers=1, test_modules=0`. So `test_the_census_walked_the_tree_it_claims`
+was failing before this lane touched anything, and any CI shard citing it on a
+tree at or after `bccf677` is that staleness.
