@@ -22,6 +22,13 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.12", "3.13", "3.14"]
+        include:
+          - python-version: "3.12"
+            token: "b3120000"
+          - python-version: "3.13"
+            token: "b3130000"
+          - python-version: "3.14"
+            token: "b3140000"
     timeout-minutes: 90
 
     services:
@@ -39,7 +46,7 @@ jobs:
 
     env:
       PYTHONPATH: src
-      S09ISO_TOKEN: ci0000000000001
+      S09ISO_TOKEN: ${{ matrix.token }}
       SETTLEMENT_TEST_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
       S09ISO_ADMIN_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
 
@@ -56,10 +63,17 @@ jobs:
           pip install -e ".[test]"
 
       - name: Collect
-        run: python -m pytest --collect-only -q 2>&1 | tail -5
+        run: |
+          set -o pipefail
+          python -m pytest --collect-only -q 2>&1 | tail -5
 
       - name: Suite
-        run: python -m pytest -q -p no:cacheprovider 2>&1 | tail -80
+        # pipefail, or `| tail` returns tail's status and an INTERNALERROR at
+        # collection reads as a green run with zero tests executed.
+        run: |
+          set -o pipefail
+          python -m pytest -q -p no:cacheprovider 2>&1 | tee suite.log | tail -80
+          exit ${PIPESTATUS[0]}
 
   heavy:
     name: heavy archived
@@ -82,7 +96,7 @@ jobs:
 
     env:
       PYTHONPATH: src
-      S09ISO_TOKEN: ci0000000000002
+      S09ISO_TOKEN: "b7ea1701"
       SETTLEMENT_TEST_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
       S09ISO_ADMIN_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
 
@@ -100,9 +114,11 @@ jobs:
 
       - name: Heavy archived, one file at a time
         run: |
+          set -o pipefail
           for f in tests/_heavy_archived/test_*.py; do
             echo "=== $f"
             python -m pytest -q -p no:cacheprovider "$f" 2>&1 | tail -3
+            exit ${PIPESTATUS[0]}
           done
 
   consistency:
