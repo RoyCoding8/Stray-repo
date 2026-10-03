@@ -95,12 +95,6 @@ def _run_phase(source: str, *args: str) -> str:
     return done.stdout
 
 
-def _held(store: str, cid: str) -> list:
-    from experiments.ad01 import mission
-
-    return mission.read_in_flight(store, cid)
-
-
 def _in_flight_raw(store: str, cid: str) -> list:
     """The column itself, not this lane's reading of it.
 
