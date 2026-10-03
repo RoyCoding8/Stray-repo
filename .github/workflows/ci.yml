@@ -1,0 +1,131 @@
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    name: suite (py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.12", "3.13", "3.14"]
+    timeout-minutes: 90
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PYTHONPATH: src
+      S09ISO_TOKEN: ci0000000000001
+      SETTLEMENT_TEST_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
+      S09ISO_ADMIN_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: Collect
+        run: python -m pytest --collect-only -q 2>&1 | tail -5
+
+      - name: Suite
+        run: python -m pytest -q -p no:cacheprovider 2>&1 | tail -80
+
+  heavy:
+    name: heavy archived
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    needs: [suite]
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PYTHONPATH: src
+      S09ISO_TOKEN: ci0000000000002
+      SETTLEMENT_TEST_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
+      S09ISO_ADMIN_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: Heavy archived, one file at a time
+        run: |
+          for f in tests/_heavy_archived/test_*.py; do
+            echo "=== $f"
+            python -m pytest -q -p no:cacheprovider "$f" 2>&1 | tail -3
+          done
+
+  consistency:
+    name: line endings and migration currency
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: tests/ must be LF on Linux
+        run: |
+          # A CRLF file in tests/ is invisible on Windows and breaks exact
+          # matching on Linux. Counted, not asserted per file.
+          crlf=$(git ls-files 'tests/*.py' | xargs grep -lU $'\r' 2>/dev/null | wc -l)
+          echo "tests/ files containing CR: $crlf"
+          if [ "$crlf" != "0" ]; then
+            echo "::error::CRLF line endings in tests/ break byte-exact needles on Linux"
+            exit 1
+          fi
+
+      - name: migration files are LF
+        run: |
+          crlf=$(git ls-files 'migrations/*.sql' | xargs grep -lU $'\r' 2>/dev/null | wc -l)
+          echo "migrations/ files containing CR: $crlf"
+          [ "$crlf" = "0" ]
