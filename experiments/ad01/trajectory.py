@@ -883,6 +883,8 @@ def _method_panel(family: str, world: int, seed: str, size: int) -> dict:
     self-measurement the repertoire already refuses when it declines to
     offer a member on its own acquisition task.
     """
+    import hashlib
+
     from . import worlds
     membership = worlds.world_membership(worlds.FROZEN_DIR)[str(world)]
     candidates = [task_id for task_id
