@@ -489,7 +489,7 @@ def test_the_walk_separates_the_method_from_the_policy(walk):
 
 PROD_TREES = ("src", "experiments", "scripts")
 TEST_TREES = ("tests",)
-EXPECTED_PROD_FILES = 467
+EXPECTED_PROD_FILES = 468
 
 CAPABILITIES = (
     ("admission", "admit an operation with durable identity",
@@ -842,12 +842,14 @@ def test_the_census_is_reported_not_baked_in(capsys):
 def test_fresh_round_cannot_open_a_store_that_names_a_durable_owner(tmp_path):
     """A live-adjacent opener measured rather than cited.
 
-    `improve_channel.fresh_round` is `FrontierStore(store_path)` with no
-    identity, and `_check_identity` refuses that for any document that
-    recorded one. So the improvement path's fresh process cannot open any
-    store a durable owner created. This does not fix it: the repair is a
-    decision about which investigation owns that store, which is not a
-    measurement's to take.
+    `improve_channel.fresh_round` opened namelessly, and `_check_identity`
+    refuses that for any document that recorded an owner. So the improvement
+    path's fresh process could not open any store a durable owner created. This
+    test still holds, and still describes the guard: the nameless open is
+    refused, and a nameless document still refuses an owned open. What changed
+    is that the opener now takes the two names, so the refusal is something a
+    correct caller can answer rather than a dead end. See
+    `tests/test_a55_continuation_owner.py`.
     """
     from experiments.ad01 import frontier
 
@@ -873,8 +875,16 @@ def test_fresh_round_cannot_open_a_store_that_names_a_durable_owner(tmp_path):
         frontier.FrontierStore(str(nameless), identity=owned)
 
 
-def test_fresh_round_passes_no_identity():
-    """The opener is the shape, read from the source rather than assumed."""
+def test_fresh_round_names_the_owner_it_was_given():
+    """The opener is the shape, read from the source rather than assumed.
+
+    This pinned `FrontierStore(store_path)` with no identity, which is the
+    defect `test_fresh_round_cannot_open_a_store_that_names_a_durable_owner`
+    measures and declined to fix on the grounds that which investigation owns
+    the store is not a measurement's call. WORKER-PROMPT.md §A assigns that
+    decision to the ownership migration, so the opener now carries the two
+    names and still opens namelessly when given neither.
+    """
     from experiments.ad01 import improve_channel
 
     source = Path(improve_channel.__file__).read_text(encoding="utf-8")
@@ -882,4 +892,9 @@ def test_fresh_round_passes_no_identity():
     body = source[start:source.index("def main(", start)]
     calls = [line.strip() for line in body.splitlines()
              if "FrontierStore(" in line]
-    assert calls == ["store = _frontier.FrontierStore(store_path)"], calls
+    assert len(calls) == 1, calls
+    assert "identity=" in body, body
+    assert "dsn: str | None = None" in body
+    assert "investigation_id: str | None = None" in body
+    opener = calls[0]
+    assert opener.startswith("store = _frontier.FrontierStore("), opener

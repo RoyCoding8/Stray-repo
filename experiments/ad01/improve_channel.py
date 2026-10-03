@@ -2332,8 +2332,32 @@ def drive_improve_round(store, task, package=None,
             "observations": list(round_obs), "receipts": receipts}
 
 
-def fresh_round(store_path: str, round_no: int) -> dict:
-    store = _frontier.FrontierStore(store_path)
+def _round_identity(dsn: str | None, investigation_id: str | None):
+    if (dsn is None) != (investigation_id is None):
+        raise _frontier.Refused(
+            "a fresh round names its store by dsn and investigation_id"
+            " together; one of them identifies nothing")
+    if dsn is None:
+        return None
+    return _frontier.StoreIdentity(investigation_id=investigation_id, dsn=dsn)
+
+
+def fresh_round(store_path: str, round_no: int, *, dsn: str | None = None,
+                investigation_id: str | None = None) -> dict:
+    """Continue a live store's next improvement round in a fresh process.
+
+    A restart is the same mission continuing, so it opens under the identity the
+    store was created with. It used to open namelessly, and `_check_identity`
+    refuses that on any document recording an owner, which is every store
+    `live_construct.ensure_live_store` creates. The tree's only continuation
+    entry could therefore continue only the stores no live run produces. The
+    two names travel together for the reason `_live_identity` already gives:
+    a `dsn` with no investigation names no row, and an investigation with no
+    `dsn` names no row to address it on. Both absent is the fixture boundary
+    and stays open.
+    """
+    store = _frontier.FrontierStore(
+        store_path, identity=_round_identity(dsn, investigation_id))
     active = store.active_package
     if active is None:
         raise _frontier.Refused("fresh process found no bound program")
@@ -2352,7 +2376,9 @@ def fresh_round(store_path: str, round_no: int) -> dict:
 
 def main(argv) -> int:
     store_path, round_no = argv[1], int(argv[2])
-    summary = fresh_round(store_path, round_no)
+    summary = fresh_round(store_path, round_no,
+                          dsn=argv[3] if len(argv) > 3 else None,
+                          investigation_id=argv[4] if len(argv) > 4 else None)
     sys.stdout.write(json.dumps(summary, sort_keys=True) + "\n")
     return 0
 
