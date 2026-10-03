@@ -398,10 +398,15 @@ def _s09_incorporate(dsn: str, cid: str, seq: int, *, decision: dict,
     and one that is being incorporated from an earlier run's boundary
     observation.
 
-    The mission entry is not released here. Release belongs to the path that
-    resolved a *pending* boundary, and folding it into every incorporation
-    would release an operation on the fresh path, which never held one and
-    has no mission row to release from.
+    The mission entry is not released here. Release belongs to the boundary
+    that ran, and it is `_s09_release` at the one place that both ran and
+    adopted an entry: `execute_pending`. This function is reached from two
+    paths, the fresh one at `run_campaign` and the settled-resume one above,
+    and on neither does the boundary hold an admitted operation -- the fresh
+    path now admits and releases around its own call, and a row incorporated
+    from an earlier run has nothing to release. Folding release in here would
+    release an operation nobody admitted, which is why the release stayed on
+    the path that holds one.
     """
     from psycopg.types.json import Json
     effect_id = _effect_operation_id(dsn, cid, episode or {})
@@ -523,10 +528,42 @@ def _admitting_program_digest(named: str) -> str:
     return named
 
 
-def _decision_task_id(decision: dict) -> str:
-    """The task a decision names, or empty when it names none."""
-    action = dict(decision or {}).get("next_action")
-    return str(action.get("task_id") or "") if isinstance(action, dict) else ""
+def admit_boundary(dsn: str, cid: str, seq: int, decision: dict, *,
+                   capability_id: str, program_digest: str = "") -> str:
+    """Hold the operation this boundary just decided, before its effect runs.
+
+    The seam is the line in `_run_boundary` that calls this, and it is not
+    `_s09_accept` and not `_s09_incorporate`. `record_decision` makes the
+    decision durable and `s09_policy_state` already holds it as `accepted`;
+    what neither of them records is that the work is now owed. A crash between
+    that write and the effect leaves a boundary whose decision survives and
+    whose operation exists nowhere, so a restart re-decides it and the admitted
+    identity is gone before anything ran. That window is the one
+    `accept_action` was written for, and this is the live path entering it.
+
+    Everything is derived from what the boundary already holds. `seq` and the
+    attempt id are positional facts about the boundary; `task_id` and
+    `capability_id` are the arguments `_run_boundary` was called with and the
+    decision's own `next_action`.
+
+    `program_digest` is passed through, not derived, and no value is invented
+    here. `_run_boundary` reaches four different programs -- a control, a seed
+    capability, a constructed member's authored source, a retained member's
+    source -- and which one runs is not decided until the arm below, so a
+    digest taken at this line would name a program that has not been chosen.
+    The seed digest therefore stands, which is what
+    `_admitting_program_digest` already derived for a caller that names no
+    program, and an arm that runs something else says so through the
+    `capability_id` it records.
+
+    This adds no writer. `mission.admit_operation` is the only code in the tree
+    that writes `investigations.in_flight`, and this reaches it through
+    `accept_action` rather than beside it.
+    """
+    return accept_action(dsn, cid, seq, decision,
+                         program_digest=program_digest,
+                         task_id=_decision_task_id(decision),
+                         capability_id=capability_id)
 
 
 def mission_held(dsn: str, cid: str, seq: int):
@@ -835,6 +872,8 @@ def _run_boundary(task_id: str, capability_id: str, caps: dict,
         if journal.get("dsn") and accepted is None:
             record_decision(journal["dsn"], journal["cid"], boundary["seq"],
                             investigation)
+            admit_boundary(journal["dsn"], journal["cid"], boundary["seq"],
+                           investigation, capability_id=capability_id)
     if action["kind"] == "use_method":
         return _use_retained_method(action, experience or {}, seed_obs, journal, boundary)
     if action["kind"] == "policy_revision":
@@ -1551,6 +1590,7 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
             _s09_incorporate(
                 dsn, cid, seq, decision=decision, observation=observation,
                 episode=episode, spend=spend, provenance="s09-m1")
+            _s09_release(dsn, cid, seq)
         boundaries.append(entry)
     else:
         stop = {"reason": "no admissible work remains"}
