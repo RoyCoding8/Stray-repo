@@ -19,6 +19,15 @@ interpreter with a scrubbed environment. The method column runs
 `trajectory.run_use`, the function `scripts/s09_pilot.run_study` calls at
 `scripts/s09_pilot.py:1133`.
 
+That executor refuses an execution that names no store, allocation and
+operation id, so every entry point here takes that authority as an argument
+and `proof_authority` mints a disposable one. This module has no refusal to
+show and no reading to take: `fresh_process_evidence` reports a worker
+status and a launcher receipt that exist only once a child has run, so a
+proof that could not execute would report nothing about which column
+governs. The authority is a disposable store created for these executions
+and dropped after them, never a study or live store.
+
 A negative result here is a finding. `governing_column` names the column
 that governs, and the evidence for the other column's non-governance is
 carried in the same report.
@@ -26,11 +35,13 @@ carried in the same report.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Iterator, Mapping, Sequence
 
 from . import method_exec
 from . import policy_action
@@ -253,12 +264,74 @@ class FreshProcess:
 
 
 def execute_bound_policy(binding: PolicyBinding_, view: dict, state: dict, *,
-                         entry: str = "STEP") -> dict:
+                         entry: str = "STEP",
+                         authority: Mapping[str, Any] | None = None,
+                         operation_id: str | None = None) -> dict:
+    """The one execution this module makes, under an authority it names.
+
+    This module proves that the bound policy runs in a fresh interpreter and
+    that its admitted action governs, so it has to execute rather than read
+    the refusal: `fresh_process_evidence` reports a worker status and a
+    launcher receipt that only exist once a child has run. The executor
+    refuses an execution with no `dsn`, allocation and operation id, so the
+    authority is named here rather than inferred, and its absence is a
+    refusal rather than a run against whatever store happens to be visible.
+    """
     binding.verified()
     record = binding.as_policy_record()
     policy_step.verify_policy_record(record)
+    if not isinstance(authority, Mapping) or not authority.get("dsn") \
+            or not authority.get("allocation_id") or not operation_id:
+        raise PolicyNotProved(
+            "this proof executes the bound policy, so it needs a store, an "
+            "allocation and an operation identity: it has no refusal to show "
+            "and no result without them")
     return method_exec.run_step_out_of_process(
-        binding.source, view, state, entry=entry)
+        binding.source, view, state, entry=entry,
+        dsn=str(authority["dsn"]),
+        allocation_id=str(authority["allocation_id"]),
+        operation_id=str(operation_id))
+
+
+@contextlib.contextmanager
+def proof_authority() -> Iterator[dict]:
+    """A disposable store and allocation for this proof's executions.
+
+    Created here, for these executions, and dropped when the proof ends, so
+    the receipts it reads back are attributable while they run and leave
+    nothing behind afterwards. It is separate from any live or study store
+    by construction rather than by convention.
+    """
+    from . import s09_run_isolation as isolation
+    from settlement import authority as _authority
+
+    token = "bound-use-proof-%s" % uuid.uuid4().hex[:8]
+    admin = isolation.admin_dsn()
+    database = isolation.create_disposable_db(token, admin_dsn=admin)
+    try:
+        handle = _authority.authorize_study(
+            database.dsn, isolation.study_root_for(token),
+            authorized=1_000_000, allocation_id="%s-alloc" % token,
+            ceilings={"sandbox_calls": 10_000})
+        yield {"dsn": database.dsn, "allocation_id": handle.allocation_id}
+    finally:
+        isolation.drop_disposable_db(database, admin_dsn=admin)
+
+
+def _operation_id(binding: PolicyBinding_, view: dict, suffix: str = "") -> str:
+    """One execution's identity, derived from the bytes and the view.
+
+    The step suffix is part of it because a sequence of steps is not one
+    execution: under a single identity the second step would read back the
+    first step's settled receipt and report the first step's action, which
+    would read as "the policy stopped advancing" when nothing ran twice.
+    """
+    view_key = sha256_of(json.dumps(dict(view), sort_keys=True,
+                                     default=str))[:16]
+    parts = ["bound-use-proof", binding.recorded_digest[:16], view_key]
+    if suffix:
+        parts.append(suffix)
+    return "-".join(parts)
 
 
 def fresh_process_evidence(result: Mapping[str, Any]) -> FreshProcess:
@@ -275,11 +348,14 @@ def fresh_process_evidence(result: Mapping[str, Any]) -> FreshProcess:
 
 
 def admitted_actions(binding: PolicyBinding_, view: dict, *,
-                     steps: int = 2) -> list:
+                     steps: int = 2,
+                     authority: Mapping[str, Any] | None = None) -> list:
     state: dict = {}
     admitted = []
-    for _ in range(steps):
-        result = execute_bound_policy(binding, view, state)
+    for index in range(steps):
+        result = execute_bound_policy(
+            binding, view, state, authority=authority,
+            operation_id=_operation_id(binding, view, "step%d" % index))
         action = policy_step.validate_step_result(
             {"action": result["action"], "state": result["state"]})
         admitted.append(action["action"])
@@ -331,14 +407,17 @@ def use_episode(policy: Any = None, *,
 
 def column_report(*, binding: PolicyBinding_ | None = None,
                   use_records: Sequence[Mapping[str, Any]] | None = None,
-                  view: dict | None = None) -> dict:
+                  view: dict | None = None,
+                  authority: Mapping[str, Any] | None = None) -> dict:
     binding = binding if binding is not None else load_bound_policy()
     view = view if view is not None else use_view()
     use_records = list(use_records if use_records is not None
                        else use_episode(None))
 
-    policy_result = execute_bound_policy(binding, view, {})
-    policy_actions = admitted_actions(binding, view)
+    policy_result = execute_bound_policy(
+        binding, view, {}, authority=authority,
+        operation_id=_operation_id(binding, view, "report"))
+    policy_actions = admitted_actions(binding, view, authority=authority)
     policy_fresh = fresh_process_evidence(policy_result)
     policy_verdict = (
         PROVING if (policy_fresh.executed_digest == binding.recorded_digest
@@ -435,14 +514,15 @@ class Substitution:
 def substitute_policy(baseline: PolicyBinding_,
                       substitute: PolicyBinding_,
                       view: dict | None = None,
-                      repertoire: dict | None = None) -> Substitution:
+                      repertoire: dict | None = None,
+                      authority: Mapping[str, Any] | None = None) -> Substitution:
     view = view if view is not None else use_view()
     repertoire = repertoire if repertoire is not None else use_repertoire()
     method_digest = sha256_of(str(repertoire["members"][0]["method_source"]))
 
     actions, outcomes = [], []
     for binding in (baseline, substitute):
-        admitted = admitted_actions(binding, view)
+        admitted = admitted_actions(binding, view, authority=authority)
         actions.append(tuple(_action_key(action) for action in admitted))
         outcomes.append(tuple(
             _candidate_digest(_execute_admitted(action, binding))
@@ -467,7 +547,8 @@ def _candidate_digest(effect: Mapping[str, Any]) -> str:
     return sha256_of(json.dumps(effect.get("candidate"), sort_keys=True))
 
 
-def substitute(baseline_source: str, substitute_source: str) -> Substitution:
+def substitute(baseline_source: str, substitute_source: str,
+               authority: Mapping[str, Any] | None = None) -> Substitution:
     """Substitution over two policy sources, repertoire held fixed.
 
     Neither source is required to be persisted. The substitution question
@@ -481,7 +562,8 @@ def substitute(baseline_source: str, substitute_source: str) -> Substitution:
     substitute_binding = PolicyBinding_(
         source=substitute_source, recorded_digest=sha256_of(substitute_source),
         origin="fixture-stand-in", durable=False)
-    return substitute_policy(baseline, substitute_binding, view)
+    return substitute_policy(baseline, substitute_binding, view,
+                             authority=authority)
 
 
 @dataclass(frozen=True)
@@ -652,6 +734,7 @@ __all__ = [
     "fresh_process_evidence",
     "load_bound_policy",
     "make_record",
+    "proof_authority",
     "recorded_p1_use_census",
     "seed_policy_source",
     "sha256_of",
