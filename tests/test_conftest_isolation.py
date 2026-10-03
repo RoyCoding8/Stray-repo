@@ -345,8 +345,8 @@ def test_the_scan_reaches_the_archived_directory():
     assert seams["EC02_L_DSN"].redirectable
 
 
-def test_a_redirected_seam_carries_the_session_route_and_not_the_default(tmp_path,
-                                                                      monkeypatch):
+def test_a_redirected_seam_carries_the_session_route_and_not_the_default(
+        tmp_path, monkeypatch):
     """The redirect must not inherit the unreachable socket from the default.
 
     ``env_for`` used to rebuild the DSN from ``seam.default_dsn``, keeping every

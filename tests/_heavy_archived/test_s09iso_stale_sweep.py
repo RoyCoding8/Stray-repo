@@ -136,8 +136,7 @@ def _write_holder_script() -> None:
     HOLDER_SCRIPT.write_text(
         "import os, signal, sys, time\n"
         "sys.path.insert(0, %r)\n"
-        "from tests.conftest_isolation import RunClaim\n"
-        "from tests.conftest_isolation import admin_dsn\n"
+        "from tests.conftest_isolation import RunClaim, admin_dsn\n"
         "marker = sys.argv[2]\n"
         "claim = RunClaim(sys.argv[1], admin_dsn()).acquire()\n"
         "previous = {}\n"
