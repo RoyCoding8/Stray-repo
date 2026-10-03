@@ -490,6 +490,44 @@ def read_in_flight(dsn: str, investigation_id: str) -> list[InFlightOperation]:
                   key=lambda item: (item.seq, item.attempt_id))
 
 
+def is_quiescent(dsn: str, investigation_id: str) -> bool:
+    """Whether this investigation has work it admitted and has not run.
+
+    One predicate over the durable row. It answers for the investigation and
+    not for one attempt, so the signature does not take an attempt id: an
+    investigation with nothing left to run is quiescent whichever attempt it
+    once used.
+
+    A mission with no row is refused rather than answered. `read_in_flight`
+    raises for an absent investigation, so a predicate returning True here
+    would be the one reader in the module calling a mission that was never
+    recorded a finished one. Absent is not the same claim as done.
+
+    Counting the column's length rather than fetching the list keeps an
+    uninterpretable entry visible as non-quiescence. `read_in_flight` reads
+    through `_entry`, which raises on a status outside `IN_FLIGHT_STATES`, so
+    going that way would turn a corrupt row into an error instead of the
+    answer a caller gating on quiescence can act on.
+
+    The in-flight list alone is the question. The two other places a study
+    records admitted-unrun work are not this module's column and are not
+    folded in to make a wider answer: `s09_policy_state` holds one row per
+    boundary, and `FrontierStore.pending_effects` is a list in a document on
+    disk keyed on opportunities rather than attempts. An investigation can
+    carry an unresolved frontier effect and no in-flight row, and this says so
+    rather than claiming otherwise.
+    """
+    with connect(dsn) as conn:
+        row = conn.execute(
+            "SELECT jsonb_array_length(in_flight) AS held FROM investigations"
+            " WHERE id = %s", (investigation_id,)).fetchone()
+        conn.commit()
+    if row is None:
+        raise MissionRefused("no mission for investigation %r"
+                             % investigation_id)
+    return int(row["held"]) == 0
+
+
 def held_operation(dsn: str, investigation_id: str,
                    attempt_id: str) -> InFlightOperation | None:
     """The one operation an attempt is holding, or None.
