@@ -141,6 +141,14 @@ def test_reopening_by_identity_keeps_the_entry(entered, tmp_path):
     A restarted run re-opens the store by the same identity. If the read were
     skipped on the reopen path the objective check would compare the file
     against itself and never notice that the entry had moved.
+
+    The refusal below was `mission mismatch`, reached by comparing the
+    document's objective against the entry's. Now that the live store records
+    the investigation that owns it (A27's `StoreIdentity`, wired in by A31),
+    naming a *different* investigation is refused earlier and more precisely:
+    the store is owned by the first one, so there is nothing to reconcile and
+    the objective is never compared. Both are `LiveRefused`, so a caller that
+    catches the live refusal still catches this one.
     """
     dsn, investigation_id = entered
     path = tmp_path / "store.json"
@@ -157,7 +165,7 @@ def test_reopening_by_identity_keeps_the_entry(entered, tmp_path):
     mission.record_mission(
         dsn, other, objective="a different objective",
         environments=ENVIRONMENTS)
-    with pytest.raises(live.LiveRefused, match="mission mismatch"):
+    with pytest.raises(live.LiveRefused, match="owned by investigation"):
         live.ensure_live_store(path, None, dict(live.LIVE_AUTHORITY),
                                dsn=dsn, investigation_id=other)
 

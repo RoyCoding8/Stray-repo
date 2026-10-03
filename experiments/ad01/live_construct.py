@@ -1060,6 +1060,24 @@ def live_mission(objective: str, environments: list) -> dict:
             "success_criteria": []}
 
 
+def _live_identity(dsn: str | None, investigation_id: str | None):
+    """The one place a live caller turns two names into a store identity.
+
+    Both or neither. A `dsn` with no investigation names no row, and an
+    investigation with no `dsn` names no row to address it on, so half an
+    identity is a caller that believes it named an owner and did not. Both
+    absent is the fixture boundary and is recorded as absence.
+    """
+    from . import frontier as _frontier
+    if (dsn is None) != (investigation_id is None):
+        raise LiveRefused(
+            "a live store names its mission by dsn and investigation_id"
+            " together; one of them identifies nothing")
+    if dsn is None:
+        return None
+    return _frontier.StoreIdentity(investigation_id=investigation_id, dsn=dsn)
+
+
 def ensure_live_store(path, mission: dict | None, authority: dict, *,
                       dsn: str | None = None,
                       investigation_id: str | None = None):
@@ -1069,22 +1087,25 @@ def ensure_live_store(path, mission: dict | None, authority: dict, *,
     they replace `mission` rather than qualifying it: the live entry passes
     `None` there and the declaration is read from `investigations`, so the
     store is opened over the entry that owns the mission and no caller can
-    open a live store under a mission it invented. Without both, `mission` is
-    the declaration and this function is a fixture boundary. Half an identity
-    is a refusal rather than a default, because a `dsn` with no investigation
-    names nothing.
+    open a live store under a mission it invented. The same pair is the
+    store's own identity, so the store records the investigation whose
+    `in_flight` row would own its admitted-unrun effects, and reopening
+    under a different one is refused rather than reconciled. Without both,
+    `mission` is the declaration and the store records no durable owner,
+    which is stated in the document rather than left to be inferred from an
+    absent key.
     """
     from . import frontier as _frontier
     from . import mission as _mission
     import os
-    if (dsn is None) != (investigation_id is None):
-        raise LiveRefused(
-            "a live store names its mission by dsn and investigation_id"
-            " together; one of them identifies nothing")
+    identity = _live_identity(dsn, investigation_id)
     if dsn is not None:
         mission = _mission.read_declaration(dsn, investigation_id)
     if os.path.exists(str(path)):
-        store = _frontier.FrontierStore(str(path))
+        try:
+            store = _open_owned_store(path, dsn, investigation_id)
+        except _frontier.Refused as exc:
+            raise LiveRefused("live store refused: %s" % exc) from exc
         if store._doc.get("mission", {}).get("objective") != \
                 mission.get("objective"):
             raise LiveRefused("live store mission mismatch")
@@ -1097,7 +1118,25 @@ def ensure_live_store(path, mission: dict | None, authority: dict, *,
         mission={"objective": mission["objective"],
                  "environments": list(mission["environments"])},
         authority={"queries": int(authority["queries"]),
-                   "steps": int(authority["steps"])})
+                   "steps": int(authority["steps"])},
+        identity=identity)
+
+
+def _open_owned_store(store_path: str, dsn: str | None,
+                      investigation_id: str | None):
+    """Open an existing live store under the owner it was created with.
+
+    The refusal is left as `frontier.Refused`. That is the vocabulary the
+    store's own validation already raises in, and `restart_store` and
+    `bind_retained_acquisition` are documented and tested as passing it
+    through — a caller distinguishing "the store is unreadable" from "the
+    caller got the arguments wrong" reads that type. Translating it here
+    would break both boundaries, so an owner mismatch is refused in the same
+    type as every other fault in the document.
+    """
+    from . import frontier as _frontier
+    return _frontier.FrontierStore(
+        str(store_path), identity=_live_identity(dsn, investigation_id))
 
 
 def propose_live_work(store, opportunities: list) -> list:
@@ -1309,9 +1348,10 @@ def _construct_receipts(probe: dict, round_no) -> list:
 
 
 def bind_live_revision(store_path, package: dict, task: dict,
-                        arm: str) -> dict:
+                        arm: str, dsn: str | None = None,
+                        investigation_id: str | None = None) -> dict:
     from . import frontier as _frontier
-    store = _frontier.FrontierStore(str(store_path))
+    store = _open_owned_store(store_path, dsn, investigation_id)
     store._validate_active_package()
     retained = [candidate for candidate in
                 store._doc["treatment_arms"]["acquired"]
@@ -1329,7 +1369,8 @@ def bind_live_revision(store_path, package: dict, task: dict,
         bound = store.active_package
     else:
         bound = adopt_live_revision(store, retained[0], arm=arm)
-    restarted = restart_store(str(store_path))
+    restarted = restart_store(str(store_path), dsn=dsn,
+                              investigation_id=investigation_id)
     if restarted.active_digest != bound.get("package_digest"):
         raise LiveRefused("retained without binding: durable active"
                           " digest differs from the retained package")
@@ -1366,12 +1407,13 @@ def bind_live_revision(store_path, package: dict, task: dict,
 
 
 def bind_retained_acquisition(store_path, acquisition: dict,
-                              task: dict) -> dict:
+                              task: dict, dsn: str | None = None,
+                              investigation_id: str | None = None) -> dict:
     from . import frontier as _frontier
     control_id = acquisition.get("control_id", "")
     digest = acquisition.get("package_digest", "")
     try:
-        store = _frontier.FrontierStore(str(store_path))
+        store = _open_owned_store(store_path, dsn, investigation_id)
     except (OSError, ValueError, KeyError, TypeError,
             _frontier.Refused) as exc:
         return {"disposition": "retained",
@@ -1391,7 +1433,8 @@ def bind_retained_acquisition(store_path, acquisition: dict,
                 "release_id": control_id, "bound_digest": digest}
     try:
         return bind_live_revision(
-            str(store_path), matches[0], task, str(acquisition.get("arm", "")))
+            str(store_path), matches[0], task, str(acquisition.get("arm", "")),
+            dsn=dsn, investigation_id=investigation_id)
     except (LiveRefused, _frontier.Refused) as exc:
         message = str(exc)
         if message.startswith("rejected:"):
@@ -1431,9 +1474,16 @@ def adopt_live_revision(store, candidate: dict,
         raise LiveRefused("live adoption refused: %s" % exc) from exc
 
 
-def restart_store(path):
+def restart_store(path, dsn: str | None = None,
+                  investigation_id: str | None = None):
+    """Reopen a live store in this process, under the same owner.
+
+    A restart is the same mission continuing, so it opens under the identity
+    the store was created with rather than dropping to a nameless read that
+    an owned document refuses. A nameless live store restarts namelessly.
+    """
     from . import frontier as _frontier
-    return _frontier.FrontierStore(str(path))
+    return _open_owned_store(path, dsn, investigation_id)
 
 
 def live_frontier_round(store_path, mission: dict, authority: dict,

@@ -1989,7 +1989,8 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
     except Exception as exc:
         adopted = {"status": "refused", "reason": str(exc)}
     store.save()
-    restarted = _live.restart_store(store_path)
+    restarted = _live.restart_store(store_path, dsn=dsn,
+                                    investigation_id=investigation_id)
     assert restarted.active_digest == store.active_digest
     active2 = restarted.active_package
     second = _live.run_live_improve_round(restarted, task, active2, 2)
@@ -2055,6 +2056,7 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
             which)["package_digest"] not in acquired_digests
     return {"label": label,
             "store_path": str(store_path),
+            "investigation_id": investigation_id,
             "active_digest": active["package_digest"],
             "choice_preserved": choice_preserved["choice"],
             "choice_mismatch": choice_mismatch["choice"],
@@ -2203,7 +2205,8 @@ def run_e0(dsn: str, out) -> dict:
         from experiments.ad01 import live_construct as _live
         revision = _live.bind_retained_acquisition(
             live.get("store_path", ""), acquisition,
-            _rules.make_task("dev", 4))
+            _rules.make_task("dev", 4), dsn=dsn,
+            investigation_id=live["investigation_id"])
     else:
         revision = "absent"
     live["store_digest"] = _file_digest(Path(live["store_path"]))
@@ -2562,18 +2565,21 @@ def boolean_live_round(*, guard, model: str, split: str, seed: int,
 
 
 def _write_e12_revision_receipts(out: Path, freeze_digest: str,
-                                 arms: dict) -> None:
+                                 arms: dict, dsn: str) -> None:
     from experiments.ad01 import frontier as _frontier
+    from experiments.ad01 import live_construct as _live
     operations = {}
     child_receipts = {}
     for arm in ("P1", "P2"):
         info = arms.get(arm) or {}
         if info.get("status") != "available":
             continue
-        store_path = (info.get("frontier") or {}).get("store_path")
+        summary = info.get("frontier") or {}
+        store_path = summary.get("store_path")
         if not store_path:
             continue
-        store = _frontier.FrontierStore(str(store_path))
+        store = _live._open_owned_store(str(store_path), dsn,
+                                        summary["investigation_id"])
         records = [record for record in store.accepted_revisions
                    if record.get("arm") == arm
                    and isinstance(record.get("receipt"), dict)]
@@ -2683,7 +2689,8 @@ def run_e12(dsn: str, out) -> dict:
                 from experiments.ad01 import live_construct as _live
                 revision = _live.bind_retained_acquisition(
                     frontier.get("store_path", ""), acquisition,
-                    _rules.make_task("dev", 4))
+                    _rules.make_task("dev", 4), dsn=dsn,
+                    investigation_id=frontier["investigation_id"])
             program_freeze = _freeze_arm_program(frontier, revision, arm)
             if acquisition.get("status") == "retained" and program_freeze is None:
                 raise ValueError("arm program was not frozen before qualification")
@@ -2785,7 +2792,7 @@ def run_e12(dsn: str, out) -> dict:
         out / "frontier-control-e12.json", freeze, "control",
         dsn=dsn, guard=None, model=model)
     _write_e12_revision_receipts(
-        out, freeze["freeze_digest"], arms)
+        out, freeze["freeze_digest"], arms, dsn)
     total = sum(int(a.get("model_calls", 0)) for a in arms.values())
     raw_dispatch_ledger = []
     for arm in ("P1", "P2"):
@@ -3003,7 +3010,8 @@ def run_e3(dsn: str, out, e12_dir, *, authority=None) -> dict:
             reasons[arm] = "frontier store digest does not match E12"
             continue
         try:
-            store = _frontier.FrontierStore(str(store_path))
+            store = _live._open_owned_store(
+                str(store_path), dsn, summary["investigation_id"])
         except Exception as exc:
             reasons[arm] = "durable frontier store is unreadable: %s" % exc
             continue
