@@ -29,7 +29,7 @@ from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import policy_action
 from experiments.ad01 import policy_step
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 ALWAYS = {"always": True}
 
 

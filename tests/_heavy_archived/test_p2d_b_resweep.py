@@ -14,7 +14,7 @@ from settlement.launcher_local import LocalLauncher
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]
                        / "experiments"))
 from doubles import ScriptedDouble
 

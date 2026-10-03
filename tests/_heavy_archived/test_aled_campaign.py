@@ -17,7 +17,7 @@ import pytest
 
 from test_s09_migrate_callers import first_eligible
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 DSN = os.environ.get(

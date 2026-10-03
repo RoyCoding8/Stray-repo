@@ -13,7 +13,7 @@ from settlement import broker, evaluation, launcher_local, store, trials
 from settlement.common import Command
 from settlement.launcher_local import LocalLauncher
 
-TEAM01 = Path(__file__).resolve().parent.parent / "experiments" / "team01"
+TEAM01 = Path(__file__).resolve().parents[2] / "experiments" / "team01"
 
 
 def _cmd(payload: dict, tag: str) -> Command:

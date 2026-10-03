@@ -920,7 +920,7 @@ AD01_KILL_TASKS = ("ad01-w0-dev-sw-00,ad01-w0-dev-gr-00,"
                    "ad01-w0-dev-sw-02,ad01-w0-dev-gr-02")
 
 
-AD01_ROOT = str(Path(__file__).resolve().parent.parent)
+AD01_ROOT = str(Path(__file__).resolve().parents[2])
 
 
 def _ad01_env():
@@ -1077,7 +1077,7 @@ def test_verif_ad01_resume_spend_equals_direct_run(dsn):
 # `a41d4b3` (2026-09-20) added it to the other six suites that need it and
 # did not add it to this one. Both calls now pass it. The census reading
 # "all 5 rows are the dead worktree path" was half right.
-VERIF_ROOT = str(Path(__file__).resolve().parent.parent)
+VERIF_ROOT = str(Path(__file__).resolve().parents[2])
 
 
 def _verif_tracked(path):
