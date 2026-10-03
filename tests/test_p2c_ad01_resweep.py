@@ -20,6 +20,13 @@ from experiments.ad01 import worlds
 from experiments.ad01.learner import LearnerRefused
 from settlement.common import SettlementError
 
+from tests.conftest_isolation import admin_dsn, dsn_with_dbname
+
+# A store that must stay absent: these three assert a refusal, and creating
+# the database would invert them. What has to be real is the route, because the
+# refusal is raised only after the read that finds no boundary row.
+UNUSED_DSN = dsn_with_dbname(admin_dsn(), "ec02test_p2c_unused")
+
 GRAPH_TASK = "ad01-w0-dev-gr-00"
 
 
@@ -92,7 +99,7 @@ def test_record_decision_store_mismatch_refuses(monkeypatch):
     monkeypatch.setattr(_store, "submit_observation",
                         lambda dsn, cmd: _Made("att-someone-else-9"))
     with pytest.raises(SettlementError):
-        trajectory.record_decision("dbname=ec02test_p2c_unused", "ad01-w0-I-00",
+        trajectory.record_decision(UNUSED_DSN, "ad01-w0-I-00",
                                    0, {"next_action": {"kind": "stop"}})
 
 
@@ -104,7 +111,7 @@ def test_publish_boundary_store_mismatch_refuses(monkeypatch):
                         lambda dsn, cmd: _Made("att-someone-else-9"))
     with pytest.raises(SettlementError):
         trajectory._publish_boundary(
-            "dbname=ec02test_p2c_unused", "ad01-w0-I-00", 0, GRAPH_TASK,
+            UNUSED_DSN, "ad01-w0-I-00", 0, GRAPH_TASK,
             decision=None, observation={"observation_id": "obs-1"},
             episode={}, spend=1)
 
@@ -113,7 +120,7 @@ def test_resume_campaign_id_mismatch_refuses(monkeypatch):
     monkeypatch.setattr(trajectory, "run_campaign",
                         lambda *a, **k: {"campaign_id": "ad01-w0-I-99"})
     with pytest.raises(ValueError, match="unexpected campaign"):
-        trajectory.resume_campaign("dbname=ec02test_p2c_unused", "ad01-w0-I-00",
+        trajectory.resume_campaign(UNUSED_DSN, "ad01-w0-I-00",
                                    {"objective": "x"}, {})
 
 

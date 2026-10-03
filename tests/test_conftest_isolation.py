@@ -399,3 +399,37 @@ def test_no_test_module_binds_a_socket_as_a_connection_route():
     assert routes == [], (
         "these connect through a literal socket that exists only on the "
         "author's host: %s" % (routes,))
+
+
+def test_a_bare_dbname_is_not_a_route():
+    """``dbname=x`` with no ``host`` is a socket DSN written without the socket.
+
+    libpq resolves a conninfo carrying no host over the local Unix socket, so a
+    string this short is the same defect spelled differently, and it is not
+    caught by searching for the path. ``tests/test_p2c_ad01_resweep.py`` handed
+    one to ``trajectory._publish_boundary``, which reads the boundary row
+    before it refuses, so the read failed on a host with no socket.
+
+    The assertion is narrower than "no such string exists" because five test
+    modules spell one deliberately and none of them connects through it: two
+    refuse on a parse that precedes any query, one replaces ``psycopg`` with a
+    stub, one raises on an empty migrations directory before opening a
+    connection, and one asserts that the connection it gets is refused. What
+    these share is that they say so. What the repair changed is the file whose
+    read happened for real, and that is what is named here -- the constant a
+    refusal input is built from must carry a route, while its dbname stays the
+    absent one the assertion depends on.
+    """
+    import ast
+    import re
+
+    target = TESTS_DIR / "test_p2c_ad01_resweep.py"
+    source = target.read_text(encoding="utf-8")
+    assigned = re.search(r"UNUSED_DSN = dsn_with_dbname\(\s*admin_dsn\(\),\s*"
+                         r"\"([^\"]+)\"", source)
+    assert assigned is not None, "the refusal input must be built from one route"
+    assert assigned.group(1) == "ec02test_p2c_unused", assigned.group(1)
+    assert 'trajectory.record_decision("dbname=' not in source, (
+        "the absent dbname is passed inline again, which is a route libpq "
+        "resolves over a local socket")
+    ast.parse(source, filename=str(target))
