@@ -1,0 +1,181 @@
+diff --git a/reviews/probes/ad01_bdf12d5_review.py b/reviews/probes/ad01_bdf12d5_review.py
+index 1811e86..93b04c2 100644
+--- a/reviews/probes/ad01_bdf12d5_review.py
++++ b/reviews/probes/ad01_bdf12d5_review.py
+@@ -3,6 +3,7 @@
+ import inspect
+ import json
+ import os
++import shutil
+ import subprocess
+ import sys
+ import tempfile
+@@ -15,6 +16,33 @@ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
+ from experiments.ad01 import benefit, checker, trajectory as T, worlds
+ from experiments.coord02 import controller as C, entry as E
+ 
++REVIEWED_COMMIT = "bdf12d58c185c8b586b56c83b3d9857b85d2900f"
++WORLDS_DIR = "experiments/ad01/worlds"
++
++
++def reviewed_panel(ref: str):
++    """The panel this probe reviewed, materialised from git blobs.
++
++    Two of the probe's claims are about the committed archives, and the panel
++    those archives were run against is no longer the one in the tree: A20
++    regenerated the nine within-graph cells and the manifest moved from
++    15e588a86c12 to ee1362df3f09. Reading the blobs rather than a checkout keeps
++    the check independent of the host line-ending policy, which rewrites this
++    tree to CRLF.
++    """
++    root = Path(tempfile.mkdtemp(prefix="ad01-bdf-review-panel-"))
++    listing = subprocess.check_output(
++        ["git", "ls-tree", "-r", "--name-only", ref, WORLDS_DIR],
++        cwd=ROOT, text=True)
++    for name in listing.split():
++        target = root / name
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.write_bytes(subprocess.check_output(
++            ["git", "cat-file", "-p", "%s:%s" % (ref, name)], cwd=ROOT))
++    panel = root / WORLDS_DIR
++    assert not worlds.verify_freeze(panel), worlds.verify_freeze(panel)
++    return root
++
+ 
+ def main():
+     calls = []
+@@ -69,11 +97,19 @@ def main():
+     assert future_run["episodes"][0]["task_id"] == "ad01-w0-within-sw-00"
+ 
+     committed = ROOT / "evidence-ad01/c3-trajectories"
+-    records = [r for p in sorted(committed.glob("use-*.json")) for r in json.loads(p.read_text())]
+-    members = [m for p in sorted(committed.glob("repertoire-*.json"))
++    records = [r for p in sorted(committed.glob("use-w[0-9]-[IR].json")) for r in json.loads(p.read_text())]
++    members = [m for p in sorted(committed.glob("repertoire-w[0-9]-[IR].json"))
+                for m in json.loads(p.read_text())["members"]]
+-    verification = checker.verify_use_records(records, worlds.FROZEN_DIR)
++    panel_root = reviewed_panel(REVIEWED_COMMIT)
++    panel = panel_root / WORLDS_DIR
++    try:
++        verification = checker.verify_use_records(records, panel)
++    finally:
++        shutil.rmtree(panel_root)
+     assert len(records) == 72 and not verification["problems"]
++    current = checker.verify_use_records(records, worlds.FROZEN_DIR)
++    assert all(problem.startswith("wrong-freeze-reference")
++               for problem in current["problems"]), current["problems"]
+     assert len(members) == 15 and all(m["authored"] and "method_source" not in m for m in members)
+     with tempfile.TemporaryDirectory(prefix="ad01-bdf-review-") as scratch:
+         root = Path(scratch).resolve()
+@@ -82,11 +118,16 @@ def main():
+         proc = subprocess.run([sys.executable, "-m", "experiments.ad01.run_c3_qualification", str(output)],
+                               cwd=ROOT, text=True, capture_output=True, timeout=120)
+         assert proc.returncode == 0, proc.stderr
+-        same = {p.name: json.loads(p.read_text()) == json.loads((output / p.name).read_text())
+-                for p in committed.glob("*.json")}
++        replayed = {p.name: json.loads(p.read_text()) for p in sorted(output.glob("*.json"))}
++        same = {p.name: replayed[p.name] == json.loads(p.read_text())
++                for p in sorted(committed.glob("*.json")) if p.name in replayed}
+         assert len(same) == 19 and all(same.values())
++        replay_records = [rec for p in sorted(output.glob("use-w[0-9]-[IR].json")) for rec in json.loads(p.read_text())]
++        replay_check = checker.verify_use_records(replay_records, worlds.FROZEN_DIR)
++        assert not replay_check["problems"], replay_check["problems"]
+ 
+-    return {"reviewed_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
++    return {"reviewed_commit": REVIEWED_COMMIT,
++            "checkout": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+             "bounds": "Trusted offline canary and direct-boundary probes, committed evidence checks, fresh qualification subprocess. No provider calls, DB access, or untrusted program execution. Factory identity probe captures arguments rather than asserting a real-DB outcome.",
+             "child_call_identities": calls, "diagnostic_renderer": rendered,
+             "trusted_method_executes_in_host_pid": own["pid"] == os.getpid(),
+@@ -94,8 +135,10 @@ def main():
+             "protected_target_accepted_during_development": future_run["episodes"][0]["task_id"],
+             "committed_qualification": {"use_records": len(records), "retained_members": len(members),
+                                         "all_members_authored": True, "checker": verification,
++                                        "checker_against_current_panel": current,
+                                         "benefit_from_use_records_only": benefit.evaluate(records),
+-                                        "fresh_subprocess_jsons_equal": same},
++                                        "fresh_subprocess_jsons_equal": same,
++                                        "fresh_replay_verifies_against_current_panel": not replay_check["problems"]},
+             "public_accounting_still_constant": E._cell_costs("unused", None, {})["model_tokens_in"] == 100,
+             "cost_helper_connected_to_entry": "costs_for_operations(" in inspect.getsource(E),
+             "ad01_cli_has_provider_path": any(s in (ROOT / "experiments/ad01/cli.py").read_text()
+diff --git a/reviews/probes/closure_84d2094.py b/reviews/probes/closure_84d2094.py
+index 5158d40..58cdc8f 100644
+--- a/reviews/probes/closure_84d2094.py
++++ b/reviews/probes/closure_84d2094.py
+@@ -2,13 +2,40 @@
+ 
+ import hashlib
+ import json
++import shutil
+ import subprocess
++import tempfile
+ from pathlib import Path
+ from unittest.mock import patch
+ 
+ from experiments.ad01 import checker, construct, trajectory, worlds
+ 
+ ROOT = Path(__file__).resolve().parents[2]
++REVIEWED_SOURCE = "84d20948ddbef8efea38a5728edd3fddc6b3a936"
++WORLDS_DIR = "experiments/ad01/worlds"
++
++
++def reviewed_panel(ref: str):
++    """The panel this probe reviewed, materialised from git blobs.
++
++    The archived records pin the panel they were run against, and that panel is
++    no longer the one in the tree: A20 regenerated the nine within-graph cells
++    and the manifest moved from 15e588a86c12 to ee1362df3f09. Reading the bytes
++    from the blob rather than from a checkout also keeps the check independent of
++    the host's line-ending policy, which rewrites this tree to CRLF.
++    """
++    root = Path(tempfile.mkdtemp(prefix="ad01-84d2094-panel-"))
++    listing = subprocess.check_output(
++        ["git", "ls-tree", "-r", "--name-only", ref, WORLDS_DIR],
++        cwd=ROOT, text=True)
++    for name in listing.split():
++        target = root / name
++        target.parent.mkdir(parents=True, exist_ok=True)
++        target.write_bytes(subprocess.check_output(
++            ["git", "cat-file", "-p", "%s:%s" % (ref, name)], cwd=ROOT))
++    panel = root / WORLDS_DIR
++    assert not worlds.verify_freeze(panel), worlds.verify_freeze(panel)
++    return root
+ 
+ 
+ def prompt_probe():
+@@ -71,10 +98,18 @@ def evidence_probe():
+                        "retained": data["accounting"]["mechanism"]["retained"],
+                        "unknown_tokens": data["accounting"]["total"]["tokens"] is None,
+                        "exported_operation_entries": len(data["accounting"]["operations"])})
+-    records = [record for file in sorted((ROOT / "evidence-ad01/c3-trajectories-merged").glob("use-*.json"))
++    records = [record for file in sorted((ROOT / "evidence-ad01/c3-trajectories-merged").glob("use-w[0-9]-[IR].json"))
+                for record in json.loads(file.read_text())]
+-    checked = checker.verify_use_records(records, worlds.FROZEN_DIR)
++    panel_root = reviewed_panel(REVIEWED_SOURCE)
++    panel = panel_root / WORLDS_DIR
++    try:
++        checked = checker.verify_use_records(records, panel)
++    finally:
++        shutil.rmtree(panel_root)
+     assert len(records) == 72 and not checked["problems"]
++    current = checker.verify_use_records(records, worlds.FROZEN_DIR)
++    assert all(problem.startswith("wrong-freeze-reference")
++               for problem in current["problems"]), current["problems"]
+     fallback = trajectory.run_use({"campaign_id": "offline-empty", "members": []},
+                                   0, "I", ["ad01-w0-within-sw-00"], {})
+     assert fallback[0]["executed"] == "incumbent"
+@@ -83,11 +118,12 @@ def evidence_probe():
+                for r in acquisition["results"]}
+     return {"c4_readable_traces": len(traces), "c4_empty_stubs": empty, "c4_traces": traces,
+             "c3_use_records": len(records), "c3_checker": checked,
++            "c3_checker_against_current_panel": current,
+             "empty_repertoire_fallback": fallback[0]["executed"], "c2_init_failure_reasons": reasons}
+ 
+ 
+ if __name__ == "__main__":
+-    print(json.dumps({"reviewed_source": "84d20948ddbef8efea38a5728edd3fddc6b3a936",
++    print(json.dumps({"reviewed_source": REVIEWED_SOURCE,
+                       "checkout": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+                       "prompt": prompt_probe(), "boundary": boundary_probe(),
+                       "evidence": evidence_probe()}, indent=2))

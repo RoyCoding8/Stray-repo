@@ -1,0 +1,140 @@
+diff --git a/experiments/ad01/method_exec.py b/experiments/ad01/method_exec.py
+index 2392653..1b2e2ca 100644
+--- a/experiments/ad01/method_exec.py
++++ b/experiments/ad01/method_exec.py
+@@ -1278,6 +1278,107 @@ def step_contract() -> dict:
+     }
+ 
+ 
++_NOT_LITERAL = object()
++
++
++def _literal_value(node):
++    """The value of a literal expression, or a marker for anything else."""
++    try:
++        return ast.literal_eval(node)
++    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
++        return _NOT_LITERAL
++
++
++def _validator_refuses(literal) -> bool:
++    """Whether `policy_step.validate_action` refuses this literal as an action.
++
++    The action contract is asked rather than restated. A list of inert shapes
++    here would be a second spelling of `ACTION_REQUIRED`, and it would drift
++    the first time a field is added: a shape this function still called inert
++    would become valid, and a valid one would stay refused. `None` is the
++    recorded case (invl02-r123 r1, `{"action": None, "state": state}`).
++    """
++    from . import policy_step
++    try:
++        policy_step.validate_action(literal)
++    except ValueError:
++        return True
++    return False
++
++
++def _return_binds_inert_action(node) -> bool:
++    """Whether this return hands back an `action` the contract refuses.
++
++    Only a dict literal naming `action` counts, and only when that value is
++    itself a literal. A name, a call, a subscript or a conditional
++    expression could carry a real action, so the answer is no and the source
++    is left to execution to judge.
++    """
++    value = node.value
++    if not isinstance(value, ast.Dict):
++        return False
++    for key, item in zip(value.keys, value.values):
++        if isinstance(key, ast.Constant) and key.value == "action":
++            literal = _literal_value(item)
++            return literal is not _NOT_LITERAL \
++                and _validator_refuses(literal)
++    return False
++
++
++def _entry_returns(function) -> list:
++    """The `return` statements of this entry, and only of this entry.
++
++    `ast.walk` descends into every nested function, and a `return` inside a
++    helper is not a return of the entry: counting one as an exit the entry
++    does not take makes the walk unsound in the safe direction only by
++    accident. A nested helper that returns a real action would admit a body
++    whose own returns are all inert, which is a false negative, but a
++    helper's inert return would otherwise refuse a program that can act
++    through it, which is a false positive against live bytes. Nested defs
++    are therefore skipped, and a helper that decides the return value stays
++    admitted because its own `return` is not one this reads.
++    """
++    returns, stack = [], list(ast.iter_child_nodes(function))
++    while stack:
++        node = stack.pop()
++        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
++                             ast.Lambda)):
++            continue
++        if isinstance(node, ast.Return):
++            returns.append(node)
++            continue
++        stack.extend(ast.iter_child_nodes(node))
++    return returns
++
++
++def _produces_no_action(function) -> bool:
++    """Whether every exit of this entry hands back something inert.
++
++    Decided only when the answer is provable, which is what makes it a gate
++    rather than a guess. The entry must have at least one `return`, and every
++    one of them must bind `action` to a literal the action contract refuses;
++    a single unknown return, or one binding something real, leaves the source
++    admitted.
++
++    A body with no `return` is admitted rather than refused. It falls through
++    to `None`, so it cannot produce an action either, but nothing in its
++    bytes says when or whether it ends: a `while True` is caught by the CPU
++    bound and a bare assignment by execution, both of which this gate would
++    only pre-empt. Refusing it here would delete the coverage the CPU bound
++    has, which is a loss of a boundary rather than a gain at one.
++
++    What this does not decide, so that nobody reads it as deciding it: a
++    program that builds its action through a name, a call or a helper, and a
++    program whose action is real on some inputs and absent on others when
++    the absent one is not a literal. Both reach `validate_step_result` at
++    execution and are refused there, on the first step that returns them.
++    """
++    returns = _entry_returns(function)
++    if not returns:
++        return False
++    return all(_return_binds_inert_action(node) for node in returns)
++
++
+ def verify_step_source(source: str, entry: str = "STEP") -> str:
+     if not isinstance(source, str) or not source.strip():
+         raise MethodExecutionError("refused: empty-policy-source")
+@@ -1308,6 +1409,10 @@ def verify_step_source(source: str, entry: str = "STEP") -> str:
+         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) \
+                 and node.func.id in _FORBIDDEN_CALLS:
+             raise MethodExecutionError("refused: io-or-reflection-forbidden")
++    if _produces_no_action(targets[0]):
++        raise MethodExecutionError(
++            "refused: entry-can-produce-no-action: no return of %s can hand"
++            " back a policy action object" % entry)
+     return entry
+ 
+ 
+diff --git a/tests/test_final_provenance.py b/tests/test_final_provenance.py
+index 8e5e830..4215103 100644
+--- a/tests/test_final_provenance.py
++++ b/tests/test_final_provenance.py
+@@ -298,8 +298,10 @@ def test_durable_step_rechecks_source_after_receipt(monkeypatch):
+     monkeypatch.setattr(method_exec.broker, "ensure_operation", ensure_operation)
+     monkeypatch.setattr(method_exec.broker, "dispatch_operation", dispatch)
+     source = ("def STEP(view, state):\n"
+-              "    return {\"action\": {\"kind\": \"wait\"},"
+-              " \"state\": {}}\n")
++              "    action = {\"kind\": \"stop\", \"target\": \"t\","
++              " \"inputs\": {}, \"evidence_refs\": [],"
++              " \"requested_resources\": {}}\n"
++              "    return {\"action\": action, \"state\": {}}\n")
+     view = policy_step.materialize_view(
+         task=worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-dev-sw-00"),
+         observations=[], open_questions=[], last_result=None,

@@ -1,0 +1,56 @@
+diff --git a/reports/FINAL-ACCEPTANCE.md b/reports/FINAL-ACCEPTANCE.md
+index 3cbd6fd..7eb151b 100644
+--- a/reports/FINAL-ACCEPTANCE.md
++++ b/reports/FINAL-ACCEPTANCE.md
+@@ -5,6 +5,22 @@
+ > [STAGE-09-10-COMPLETION-MATRIX.md](STAGE-09-10-COMPLETION-MATRIX.md). Read
+ > this file for what this pass measured and how; its dispositions do not govern
+ > the current checkpoint.
++>
++> **Correction, 2026-10-02 — §6 and the closing list: "no live revision attempt
++> ran" is false, and "NEGATIVE" overstates it.** E4, a different and earlier
++> live attempt, did run: 6 of 6 authorized dispatches spent against grant
++> `human-2026-09-23-nemotron-ultra-550b-free`, free tier, cost 0, 6 of 6
++> acquired as `model-acquired`, **0 of 6 eligible**
++> (`reports/evidence/inv_r1_e4/run/campaign.json`). What E4 measured is
++> narrower than the 6-of-6 suggests: all six candidates were refused the same
++> way (`delegates-to-unchanged-reducer`), each naming input 0 at the first
++> step, under one prompt digest, giving **3 distinct response digests** whose
++> sources differ only in a step-0 expression constant at step 0. So six
++> dispatches carry one distinct behaviour, and the 6 of 6 is a constant rather
++> than a rate. What *is* true is narrower: `c4-live` never ran, so its question
++> is closed-unrun. The pass's own `c4-live` and `delegates-to-unchanged-reducer`
++> findings stand; the blanket "no live revision attempt ran" and the **NEGATIVE**
++> heading do not.
+ 
+ # Final independent acceptance — consolidation batch 2026-10-01
+ 
+@@ -189,6 +205,17 @@ is unavailable from these two instruments as they stand.
+ No live revision attempt ran. `c4-live` is listed in the plan and has no
+ workstream report, no evidence directory and no test.
+ 
++> **Superseded 2026-10-02, heading and first paragraph only.** `c4-live` never
++> ran, so its question is **closed-unrun, not negative** — a negative needs a
++> measurement that found nothing. "No live revision attempt ran" is also false
++> of **E4**, which spent 6 of 6 authorized free-tier dispatches, acquired 6 of
++> 6 as `model-acquired` and admitted **0 of 6**, every one refused
++> `delegates-to-unchanged-reducer` with input 0 named at the first step under a
++> single prompt digest. Its 3 distinct response digests differ only in a step-0
++> expression constant at step 0, so the six dispatches carry one distinct
++> behaviour and the 6 of 6 is a constant. The `c4-live` absence and the
++> mechanism review below stand as written.
++
+ What exists is mechanism. C4 deleted the two-member fixed menu and made a
+ descendant inherit its parent's construction input, so `reachable_evidence`
+ is now a function of the program rather than a constant published beside
+@@ -536,7 +563,9 @@ the right generalisation and it produced four real fixes.
+ - No autonomous selection. The C7 crossing order is scripted.
+ - No two-domain comparison. Powered on one side only; the Boolean side has
+   one independent unit.
+-- No eligible revision and no revised descendants. `c4-live` never ran.
++- No eligible revision and no revised descendants. `c4-live` never ran. *(This
++  bullet is narrow and correct: it names `c4-live`. E4 is the separate live
++  attempt that did run and admitted 0 of 6 — see the banner correction.)*
+ - No B4 crossover. The sweep was cancelled; the direction is unknown.
+ - No completion report, and no update to the two documents that own current
+   status.

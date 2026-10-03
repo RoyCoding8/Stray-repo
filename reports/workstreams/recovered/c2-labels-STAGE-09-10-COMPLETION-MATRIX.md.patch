@@ -1,0 +1,80 @@
+diff --git a/reports/STAGE-09-10-COMPLETION-MATRIX.md b/reports/STAGE-09-10-COMPLETION-MATRIX.md
+index 7a2fcc5..26afd23 100644
+--- a/reports/STAGE-09-10-COMPLETION-MATRIX.md
++++ b/reports/STAGE-09-10-COMPLETION-MATRIX.md
+@@ -18,6 +18,16 @@ own source revisions, which `AGENTS.md` requires be preserved.
+ [`STAGE-09-CONSOLIDATION.md`](STAGE-09-CONSOLIDATION.md) is an older branch's
+ handback and stays where it is. This file is the current one.
+ 
++**Correction, 2026-10-02 — §6 heading.** §6 read "Learner improvement —
++negative", which this file's own vocabulary forbids: `negative` means the
++question was asked and the answer was no, and `c4-live` was never asked. The
++heading is now `not established`, and §6 separates `c4-live` (never run) from
++E4 (run, 0 of 6 admitted) as two different experiments that had been collapsed
++into one claim. E4's "6 of 6" is a constant, not a rate: one prompt digest,
++every candidate naming input 0 at the first step, 3 distinct response digests
++whose sources differ only in a step-0 expression constant at step 0. §5 gains a
++row recording that `run_two_domain_crossing` has no caller outside its test.
++
+ **Reading rule.** A row is `completed` only where a named artifact carries the
+ claim and the artifact was read. A lane's report is a claim, not a row. **A
+ negative valid study completes its question. An unrun study does not.** Where a
+@@ -191,6 +201,7 @@ in its own `not_claimed`.
+ | Property | Measured | Consequence |
+ |---|---|---|
+ | Episode order | 3 Boolean then 3 SWE, fixed in `experiments/ad01/twodomain.py` | A script. Not selection. |
++| Crossing executed outside a test | **never run** | `twodomain.run_two_domain_crossing` (`twodomain.py:403`) has exactly one caller repo-wide, `tests/test_inv_c7_two_domain.py:85`, no CLI entry point, and no crossing evidence directory under `reports/evidence/`. The schedule is therefore closed-unrun as well as fixed: nothing outside a test has ever executed it, so no crossing has produced a result to assess for selection. |
+ | Crossing power, SWE side | `software-fault-repair-v1` reports **9** clusters, `powered: True` | **This 9 is a union.** `_swe_clusters` (`twodomain.py:119-126`) returns `len(set(DEV_TEMPLATES) \| set(HELD_OUT_TEMPLATES))`, and the two splits hold 3 and 6 templates. Per split that is **3 or 6 against 6 required**: dev is unpowered, held-out is exactly at threshold with zero margin. The union clears the bar through the census the split exists to prevent. |
+ | Crossing power, Boolean side | `boolean-rule-v1` offers **1** cluster against 6 required, shortfall 5, `powered: False` | The comparison is unavailable from these two instruments. |
+ | Boolean hypothesis classes | **exactly one** distinct descriptor, identical `class_digest`, `class_size`, `form` and `n_inputs` across 3 splits x 24 seeds | A contrast over it has one independent unit however many tasks it runs. No panel choice can move it. |
+@@ -206,17 +217,23 @@ the arm it actually runs is the 3-unit one. A contrast with one independent
+ unit per structure is n=1 however many rows it produces, and the design
+ supplies no way to raise that without new generator families.
+ 
+-## 6. Learner improvement — negative
++## 6. Learner improvement — not established
+ 
+ | Requirement | State | Note |
+ |---|---|---|
+-| Live revision attempt | `never run` | `c4-live` has no workstream report, no evidence directory and no test. It is recorded as outstanding in `reports/PLAN.md`, not dropped. |
++| Live revision attempt (`c4-live`) | `never run` | `c4-live` has no workstream report, no evidence directory and no test. It is recorded as outstanding in `reports/PLAN.md`, not dropped. Per this file's own vocabulary, `never run` is **not** `negative`: the milestone-C question is unstarted, not answered no. |
++| Earlier live attempt (E4) | `negative`, bounded | E4 is a **different and earlier** experiment that did run: 6 of 6 authorized dispatches spent on the free tier against grant `human-2026-09-23-nemotron-ultra-550b-free`, 6 of 6 acquired as `model-acquired`, **0 of 6 eligible**, all refused `delegates-to-unchanged-reducer` (`reports/evidence/inv_r1_e4/run/campaign.json`). **The 6 of 6 is a constant, not a rate**: one prompt digest, every candidate naming input 0 at the first step, 3 distinct response digests whose sources differ only in a step-0 expression constant at step 0 — so six dispatches carry one distinct behaviour. It bounds the selector, not the learner. |
+ | Inheritable construction procedure | `confirmed` (mechanism only) | C4 deleted the two-member fixed menu; a descendant now inherits its parent's construction input, so `reachable_evidence` is a function of the program rather than a constant published beside it. `_revision_source(3)`, `(8)`, `(11)` all build ~1067-character sources and all pass the frozen-write check. |
+-| Revised descendant cohort | **does not exist** | No eligible revision was attempted, so nothing was compared and no learner improved. |
++| Revised descendant cohort | **does not exist** | E4 admitted no revision and `c4-live` never ran, so nothing was compared and no learner improved. |
+ | Per-task policy state in sealed assessment | `never run` | `b5-sealed-state` has no report, no evidence and no test. |
+ 
+ Per `WORKER-PROMPT.md`, the prototype's existence does not claim beneficial RSI.
+-Nothing here claims it.
++Nothing here claims it. **What would unblock the learner-improvement question:**
++a live `c4-live` on the verified free route that admits at least one revision
++outside the frozen reducer's own ranked inputs, the only condition the
++`delegates-to-unchanged-reducer` boundary accepts. E4 spent its whole
++authorized budget on that selector and returned nothing admissible, so a second
++attempt on the same boundary has no headroom.
+ 
+ ## 7. Search passes and the defects they fixed
+ 
+@@ -363,8 +380,11 @@ C7 landed the connected mission prototype: one persistent mission entry with
+ frontier, permitted experience, active program, acquired artifacts, retained use
+ and improvement mode, demonstrated across both selected task structures.
+ 
+-**Its existence does not claim beneficial RSI.** No eligible revision ran, so no
+-learner improved and nothing here supports such a claim. It is prototype level,
++**Its existence does not claim beneficial RSI.** No eligible revision was
++admitted, so no learner was revised and no learner improved, and nothing here
++supports such a claim. The two absences behind that sentence differ — E4 ran and
++had all six candidates refused at the eligibility boundary, while `c4-live`
++never ran — and neither is evidence about learner benefit. It is prototype level,
+ not the connected general prototype Stage 10's own definition requires, and it
+ is not qualified for deployment.
+ 
+@@ -372,7 +392,7 @@ is not qualified for deployment.
+ 
+ | Item | State | Why it is not closed |
+ |---|---|---|
+-| `c4-live` | **never run** | The milestone-C deliverable. The mechanism that would make it runnable exists and is eligible; nothing was attempted against it. |
++| `c4-live` | **never run** | The milestone-C deliverable. The mechanism that would make it runnable exists and is eligible; nothing was attempted against it. **Closed-unrun, not negative** — E4's bounded 0-of-6 refusal is a separate earlier experiment and does not stand in for this one. |
+ | `b5-sealed-state` | **never run** | Per-task policy state in sealed assessment, asked for in `WORKER-PROMPT.md` §B. |
+ | B4 crossover | **unmeasured** | The single `control_competence(40)` sweep was cancelled for resource reasons before it returned. A cancelled measurement is not a null measurement: nothing about the crossover is known in either direction. |
+ | Acquisition | **open** | 0 of 4, on one returned artifact. The output budget is **not** the binding constraint; B17 falsified that and the remaining live question is a route-and-protocol one, since 3 of 3 responses were prose where the protocol asked for code. |

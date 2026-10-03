@@ -1,0 +1,87 @@
+diff --git a/reports/PROJECT-LEDGER.md b/reports/PROJECT-LEDGER.md
+index 19bb1be..db48b44 100644
+--- a/reports/PROJECT-LEDGER.md
++++ b/reports/PROJECT-LEDGER.md
+@@ -55,8 +55,8 @@ The exact test commands and limits are in [VERIFICATION](VERIFICATION.md).
+ | Acquisition | B12 recorded no acquisition in four scheduled lineages: five receipts contain one success, three failures and one unknown. Only one artifact returned; this does not estimate model capability. |
+ | Utility | Unmeasured. There is no usable acquired arm in that comparison. |
+ | Retention/transfer | Unmeasured benefit. B14's reachable terminal verdict was constant; this diagnoses its instrument, not the value of retention. |
+-| Autonomous selection | Not established. `twodomain.run_two_domain_crossing` schedules fixed authored episodes and records acquisition as not attempted. |
+-| Learner improvement | Unrun in the intended live C4 study. Source supports executable probe choice influencing descendants, but no revised-descendant benefit comparison was demonstrated. |
++| Autonomous selection | Closed-unrun, not negative. `twodomain.run_two_domain_crossing` has no caller but `tests/test_inv_c7_two_domain.py:85`, no CLI entry point and no evidence directory, so the crossing has never run outside a test. The function schedules fixed authored episodes regardless, and its own output would record acquisition as not attempted. |
++| Learner improvement | Not established. Two different experiments were collapsed here. `c4-live` is closed-unrun: it never ran, so the intended C study has no result in either direction. E4 is a separate, earlier live attempt that did run — 6 of 6 dispatches used, 0 of 6 eligible — and what it measured is narrower than a rate: all six were refused the same way, each naming input 0, and they carry 3 distinct response digests that differ only in a step-0 probe expression that is constant at step 0. The inheritable construction procedure exists and is eligible; no revised-descendant benefit comparison exists. |
+ 
+ Stages 9 and 10 remain incomplete. A valid negative can close a measured
+ question; unavailable arms, degenerate measurements and unrun studies cannot.
+@@ -127,6 +127,17 @@ those are recorded under the red audit below.
+ | 5 | Autonomous selection | **NOT ESTABLISHED.** The two-domain order is a fixed script in `experiments/ad01/twodomain.py`, not a program choosing from the admissible frontier. |
+ | 6 | Learner improvement | **NEGATIVE.** No live revision attempt ran and no revised descendant cohort exists. |
+ 
++**Correction, 2026-10-02 — row 6 is a closed-unrun question, not a negative,
++and it does not govern.** The six dispositions above are the acceptance pass's
++own and are retained as that pass issued them. Row 6's label is wrong on two
++counts, and the current ledger row is corrected in place under *Evidence
++dispositions*: `c4-live` **never ran**, so no measurement exists and none is
++implied in either direction — a negative requires a measurement that found
++nothing, and zero dispatches is not that. And "no live revision attempt ran" is
++false of **E4**, a different and earlier live attempt that did run. E4's
++6-of-6-accepted-nothing is a real but narrow refusal, not a rate; see the
++corrected row for the measurement.
++
+ ### What the batch established
+ 
+ A real causal path, verified against artifacts and source rather than reports:
+@@ -153,6 +164,10 @@ forms beside it went unseen until the review named them.
+ **No acquisition. No learning advantage. No transfer. No learner improvement.**
+ Four dispositions, and the mechanism result is not evidence for any of them.
+ 
++*Corrected 2026-10-02: the fourth is **closed-unrun**, not negative — `c4-live`
++never ran, so the absence is an absence of measurement, not a measured absence.
++Nothing above claims a learner failed to improve; the question is unstarted.*
++
+ ### The honest live numbers
+ 
+ Recomputed from the evidence directories, not from a lane summary.
+@@ -256,7 +271,10 @@ open research questions.
+ frontier, permitted experience, active program, acquired artifacts, retained
+ use and improvement mode, crossing both selected task structures. **Its
+ existence does not claim beneficial RSI**, and nothing in this batch supports
+-such a claim: no eligible revision ran, so no learner improved. Stage 10 is
++such a claim: no eligible revision was admitted, so no learner was revised and
++no learner improved. The two are different absences — E4 ran and its six
++candidates were all refused at the eligibility boundary, while `c4-live` never
++ran — and neither establishes anything about learner benefit. Stage 10 is
+ prototype-level, not the connected general prototype its own definition
+ requires, and it is not qualified for deployment.
+ 
+@@ -276,7 +294,7 @@ The detailed former ledger and completion narratives remain in Git at 6096442. S
+ 
+ ## Stage status
+ 
+-Stages 1-6 have selected/specified baselines. Stage 7 foundation and Stage 8 cognitive mechanisms are built at scoped prototype levels. **Stage 9 is active and its supported protocols have now completed**; what remains open is acquisition, transfer, autonomous selection and learner improvement, all four of them negative or unestablished on this batch. **Stage 10 has a connected mission prototype at prototype level** and is not complete. Stages 11-12 remain incomplete.
++Stages 1-6 have selected/specified baselines. Stage 7 foundation and Stage 8 cognitive mechanisms are built at scoped prototype levels. **Stage 9 is active and its supported protocols have now completed**; what remains open is acquisition, transfer, autonomous selection and learner improvement — acquisition and transfer measured negative, autonomous selection closed-unrun, and learner improvement **not established** because `c4-live` is closed-unrun rather than negative. **Stage 10 has a connected mission prototype at prototype level** and is not complete. Stages 11-12 remain incomplete.
+ 
+ The inventory defines 15 capability areas with code: seven foundation and eight cognitive areas. This is not 15 completed product features. Individual paths exist, but there is no demonstrated general trajectory connecting memory, autonomous investigation, acquired behavior, use and learner revision. **The 2026-10-01 batch strengthened that trajectory's plumbing and did not demonstrate the trajectory.**
+ 
+@@ -295,7 +313,7 @@ taken at.
+ | Experience | **NEGATIVE.** The retention leg measured 0 of 3 members over 27 executions; the verdict union across all 26 comparable rows is exactly `{"preserved"}`. |
+ | Retention/transfer | **NEGATIVE.** Nothing retained was distinguishable from the seed, and the two-domain crossing transfers a predicate, not answers. |
+ | Autonomous selection | **NOT ESTABLISHED.** The episode order is a fixed script, and the crossing is unpowered on both sides read per split: the Boolean structure offers one hypothesis class against six required, and the SWE side's nine is a union of the dev and held-out splits, which is 3 and 6 respectively against six required. |
+-| Learner improvement | **NEGATIVE.** No live revision attempt ran (`c4-live` never ran); no eligible revision and no revised-descendant cohort. The inheritable construction procedure exists and is eligible; nothing was attempted against it. |
++| Learner improvement | **NOT ESTABLISHED — `c4-live` is closed-unrun, and E4 is a bounded refusal, not a rate.** The intended C study never ran: `c4-live` has no workstream report, no evidence directory and no test, so there is no measurement and none is implied in either direction. This was previously labelled **NEGATIVE**, which claimed a closed question where an unstarted one exists. The nearest live attempt is a different and earlier experiment, **E4**, and it did run: 6 of 6 authorized dispatches spent against grant `human-2026-09-23-nemotron-ultra-550b-free` on the free tier at cost 0, 6 of 6 acquired as `model-acquired`, **0 of 6 eligible**, all refused `delegates-to-unchanged-reducer` (`reports/evidence/inv_r1_e4/run/campaign.json`, `result.json`). **"6 of 6" is a constant, not a rate**: all six failed for the same reason, each naming input 0 at the first step, under one identical prompt digest, yielding **3 distinct response digests** — the count the [inventory](PROJECT-INVENTORY.md) already records — whose three sources differ only in a step-0 probe expression that is constant at step 0 and so cannot change the decision. Six dispatches therefore carry one distinct behaviour. No revised-descendant cohort exists and nothing was compared. The inheritable construction procedure exists and is eligible. **What would unblock it:** a live `c4-live` on the verified free route that admits at least one revision outside the frozen reducer's own ranked inputs, which is the only condition the `delegates-to-unchanged-reducer` boundary admits — E4 spent its whole authorized budget on the selector and returned nothing the boundary could accept, so a further attempt on the same boundary has no headroom. |
+ | Mechanism | **CONFIRMED as to the durable chain. The freeze was over-claimed, was repaired by X3, and the causal link between an effect id and a store row was unbound until X4b.** Independent acceptance returned CONFIRMED; an independent review overturned it to *too generous* and named both halves. `s09_policy_state.effect_id` was minted as a formatted string with no row behind it, and no `attempt_observations` row carries `operation_id` or `effect_id` at all — the column does not exist. Both halves are now repaired: the freeze against the parse's own contexts, and the identity as a value read back and checked against `operations WHERE settled` before it is written. |
+ | Deployment | Real containment, current database/DBOS recovery and supported deployment remain unqualified. Unchanged by this batch. |
+ 
+@@ -320,10 +338,10 @@ E1 r3 contains 12 records, 16 recorded spends and 4 carried-in dispatches. Prese
+ 
+ - [x] Choose the investigation owner: reuse AD01's durable trajectory and converge effect boundaries under the existing trusted runtime; do not add another owner. **Closed by C1 and C6**: one durable mission entry, and one resume owner that names what it resumed.
+ - [ ] Specify informative multi-domain panels, competent controls and acquisition headroom. **Partly closed, and the residue is the blocker, now stated as one bottleneck rather than two.** B8's census and B10's cap sheet specified a powered panel and a frozen protocol; the headroom is not informative, because every disposition above acquisition is a two-arm contrast and the design supplies one independent unit per structure. The Boolean side offers one hypothesis class against six required; the software side, counted per split, offers 3 or 6 against 6. Closing this needs new generator families, not a new panel choice.
+-- [ ] Define operational acquisition/reuse followed by one inherited acquisition-procedure change, evaluated through fresh descendants. **Not reached.** The inherited-change mechanism exists (C4) and is eligible; the acquisition that must precede it returned 0 of 4, and `c4-live` never ran.
++- [ ] Define operational acquisition/reuse followed by one inherited acquisition-procedure change, evaluated through fresh descendants. **Not reached.** The inherited-change mechanism exists (C4) and is eligible; the acquisition that must precede it returned 0 of 4, and `c4-live` never ran. E4's earlier 0-of-6 refusal is not this study and does not stand in for it.
+ - [x] Derive the next worker batch from the consolidation contract, with finite prospective studies and a stopping condition. **Implemented and integrated** at `8a207ab`; reviewed, repaired at `8cc1927`, and now at `5b7f1ca`. 129 commits and 52 merges over base `70223fb`, naming 47 distinct lanes.
+ - [ ] Retire historical refs only after preserving a remote archive anchor, checking active ownership and reviewing genuinely separate histories.
+-- [ ] **`b5-sealed-state` and `c4-live` remain outstanding.** Neither ran; neither consumed a dispatch. `c4-live` is the milestone-C deliverable in `WORKER-PROMPT.md` §C.
++- [ ] **`b5-sealed-state` and `c4-live` remain outstanding.** Neither ran; neither consumed a dispatch. `c4-live` is the milestone-C deliverable in `WORKER-PROMPT.md` §C. Both are closed-unrun; naming them as outstanding is what they are, and neither is a measured null.
+ 
+ Avoid another general bug sweep as a substitute for these questions. The two
+ search passes already ran and found four real defects; the independent review

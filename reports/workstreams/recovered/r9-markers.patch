@@ -1,0 +1,419 @@
+diff --git a/experiments/ad01/s09_e1_gates_probe.py b/experiments/ad01/s09_e1_gates_probe.py
+index 7908d25..e52aebc 100644
+--- a/experiments/ad01/s09_e1_gates_probe.py
++++ b/experiments/ad01/s09_e1_gates_probe.py
+@@ -39,6 +39,7 @@ for _entry in (ROOT, ROOT / "src"):
+ 
+ from experiments.ad01 import control_distinctness as gates  # noqa: E402
+ from experiments.ad01 import s09_swe_experiment as swe  # noqa: E402
++from scripts.evidence_supersession import artifact_paths  # noqa: E402
+ 
+ EVIDENCE = ROOT / "evidence-ad01"
+ AUTHORED = EVIDENCE / "c3-authored"
+@@ -86,7 +87,7 @@ def _ad01_observations() -> list:
+     have said.
+     """
+     rows = []
+-    for path in sorted(TRAJECTORIES.glob("use-*.json")):
++    for path in artifact_paths(TRAJECTORIES, "use-*.json"):
+         loaded = json.loads(path.read_text(encoding="utf-8"))
+         for row in loaded:
+             rows.append({
+diff --git a/reports/STAGE-09-SUPERSESSION.md b/reports/STAGE-09-SUPERSESSION.md
+index 7bd5e75..33bacf6 100644
+--- a/reports/STAGE-09-SUPERSESSION.md
++++ b/reports/STAGE-09-SUPERSESSION.md
+@@ -265,3 +265,114 @@ So the tree's history is one deletion and zero renames — not "nothing", and no
+   `s09_exposure_ledger.py` and `conftest_isolation.py` were read only, never
+   written. `scripts/` and `tests/test_evidence_supersession.py` are new paths,
+   disjoint from every live lane.
++
++---
++
++## 6. Dated note, 2026-10-02 (lane R9) — the suffix collided, and §1 did not
++
++This is an addition, not a revision. Sections 1–5 above are as their author
++left them. What follows records a decision R8 correctly declined to make
++inside its own pass, and three measurements that correct its report.
++
++### 6.1 The brief's premise was half wrong: three broken readers, not three
++
++R8 measured three committed readers broken by the 45 markers it added. The
++collision surface is **six** sites. Resolved against each site's real root
++directory rather than by pattern match alone:
++
++| site | pattern | markers matched |
++|---|---|---|
++| `reviews/probes/inv_a_baseline_gaps.py:71` | `use-*.json` | 6 |
++| `experiments/ad01/s09_e1_gates_probe.py:90` | `use-*.json` | 6 |
++| `reviews/probes/ad01_bdf12d5_review.py:74` | `use-*.json` | 6 |
++| `reviews/probes/closure_84d2094.py:78` | `use-*.json` | 6 |
++| `scripts/inv01_study.py:585` | `export-*.json` | 6 |
++| `reviews/probes/ad01_bdf12d5_review.py:88` | `*.json` | 6 |
++
++The sixth is the one that decides the argument. `ad01_bdf12d5_review.py` also
++walks `committed.glob("*.json")`, and **no marker name that ends in `.json`
++can escape a `*.json` glob**. R8's proposed repair —
++`'use-w[0-9]-[IR].json'` — is narrower than `use-*.json` and would survive it,
++but the `*.json` walk at line 88 would still swallow six markers. A repair
++that fixes five of six sites and reports the lane green is worse than the
++breakage, because it looks fixed.
++
++### 6.2 The suffix cannot be renamed out of the way, and the reason is structural
++
++I tested eight candidate namings against all 52 committed glob patterns. Any
++name retaining a `.json` ending is matched by `*.json`; every non-`.json`
++ending is matched by `rglob("*")` at `scripts/checkpoint.py:132` and
++`tests/test_ad01_env.py:58`. There is no filename that is invisible to both
++classes.
++
++`rglob("*")` is a false positive on measurement: `_artifact_manifest` and
++`_committed_tasks` receive runtime-supplied directories and
++`worlds.FROZEN_DIR`, neither of which is an evidence tree. So a rename *is*
++reachable — `.supersession` (no `.json`) escapes every real reader. I did not
++take it, for the reason in §6.3.
++
++### 6.3 Why the readers changed instead: the rename destroys the mechanism
++
++§1's rule is that reachability comes from a sibling **named to sort beside the
++file it describes**. Rename the suffix and three things break at once:
++
++1. The marker stops being a `.json` file, so a marker is no longer openable by
++   the reader the mechanism exists for.
++2. §1's own worked example, `e3-postfix-ladder.json` →
++   `e3-postfix-ladder.supersession.json`, is the naming contract. Changing the
++   suffix changes the contract every future marker is written against, to fix
++   a bug that has one correct location.
++3. The 4 committed markers, the 30 tests, and `reports/workstreams/w3-e3-recompute.md`
++   all pin the current name.
++
++The collision has one cause and it is not the suffix. It is that readers
++enumerate a directory by **artifact family** (`use-*.json`, `export-*.json`)
++while the marker is named by **artifact stem**, and a name derived from a stem
++necessarily matches its own family's glob. The suffix is not the defect; the
++absence of a reader-side rule is. So the fix is one function —
++`artifact_paths()` in `scripts/evidence_supersession.py`, `glob(pattern)` minus
++markers — used by all six sites.
++
++**§1 is strengthened, not weakened.** Before, "no new file matches any glob
++pattern the tree is scanned with" was true only because no marker had been
++placed beside an artifact any reader globs. It was a census finding, not a
++rule. It is now a rule that holds by construction, and it is tested.
++
++### 6.4 The `EVIDENCE_ROOT` defect: 18 markers, invisible, and not clean either
++
++The brief says the 18 `evidence-ad01/` markers "all validate under a direct
++`check_marker` call". **They do not.** Measured: all 18 report `stale marker`,
++for the same CRLF reason as the other 31. `EVIDENCE_ROOT` became
++`EVIDENCE_ROOTS = ("reports/evidence", "evidence-ad01")`; `iter_markers` now
++returns **49** of 49. `check_evidence_tree` was reporting a clean tree it had
++never looked at.
++
++### 6.5 The digest: blob-digest is right, `.gitattributes` is still owed
++
++R8 pins `artifact_sha256` to the **git blob digest** and reports all 49 stale.
++Both halves are correct and they are not in conflict:
++
++- Pinned digest == blob digest: **49 of 49**.
++- Pinned digest == on-disk digest: **0 of 49**.
++
++**The correction.** The brief says the *prior* lane's marker pinned the CRLF
++on-disk digest, so `.gitattributes` would not help it. It pinned the blob
++digest too — all four committed markers, including the one whose §2 excerpt
++quotes `2d59e0c9…`, which is `sha256(blob)`, not `sha256(CRLF)`. So
++`.gitattributes` helps all 49 equally, and the claim that one marker is beyond
++repair is wrong.
++
++Measured, over 485 blobs under `reports/evidence/` + `evidence-ad01/`: **0
++contain CRLF**, and 482 of 485 on-disk files are exactly the blob with
++`\n`→`\r\n`. The whole discrepancy is `core.autocrlf=true` with no attribute.
++Adding `reports/evidence/** text eol=lf` and `evidence-ad01/** text eol=lf` to
++`.gitattributes` — the same scoped rule the file already carries for the
++content-hashed trees — makes disk bytes equal blob bytes on re-materialisation.
++I did not commit that change: it re-writes every working-tree copy of both
++evidence trees, which is a bigger decision than this note, and this lane is
++additive-only.
++
++**The position.** The blob digest is correct and stays. A digest that changes
++with the host's line-ending policy is a digest of the checkout, not of the
++source, and the existing `.gitattributes` preamble says exactly that. What is
++owed is the two-line attribute, not a re-stamp.
+diff --git a/reviews/probes/ad01_bdf12d5_review.py b/reviews/probes/ad01_bdf12d5_review.py
+index 1811e86..d5a1bfb 100644
+--- a/reviews/probes/ad01_bdf12d5_review.py
++++ b/reviews/probes/ad01_bdf12d5_review.py
+@@ -12,6 +12,8 @@ from unittest.mock import patch
+ ROOT = Path(__file__).resolve().parents[2]
+ sys.path[:0] = [str(ROOT), str(ROOT / "src")]
+ 
++from scripts.evidence_supersession import artifact_paths
++
+ from experiments.ad01 import benefit, checker, trajectory as T, worlds
+ from experiments.coord02 import controller as C, entry as E
+ 
+@@ -69,8 +71,8 @@ def main():
+     assert future_run["episodes"][0]["task_id"] == "ad01-w0-within-sw-00"
+ 
+     committed = ROOT / "evidence-ad01/c3-trajectories"
+-    records = [r for p in sorted(committed.glob("use-*.json")) for r in json.loads(p.read_text())]
+-    members = [m for p in sorted(committed.glob("repertoire-*.json"))
++    records = [r for p in artifact_paths(committed, "use-*.json") for r in json.loads(p.read_text())]
++    members = [m for p in artifact_paths(committed, "repertoire-*.json")
+                for m in json.loads(p.read_text())["members"]]
+     verification = checker.verify_use_records(records, worlds.FROZEN_DIR)
+     assert len(records) == 72 and not verification["problems"]
+@@ -83,7 +85,7 @@ def main():
+                               cwd=ROOT, text=True, capture_output=True, timeout=120)
+         assert proc.returncode == 0, proc.stderr
+         same = {p.name: json.loads(p.read_text()) == json.loads((output / p.name).read_text())
+-                for p in committed.glob("*.json")}
++                for p in artifact_paths(committed)}
+         assert len(same) == 19 and all(same.values())
+ 
+     return {"reviewed_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+diff --git a/reviews/probes/closure_84d2094.py b/reviews/probes/closure_84d2094.py
+index 5158d40..474dbb4 100644
+--- a/reviews/probes/closure_84d2094.py
++++ b/reviews/probes/closure_84d2094.py
+@@ -3,12 +3,16 @@
+ import hashlib
+ import json
+ import subprocess
++import sys
+ from pathlib import Path
+ from unittest.mock import patch
+ 
+ from experiments.ad01 import checker, construct, trajectory, worlds
+ 
+ ROOT = Path(__file__).resolve().parents[2]
++sys.path[:0] = [str(ROOT), str(ROOT / "src")]
++
++from scripts.evidence_supersession import artifact_paths  # noqa: E402
+ 
+ 
+ def prompt_probe():
+@@ -71,7 +75,7 @@ def evidence_probe():
+                        "retained": data["accounting"]["mechanism"]["retained"],
+                        "unknown_tokens": data["accounting"]["total"]["tokens"] is None,
+                        "exported_operation_entries": len(data["accounting"]["operations"])})
+-    records = [record for file in sorted((ROOT / "evidence-ad01/c3-trajectories-merged").glob("use-*.json"))
++    records = [record for file in artifact_paths(ROOT / "evidence-ad01/c3-trajectories-merged", "use-*.json")
+                for record in json.loads(file.read_text())]
+     checked = checker.verify_use_records(records, worlds.FROZEN_DIR)
+     assert len(records) == 72 and not checked["problems"]
+diff --git a/reviews/probes/inv_a_baseline_gaps.py b/reviews/probes/inv_a_baseline_gaps.py
+index 5d017d3..69e671c 100644
+--- a/reviews/probes/inv_a_baseline_gaps.py
++++ b/reviews/probes/inv_a_baseline_gaps.py
+@@ -16,6 +16,9 @@ import sys
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parents[2]
++sys.path[:0] = [str(ROOT), str(ROOT / "src")]
++
++from scripts.evidence_supersession import artifact_paths
+ C4 = ROOT / "evidence-ad01/c4-live"
+ LIVE = ROOT / "evidence-live"
+ INV_A = ROOT / "reports/workstreams/inv-a.md"
+@@ -66,7 +69,7 @@ def replay_c4() -> dict:
+ 
+ def replay_c3_use() -> int:
+     total = 0
+-    for f in sorted(C3_MERGED.glob("use-*.json")):
++    for f in artifact_paths(C3_MERGED, "use-*.json"):
+         total += len(json.loads(f.read_text()))
+     return total
+ 
+diff --git a/scripts/evidence_supersession.py b/scripts/evidence_supersession.py
+index a0ff56e..4839580 100644
+--- a/scripts/evidence_supersession.py
++++ b/scripts/evidence_supersession.py
+@@ -43,7 +43,7 @@ import json
+ from pathlib import Path
+ 
+ MARKER_SUFFIX = ".supersession.json"
+-EVIDENCE_ROOT = "reports/evidence"
++EVIDENCE_ROOTS = ("reports/evidence", "evidence-ad01")
+ 
+ SHAPES = ("VESSEL", "DATA", "SCOPE", "EDITS", "NAME")
+ VERDICTS = ("VOID", "PARTIALLY_VOID", "CONTAINER_MISLABELLED", "NAME_MISLABELLED")
+@@ -257,10 +257,32 @@ def _ref_missing(repo_root: Path, ref: str) -> bool:
+     return result.returncode != 0
+ 
+ 
++def is_marker(path: Path | str) -> bool:
++    return Path(path).name.endswith(MARKER_SUFFIX)
++
++
++def artifact_paths(directory: Path | str, pattern: str = "*.json") -> list[Path]:
++    """`glob(pattern)` over `directory`, minus the supersession markers.
++
++    A marker is a sibling of an artifact and carries its stem, so a reader
++    globbing the artifact's own family matches the marker too. Every reader
++    of these trees goes through here, so "a marker is not an artifact" is one
++    rule rather than one exclusion per reader.
++    """
++    return sorted(p for p in Path(directory).glob(pattern) if not is_marker(p))
++
++
+ def iter_markers(repo_root: Path | str = ".") -> list[Path]:
+-    root = Path(repo_root) / EVIDENCE_ROOT
+-    return sorted(p for p in root.rglob("*" + MARKER_SUFFIX)
+-                  if _INDEX_SKIP.isdisjoint(p.parts))
++    """Every marker under every evidence tree.
++
++    `evidence-ad01/` is an evidence tree too and its markers used to be
++    unreachable from here, which made `check_evidence_tree` report a clean
++    tree it had never looked at.
++    """
++    root = Path(repo_root)
++    found = {p for base in EVIDENCE_ROOTS
++             for p in (root / base).rglob("*" + MARKER_SUFFIX)}
++    return sorted(p for p in found if _INDEX_SKIP.isdisjoint(p.parts))
+ 
+ 
+ def check_evidence_tree(repo_root: Path | str = ".") -> list[str]:
+diff --git a/scripts/inv01_study.py b/scripts/inv01_study.py
+index 3c1b493..73a9340 100644
+--- a/scripts/inv01_study.py
++++ b/scripts/inv01_study.py
+@@ -22,6 +22,8 @@ MODEL = "inv01-study-double"
+ CALIBRATION_WORLD = 0
+ COMPARISON_WORLDS = [1, 2]
+ 
++from scripts.evidence_supersession import artifact_paths
++
+ DISPOSIBLE_PREFIXES = ("s09iso_", "inv_r1_", "inv_c3_")
+ 
+ # The authored control arm's own name, and the witness budget both arms run
+@@ -580,7 +582,7 @@ def recompute_study(out: Path, recomputed_out: Path) -> int:
+     totals = {"model_calls": 0, "construction_calls": 0,
+               "witness_queries": 0}
+     loaded_exports = []
+-    for path in sorted(exports_dir.glob("export-*.json")):
++    for path in artifact_paths(exports_dir, "export-*.json"):
+         export = records.load_export(path)
+         loaded_exports.append(export)
+         recomputed = records.recompute_accounting(export, [])
+diff --git a/tests/test_evidence_supersession.py b/tests/test_evidence_supersession.py
+index 825fea2..81018eb 100644
+--- a/tests/test_evidence_supersession.py
++++ b/tests/test_evidence_supersession.py
+@@ -79,6 +79,23 @@ def test_every_marked_artifact_exists_and_the_digest_is_the_ones_on_disk():
+         assert marker["artifact_sha256"] == sup.sha256_file(artifact)
+ 
+ 
++def test_every_marker_in_the_tree_is_reachable_from_the_check():
++    """Widening the roots must reach both trees, not just the one that had markers.
++
++    `evidence-ad01/` is an evidence tree and its markers were invisible to
++    `iter_markers`, so the tree check was passing over a tree it had never
++    read. The roots are written out literally here rather than read from
++    `EVIDENCE_ROOTS`, so dropping one fails this test instead of quietly
++    redefining what the check means.
++    """
++    on_disk = set()
++    for tree in ("reports/evidence", "evidence-ad01"):
++        on_disk |= {p for p in (ROOT / tree).rglob("*" + sup.MARKER_SUFFIX)}
++
++    assert on_disk
++    assert on_disk == set(sup.iter_markers(ROOT))
++
++
+ def test_the_ladder_marker_is_discoverable_from_the_ladder_without_being_told_to_look():
+     """The reachability claim itself, as an assertion.
+ 
+@@ -318,3 +335,93 @@ def test_an_index_past_the_end_of_a_list_is_refused():
+ def test_a_pointer_that_does_not_start_at_the_root_is_refused():
+     with pytest.raises(sup.MarkerError, match="must start with"):
+         sup.resolve_pointer({"a": 1}, "a")
++
++
++# --- the collision rule, as an assertion rather than a census ---
++
++def test_a_marker_beside_an_artifact_is_excluded_from_that_artifacts_glob(tmp_path):
++    """The defect this file pins: readers enumerate by artifact family.
++
++    A marker is named after the artifact's stem, so `use-*.json` matches
++    `use-w0-I.supersession.json`. `artifact_paths` is the one rule that
++    stops it, and a reader that forgets it reads the marker as data.
++    """
++    directory = tmp_path / "evidence-ad01/c3-trajectories"
++    directory.mkdir(parents=True)
++    (directory / "use-w0-I.json").write_text("[]", encoding="utf-8")
++    (directory / "use-w0-I.supersession.json").write_text("{}", encoding="utf-8")
++    (directory / "use-w1-I.json").write_text("[]", encoding="utf-8")
++
++    assert [p.name for p in directory.glob("use-*.json")] == [
++        "use-w0-I.json", "use-w0-I.supersession.json", "use-w1-I.json"]
++    assert [p.name for p in sup.artifact_paths(directory, "use-*.json")] == [
++        "use-w0-I.json", "use-w1-I.json"]
++
++
++def test_the_exclusion_holds_for_a_bare_star_glob_too():
++    """`*.json` is the widest reader there is, and it must hold as well.
++
++    No marker naming that ends in `.json` can escape a `*.json` glob, which
++    is why the fix is on the reader side and the suffix is unchanged.
++    """
++    directory = Path(__file__).resolve().parent.parent / "reports/evidence/inv_r1_m3"
++    names = [p.name for p in sup.artifact_paths(directory)]
++
++    assert "study.json" in names
++    assert not any(n.endswith(sup.MARKER_SUFFIX) for n in names)
++    assert len(names) == len(list(directory.glob("*.json"))) - 2
++
++
++def test_no_committed_reader_glob_can_match_a_marker():
++    """The rule holds by construction only if no site reimplements the glob.
++
++    A reader that globs an artifact family directly matches the marker
++    named after that family, and this fails at the next marker rather than
++    at the next review. The check is over real marker names in the tree,
++    so it is a property of the naming convention and not a list to keep
++    in step by hand.
++    """
++    import ast
++    import fnmatch
++
++    marker_names = {p.name for p in sup.iter_markers(ROOT)}
++    sites = ("reviews/probes/inv_a_baseline_gaps.py",
++             "experiments/ad01/s09_e1_gates_probe.py",
++             "reviews/probes/ad01_bdf12d5_review.py",
++             "reviews/probes/closure_84d2094.py",
++             "scripts/inv01_study.py")
++    # Globs over a directory that holds no marker cannot break, and two of
++    # these files also walk `evidence-live/` and `c4-live/`, which do not.
++    marker_dirs = {"C3_MERGED", "TRAJECTORIES", "committed", "exports_dir"}
++    offenders = []
++    for rel in sites:
++        tree = ast.parse((ROOT / rel).read_text(encoding="utf-8"))
++        for node in ast.walk(tree):
++            if not (isinstance(node, ast.Call)
++                    and isinstance(node.func, ast.Attribute)
++                    and node.func.attr == "glob"
++                    and node.args and isinstance(node.args[0], ast.Constant)
++                    and isinstance(node.args[0].value, str)):
++                continue
++            if node.func.value.id not in marker_dirs:
++                continue
++            pattern = node.args[0].value
++            if any(fnmatch.fnmatch(name, pattern) for name in marker_names):
++                offenders.append("%s:%d %s" % (rel, node.lineno, pattern))
++    assert not offenders, offenders
++
++
++def test_a_marker_beside_an_artifact_is_still_discoverable(tmp_path):
++    """Excluding a marker from a reader's glob must not hide it from the check.
++
++    `artifact_paths` and `iter_markers` are deliberately opposite, and this
++    is the assertion that keeps them that way.
++    """
++    directory = tmp_path / "evidence-ad01/c3-trajectories"
++    directory.mkdir(parents=True)
++    marker = directory / "use-w0-I.supersession.json"
++    marker.write_text("{}", encoding="utf-8")
++
++    assert sup.is_marker(marker)
++    assert marker not in sup.artifact_paths(directory)
++    assert sup.is_marker(directory / "study.supersession.json")

@@ -1,0 +1,184 @@
+diff --git a/reports/PROJECT-LEDGER.md b/reports/PROJECT-LEDGER.md
+index 19bb1be..362ef88 100644
+--- a/reports/PROJECT-LEDGER.md
++++ b/reports/PROJECT-LEDGER.md
+@@ -237,6 +237,51 @@ never ran, which bounds what a campaign measured and says nothing about the
+ design. Free-route instability: B12's 502s and timeout are external-dependency
+ observations about one route.
+ 
++### The free route's success rate, stated as two denominators
++
++**No single success rate for this route is defensible, and none is recorded
++here.** The figures that were in circulation — "27 sends, 19 success, 8 failed"
++— reproduce from no committed evidence and have no denominator a reader can
++check. Two denominators are real, and they measure different things, so they are
++recorded separately and are **not** averaged into a third:
++
++| denominator | what it is | outcome split |
++|---|---|---|
++| **217 distinct receipts** across all of `reports/evidence/` | every settled receipt identity the tree commits, deduplicated across the 383 rows that repeat them | 181 success, 11 failure, 25 unknown |
++| **15 B-lane operations** (`invr1b11-budget`, `invr1b12-swe`, `invr1b17-budgetfit`) | the milestone-B live sends only | 8 success, 4 failure, 3 unknown |
++| **9 of those at `max_output_tokens: 2048`** | the same B-lane operations restricted to the budget every campaign pins | 4 success, 4 failure, 1 unknown — **0.444** |
++
++The first row spans studies that ran at different output budgets, different
++deadlines and different periods, so pooling it describes the archive rather
++than the route under any one protocol. The second and third are the ones a cap
++sheet can be priced against, and **they disagree with each other** — 0.533
++against 0.444 — which is itself the finding: excluding B11's five successes at
++16/64/256/1024/2048 removes the only rungs below 2048 and makes the route look
++markedly worse. B17's fourth operation (`a1`, `elapsed_s: 0.6`,
++`exception_class: PreGatewayRefusal`) is excluded from the 15 because it was
++refused before the wire and spent no send.
++
++**What the committed evidence does and does not say about latency.** Every
++measured 502 in the tree carries a latency, and **none is under 120 s**: the
++three recorded values are **180.1 s** and **180.1 s** (the same probe under two
++read ceilings, `invl02-live/probe-chat-180000.json` and
++`probe-responses-300000.json`) and **123.86 s** (`invr1b17-budgetfit`). The
++slowest successful send anywhere in the evidence is **112.57 s**. So the
++ordering holds — every 502 in the tree is slower than every success — but it
++rests on **three** observations, not four, and the four figures circulating
++(`122.7`, `122.7`, `180.6`, `180.8`) appear in no committed file. `b12-swe.md`
++narrates one send lost at **61.4 s**, which is below 120 s and is a timeout
++rather than a 502, so it does not join the 502 set.
++
++**"Route latency, not token budget" is true at 2048 and false at 4096, and
++these are two instruments.** B11's ladder served 16, 64, 256, 1024 and 2048
++with `stop_reason: length` and lost **4096 to a read timeout**, on the same
++prompt. Within 2048 the failures are slow successes that died at the provider
++(123.86 s against a 300 s deadline), which is a latency fact; at 4096 the
++failure is the budget having been spent, which is a budget fact. Averaging
++across the ladder or pooling 4096 with 2048 produces a number that belongs to
++neither budget, so neither is done here.
++
+ ## Stage 9 and Stage 10 after this batch
+ 
+ **Stage 9 keep/change/remove, under the completed supported protocols.** These
+diff --git a/reports/cap-sheets/b-live-cap.md b/reports/cap-sheets/b-live-cap.md
+index 054e926..a83b486 100644
+--- a/reports/cap-sheets/b-live-cap.md
++++ b/reports/cap-sheets/b-live-cap.md
+@@ -81,6 +81,37 @@ catalog has 219 entries and the pinned id is present, so the archived
+ (`reports/PLAN.md`, ROUTE row, live catalog read 2026-10-01). The absence finding is
+ history and is not restated as a current precondition.
+ 
++### Which spelling is the route of record, and why this is not yet settled
++
++Two spellings of this route are in the tree and they are not
++interchangeable: the **unprefixed** `nvidia/nemotron-3-ultra-550b-a55b:free`,
++which is what this sheet pins, what `live_construct.OUTPUT_ROUTE` pins, and what
++every B-lane run sent (`invr1b11-budget`, `invr1b12-swe` and `invr1b17-budgetfit`
++each record it under `requested_model`); and the **`openrouter/`-prefixed**
++spelling, which `s09_route_cost.FREE_MODEL`, `s09_doubles_forensics.FREEZE_MODEL`
++and `s09_study_protocol.REQUESTED_MODEL` still carry, and which
++`reports/cap-sheets/invl02-s09-cap.json` records in its `route` field.
++
++`live_construct.py:25-29` already records why the two diverged: the prefixed
++spelling "no longer exists in the live 255-entry catalog: the aggregator moved
++the prefix," which it calls configuration drift rather than unavailability. That
++is the current route of record, and the prefixed spelling is what the older
++studies used.
++
++**`FREE_MODEL` was left unchanged, and that is a decision for the owner, not a
++repair.** It is the requested-model spelling in `s09_route_cost.probe_request`
++and the model in `s09_cap_sheet.RequestBounds`, whose `as_request()` reaches
++`reservation_units` — a pricing path, not a dispatch path — so changing it
++today would not alter what any live send requests. It would, however, change
++`reports/cap-sheets/invl02-s09-cap.json`, whose `route` field is digest-bound:
++`s09_cap_sheet.load()` recomputes `sheet_digest` over the body and **refuses** a
++sheet edited after its freeze, so the constant and the committed JSON cannot be
++moved apart without a new freeze. Whether the prefixed spelling is retired
++outright, or kept as the recorded route of the studies that used it and read as
++history everywhere else, is a question about the route of record, and **this
++lane did not answer it.** No cap sheet should be priced off `FREE_MODEL` while
++the two spellings coexist; price off the unprefixed id this sheet pins.
++
+ **No key value appears in this sheet, in this repository, or in any evidence file it
+ references.** The key lives in an environment file outside Git, mode 600, and the
+ sheet names the variable and nothing else. No paid fallback is permitted. Jev is not
+@@ -131,15 +162,29 @@ no effort rather than a control the wire never applied.
+ | **total** | **75** | **3** | **78** | |
+ 
+ `total_dispatch_cap: 75`, `total_physical_send_ceiling: 78`,
+-`campaign_wall_ceiling_ms: 22800000`, which is 78 sends x 300000 ms, the sum of every
++`campaign_wall_ceiling_ms: 23400000`, which is 78 sends x 300000 ms, the sum of every
+ request's own deadline under a serial broker. `B11` carries no retry allowance
+ because a retry at a fixed budget re-measures the same rung and answers nothing.
+ 
++The wall ceiling was `22800000` when this sheet was first frozen, which is 76
++sends and not 78. **The number was wrong and the basis was right**, so the
++ceiling is corrected here rather than the description. The send ceiling is
++corroborated three times over in this sheet — by the table above
++(`6 + 25 + 38 + 9 = 78`), by `total_units: 194376 = 2492 x 78`, and by the
++stopping condition's 78 physical sends — while the wall ceiling is the only
++figure that disagreed, and its own definition is the naive sum. Nothing in the
++sheet states a tighter wall and nothing justifies one; 76 matches no other
++figure here except `total_dispatch_cap: 75` plus a single retry, which is not a
++basis this sheet states or freezes. Correcting the figure rather than the
++description is also the direction that cannot authorise anything: this ceiling
++bounds wall time, and the dispatch and send ceilings that actually gate a
++dispatch stay at 75 and 78.
++
+ ```text
+ total_dispatch_cap: 75
+ total_retry_allowance: 3
+ total_physical_send_ceiling: 78
+-campaign_wall_ceiling_ms: 22800000
++campaign_wall_ceiling_ms: 23400000
+ per_request_units: 2492
+ requests: 78
+ unit_kind: estimated-budget
+@@ -258,8 +303,8 @@ condition, and the free tier is not a reason to widen any of these numbers.
+ | Free route present in the live catalog | MET — 219 entries read 2026-10-01, pinned id present unprefixed |
+ | Standing authority for finite prospective studies | MET — `WORKER-PROMPT.md:28-34` |
+ | Panel reaches required clusters with a positive ceiling | MET — `graph:dev+transfer`, 6 clusters, ceiling `0.285714`, 6 of 6 rows open |
+-| Panel readable by the qualification gate | **NOT MET** — the five authored graph policies hardcoded a `seed-sw-` method; repaired on `wt/b13b-replseed`, not yet merged here |
+-| Out-of-process execution carries authority | **NOT MET** — `s09_e2_scored._execute` passes no dsn, allocation or operation id, so every policy reading is `unscored`; owned by A2 |
++| Panel readable by the qualification gate | **MET, conditionally — and the condition is load-bearing.** The seed-hardcoding repair is on this source (`8e06980`), so the gate separates a reader from an echoer on **18 of 18** distinct panel targets across both families, measured through `replica.qualify_instrument` under a real store and allocation: software reader `1.5`-`1.7857` against echoer `0.5`-`0.7857`, graph reader `1.0`-`1.2381` against echoer `0.0`-`0.2381`. `w2_retention_campaign.qualification_census` on this source reads **9 of 9** rows readable over the two panels it enumerates. **With empty observations the gate separates 0 of 18**, so `qualification_census` alone does not certify readability: arms must first be built at `evidence_budget_for(family)`, measured as **2 for software and 6 for graph** against an inherited `EVIDENCE_MAX_QUERIES = 3`. That budget is a field of the action the policy proposes, not of the priced request, so `per_request_units` stays `2492` and the unit accounting below is unchanged. |
++| Out-of-process execution carries authority | **NOT MET as this sheet records it** — the row reads `s09_e2_scored._execute` passes no dsn, allocation or operation id, so every policy reading is `unscored`; owned by A2. **This lane did not re-measure it and did not change its verdict.** It is recorded here that the readability measurement above did run under a real store and allocation and did produce scored readings, which A2's own close-out is the authority on |
+ | Served output budget | **UNRESOLVED** — see above; `B11` measures it |
+ | Uncertain historical reservation identified | **NOT MET** — needs the `invl02_live` store, a different grant |
+ | Confined read denial | **NOT MET** — WSL2 kernel rejects Landlock; needs bare metal |
+diff --git a/reports/cap-sheets/b14-retention-freeze.md b/reports/cap-sheets/b14-retention-freeze.md
+index 75e7c9c..1c1ca20 100644
+--- a/reports/cap-sheets/b14-retention-freeze.md
++++ b/reports/cap-sheets/b14-retention-freeze.md
+@@ -151,10 +151,27 @@ only `software`, so the campaign's own `qualification_census()` reports
+ `readable: 0` on it (`w2_retention_campaign.qualification_census`). The three
+ powered panels are `graph`, and `w2_retention_campaign`'s header states the
+ gate's five authored policies hardcode a `seed-sw-` method, so a graph target
+-is refused before any reading is taken. B13b repaired the seed hardcoding on
+-`wt/b13b-replseed`, not merged here. **B14 would be gated on a live contrast
++is refused before any reading is taken. **B14 would be gated on a live contrast
+ even with a varying member in hand.** Recorded rather than worked around.
+ 
++**That blocker has since been measured, and it is narrower than it was
++recorded here.** The seed-hardcoding repair is on current source (`8e06980`);
++`wt/b13b-replseed` no longer exists, so "not merged here" was true of a branch
++and is not a statement about the code. Re-measured through
++`replica.qualify_instrument` under a real store and allocation, the gate
++separates a reader from an echoer on **18 of 18** distinct panel targets once
++arms are built — software reader `1.5`-`1.7857` against echoer
++`0.5`-`0.7857`, graph reader `1.0`-`1.2381` against echoer `0.0`-`0.2381` — and
++this sheet's own `qualification_census` now reads **9 of 9** rows readable
++rather than 0. It separates **0 of 18** on empty observations. So readability
++is real and it is conditional on one thing: `qualification_census` certifies
++nothing until the arms are built at `evidence_budget_for(family)`, which is
++**2 for software and 6 for graph** against an inherited
++`EVIDENCE_MAX_QUERIES = 3`. **This does not lift B14's ceiling.** Its own reason
++for a zero ceiling is measured below and is untouched by the gate: no member on
++this route carries a varying verdict. The gate blocker was a second,
++independent one, and it is now closed; the first still stands.
++
+ ## What was measured, and what was not
+ 
+ **Measured, zero dispatches, on this branch:**
+@@ -318,7 +335,7 @@ result past this ceiling.
+ | Repertoire admits a method acquired on a prior task | MET — `assessment_profile.Repertoire`, landed by B3 at `794520f` |
+ | **A member whose verdict varies across tasks exists** | **NOT MET** — 0 of 3 live-acquired and 0 of 4 strategy arms measurable |
+ | **Acquisition returns a member at the current rate** | **NOT MET** — B12 returned 0 of 4 lineages; the last live acquisition before it returned 3 of 6, all constant-verdict |
+-| Panel readable by the qualification gate | **NOT MET** — `qualification_census` reads 0 rows; the seed hardcoding is repaired on `wt/b13b-replseed`, unmerged here |
++| Panel readable by the qualification gate | **MET, conditionally** — the repair is on this source (`8e06980`) and the gate separates a reader from an echoer on 18 of 18 distinct panel targets with built arms (software `1.5`-`1.7857` vs `0.5`-`0.7857`; graph `1.0`-`1.2381` vs `0.0`-`0.2381`), with `qualification_census` reading **9 of 9** rows readable, but **0 of 18 with empty observations**, so readability is claimed only after arms are built at `evidence_budget_for(family)` — 2 software, 6 graph, against an inherited `EVIDENCE_MAX_QUERIES = 3` |
+ | Confined read denial | NOT MET — WSL2 kernel rejects Landlock; needs bare metal |
+ | Rate limits, quota, concurrency | UNVERIFIED — treated as unknown headroom |
+ 

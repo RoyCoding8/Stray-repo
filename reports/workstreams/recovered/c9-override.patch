@@ -1,0 +1,193 @@
+diff --git a/experiments/ad01/method_exec.py b/experiments/ad01/method_exec.py
+index 2392653..aa00cc6 100644
+--- a/experiments/ad01/method_exec.py
++++ b/experiments/ad01/method_exec.py
+@@ -1278,6 +1278,160 @@ def step_contract() -> dict:
+     }
+ 
+ 
++_NOT_LITERAL = object()
++_NO_ACTION = object()
++_NO_BINDING = object()
++_MAYBE_ACTION = object()
++
++
++def _literal_value(node):
++    """The value of a literal expression, or a marker for anything else."""
++    try:
++        return ast.literal_eval(node)
++    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
++        return _NOT_LITERAL
++
++
++def _validator_refuses(literal) -> bool:
++    """Whether `policy_step.validate_action` refuses this literal as an action.
++
++    The action contract is asked rather than restated. A list of inert shapes
++    here would be a second spelling of `ACTION_REQUIRED`, and it would drift
++    the first time a field is added: a shape this function still called inert
++    would become valid, and a valid one would stay refused. `None` is the
++    recorded case (invl02-r123 r1, `{"action": None, "state": state}`).
++    """
++    from . import policy_step
++    try:
++        policy_step.validate_action(literal)
++    except ValueError:
++        return True
++    return False
++
++
++def _dict_binding_action(node) -> object:
++    """What `action` this dict display binds at runtime, or a marker.
++
++    A dict display binds each key as it is written and a later binding of the
++    same key replaces an earlier one, so `{"action": None, "action": x}` and
++    `{"action": None, **{"action": x}}` both hand back `x`. Reading the first
++    `action` rather than the last is not a narrower reading, it is the wrong
++    one: it refuses a program that acts and admits a program that cannot, and
++    those are the two ends of the same ordering question. So the pairs are
++    read in the order Python writes them and the last binding of `action`
++    decides.
++
++    `**` is a binding at its position, so it is decided the same way. A spread
++    that folds to a literal dict is already last-wins resolved by
++    `ast.literal_eval`, which asks the same question this function asks; one
++    that cannot fold might carry any key at all, so it admits. Either way the
++    walk continues, because a later literal overrides an earlier spread just
++    as it overrides an earlier literal.
++
++    `_NO_ACTION` means "binds an `action` no literal could satisfy the
++    contract with". `_NO_BINDING` is not that: a display that never names
++    `action` binds nothing for the contract to accept or refuse, and the
++    envelope is refused for the missing key instead. Collapsing the two would
++    turn this from a bound on the action into a second spelling of
++    `validate_step_result`, refusing every source that forgot the envelope.
++    """
++    if not isinstance(node, ast.Dict):
++        return _MAYBE_ACTION
++    bound = _NO_BINDING
++    for key, item in zip(node.keys, node.values):
++        if key is None:
++            spread = _literal_value(item)
++            if spread is _NOT_LITERAL or not isinstance(spread, dict):
++                bound = _MAYBE_ACTION
++            elif "action" in spread:
++                bound = _NO_ACTION if _validator_refuses(
++                    spread["action"]) else _MAYBE_ACTION
++            continue
++        if not (isinstance(key, ast.Constant) and key.value == "action"):
++            continue
++        literal = _literal_value(item)
++        if literal is _NOT_LITERAL:
++            bound = _MAYBE_ACTION
++        else:
++            bound = _NO_ACTION if _validator_refuses(literal) \
++                else _MAYBE_ACTION
++    return bound
++
++
++def _return_binds_inert_action(node) -> bool:
++    """Whether this return hands back an `action` the contract refuses.
++
++    A return with no value at all is inert too: every input reaching a bare
++    `return` yields `None`, so the envelope has no `action` for the contract
++    to accept and `validate_step_result` refuses it on the very shape. It is
++    not a dict literal, and treating it as unknown admits a body whose every
++    other exit is inert and whose last exit carries nothing.
++
++    A name, a call, a subscript or a conditional expression could carry a
++    real action, so those admit and the source is left to execution to judge.
++    """
++    if node.value is None:
++        return True
++    return _dict_binding_action(node.value) is _NO_ACTION
++
++
++def _entry_returns(function) -> list:
++    """The `return` statements of this entry, and only of this entry.
++
++    `ast.walk` descends into every nested function, and a `return` inside a
++    helper is not a return of the entry: counting one as an exit the entry
++    does not take makes the walk unsound in the safe direction only by
++    accident. A nested helper that returns a real action would admit a body
++    whose own returns are all inert, which is a false negative, but a
++    helper's inert return would otherwise refuse a program that can act
++    through it, which is a false positive against live bytes. Nested defs
++    are therefore skipped, and a helper that decides the return value stays
++    admitted because its own `return` is not one this reads.
++    """
++    returns, stack = [], list(ast.iter_child_nodes(function))
++    while stack:
++        node = stack.pop()
++        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
++                             ast.Lambda)):
++            continue
++        if isinstance(node, ast.Return):
++            returns.append(node)
++            continue
++        stack.extend(ast.iter_child_nodes(node))
++    return returns
++
++
++def _produces_no_action(function) -> bool:
++    """Whether every exit of this entry hands back something inert.
++
++    Decided only when the answer is provable, which is what makes it a gate
++    rather than a guess. The entry must have at least one `return`, and every
++    one of them must bind `action` to a literal the action contract refuses,
++    or carry no action at all; a single unknown return, or one binding
++    something real, leaves the source admitted.
++
++    A body with no `return` is admitted rather than refused, and that is a
++    different case from a body whose returns all carry nothing. A body with
++    no `return` falls through to `None` too, but nothing in its bytes says
++    when or whether it ends: a `while True` is caught by the CPU bound and a
++    bare assignment by execution, both of which this gate would only
++    pre-empt. Refusing it here would delete the coverage the CPU bound has,
++    which is a loss of a boundary rather than a gain at one. A body that
++    does `return` is not that case: its exits are written down, so what it
++    binds is knowable.
++
++    What this does not decide, so that nobody reads it as deciding it: a
++    program that builds its action through a name, a call or a helper, and a
++    program whose action is real on some inputs and absent on others when
++    the absent one is not a literal. Both reach `validate_step_result` at
++    execution and are refused there, on the first step that returns them.
++    """
++    returns = _entry_returns(function)
++    if not returns:
++        return False
++    return all(_return_binds_inert_action(node) for node in returns)
++
++
+ def verify_step_source(source: str, entry: str = "STEP") -> str:
+     if not isinstance(source, str) or not source.strip():
+         raise MethodExecutionError("refused: empty-policy-source")
+@@ -1308,6 +1462,10 @@ def verify_step_source(source: str, entry: str = "STEP") -> str:
+         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) \
+                 and node.func.id in _FORBIDDEN_CALLS:
+             raise MethodExecutionError("refused: io-or-reflection-forbidden")
++    if _produces_no_action(targets[0]):
++        raise MethodExecutionError(
++            "refused: entry-can-produce-no-action: no return of %s can hand"
++            " back a policy action object" % entry)
+     return entry
+ 
+ 
+diff --git a/tests/test_final_provenance.py b/tests/test_final_provenance.py
+index 8e5e830..4215103 100644
+--- a/tests/test_final_provenance.py
++++ b/tests/test_final_provenance.py
+@@ -298,8 +298,10 @@ def test_durable_step_rechecks_source_after_receipt(monkeypatch):
+     monkeypatch.setattr(method_exec.broker, "ensure_operation", ensure_operation)
+     monkeypatch.setattr(method_exec.broker, "dispatch_operation", dispatch)
+     source = ("def STEP(view, state):\n"
+-              "    return {\"action\": {\"kind\": \"wait\"},"
+-              " \"state\": {}}\n")
++              "    action = {\"kind\": \"stop\", \"target\": \"t\","
++              " \"inputs\": {}, \"evidence_refs\": [],"
++              " \"requested_resources\": {}}\n"
++              "    return {\"action\": action, \"state\": {}}\n")
+     view = policy_step.materialize_view(
+         task=worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-dev-sw-00"),
+         observations=[], open_questions=[], last_result=None,
