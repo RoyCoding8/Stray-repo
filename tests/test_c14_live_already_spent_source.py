@@ -56,6 +56,9 @@ import worktree_checkouts as checkouts
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tests"))
+
+from tests.conftest_isolation import admin_dsn, dsn_with_dbname  # noqa: E402
 
 DEAD = "S09_STUDY_CALLS_ALREADY_SPENT"
 
@@ -227,7 +230,7 @@ def test_the_probe_ceiling_is_the_stores_count_and_not_a_seed() -> None:
 
 
 DATABASE = "v3_c14_spend_source"
-DSN = "dbname=%s host=/var/run/postgresql user=ubuntu" % DATABASE
+DSN = dsn_with_dbname(admin_dsn(), DATABASE)
 ALLOCATION = "ad01-campaign-invl02-live-e0"
 
 
@@ -237,15 +240,13 @@ def store():
     import psycopg
     from settlement import db
 
-    admin = psycopg.connect(
-        "host=/var/run/postgresql user=ubuntu dbname=postgres", autocommit=True)
+    admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.execute("CREATE DATABASE %s" % DATABASE)
     admin.close()
     db.apply_migrations(DSN, ROOT / "migrations")
     yield DSN
-    admin = psycopg.connect(
-        "host=/var/run/postgresql user=ubuntu dbname=postgres", autocommit=True)
+    admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.close()
 
@@ -299,8 +300,7 @@ def test_an_unreadable_store_refuses_rather_than_reporting_zero() -> None:
 
     with pytest.raises(ValueError, match="was not readable"):
         driver._already_spent(
-            "dbname=v3_c14_absent host=/var/run/postgresql user=ubuntu",
-            ALLOCATION)
+            dsn_with_dbname(admin_dsn(), "v3_c14_absent"), ALLOCATION)
 
 
 def test_the_env_var_could_not_have_produced_that_number(store, monkeypatch) -> None:

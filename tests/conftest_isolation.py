@@ -18,15 +18,23 @@ A default is a seam on the strength of its carrying a ``dbname`` field, not on
 its name carrying a prefix. A test database does not have to be spelled
 ``ec02test_*`` to be shared: ``inv_r3_export`` was a module-level literal in an
 ``os.environ.get`` default like any other, and the scan missed it because it
-screened on the prefix instead. Every ``dbname`` default is now a candidate,
-which is 40 of them and not the 25 the prefix used to admit.
+screened on the prefix instead. Every ``dbname`` default is now a candidate.
 
-Four seams cannot be redirected. Each of those files asserts, in a fixture,
-something about the resolved ``dbname``, so a unique name either fails the
-assertion or satisfies it only by still carrying the shared name. :class:`Seam`
-records the reason and :meth:`SuitePlan.env_for` refuses to build a DSN for
-one, so a run reports the blocker rather than quietly falling back to the
-shared database.
+The scan reaches ``_heavy_archived`` too. It used to ``glob`` the top level
+only, so the twenty-five defaults under that directory were invisible to it and
+each one bound a shared socket database on any host that has a socket. Nothing
+about a file's location makes its default a different kind of seam.
+
+A default supplies a ``dbname`` and nothing else. :meth:`SuitePlan.env_for`
+builds the connection fields from :func:`admin_dsn` -- the route this session
+reached its server over -- because the default is a fallback carrying whatever
+its author wrote, and a redirected seam that inherited it would point at a path
+that exists only where that author worked.
+
+No seam in the real suite is pinned, which is the outcome the mechanism was
+built to reach. :class:`Seam` records the reason and :meth:`SuitePlan.env_for`
+refuses to build a DSN for one, so a future pin is reported rather than quietly
+falling back to the shared database.
 
 A default named ``*_unused`` or ``*_missing`` is an input to a test that
 asserts a refusal. Creating the database would invert that test, so it is
@@ -81,6 +89,36 @@ PINNED = "pinned"
 ABSENT = "absent-by-design"
 
 DEFAULT_ADMIN_DSN = "dbname=postgres host=/var/run/postgresql user=ubuntu"
+
+
+def admin_dsn() -> str:
+    """The route this session reaches its server over.
+
+    The socket is a local convenience, not a route every host has: the CI
+    service listens on TCP and has no socket file at all, so a name that
+    reaches here carrying the socket cannot connect anywhere. Every DSN a
+    test binds is built from this answer, so the route is named once rather
+    than carried by each file.
+    """
+    return os.environ.get(ADMIN_ENV, "") or os.environ.get(DSN_ENV, "") \
+        or DEFAULT_ADMIN_DSN
+
+
+def admin_url(dbname: str) -> str:
+    """The same route in URL form, naming ``dbname``.
+
+    Batteries that hand a URL to code which will not take keyword/value
+    conninfo need the second spelling, and both spellings are built from
+    :func:`admin_dsn` so they cannot disagree about where the server is.
+    """
+    from urllib.parse import urlencode
+
+    from psycopg.conninfo import conninfo_to_dict
+
+    params = {k: v for k, v in conninfo_to_dict(admin_dsn()).items()
+              if k != "password"}
+    params["dbname"] = dbname
+    return "postgresql:///?%s" % urlencode(params)
 
 
 def dbname_of(dsn: str) -> str:
@@ -168,11 +206,19 @@ class SuitePlan:
         return [s for s in self.seams if s.mode == ABSENT]
 
     def env_for(self, seam: Seam) -> str:
-        """The value to put in the environment for a redirectable seam."""
+        """The value to put in the environment for a redirectable seam.
+
+        The connection fields are taken from the route this session actually
+        reached its server over, not from the seam's own default. A default is
+        an ``os.environ.get`` fallback and carries whatever the file's author
+        wrote, which on any host without that socket names a path that does not
+        exist. Reading the route from the default would make every redirected
+        seam inherit an unreachable socket, so the default supplies the
+        ``dbname`` and nothing else.
+        """
         if not seam.redirectable:
             raise ValueError("%s is %s: %s" % (seam.env_var, seam.mode, seam.reason))
-        return dsn_with_dbname(seam.default_dsn,
-                               derived_name(self.token, seam.db_name))
+        return dsn_with_dbname(admin_dsn(), derived_name(self.token, seam.db_name))
 
 
 def _literals_in(node: ast.AST) -> list[str]:
@@ -240,7 +286,7 @@ def scan(directory: Path | None = None) -> list[Seam]:
     """
     root = directory or TESTS_DIR
     found: dict[str, Seam] = {}
-    for path in sorted(root.glob("test_*.py")):
+    for path in sorted(root.rglob("test_*.py")):
         source = path.read_text(encoding="utf-8")
         try:
             tree = ast.parse(source, filename=str(path))
@@ -304,7 +350,7 @@ def _merge(left: Seam, right: Seam) -> Seam:
 
 def plan(token: str | None = None, directory: Path | None = None) -> SuitePlan:
     """Decide every redirection, without connecting to anything."""
-    admin = os.environ.get(ADMIN_ENV, "") or DEFAULT_ADMIN_DSN
+    admin = admin_dsn()
     if directory is None:
         scanned = os.environ.get(SCAN_DIR_ENV, "")
         if scanned:
@@ -474,7 +520,7 @@ def clear_ready_markers(directory: Path, tokens: set[str], *,
     check = probe
     owned = None
     if check is None:
-        owned = _admin_connection(DEFAULT_ADMIN_DSN)
+        owned = _admin_connection(admin_dsn())
         check = lambda t: _token_locked(owned, t)  # noqa: E731
     cleared: list[str] = []
     try:

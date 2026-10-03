@@ -14,10 +14,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
+sys.path.insert(0, str(ROOT / "tests"))
 
-DSN = os.environ.get(
-    "P3E_DSN", "dbname=ec02test_p3e_entry host=/var/run/postgresql user=ubuntu")
-MISSING_DSN = "dbname=ec02test_p3e_missing host=/var/run/postgresql user=ubuntu"
+from tests.conftest_isolation import admin_dsn, dsn_with_dbname  # noqa: E402
+
+DSN = os.environ.get("P3E_DSN", "dbname=ec02test_p3e_entry")
+MISSING_DSN = dsn_with_dbname(admin_dsn(), "ec02test_p3e_missing")
 MIGRATIONS = ROOT / "migrations"
 
 # This battery truncates its store, so the property worth asserting is that the
