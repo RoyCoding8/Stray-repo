@@ -74,31 +74,120 @@ def database_url(dsn: str) -> str:
     ).render_as_string(hide_password=False)
 
 
+REPO_MIGRATIONS = Path(__file__).resolve().parents[2] / "migrations"
+
+
 class MigrationSetEmpty(RuntimeError):
     """The migration directory yielded no `.sql` files at all.
 
-    Raised by `apply_migrations` rather than reported as an empty success.
+    Raised by `migration_files` rather than reported as an empty success.
     A directory that exists and is empty and a directory that was never
     the migrations directory produce the same glob result, and the
     difference is a schema that was silently never migrated.
     """
 
 
-def apply_migrations(dsn: str, migrations_dir: str | Path) -> list[str]:
+class MigrationSetStale(RuntimeError):
+    """The store's recorded migrations are not the directory's migrations.
+
+    Raised by `verify_current`, which refuses rather than reporting a
+    store as migrated. `MigrationSetEmpty` answers "does this directory
+    name any migrations"; this answers "is this store the schema this
+    directory describes", and those are not the same failure. An empty
+    directory is a path that was never right. A stale store is a schema
+    that was right when it was built and is not now, and it is the state
+    that surfaces much later as a missing column, inside a caller that
+    has no reason to suspect its own schema.
+
+    The comparison is equality in both directions rather than a
+    high-water mark, because a mark moves forward and cannot say that a
+    file was renamed or withdrawn, and because a subset check cannot see
+    a migration the store never applied.
+    """
+
+
+def migration_files(migrations_dir: str | Path) -> list[Path]:
+    """The migrations this directory names, or a refusal naming the path.
+
+    An empty glob and a directory that exists but is empty are the same
+    list, so the two cannot be told apart by their contents. The cost of
+    guessing wrong is a schema that is silently not migrated: the apply
+    loop never runs, the caller reports success, and the failure surfaces
+    much later as a missing relation. `apply_migrations` is called with a
+    path assembled from `Path(__file__).parent.parent` in 31 archived
+    tests, and archiving the tree moved those files one level deeper -- so
+    the wrong path is a state this repository has actually been in.
+    Refuse rather than report an empty success.
+    """
     files = sorted(Path(migrations_dir).glob("*.sql"))
     if not files:
-        # An empty glob and a directory that exists but is empty are the same
-        # list, so the two cannot be told apart by their contents. The cost of
-        # guessing wrong is a schema that is silently not migrated: the loop
-        # below never runs, the function reports success, and the failure
-        # surfaces much later as a missing relation. `apply_migrations` is
-        # called with a path assembled from `Path(__file__).parent.parent`
-        # in 31 archived tests, and archiving the tree moved those files one
-        # level deeper -- so the wrong path is a state this repository has
-        # actually been in. Refuse rather than report an empty success.
         raise MigrationSetEmpty(
             "no migrations found at %r; refusing to report an empty success"
             " for a schema that was never migrated" % (str(migrations_dir),))
+    return files
+
+
+def _currency_gap(recorded: set[str], on_disk: set[str]) -> str:
+    """What separates a store from this directory, or "" when nothing does."""
+    unapplied = sorted(on_disk - recorded)
+    withdrawn = sorted(recorded - on_disk)
+    if not unapplied and not withdrawn:
+        return ""
+    said = []
+    if unapplied:
+        said.append("this store has not applied %s" % (", ".join(unapplied),))
+    if withdrawn:
+        said.append("this store records %s, which the directory does not name"
+                    % (", ".join(withdrawn),))
+    return "; ".join(said)
+
+
+def verify_current(dsn: str, migrations_dir: str | Path) -> set[str]:
+    """The migrations this store holds, or a refusal naming what it lacks.
+
+    The question is asked of committed state over a connection of its own
+    and never of what a caller believes it just wrote, so a store whose
+    record did not take is one that fails here rather than one that
+    reports itself migrated. `apply_migrations` commits each file before
+    recording it, so a file that succeeded and a record that followed it
+    are separate events and only the second is checked.
+
+    Currency is relative to the directory it is asked against, and that is
+    the whole of the difference between a store that means to be partial
+    and one that is stale. A caller that means an older schema names an
+    older directory, and then the two sides agree. A caller running this
+    code against a store built from a directory this tree has since added
+    to cannot reach a pass, because the directory it passes is the same
+    argument that says which schema it means.
+    """
+    files = migration_files(migrations_dir)
+    with connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT name FROM schema_migrations")
+            recorded = {row[0] for row in cur.fetchall()}
+            conn.commit()
+    gap = _currency_gap(recorded, {path.name for path in files})
+    if gap:
+        raise MigrationSetStale(
+            "%s. The directory names %d migrations and the store records %d,"
+            " so this store was not migrated from this directory."
+            % (gap, len(files), len(recorded)))
+    return recorded
+
+
+def apply_migrations(dsn: str, migrations_dir: str | Path) -> list[str]:
+    """Apply what the directory names, then refuse a store that is not it.
+
+    The trailing `verify_current` is the point of the function rather than
+    a courtesy. A store that applied its migrations is the one caller
+    entitled to say the schema is current, and it can only say so by
+    reading the record back. Without the read-back this function's
+    return value and the store's actual state are the same claim made
+    twice by the same writer, which is why a store left behind by a
+    withheld trailing migration has been indistinguishable from a healthy
+    one everywhere downstream.
+    """
+    files = migration_files(migrations_dir)
     applied: list[str] = []
     with connect(dsn, autocommit=True) as conn:
         with conn.cursor() as cur:
@@ -113,4 +202,5 @@ def apply_migrations(dsn: str, migrations_dir: str | Path) -> list[str]:
                 cur.execute(path.read_text())
                 cur.execute("INSERT INTO schema_migrations (name) VALUES (%s)", (path.name,))
                 applied.append(path.name)
+    verify_current(dsn, migrations_dir)
     return applied

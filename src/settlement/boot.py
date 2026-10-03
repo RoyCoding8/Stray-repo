@@ -6,6 +6,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Any
 
+from . import db
 from .common import ResultCode
 from .config import Settings
 from .gateway import (
@@ -49,7 +50,18 @@ def _status(
     return DependencyStatus(name, configured, reachable, authenticated, exercised, detail)
 
 
-def check_database(dsn: str) -> DependencyStatus:
+def check_database(dsn: str, migrations_dir: str | None = None) -> DependencyStatus:
+    """Whether the store is reachable *and* is the schema this tree describes.
+
+    The two are one status rather than two because a boot report that says
+    "connected; 19 migrations recorded" about a directory holding twenty
+    is a health report describing a defect. Reporting the count is what
+    made it read as healthy: the number is only meaningful against the
+    files it came from, and nothing here said which files that was. So
+    the count is now stated next to the currency claim, and the claim is
+    `db.verify_current`, whose refusal names the migration that is
+    missing rather than leaving the reader to divide.
+    """
     if not dsn:
         return _status("database", False, False, False, False, "SETTLEMENT_DSN is not configured")
     try:
@@ -62,16 +74,14 @@ def check_database(dsn: str) -> DependencyStatus:
     except Exception as exc:
         return _status("database", True, False, False, False, f"database unreachable: {exc}")
     try:
-        with psycopg.connect(dsn, connect_timeout=5) as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT count(*) FROM schema_migrations")
-                pending = cur.fetchone()[0]
+        recorded = db.verify_current(dsn, migrations_dir or db.REPO_MIGRATIONS)
     except Exception as exc:
         return _status(
-            "database", True, True, True, False, f"migration state not readable: {exc}"
+            "database", True, True, True, False, f"schema is not current: {exc}"
         )
     return _status(
-        "database", True, True, True, True, f"connected; {pending} migrations recorded"
+        "database", True, True, True, True,
+        f"connected; {len(recorded)} migrations recorded and current",
     )
 
 
@@ -221,6 +231,7 @@ def validate(
     gateway_adapter: GatewayAdapter | None = None,
     admitted_profile: str = "gvisor",
     exercise_gateway: bool = False,
+    migrations_dir: str | None = None,
 ) -> BootReport:
     adapter = gateway_adapter
     if adapter is None and settings.gateway.endpoint:
@@ -228,7 +239,7 @@ def validate(
 
         adapter = HttpGatewayAdapter.from_settings(settings)
     entries = (
-        check_database(settings.dsn),
+        check_database(settings.dsn, migrations_dir),
         check_artifacts(settings.artifact_root, settings.staging_root),
         check_sandbox(admitted_profile),
         check_gateway(adapter, settings.gateway.endpoint, exercise_gateway),
