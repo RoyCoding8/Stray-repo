@@ -37,12 +37,12 @@ contended.
 
 | Lane | Task | Ownership | Depends on | State |
 |---|---|---|---|---|
-| a0-state | 46 | `FrontierStore` private state, writers/readers, durability, per-fact single owner | — | running |
-| a1-sqlowner | 47 | SQL investigation owner's tables, lifecycle, continuation identity, gaps | — | running |
-| a2-callers | 48 | production call sites, reachability, safe migration order | — | running |
-| b0-census | 49 | milestone B: established / negative / absent / closed-unrun, with denominators | — | running |
-| c0-census | 50 | milestone C: same discipline, plus the freeze-path reachability verdict | — | running |
-| x0-baseline | 51 | real clean baseline on PostgreSQL, per file, per run | — | running |
+| a0-state | 46 | `FrontierStore` private state, writers/readers, durability, per-fact single owner | — | **never run.** No workstream report, no evidence directory, no commit. Not dispatched in this batch. |
+| a1-sqlowner | 47 | SQL investigation owner's tables, lifecycle, continuation identity, gaps | — | **never run.** No workstream report, no evidence directory, no commit. Not dispatched in this batch. |
+| a2-callers | 48 | production call sites, reachability, safe migration order | — | **never run.** No workstream report, no evidence directory, no commit. Not dispatched in this batch. |
+| b0-census | 49 | milestone B: established / negative / absent / closed-unrun, with denominators | — | **never run.** No workstream report, no evidence directory, no commit. Not dispatched in this batch. |
+| c0-census | 50 | milestone C: same discipline, plus the freeze-path reachability verdict | — | **never run.** No workstream report, no evidence directory, no commit. Not dispatched in this batch. |
+| x0-baseline | 51 | real clean baseline on PostgreSQL, per file, per run | — | **never run.** No workstream report, no evidence directory, no commit. Not dispatched in this batch. |
 
 "Closed unrun" is kept distinct from "negative" throughout this batch. The two
 have been conflated in earlier passes, and the difference decides whether a

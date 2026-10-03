@@ -44,6 +44,13 @@ diversity is not construction independence. Define the claim and experimental
 unit before a fresh study; do not alter old evidence or raise alpha to obtain a
 favorable result.
 
+The A/B closure batch on `codex/ab-closure-2026-10-02` landed 25 lanes with
+workstream reports and ran the suite on GitHub CI for the first time. That run
+found the suite had never executed off the author's machine: 23 failures from
+test DSNs that named a local socket the runner does not have. They are repaired
+at the isolation plugin, which now derives every connection route from the
+session rather than from each file's default. No claim in this roadmap changes.
+
 Next, exercise program-selected investigation, live acquisition, retained use
 and inherited acquisition decisions through one restart-safe public mission.
 Assess operational quality and complete resources, not only a terminal verdict
