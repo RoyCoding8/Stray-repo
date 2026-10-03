@@ -128,6 +128,15 @@ def test_a_reuse_id_is_admitted_and_the_parser_refuses_it(store):
     with pytest.raises(ValueError):
         trajectory._parse_campaign_id(REUSE_CID)
 
+    # `resume_campaign` is the one entry that turns an id back into a campaign,
+    # and it is the only production caller of the parser. The refusal is a
+    # precondition rather than a side effect: the dsn here cannot connect, so
+    # if the refusal came after the first query this would raise a connection
+    # error instead and this test would fail.
+    with pytest.raises(ValueError, match="malformed campaign id"):
+        trajectory.resume_campaign("dbname=a41-not-a-database", REUSE_CID,
+                                   dict(CHARTER), dict(CAPS))
+
 
 def test_the_parser_still_names_every_campaign_id_shape(store):
     """Non-vacuity: the refusal above is about the shape, not about the row.
