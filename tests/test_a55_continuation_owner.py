@@ -65,6 +65,10 @@ def _nameless(tmp_path, name):
     return path
 
 
+def _read(path) -> dict:
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
 def test_the_owned_store_cannot_be_opened_namelessly(tmp_path):
     """The guard the repair routes around rather than removes.
 
@@ -175,8 +179,9 @@ def test_fresh_round_requires_both_halves_of_an_identity(tmp_path):
 def test_the_main_entry_can_pass_the_owner_through(tmp_path):
     """`main` is the argv surface a second process actually uses.
 
-    `fresh_round` gained the two names; if `main` did not forward them the new
-    parameter would be unreachable from the only process that needs it.
+    `fresh_round` takes the two names as keywords; if `main` did not forward
+    them the new parameters would be unreachable from the only process that
+    needs them.
     """
     source = ast.parse((ROOT / "experiments/ad01/improve_channel.py")
                        .read_text(encoding="utf-8"))
@@ -191,5 +196,52 @@ def test_the_main_entry_can_pass_the_owner_through(tmp_path):
     assert {"dsn", "investigation_id"} <= forwarded
 
 
-def _read(path) -> dict:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+def test_main_names_the_owner_rather_than_taking_it_positionally():
+    """A trailing positional made the two-argument call mean two things.
+
+    `fresh_round(store_path, round_no)` is the fixture boundary: a store with
+    no recorded owner. With the names as trailing positionals, that same call
+    also meant "an owned store whose names the caller forgot", and a failure
+    pointed inside `fresh_round` rather than at the call that omitted them.
+    The names are options, so omitting them is one meaning.
+    """
+    source = ast.parse((ROOT / "experiments/ad01/improve_channel.py")
+                       .read_text(encoding="utf-8"))
+    main_fn = next(node for node in source.body
+                   if isinstance(node, ast.FunctionDef)
+                   and node.name == "main")
+    positional = [node for node in ast.walk(main_fn)
+                  if isinstance(node, ast.Call)
+                  and getattr(node.func, "id", None) == "fresh_round"
+                  and len(node.args) > 2]
+    assert not positional, (
+        "main passes owner names positionally again; the two-argument call is"
+        " the nameless case and must not share a meaning")
+    options = [node for node in ast.walk(main_fn)
+               if isinstance(node, ast.Call)
+               and isinstance(node.func, ast.Attribute)
+               and node.func.attr == "add_argument"
+               and node.args and isinstance(node.args[0], ast.Constant)
+               and isinstance(node.args[0].value, str)]
+    flags = {node.args[0].value for node in options}
+    assert {"--dsn", "--investigation-id"} <= flags, sorted(flags)
+
+
+def test_main_still_runs_the_two_argument_call(tmp_path, monkeypatch, capsys):
+    """The fixture boundary survives: two arguments, no owner, still runs.
+
+    This is the call `tests/test_m2_frontier_inherit.py` makes, and the one the
+    positional pair made ambiguous.
+    """
+    path = _nameless(tmp_path, "nameless.json")
+    store = frontier.FrontierStore(path)
+    live.bind_live_control(store, "low")
+    monkeypatch.setattr(
+        channel, "drive_improve_round",
+        lambda store, task, round_no, admit_probes=False: {"candidate": {
+            "control_id": "cand", "parent_digest": "p" * 64,
+            "imp_digest": "i" * 64}})
+
+    assert channel.main(["improve_channel", str(path), "3"]) == 0
+
+    assert json.loads(capsys.readouterr().out)["round"] == 3

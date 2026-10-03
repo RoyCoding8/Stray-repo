@@ -24,6 +24,7 @@ study can be told before it is run that the decision has no headroom.
 
 from __future__ import annotations
 
+import argparse
 import ast
 import contextlib
 import json
@@ -2375,10 +2376,23 @@ def fresh_round(store_path: str, round_no: int, *, dsn: str | None = None,
 
 
 def main(argv) -> int:
-    store_path, round_no = argv[1], int(argv[2])
-    summary = fresh_round(store_path, round_no,
-                          dsn=argv[3] if len(argv) > 3 else None,
-                          investigation_id=argv[4] if len(argv) > 4 else None)
+    """Drive the argv surface a second process uses to continue a round.
+
+    The two owner names are named options rather than trailing positionals. A
+    positional pair made `fresh_round(store_path, round_no)` ambiguous between
+    "a nameless store" and "an owned store whose names were forgotten", and it
+    put the reader inside `fresh_round` when a call failed. Naming them makes
+    the two-argument call the fixture boundary it always was, and makes an
+    owned store a store that said so.
+    """
+    parser = argparse.ArgumentParser(prog="improve_channel")
+    parser.add_argument("store_path")
+    parser.add_argument("round_no", type=int)
+    parser.add_argument("--dsn")
+    parser.add_argument("--investigation-id", dest="investigation_id")
+    args = parser.parse_args(argv[1:])
+    summary = fresh_round(args.store_path, args.round_no, dsn=args.dsn,
+                          investigation_id=args.investigation_id)
     sys.stdout.write(json.dumps(summary, sort_keys=True) + "\n")
     return 0
 
