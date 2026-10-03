@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from experiments.ad01 import method_exec, policy_step, worlds
+from execution_authority import execution_authority
 
 TASK = worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-dev-sw-00")
 
@@ -67,14 +68,18 @@ def test_local_step_receipt_carries_verified_source_digest():
         task=TASK, observations=[], open_questions=[],
         last_result=None, eligible_methods=[], remaining={"steps": 1})
 
-    stepped = method_exec.run_step_out_of_process(STEP_SOURCE, view, {})
+    with execution_authority("a56srcreceipt") as auth:
+        stepped = method_exec.run_step_out_of_process(
+            STEP_SOURCE, view, {}, dsn=auth["dsn"],
+            allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
     expected = hashlib.sha256(STEP_SOURCE.encode("utf-8")).hexdigest()
     receipt = stepped["receipt"]
     launcher_receipt = receipt["details"]["raw_payload"]["launcher_receipt"]
 
     assert stepped["source_digest"] == expected
-    assert stepped["operation_id"] == "step"
-    assert stepped["operation_ids"] == []
+    assert stepped["operation_id"] == "a56srcreceipt-op"
+    assert stepped["operation_ids"] == ["a56srcreceipt-op"]
     assert receipt["source_digest"] == expected
     assert launcher_receipt["profile"] == "local-process"
     assert launcher_receipt["containment"] is False
@@ -87,9 +92,13 @@ def test_step_rejects_source_substituted_before_dispatch(monkeypatch):
         task=TASK, observations=[], open_questions=[],
         last_result=None, eligible_methods=[], remaining={"steps": 1})
 
-    with pytest.raises(method_exec.MethodExecutionError,
-                       match="staged source digest mismatch"):
-        method_exec.run_step_out_of_process(STEP_SOURCE, view, {})
+    with execution_authority("a56srcsubst") as auth:
+        with pytest.raises(method_exec.MethodExecutionError,
+                           match="staged source digest mismatch"):
+            method_exec.run_step_out_of_process(
+                STEP_SOURCE, view, {}, dsn=auth["dsn"],
+                allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
 
     assert len(replaced) == 1
 
@@ -100,9 +109,13 @@ def test_member_rejects_source_substituted_before_dispatch(monkeypatch):
     member = {"capability_id": "source-authority-test",
               "method_source": MEMBER_SOURCE, "entry": "carried"}
 
-    with pytest.raises(method_exec.MethodExecutionError,
-                       match="staged source digest mismatch"):
-        method_exec.run_member_out_of_process(member, TASK)
+    with execution_authority("a56srcmemsubst") as auth:
+        with pytest.raises(method_exec.MethodExecutionError,
+                           match="staged source digest mismatch"):
+            method_exec.run_member_out_of_process(
+                member, TASK, dsn=auth["dsn"],
+                allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
 
     assert len(replaced) == 1
 
@@ -124,9 +137,13 @@ def test_step_rejects_driver_substitution_before_dispatch(monkeypatch):
         task=TASK, observations=[], open_questions=[],
         last_result=None, eligible_methods=[], remaining={"steps": 1})
 
-    with pytest.raises(method_exec.MethodExecutionError,
-                       match="staged driver digest mismatch"):
-        method_exec.run_step_out_of_process(INPUT_SENSITIVE_STEP_SOURCE, view, {})
+    with execution_authority("a56srcdrvsubst") as auth:
+        with pytest.raises(method_exec.MethodExecutionError,
+                           match="staged driver digest mismatch"):
+            method_exec.run_step_out_of_process(
+                INPUT_SENSITIVE_STEP_SOURCE, view, {}, dsn=auth["dsn"],
+                allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
 
     assert calls == [True]
 
@@ -149,9 +166,13 @@ def test_step_rejects_serialized_input_substitution_before_dispatch(
         task=TASK, observations=[], open_questions=[],
         last_result=None, eligible_methods=[], remaining={"steps": 1})
 
-    with pytest.raises(method_exec.MethodExecutionError,
-                       match="serialized input digest mismatch"):
-        method_exec.run_step_out_of_process(INPUT_SENSITIVE_STEP_SOURCE, view, {})
+    with execution_authority("a56srcinputsubst") as auth:
+        with pytest.raises(method_exec.MethodExecutionError,
+                           match="serialized input digest mismatch"):
+            method_exec.run_step_out_of_process(
+                INPUT_SENSITIVE_STEP_SOURCE, view, {}, dsn=auth["dsn"],
+                allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
 
     assert calls == [True]
 
@@ -173,9 +194,13 @@ def test_member_rejects_serialized_task_substitution_before_dispatch(
     member = {"capability_id": "task-authority-test",
               "method_source": INPUT_SENSITIVE_MEMBER_SOURCE, "entry": "carried"}
 
-    with pytest.raises(method_exec.MethodExecutionError,
-                       match="serialized input digest mismatch"):
-        method_exec.run_member_out_of_process(member, TASK)
+    with execution_authority("a56srcmeminputsubst") as auth:
+        with pytest.raises(method_exec.MethodExecutionError,
+                           match="serialized input digest mismatch"):
+            method_exec.run_member_out_of_process(
+                member, TASK, dsn=auth["dsn"],
+                allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
 
     assert calls == [True]
 
@@ -193,7 +218,11 @@ def test_step_payload_binds_staged_source_driver_and_input(monkeypatch):
         task=TASK, observations=[], open_questions=[],
         last_result=None, eligible_methods=[], remaining={"steps": 1})
 
-    stepped = method_exec.run_step_out_of_process(STEP_SOURCE, view, {})
+    with execution_authority("a56srcpayload") as auth:
+        stepped = method_exec.run_step_out_of_process(
+            STEP_SOURCE, view, {}, dsn=auth["dsn"],
+            allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
     assert observed["profile"] == "local-process"
     assert stepped["driver_digest"] == hashlib.sha256(
         (method_exec._STEP_DRIVER % "STEP").encode("utf-8")).hexdigest()

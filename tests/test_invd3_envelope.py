@@ -21,6 +21,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from execution_authority import child_error, execution_authority
+
 RUN_TOKEN = "invd3%s" % uuid.uuid4().hex[:8]
 MIGRATIONS = ROOT / "migrations"
 
@@ -88,8 +90,11 @@ def test_documented_envelope_example_runs_through_child():
     from experiments.ad01 import method_exec, trajectory
     task = trajectory.worlds.load_task(trajectory.worlds.FROZEN_DIR,
                                        SW0)
-    result = method_exec.run_member_out_of_process(
-        _member(ENVELOPE_SW_SOURCE, "d3_sweep"), task, max_queries=16)
+    with execution_authority("a56d3envelope") as auth:
+        result = method_exec.run_member_out_of_process(
+            _member(ENVELOPE_SW_SOURCE, "d3_sweep"), task, max_queries=16,
+            dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
     report = trajectory._check(task, result["candidate"])
     assert report["verdict"] == "preserved"
     assert len(result["candidate"]["ops"]) < len(task["ops"])
@@ -102,11 +107,18 @@ def test_bare_candidate_passes_gate_and_fails_in_child():
                                        SW0)
     assert method_exec.verify_member(
         _member(BARE_CANDIDATE_SOURCE, "d3_bare")) == "d3_bare"
-    with pytest.raises(method_exec.MethodExecutionError,
-                       match="malformed-result-envelope"):
-        method_exec.run_member_out_of_process(
-            _member(BARE_CANDIDATE_SOURCE, "d3_bare"), task,
-            max_queries=16)
+    with execution_authority("a56d3bare") as auth:
+        with pytest.raises(method_exec.MethodExecutionError):
+            method_exec.run_member_out_of_process(
+                _member(BARE_CANDIDATE_SOURCE, "d3_bare"), task,
+                max_queries=16,
+                dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
+        assert "malformed-result-envelope" in child_error(
+            auth["dsn"], auth["operation_id"]), (
+            "the entry passed verify_member and returned the bare task, so the "
+            "envelope refusal is the child's and lives in the receipt it "
+            "settled")
 
 
 def test_the_case_b3_store_is_named_for_this_run_not_for_the_file():

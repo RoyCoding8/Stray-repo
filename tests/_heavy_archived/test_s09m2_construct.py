@@ -209,9 +209,10 @@ def test_model_constructor_returns_checked_bytes_with_repair(store):
             task=task, observations=[], open_questions=[],
             last_result=None, eligible_methods=[],
             remaining={"steps": 1}),
-        {})
+        {}, dsn=store, allocation_id=trajectory._alloc_id(cid),
+        operation_id="a56m2construct-step")
     assert stepped["action"]["kind"] == "diagnose"
-    assert stepped["operation_ids"] == []
+    assert stepped["operation_ids"] == ["a56m2construct-step"]
     ops = [op["id"] for op in trajectory._campaign_operations(
         store, cid) if "-policy-l" in op["id"]]
     assert len([o for o in ops if o.endswith("-init")]) == 1
@@ -352,11 +353,15 @@ def test_step_source_validation_refuses_host_risks(source, fragment):
     assert fragment in str(excinfo.value)
 
 
-def test_step_result_envelope_and_state_cap_enforced():
+def test_step_result_envelope_and_state_cap_enforced(store):
+    from experiments.ad01 import trajectory
     view = {"task_content": {"task_id": TASK}, "observations": [],
             "open_questions": [], "last_result": None,
             "eligible_methods": [], "remaining": {},
             "contract_versions": {}}
+    cid = trajectory.campaign_id(0, "I", 75)
+    trajectory.authorize_campaign(store, cid, authorized=100000)
+    allocation_id = trajectory._alloc_id(cid)
     unknown_kind = (
         "def STEP(view, state):\n"
         "    return {\"action\": {\"kind\": \"teleport\",\n"
@@ -364,9 +369,13 @@ def test_step_result_envelope_and_state_cap_enforced():
         "                        \"evidence_refs\": [],\n"
         "                        \"requested_resources\": {}},\n"
         "            \"state\": {}}\n")
+    # Every return of this source binds an action the contract refuses, so
+    # the static gate refuses it before the entry is ever staged. The refusal
+    # names the action object rather than the kind, because at this layer the
+    # kind was never read.
     with pytest.raises(method_exec.MethodExecutionError) as excinfo:
-        method_exec.run_step_out_of_process(unknown_kind, view, {})
-    assert "unknown policy action kind" in str(excinfo.value)
+        method_exec.verify_step_source(unknown_kind, "STEP")
+    assert "entry-can-produce-no-action" in str(excinfo.value)
     big_state = (
         "def STEP(view, state):\n"
         "    return {\"action\": {\"kind\": \"stop\",\n"
@@ -375,7 +384,9 @@ def test_step_result_envelope_and_state_cap_enforced():
         "                        \"requested_resources\": {}},\n"
         "            \"state\": {\"blob\": \"x\" * 9000}}\n")
     with pytest.raises(method_exec.MethodExecutionError) as excinfo:
-        method_exec.run_step_out_of_process(big_state, view, {})
+        method_exec.run_step_out_of_process(
+            big_state, view, {}, dsn=store, allocation_id=allocation_id,
+            operation_id="a56m2envelope-cap")
     assert "exceeds" in str(excinfo.value)
 
 

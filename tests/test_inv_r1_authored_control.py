@@ -34,6 +34,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
+from execution_authority import child_error, execution_authority
+
 SOFTWARE_TASK = "ad01-w0-within-sw-00"
 GRAPH_TASK = "ad01-w0-within-gr-00"
 
@@ -62,12 +64,14 @@ def _member(capability_id: str, family: str, method: str) -> dict:
     }
 
 
-def _execute(member: dict, task_id: str):
+def _execute(member: dict, task_id: str, authority: dict):
     from experiments.ad01 import method_exec, worlds
 
     return method_exec.run_member_out_of_process(
         member, worlds.load_task(worlds.FROZEN_DIR, task_id),
-        max_queries=BUDGET)
+        max_queries=BUDGET, dsn=authority["dsn"],
+        allocation_id=authority["allocation_id"],
+        operation_id="a56r1ctl-%s" % member["capability_id"])
 
 
 def test_the_study_declares_no_control_repertoire():
@@ -82,54 +86,59 @@ def test_the_study_declares_no_control_repertoire():
 
 def test_an_authored_control_member_executes_under_the_child_contract():
     """The bytes run, return a candidate, and spend the budget asked for."""
-    for family, task_id, greedy_ops in (("software", SOFTWARE_TASK, 8),
-                                        ("graph", GRAPH_TASK, 5)):
-        result = _execute(_member("control-%s-greedy" % family, family,
-                                  "greedy"), task_id)
+    with execution_authority("a56r1child") as auth:
+        for family, task_id, greedy_ops in (("software", SOFTWARE_TASK, 8),
+                                            ("graph", GRAPH_TASK, 5)):
+            result = _execute(_member("control-%s-greedy" % family, family,
+                                      "greedy"), task_id, auth)
 
-        assert result["queries"] == BUDGET, (
-            "%s: the member spent %d witness queries, the budget was %d"
-            % (family, result["queries"], BUDGET))
-        candidate = result["candidate"]
-        assert candidate["task_id"] == task_id
-        assert candidate["family"] == family
-        if family == "software":
-            assert candidate["fault"] == "stale-read"
-            assert len(candidate["ops"]) == greedy_ops
-        else:
-            assert len(candidate["vertices"]) == greedy_ops
-            assert len(candidate["edges"]) == greedy_ops
+            assert result["queries"] == BUDGET, (
+                "%s: the member spent %d witness queries, the budget was %d"
+                % (family, result["queries"], BUDGET))
+            candidate = result["candidate"]
+            assert candidate["task_id"] == task_id
+            assert candidate["family"] == family
+            if family == "software":
+                assert candidate["fault"] == "stale-read"
+                assert len(candidate["ops"]) == greedy_ops
+            else:
+                assert len(candidate["vertices"]) == greedy_ops
+                assert len(candidate["edges"]) == greedy_ops
 
 
 def test_the_two_control_members_are_byte_distinct_and_measure_differently():
     """C15 in one test: distinct bytes, and a difference the world can see."""
     from experiments.ad01 import control_distinctness
 
-    for family, task_id, greedy_ops in (("software", SOFTWARE_TASK, 8),
-                                        ("graph", GRAPH_TASK, 5)):
-        members = [_member("control-%s-%s" % (family, method), family, method)
-                   for method in ("ddmin", "greedy")]
+    with execution_authority("a56r1distinct") as auth:
+        for family, task_id, greedy_ops in (("software", SOFTWARE_TASK, 8),
+                                            ("graph", GRAPH_TASK, 5)):
+            members = [_member("control-%s-%s" % (family, method), family,
+                               method)
+                       for method in ("ddmin", "greedy")]
 
-        assert members[0]["method_source"] != members[1]["method_source"]
-        assert (members[0]["source_digest"] != members[1]["source_digest"])
-        for member in members:
-            assert member["source_digest"] == hashlib.sha256(
-                member["method_source"].encode("utf-8")).hexdigest()
+            assert members[0]["method_source"] != members[1]["method_source"]
+            assert (members[0]["source_digest"]
+                    != members[1]["source_digest"])
+            for member in members:
+                assert member["source_digest"] == hashlib.sha256(
+                    member["method_source"].encode("utf-8")).hexdigest()
 
-        results = [_execute(member, task_id) for member in members]
-        digests = [control_distinctness._digest(
-            result["candidate"]) for result in results]
-        assert digests[0] != digests[1], (
-            "%s: both strategies returned a byte-identical candidate, so the "
-            "control column is the same method twice" % family)
-        assert results[0]["queries"] == results[1]["queries"] == BUDGET
-        greedy = results[1]["candidate"]
-        size = (len(greedy["ops"]) if family == "software"
-                else len(greedy["vertices"]))
-        assert size == greedy_ops, (
-            "%s: greedy reduced to %d at a budget of %d, expected %d, so the "
-            "budget is not reaching the reducer"
-            % (family, size, BUDGET, greedy_ops))
+            results = [_execute(member, task_id, auth)
+                       for member in members]
+            digests = [control_distinctness._digest(
+                result["candidate"]) for result in results]
+            assert digests[0] != digests[1], (
+                "%s: both strategies returned a byte-identical candidate, so "
+                "the control column is the same method twice" % family)
+            assert results[0]["queries"] == results[1]["queries"] == BUDGET
+            greedy = results[1]["candidate"]
+            size = (len(greedy["ops"]) if family == "software"
+                    else len(greedy["vertices"]))
+            assert size == greedy_ops, (
+                "%s: greedy reduced to %d at a budget of %d, expected %d, so "
+                "the budget is not reaching the reducer"
+                % (family, size, BUDGET, greedy_ops))
 
 
 def test_the_distinctness_gate_reads_two_real_control_records_as_distinct():
@@ -139,18 +148,24 @@ def test_the_distinctness_gate_reads_two_real_control_records_as_distinct():
     task_id = SOFTWARE_TASK
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
     control, acquired = [], []
-    for method in ("ddmin", "greedy"):
-        member = _member("control-software-%s" % method, "software", method)
-        result = method_exec.run_member_out_of_process(
-            member, task, max_queries=BUDGET)
-        control.append({
-            "task_id": task_id, "executed": member["capability_id"],
-            "executed_source": member["method_source"],
-            "output": result["candidate"],
-            "costs": {"witness_queries": result["queries"]}})
-    acquired_member = _member("acquired-software-greedy", "software", "greedy")
-    acquired_result = method_exec.run_member_out_of_process(
-        acquired_member, task, max_queries=BUDGET)
+    with execution_authority("a56r1gate") as auth:
+        for method in ("ddmin", "greedy"):
+            member = _member("control-software-%s" % method, "software", method)
+            result = method_exec.run_member_out_of_process(
+                member, task, max_queries=BUDGET, dsn=auth["dsn"],
+                allocation_id=auth["allocation_id"],
+                operation_id="a56r1gate-control-%s" % method)
+            control.append({
+                "task_id": task_id, "executed": member["capability_id"],
+                "executed_source": member["method_source"],
+                "output": result["candidate"],
+                "costs": {"witness_queries": result["queries"]}})
+        acquired_member = _member("acquired-software-greedy", "software",
+                                  "greedy")
+        acquired_result = method_exec.run_member_out_of_process(
+            acquired_member, task, max_queries=BUDGET, dsn=auth["dsn"],
+            allocation_id=auth["allocation_id"],
+            operation_id="a56r1gate-acquired")
     acquired.append({
         "task_id": task_id, "executed": acquired_member["capability_id"],
         "executed_source": acquired_member["method_source"],
@@ -184,19 +199,27 @@ def test_the_current_control_repertoire_bytes_are_what_the_gate_refuses():
     task_id = SOFTWARE_TASK
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
     control = []
-    for capability in recorded["members"]:
-        with pytest.raises(method_exec.MethodExecutionError) as failure:
-            method_exec.run_member_out_of_process(
-                {"capability_id": capability["capability_id"],
-                 "entry": capability["entry"],
-                 "method_source": capability["method_source"],
-                 "source_digest": capability["source_digest"]},
-                task, max_queries=BUDGET)
-        assert "run_seed" in str(failure.value)
-        control.append({
-            "task_id": task_id, "executed": capability["capability_id"],
-            "executed_source": capability["method_source"],
-            "output": {}, "costs": {"witness_queries": 0}})
+    with execution_authority("a56r1recdef") as auth:
+        for capability in recorded["members"]:
+            operation_id = "a56r1recdef-%s" % capability["capability_id"]
+            with pytest.raises(method_exec.MethodExecutionError):
+                method_exec.run_member_out_of_process(
+                    {"capability_id": capability["capability_id"],
+                     "entry": capability["entry"],
+                     "method_source": capability["method_source"],
+                     "source_digest": capability["source_digest"]},
+                    task, max_queries=BUDGET, dsn=auth["dsn"],
+                    allocation_id=auth["allocation_id"],
+                    operation_id=operation_id)
+            assert "run_seed" in child_error(auth["dsn"], operation_id), (
+                "the recorded control source names run_seed, which is not in "
+                "the child namespace, so the child raised NameError. The "
+                "receipt is where that is visible; the executor's own refusal "
+                "is the same message for every child failure")
+            control.append({
+                "task_id": task_id, "executed": capability["capability_id"],
+                "executed_source": capability["method_source"],
+                "output": {}, "costs": {"witness_queries": 0}})
     control[0]["method_source"] = source
 
     verdict = control_distinctness.control_distinct(control, control)
@@ -234,11 +257,20 @@ def test_the_seed_capabilities_are_authored_and_cover_both_families():
     assert all(c["authored"] is True for c in seeds.SEED_CAPABILITIES)
 
     task = worlds.load_task(worlds.FROZEN_DIR, SOFTWARE_TASK)
-    result = trajectory._run_member(
-        {"capability_id": "seed-sw-ddmin", "entry": "ENTRY",
-         "method_source": "def ENTRY(task, oracle, max_queries=16):\n"
-                          "    raise RuntimeError('these bytes must not run')\n",
-         "source_digest": "0" * 64}, task, max_queries=BUDGET)
+    with execution_authority("a56r1seedshadow") as auth:
+        result = trajectory._run_member(
+            {"capability_id": "seed-sw-ddmin", "entry": "ENTRY",
+             "method_source": "def ENTRY(task, oracle, max_queries=16):\n"
+                              "    raise RuntimeError('these bytes must not run')\n",
+             "source_digest": "0" * 64}, task, max_queries=BUDGET,
+            dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
 
     assert result["executed_source"] == "ddmin"
     assert result["queries"] == BUDGET
+    assert "operation_id" not in result, (
+        "a seed- id is answered by the host dispatch table, which stages no "
+        "child and records no durable operation. One here would mean the "
+        "member's own bytes reached the executor, which is the shadowing "
+        "this test exists to rule out")
+    assert result["capability_id"] == "seed-sw-ddmin"

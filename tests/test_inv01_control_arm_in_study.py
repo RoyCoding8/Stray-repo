@@ -36,6 +36,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
+from execution_authority import child_error, execution_authority
+
 BUDGET = 4
 ARM = "C"
 
@@ -104,23 +106,34 @@ def test_a_control_member_runs_its_own_bytes_not_the_host_dispatch():
 
     control = next(m for m in repertoire["members"]
                    if m["capability_id"] == "ctl-software-greedy")
-    result = method_exec.run_member_out_of_process(control, task,
-                                                   max_queries=BUDGET)
+    with execution_authority("a56inv01shadow") as auth:
+        result = method_exec.run_member_out_of_process(
+            control, task, max_queries=BUDGET, dsn=auth["dsn"],
+            allocation_id=auth["allocation_id"],
+            operation_id=auth["operation_id"])
 
-    assert result["queries"] == BUDGET
-    assert result["candidate"]["task_id"] == "ad01-w0-within-sw-00"
+        assert result["queries"] == BUDGET
+        assert result["candidate"]["task_id"] == "ad01-w0-within-sw-00"
 
-    shadowed = {"capability_id": "seed-sw-greedy", "entry": "ENTRY",
-                "method_source": "def ENTRY(task, oracle, max_queries=16):\n"
-                                 "    raise RuntimeError('never run')\n",
-                "source_digest": "0" * 64}
-    from experiments.ad01 import trajectory
-    host = trajectory._run_member(shadowed, task, max_queries=BUDGET)
+        shadowed = {"capability_id": "seed-sw-greedy", "entry": "ENTRY",
+                    "method_source": "def ENTRY(task, oracle, max_queries=16):\n"
+                                     "    raise RuntimeError('never run')\n",
+                    "source_digest": "0" * 64}
+        from experiments.ad01 import trajectory
+        host = trajectory._run_member(
+            shadowed, task, max_queries=BUDGET, dsn=auth["dsn"],
+            allocation_id=auth["allocation_id"],
+            operation_id="a56inv01shadow-seed")
 
     assert host["executed_source"] == "greedy", (
         "the control's own execution is only evidence if a seed- id does"
         " something different, and this is that: the host returned the method"
         " name without ever staging the source above")
+    assert "operation_id" not in host, (
+        "the host dispatch table staged no child, so the seed- id recorded no "
+        "durable operation. One here would mean the member's own bytes "
+        "reached the executor under an authority, which is the shadowing "
+        "this test exists to rule out")
 
 
 def test_the_control_ids_are_namespaced_and_digests_are_of_their_own_bytes():
@@ -173,21 +186,25 @@ def test_the_selector_answers_a_family_two_members_both_claim():
     assert callable(policy), "the control selector must compile to a STEP"
     eligible = [m["capability_id"] for m in repertoire["members"]]
     picked = set()
-    for world in (0, 1, 2):
-        for task_id in control_arm.control_tasks(world):
-            task = worlds.load_task(worlds.FROZEN_DIR, task_id)
-            from experiments.ad01 import packet
-            decision = policy(
-                {"task_content": packet.strip_task(task),
-                 "eligible_methods": eligible, "observations": [],
-                 "open_questions": [], "last_result": None, "remaining": {}},
-                {})
-            action = decision["action"]
+    with execution_authority("a56inv01selector") as auth:
+        for world in (0, 1, 2):
+            for task_id in control_arm.control_tasks(world):
+                task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+                from experiments.ad01 import packet
+                decision = policy.run(
+                    {"task_content": packet.strip_task(task),
+                     "eligible_methods": eligible, "observations": [],
+                     "open_questions": [], "last_result": None,
+                     "remaining": {}},
+                    {}, dsn=auth["dsn"],
+                    allocation_id=auth["allocation_id"],
+                    operation_id="a56inv01selector-%s" % task_id)
+                action = decision["action"]
 
-            assert action["kind"] == "use_method"
-            assert action["inputs"]["method_id"] in eligible
-            assert action["inputs"]["max_queries"] == BUDGET
-            picked.add(action["inputs"]["method_id"])
+                assert action["kind"] == "use_method"
+                assert action["inputs"]["method_id"] in eligible
+                assert action["inputs"]["max_queries"] == BUDGET
+                picked.add(action["inputs"]["method_id"])
 
     assert picked & {"ctl-software-ddmin", "ctl-software-greedy"}, (
         "no software task was answered, so the control arm would record a"
@@ -215,32 +232,35 @@ def test_the_selector_never_reads_list_position():
     repertoire = control_arm.control_repertoire("ad01-ctl")
     tables = control_arm.measured_tables(repertoire)
 
-    def answer(doc, task_id):
+    def answer(doc, task_id, tag):
         policy = policy_step.compile_step(
             control_arm.selector_source(
                 doc, features=tables["shape"], coarse=tables["template"]),
             origin="<order-test>")
         view = packet.strip_task(
             worlds.load_task(worlds.FROZEN_DIR, task_id))
-        return policy(
+        return policy.run(
             {"task_content": view,
              "eligible_methods": [m["capability_id"]
                                   for m in doc["members"]],
              "observations": [], "open_questions": [],
-             "last_result": None, "remaining": {}}, {})
+             "last_result": None, "remaining": {}},
+            {}, dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+            operation_id="a56inv01order-%s-%s" % (tag, task_id))
 
     shuffled = dict(repertoire)
     shuffled["members"] = list(reversed(repertoire["members"]))
-    for task_id, want in (("ad01-w0-within-sw-00", "ctl-software-ddmin"),
-                          ("ad01-w0-within-gr-00", "ctl-graph-greedy")):
-        forward = answer(repertoire, task_id)
-        backward = answer(shuffled, task_id)
+    with execution_authority("a56inv01order") as auth:
+        for task_id, want in (("ad01-w0-within-sw-00", "ctl-software-ddmin"),
+                              ("ad01-w0-within-gr-00", "ctl-graph-greedy")):
+            forward = answer(repertoire, task_id, "forward")
+            backward = answer(shuffled, task_id, "backward")
 
-        assert forward["action"]["inputs"]["method_id"] \
-            == backward["action"]["inputs"]["method_id"] == want, (
-            "%s: the pick changed when the member list was reordered, or"
-            " moved off the measured shape answer, so the selector is"
-            " reading position rather than task shape" % task_id)
+            assert forward["action"]["inputs"]["method_id"] \
+                == backward["action"]["inputs"]["method_id"] == want, (
+                "%s: the pick changed when the member list was reordered, or"
+                " moved off the measured shape answer, so the selector is"
+                " reading position rather than task shape" % task_id)
 
 
 def test_the_selector_refuses_a_shape_no_measurement_covers():
@@ -251,23 +271,30 @@ def test_the_selector_refuses_a_shape_no_measurement_covers():
     which is what the original rule was for, and what a control arm that
     answered anyway would be violating.
     """
-    from experiments.ad01 import control_arm, policy_step
+    from experiments.ad01 import control_arm, method_exec, policy_step
 
     repertoire = control_arm.control_repertoire("ad01-ctl")
     policy = policy_step.compile_step(
         control_arm.selector_source(repertoire, features={}, coarse={}),
         origin="<uncovered-test>")
 
-    with pytest.raises(ValueError) as refusal:
-        policy(
-            {"task_content": {"task_id": "ad01-x", "family": "software",
-                              "template": "never-measured", "ops": [1]},
-             "eligible_methods": [m["capability_id"]
-                                  for m in repertoire["members"]],
-             "observations": [], "open_questions": [],
-             "last_result": None, "remaining": {}}, {})
+    with execution_authority("a56inv01uncovered") as auth:
+        with pytest.raises(method_exec.MethodExecutionError):
+            policy.run(
+                {"task_content": {"task_id": "ad01-x", "family": "software",
+                                  "template": "never-measured", "ops": [1]},
+                 "eligible_methods": [m["capability_id"]
+                                      for m in repertoire["members"]],
+                 "observations": [], "open_questions": [],
+                 "last_result": None, "remaining": {}},
+                {}, dsn=auth["dsn"], allocation_id=auth["allocation_id"],
+                operation_id=auth["operation_id"])
 
-    assert "no member of family" in str(refusal.value)
+        # Inside the store: `execution_store` drops it on the way out, so a
+        # read after the block is a connection to a database that is gone.
+        reason = child_error(auth["dsn"], auth["operation_id"])
+
+    assert "no member of family" in reason
 
 
 def test_the_study_hands_the_control_its_own_selector():
@@ -702,23 +729,27 @@ def test_the_gate_reads_a_control_against_an_acquired_as_distinct():
     repertoire = control_arm.control_repertoire("ad01-ctl")
     members = {m["capability_id"]: m for m in repertoire["members"]}
     control, acquired = [], []
-    for world in (0, 1, 2):
-        for task_id in control_arm.control_tasks(world):
-            task = worlds.load_task(worlds.FROZEN_DIR, task_id)
-            family = task["family"]
-            view = packet.strip_task(task)
-            for method, capability_id in (
-                    ("ddmin", "ctl-%s-ddmin" % family),
-                    ("greedy", "ctl-%s-greedy" % family)):
-                member = members[capability_id]
-                result = method_exec.run_member_out_of_process(
-                    member, task, max_queries=BUDGET)
-                row = {"task_id": task_id, "executed": capability_id,
-                       "executed_source": member["method_source"],
-                       "output": result["candidate"],
-                       "costs": {"witness_queries": result["queries"]}}
-                (acquired if method == "greedy" else control).append(row)
-            assert view["family"] == family
+    with execution_authority("a56inv01gate") as auth:
+        for world in (0, 1, 2):
+            for task_id in control_arm.control_tasks(world):
+                task = worlds.load_task(worlds.FROZEN_DIR, task_id)
+                family = task["family"]
+                view = packet.strip_task(task)
+                for method, capability_id in (
+                        ("ddmin", "ctl-%s-ddmin" % family),
+                        ("greedy", "ctl-%s-greedy" % family)):
+                    member = members[capability_id]
+                    result = method_exec.run_member_out_of_process(
+                        member, task, max_queries=BUDGET, dsn=auth["dsn"],
+                        allocation_id=auth["allocation_id"],
+                        operation_id="a56inv01gate-%s-%s"
+                                     % (capability_id, task_id))
+                    row = {"task_id": task_id, "executed": capability_id,
+                           "executed_source": member["method_source"],
+                           "output": result["candidate"],
+                           "costs": {"witness_queries": result["queries"]}}
+                    (acquired if method == "greedy" else control).append(row)
+                assert view["family"] == family
 
     verdict = control_distinctness.control_distinct(control, acquired)
 
@@ -746,32 +777,39 @@ def test_a_greedy_control_against_a_greedy_acquired_is_the_e1_finding():
                  if m["capability_id"] == "ctl-software-ddmin")
     task = worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-within-sw-00")
 
+    executed = []
+
     def row(member, capability_id):
         result = method_exec.run_member_out_of_process(
-            member, task, max_queries=BUDGET)
+            member, task, max_queries=BUDGET, dsn=auth["dsn"],
+            allocation_id=auth["allocation_id"],
+            operation_id="a56inv01e1-%d" % len(executed))
+        executed.append(capability_id)
         return {"task_id": task["task_id"], "executed": capability_id,
                 "executed_source": member["method_source"],
                 "output": result["candidate"],
                 "costs": {"witness_queries": result["queries"]}}
 
-    same_id = control_distinctness.control_distinct(
-        [row(greedy, "ctl-software-greedy")], [row(greedy, "ctl-software-greedy")])
-    assert same_id["distinct"] is False
-    assert same_id["same_executed_policy"], (
-        "one id on both arms must refuse, or the gate reads two columns of"
-        " the same policy as a comparison")
+    with execution_authority("a56inv01e1") as auth:
+        same_id = control_distinctness.control_distinct(
+            [row(greedy, "ctl-software-greedy")],
+            [row(greedy, "ctl-software-greedy")])
+        assert same_id["distinct"] is False
+        assert same_id["same_executed_policy"], (
+            "one id on both arms must refuse, or the gate reads two columns of"
+            " the same policy as a comparison")
 
-    greedy_arms = control_distinctness.control_distinct(
-        [row(greedy, "ctl-software-greedy")],
-        [row(greedy, "acquired-sw-58d90427")])
-    assert greedy_arms["distinct"] is False
-    assert greedy_arms["same_strategy"], (
-        "greedy against greedy must read as one strategy even when the ids"
-        " differ; this is the E1 finding")
+        greedy_arms = control_distinctness.control_distinct(
+            [row(greedy, "ctl-software-greedy")],
+            [row(greedy, "acquired-sw-58d90427")])
+        assert greedy_arms["distinct"] is False
+        assert greedy_arms["same_strategy"], (
+            "greedy against greedy must read as one strategy even when the ids"
+            " differ; this is the E1 finding")
 
-    fixed = control_distinctness.control_distinct(
-        [row(ddmin, "ctl-software-ddmin")],
-        [row(greedy, "acquired-sw-58d90427")])
+        fixed = control_distinctness.control_distinct(
+            [row(ddmin, "ctl-software-ddmin")],
+            [row(greedy, "acquired-sw-58d90427")])
     assert fixed["distinct"] is True, fixed.get("refusal")
 
 

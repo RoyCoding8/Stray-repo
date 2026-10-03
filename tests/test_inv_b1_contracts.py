@@ -191,14 +191,14 @@ def test_two_param_entry_executes_without_broker():
                   "def carried(task, oracle):\n"
                   "    return reducers.reduce_software(task, oracle)\n"),
               "entry": "carried"}
+    task = worlds.load_task(worlds.FROZEN_DIR, DEV_SW)
+    allocation_id = _allocation("two-param")
     result = method_exec.run_member_out_of_process(
-        member, worlds.load_task(worlds.FROZEN_DIR, DEV_SW),
-        max_queries=16)
+        member, task, max_queries=16, dsn=DSN, allocation_id=allocation_id,
+        operation_id="invb1-two-param-op")
     assert result["source_digest"] == hashlib.sha256(
         member["method_source"].encode("utf-8")).hexdigest()
-    report = trajectory._check(
-        worlds.load_task(worlds.FROZEN_DIR, DEV_SW),
-        result["candidate"])
+    report = trajectory._check(task, result["candidate"])
     assert report["verdict"] == "preserved", report
 
 

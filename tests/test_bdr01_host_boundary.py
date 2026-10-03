@@ -18,6 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from execution_authority import child_receipt, execution_store
+
 DSN = os.environ.get(
     "EC02_AD01C_DSN",
     "dbname=ec02test_ad01c host=/var/run/postgresql user=ubuntu")
@@ -113,7 +115,11 @@ def test_acquired_member_cannot_touch_host_modules():
     from experiments.representation import reducers
     assert not hasattr(reducers, "bdr01_host_pollution")
     task = worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-dev-sw-00")
-    own = trajectory._run_member(dict(CANARY_MEMBER), task)
+    with execution_store("a56bdr01host") as store:
+        own = trajectory._run_member(
+            dict(CANARY_MEMBER), task, dsn=store["dsn"],
+            allocation_id=store["allocation_id"],
+            operation_id="a56bdr01host-pollution")
     assert own["candidate"] == task
     assert not hasattr(reducers, "bdr01_host_pollution"), \
         "candidate executed in the trusted host process"
@@ -137,9 +143,19 @@ def test_hung_member_hits_the_wall_clock_bound():
                    "    while True:\n"
                    "        pass\n"),
                "entry": "bdr01_canary"}
-    with __import__("pytest").raises(method_exec.MethodExecutionError,
-                                     match="timeout"):
-        trajectory._run_member(looping, task, timeout_ms=500)
+    with execution_store("a56bdr01hung") as store:
+        with __import__("pytest").raises(method_exec.MethodExecutionError):
+            trajectory._run_member(
+                looping, task, timeout_ms=500, dsn=store["dsn"],
+                allocation_id=store["allocation_id"],
+                operation_id="a56bdr01hung-spin")
+        # The executor raises one message for every child failure, so the
+        # reason the wall clock fired is in the record the child settled.
+        record = child_receipt(store["dsn"], "a56bdr01hung-spin")
+
+    assert record.get("timed_out") is True, (
+        "the member loops forever and the launcher stops it at 500ms, which "
+        "settles a timed-out record; got %r" % (sorted(record),))
 
 
 def _use_policy(method_id: str, max_queries: int = 16):

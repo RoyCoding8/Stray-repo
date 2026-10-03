@@ -90,3 +90,32 @@ def execution_authority(token: str, *, sandbox_calls: int = 10_000):
     """
     with execution_store(token, sandbox_calls=sandbox_calls) as store:
         yield authority_for(store, "%s-op" % token)
+
+
+def child_receipt(dsn: str, operation_id: str) -> dict:
+    """The record the child settled for one execution, or `{}`.
+
+    Every child failure settles a receipt and the executor then raises one
+    message for all of them, so a refusal's text says only that an execution
+    failed. What actually happened is here: `data["worker"]["error"]` for a
+    child that ran and failed, and `data["timed_out"]` for one the wall clock
+    stopped, which is not under `worker` at all. `tests/test_s89a1_contract.py`
+    and `tests/test_s09step_arm.py` established the idiom; this is it, in the
+    one place every migrated test can reach instead of in each file again.
+
+    Read this while the store is still open. `execution_store` drops the
+    database on the way out, so a read after the block is a connection to a
+    store that no longer exists.
+    """
+    from settlement import store
+
+    receipts = store.operation_receipts(dsn, operation_id)
+    if len(receipts) != 1:
+        return {}
+    return dict(receipts[0]["content"].get("data") or {})
+
+
+def child_error(dsn: str, operation_id: str) -> str:
+    """What the child itself reported, for an execution that failed."""
+    worker = child_receipt(dsn, operation_id).get("worker") or {}
+    return str(worker.get("error", ""))
