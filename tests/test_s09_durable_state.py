@@ -178,11 +178,11 @@ def test_an_incorporated_effect_replaces_the_empty_identity_with_its_operation(
         store, cid, 0, binding=BINDING,
         view=VIEW, action=ACTION, state=STATE)
     operation_id = _settled_operation(store, "durable-round-trip-incorporated")
-    trajectory._s09_ensure_incorporated(
-        store, cid, 0, {"next_action": {"kind": "diagnostic"}},
-        {"observation_id": "obs-durable"}, {"kind": "diagnostic",
-                                            "operation_id": operation_id},
-        1, "s09-m1")
+    trajectory._s09_incorporate(
+        store, cid, 0, decision={"next_action": {"kind": "diagnostic"}},
+        observation={"observation_id": "obs-durable"},
+        episode={"kind": "diagnostic", "operation_id": operation_id},
+        spend=1, provenance="s09-m1")
     loaded = durable.load_step(store, cid, 0, binding=BINDING)
     assert loaded.effect_id == operation_id
     assert loaded.attempt_id == "att-%s-0" % cid

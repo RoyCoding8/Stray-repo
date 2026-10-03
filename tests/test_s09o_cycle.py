@@ -255,7 +255,9 @@ def test_interrupted_accepted_effect_is_reconciled_once(store):
                 "question": "diagnose", "next_action": {
                     "kind": "diagnostic", "diagnostic": "software",
                     "task_id": SW_TASK}}
-    trajectory._s09_insert_accepted(store, cid, 0, decision, "test-interrupt")
+    trajectory._s09_accept(store, cid, 0, decision=decision,
+                           provenance="test-interrupt",
+                           driver_version="s09-m1")
     trajectory.record_decision(store, cid, 0, decision)
     resumed = trajectory.resume_campaign(store, cid, CHARTER, CAPS)
     assert len(resumed["boundaries"]) == 1

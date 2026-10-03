@@ -13,10 +13,10 @@ list built from a read that can be arbitrarily stale. Two writers on the same
 column, one of them unlocked, is the asymmetry that let pass 1's defect
 survive in the first place.
 
-The live caller is `trajectory._s09_mark_incorporated` (line 331), which runs
-per incorporated boundary. Two boundaries of one campaign settling at the same
-moment each read the pre-settle list and each write back only its own removal,
-so the other boundary's settled operation stays on the entry. A later
+The live caller is `trajectory._s09_release`, which incorporation runs per
+settled boundary. Two boundaries of one campaign settling at the same moment
+each read the pre-settle list and each write back only its own removal, so the
+other boundary's settled operation stays on the entry. A later
 `resume_operation` then restores work that already ran, which is exactly the
 double-counted effect that module's own docstring says it exists to prevent.
 

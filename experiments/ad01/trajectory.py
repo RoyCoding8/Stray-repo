@@ -324,8 +324,32 @@ def _s09_get(dsn: str, cid: str, seq: int):
         return row
 
 
-def _s09_insert_accepted(dsn: str, cid: str, seq: int,
-                         decision: dict, provenance: str) -> None:
+def _s09_accept(dsn: str, cid: str, seq: int, *, decision: dict,
+                provenance: str, driver_version: str,
+                step: dict | None = None) -> None:
+    """Record that a boundary accepted an action. The row's first state.
+
+    One function for the insert-or-upgrade of an `accepted` row, because the
+    two halves are one decision and disagreed when they were separate.
+
+    The status is written as `accepted` and is not a parameter. An earlier
+    revision took `status` from the caller, which moved the write here but
+    left the decision there: `agenda_policy` passed `incorporated` for a
+    policy step that had refused and whose boundary had never run, so the
+    owner stamped a transition it had not observed and could not refuse. A
+    caller that can assert a transition is a second authority wearing an
+    argument. Incorporation is `_s09_incorporate`, which is reached only by
+    the path that ran the effect.
+
+    The upgrade rewrites `accepted_action` and the three policy columns
+    together and leaves everything else. Its `WHERE` requires an unresolved
+    row twice over: the accepted action must still be `pending`, and the
+    effect record must be absent. The second clause is the one that matters
+    once `status` is derived -- without it a row whose effect is already
+    recorded could be driven back to `accepted` above a settled effect, which
+    is the same disagreement this function exists to remove. A row that
+    holds any other action was decided already and is left exactly as it is.
+    """
     from psycopg.types.json import Json
     with _read_conn(dsn) as conn:
         conn.execute(
@@ -333,24 +357,57 @@ def _s09_insert_accepted(dsn: str, cid: str, seq: int,
             " (investigation_id, seq, attempt_id, effect_id,"
             " policy_input, policy_output, state_transition,"
             " accepted_action, status, provenance, driver_version)"
-            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s,"
-            " 'accepted', %s, 's09-m1')"
+            " VALUES (%s, %s, %s, '', %s, %s, %s, %s, 'accepted', %s, %s)"
             " ON CONFLICT (investigation_id, seq) DO NOTHING",
             (cid, seq, _attempt_id(cid, seq),
-             "", Json({}), Json({}),
-             Json({}), Json(decision), provenance))
+             Json((step or {}).get("policy_input") or {}),
+             Json((step or {}).get("policy_output") or {}),
+             Json((step or {}).get("state_transition") or {}),
+             Json(decision), provenance, driver_version))
+        if step is not None:
+            conn.execute(
+                "UPDATE s09_policy_state SET policy_input = %s,"
+                " policy_output = %s, state_transition = %s,"
+                " accepted_action = %s, updated_at = now()"
+                " WHERE investigation_id = %s AND seq = %s"
+                " AND accepted_action->>'status' = 'pending'"
+                " AND effect_record IS NULL",
+                (Json(step["policy_input"]), Json(step["policy_output"]),
+                 Json(step["state_transition"]), Json(decision), cid, seq))
         conn.commit()
 
 
-def _s09_ensure_incorporated(dsn: str, cid: str, seq: int,
-                             decision: dict, observation,
-                             episode: dict, spend: int,
-                             provenance: str) -> None:
+def _s09_incorporate(dsn: str, cid: str, seq: int, *, decision: dict,
+                     observation: dict, episode: dict, spend: int,
+                     provenance: str, effect_record: dict | None = None
+                     ) -> None:
+    """The `accepted` -> `incorporated` transition, and the effect on the row.
+
+    The boundary's effect has run, so the row stops being an outstanding
+    action and starts being a settled one. `status` moves here and nowhere
+    else: `policy_step` used to write this column itself for a policy step
+    that had been refused and whose boundary had never run, so the same value
+    meant "an effect is recorded" and "a policy step ended" depending on which
+    module the reader asked.
+
+    `effect_id` is adopted rather than restated, and `effect_record` keeps
+    whatever the row already held, so a resumed run cannot overwrite the
+    operation identity the first run settled. When `effect_record` is given it
+    is this run's fresh effect and it replaces the old one, which is the
+    difference between a row that has just been written by `execute_pending`
+    and one that is being incorporated from an earlier run's boundary
+    observation.
+
+    The mission entry is not released here. Release belongs to the path that
+    resolved a *pending* boundary, and folding it into every incorporation
+    would release an operation on the fresh path, which never held one and
+    has no mission row to release from.
+    """
     from psycopg.types.json import Json
-    payload = {"observation": observation, "episode": episode,
-               "spend": spend, "decision": decision}
     effect_id = _effect_operation_id(dsn, cid, episode or {})
-    payload["effect_operation_id"] = effect_id
+    payload = {"observation": observation, "episode": episode,
+               "spend": spend, "decision": decision,
+               "effect_operation_id": effect_id}
     with _read_conn(dsn) as conn:
         conn.execute(
             "INSERT INTO s09_policy_state"
@@ -364,31 +421,27 @@ def _s09_ensure_incorporated(dsn: str, cid: str, seq: int,
             (cid, seq, _attempt_id(cid, seq),
              effect_id, Json({}), Json({}),
              Json({}), Json(decision), Json(payload), provenance))
-        # The effect identity is settled by the table, so the UPDATE adopts it
-        # rather than restating it. `COALESCE` keeps a row that already
-        # admitted an operation on a resumed run, which is what makes a
-        # restart idempotent: the first run's identity is the identity.
         conn.execute(
             "UPDATE s09_policy_state SET status = 'incorporated',"
-            " effect_record = COALESCE(effect_record, %s::jsonb),"
+            " effect_record = CASE WHEN %s::jsonb IS NULL"
+            " THEN COALESCE(effect_record, %s::jsonb) ELSE %s::jsonb END,"
             " effect_id = CASE WHEN effect_id = '' THEN %s ELSE effect_id END,"
             " updated_at = now()"
             " WHERE investigation_id = %s AND seq = %s",
-            (Json(payload), effect_id, cid, seq))
+            (Json(effect_record) if effect_record is not None else None,
+             Json(payload), Json(effect_record) if effect_record is not None
+             else None, effect_id, cid, seq))
         conn.commit()
 
 
-def _s09_mark_incorporated(dsn: str, cid: str, seq: int) -> None:
-    with _read_conn(dsn) as conn:
-        conn.execute(
-            "UPDATE s09_policy_state SET status = 'incorporated',"
-            " updated_at = now()"
-            " WHERE investigation_id = %s AND seq = %s",
-            (cid, seq))
-        conn.commit()
-    # An incorporated operation has run, so it is no longer in flight. Leaving
-    # it on the entry would make a later resume restore work that already
-    # happened, which is how a recovered crash becomes a double-counted effect.
+def _s09_release(dsn: str, cid: str, seq: int) -> None:
+    """An incorporated operation has run, so it is no longer in flight.
+
+    Leaving it on the mission entry would make a later resume restore work
+    that already happened, which is how a recovered crash becomes a
+    double-counted effect. Called by the pending-resume path, which is the
+    only one holding an admitted operation to release.
+    """
     from . import mission
 
     mission.release_operation(dsn, cid, _attempt_id(cid, seq))
@@ -433,7 +486,8 @@ def accept_action(dsn: str, cid: str, seq: int,
             raise ValueError("boundary %d already settled" % seq)
         if seq in pending and pending[seq].get("decision") != decision:
             raise ValueError("pending effect %d already accepted" % seq)
-        _s09_insert_accepted(dsn, cid, seq, decision, "s09-m1")
+        _s09_accept(dsn, cid, seq, decision=decision, provenance="s09-m1",
+                    driver_version="s09-m1")
         if seq not in pending:
             record_decision(dsn, cid, seq, decision)
         attempt_id = _attempt_id(cid, seq)
@@ -488,7 +542,6 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
                     experience: dict, state: dict,
                     study_root: str | None = None,
                     construction=None) -> tuple:
-    from psycopg.types.json import Json
     row = _s09_get(dsn, cid, seq)
     if row is None:
         raise ValueError("no accepted action for %s %d" % (cid, seq))
@@ -498,6 +551,23 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
                 int(rec["spend"]), rec["decision"])
     admitted = mission_held(dsn, cid, seq)
     decision = dict(row["accepted_action"])
+    if admitted is not None:
+        # The entry, not the schedule, says what this operation runs. A restart
+        # re-invokes the campaign with a caller-supplied capability, and that
+        # argument answers what the CALLER would run -- which is how a
+        # boundary came to execute one program while the record filed its
+        # result under another. Reading the identity here is what makes
+        # `ran_under` below a record of the run rather than a copy of the
+        # admission.
+        #
+        # Corrected rather than refused. The admitted program is durable and
+        # runnable, so refusing would discard work this store can finish, on
+        # the common case of a caller that simply did not repeat its own
+        # argument. The cost accepted is that a genuinely stale admitted
+        # program still runs; that is visible, because the record names it,
+        # where a silent substitution was not.
+        task_id = admitted.task_id or task_id
+        capability_id = admitted.capability_id or capability_id
     journal = {"dsn": dsn, "cid": cid, "decision": decision}
     observation, episode, spend = _run_boundary(
         task_id, capability_id, caps, seed_obs, charter=charter,
@@ -517,13 +587,9 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
             "input_identity": admitted.input_identity,
             "decision_digest": admitted.decision_digest,
             "task_id": admitted.task_id, "capability_id": admitted.capability_id}
-    with _read_conn(dsn) as conn:
-        conn.execute(
-            "UPDATE s09_policy_state SET effect_record = %s,"
-            " updated_at = now()"
-            " WHERE investigation_id = %s AND seq = %s",
-            (Json(payload), cid, seq))
-        conn.commit()
+    _s09_incorporate(dsn, cid, seq, decision=decision,
+                     observation=observation, episode=episode, spend=spend,
+                     provenance="s09-m1", effect_record=payload)
     return observation, episode, spend, decision
 
 
@@ -1327,10 +1393,10 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
         if seq in settled:
             old = settled[seq]
             if dsn is not None:
-                _s09_ensure_incorporated(
-                    dsn, cid, seq, old["decision"],
-                    old["observation"], old["episode"],
-                    int(old["spend"]), "s09-m1")
+                _s09_incorporate(
+                    dsn, cid, seq, decision=old["decision"],
+                    observation=old["observation"], episode=old["episode"],
+                    spend=int(old["spend"]), provenance="s09-m1")
             queries += int(old["spend"])
             if old["episode"].get("kind", "development") == "development" \
                     and old["episode"]["disposition"] in (
@@ -1362,8 +1428,9 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
                 raise ValueError("pending STEP requires a policy consumer")
             if (s09row is not None or pend is not None) and not pending_step:
                 if s09row is None:
-                    _s09_insert_accepted(
-                        dsn, cid, seq, pend, "legacy-drain")
+                    _s09_accept(
+                        dsn, cid, seq, decision=pend, provenance="legacy-drain",
+                        driver_version="s09-m1")
                     s09row = _s09_get(dsn, cid, seq)
                 routed = _capability_for(task_id, capability_id)
                 seed_obs = {"observation_id": "obs-%s-seed" % task_id,
@@ -1377,7 +1444,7 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
                     experience=experience, state=state,
                     construction=construction, study_root=study_root)
                 if observation is None:
-                    _s09_mark_incorporated(dsn, cid, seq)
+                    _s09_release(dsn, cid, seq)
                     stop = {"reason": "learner stop"}
                     break
                 executed = episode.get("task_id", task_id)
@@ -1402,7 +1469,7 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
                     dsn, cid, seq, executed, decision, observation,
                     episode, spend)
                 boundaries.append(entry)
-                _s09_mark_incorporated(dsn, cid, seq)
+                _s09_release(dsn, cid, seq)
                 continue
         routed = _capability_for(task_id, capability_id)
         seed_obs = {"observation_id": "obs-%s-seed" % task_id,
@@ -1442,9 +1509,9 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
             entry["decision_id"] = _publish_boundary(
                 dsn, cid, seq, executed, decision, observation,
                 episode, spend)
-            _s09_ensure_incorporated(
-                dsn, cid, seq, decision, observation, episode,
-                spend, "s09-m1")
+            _s09_incorporate(
+                dsn, cid, seq, decision=decision, observation=observation,
+                episode=episode, spend=spend, provenance="s09-m1")
         boundaries.append(entry)
     else:
         stop = {"reason": "no admissible work remains"}
@@ -1900,8 +1967,9 @@ def resume_campaign(dsn: str, cid: str, charter: dict, caps: dict,
     execution. `mission.resume_operation` reads back each admitted operation's
     program digest and input identity and marks it restored; it runs nothing
     and writes no effect record. `run_campaign` then executes the pending
-    boundary through `execute_pending`, which refuses if the task or capability
-    about to run is not the one the entry says was admitted.
+    boundary through `execute_pending`, which runs the task and capability the
+    entry recorded at admission rather than the ones the restarting caller's
+    schedule supplies.
 
     The result reports what was restored under which program, so a caller can
     see the identity a restart resumed with rather than inferring it. That

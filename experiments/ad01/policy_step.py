@@ -349,7 +349,7 @@ def _s09_ids(cid: str, seq: int) -> tuple:
     placeholder. This row is written when the step is persisted, which is
     before the boundary's effect has run, so there is no operation to name yet.
     The identity is set when the effect is incorporated, in
-    `trajectory._s09_ensure_incorporated`, by reading the operation that
+    `trajectory._s09_incorporate`, by reading the operation that
     actually ran.
 
     It used to return the constant `ad01-<cid>-b<seq>-effect`, which named no
@@ -402,43 +402,42 @@ def persist_step_transition(dsn: str | None, cid: str, seq: int, *,
                             transitions: list, investigation: dict,
                             source_digest: str,
                             status: str = "accepted") -> None:
+    """Record where the STEP decision got to, through the table's owner.
+
+    This module used to hold its own INSERT and UPDATE against
+    `s09_policy_state`, and it wrote `status` itself. That is the rival
+    authority milestone A names: a policy step that was refused -- whose
+    boundary never ran and produced no effect -- moved the row to
+    `incorporated`, so the same value meant "an effect is recorded" here and
+    in `trajectory` and nothing on the row said which. The column has two
+    values and the fact it records is one: an action is either still awaiting
+    its effect or concluded.
+
+    `status` survives as a parameter because callers still name their intent
+    and an unknown one is still a caller's mistake worth refusing. It is not
+    passed on. Routing the write to `trajectory._s09_accept` while forwarding
+    this argument would leave the decision here and the statement there, which
+    is the defect one layer up: a refused step would still be able to assert
+    that its effect ran. So the value is validated and then dropped, and the
+    owner derives the row's state from the effect it can observe. A refused
+    STEP is `accepted`, which is true; `incorporated` is reached only by
+    `trajectory._s09_incorporate`, on the path that ran the effect.
+
+    The payload, the size cap and the "already decided, so leave it" refusal
+    all stay here. They are this caller's knowledge about a policy step; only
+    the write and the decision about it are the owner's.
+    """
     if dsn is None:
         return
     import json
-    from psycopg.types.json import Json
-    from .trajectory import _read_conn
     if status not in ("accepted", "incorporated"):
         raise ValueError("unknown s09 status %r" % (status,))
+    from .trajectory import _s09_accept
     existing = load_policy_state(dsn, cid, seq)
     if existing is not None:
         accepted = dict(existing["accepted_action"] or {})
         if accepted.get("status") != "pending":
             return
-        import json as _json
-        final_state = results[-1]["state"] if results else {}
-        payload = {
-            "policy_input": {"initial_view": views[0] if views else {},
-                              "views": views},
-            "policy_output": {"results": results,
-                               "source_digest": source_digest},
-            "state_transition": {"transitions": transitions,
-                                  "final_state": final_state},
-        }
-        if len(_json.dumps(payload, sort_keys=True).encode()) > VIEW_LIMIT_BYTES:
-            raise ValueError("policy transition exceeds durable size cap")
-        with _read_conn(dsn) as conn:
-            conn.execute(
-                "UPDATE s09_policy_state SET policy_input = %s,"
-                " policy_output = %s, state_transition = %s,"
-                " accepted_action = %s, status = %s, updated_at = now()"
-                " WHERE investigation_id = %s AND seq = %s"
-                " AND accepted_action->>'status' = 'pending'",
-                (Json(payload["policy_input"]), Json(payload["policy_output"]),
-                 Json(payload["state_transition"]), Json(investigation),
-                 status, cid, seq))
-            conn.commit()
-        return
-    attempt_id, effect_id = _s09_ids(cid, seq)
     initial = views[0] if views else {}
     final_state = results[-1]["state"] if results else {}
     payload = {
@@ -448,24 +447,11 @@ def persist_step_transition(dsn: str | None, cid: str, seq: int, *,
         "state_transition": {"transitions": transitions,
                              "final_state": final_state},
     }
-    raw = json.dumps(payload, sort_keys=True)
-    if len(raw.encode()) > VIEW_LIMIT_BYTES:
+    if len(json.dumps(payload, sort_keys=True).encode()) > VIEW_LIMIT_BYTES:
         raise ValueError("policy transition exceeds durable size cap")
-    with _read_conn(dsn) as conn:
-        conn.execute(
-            "INSERT INTO s09_policy_state"
-            " (investigation_id, seq, attempt_id, effect_id,"
-            " policy_input, policy_output, state_transition,"
-            " accepted_action, status, provenance, driver_version)"
-            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s,"
-            " %s, 's09-m2', %s)"
-            " ON CONFLICT (investigation_id, seq) DO NOTHING",
-            (cid, seq, attempt_id, effect_id,
-             Json(payload["policy_input"]),
-             Json(payload["policy_output"]),
-             Json(payload["state_transition"]),
-             Json(investigation), status, POLICY_STEP_VERSION))
-        conn.commit()
+    _s09_accept(dsn, cid, seq, decision=investigation,
+                provenance="s09-m2", driver_version=POLICY_STEP_VERSION,
+                step=payload)
 
 
 def run_policy_step(record: dict, view: dict, state: dict, *,
