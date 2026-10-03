@@ -61,7 +61,22 @@ def cmd_run(args) -> int:
                       "complete": trace.get("complete"),
                       "end_reason": trace.get("end_reason"),
                       "grade": trace.get("grade")}, sort_keys=True))
-    return 0 if trace.get("complete") or args.max_ticks is not None else 1
+    return _verdict_exits(trace, args)
+
+
+def _verdict_exits(trace: dict, args) -> int:
+    """Whether this run is the one its caller asked for.
+
+    `--max-ticks` asks for a prefix, and a trajectory stopped before its
+    own horizon is that prefix. It does not excuse a trajectory that
+    could not pay for its next decision: `unfundable` is a fault the
+    trajectory holds whatever prefix was asked for.
+    """
+    if trace.get("complete"):
+        return 0
+    if args.max_ticks is not None and trace.get("end_reason") == "horizon":
+        return 0
+    return 1
 
 
 def cmd_verify(args) -> int:

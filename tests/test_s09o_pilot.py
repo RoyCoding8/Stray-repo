@@ -172,11 +172,22 @@ def test_schedule_and_assessment_counts_are_observed(full_bundle):
 
 
 def test_rejected_arm_is_incomplete_and_not_relabelled(tmp_path):
+    """A rejected arm must be refused, not returned with a failing verdict.
+
+    This used to assert that `run_study` returns a bundle its own verifier
+    calls `fail`. It passed only while the pilot returned such a bundle:
+    a study with an arm it could not bind exited 0 and printed a success
+    line beside a document saying `fail`. The refusal is the contract now,
+    so the test asserts it, and reads the same claims off the bundle the
+    refusal carries.
+    """
     from scripts import s09_pilot, s09_verify
     with _store(TOKEN) as database:
-        bundle = s09_pilot.run_study(
-            database.dsn, tmp_path, namespace_token="o2",
-            gateway=RoutingProvider(REJECTED_POLICY))
+        with pytest.raises(s09_pilot.BundleVerificationRefusal) as caught:
+            s09_pilot.run_study(
+                database.dsn, tmp_path, namespace_token="o2",
+                gateway=RoutingProvider(REJECTED_POLICY))
+    bundle = caught.value.bundle
     assert bundle["construction"]["P1"]["status"] == "rejected"
     assert bundle["construction"]["P1"]["disposition"] == "rejected"
     assert bundle["construction"]["P1"]["release_id"] is None
@@ -184,7 +195,10 @@ def test_rejected_arm_is_incomplete_and_not_relabelled(tmp_path):
     assert "P1" in bundle["report"]["incomplete_arms"]
     assert {record["executed"] for record in bundle["use_records"]
             if record["study_arm"] == "P1"} == {"unavailable"}
+    assert bundle["verdict"]["status"] == "fail"
     assert s09_verify.verify_bundle(bundle)["status"] == "fail"
+    assert json.loads((tmp_path / "verify.json").read_text())[
+        "status"] == "fail"
 
 
 def test_controlled_http_adapter_carries_bound_policy_bytes(tmp_path, monkeypatch):

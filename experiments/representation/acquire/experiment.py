@@ -244,7 +244,26 @@ def main(argv) -> int:
         print(json.dumps({"tag": args.tag, "error": str(exc)}))
         return 1
     print(json.dumps(status, sort_keys=True, indent=2))
-    return 0
+    return 0 if _evidence_clean(status) else 1
+
+
+def _evidence_clean(status: dict) -> bool:
+    """Whether the evidence root is free of checker problems.
+
+    `decide_disposition` accumulates manifest drift, evidence gaps, a
+    failed barrier, controls that did not pass and a cross-check that
+    blew up into `problems`, and the checker's own CLI exits 1 on that
+    list. `promising`, `release_eligible` and `use_authorized` are
+    findings and policy constants, not faults, so they are not read
+    here. A run that asked for no disposition holds no verdict.
+    """
+    disposition = status.get("disposition")
+    if disposition is not None and disposition.get("problems"):
+        return False
+    final = status.get("final_check")
+    if final is not None and not final.get("clean"):
+        return False
+    return True
 
 
 if __name__ == "__main__":

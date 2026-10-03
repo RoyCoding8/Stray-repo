@@ -980,8 +980,10 @@ def main(argv: list) -> int:
     if len(argv) == 2 and argv[1] == "census":
         print(json.dumps(axis_census(), indent=2, sort_keys=True))
         return 0
-    print(json.dumps(report(), indent=2, sort_keys=True))
-    return 0
+    document = report()
+    print(json.dumps(document, indent=2, sort_keys=True))
+    freeze = document["freeze"]
+    return 1 if freeze["intact"] or freeze["audit"] else 0
 
 
 if __name__ == "__main__":

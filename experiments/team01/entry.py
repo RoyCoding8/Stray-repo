@@ -114,7 +114,21 @@ def main(argv) -> int:
         print(json.dumps({"tag": args.tag, "error": str(exc)}))
         return 1
     print(json.dumps(status, sort_keys=True, indent=2))
-    return 0
+    return 0 if _disposition_clean(status) else 1
+
+
+def _disposition_clean(status: dict) -> bool:
+    """Whether the panel's own disposition found nothing wrong.
+
+    `checker.check_all` exits 1 on the same `clean` field, so this is the
+    entry point agreeing with the checker that owns the verdict. A run
+    that asked for no disposition holds no verdict and cannot have
+    failed one.
+    """
+    disposition = status.get("disposition")
+    if disposition is None:
+        return True
+    return bool(disposition.get("clean"))
 
 
 if __name__ == "__main__":
