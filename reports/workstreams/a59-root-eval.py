@@ -15,7 +15,20 @@ import ast
 import json
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent
+
+def find_repo():
+    """The checkout root, located by the tree this guards rather than by where
+    this script sits. Deriving it from __file__ is only correct while the
+    script lives at the root; from reports/workstreams/ it pointed at a
+    directory with no tests/ and reported a green zero derivations."""
+    here = Path(__file__).resolve()
+    for base in (Path.cwd(), *here.parents):
+        if (base / "tests" / "_heavy_archived").is_dir():
+            return base
+    raise SystemExit(f"no tests/_heavy_archived above {here} or under cwd")
+
+
+REPO = find_repo()
 HEAVY = REPO / "tests" / "_heavy_archived"
 
 
@@ -51,22 +64,27 @@ def sites(tree):
 
 def main():
     rows = []
-    for f in sorted(HEAVY.glob("test_*.py")):
+    files = sorted(HEAVY.glob("test_*.py"))
+    for f in files:
         for lineno, expr in sites(ast.parse(f.read_text(encoding="utf-8"))):
             got = eval(expr, {"__file__": str(f), "Path": Path})
             rows.append({"file": f.name, "line": lineno, "expr": expr,
                          "resolves_to": str(got), "name": got.name,
                          "is_repo_root": got == REPO})
     bad = [r for r in rows if not r["is_repo_root"]]
+    print(f"archived files scanned            : {len(files)}")
     print(f"own-__file__ derivations evaluated : {len(rows)}")
     print(f"landing on the repository root     : {len(rows) - len(bad)}")
     print(f"landing somewhere else             : {len(bad)}")
     print(f"distinct files affected            : {len({r['file'] for r in bad})}")
     for r in bad:
         print(f"  NOT ROOT {r['file']}:{r['line']}  {r['expr']}  -> {r['name']}")
-    out = REPO / ".a59-derivations.json"
+    out = REPO / "reports" / "workstreams" / "a59-derivations.json"
     json.dump(rows, open(out, "w"), indent=1)
     print(f"wrote {out}")
+    if not files:
+        print("FAIL: no archived files scanned; a green run that examined nothing")
+        return 1
     return 1 if bad else 0
 
 

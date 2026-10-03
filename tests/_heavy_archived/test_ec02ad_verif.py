@@ -1100,7 +1100,7 @@ def test_verif_fresh_checkout_premises_tracked_no_scratch_deps():
                  "experiments/ad01/cli.py",
                  "experiments/ad01/worlds/manifest.json",
                  "experiments/ad01/worlds/manifest.sha256",
-                 "tests/test_ec02ad_verif.py",
+                 "tests/_heavy_archived/test_ec02ad_verif.py",
                  "migrations"):
         assert _verif_tracked(path), \
             "deterministic-path driver not tracked: %s" % path
