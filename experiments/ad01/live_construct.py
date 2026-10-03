@@ -1042,16 +1042,47 @@ LIVE_AUTHORITY = {"queries": 16, "steps": 12}
 
 
 def live_mission(objective: str, environments: list) -> dict:
+    """A mission declaration, as the durable entry holds it.
+
+    This is the shape `mission.as_declaration` returns and the only shape
+    `ensure_live_store` accepts. It carries the four charter fields because
+    `MissionEntry` has all four, not because the frontier store uses more
+    than two of them. A caller that hand-builds this dict is restating an
+    entry that owns it, which is what `ensure_live_store` took a `dsn` for.
+    """
     if not isinstance(objective, str) or not objective.strip():
         raise LiveRefused("live mission needs an objective")
     if not isinstance(environments, list) or not environments:
         raise LiveRefused("live mission needs frozen environments")
-    return {"objective": objective, "environments": list(environments)}
+    return {"objective": objective,
+            "environments": list(environments),
+            "constraints": [],
+            "success_criteria": []}
 
 
-def ensure_live_store(path, mission: dict, authority: dict):
+def ensure_live_store(path, mission: dict | None, authority: dict, *,
+                      dsn: str | None = None,
+                      investigation_id: str | None = None):
+    """Open the live store over the mission the durable entry holds.
+
+    A `dsn` and an `investigation_id` are how the mission is identified, and
+    they replace `mission` rather than qualifying it: the live entry passes
+    `None` there and the declaration is read from `investigations`, so the
+    store is opened over the entry that owns the mission and no caller can
+    open a live store under a mission it invented. Without both, `mission` is
+    the declaration and this function is a fixture boundary. Half an identity
+    is a refusal rather than a default, because a `dsn` with no investigation
+    names nothing.
+    """
     from . import frontier as _frontier
+    from . import mission as _mission
     import os
+    if (dsn is None) != (investigation_id is None):
+        raise LiveRefused(
+            "a live store names its mission by dsn and investigation_id"
+            " together; one of them identifies nothing")
+    if dsn is not None:
+        mission = _mission.read_declaration(dsn, investigation_id)
     if os.path.exists(str(path)):
         store = _frontier.FrontierStore(str(path))
         if store._doc.get("mission", {}).get("objective") != \
@@ -1408,8 +1439,11 @@ def restart_store(path):
 def live_frontier_round(store_path, mission: dict, authority: dict,
                         opportunities: list, task, package=None,
                         round_no: int = 1,
-                        experience: list | None = None) -> dict:
-    store = ensure_live_store(store_path, mission, authority)
+                        experience: list | None = None,
+                        dsn: str | None = None,
+                        investigation_id: str | None = None) -> dict:
+    store = ensure_live_store(store_path, mission, authority, dsn=dsn,
+                              investigation_id=investigation_id)
     propose_live_work(store, opportunities)
     active = store.active_package
     if active is None:

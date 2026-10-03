@@ -334,7 +334,7 @@ def test_e12_refuses_history_drift_before_authority(tmp_path, monkeypatch):
     assert "history" in result["reason"]
 
 
-def test_route_metadata_must_match_before_e0_retention(tmp_path):
+def test_route_metadata_must_match_before_e0_retention(tmp_path, dsn):
     freeze = driver.freeze_e0(tmp_path / "e0")
     route = freeze["route"]
 
@@ -346,7 +346,7 @@ def test_route_metadata_must_match_before_e0_retention(tmp_path):
         Gateway(), pinned_model=route["requested_model"], ceiling=2,
         expected_route=route)
     record = driver._run_frontier_investigation(
-        tmp_path / "frontier.json", freeze, "live", guard=guard,
+        tmp_path / "frontier.json", freeze, "live", dsn=dsn, guard=guard,
         model=route["requested_model"])
     assert record["acquisition"]["status"] == "unavailable"
 
@@ -1020,7 +1020,7 @@ def test_verify_output_rejects_repair_after_accepted_response(tmp_path):
         first["arm"], split) in verified["problems"]
 
 
-def test_p2_frontier_construction_prompt_contains_permitted_history(tmp_path):
+def test_p2_frontier_construction_prompt_contains_permitted_history(tmp_path, dsn):
     from experiments.ad01 import live_construct as live
 
     class Guard:
@@ -1040,7 +1040,7 @@ def test_p2_frontier_construction_prompt_contains_permitted_history(tmp_path):
     permitted = driver._permitted_dev_history([3, 7])
     guard = Guard()
     driver._run_frontier_investigation(
-        tmp_path / "frontier-P2.json", freeze, "P2", guard=guard,
+        tmp_path / "frontier-P2.json", freeze, "P2", dsn=dsn, guard=guard,
         model="test-model", history=permitted)
 
     assert len(guard.prompts) == 1

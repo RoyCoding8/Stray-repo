@@ -83,11 +83,17 @@ class MissionEntry:
     improvement_mode: str
 
     def as_declaration(self) -> dict:
-        """The mission as a study declares it, before it is recorded.
+        """The mission as a study declares it, read back from the entry.
 
         This is the shape `frontier.create_store` accepts. A frontier store
-        used to carry its own mission dict; after the migration it carries
-        this one, read from the durable entry rather than restated in a file.
+        used to carry its own mission dict; the live path now reads this one
+        off the row rather than restating it in a file or in a caller. Five
+        production `create_store` call sites still hand-build an equivalent
+        dict -- `learner_revision._mission` at lines 737, 1264, 1278 and
+        1301, and `channel_controls._mission` at line 366 -- because they
+        are fixture and apparatus paths with no `dsn`; that is a remaining
+        restatement, not a second owner, and it is why this docstring does
+        not claim the migration is finished.
         """
         return {"objective": self.objective,
                 "environments": list(self.environments),
@@ -329,9 +335,22 @@ def read_declaration(dsn: str, investigation_id: str) -> dict:
 
     A study that builds a frontier store needs the objective and the frozen
     environments and nothing else. It used to hand-build that dict and the
-    store wrote its own copy; it now reads the one the entry already holds.
+    store wrote its own copy; the live path now reads the one the entry
+    already holds.
     """
     return read_mission(dsn, investigation_id).as_declaration()
+
+
+def read_improvement_mode(dsn: str, investigation_id: str) -> str:
+    """Whether this investigation is operating or improving.
+
+    The mode is CHECK-constrained because it decides which executor holds
+    authority, and an executor that cannot read it is a mission that records
+    a decision nobody consults. This is the reader: the live path is the
+    improve side, so it refuses to run an entry recorded as `operate` rather
+    than improving a mission that was not asked to improve.
+    """
+    return read_mission(dsn, investigation_id).improvement_mode
 
 
 def seed_program_digest() -> str:

@@ -1896,19 +1896,58 @@ def _live_opportunities(freeze: dict) -> list:
     return opportunities
 
 
+def _live_investigation_id(freeze: dict, label: str) -> str:
+    """The investigation a frozen live arm is run under.
+
+    Keyed on the frozen run as well as the study and the arm, because the
+    charter a mission is recorded with is the freeze's own charter and two
+    freezes of one study are two different missions. Sharing one id across
+    them would have the second run's record rewrite the first run's entry.
+    """
+    return "%s-%s-%s" % (freeze.get("study_root"), freeze.get("run_id"),
+                         label)
+
+
+def _record_live_mission(dsn: str, investigation_id: str,
+                         freeze: dict) -> str:
+    """Write the live arm's mission entry, once, before the store opens.
+
+    The entry is what the live path reads its mission from, so it has to
+    exist. Recording it here rather than in `mission` is deliberate: the
+    charter is the study's, and a study that names its own charter and
+    environments is the only thing that can author them. This is a write, and
+    it is the only write the live path makes to the entry -- every later read
+    goes through `mission.read_declaration`.
+    """
+    from experiments.ad01 import live_construct as _live
+    from experiments.ad01 import mission as _mission
+    _mission.record_mission(
+        dsn, investigation_id,
+        objective=str(freeze.get("charter", {}).get(
+            "objective", _live.LIVE_MISSION_OBJECTIVE)),
+        environments=_live_environments(freeze),
+        constraints=[], success_criteria=[],
+        improvement_mode="improve")
+    return investigation_id
+
+
 def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
-                                guard=None, model: str = "",
+                                dsn: str, guard=None, model: str = "",
                                 history: list | None = None) -> dict:
     from experiments.ad01 import boolean_rule as _rules
     from experiments.ad01 import frontier as _frontier
     from experiments.ad01 import improve_channel as _channel
     from experiments.ad01 import live_construct as _live
-    mission = _live.live_mission(
-        str(freeze.get("charter", {}).get(
-            "objective", _live.LIVE_MISSION_OBJECTIVE)),
-        _live_environments(freeze))
+    from experiments.ad01 import mission as _mission
+    investigation_id = _record_live_mission(
+        dsn, _live_investigation_id(freeze, label), freeze)
+    if _mission.read_improvement_mode(dsn, investigation_id) != "improve":
+        raise ValueError(
+            "the live arm improves its mission; entry %s is not recorded as"
+            " improving" % investigation_id)
     store = _live.ensure_live_store(
-        store_path, mission, dict(_live.LIVE_AUTHORITY))
+        store_path, None, dict(_live.LIVE_AUTHORITY), dsn=dsn,
+        investigation_id=investigation_id)
     _live.propose_live_work(store, _live_opportunities(freeze))
     if store.active_package is None:
         active = _live.bind_live_control(store, "low")
@@ -2146,7 +2185,7 @@ def run_e0(dsn: str, out) -> dict:
             "durable broker unavailable before inference: %s" % exc)
     control = _run_frontier_investigation(
         out / "frontier-control.json", freeze, "control",
-        guard=None, model=model)
+        dsn=dsn, guard=None, model=model)
     already_spent = _already_spent(dsn, allocation_id)
     guard = _guard(durable_gateway, pinned_model=model,
                    ceiling=freeze["bounds"]["model_calls"] + already_spent,
@@ -2155,7 +2194,7 @@ def run_e0(dsn: str, out) -> dict:
                    dsn=dsn, allocation_id=allocation_id)
     live = _run_frontier_investigation(
         out / "frontier-live.json", freeze, "live",
-        guard=guard, model=model)
+        dsn=dsn, guard=guard, model=model)
     spent = already_spent
     live_calls = max(0, guard.dispatch_count - spent)
     acquisition = live.get("acquisition") or {}
@@ -2636,7 +2675,7 @@ def run_e12(dsn: str, out) -> dict:
         try:
             frontier = _run_frontier_investigation(
                 out / ("frontier-%s.json" % arm), freeze, arm,
-                guard=guard, model=model, history=want_history)
+                dsn=dsn, guard=guard, model=model, history=want_history)
             acquisition = frontier.get("acquisition") or {}
             revision: object = "absent"
             if acquisition.get("status") == "retained":
@@ -2744,7 +2783,7 @@ def run_e12(dsn: str, out) -> dict:
                    sort_keys=True, indent=1, default=str) + "\n")
     control = _run_frontier_investigation(
         out / "frontier-control-e12.json", freeze, "control",
-        guard=None, model=model)
+        dsn=dsn, guard=None, model=model)
     _write_e12_revision_receipts(
         out, freeze["freeze_digest"], arms)
     total = sum(int(a.get("model_calls", 0)) for a in arms.values())

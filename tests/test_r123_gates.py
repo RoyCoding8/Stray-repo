@@ -177,7 +177,7 @@ def test_r1_disconnect_improvement_refused_or_changes(tmp_path):
         live.adopt_live_revision(store, dict(low))
 
 
-def test_r1_driver_routes_through_frontier(tmp_path):
+def test_r1_driver_routes_through_frontier(tmp_path, dsn):
     source = Path(driver.__file__).read_text()
     e0_body = source[source.index("def run_e0"):source.index(
         "def restart_use")]
@@ -191,25 +191,25 @@ def test_r1_driver_routes_through_frontier(tmp_path):
     freeze = driver.freeze_e0(tmp_path / "e0")
     record = driver._run_frontier_investigation(
         tmp_path / "frontier.json", freeze, "gate",
-        guard=None, model="test-model")
+        dsn=dsn, guard=None, model="test-model")
     assert record["observation_dependent"] is True
     assert record["second_candidate"] != record["first_candidate"]
     assert record["adopted"]["status"] == "activated-control"
 
 
-def test_r1_live_improver_via_doubles(tmp_path):
+def test_r1_live_improver_via_doubles(tmp_path, dsn):
     freeze = driver.freeze_e0(tmp_path / "e0b")
     text = json.dumps({"entry": channel.IMPROVE_HIGH_SOURCE})
     guard = _guard([text], ceiling=12)
     record = driver._run_frontier_investigation(
         tmp_path / "frontier-live.json", freeze, "live",
-        guard=guard, model="test-model")
+        dsn=dsn, guard=guard, model="test-model")
     assert record["acquisition"]["status"] == "retained"
     assert guard.dispatch_count == 1
     bad = _guard(['{"entry": "import os"}'], ceiling=12)
     refused = driver._run_frontier_investigation(
         tmp_path / "frontier-bad.json", freeze, "bad",
-        guard=bad, model="test-model")
+        dsn=dsn, guard=bad, model="test-model")
     assert refused["acquisition"]["status"] == "unavailable"
 
 
