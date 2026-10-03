@@ -156,7 +156,7 @@ _DIE_AT_ADMISSION = (
     "                      capability_id=%r)\n"
     "sys.stdout.write('DID_NOT_CRASH')\n"
     % (repr(CHARTER), repr(CAPS), DEV_TASK, repr(CHARTER), repr(CAPS),
-       DEV_TASK, repr(ADMITTED_PROGRAM)))
+       DEV_TASK, ADMITTED_PROGRAM))
 
 
 def test_the_live_path_admits_where_it_decides(store):
@@ -245,12 +245,19 @@ _RESUME_PHASE = (
     "    [item.as_json() for item in restored], default=str) + chr(10))\n"
     "sys.stdout.flush()\n"
     "out = trajectory.resume_campaign(dsn, cid, %s, %s, tasks=[%r],\n"
-    "                                 capability_id=%r)\n"
+    "                                 capability_id=%s)\n"
+    "with trajectory._read_conn(dsn) as conn:\n"
+    "    row = conn.execute(\n"
+    "        'SELECT effect_record FROM s09_policy_state'\n"
+    "        ' WHERE investigation_id = %%s AND seq = 0', (cid,)).fetchone()\n"
+    "    conn.commit()\n"
+    "record = dict(row['effect_record'] or {})\n"
     "sys.stdout.write('RAN:' + json.dumps(\n"
     "    {'boundaries': len(out['boundaries']),\n"
     "     'resumed': out.get('resumed_in_flight'),\n"
-    "     'capability': [e.get('lineage', [{}])[0].get('capability_id')\n"
-    "                    for e in out['episodes']]}, default=str) + chr(10))\n"
+    "     'ran_under': record.get('ran_under'),\n"
+    "     'kinds': [e.get('kind') for e in out['episodes']]},\n"
+    "    default=str) + chr(10))\n"
     % (repr(CHARTER), repr(CAPS), DEV_TASK, repr(SUBSTITUTED_PROGRAM)))
 
 
@@ -313,20 +320,29 @@ def test_a_crash_in_the_window_resumes_under_its_admitted_identity(store):
         "the restart ran no boundary: %r" % (ran,))
     assert ran["resumed"], (
         "the resume ran a boundary that was already settled")
-    assert ran["capability"] == [ADMITTED_PROGRAM], (
-        "the restart ran the boundary under %r, not the program it was "
-        "admitted under" % (ran["capability"],))
 
-    # The effect record names the run, not the admission, and it must name
-    # the program that actually ran.
-    record = _effect_record(store, cid)
-    assert record is not None, "the resumed boundary recorded no effect"
-    ran_under = dict(dict(record)["ran_under"])
+    # The identity the restart actually ran under, read from the effect
+    # record rather than from the episode. The default campaign path is a
+    # diagnostic -- `scaffolding_proposer` can emit no other kind -- and a
+    # diagnostic episode carries no `lineage`, so a resumed-run check that
+    # read one would be reading a key this path never writes. `ran_under` is
+    # written for any held operation and names the admission.
+    ran_under = ran["ran_under"]
+    assert ran_under, (
+        "the resumed boundary recorded no ran_under, so the restart did not"
+        " run under a recorded identity: %r" % (ran,))
+    assert ran_under["capability_id"] == ADMITTED_PROGRAM, (
+        "the restart ran the boundary under %r, not the program it was "
+        "admitted under" % (ran_under["capability_id"],))
     assert ran_under["program_digest"] == admitted["program_digest"], (
         "the settled boundary does not say which program produced it")
     assert ran_under["input_identity"] == admitted["input_identity"]
     assert ran_under["decision_digest"] == admitted["decision_digest"]
-    assert ran_under["capability_id"] == ADMITTED_PROGRAM
+
+    record = _effect_record(store, cid)
+    assert record is not None, "the resumed boundary recorded no effect"
+    assert dict(dict(record)["ran_under"]) == ran_under, (
+        "the record read here and the one the resume saw disagree")
 
     assert _in_flight_raw(store, cid) == [], (
         "the settled operation is still in flight, so a later resume would "
