@@ -28,8 +28,13 @@ yields `str` against `str`, and `stale-clear` always yields `missing`
 against `str`. Both are forced by the fault branches themselves, not by the
 templates. So four software clusters are two units wearing four names, and
 no software generator that reuses those two branches can close the
-shortfall, however many templates it adds. The graph panel's six templates
-do reach six distinct ceilings, so the graph side is not subject to this.
+shortfall, however many templates it adds.
+
+The graph family is **not measured here.** `s09_panel_inventory` records its
+`signature_count` as `None` with the note that no observable-behaviour
+measure is defined for it, so whether the six graph templates are six
+independent units is unproven rather than established. Read the ceiling
+spread before relying on it.
 
 A family whose signatures collapse is not a panel that can be powered by
 adding to it. It is a panel where two rows are the same row.
