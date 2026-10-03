@@ -1,0 +1,498 @@
+[
+ {
+  "file": "test_acct_store_costs.py",
+  "line": 43,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_adv_broker.py",
+  "line": 15,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_agenda_repair.py",
+  "line": 24,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_aled_campaign.py",
+  "line": 20,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_bdr02_child_identity.py",
+  "line": 42,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_bexec_child.py",
+  "line": 30,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_bverif_public.py",
+  "line": 33,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_exec.py",
+  "line": 33,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_experiment.py",
+  "line": 27,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_learning.py",
+  "line": 38,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_m2_qualification.py",
+  "line": 58,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_m3_acquisition.py",
+  "line": 33,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_m4_frozen.py",
+  "line": 71,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_m4_frozen.py",
+  "line": 70,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_runtime.py",
+  "line": 33,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_coord02_state.py",
+  "line": 38,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_dev01_compare.py",
+  "line": 123,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_eacq_repair.py",
+  "line": 35,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_ec02ad_verif.py",
+  "line": 38,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_ec02ad_verif.py",
+  "line": 923,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_ec02ad_verif.py",
+  "line": 1080,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_eng_invb_dispatch.py",
+  "line": 83,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_inv_b2_loop.py",
+  "line": 18,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_inv_b3_coord02_contracts.py",
+  "line": 19,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_inv_c_qualification.py",
+  "line": 25,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_inv_f1_seam.py",
+  "line": 15,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_invc2_authority.py",
+  "line": 17,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_invc2_recovery.py",
+  "line": 20,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_invd1_dispatch.py",
+  "line": 25,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_invr2_correction.py",
+  "line": 24,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_invr2_diagnostic.py",
+  "line": 25,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_learning_review.py",
+  "line": 7,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_method_exec_source_authority.py",
+  "line": 12,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_n36_containment.py",
+  "line": 42,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_p2d_b_resweep.py",
+  "line": 17,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_r01_recovery.py",
+  "line": 26,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_r01_recovery.py",
+  "line": 17,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_r02_evalbind.py",
+  "line": 15,
+  "expr": "Path(__file__).resolve().parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_r02_exec.py",
+  "line": 32,
+  "expr": "Path(__file__).resolve().parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_r02_explearn.py",
+  "line": 32,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_r03_flow.py",
+  "line": 15,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_r03_flow.py",
+  "line": 355,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_r03_flow.py",
+  "line": 358,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_rec_restore.py",
+  "line": 11,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_rec_restore.py",
+  "line": 27,
+  "expr": "Path(__file__).parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_rpr06_transfer.py",
+  "line": 10,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_rpr08_resume.py",
+  "line": 19,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_rpr13_endtoend.py",
+  "line": 15,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_run_bounded.py",
+  "line": 38,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_s09_bound_use_proof.py",
+  "line": 24,
+  "expr": "Path(__file__).resolve().parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_s09_multi_receipt.py",
+  "line": 38,
+  "expr": "Path(__file__).resolve().parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_s09_n202_resend.py",
+  "line": 32,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_s09_n202_stranded.py",
+  "line": 29,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_s09ast_boundary.py",
+  "line": 20,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_s09ast_restart.py",
+  "line": 25,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_s09graph_budget.py",
+  "line": 28,
+  "expr": "Path(__file__).resolve().parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_s09graph_representation.py",
+  "line": 32,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_s09iso_stale_sweep.py",
+  "line": 50,
+  "expr": "Path(__file__).resolve().parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_s09iso_stale_sweep.py",
+  "line": 35,
+  "expr": "Path(__file__).resolve().parents[2]",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy",
+  "name": "a59-heavy",
+  "is_repo_root": true
+ },
+ {
+  "file": "test_s09m2_construct.py",
+  "line": 16,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_team_solver.py",
+  "line": 17,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ },
+ {
+  "file": "test_team_world.py",
+  "line": 16,
+  "expr": "Path(__file__).resolve().parent.parent",
+  "resolves_to": "D:\\AI\\Agent-Society-v2\\.worktrees\\a59-heavy\\tests",
+  "name": "tests",
+  "is_repo_root": false
+ }
+]
