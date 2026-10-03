@@ -137,7 +137,7 @@ in isolated worktrees, reviewed production callers, and integrated serially:
 
 | Gap | Closed behavior | What this does not establish |
 |---|---|---|
-| Incomplete initial mission rows | Initial SQL admission refuses a missing objective or environments and leaves no row | The live JSON frontier is not migrated to this SQL owner |
+| Incomplete initial mission rows | Initial SQL admission refuses a missing objective or environments and leaves no row | The live JSON frontier is **not on the live path at all**, rather than awaiting a join — see the 2026-10-03 batch for the call-edge measurement. `frontier.py` *is* import-reachable from `cli` through `method_exec`, so import reachability is the wrong test and the next reader will re-derive this wrongly |
 | Misleading experiment coverage | Available families, minimum p-value resolution and realized episode/family coverage are separate. The crossing assesses one SWE family in each split, not all nine available families | Statistical independence, power or broad transfer |
 | Misidentified active source | The authored crossing driver's source bytes have a source digest; crossing output has a separate transcript digest | Model-acquired operational policy or a release |
 | Limited-run lineage summaries | Summaries use lineages present in the result rather than all configured slots; digest diversity is separate from lineage identities | Independent model constructions or live acquisition |
