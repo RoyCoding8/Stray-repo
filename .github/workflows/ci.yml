@@ -29,7 +29,19 @@ jobs:
             token: "b3130000"
           - python-version: "3.14"
             token: "b3140000"
-    timeout-minutes: 90
+          - python-version: "3.13"
+            token: "b31300a1"
+            shard: "1"
+          - python-version: "3.13"
+            token: "b31300a2"
+            shard: "2"
+          - python-version: "3.13"
+            token: "b31300a3"
+            shard: "3"
+          - python-version: "3.13"
+            token: "b31300a4"
+            shard: "4"
+    timeout-minutes: 100
 
     services:
       postgres:
@@ -61,6 +73,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[test]"
+          pip install pytest-split
 
       - name: Collect
         run: |
@@ -70,9 +83,16 @@ jobs:
       - name: Suite
         # pipefail, or `| tail` returns tail's status and an INTERNALERROR at
         # collection reads as a green run with zero tests executed.
+        # The whole suite exceeds one job's timeout, so 3.13 is split into
+        # four shards; 3.12 and 3.14 run whole as the version bounds.
         run: |
           set -o pipefail
-          python -m pytest -q -p no:cacheprovider 2>&1 | tee suite.log | tail -80
+          if [ -n "${{ matrix.shard }}" ]; then
+            opts="--splits 4 --group ${{ matrix.shard }}"
+          else
+            opts=""
+          fi
+          python -m pytest -q -p no:cacheprovider $opts 2>&1 | tee suite.log | tail -80
           exit ${PIPESTATUS[0]}
 
   heavy:
@@ -111,6 +131,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[test]"
+          pip install pytest-split
 
       - name: Heavy archived, one file at a time
         run: |
