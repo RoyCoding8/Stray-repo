@@ -587,6 +587,8 @@ class _Module:
     def __init__(self, name, is_prod):
         self.name = name
         self.is_prod = is_prod
+        # binding name -> (module, None) when the binding names a module,
+        # (base module, symbol) when it names something inside one.
         self.aliases = {}
         self.defs = {}
         self.sites = []
@@ -627,8 +629,8 @@ def _load(path: Path, is_prod: bool) -> _Module:
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
-                mod.aliases[a.asname or a.name.split(".")[0]] = (
-                    a.name if a.asname else a.name.split(".")[0], None, False)
+                mod.aliases[a.asname or a.name] = (
+                    a.name if a.asname else a.name.split(".")[0], None)
         elif isinstance(node, ast.ImportFrom):
             base = node.module or ""
             if node.level:
@@ -640,8 +642,7 @@ def _load(path: Path, is_prod: bool) -> _Module:
                 if a.name == "*":
                     mod.star_imports.append(base)
                 else:
-                    mod.aliases[a.asname or a.name] = (base, a.name,
-                                                        a.asname is None)
+                    mod.aliases[a.asname or a.name] = (base, a.name)
 
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
@@ -707,16 +708,18 @@ def _census() -> dict:
                 al = m.aliases.get(key)
                 if al is None:
                     continue
-                base, sym, bare = al
+                base, sym = al
                 if sym is None:
                     if base in module_set and "%s:%s" % (base, attr) \
                             in mods[base].defs:
                         edges[scope].add("%s:%s" % (base, attr))
                     continue
-                if bare and "%s.%s" % (base, sym) in module_set:
-                    sub = "%s.%s" % (base, sym)
-                    if "%s:%s" % (sub, attr) in mods[sub].defs:
-                        edges[scope].add("%s:%s" % (sub, attr))
+                submod = "%s.%s" % (base, sym)
+                if submod in module_set:
+                    # The binding is a module however it was spelled, so an
+                    # attribute on it is a call into that module.
+                    if "%s:%s" % (submod, attr) in mods[submod].defs:
+                        edges[scope].add("%s:%s" % (submod, attr))
                     continue
                 parent = "%s:%s" % (base, sym)
                 if base in mods and parent in mods[base].defs:
@@ -806,11 +809,13 @@ def test_admission_and_quiescence_are_both_live():
     quiescence for live admission and program adoption, so `live_construct` now
     gates both of its `adopt_revision` call sites on the SQL predicate.
 
-    So `prod_callers == 0` is now the wrong assertion; it was a census of a dead
-    seam and the seam is wired. `reachable_from_main` stays False and is not the
-    signal: the census does not resolve `from . import live_construct as _live`,
-    so it cannot see a caller behind that alias. `prod_callers` is the count that
-    answers the question actually being asked here.
+    `is_quiescent` is reachable from a `__main__` through
+    `scripts.invl02_live._run_frontier_investigation` ->
+    `live_construct.activate_control_revision` ->
+    `live_construct._require_quiescent` -> `mission.is_quiescent`. Three hops,
+    and the second is the aliased-import seam this census used to read as
+    solid. So the count and the reachability are both asserted: a wiring that
+    counted callers but sat outside `main` would satisfy the first alone.
     """
     report = _census()
     rows = {r["impl"]: r for r in report["rows"]}
@@ -826,6 +831,9 @@ def test_admission_and_quiescence_are_both_live():
     assert quiescent["prod_callers"] > 0, (
         "is_quiescent has no production caller again, so nothing governs "
         "readiness: %r" % quiescent)
+    assert quiescent["reachable_from_main"], (
+        "is_quiescent has production callers but none reachable from a "
+        "__main__, so nothing that ships asks it: %r" % quiescent)
 
 
 def test_the_census_is_reported_not_baked_in(capsys):
