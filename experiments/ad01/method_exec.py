@@ -1306,18 +1306,53 @@ def _literal_value(node):
 
 
 def _validator_refuses(literal) -> bool:
-    """Whether `policy_step.validate_action` refuses this literal as an action.
+    """Whether no action contract this host declares can read this literal.
 
     The action contract is asked rather than restated. A list of inert shapes
     here would be a second spelling of `ACTION_REQUIRED`, and it would drift
     the first time a field is added: a shape this function still called inert
     would become valid, and a valid one would stay refused. `None` is the
     recorded case (invl02-r123 r1, `{"action": None, "state": state}`).
+
+    `validate_action` refuses for two different reasons, and this used to
+    read them as one. It refuses a dict that is missing a required field,
+    and it refuses a dict whose kind it does not carry. Only the second is
+    a question about vocabulary. The first is what an action object IS: the
+    required field set is the same in every action contract on this host and
+    none of them calls a dict missing one of those fields an action object,
+    so it is asked once, of the field list, and does not depend on which
+    contract is reading.
+
+    The second is asked of every contract, because the answer differs and
+    the difference is the defect. This host declares two. The STEP ABI
+    carries `diagnose`/`construct_method`/`use_method`/`request_model`/
+    `propose_revision`, and the shared contract carries `probe`/`observe`/
+    `construct`/`use`/`check`. They share exactly one kind, `stop`. So a
+    literal carrying `probe` is an action object to the shared contract and
+    an unknown kind to the STEP ABI, and reading that as "no contract can
+    produce an action" refused every shared-contract policy at admission --
+    one layer above the world that was going to judge it, replacing the
+    world's own reason with this gate's. The gate runs on the shared
+    `run_step_out_of_process` path, so that refusal was not confined to
+    the STEP vocabulary's own callers.
+
+    Asking more contracts only ever admits more, never refuses more, so
+    every refusal recorded above this line is unchanged: `None` is still
+    inert, and a `{"kind": "teleport"}` dict is still refused here exactly
+    as `validate_step_result` refuses it one step later.
     """
-    from . import policy_step
+    from . import policy_action, policy_step
+    if not isinstance(literal, dict) or any(
+            field not in literal for field in policy_step.ACTION_REQUIRED):
+        return True
     try:
         policy_step.validate_action(literal)
+        return False
     except ValueError:
+        pass
+    try:
+        policy_action.parse_action(literal)
+    except policy_action.ActionRefused:
         return True
     return False
 
