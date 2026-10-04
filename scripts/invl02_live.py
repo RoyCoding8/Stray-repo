@@ -33,6 +33,20 @@ from experiments.ad01.live_construct import LiveGuard as _LiveGuard
 
 STUDY_ROOT_E0 = "invl02-live-e0"
 STUDY_ROOT_E12 = "invl02-live-e12"
+#: How many child executions one study may admit, per
+#: `reports/cap-sheets/e0-e12-child-execution-caps.md`, which froze both
+#: numbers before any model call was made under them. They are ceilings, not
+#: targets: an undeclared `sandbox_calls` is not a zero ceiling but an
+#: unbounded resource wearing a grant's clothes, because `_check_study_ceilings`
+#: only iterates the names a study declared.
+#:
+#: E0 is two investigations (the control and the live arm) at eight
+#: executions each, plus the one retained-acquisition binding only the live arm
+#: can pay. E12 is three investigations at eight each, plus one binding per
+#: retained arm. `boolean_live_round` makes model calls only and draws on no
+#: executor, so it is not in either figure.
+E0_SANDBOX_CALLS = 19
+E12_SANDBOX_CALLS = 30
 OUTPUT_ROUND = _live_output.OUTPUT_ROUND
 STUDY_ROOT_OUTPUT = _live_output.OUTPUT_STUDY_ROOT
 E0_PROTOCOL_ID = "invl02-live-e0-v1"
@@ -261,6 +275,19 @@ def _already_spent(dsn: str, allocation_id: str) -> int:
     returns the stored id for an existing binding, so a resume counts the rows
     the first run created.
 
+    Narrowed to `effect = 'model-inference'`, because that is the currency
+    and it is no longer the only thing this allocation carries. A round now
+    executes under this same allocation rather than under a database created
+    and dropped inside the round, so a `sandbox-exec` row lands here beside
+    the sends. Counting it would price one child execution as one model call,
+    and since the ceiling this feeds is the live arm's own allowance plus the
+    count, the count would refuse the arm's *first* dispatch -- a ceiling
+    enforced against a number that moved because a sibling resource was
+    spent. The same predicate is how the store itself separates the two:
+    `_counters_spent_by` (store.py:1398-1412) charges `sandbox-exec` to
+    `sandbox_calls` and `execution_units` and nothing to `model_calls`, and
+    `_study_operation_counts` (`:1569-1574`) counts them the same way.
+
     An unreadable store is an error, not a zero. Returning zero would read as
     "nothing spent" and re-open the hole for every briefly-unreachable
     database, which is the same reasoning the preflight's `None` follows.
@@ -273,7 +300,9 @@ def _already_spent(dsn: str, allocation_id: str) -> int:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
                     "SELECT COUNT(*) AS spent FROM operations"
-                    " WHERE allocation_id = %s", (allocation_id,))
+                    " WHERE allocation_id = %s"
+                    " AND payload->>'effect' = 'model-inference'",
+                    (allocation_id,))
                 spent = cur.fetchone()["spent"]
             conn.commit()
     except Exception as exc:
@@ -1933,12 +1962,34 @@ def _record_live_mission(dsn: str, investigation_id: str,
 
 def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
                                 dsn: str, guard=None, model: str = "",
-                                history: list | None = None) -> dict:
+                                history: list | None = None,
+                                allocation_id: str | None = None) -> dict:
+    """Drive one live investigation, under the study allocation it runs under.
+
+    `allocation_id` is the study's own allocation, already bound by the caller
+    through `_authorize`. It is threaded to both improve rounds rather than
+    resolved here, because the caller is where the study authority is bought
+    and a second derivation of it inside this function would be a second
+    authority for one leg. It stays optional because a caller that holds no
+    allocation is not fabricating one: `run_live_improve_round` forwards it to
+    `drive_improve_round`, which refuses an owned store that has none. That
+    refusal is correct and is left standing -- a round executing against a
+    disposable database settles receipts the investigation's row cannot
+    reach -- so a caller on this path supplies the allocation rather than
+    having the store's own ownership quietly papered over.
+
+    `dsn` alone is not the authority. `_run_source` demands both
+    `{"dsn", "allocation_id"}` (`improve_channel.py:1773-1776`), and the store
+    the round runs on is the owned one `ensure_live_store(dsn=...)` opens
+    below.
+    """
     from experiments.ad01 import boolean_rule as _rules
     from experiments.ad01 import frontier as _frontier
     from experiments.ad01 import improve_channel as _channel
     from experiments.ad01 import live_construct as _live
     from experiments.ad01 import mission as _mission
+    authority = {"dsn": dsn, "allocation_id": allocation_id} \
+        if allocation_id else None
     investigation_id = _record_live_mission(
         dsn, _live_investigation_id(freeze, label), freeze)
     if _mission.read_improvement_mode(dsn, investigation_id) != "improve":
@@ -1972,7 +2023,8 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
         effect = _live.execute_chosen_work(store, probe_action, task)
     except Exception as exc:
         effect = {"status": "refused", "reason": str(exc)}
-    first = _live.run_live_improve_round(store, task, active, 1)
+    first = _live.run_live_improve_round(store, task, active, 1,
+                                        authority=authority)
     candidate = first["candidate"]
     assert candidate.get("origin") == "authored-control"
     assert candidate.get("source_kind") == "fixed-menu"
@@ -1996,7 +2048,8 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
                                     investigation_id=investigation_id)
     assert restarted.active_digest == store.active_digest
     active2 = restarted.active_package
-    second = _live.run_live_improve_round(restarted, task, active2, 2)
+    second = _live.run_live_improve_round(restarted, task, active2, 2,
+                                         authority=authority)
     assert second["candidate"]["parent_digest"] == \
         active2["package_digest"]
     assert {e["executed_digest"] for e in second["log"]} == \
@@ -2177,7 +2230,8 @@ def run_e0(dsn: str, out) -> dict:
         authority = _authorize(
             dsn, STUDY_ROOT_E0, 200000,
             {"model_calls": freeze["bounds"]["model_calls"],
-             "construction_calls": 4})
+             "construction_calls": 4,
+             "sandbox_calls": E0_SANDBOX_CALLS})
         allocation_id = authority.get("allocation_id")
         if not allocation_id:
             raise ValueError("durable study allocation is unavailable")
@@ -2190,7 +2244,7 @@ def run_e0(dsn: str, out) -> dict:
             "durable broker unavailable before inference: %s" % exc)
     control = _run_frontier_investigation(
         out / "frontier-control.json", freeze, "control",
-        dsn=dsn, guard=None, model=model)
+        dsn=dsn, guard=None, model=model, allocation_id=allocation_id)
     already_spent = _already_spent(dsn, allocation_id)
     guard = _guard(durable_gateway, pinned_model=model,
                    ceiling=freeze["bounds"]["model_calls"] + already_spent,
@@ -2199,7 +2253,7 @@ def run_e0(dsn: str, out) -> dict:
                    dsn=dsn, allocation_id=allocation_id)
     live = _run_frontier_investigation(
         out / "frontier-live.json", freeze, "live",
-        dsn=dsn, guard=guard, model=model)
+        dsn=dsn, guard=guard, model=model, allocation_id=allocation_id)
     spent = already_spent
     live_calls = max(0, guard.dispatch_count - spent)
     acquisition = live.get("acquisition") or {}
@@ -2640,7 +2694,8 @@ def run_e12(dsn: str, out) -> dict:
         authority = _authorize(
             dsn, STUDY_ROOT_E12, 400000,
             {"model_calls": freeze["bounds"]["model_calls"],
-             "construction_calls": 8})
+             "construction_calls": 8,
+             "sandbox_calls": E12_SANDBOX_CALLS})
         allocation_id = authority.get("allocation_id")
         if not allocation_id:
             raise ValueError("durable study allocation is unavailable")
@@ -2698,7 +2753,8 @@ def run_e12(dsn: str, out) -> dict:
             # arm's own evidence refers to; the summary is a separate file.
             frontier = _run_frontier_investigation(
                 out / ("frontier-store-%s.json" % arm), freeze, arm,
-                dsn=dsn, guard=guard, model=model, history=want_history)
+                dsn=dsn, guard=guard, model=model, history=want_history,
+                allocation_id=allocation_id)
             acquisition = frontier.get("acquisition") or {}
             revision: object = "absent"
             if acquisition.get("status") == "retained":
@@ -2807,7 +2863,7 @@ def run_e12(dsn: str, out) -> dict:
                    sort_keys=True, indent=1, default=str) + "\n")
     control = _run_frontier_investigation(
         out / "frontier-control-e12.json", freeze, "control",
-        dsn=dsn, guard=None, model=model)
+        dsn=dsn, guard=None, model=model, allocation_id=allocation_id)
     _write_e12_revision_receipts(
         out, freeze["freeze_digest"], arms, dsn)
     total = sum(int(a.get("model_calls", 0)) for a in arms.values())

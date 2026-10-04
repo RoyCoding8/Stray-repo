@@ -15,17 +15,33 @@ then enforced against a fiction, which is the same hole `9a1884d` closed in
 C14 asks where the count should come from at each of the three call sites. The
 answer differs by site, and the difference is structural:
 
-  - `run_e0` (line 2053) and `run_e12` (line 2512) both already hold a `dsn`
+  - `run_e0` (line 2214) and `run_e12` (line 2665) both already hold a `dsn`
     and have already called `_authorize`, which binds a stable
     `allocation_id` to the study root. Every send on these paths goes through
     `_DurableBrokerOutput.infer`, which calls `broker.ensure_operation` with
     that `allocation_id`, and `store.prepare_operation` writes it to
-    `operations.allocation_id` (store.py:1477). So a store read is available:
-    `SELECT COUNT(*) FROM operations WHERE allocation_id = %s`, which is the
-    same currency `_output_already_spent` (line 1310) already counts for the
-    output study, and the same one `LiveGuard`'s own docstring names.
+    `operations.allocation_id` (store.py:1507-1512). So a store read is
+    available, and the unit it counts in is settled by what the ceiling is a
+    ceiling on: all three consumers spend it as model sends. `probe` builds
+    `ceiling = already_spent + 1` (line 4368), `run_e0` adds it to
+    `freeze["bounds"]["model_calls"]`, and `run_e12` adds it to the per-arm
+    `init + repair`. So the query is
+    `SELECT COUNT(*) FROM operations WHERE allocation_id = %s AND
+    payload->>'effect' = 'model-inference'`, which is the predicate
+    `_study_operation_counts` (store.py:1570-1571) charges to `model_calls`.
 
-  - `probe` (line 4111) was the exception. It was handed a bare
+  - `sandbox_calls` is a different currency over the same allocation, and it
+    is not this counter's business. A round now executes under this study's
+    own allocation, so a `sandbox-exec` row lands beside the sends
+    (`method_exec.py:1174-1176`). Counting it would price one child execution
+    as one model call and refuse the live arm's first dispatch. The store
+    already separates the two without consulting this function at all:
+    `_counters_spent_by` (store.py:1400-1412) charges `sandbox-exec` to
+    `sandbox_calls` and `execution_units` and nothing to `model_calls`, and
+    `_check_study_ceilings` (store.py:1441-1445) enforces each declared ceiling
+    against only the counters its operation moves.
+
+  - `probe` (line 4331) was the exception. It was handed a bare
     `HttpGatewayAdapter`, never a `_DurableBrokerOutput`, so no send on that
     path created an operation row to count. Lane A7 made the probe take the
     same `--dsn` and `--allocation-id` pair the other two sites hold and
@@ -37,17 +53,24 @@ So the fix was two derivations and one refusal, and the refusal was the
 point: `probe` must not keep reading a number nobody writes. It now reads
 the store, and it refuses rather than guessing when it cannot.
 
+All three read the same store, and the narrowing to `effect =
+'model-inference'` is the same currency the store itself charges to
+`model_calls`. The count is a model-send count on every one of its three
+call sites, because every one of them spends it as one.
+
 This file pins the reader census. The derivations themselves are in
 `scripts/invl02_live.py` and are exercised by the live paths and by
 `tests/test_inv_a7_probe_durable.py`, not here; what is testable offline is
-that the dead name is gone, that each derivation reads the store, and that
-the probe now takes the store it needs.
+that the dead name is gone, that each derivation reads the store, that the
+probe now takes the store it needs, and that the count is a send count which
+does not charge a child execution to it.
 """
 
 from __future__ import annotations
 
 import ast
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -110,7 +133,7 @@ def test_the_dead_name_is_no_longer_a_reader_anywhere() -> None:
         r"""environ\s*\.?\s*(?:\.get\s*\(\s*)?\(?\s*['"]%s['"]"""
         % DEAD)
     canonical = checkouts.canonical_root(ROOT)
-    hits: list[str] = []
+    hits: list[tuple[str, int]] = []
 
     def scan(paths: list[tuple[Path, str]]) -> None:
         for path, key in paths:
@@ -118,7 +141,7 @@ def test_the_dead_name_is_no_longer_a_reader_anywhere() -> None:
                     path.read_text(encoding="utf-8", errors="ignore")
                     .splitlines(), 1):
                 if reader.search(line):
-                    hits.append("%s:%d" % (key, number))
+                    hits.append((key, number))
 
     # This checkout's tracked sources, keyed the way the assertion reads.
     scan([(ROOT / name, name)
@@ -132,9 +155,18 @@ def test_the_dead_name_is_no_longer_a_reader_anywhere() -> None:
               for name in checkouts.untracked_paths(
                   canonical, lane, ("*.py",))])
 
-    hits.sort()
-    assert hits == ["scripts/s09_pilot.py:1101"], (
-        "the live readers of the dead name moved: %r" % hits)
+    # Which file still reads the name, and how many places in it, is the
+    # claim. The line number is not: this test used to pin
+    # `scripts/s09_pilot.py:1101`, and every edit that added a line above the
+    # reader moved the number without moving a reader, so an unrelated lane's
+    # refactor turned this red over a fact it does not assert. Dropping the
+    # number is not dropping the count -- a second reader in the same file is
+    # still a moved reader, so a duplicate occurrence still fails. The line
+    # numbers are printed in the failure so a real move is one jump away.
+    counted = Counter(key for key, _ in hits)
+    assert counted == {"scripts/s09_pilot.py": 1}, (
+        "the live readers of the dead name moved: %r" % (
+            sorted("%s:%d" % pair for pair in hits),))
 
 
 def test_the_two_store_backed_paths_derive_from_the_allocation() -> None:
@@ -251,20 +283,90 @@ def store():
     admin.close()
 
 
-def _operations(store_dsn: str, allocation_id: str, count: int) -> None:
+def _payload_for(effect: str) -> dict:
+    """A payload the store's own validator accepts, so the row is real."""
+    from settlement import broker
+
+    if effect == broker.MODEL_INFERENCE:
+        return {"model": "c14-model",
+                "messages": [{"role": "user", "content": "c14"}],
+                "max_output_tokens": 1, "deadline_ms": 1000}
+    if effect == broker.SANDBOX_EXEC:
+        return {"profile": "local-process", "argv": ["c14"],
+                "timeout_ms": 1000}
+    raise ValueError("no seed payload for effect %r" % effect)
+
+
+def _seed_allocation(store_dsn: str, allocation_id: str) -> None:
+    """Seed the allocation once. `seed_allocation` refuses an existing id, and
+    a test that mixes two effects under one allocation asks twice."""
+    from psycopg.rows import dict_row
+    from settlement import db
     from settlement import store as settlement_store
     from settlement.common import Command
 
+    with db.read_connect(store_dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT 1 FROM allocations WHERE id = %s", (allocation_id,))
+            present = cur.fetchone() is not None
+        conn.commit()
+    if present:
+        return
     settlement_store.seed_allocation(store_dsn, Command(
         request_id="c14-alloc-%s" % allocation_id,
         payload={"allocation_id": allocation_id, "domain": "study",
                  "authorized": 1000}))
+
+
+def _operations(store_dsn: str, allocation_id: str, count: int,
+                effect: str = "model-inference") -> None:
+    """Seed `count` rows the way production writes them.
+
+    `broker.ensure_operation` is the single writer on every path this file
+    counts: `_DurableBrokerOutput.infer` calls it for a send
+    (invl02_live.py:963) and `method_exec.run_step_out_of_process` calls it for
+    a child execution (method_exec.py:1174). It puts `effect` at the top level
+    of the envelope that becomes `operations.payload` (broker.py:280,
+    store.py:1507-1512).
+
+    The seed used to hand `prepare_operation` a literal `{"effect": "note"}`
+    body instead. That put `effect` one level below where the query reads it
+    and named an effect `broker.EFFECTS` does not contain. It passed because
+    the query it was checking had no predicate to disagree with, so the
+    fixture asserted a number the reader arrived at for an unrelated reason.
+    Going through the production entry point makes that drift unreachable
+    rather than corrected once.
+    """
+    from settlement import broker
+
+    _seed_allocation(store_dsn, allocation_id)
     for index in range(count):
-        settlement_store.prepare_operation(store_dsn, Command(
-            request_id="c14-prep-%s-%d" % (allocation_id, index),
-            payload={"operation_id": "op-%s-%d" % (allocation_id, index),
-                     "allocation_id": allocation_id,
-                     "operation": {"effect": "note"}}))
+        broker.ensure_operation(
+            store_dsn,
+            operation_id="op-%s-%s-%d" % (allocation_id, effect, index),
+            effect=effect, payload=_payload_for(effect),
+            allocation_id=allocation_id, retries=0)
+
+
+def _every_row(store_dsn: str, allocation_id: str) -> int:
+    """Every row under the allocation, whatever its effect.
+
+    `_already_spent` deliberately does not read this. It is here so the test
+    that excludes a child execution can prove the row it excludes is really
+    there, under this allocation, rather than absent for some other reason.
+    """
+    from settlement import db
+    from psycopg.rows import dict_row
+
+    with db.read_connect(store_dsn) as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT COUNT(*) AS rows FROM operations WHERE allocation_id"
+                " = %s", (allocation_id,))
+            total = cur.fetchone()["rows"]
+        conn.commit()
+    return int(total)
 
 
 def test_the_count_is_the_stores_and_not_a_declaration(store) -> None:
@@ -272,6 +374,25 @@ def test_the_count_is_the_stores_and_not_a_declaration(store) -> None:
 
     _operations(store, ALLOCATION, 3)
 
+    assert driver._already_spent(store, ALLOCATION) == 3
+
+
+def test_a_child_execution_is_not_counted_as_a_model_send(store) -> None:
+    """The ceiling this count feeds is a model-send ceiling, and a round now
+    executes under this same allocation, so a `sandbox-exec` row lands beside
+    the sends. Counting it would price one child execution as one model call.
+
+    This is the narrowing's whole claim, so the test carries both halves. The
+    three sends are counted and the four child executions are not, and the
+    unscoped count says all seven rows are on this allocation, so the
+    exclusion is the predicate's doing and not the rows having gone missing.
+    """
+    from scripts import invl02_live as driver
+
+    _operations(store, ALLOCATION, 3, effect="model-inference")
+    _operations(store, ALLOCATION, 4, effect="sandbox-exec")
+
+    assert _every_row(store, ALLOCATION) == 7
     assert driver._already_spent(store, ALLOCATION) == 3
 
 
