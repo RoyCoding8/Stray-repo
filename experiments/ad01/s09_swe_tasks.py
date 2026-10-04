@@ -21,6 +21,12 @@ assessment split therefore spans all four roles and all three structures.
 Only digits reach these programs, and every digit maps to a nonzero
 contribution, so a widened, reversed or shortened window always changes the
 result. Every faulty variant is checked to be observable, not assumed to be.
+
+``score`` credits a candidate as ``repaired`` only when it behaves as the
+reference across the programs' whole input domain, not merely on the drawn
+cases. The drawn cases say what the candidate was asked to do; they cannot say
+whether the candidate is right, because a program can agree with the reference
+on every case ever drawn from a set and still be wrong everywhere else.
 """
 
 from __future__ import annotations
@@ -577,8 +583,28 @@ def run_program(program: Program, args: list, lines: list) -> dict:
 MAX_STEPS = 100000
 
 
+def _step_bound(budget: list):
+    """A trace hook that raises once `budget` runs out. Portable; see `_bounded`."""
+    def tracer(_frame, _event, _arg):
+        budget[0] -= 1
+        if budget[0] <= 0:
+            raise _TooLong
+        return tracer
+
+    return tracer
+
+
 def _bounded(entry, args) -> dict:
-    """Run the entry point under a step alarm, so a bad edit cannot hang."""
+    """Run the entry point under a step bound, so a bad edit cannot hang.
+
+    `signal.setitimer` is POSIX-only. Behind that `hasattr` it is simply absent
+    on win32, which left a candidate that never returned hanging the harness
+    on the host that runs this most often. A bound counted in steps is
+    portable, so it is the mechanism that decides the verdict on every host.
+    The alarm stays as the wall-clock limit on top of it, because a bound
+    counted in steps cannot stop a single line that never yields to the
+    interpreter.
+    """
     import signal
 
     def on_alarm(_signum, _frame):
@@ -588,6 +614,8 @@ def _bounded(entry, args) -> dict:
     if hasattr(signal, "setitimer"):
         previous = signal.signal(signal.SIGALRM, on_alarm)
         signal.setitimer(signal.ITIMER_REAL, 2.0)
+    budget = [MAX_STEPS]
+    traced = sys.settrace(_step_bound(budget))
     try:
         return {"kind": "value", "value": entry(*args)}
     except _TooLong:
@@ -596,6 +624,7 @@ def _bounded(entry, args) -> dict:
         return {"kind": "error", "name": type(exc).__name__,
                 "text": str(exc)}
     finally:
+        sys.settrace(traced)
         if previous is not None:
             signal.setitimer(signal.ITIMER_REAL, 0)
             signal.signal(signal.SIGALRM, previous)
@@ -653,7 +682,17 @@ def score(record: dict, lines: list) -> dict:
                        "kind": got["kind"]})
     passed = sum(1 for item in public if item["pass"])
     protected = protected_verdict(program, record, lines)
-    if passed == len(public) and protected["outcome"] == "pass":
+    # The drawn cases decide what the candidate was asked to do. They cannot
+    # decide whether the candidate is right, because a program can agree with
+    # the reference on every case drawn and still be wrong everywhere the
+    # cases do not reach. Equivalence over the domain is what makes `repaired`
+    # mean a correct repair, which is the claim the intervention experiments
+    # rest on. The sweep only runs for a candidate that already cleared the
+    # drawn cases, which is rare enough that it does not price the verdict.
+    answered = passed == len(public) and protected["outcome"] == "pass"
+    equivalent = (equivalence_verdict(program, record, lines)
+                  if answered else {"outcome": "fail"})
+    if equivalent["outcome"] == "pass":
         outcome = "repaired"
     elif any(item["kind"] == "error" for item in public):
         outcome = "crashed"
@@ -661,7 +700,7 @@ def score(record: dict, lines: list) -> dict:
         outcome = "unrepaired"
     return {"public": public, "public_passed": passed,
             "public_total": len(public), "protected": protected,
-            "outcome": outcome}
+            "equivalent": equivalent, "outcome": outcome}
 
 
 def protected_verdict(program: Program, record: dict, lines: list) -> dict:
@@ -669,6 +708,94 @@ def protected_verdict(program: Program, record: dict, lines: list) -> dict:
     got = run_program(program, case["args"], lines)
     passed = got["kind"] == "value" and got["value"] == case["expected"]
     return {"outcome": "pass" if passed else "fail"}
+
+
+# The equivalence domain. A candidate is `repaired` when it behaves as the
+# reference does across this whole domain, not when it happens to match the
+# reference on the three drawn cases.
+#
+# Three cases cannot carry the verdict, and no bigger draw can either. A
+# candidate that computes the reference only for inputs inside the drawn set
+# and returns a constant outside it agrees on every case ever drawn from that
+# set, so raising PUBLIC_CASES or PROTECTED_CASES moves the boundary rather
+# than closing it. Measured: at this domain size such a candidate is scored
+# `repaired` on all 39 instances today. The verdict has to be taken against
+# the reference over an input set the candidate did not get to choose, so it
+# is taken against all of it.
+#
+# The domain is the declared input space of every program in this file: `body`
+# is a string over `PLANT`, and `n` is a positive count. Bodies of length 1
+# through SWEEP_BODY cover every distinct slice bound these programs compute,
+# so agreement here is agreement everywhere on the domain and not merely
+# agreement on a sample of it.
+SWEEP_BODY = 5
+SWEEP_N = 5
+_SWEEP_CASES: list = []
+
+
+def equivalence_domain() -> list:
+    """The `(body, n)` pairs the verdict is taken over. Built once."""
+    global _SWEEP_CASES
+    if _SWEEP_CASES:
+        return _SWEEP_CASES
+    cases = []
+    for length in range(1, SWEEP_BODY + 1):
+        stack = [""]
+        for _ in range(length):
+            stack = [prefix + mark for prefix in stack for mark in PLANT]
+        for body in stack:
+            for n in range(1, SWEEP_N + 1):
+                cases.append([body, n])
+    _SWEEP_CASES = cases
+    return cases
+
+
+def equivalence_verdict(program: Program, record: dict, lines: list) -> dict:
+    """Does this candidate behave as the reference across the whole domain?
+
+    The reference is itself the specification, so a candidate is judged by
+    agreement with it rather than against a second set of expected values
+    that would have to be derived and frozen separately.
+    """
+    wanted = replay(program, record["reference_source"], equivalence_domain())
+    got = replay(program, lines, equivalence_domain())
+    return {"outcome": "pass" if got == wanted else "fail"}
+
+
+def replay(program: Program, lines: list, cases: list) -> list:
+    """Every case's outcome from one compiled candidate, under the step bound.
+
+    Compiled once and run over the whole sweep, because the step bound is
+    installed per trace session and re-entering it per input would not bound
+    anything. A candidate that cannot compile comes back as `None`, which
+    compares unequal to any reference sweep and so fails the check.
+    """
+    namespace: dict = {}
+    try:
+        exec(compile(render_source(lines), "<swe>", "exec"), namespace)
+    except Exception:
+        return None
+    entry = namespace.get(program.entry)
+    if not callable(entry):
+        return None
+    budget = [MAX_STEPS]
+    previous = sys.settrace(_step_bound(budget))
+    try:
+        outcomes = []
+        for args in cases:
+            # The budget is per case, not per sweep: a sweep of 1815 inputs
+            # would exhaust any single budget partway through and report the
+            # rest of the program as non-terminating.
+            budget[0] = MAX_STEPS
+            try:
+                outcomes.append(("value", entry(*args)))
+            except _TooLong:
+                outcomes.append(("error", "NonTerminating"))
+            except Exception as exc:
+                outcomes.append(("error", type(exc).__name__))
+    finally:
+        sys.settrace(previous)
+    return outcomes
 
 
 def instance(split: str, template: str, mechanism: str) -> dict:
