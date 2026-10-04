@@ -1192,13 +1192,148 @@ def choose_next_work(store, package: dict, experience: list) -> dict:
                 "opportunity_id")}
 
 
+def _live_effect_key(store, action: dict) -> tuple:
+    """The store's own identity for the effect this action is about to run.
+
+    A frontier effect is keyed on its opportunity, and the store recovers a
+    settled one by that key alone (`improve_channel._find_admitted_probe_effect`
+    matches `opportunity_id` and the probed input and nothing else). So the
+    same pair names the effect before it is admitted as after, and an admission
+    derived from it is a record of that effect rather than of a second name
+    invented beside it.
+
+    The target is the frozen task the opportunity intervenes on, which is the
+    same field the live opportunities are built with (`live_opportunity`) and
+    the one `_improve_probe_opportunity` writes, so `task_id` names the same
+    task the campaign side's `task_id` names.
+    """
+    from . import frontier as _frontier
+    inputs = dict(action.get("inputs") or {})
+    opportunity_id = str(inputs.get("opportunity_id") or "")
+    if action.get("kind") not in _frontier.OPERATE_KINDS or not opportunity_id:
+        return "", ""
+    record = store._doc["opportunities"].get(opportunity_id)
+    if record is None:
+        return "", ""
+    target = str(record.get("intervention", {}).get("target") or "")
+    return "%s@%s" % (opportunity_id, inputs.get("x", "")), target
+
+
+def _admit_live_effect(store, action: dict) -> str:
+    """Hold the operation this action is about to run, on the store's own row.
+
+    Admission is before the effect runs and release is after it settles, which
+    is the ordering `mission.admit_operation` exists for: a record written when
+    the effect completes is missing exactly when it is needed, which is the
+    window a crash lands in.
+
+    `capability_id` is the action kind. It is an input to `input_identity`
+    rather than a program identity, `program_digest` already carries the
+    program the effect runs under, and the effect's own identity is the
+    opportunity key above. `frontier.OPERATE_KINDS` is the closed set this
+    draws from, so nothing here names a kind the store would refuse.
+
+    A store naming no investigation is the fixture boundary and admits
+    nothing, because there is no row to hold an operation on.
+    """
+    from . import mission
+    identity = getattr(store, "identity", None)
+    dsn = getattr(identity, "dsn", None)
+    investigation_id = getattr(identity, "investigation_id", None)
+    if not dsn or not investigation_id:
+        return ""
+    key, task_id = _live_effect_key(store, action)
+    if not key:
+        return ""
+    program_digest = store.active_digest
+    if not program_digest:
+        raise LiveRefused("a live effect needs a bound program to be"
+                          " admitted under")
+    attempt_id = "att-%s-%s" % (investigation_id, key)
+    held = mission.read_in_flight(dsn, investigation_id)
+    seq = next((item.seq for item in held if item.attempt_id == attempt_id),
+               len(held))
+    mission.admit_operation(
+        dsn, investigation_id, seq=seq, attempt_id=attempt_id,
+        decision=dict(action), program_digest=program_digest,
+        task_id=task_id, capability_id=str(action.get("kind")))
+    return attempt_id
+
+
+def _effect_key_prefix(investigation_id: str) -> str:
+    return "att-%s-" % investigation_id
+
+
+def release_live_effects(store) -> int:
+    """Release every held operation whose effect is no longer to settle.
+
+    An effect leaves `pending_effects` only by settling, so its absence from
+    that list is the store's own statement that the work ran, and the two lists
+    are reconciled against each other rather than against a counter.
+
+    The opportunity key is recovered by prefix match rather than by parsing the
+    attempt id, because live opportunity ids contain dashes
+    (`opp-rule-dev-4`) and a split cannot tell those from the separators in the
+    investigation id.
+
+    Returns how many entries were released.
+    """
+    from . import mission
+    identity = getattr(store, "identity", None)
+    dsn = getattr(identity, "dsn", None)
+    if not dsn:
+        return 0
+    investigation_id = identity.investigation_id
+    outstanding = {effect.get("opportunity_id")
+                   for effect in store.pending_effects}
+    prefix = _effect_key_prefix(investigation_id)
+    released = 0
+    for item in mission.read_in_flight(dsn, investigation_id):
+        if not item.attempt_id.startswith(prefix):
+            continue
+        key = item.attempt_id[len(prefix):]
+        if key.split("@", 1)[0] in outstanding:
+            continue
+        mission.release_operation(dsn, investigation_id, item.attempt_id)
+        released += 1
+    return released
+
+
 def execute_chosen_work(store, action: dict, task=None) -> dict:
     from . import frontier as _frontier
     from . import improve_channel as _channel
+    _admit_live_effect(store, action)
     try:
         return _channel.execute_operate_action(store, action, task)
     except _frontier.Refused as exc:
         raise LiveRefused("live effect refused: %s" % exc) from exc
+    finally:
+        release_live_effects(store)
+
+
+def _require_quiescent(store, action: str) -> None:
+    """Refuse adoption while this investigation holds admitted-unrun work.
+
+    `FrontierStore.adopt_revision` asks its own list, which is a file. The
+    durable row is the same question asked of the record a restart reads, and
+    `mission.is_quiescent` is the one predicate over it. A store naming no
+    investigation is the fixture boundary and has no row to ask.
+
+    An investigation with no row is a refusal rather than a quiescent answer,
+    which is the rule `mission.is_quiescent` states for itself, kept rather
+    than turned into a default here.
+    """
+    from . import mission
+    identity = getattr(store, "identity", None)
+    dsn = getattr(identity, "dsn", None)
+    if not dsn:
+        return
+    try:
+        quiescent = mission.is_quiescent(dsn, identity.investigation_id)
+    except mission.MissionRefused as exc:
+        raise LiveRefused("%s refused: %s" % (action, exc)) from exc
+    if not quiescent:
+        raise LiveRefused("%s needs a quiescent boundary" % action)
 
 
 def run_live_improve_round(store, task, package: dict,
@@ -1320,6 +1455,7 @@ def activate_control_revision(store, candidate: dict) -> dict:
             "fixed-menu":
         raise LiveRefused("control activation admits only"
                           " fixed-menu authored-control packages")
+    _require_quiescent(store, "control activation")
     try:
         bound = store.adopt_revision(candidate)
     except _frontier.Refused as exc:
@@ -1478,6 +1614,7 @@ def adopt_live_revision(store, candidate: dict,
     try:
         validate_acquired_provenance(
             candidate, originals[0], finalizations[0])
+        _require_quiescent(store, "live adoption")
         return store.adopt_revision(
             candidate, arm=arm, acquisition_evidence=finalizations[0])
     except (LiveRefused, _frontier.Refused) as exc:

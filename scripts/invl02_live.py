@@ -1981,6 +1981,7 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
                 "pending effect has no attributable observation")
         for eff in list(pending):
             store.settle(eff["effect_id"], store.observations[-1])
+        _live.release_live_effects(store)
     try:
         activated = _live.activate_control_revision(store, candidate)
         adopted = {"status": "activated-control",
