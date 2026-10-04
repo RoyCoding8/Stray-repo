@@ -94,9 +94,13 @@ def software_atoms(task: dict):
 
     def build(keep):
         kept = [ops[i] for i in sorted(keep)]
+        # The candidate is a proposal to the grader, not a copy of the
+        # task. It carries the identity the grader matches on and the
+        # atoms it will read; it does not carry the fault, the witness
+        # values or the seed, which the grader already holds and a member
+        # must not be able to read off its own output.
         return {"family": "software", "task_id": task["task_id"],
-                "fault": task["fault"], "ops": kept,
-                "witness": task["witness"], "seed": task.get("seed")}
+                "ops": kept}
 
     order = ([i for i in range(len(ops) - 1, -1, -1) if i != witness_pos]
              + [witness_pos])
@@ -123,8 +127,7 @@ def graph_atoms(task: dict):
         keep_e = [e for i, e in enumerate(edges)
                   if i not in drop_e and e[0] in kept_v and e[1] in kept_v]
         return {"family": "graph", "task_id": task["task_id"],
-                "vertices": keep_v, "edges": keep_e,
-                "seed": task.get("seed")}
+                "vertices": keep_v, "edges": keep_e}
 
     def priority():
         scores = []

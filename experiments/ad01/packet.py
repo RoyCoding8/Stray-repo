@@ -87,6 +87,19 @@ PUBLIC_TASK_FIELDS = frozenset({
     "public_ops", "public_observations", "examples", "spec",
 })
 
+# The member's task, which is not the public view and not the method view.
+# A member is handed the material it has to reduce and told which
+# observation has to survive. `fault`, `seed` and `template` are absent by
+# name, so a task field added later cannot arrive by default: the allowlist
+# denies it until someone argues for it. `witness` is narrowed separately
+# below, because the observation is the member's business and the two
+# values it is scored against are not.
+MEMBER_TASK_FIELDS = frozenset({
+    "family", "task_id", "ops", "vertices", "edges", "witness",
+})
+
+MEMBER_WITNESS_FIELDS = frozenset({"observation"})
+
 
 def _is_sealed_observation(obs: dict) -> bool:
     if not isinstance(obs, dict):
@@ -122,6 +135,42 @@ def strip_task(task: dict | None) -> dict:
 def public_task_view(task: dict | None) -> dict:
     return {k: _strip_value(v) for k, v in dict(task or {}).items()
             if k in PUBLIC_TASK_FIELDS}
+
+
+def member_task_view(task: dict | None) -> dict:
+    """Task input for a member: the atoms, and which observation to protect.
+
+    The one place a task is narrowed for a member. Two different consumers
+    read a task and need different things from it, and one dict could not
+    serve both without leaking. The host grader is scored against the
+    fault and the witness's two values, so it must hold the whole task; a
+    member has to find the preserved reduction itself, so the answer is
+    the one thing it cannot be given. Filtering at each call site would
+    filter the grader along with the member, and a task the grader cannot
+    read grades every candidate `invalid-task` and the study measures a
+    null it never ran. So the split happens here, once, and the executor
+    keeps the two apart.
+
+    `witness["observation"]` stays because it is not the answer. It names
+    which op in `ops` the candidate has to keep holding, which the
+    member cannot infer without being told which observation is
+    designated, and it is an op id rather than a fault or an expected
+    value. `ref` and `faulty` are the answer and are dropped.
+
+    `template` is dropped for the same reason the public view keeps it
+    here and not there: it is `"stale-read-2chain"`, which names the
+    fault by substring. `seed` is dropped because `task_id` already
+    publishes the three integers it is arithmetic on.
+    """
+    task = dict(task or {})
+    view = {k: v for k, v in task.items() if k in MEMBER_TASK_FIELDS}
+    witness = view.get("witness")
+    if isinstance(witness, dict):
+        view["witness"] = {k: v for k, v in witness.items()
+                           if k in MEMBER_WITNESS_FIELDS}
+    else:
+        view.pop("witness", None)
+    return {k: _strip_value(v) for k, v in view.items()}
 
 
 def method_task_view(task: dict | None) -> dict:

@@ -26,6 +26,7 @@ import threading
 from contextlib import nullcontext
 from pathlib import Path
 
+from experiments.ad01 import packet
 from experiments.representation import checkers
 from settlement import broker
 from settlement.common import ResultCode, payload_digest
@@ -1115,6 +1116,17 @@ def run_member_out_of_process(member: dict, task: dict, *,
                               dsn: str | None = None,
                               allocation_id: str | None = None,
                               operation_id: str | None = None) -> dict:
+    """Run one member on one task, out of process, on the host's oracle.
+
+    `task` is the raw task and stays the host's own business. What reaches
+    the child is `packet.member_task_view(task)` and nothing else, which
+    is the whole seam: the grader needs the fault and the witness values
+    and the member must not have them, so one dict cannot serve both roles
+    and the executor splits it rather than leaving six call sites to
+    filter. Filtering at a call site filtered the grader too, and a
+    grader holding a fault-stripped task returns `invalid-task` for every
+    candidate, so the study would have measured a null it never ran.
+    """
     entry = verify_member(member)
     verify_child_contract()
     if not dsn or not allocation_id or not operation_id:
@@ -1126,6 +1138,7 @@ def run_member_out_of_process(member: dict, task: dict, *,
         if isinstance(n, ast.FunctionDef) and n.name == entry)
     oracle_type = checkers.GraphOracle if task.get("family") == "graph" else checkers.SoftwareOracle
     oracle = oracle_type(task, max_queries=max_queries)
+    exposed = packet.member_task_view(task)
     root = str(Path(__file__).resolve().parent.parent.parent)
     from settlement import db
     with db.connect(dsn) as conn:
@@ -1144,7 +1157,7 @@ def run_member_out_of_process(member: dict, task: dict, *,
         _stage_source(
             work / "member.py", member["method_source"], requested_digest,
             preserve=True)
-        input_data = {"task": task, "max_queries": max_queries}
+        input_data = {"task": exposed, "max_queries": max_queries}
         (work / "task.json").write_bytes(_canonical_input(input_data))
         driver_source = _DRIVER % (entry, argc)
         provenance = _operation_provenance(
