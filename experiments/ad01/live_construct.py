@@ -1041,25 +1041,6 @@ LIVE_MISSION_OBJECTIVE = "smaller valid explanatory examples"
 LIVE_AUTHORITY = {"queries": 16, "steps": 12}
 
 
-def live_mission(objective: str, environments: list) -> dict:
-    """A mission declaration, as the durable entry holds it.
-
-    This is the shape `mission.as_declaration` returns and the only shape
-    `ensure_live_store` accepts. It carries the four charter fields because
-    `MissionEntry` has all four, not because the frontier store uses more
-    than two of them. A caller that hand-builds this dict is restating an
-    entry that owns it, which is what `ensure_live_store` took a `dsn` for.
-    """
-    if not isinstance(objective, str) or not objective.strip():
-        raise LiveRefused("live mission needs an objective")
-    if not isinstance(environments, list) or not environments:
-        raise LiveRefused("live mission needs frozen environments")
-    return {"objective": objective,
-            "environments": list(environments),
-            "constraints": [],
-            "success_criteria": []}
-
-
 def _live_identity(dsn: str | None, investigation_id: str | None):
     """The one place a live caller turns two names into a store identity.
 
@@ -1085,22 +1066,29 @@ def ensure_live_store(path, mission: dict | None, authority: dict, *,
 
     A `dsn` and an `investigation_id` are how the mission is identified, and
     they replace `mission` rather than qualifying it: the live entry passes
-    `None` there and the declaration is read from `investigations`, so the
-    store is opened over the entry that owns the mission and no caller can
-    open a live store under a mission it invented. The same pair is the
-    store's own identity, so the store records the investigation whose
-    `in_flight` row would own its admitted-unrun effects, and reopening
-    under a different one is refused rather than reconciled. Without both,
-    `mission` is the declaration and the store records no durable owner,
-    which is stated in the document rather than left to be inferred from an
-    absent key.
+    `None` there and the entry is read from `investigations`, so the store is
+    opened over the row that owns the mission and no caller can open a live
+    store under a mission it invented. The same pair is the store's own
+    identity, so the store records the investigation whose `in_flight` row
+    would own its admitted-unrun effects, and reopening under a different one
+    is refused rather than reconciled. Without both, `mission` is the
+    declaration and the store records no durable owner, which is stated in
+    the document rather than left to be inferred from an absent key.
+
+    The read is `read_mission` and not `read_declaration`. A store's mission
+    is the two fields `create_store` keeps, but the identity it is opened
+    under was decided by a caller that had just called `read_improvement_mode`
+    on the same row, so reading the four charter fields through a narrower
+    reader is the shape that hid the mode from the boundary that consults it.
+    One reader for the row means a caller cannot hold two views of the same
+    mission that disagree.
     """
     from . import frontier as _frontier
     from . import mission as _mission
     import os
     identity = _live_identity(dsn, investigation_id)
     if dsn is not None:
-        mission = _mission.read_declaration(dsn, investigation_id)
+        mission = _mission.read_mission(dsn, investigation_id).as_declaration()
     if os.path.exists(str(path)):
         try:
             store = _open_owned_store(path, dsn, investigation_id)
@@ -1214,7 +1202,29 @@ def execute_chosen_work(store, action: dict, task=None) -> dict:
 
 
 def run_live_improve_round(store, task, package: dict,
-                           round_no: int, arm: str | None = None) -> dict:
+                           round_no: int, arm: str | None = None,
+                           *, authority: dict | None = None) -> dict:
+    """Run one improvement round, under the authority the caller holds.
+
+    `authority` is the `{dsn, allocation_id}` the round's executions settle
+    against. It is forwarded to `drive_improve_round` and not defaulted here,
+    because the default there is a database created for this round and dropped
+    when it ends: a receipt naming that database is a receipt about something
+    that no longer exists. Supplying it is what makes the round's operations
+    sit under the study root the caller already authorized.
+
+    Production does not supply it yet, and this function refuses to guess. A
+    caller with a study store names it; a caller without one is the fixture
+    boundary, and the round mints its own ledger as before. What this lane
+    cannot do alone is make production supply it: the operation identity
+    `drive_improve_round` mints is `invl02-improve-<package[:16]>-r<n>-s<k>`
+    and carries neither the arm nor the investigation, so every arm that
+    binds the same deterministic `make_control("low")` mints the same
+    operation id for the same step. Under one shared allocation the second
+    arm therefore reads the first arm's settled receipt instead of executing,
+    or refuses on changed immutable authority metadata. That minting site
+    belongs to `improve_channel`, which this lane does not own.
+    """
     from . import frontier as _frontier
     from . import improve_channel as _channel
     if package.get("package_digest") != store.active_digest:
@@ -1222,7 +1232,7 @@ def run_live_improve_round(store, task, package: dict,
     try:
         return _channel.drive_improve_round(
             store, task, package=dict(package), round_no=int(round_no),
-            arm=arm, admit_probes=True)
+            arm=arm, admit_probes=True, authority=authority)
     except _frontier.Refused as exc:
         raise LiveRefused("live improvement refused: %s" % exc) from exc
 
@@ -1484,47 +1494,6 @@ def restart_store(path, dsn: str | None = None,
     """
     from . import frontier as _frontier
     return _open_owned_store(path, dsn, investigation_id)
-
-
-def live_frontier_round(store_path, mission: dict, authority: dict,
-                        opportunities: list, task, package=None,
-                        round_no: int = 1,
-                        experience: list | None = None,
-                        dsn: str | None = None,
-                        investigation_id: str | None = None) -> dict:
-    store = ensure_live_store(store_path, mission, authority, dsn=dsn,
-                              investigation_id=investigation_id)
-    propose_live_work(store, opportunities)
-    active = store.active_package
-    if active is None:
-        active = bind_live_control(store, "low")
-    elif package is not None:
-        if package.get("package_digest") != active.get("package_digest"):
-            raise LiveRefused("live round package is not the bound program")
-        active = package
-    exp = list(experience) if experience is not None else []
-    chosen = choose_next_work(store, active, exp)
-    effect: dict = {"status": "choice-only"}
-    inner = chosen["action"]
-    if inner.get("kind") == "investigate":
-        effect = execute_chosen_work(store, inner, task)
-    elif inner.get("kind") == "probe":
-        effect = execute_chosen_work(store, inner, task)
-    improved = run_live_improve_round(store, task, active,
-                                      int(round_no))
-    candidate = improved["candidate"]
-    return {"store_path": str(store_path),
-            "active_digest": active["package_digest"],
-            "choice": chosen["choice"],
-            "action": chosen["action"],
-            "executed_digest": chosen["executed_digest"],
-            "effect": effect,
-            "candidate_id": candidate["control_id"],
-            "candidate_digest": candidate["package_digest"],
-            "parent_digest": candidate["parent_digest"],
-            "executed_imp_digest": active["imp_digest"],
-            "observations": improved["observations"],
-            "log": improved["log"]}
 
 
 PREFLIGHT_VERSION = "invl02-live-preflight-v1"
