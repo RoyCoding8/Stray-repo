@@ -1172,7 +1172,8 @@ def bind_live_control(store, which: str = "low"):
     return active
 
 
-def choose_next_work(store, package: dict, experience: list) -> dict:
+def choose_next_work(store, package: dict, experience: list,
+                     *, arm: str | None = None) -> dict:
     from . import frontier as _frontier
     from . import improve_channel as _channel
     if not isinstance(package, dict) or not package.get("package_digest"):
@@ -1182,7 +1183,7 @@ def choose_next_work(store, package: dict, experience: list) -> dict:
     view = store.step_view(_frontier.OPERATE, package)
     view["experience"] = list(experience)
     try:
-        result = _channel.run_operate_step(package, view, {})
+        result = _channel.run_operate_step(package, view, {}, arm=arm)
     except _frontier.Refused as exc:
         raise LiveRefused("live frontier choice refused: %s" % exc) \
             from exc
