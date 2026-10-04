@@ -796,12 +796,21 @@ def test_the_resolver_sees_a_known_production_caller():
         "a resolver that cannot see that sees nothing")
 
 
-def test_admission_is_live_and_quiescence_is_still_dead():
-    """What the wiring made reachable, and what it left dead.
+def test_admission_and_quiescence_are_both_live():
+    """What the wiring made reachable, which used to be half-dead.
 
     Admission is entered from `run_campaign` and its column is written on the
-    live path. `is_quiescent` is still called from nothing in production:
-    the campaign knows it holds work by reading the row, not by asking.
+    live path. `is_quiescent` used to be called from nothing in production —
+    the campaign knew it held work by reading the row, not by asking, and the
+    live arm's own predicate was a file read. M1 requires one definition of
+    quiescence for live admission and program adoption, so `live_construct` now
+    gates both of its `adopt_revision` call sites on the SQL predicate.
+
+    So `prod_callers == 0` is now the wrong assertion; it was a census of a dead
+    seam and the seam is wired. `reachable_from_main` stays False and is not the
+    signal: the census does not resolve `from . import live_construct as _live`,
+    so it cannot see a caller behind that alias. `prod_callers` is the count that
+    answers the question actually being asked here.
     """
     report = _census()
     rows = {r["impl"]: r for r in report["rows"]}
@@ -814,8 +823,9 @@ def test_admission_is_live_and_quiescence_is_still_dead():
     assert quiescent["test_modules"] > 0, (
         "is_quiescent is neither reachable nor tested; the census cannot "
         "tell those apart")
-    assert quiescent["prod_callers"] == 0, quiescent
-    assert quiescent["reachable_from_main"] is False
+    assert quiescent["prod_callers"] > 0, (
+        "is_quiescent has no production caller again, so nothing governs "
+        "readiness: %r" % quiescent)
 
 
 def test_the_census_is_reported_not_baked_in(capsys):
