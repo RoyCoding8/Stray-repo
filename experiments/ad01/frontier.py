@@ -2206,7 +2206,60 @@ class FrontierStore:
         return events
 
     def is_quiescent(self) -> bool:
+        """Whether this document has an effect it admitted and has not run.
+
+        Not the mission's quiescence. This list is keyed on opportunities and
+        lives in a file; `mission.is_quiescent` reads a row keyed on attempts,
+        and no writer in the tree carries one into the other.
+        `adopt_revision` is where both are consulted and which authority
+        answers for which store; this method is only ever the document's own
+        half of the question.
+        """
         return len(self.pending_effects) == 0
+
+    def _require_quiescent_boundary(self) -> None:
+        """Refuse adoption unless this store's own owner says it may.
+
+        Adoption resets `private_state` and rewrites `retained` from the
+        observations recorded so far, so it is destructive to anything a
+        pending effect might still need. The question is therefore not
+        "is the program quiescent" but "has every work item this store
+        admitted finished", and the two records of that answer are kept
+        apart rather than merged into one predicate.
+
+        A store naming an investigation is a live mission. Its row is the
+        record a restart reads, so `mission.is_quiescent` answers for it and
+        the document's list is not consulted: an effect the row never
+        recorded is a gap in the admission path, not a licence to adopt,
+        and answering it from a file would let a durable answer depend on a
+        document any writer could have rewritten.
+
+        A store naming no investigation is a fixture, built per arm with no
+        `dsn` in scope and no row behind it (`learner_revision._mission`,
+        `channel_controls._mission`). There is no mission to declare
+        quiescent and nothing a row could be asked, so the document's own
+        list is the only answer available and refusing it would refuse
+        every fixture adoption. `mission.is_quiescent` raises for an absent
+        row rather than answering, and that refusal is not turned into a
+        default here.
+
+        The split is by named owner, not by caller. Whether these fixture
+        paths ever gain a `dsn` is a question about the studies that build
+        them, and the day one does it answers to the row with no edit here.
+        """
+        identity = self.identity
+        if identity is None or not identity.dsn:
+            quiescent = self.is_quiescent()
+        else:
+            from . import mission
+            try:
+                quiescent = mission.is_quiescent(identity.dsn,
+                                                 identity.investigation_id)
+            except mission.MissionRefused as exc:
+                raise Refused("adoption needs a quiescent boundary: %s"
+                              % exc) from exc
+        if not quiescent:
+            raise Refused("adoption needs a quiescent boundary")
 
     def bind_active(self, package: dict, *,
                     acquisition_evidence: dict | None = None) -> dict:
@@ -2246,8 +2299,7 @@ class FrontierStore:
         active = self._validate_active_package()
         if active is None:
             raise Refused("no active program to revise")
-        if not self.is_quiescent():
-            raise Refused("adoption needs a quiescent boundary")
+        self._require_quiescent_boundary()
         bound = validate_package(candidate, grant=self._doc["grant"])
         if bound["package_digest"] == active["package_digest"]:
             if bound.get("origin") == "acquired":
