@@ -99,7 +99,18 @@ def test_an_authored_control_member_executes_under_the_child_contract():
             assert candidate["task_id"] == task_id
             assert candidate["family"] == family
             if family == "software":
-                assert candidate["fault"] == "stale-read"
+                # `fault` is `"stale-read"` in the raw task and is the value
+                # the grader scores the candidate against. 7ac77bb stopped
+                # copying it into the candidate, because a candidate that
+                # carries its own answer does not have to find the preserved
+                # reduction. This asserted the copy as intended behaviour, so
+                # it raised KeyError once the copy was gone. The child contract
+                # is that the answer never reaches the member, so that is what
+                # is asserted: the candidate carries the identity and the
+                # atoms the grader reads, and neither the fault nor the seed
+                # it is scored against.
+                assert "fault" not in candidate
+                assert "seed" not in candidate
                 assert len(candidate["ops"]) == greedy_ops
             else:
                 assert len(candidate["vertices"]) == greedy_ops
