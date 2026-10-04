@@ -2012,6 +2012,98 @@ def _improve_probe_opportunity(store, task: dict, x: int,
     return opportunity_id
 
 
+def _admit_round_effect(store, action: dict, opportunity_id: str,
+                        operation_id: str) -> str:
+    """Hold the operation this round's probe is about to run, on its own row.
+
+    The same shape `live_construct._admit_live_effect` writes, with the same
+    conventions, so the two admission paths name one thing: `attempt_id` is
+    `att-<investigation>-<opportunity_id>@<x>`, `program_digest` is
+    `store.active_digest`, and `seq` is the existing seq on re-admission else
+    `len(held)`. `capability_id` is the action kind, which is a member of
+    `frontier.OPERATE_KINDS`, and `task_id` is the target the opportunity
+    intervenes on.
+
+    Admission is before the effect is admitted and spent, and release is after
+    it settles, which is the ordering `mission.admit_operation` exists for: a
+    record written when the effect completes is missing exactly when a restart
+    needs it.
+
+    The decision carries the round's own `operation_id` because this is a
+    probe the round ran, and the store keys the effect on that id
+    (`effect_identity={"operation_id": ...}` two lines below). Without it two
+    arms of one investigation admit the same action as the same decision,
+    which is the collision the round's operation ids were renamed to fix.
+
+    The convention is duplicated rather than shared. `live_construct` already
+    owns `_admit_live_effect`, but that module imports this one, so reaching
+    across the direction would put the live boundary inside every fixture
+    round that executes an action.
+
+    A store naming no investigation is the fixture boundary and admits
+    nothing, exactly as `_disposable_authority` constructs a store per round.
+    There is no row to hold an operation on, and one is not fabricated.
+    """
+    from . import mission
+    identity = getattr(store, "identity", None)
+    dsn = getattr(identity, "dsn", None)
+    investigation_id = getattr(identity, "investigation_id", None)
+    if not dsn or not investigation_id:
+        return ""
+    program_digest = store.active_digest
+    if not program_digest:
+        raise _frontier.Refused("a round effect needs a bound program to be"
+                                " admitted under")
+    record = store._doc["opportunities"].get(opportunity_id)
+    if record is None:
+        raise _frontier.Refused("round effect names an unknown opportunity")
+    task_id = str(record.get("intervention", {}).get("target") or "")
+    attempt_id = "att-%s-%s@%s" % (
+        investigation_id, opportunity_id,
+        (action.get("inputs") or {}).get("x", ""))
+    held = mission.read_in_flight(dsn, investigation_id)
+    seq = next((item.seq for item in held if item.attempt_id == attempt_id),
+               len(held))
+    mission.admit_operation(
+        dsn, investigation_id, seq=seq, attempt_id=attempt_id,
+        decision={"action": dict(action), "opportunity_id": opportunity_id,
+                  "operation_id": operation_id},
+        program_digest=program_digest, task_id=task_id,
+        capability_id=str(action.get("kind")))
+    return attempt_id
+
+
+def _release_round_effect(store, attempt_id: str) -> None:
+    """Drop the hold this round's probe took, once the effect is admitted.
+
+    The round completes the effect two blocks below, so releasing here is
+    releasing on admission rather than on settlement. That is honest about
+    what this path knows: the round holds the operation across the store's
+    own `admit_and_spend`, which is the window the effect exists without an
+    observation, and the observation is written immediately after with no
+    boundary a restart could land between.
+
+    `live_construct.release_live_effects` reconciles against
+    `store.pending_effects` instead, because it runs at a loop boundary with
+    effects from a whole study round outstanding. This one admits and releases
+    inside a single statement's scope, so there is nothing to reconcile.
+
+    The live loop also calls `release_live_effects` after settling. That call
+    stays necessary and is not made redundant by this: it releases the holds
+    that round admitted but this release did not, which is any probe whose
+    `admit_and_spend` refused after the hold was taken.
+    """
+    if not attempt_id:
+        return
+    from . import mission
+    identity = getattr(store, "identity", None)
+    dsn = getattr(identity, "dsn", None)
+    investigation_id = getattr(identity, "investigation_id", None)
+    if not dsn or not investigation_id:
+        return
+    mission.release_operation(dsn, investigation_id, attempt_id)
+
+
 def execute_operate_action(store, action: dict, task=None) -> dict:
     _frontier.validate_operate_action(action)
     kind = action["kind"]
@@ -2243,6 +2335,12 @@ def drive_improve_round(store, task, package=None,
             probe_opportunity_id = None
             recovered = None
             effect = None
+            # The hold this step's probe took on the investigation's row,
+            # released once the effect settles below and at the round's end
+            # for a hold a `break` left outstanding. It is declared here
+            # rather than inside the probe branch because a step can leave
+            # the branch by `continue` as well as by falling through.
+            attempt_id = ""
             try:
                 if action["kind"] == "probe" and admit_probes:
                     probe_opportunity_id = _improve_probe_opportunity(
@@ -2260,9 +2358,14 @@ def drive_improve_round(store, task, package=None,
                                     "executed_digest": stepped["executed_digest"],
                                     "result": "observed"})
                         continue
+                    attempt_id = _admit_round_effect(
+                        store, action, probe_opportunity_id,
+                        receipt["operation_id"])
                     effect = store.admit_and_spend(
-                        probe_opportunity_id, active["package_digest"], requested,
-                        effect_identity={"operation_id": receipt["operation_id"]})
+                        probe_opportunity_id, active["package_digest"],
+                        requested,
+                        effect_identity={
+                            "operation_id": receipt["operation_id"]})
                 else:
                     store.spend_round_command(int(round_no), step, requested)
             except _frontier.Refused as exc:
@@ -2301,6 +2404,7 @@ def drive_improve_round(store, task, package=None,
                                     "inputs": {"x": entry["x"]},
                                     "environment": store.environment_digest},
                         outcome={"y": list(found)})
+                _release_round_effect(store, attempt_id)
                 round_obs.append(entry)
                 log.append({"round": round_no, "step": step,
                             "action": "probe", "inputs": {"x": entry["x"]},
@@ -2346,6 +2450,13 @@ def drive_improve_round(store, task, package=None,
                             "executed_digest": stepped["executed_digest"],
                             "result": "round-ended"})
                 break
+    # A step that took a hold and then broke out of the loop -- the round
+    # refused its effect, or ended on a kind that settles nothing -- leaves
+    # the hold outstanding. The hold is released here rather than left for
+    # `live_construct.release_live_effects`, which reconciles by
+    # `store.pending_effects` and so needs the store to be saved first. The
+    # hold is the round's own and the round knows which one it took.
+    _release_round_effect(store, attempt_id)
     if candidate is None:
         raise _frontier.Refused("improve round left no candidate")
     if admit_probes:
