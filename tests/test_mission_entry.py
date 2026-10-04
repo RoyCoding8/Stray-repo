@@ -134,9 +134,16 @@ def test_mission_fields_is_exactly_what_is_written(entered):
         conn.commit()
     assert [row["improvement_mode"] for row in names] == ["improve"]
 
+    # The refused name is what the test is for, so the call has to reach the
+    # validator rather than stop at the signature. `record_mission`'s first
+    # parameter has been `dsn` since 8e06980; the keyword `store=` this used
+    # to pass was the pre-migration name and never bound, so the raise this
+    # asserts never had a chance to happen. The dsn is the live fixture's, not
+    # None, because a refused field is refused before any row is written and
+    # this must fail for that reason rather than on a connection.
     with pytest.raises(mission.MissionRefused):
         mission.record_mission(
-            store=None, investigation_id=INVESTIGATION,
+            entered, INVESTIGATION,
             objective="probe boolean rules",
             environments=[], constraints=[], success_criteria=[],
             retained_use={"package_digest": "c" * 64})
