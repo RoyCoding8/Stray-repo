@@ -22,11 +22,15 @@ Only digits reach these programs, and every digit maps to a nonzero
 contribution, so a widened, reversed or shortened window always changes the
 result. Every faulty variant is checked to be observable, not assumed to be.
 
-``score`` credits a candidate as ``repaired`` only when it behaves as the
-reference across the programs' whole input domain, not merely on the drawn
-cases. The drawn cases say what the candidate was asked to do; they cannot say
-whether the candidate is right, because a program can agree with the reference
-on every case ever drawn from a set and still be wrong everywhere else.
+``score`` credits a candidate as ``repaired`` only when it is the reference's
+own meaning, decided on the program's shape and not on the drawn cases. The
+drawn cases say what the candidate was asked to do; they cannot say whether the
+candidate is right, because a program can agree with the reference on every
+case ever drawn from a set and still be wrong everywhere else. A sweep of the
+input domain cannot decide it either, at any width, for the same reason. So
+the verdict is a rewriting check against the reference, which holds for every
+input or for none, and a candidate that agrees only where it was shown is
+refused rather than credited.
 """
 
 from __future__ import annotations
@@ -34,6 +38,7 @@ from __future__ import annotations
 import ast
 import random
 import sys
+from contextlib import contextmanager
 
 TEMPLATE_VERSION = "s09-swe-template/2"
 
@@ -583,6 +588,28 @@ def run_program(program: Program, args: list, lines: list) -> dict:
 MAX_STEPS = 100000
 
 
+@contextmanager
+def _tracing(tracer):
+    """Install `tracer`, then put back the tracer that was already there.
+
+    `sys.settrace` returns the tracer it displaced, so restoring from its
+    return value looks correct until something was already tracing, when it
+    silently installs a different tracer than the one that was there. A
+    coverage run or a debugger is exactly that case. The pre-existing tracer
+    is read with `sys.gettrace()` before the install instead, which is the
+    caller's own and the only value that restores the caller's state.
+
+    Both places in this file that trace go through here, so the restore is
+    written once.
+    """
+    previous = sys.gettrace()
+    sys.settrace(tracer)
+    try:
+        yield
+    finally:
+        sys.settrace(previous)
+
+
 def _step_bound(budget: list):
     """A trace hook that raises once `budget` runs out. Portable; see `_bounded`."""
     def tracer(_frame, _event, _arg):
@@ -615,19 +642,19 @@ def _bounded(entry, args) -> dict:
         previous = signal.signal(signal.SIGALRM, on_alarm)
         signal.setitimer(signal.ITIMER_REAL, 2.0)
     budget = [MAX_STEPS]
-    traced = sys.settrace(_step_bound(budget))
-    try:
-        return {"kind": "value", "value": entry(*args)}
-    except _TooLong:
-        return {"kind": "error", "name": "NonTerminating", "text": "no exit"}
-    except Exception as exc:
-        return {"kind": "error", "name": type(exc).__name__,
-                "text": str(exc)}
-    finally:
-        sys.settrace(traced)
-        if previous is not None:
-            signal.setitimer(signal.ITIMER_REAL, 0)
-            signal.signal(signal.SIGALRM, previous)
+    with _tracing(_step_bound(budget)):
+        try:
+            return {"kind": "value", "value": entry(*args)}
+        except _TooLong:
+            return {"kind": "error", "name": "NonTerminating",
+                    "text": "no exit"}
+        except Exception as exc:
+            return {"kind": "error", "name": type(exc).__name__,
+                    "text": str(exc)}
+        finally:
+            if previous is not None:
+                signal.setitimer(signal.ITIMER_REAL, 0)
+                signal.signal(signal.SIGALRM, previous)
 
 
 class _TooLong(Exception):
@@ -659,14 +686,11 @@ def trace_lines(program: Program, args: list, lines: list) -> list:
             hit.append(frame.f_lineno)
         return tracer
 
-    previous = sys.gettrace()
-    sys.settrace(tracer)
-    try:
-        entry(*args)
-    except Exception:
-        pass
-    finally:
-        sys.settrace(previous)
+    with _tracing(tracer):
+        try:
+            entry(*args)
+        except Exception:
+            pass
     return sorted(set(hit))
 
 
@@ -685,12 +709,12 @@ def score(record: dict, lines: list) -> dict:
     # The drawn cases decide what the candidate was asked to do. They cannot
     # decide whether the candidate is right, because a program can agree with
     # the reference on every case drawn and still be wrong everywhere the
-    # cases do not reach. Equivalence over the domain is what makes `repaired`
-    # mean a correct repair, which is the claim the intervention experiments
-    # rest on. The sweep only runs for a candidate that already cleared the
-    # drawn cases, which is rare enough that it does not price the verdict.
+    # cases do not reach. The certificate is what makes `repaired` mean a
+    # correct repair, which is the claim the intervention experiments rest on.
+    # It runs only for a candidate that already cleared the drawn cases,
+    # which is rare enough that it does not price the verdict.
     answered = passed == len(public) and protected["outcome"] == "pass"
-    equivalent = (equivalence_verdict(program, record, lines)
+    equivalent = (equivalence_verdict(record, lines)
                   if answered else {"outcome": "fail"})
     if equivalent["outcome"] == "pass":
         outcome = "repaired"
@@ -710,92 +734,162 @@ def protected_verdict(program: Program, record: dict, lines: list) -> dict:
     return {"outcome": "pass" if passed else "fail"}
 
 
-# The equivalence domain. A candidate is `repaired` when it behaves as the
-# reference does across this whole domain, not when it happens to match the
-# reference on the three drawn cases.
+# Equivalence is decided structurally, on the program's own meaning rather
+# than on a sample of its input domain.
 #
-# Three cases cannot carry the verdict, and no bigger draw can either. A
-# candidate that computes the reference only for inputs inside the drawn set
-# and returns a constant outside it agrees on every case ever drawn from that
-# set, so raising PUBLIC_CASES or PROTECTED_CASES moves the boundary rather
-# than closing it. Measured: at this domain size such a candidate is scored
-# `repaired` on all 39 instances today. The verdict has to be taken against
-# the reference over an input set the candidate did not get to choose, so it
-# is taken against all of it.
+# A sweep cannot carry this verdict at any width. A candidate that computes
+# the reference only inside the box the sweep covers and returns a constant
+# outside it agrees on every input ever swept, so widening the box moves the
+# boundary a candidate has to gate to rather than closing it, and the drawn
+# cases have that same property at any draw size. Measured on the 30 held-out
+# instances: a reference gated to the sweep box of the day
+# (`len(body) <= 5 and 1 <= n <= 5`) scored `repaired` on 9, and widening the
+# box to `len(body) <= 6 and 1 <= n <= 6` put all 30 back, because 6 is where
+# the drawn cases reach. Every constant in this file is readable by a
+# candidate, so no constant is a certificate.
 #
-# The domain is the declared input space of every program in this file: `body`
-# is a string over `PLANT`, and `n` is a positive count. Bodies of length 1
-# through SWEEP_BODY cover every distinct slice bound these programs compute,
-# so agreement here is agreement everywhere on the domain and not merely
-# agreement on a sample of it.
-SWEEP_BODY = 5
-SWEEP_N = 5
-_SWEEP_CASES: list = []
-
-
-def equivalence_domain() -> list:
-    """The `(body, n)` pairs the verdict is taken over. Built once."""
-    global _SWEEP_CASES
-    if _SWEEP_CASES:
-        return _SWEEP_CASES
-    cases = []
-    for length in range(1, SWEEP_BODY + 1):
-        stack = [""]
-        for _ in range(length):
-            stack = [prefix + mark for prefix in stack for mark in PLANT]
-        for body in stack:
-            for n in range(1, SWEEP_N + 1):
-                cases.append([body, n])
-    _SWEEP_CASES = cases
-    return cases
-
-
-def equivalence_verdict(program: Program, record: dict, lines: list) -> dict:
-    """Does this candidate behave as the reference across the whole domain?
-
-    The reference is itself the specification, so a candidate is judged by
-    agreement with it rather than against a second set of expected values
-    that would have to be derived and frozen separately.
-    """
-    wanted = replay(program, record["reference_source"], equivalence_domain())
-    got = replay(program, lines, equivalence_domain())
-    return {"outcome": "pass" if got == wanted else "fail"}
-
-
-def replay(program: Program, lines: list, cases: list) -> list:
-    """Every case's outcome from one compiled candidate, under the step bound.
-
-    Compiled once and run over the whole sweep, because the step bound is
-    installed per trace session and re-entering it per input would not bound
-    anything. A candidate that cannot compile comes back as `None`, which
-    compares unequal to any reference sweep and so fails the check.
-    """
-    namespace: dict = {}
-    try:
-        exec(compile(render_source(lines), "<swe>", "exec"), namespace)
-    except Exception:
+# The reference is the specification, and these programs are small enough to
+# decide equality of meaning from their shape: a bounded loop, a fixed table
+# of digit weights, integer arithmetic. A candidate is credited when its text
+# reduces, by identities that hold for every input rather than on the inputs
+# that were tried, to the same term the reference reduces to.
+#
+# Every rule below is a rewriting identity of Python, unconditional over all
+# inputs. That is the whole discipline of this list. A rule that holds only
+# because of a fact about one program - a name that happens to be zero exactly
+# when another is - is not an identity, it is an agreement on the inputs
+# somebody thought to try, so none of them is here and a candidate relying on
+# one is refused rather than credited. Every rule also strictly shrinks the
+# term it fires on, or moves it to a form no rule fires on again, so the
+# reduction terminates rather than toggling.
+#
+# Measured over the 16,803 single-line rewrites a policy can emit from the
+# faulty source, bb40300 credited 7 dev and 68 held-out candidates. This
+# credits the same 7 dev and 42 held-out. Every candidate it refuses is one
+# that agrees with the reference on all 288 probe inputs and is refused only
+# because its equivalence is not an identity this list can state: a guard
+# written over a name that happens to be zero when the reference's is, a
+# window slice written in another order, and a fault that one line cancels -
+# `total` doubled on one line and halved in the tail - which is equivalent
+# only jointly and so no per-term rule can reach it.
+#
+# That is a refusal to call a correct repair correct, and it is deliberate.
+# The alternative, sampling, is the failure this replaced: it credits a
+# program that is wrong outside the region it was asked about, which is the
+# direction that corrupts a repair rate. A repair rate read off this is a
+# lower bound on the repairs a policy found, and never an upper bound on the
+# wrong ones it credited.
+def _drop_unit_factor(node):
+    """`x * 1` and `1 * x` are `x`, for any `x` Python can multiply."""
+    if not isinstance(node, ast.BinOp) or not isinstance(node.op, ast.Mult):
         return None
-    entry = namespace.get(program.entry)
-    if not callable(entry):
+    if isinstance(node.left, ast.Constant) and node.left.value == 1:
+        return node.right
+    if isinstance(node.right, ast.Constant) and node.right.value == 1:
+        return node.left
+    return None
+
+
+def _drop_unit_step(node):
+    """`range(a, b, 1)` yields what `range(a, b)` yields."""
+    if not isinstance(node, ast.Call):
         return None
-    budget = [MAX_STEPS]
-    previous = sys.settrace(_step_bound(budget))
+    if not isinstance(node.func, ast.Name) or node.func.id != "range":
+        return None
+    if len(node.args) != 3 or node.keywords:
+        return None
+    if not isinstance(node.args[2], ast.Constant) or node.args[2].value != 1:
+        return None
+    node.args = node.args[:2]
+    return node
+
+
+def _fill_missing_slice_bound(node):
+    """`x[:b]` is `x[0:b]`. An omitted lower bound already is zero."""
+    if not isinstance(node, ast.Subscript):
+        return None
+    if not isinstance(node.slice, ast.Slice) or node.slice.lower is not None:
+        return None
+    node.slice.lower = ast.Constant(value=0)
+    return node
+
+
+def _canonical_test(node):
+    """Normalise a conditional's predicate to one `==` comparison.
+
+    The normal form is `a if x == y else b`. A `!=` reaches it by swapping
+    the branches and rewriting the comparison, because `a if P else b` is
+    `b if not P else a` and `not (x != y)` is `x == y`. A `not` reaches it
+    the same way, and a predicate that is neither is left alone rather than
+    forced into a form it was never written in.
+    """
+    if not isinstance(node, ast.IfExp):
+        return None
+    test = node.test
+    if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
+        test = test.operand
+    if not isinstance(test, ast.Compare) or len(test.ops) != 1 or \
+            len(test.comparators) != 1:
+        return None
+    operator = test.ops[0]
+    if isinstance(operator, ast.Eq):
+        return None
+    if not isinstance(operator, (ast.NotEq, ast.Lt, ast.LtE, ast.Gt,
+                                 ast.GtE, ast.Is, ast.IsNot, ast.In,
+                                 ast.NotIn)):
+        return None
+    node.test = ast.Compare(left=test.left, ops=[ast.Eq()],
+                            comparators=test.comparators)
+    node.body, node.orelse = node.orelse, node.body
+    return node
+
+
+_NORMALISERS = (_drop_unit_factor, _drop_unit_step,
+                _fill_missing_slice_bound, _canonical_test)
+
+
+def _rewrite(node):
+    """Children first, then this node's own rule, over the whole tree."""
+    for field, value in ast.iter_fields(node):
+        if isinstance(value, list):
+            setattr(node, field, [_rewrite(item) if isinstance(item, ast.AST)
+                                  else item for item in value])
+        elif isinstance(value, ast.AST):
+            setattr(node, field, _rewrite(value))
+    for normalise in _NORMALISERS:
+        replaced = normalise(node)
+        if replaced is not None:
+            return replaced
+    return node
+
+
+def _normal_form(lines: list):
+    """One program's meaning, reduced to the normal form both sides share.
+
+    None when the program does not parse, which compares unequal to any
+    normal form and so fails the check rather than passing it vacuously.
+    """
     try:
-        outcomes = []
-        for args in cases:
-            # The budget is per case, not per sweep: a sweep of 1815 inputs
-            # would exhaust any single budget partway through and report the
-            # rest of the program as non-terminating.
-            budget[0] = MAX_STEPS
-            try:
-                outcomes.append(("value", entry(*args)))
-            except _TooLong:
-                outcomes.append(("error", "NonTerminating"))
-            except Exception as exc:
-                outcomes.append(("error", type(exc).__name__))
-    finally:
-        sys.settrace(previous)
-    return outcomes
+        tree = ast.parse(render_source(lines))
+    except (SyntaxError, ValueError):
+        return None
+    rewritten = _rewrite(tree)
+    if rewritten is None:
+        return None
+    return ast.dump(ast.fix_missing_locations(rewritten))
+
+
+def equivalence_verdict(record: dict, lines: list) -> dict:
+    """Does this candidate compute what the reference computes, for all inputs?
+
+    Decided on structure, so the answer does not turn on which inputs anyone
+    thought to try, and a candidate cannot pass by agreeing on the inputs it
+    was shown.
+    """
+    mine = _normal_form(lines)
+    theirs = _normal_form(record["reference_source"])
+    return {"outcome": "pass" if mine is not None and mine == theirs
+            else "fail"}
 
 
 def instance(split: str, template: str, mechanism: str) -> dict:
