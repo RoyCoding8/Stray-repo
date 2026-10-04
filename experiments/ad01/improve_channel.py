@@ -1818,20 +1818,34 @@ def _disposable_authority(token: str):
         _isolation.drop_disposable_db(database, admin_dsn=admin)
 
 
-def _derived_operation_id(package: dict, arm: str, view: dict) -> str:
+def _derived_operation_id(package: dict, purpose: str, view: dict, *,
+                          arm: str | None = None) -> str:
     """One execution's identity, derived rather than minted fresh.
 
     Derived from what the execution actually is, so a re-entry runs the same
     bytes against the same view under the same identity and a settled
-    receipt is read back instead of re-running. It has to carry the view as
-    well as the package and the arm, because `classify_revision` executes the
-    same revision once per learner view. An identity that omitted the view
-    would offer the broker one operation id with a different payload per
-    view, which it refuses as a request-identity conflict, and it refuses
-    correctly: those executions really are different work.
+    receipt is read back instead of re-running. It carries the view because
+    `classify_revision` executes the same revision once per learner view. An
+    identity that omitted the view would offer the broker one operation id
+    with a different payload per view, which it refuses as a request-identity
+    conflict, and it refuses correctly: those executions really are different
+    work.
+
+    It carries the arm for the same reason, and the same fix applies to both.
+    Two arms of one study execute the same package against the same view, and
+    under one shared allocation the second one would read the first one's
+    settled receipt instead of executing.
+
+    `purpose` is what the execution is for — `op`, `imp`, `rev` — and was
+    named `arm`, which is how the arm went missing from the id while the
+    docstring claimed it was there. Only `run_improve_step` knows an arm; the
+    operate and revision paths reach the executor without one, and their ids
+    say so rather than reading as a name.
     """
-    return "invl02-%s-%s-v%s" % (
-        arm, str(package.get("package_digest", ""))[:16],
+    return "invl02-%s-%s-%s-v%s" % (
+        purpose,
+        str(arm) if arm is not None else "noarm",
+        str(package.get("package_digest", ""))[:16],
         _frontier.source_digest(_frontier.canonical(dict(view)))[:16])
 
 
@@ -1902,7 +1916,7 @@ def run_improve_step(package: dict, view: dict, state: dict, *,
             view.get("purpose"),))
     with _execution_ledger(authority, "invl02-improve",
                            operation_id or _derived_operation_id(
-                               package, "imp", view)) as held:
+                               package, "imp", view, arm=arm)) as held:
         stepped = _run_source(package["imp_source"], view, state,
                               authority=held,
                               operation_id=held["operation_id"], arm=arm,
@@ -2132,6 +2146,10 @@ def drive_improve_round(store, task, package=None,
     where that investigation cannot reach them. The production live path did
     exactly that and its receipts did not survive the round. A refusal makes
     the omission visible before the round rather than after its evidence.
+
+    The operation ids this round mints name the investigation and the arm
+    beside the package, because an execution is one arm's work under one
+    investigation and the package digest alone names neither.
     """
     granted = authority
     if granted is None and getattr(store, "identity", None) is not None:
@@ -2167,12 +2185,25 @@ def drive_improve_round(store, task, package=None,
     receipts: list = []
     state: dict = {}
     candidate = None
+    # The two names an operation id needs and the package digest does not
+    # carry. Every live arm binds the same deterministic `make_control`,
+    # so the digest alone is one id offered to the ledger by every arm of
+    # the study. They are named rather than defaulted, because a store that
+    # names no investigation and a caller that names no arm have said
+    # something about the execution, and `"None"` in an id would read as a
+    # name rather than as the absence of one.
+    investigation = getattr(store, "identity", None)
+    investigation_segment = (
+        str(investigation.investigation_id) if investigation is not None
+        else "nameless")
+    arm_segment = str(arm) if arm is not None else "noarm"
     with contextlib.ExitStack() as ledger:
         for step in range(3):
             view = store.step_view(_frontier.IMPROVE, active)
             view["experience"] = list(round_obs)
             view["round"] = round_no
-            operation_id = "invl02-improve-%s-r%d-s%d" % (
+            operation_id = "invl02-improve-%s-%s-%s-r%d-s%d" % (
+                investigation_segment, arm_segment,
                 active["package_digest"][:16], int(round_no), step)
             command = store.round_command(int(round_no), step)
             if command is not None:
