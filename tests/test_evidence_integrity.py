@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import uuid
 from pathlib import Path
 
 import pytest
@@ -13,8 +14,50 @@ from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import frontier
 from experiments.ad01 import improve_channel as channel
 from experiments.ad01 import live_construct as live
+from experiments.ad01 import mission
 from experiments.ad01 import offline_recompute
+from experiments.ad01.s09_run_isolation import create_disposable_db, \
+    drop_disposable_db
 from scripts import invl02_live as driver
+
+MIGRATIONS = ROOT / "migrations"
+E3_ENVIRONMENTS = [{"instrument": "boolean-rule-v1", "split": "dev",
+                    "seed": 4}]
+
+
+@pytest.fixture(scope="module")
+def e3_database():
+    """A real database for the E3 fixtures, because their stores own a row.
+
+    `_bound_acquired_store` names its store after an investigation, and
+    `live.adopt_live_revision` asks that investigation's row whether the
+    investigation is quiescent before it adopts (064f249). The row lives in
+    PostgreSQL, so a fixture naming an investigation and pointing at a
+    database that does not exist asks the question against nothing and fails
+    on the connection rather than on the thing being measured.
+
+    `test_a31_live_store_identity` and `test_a34_quiescence` already reach a
+    durable row this way, so this is the established route rather than a new
+    one. Each test records its own investigation, so no test's row is another
+    test's starting state.
+    """
+    database = create_disposable_db("e3evidence", migrations_dir=MIGRATIONS)
+    try:
+        yield database.dsn
+    finally:
+        drop_disposable_db(database)
+
+
+def _owned_identity(dsn: str, arm: str) -> frontier.StoreIdentity:
+    """A store identity whose investigation has the row it names."""
+    investigation_id = "invl02-e12-%s-%s" % (
+        arm, uuid.uuid4().hex[:8])
+    mission.record_mission(
+        dsn, investigation_id,
+        objective=live.LIVE_MISSION_OBJECTIVE,
+        environments=E3_ENVIRONMENTS, constraints=[],
+        success_criteria=[], improvement_mode="improve")
+    return frontier.StoreIdentity(investigation_id=investigation_id, dsn=dsn)
 
 
 def _run_identity(freeze):
@@ -147,11 +190,12 @@ def _write_synthetic_authority(out, e12):
     return operations, child_receipts
 
 
-_E3_FIXTURE_IDENTITY = frontier.StoreIdentity(
-    investigation_id="invl02-e12-fixture", dsn="dbname=invl02-e3-fixture")
+def _bound_acquired_store(path, arm="P1", dsn=None):
+    """Build a store that has adopted an acquired revision, under a real owner.
 
-
-def _bound_acquired_store(path, arm="P1"):
+    The identity is built per call rather than shared, so each test gets its
+    own investigation and therefore its own `in_flight` row.
+    """
     from settlement.gateway import ModelRequest, ModelResponse, Usage
 
     class Gateway:
@@ -161,9 +205,10 @@ def _bound_acquired_store(path, arm="P1"):
                 json.dumps({"entry": channel.IMPROVE_LOW_SOURCE}),
                 {}, Usage(), "stop")
 
+    identity = _owned_identity(dsn, arm)
     store = frontier.create_store(
         path, namespace=frontier.NAMESPACE,
-        identity=_E3_FIXTURE_IDENTITY,
+        identity=identity,
         mission={"objective": "m", "environments": [{"split": "dev",
                                                      "seed": 4}]},
         authority={"queries": 16, "steps": 12})
@@ -194,20 +239,20 @@ def _bound_acquired_store(path, arm="P1"):
                     "control_id": package["control_id"],
                     "package_digest": package["package_digest"],
                     "response_digest": package["response_digest"]},
-        rules.make_task("dev", 4), dsn=_E3_FIXTURE_IDENTITY.dsn,
-        investigation_id=_E3_FIXTURE_IDENTITY.investigation_id)
-    return frontier.FrontierStore(str(path), _E3_FIXTURE_IDENTITY), bound
+        rules.make_task("dev", 4), dsn=identity.dsn,
+        investigation_id=identity.investigation_id)
+    return frontier.FrontierStore(str(path), identity), bound
 
 
-def _write_bound_e3_fixture(tmp_path, arm="P1"):
+def _write_bound_e3_fixture(tmp_path, arm="P1", dsn=None):
     out = tmp_path / "e12"
     out.mkdir()
     freeze = driver.freeze_e12(out)
     store_path = tmp_path / "frontier.json"
-    store, bound = _bound_acquired_store(store_path, arm)
+    store, bound = _bound_acquired_store(store_path, arm, dsn)
     summary = {"store_path": str(store_path),
                "store_digest": driver._file_digest(store_path),
-               "investigation_id": _E3_FIXTURE_IDENTITY.investigation_id}
+               "investigation_id": store.identity.investigation_id}
     e12 = {**_run_identity(freeze),
            "status": "incomplete",
            "execution_status": "incomplete",
@@ -417,9 +462,9 @@ def _replace_local_receipt_with_durable_test_seam(out, store, bound):
 
 
 def test_e3_is_an_eligibility_screen_not_an_execution_result(
-        tmp_path, monkeypatch):
+        tmp_path, monkeypatch, e3_database):
     monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
-    out, store, bound = _write_bound_e3_fixture(tmp_path)
+    out, store, bound = _write_bound_e3_fixture(tmp_path, dsn=e3_database)
     receipt = _replace_local_receipt_with_durable_test_seam(out, store, bound)
     result = driver.run_e3(
         "unused", tmp_path / "e3", out, authority=_FakeDurableE3Authority(receipt))
@@ -444,13 +489,14 @@ def test_e0_requires_bound_preflight_before_authority(tmp_path, monkeypatch):
 
 
 def test_e3_local_receipt_cannot_satisfy_missing_durable_authority(
-        tmp_path, monkeypatch):
+        tmp_path, monkeypatch, e3_database):
     monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
     monkeypatch.setattr(
         driver._DurableE3Authority, "read",
         lambda self, operation_id: (_ for _ in ()).throw(
             RuntimeError("durable authority unavailable")))
-    out, _store, _bound = _write_bound_e3_fixture(tmp_path)
+    out, _store, _bound = _write_bound_e3_fixture(
+        tmp_path, dsn=e3_database)
     result = driver.run_e3(
         "postgresql:///invl02-e3-authority-that-does-not-exist",
         tmp_path / "e3", out)
@@ -459,9 +505,9 @@ def test_e3_local_receipt_cannot_satisfy_missing_durable_authority(
 
 
 def test_e3_accepts_only_matching_bound_e12_store_and_receipt(
-        tmp_path, monkeypatch):
+        tmp_path, monkeypatch, e3_database):
     monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
-    out, store, bound = _write_bound_e3_fixture(tmp_path)
+    out, store, bound = _write_bound_e3_fixture(tmp_path, dsn=e3_database)
     receipt = _replace_local_receipt_with_durable_test_seam(out, store, bound)
     authority = _FakeDurableE3Authority(receipt)
     summary = json.loads((out / "frontier-P1.json").read_text())
@@ -485,9 +531,10 @@ def test_e3_accepts_only_matching_bound_e12_store_and_receipt(
 
 
 def test_e3_requires_durable_gateway_dispatch_provenance(
-        tmp_path, monkeypatch):
+        tmp_path, monkeypatch, e3_database):
     monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
-    out, store, _bound = _write_bound_e3_fixture(tmp_path)
+    out, store, _bound = _write_bound_e3_fixture(
+        tmp_path, dsn=e3_database)
     receipt = store.accepted_revisions[-1]["receipt"]
     store._doc["evidence"] = [
         record for record in store._doc["evidence"]
@@ -507,7 +554,8 @@ def test_e3_requires_durable_gateway_dispatch_provenance(
     assert "dispatch provenance" in result["arm_revisions"]["P1"]
 
 
-def test_e3_rejects_store_not_bound_to_e12_run(tmp_path, monkeypatch):
+def test_e3_rejects_store_not_bound_to_e12_run(tmp_path, monkeypatch,
+                                                e3_database):
     monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
     out = tmp_path / "e12"
     out.mkdir()
@@ -521,7 +569,8 @@ def test_e3_rejects_store_not_bound_to_e12_run(tmp_path, monkeypatch):
     related.bind_active(channel.make_control("low"))
 
     unrelated_path = tmp_path / "unrelated.json"
-    unrelated, _bound = _bound_acquired_store(unrelated_path, "P1")
+    unrelated, _bound = _bound_acquired_store(
+        unrelated_path, "P1", e3_database)
     receipt = unrelated.accepted_revisions[-1]["receipt"]
 
     related_digest = driver._file_digest(related_path)
@@ -617,21 +666,21 @@ def _write_owned_e3_store(tmp_path, arm="P1"):
     return store_path, identity
 
 
-def _write_adopted_e3_store(tmp_path, arm="P1"):
+def _write_adopted_e3_store(tmp_path, arm="P1", dsn=None):
     """An owned store holding an active, retained acquired revision.
 
-    No database: the gateway is a stub and the package is built from its own
-    dispatch evidence, so this reaches as far into `run_e3` as a run without
-    PostgreSQL can. The dispatch-provenance guard is one step further on and
-    needs a child receipt, which only a real execution mints — the bound
-    fixture reaches it under a live database and no fixture can reach it
-    without one.
+    The gateway is a stub and the package is built from its own dispatch
+    evidence, so this reaches as far into `run_e3` as a run without a live
+    execution can. The dispatch-provenance guard is one step further on and
+    needs a child receipt, which only a real execution mints -- the bound
+    fixture reaches it, and it is the one that must run under a real
+    database, because `adopt_live_revision` asks the owner row whether the
+    investigation is quiescent.
     """
     from settlement.gateway import ModelRequest, ModelResponse, Usage
 
     store_path = tmp_path / "owned.json"
-    identity = frontier.StoreIdentity(
-        investigation_id="invl02-e12-%s" % arm, dsn="dbname=e3-owner")
+    identity = _owned_identity(dsn, arm)
     store = frontier.create_store(
         store_path, namespace=frontier.NAMESPACE,
         mission={"objective": "m", "environments": [{"split": "dev",
@@ -699,9 +748,10 @@ def test_e3_reports_a_summary_with_no_investigation_as_absent(tmp_path,
 
 
 def test_e3_reaches_the_accepted_revision_check_past_the_store_open(
-        tmp_path, monkeypatch):
+        tmp_path, monkeypatch, e3_database):
     monkeypatch.setenv("INVL02_LIVE_GRANT", "test")
-    store_path, identity, package = _write_adopted_e3_store(tmp_path)
+    store_path, identity, package = _write_adopted_e3_store(
+        tmp_path, dsn=e3_database)
     summary = {"store_path": str(store_path),
                "store_digest": driver._file_digest(store_path),
                "investigation_id": identity.investigation_id}
