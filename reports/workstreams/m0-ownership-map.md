@@ -230,7 +230,8 @@ downstream.
 
 - **No green CI baseline exists.** Run `37172638343` is the only run on this
   branch: 3 jobs failed, 4 of 7 suite matrix entries were cancelled at ~100min,
-  1 succeeded. 245 distinct FAILED/ERROR test IDs. A lane's regression cannot be
+  1 succeeded. 259 distinct failing test IDs: 245 FAILED and 14 ERROR, from
+  run `0ee4699`. A lane's regression cannot be
   distinguished from pre-existing red without a committed starting-failure set.
 - **`run-e0`/`run-e12` are never invoked by CI.** Verified: no match in
   `ci.yml`. These are manual-operator paths, so CI cannot qualify M1's central
