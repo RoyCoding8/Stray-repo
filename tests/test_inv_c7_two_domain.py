@@ -83,11 +83,15 @@ def _cross(dsn):
     mission columns that no production code read, and migration 0021 dropped
     those columns; the assertions below now read the value the run returns,
     which is where the content lives now.
+
+    `run_two_domain_crossing` takes no arguments since 54112be. It is a pure run
+    over the two worlds and records nothing, so passing the dsn and mission id
+    it used to record against is both wrong and, after that commit, a TypeError.
     """
     from experiments.ad01 import twodomain
 
     twodomain.record_two_domain_mission(dsn, MISSION_ID, charter=CHARTER)
-    return twodomain.run_two_domain_crossing(dsn, MISSION_ID)
+    return twodomain.run_two_domain_crossing()
 
 
 # --- 1. one row, not two joined -----------------------------------------
