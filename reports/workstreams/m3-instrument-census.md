@@ -17,23 +17,30 @@ M3 forbids adding a world to raise a count. This census says the count should go
 
 Four independent reasons, each sufficient alone. The first is mine.
 
-**1. The task is regenerable from public values. [verified]** The whole task is a
-pure function of `(world, kind, index)` — `splits.py:380` seeds from
-`_ad01_seed("software", world, kind, index)`, and `task_id` is
-`ad01-w1-within-sw-00`. All three are recoverable from the public `task_id`
-string with no key.
+**1. The task hands over the answer. [verified]** This is worse than "the task
+is regenerable", and the correction is recorded in
+`reports/workstreams/ad01-leak-assessment.md`.
 
-Worse, `seed` is itself in `packet.PUBLIC_TASK_FIELDS` (`packet.py:78`), so it
-reaches the policy's view directly. And the injected fault is
-`software.FAULTS[index % 2]` (`splits.py:383`) — chosen by **index parity alone**,
-and the index is the trailing number of the public `task_id`. A policy can
-determine which fault was injected from the task id before reading the program.
+The frozen task carries the fault as a **literal key**: `ad01-w1-within-sw-00.json`
+has keys `family, fault, ops, seed, task_id, template, witness` with
+`fault = "stale-read"` and `template = "stale-read-2chain"`. Six call sites pass
+the raw task into a member (`trajectory.py:1839`, `records.py:1617`,
+`s09_m3_pilot.py:229,494`, `s09_m2_reload_proof.py:67`, `construct.py:129`).
+No import, no inversion, no source read — the answer is a key in the dict.
 
-Scope this honestly: this leaks to a policy that can import the generator, which
-is exactly the in-child model this project uses (`method_exec` runs child
-processes against the repo). It does not leak to a policy handed only the view
-over a wire. It is fatal for the in-child model and irrelevant for the wire
-model, so the fix is to state which model a study uses.
+`method_task_view` (packet.py:121-130) is a **denylist** (`SEALED_KEYS`,
+packet.py:42-45) and passes `fault` and `witness` through at both call sites.
+`public_task_view` is the allowlist and still leaks, because `template` is
+`"stale-read-2chain"` — the fault name is a substring of a public field on
+**27 of 27** frozen software tasks. `packet.py:137-143` documents exactly this,
+which is why the existing leak checks are blind to it: `held_out_values` must
+exclude any value the public view already shows, so a check for `stale-read`
+would fire on every arm including one carrying no experience.
+
+`packet.py:78` also listed `seed` in the allowlist, a second copy of what
+`task_id` already publishes, since `_ad01_seed` is arithmetic on the three
+integers in the id. Removed in `wt/instr-ad01` (`21b4c17`), `+7/-1` in one
+file. It was redundant authority, and removing it closed no hole.
 
 **2. The metric is reduction-only.** `benefit.py:18-32` freezes the rule as
 `total.reduction: strictly-greater`, computed as `sum(normalized_reduction)`
@@ -157,12 +164,28 @@ ran) distinct from E4 (ran and spent 6).
 ## Disposition
 
 **No cell freezable for a discovery claim.** M3 as written cannot be run
-honestly against these instruments. Freezing AD01 cells would manufacture the
-cluster count M3 warns against; freezing SWE would be freezing an unmeasured
-cell.
+honestly against these instruments.
 
-Per WORKER-PROMPT's own rule — if construction produces no eligible artifact,
-finish the bounded attempt and leave utility/transfer unmeasured — the correct
-next step is to repair the instrument (a leak fix on AD01, the missing
-expressive-action probe, the STEP cell measurement) and only then freeze. That
-work is independent of M1 and can run in parallel.
+**Correction to this census's own threat model.** The first version of this
+document claimed the leak was fatal only for an in-child policy that could
+import the generator, and irrelevant for a wire policy — so the fix was "state
+which model a study uses." `ad01-leak-assessment.md` refutes that by measurement.
+A child **cannot** import: `verify_member` refuses `ast.Import`/`ImportFrom` at
+`method_exec.py:738` and `:1481`, and `__import__` is in `_FORBIDDEN_CALLS` at
+`:37-40`. Zero of 4421 committed member sources contain the word. Reachability
+was inferred from the driver; the member is more contained than that.
+
+The real exposure needs no import at all. The answer is a key in the dict handed
+to the member. Declaring a threat model changes instructions to the study, not
+one line of what any member observes.
+
+**The cheapest real repair** is to route all six raw call sites through one
+named allowlisted view. That invalidates no frozen bytes, unlike re-keying or
+re-deriving the fault, both of which rewrite all 27 task digests. Those six
+sites belong to the migration lane, not this one, so it is recorded as their
+finding rather than done here.
+
+**These worlds cannot carry a discovery claim until the six raw call sites are
+routed through an allowlist.** Everything else on the removal list — reduction-only
+metric, experience that cannot vary, unique minimum — is independent of the leak
+and independently sufficient.
