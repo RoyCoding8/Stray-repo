@@ -42,7 +42,7 @@ CANARY_MEMBER = {
 
 
 def test_acquired_execution_uses_broker_profile(tmp_path):
-    from experiments.ad01 import trajectory, worlds
+    from experiments.ad01 import packet, trajectory, worlds
     from settlement import broker
     from settlement import db
     from experiments.coord02 import experience as E
@@ -56,7 +56,15 @@ def test_acquired_execution_uses_broker_profile(tmp_path):
     result = trajectory._run_member(
         dict(CANARY_MEMBER), task, dsn=DSN,
         allocation_id="ad01-campaign-ad01-broker", operation_id="ad01-broker-use-0")
-    assert result["candidate"] == task
+    # The canary echoes back what it was given, and what it was given is the
+    # member view of the task, not the task. `method_exec` hands the child
+    # `packet.member_task_view(task)` (7ac77bb) so the fault and the witness's
+    # two values cannot be read off the candidate the grader scores against.
+    # The raw task those keys belong to is the grader's, and the host still
+    # holds it.
+    assert result["candidate"] == packet.member_task_view(task)
+    assert "fault" not in result["candidate"]
+    assert set(result["candidate"]["witness"]) == {"observation"}
     assert result["operation_id"]
     op = broker.read_operation(DSN, result["operation_id"])
     assert op is not None and op["payload"]["effect"] == "sandbox-exec"
@@ -111,7 +119,7 @@ def test_broker_query_count_survives_replay():
 
 
 def test_acquired_member_cannot_touch_host_modules():
-    from experiments.ad01 import trajectory, worlds
+    from experiments.ad01 import packet, trajectory, worlds
     from experiments.representation import reducers
     assert not hasattr(reducers, "bdr01_host_pollution")
     task = worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-dev-sw-00")
@@ -120,7 +128,10 @@ def test_acquired_member_cannot_touch_host_modules():
             dict(CANARY_MEMBER), task, dsn=store["dsn"],
             allocation_id=store["allocation_id"],
             operation_id="a56bdr01host-pollution")
-    assert own["candidate"] == task
+    # The canary echoes its input, and the child is handed the member view
+    # rather than the raw task (`method_exec.run_member_out_of_process`), so
+    # this compares against that view and not against the grader's copy.
+    assert own["candidate"] == packet.member_task_view(task)
     assert not hasattr(reducers, "bdr01_host_pollution"), \
         "candidate executed in the trusted host process"
 
