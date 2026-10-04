@@ -1020,7 +1020,7 @@ def channel_headroom(*, split: str, seeds: list,
     compared against in an E4 round. What the construction can install is
     reported as `reachable_evidence`, read off the incumbent's own bytes.
     The ceiling over every input the instrument accepts is a wider
-    question, and `ceiling_over_inputs` answers it.
+    question and this is not it: nothing here bounds the substrate.
 
     A flag that cannot be true is not a measurement either, so two
     guards here are required for `measurable` to be true: the best probe
@@ -1103,28 +1103,6 @@ def channel_headroom(*, split: str, seeds: list,
         "split": split, "n": len(seeds),
         "reachable_evidence": list(reachable),
     }
-
-
-def ceiling_over_inputs(*, split: str, seeds: list) -> dict:
-    """The range over every input the instrument accepts.
-
-    `reachable_lineage_spread` bounds what a revision of this decision can
-    reach. This bounds the substrate instead, so "the construction cannot
-    express it" and "the decision has no range" can be told apart. A
-    revision's only lever is choosing a better probe, so this is the
-    ceiling on any revision of the same decision.
-    """
-    if not seeds:
-        return {"spread": None, "best_probe": None, "worst_probe": None,
-                "split": split, "n": 0}
-    means = {p: evaluate_lineage([p], split=split,
-                                 seeds=seeds)["mean"]
-             for p in range(_N_INPUTS)}
-    best = max(sorted(means), key=means.get)
-    worst = min(sorted(means), key=means.get)
-    return {"spread": means[best] - means[worst], "best_probe": best,
-            "worst_probe": worst, "input_means": means,
-            "split": split, "n": len(seeds)}
 
 
 def reviser_own_score(observations: list) -> float:
@@ -2140,6 +2118,26 @@ def drive_improve_round(store, task, package=None,
                         round_no=None, arm: str | None = None,
                         *, admit_probes: bool = False,
                         authority: dict | None = None) -> dict:
+    """Drive one improvement round under an authority the caller can name.
+
+    `authority` is the study store and allocation the round's executions
+    settle against. A caller holding none, on a store that names no owner
+    either, gets a disposable store for the length of the round. That is the
+    fixture boundary, and it is honest there because the store makes no
+    durable claim outliving the round.
+
+    A caller holding none on an *owned* store is refused. Such a store records
+    which investigation owns its unresolved work, so a round executing against
+    a database created and dropped inside the round settles its receipts
+    where that investigation cannot reach them. The production live path did
+    exactly that and its receipts did not survive the round. A refusal makes
+    the omission visible before the round rather than after its evidence.
+    """
+    granted = authority
+    if granted is None and getattr(store, "identity", None) is not None:
+        raise _frontier.Refused(
+            "refused: an owned store executes under the authority its"
+            " investigation authorizes, not under a disposable one")
     active = dict(package) if package is not None \
         else store.active_package
     if active is None:
@@ -2169,7 +2167,6 @@ def drive_improve_round(store, task, package=None,
     receipts: list = []
     state: dict = {}
     candidate = None
-    granted = authority
     with contextlib.ExitStack() as ledger:
         for step in range(3):
             view = store.step_view(_frontier.IMPROVE, active)
@@ -2327,7 +2324,20 @@ def drive_improve_round(store, task, package=None,
             "receipts": list(receipts),
         }
         result["result_digest"] = _frontier.round_result_digest(result)
+        # The entry is appended rather than written through a store method
+        # because the store has no round-result writer and `frontier.py` is
+        # another lane's. What this closes is the hole the bare append opened:
+        # the entry used to reach disk unvalidated and was only checked by
+        # `_validate_round_results` at the next open, so a round could save a
+        # document its own store refused to reopen. The store's own validator
+        # is asked before the save, and the entry withdrawn if it refuses, so
+        # nothing invalid is persisted and the refusal is the round's own.
         store._doc["round_results"].append(result)
+        try:
+            store._validate_round_results()
+        except _frontier.Refused:
+            store._doc["round_results"].pop()
+            raise
     store.save()
     return {"candidate": candidate, "log": log,
             "observations": list(round_obs), "receipts": receipts}
