@@ -68,13 +68,20 @@ MEMBER_SOURCE = (
 # measurement is not measuring. B3 asserted the same property on the same
 # bytes; here it is re-derived so this artifact's own instrument is what is
 # checked rather than a neighbour's.
+#
+# It echoes back what a member is given, and a member is no longer given the
+# fault or the witness values: `packet.member_task_view` withholds them because
+# the grader reads them and a member must not. So this copies the fields that
+# view carries and reads the rest with `get`, which returns None rather than
+# raising. It still returns its input unchanged, which is the property the
+# negative control exists to check.
 CONSTANT_SOURCE = (
     'def ENTRY(task, oracle, max_queries=16):\n'
     '    ops = list(task["ops"])\n'
     '    return {"candidate": {"family": "software",'
     ' "task_id": task["task_id"],\n'
-    '                            "fault": task["fault"], "ops": ops,\n'
-    '                            "witness": task["witness"],'
+    '                            "fault": task.get("fault"), "ops": ops,\n'
+    '                            "witness": task.get("witness"),'
     ' "seed": task.get("seed")},\n'
     '                "queries": 0}\n')
 

@@ -81,8 +81,8 @@ CONSTANT_SOURCE = (
     '    ops = list(task["ops"])\n'
     '    return {"candidate": {"family": "software",'
     ' "task_id": task["task_id"],\n'
-    '                            "fault": task["fault"], "ops": ops,\n'
-    '                            "witness": task["witness"],'
+    '                            "fault": task.get("fault"), "ops": ops,\n'
+    '                            "witness": task.get("witness"),'
     ' "seed": task.get("seed")},\n'
     '                "queries": 0}\n')
 
@@ -113,9 +113,9 @@ def _member_source() -> str:
         '    def build(indices):\n'
         '        return {"family": "software",'
         ' "task_id": task["task_id"],\n'
-        '                "fault": task["fault"],\n'
+        '                "fault": task.get("fault"),\n'
         '                "ops": [ops[i] for i in sorted(indices)],\n'
-        '                "witness": task["witness"],\n'
+        '                "witness": task.get("witness"),\n'
         '                "seed": task.get("seed")}\n'
         '\n'
         '    if not keep:\n'
