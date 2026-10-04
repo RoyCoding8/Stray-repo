@@ -2682,8 +2682,19 @@ def run_e12(dsn: str, out) -> dict:
                        dsn=dsn, allocation_id=allocation_id)
         spent_before = int(spent)
         try:
+            # The store and the arm summary are two different documents and
+            # this used to name both `frontier-<arm>.json`. The store was
+            # written first and the summary over it second, so E12 left a
+            # frontier file that was no longer a frontier store: the digest
+            # taken at the line below was the summary's own bytes, and every
+            # later reader that reopened the store by that path read the
+            # summary back. `_open_owned_store` refuses it, so
+            # `_write_e12_revision_receipts` silently recorded no child
+            # receipt, and `run_e3` refused the arm on the digest rather than
+            # on anything about the revision. The store keeps the name the
+            # arm's own evidence refers to; the summary is a separate file.
             frontier = _run_frontier_investigation(
-                out / ("frontier-%s.json" % arm), freeze, arm,
+                out / ("frontier-store-%s.json" % arm), freeze, arm,
                 dsn=dsn, guard=guard, model=model, history=want_history)
             acquisition = frontier.get("acquisition") or {}
             revision: object = "absent"
