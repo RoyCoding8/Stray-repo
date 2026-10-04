@@ -97,23 +97,42 @@ Caveat on the fix: the HMAC key is `b"ad01-task-id-hmac-v1"`, committed at
 secret in any operational sense: it is in the repository." It blocks a policy
 holding the view alone. It does not block an adversary reading the source.
 
-## The probe M3 requires does not exist
+## The probe M3 requires — now measured, and negative
 
-M3 requires a probe showing the action space "can express distinct programs (not
-just one canonical solution)". Four expressivity probes exist
-(`boolean_ast_policy.py:831`, `ordering_ast_policy.py:369`,
-`ordering_graph_policy.py:640`, `s09_swe_ast.py:414`). Every one measures a node
-set's **limits**. None measures an action space's **reach over distinct
-programs**.
+**Superseded by `reports/workstreams/m3-expressive-probe.md`.** The probe is
+specified, runnable, and measured. It reports **degenerate**.
 
-The closest is `s09_swe_experiment.search_span` (`s09_swe_experiment.py:56-67`),
-which honestly labels itself a diagnostic rather than a score (`:1497-1499`).
-But it measures reach of *one* reference program, so it cannot distinguish "the
-space is rich" from "the space happens to contain the one answer."
+It enumerates edits, not `program.variants`, because `SweSession.repair` admits
+`replace` and `delete` over any line (`s09_swe_world.py:353`,
+`s09_swe_tasks.py:484`). Enumerating variants would have measured the generator's
+table, which is the mistake this census made one level down. It separates
+"scorer accepts it" from "semantically distinct", and returns a verdict per task
+with no rate, so no reader is handed a number inviting a significance claim. Zero
+dispatches — every input is local.
 
-`agreement_split.json` (18 rows) splits 9 `same_walk`, 3 `same_answer`,
-6 `differ` — on half the frozen panel the two authored strategies take the
-*identical walk*.
+**The result.** 33 of 39 tasks admit exactly one repair. Where two are reachable,
+both widen or reverse the `window` role alongside the reference edit, pass all
+three cases, and disagree with the reference on 81 to 1575 of 2106 swept inputs.
+That is overfitting to three cases, not a second correct repair. **Zero tasks
+have two semantically plausible repairs.**
+
+**This closes the last cell M3 was counting on.** Distinct-programs is now
+measured false on SWE as well as AD01, on every instance. Combined with the
+AD01 removals above, the supported-cell count for M3 is **zero, measured**, not
+merely unproven.
+
+**A scorer defect, which outranks the freeze question.** `score`
+(`s09_swe_tasks.py:644`) decides from `record["public_tests"]` plus one protected
+case — verified at source — and already credits programs that disagree with the
+reference on up to 75 percent of inputs. Any SWE freeze taken before that is
+repaired would freeze an over-counting verdict. The fix belongs to
+`s09_swe_tasks.py`.
+
+**A local hazard.** `_bounded` (`s09_swe_tasks.py:580`) guards a
+non-terminating candidate behind `signal.setitimer` under a `hasattr` check that
+is False on win32. The probe hung once until a local step bound was applied. On
+POSIX the existing guard applies. Recorded so the next Windows reader is not
+surprised.
 
 ## Cell dispositions
 
@@ -163,29 +182,44 @@ ran) distinct from E4 (ran and spent 6).
 
 ## Disposition
 
-**No cell freezable for a discovery claim.** M3 as written cannot be run
-honestly against these instruments.
+**The supported-cell count for M3 is ZERO, measured.** Not unproven — measured.
+Every cell that survived the first pass now fails on the probe, and the probe was
+run rather than designed-and-hoped.
 
-**Correction to this census's own threat model.** The first version of this
-document claimed the leak was fatal only for an in-child policy that could
-import the generator, and irrelevant for a wire policy — so the fix was "state
-which model a study uses." `ad01-leak-assessment.md` refutes that by measurement.
-A child **cannot** import: `verify_member` refuses `ast.Import`/`ImportFrom` at
-`method_exec.py:738` and `:1481`, and `__import__` is in `_FORBIDDEN_CALLS` at
-`:37-40`. Zero of 4421 committed member sources contain the word. Reachability
-was inferred from the driver; the member is more contained than that.
+- AD01 software and graph: four independent grounds, the first being that the
+  frozen task carries `fault` as a literal key.
+- SWE: `degenerate` per the probe above — 33 of 39 tasks admit one repair, and
+  no task admits two plausible ones.
+- Boolean and ordering: clean function-identification instruments, but they
+  cannot execute a program, and `boolean_rule.key_id`'s key is committed at
+  `worlds.py:50` so it blocks a view-only policy and not an adversary reading
+  the source.
 
-The real exposure needs no import at all. The answer is a key in the dict handed
-to the member. Declaring a threat model changes instructions to the study, not
-one line of what any member observes.
+M3 as written cannot be run honestly against these instruments. That is a
+measured negative and it is the correct disposition for this batch — a valid
+null closes a study, and the WORKER-PROMPT is explicit that missing arms and
+unsupported significance claims cannot.
 
-**The cheapest real repair** is to route all six raw call sites through one
-named allowlisted view. That invalidates no frozen bytes, unlike re-keying or
-re-deriving the fault, both of which rewrite all 27 task digests. Those six
-sites belong to the migration lane, not this one, so it is recorded as their
-finding rather than done here.
+**What must be repaired before any M3 freeze**, in dependency order:
 
-**These worlds cannot carry a discovery claim until the six raw call sites are
-routed through an allowlist.** Everything else on the removal list — reduction-only
-metric, experience that cannot vary, unique minimum — is independent of the leak
-and independently sufficient.
+1. The task-view seam (`ad01-leak-assessment.md`, and the correction in this
+   document above). Six raw call sites, but the repair is one executor.
+2. The scorer (`s09_swe_tasks.py:644`) crediting programs that disagree with the
+   reference on up to 75 percent of inputs. This outranks the freeze question:
+   fixing it first would mean measuring against a broken verdict.
+3. Only then a world whose action space is genuinely expressive. On present
+   evidence that means a NEW world, which M3 forbids unless it earns its place —
+   and the probe is now the tool that would justify one.
+
+**Correction to this census's own threat model.** The first version claimed the
+leak was fatal only for an in-child policy that could import the generator, and
+irrelevant for a wire policy — so the fix was "state which model a study uses."
+`ad01-leak-assessment.md` refutes that by measurement. A child **cannot** import:
+`verify_member` refuses `ast.Import`/`ImportFrom` at `method_exec.py:738`, and
+zero of 4421 committed member sources contain the word. Reachability was inferred
+from the driver; the member is more contained than that.
+
+The real exposure needs no import. The answer is a key in the dict handed to the
+member, and `template` still names it by substring on 27 of 27 tasks. Declaring a
+threat model changes instructions to the study, not one line of what any member
+observes.
