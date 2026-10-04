@@ -1959,8 +1959,10 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
                   "task": dev_task, "verdict": "preserved"}]
     mismatch = [{"observation_id": "obs-seed",
                  "task": dev_task, "verdict": "mismatch"}]
-    choice_preserved = _live.choose_next_work(store, active, preserved)
-    choice_mismatch = _live.choose_next_work(store, active, mismatch)
+    choice_preserved = _live.choose_next_work(store, active, preserved,
+                                             arm=label)
+    choice_mismatch = _live.choose_next_work(store, active, mismatch,
+                                             arm=label)
     task = _rules.make_task("dev", 4)
     probe_action = {"kind": "probe",
                     "inputs": {"opportunity_id": "opp-rule-dev-4",
