@@ -41,6 +41,10 @@ from experiments.ad01 import live_construct as live
 
 from settlement.gateway import ModelRequest, ModelResponse, Usage
 
+# The charter shape `ensure_live_store` accepts, as a fixture. It was a
+# production helper with no production caller, deleted in 8d354a5.
+from conftest import live_mission
+
 
 def _acquired_store(tmp_path):
     """A store holding one retained, acquired, model-sourced package.
@@ -51,7 +55,7 @@ def _acquired_store(tmp_path):
     """
     store = live.ensure_live_store(
         tmp_path / "store.json",
-        live.live_mission(live.LIVE_MISSION_OBJECTIVE,
+        live_mission(live.LIVE_MISSION_OBJECTIVE,
                           [{"instrument": "boolean-rule-v1",
                             "split": "dev", "seed": 4}]),
         dict(live.LIVE_AUTHORITY))
@@ -143,7 +147,7 @@ def test_2_the_receipts_list_holds_every_step_so_position_is_meaningless(
     """
     store = live.ensure_live_store(
         tmp_path / "store.json",
-        live.live_mission(live.LIVE_MISSION_OBJECTIVE,
+        live_mission(live.LIVE_MISSION_OBJECTIVE,
                           [{"instrument": "boolean-rule-v1",
                             "split": "dev", "seed": 4}]),
         dict(live.LIVE_AUTHORITY))

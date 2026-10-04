@@ -39,12 +39,16 @@ from experiments.ad01 import frontier
 from experiments.ad01 import improve_channel as channel
 from experiments.ad01 import live_construct as live
 
+# The charter shape `ensure_live_store` accepts, as a fixture. It was a
+# production helper with no production caller, deleted in 8d354a5.
+from conftest import live_mission
+
 ENVIRONMENTS = [{"instrument": "boolean-rule-v1", "split": "dev", "seed": 4}]
 DSN = "dbname=a55-continuation"
 
 
 def _mission():
-    return live.live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS)
+    return live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS)
 
 
 def _owned(tmp_path, name, investigation_id):

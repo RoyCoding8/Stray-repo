@@ -29,6 +29,10 @@ from experiments.ad01 import mission
 from experiments.ad01.s09_run_isolation import create_disposable_db, \
     drop_disposable_db
 
+# The charter shape `ensure_live_store` accepts, as a fixture. It was a
+# production helper with no production caller, deleted in 8d354a5.
+from conftest import live_mission
+
 MIGRATIONS = ROOT / "migrations"
 # Not bare hex: `s09_run_isolation` refuses the pytest harness's own 8-hex
 # run-token space, because a store named in it is indistinguishable from a
@@ -203,7 +207,7 @@ def test_live_mission_declares_the_full_charter_shape():
     returns four. `frontier` reads only the two it uses, so no behaviour
     depended on the difference, which is exactly why it survived.
     """
-    declared = live.live_mission(live.LIVE_MISSION_OBJECTIVE,
+    declared = live_mission(live.LIVE_MISSION_OBJECTIVE,
                                  ENVIRONMENTS)
 
     assert declared == mission.MissionEntry(

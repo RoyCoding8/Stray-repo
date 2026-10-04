@@ -30,6 +30,10 @@ from experiments.ad01 import mission
 from experiments.ad01.s09_run_isolation import create_disposable_db, \
     drop_disposable_db
 
+# The charter shape `ensure_live_store` accepts, as a fixture. It was a
+# production helper with no production caller, deleted in 8d354a5.
+from conftest import live_mission
+
 MIGRATIONS = ROOT / "migrations"
 RUN_TOKEN = "a31wireidentity"
 
@@ -105,7 +109,7 @@ def test_a_nameless_live_store_says_it_has_no_owner(tmp_path):
     path = tmp_path / "fixture.json"
 
     store = live.ensure_live_store(
-        path, live.live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS),
+        path, live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS),
         dict(live.LIVE_AUTHORITY))
 
     assert store.identity is None
@@ -124,7 +128,7 @@ def test_a_nameless_live_store_cannot_be_claimed_afterwards(entered, tmp_path):
     database, investigation_id = entered
     path = tmp_path / "fixture.json"
     live.ensure_live_store(
-        path, live.live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS),
+        path, live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS),
         dict(live.LIVE_AUTHORITY))
 
     with pytest.raises(live.LiveRefused, match="owned by investigation"):
@@ -168,7 +172,7 @@ def test_restart_of_a_nameless_live_store_stays_nameless(tmp_path):
     """The fixture restart path is unchanged by the identity being available."""
     path = tmp_path / "fixture.json"
     live.ensure_live_store(
-        path, live.live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS),
+        path, live_mission(live.LIVE_MISSION_OBJECTIVE, ENVIRONMENTS),
         dict(live.LIVE_AUTHORITY))
 
     assert live.restart_store(path).identity is None

@@ -21,6 +21,10 @@ from experiments.ad01 import offline_recompute as m4
 from experiments.ad01 import rule_learner
 from scripts import invl02_live as driver
 
+# The charter shape `ensure_live_store` accepts, as a fixture. It was a
+# production helper with no production caller, deleted in 8d354a5.
+from conftest import live_mission
+
 
 class _ScriptGateway:
     def __init__(self, texts=None, error=None):
@@ -72,7 +76,7 @@ def _opportunity(oid, task, x=3):
 def _make_store(tmp_path, name="store.json"):
     path = tmp_path / name
     store = live.ensure_live_store(
-        path, live.live_mission(
+        path, live_mission(
             live.LIVE_MISSION_OBJECTIVE,
             [{"instrument": "boolean-rule-v1",
               "split": "dev", "seed": 4}]),
@@ -130,7 +134,7 @@ def test_r1_disconnect_frontier_changes_effect(tmp_path):
     assert intact["action"]["kind"] == "investigate"
     empty_path = tmp_path / "empty.json"
     empty = live.ensure_live_store(
-        empty_path, live.live_mission(
+        empty_path, live_mission(
             live.LIVE_MISSION_OBJECTIVE,
             [{"instrument": "boolean-rule-v1",
               "split": "dev", "seed": 4}]),
@@ -159,7 +163,7 @@ def test_r1_disconnect_improvement_refused_or_changes(tmp_path):
             if e["action"] == "probe"] == [3]
     fresh_path = tmp_path / "fresh.json"
     fresh = live.ensure_live_store(
-        fresh_path, live.live_mission(
+        fresh_path, live_mission(
             live.LIVE_MISSION_OBJECTIVE,
             [{"instrument": "boolean-rule-v1",
               "split": "dev", "seed": 4}]),

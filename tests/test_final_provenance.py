@@ -14,11 +14,15 @@ from experiments.ad01 import policy_step
 from experiments.ad01 import worlds
 from settlement.common import ResultCode
 
+# The charter shape `ensure_live_store` accepts, as a fixture. It was a
+# production helper with no production caller, deleted in 8d354a5.
+from conftest import live_mission
+
 
 def _store(tmp_path):
     return live.ensure_live_store(
         tmp_path / "store.json",
-        live.live_mission(
+        live_mission(
             live.LIVE_MISSION_OBJECTIVE,
             [{"instrument": "boolean-rule-v1", "split": "dev", "seed": 4}]),
         dict(live.LIVE_AUTHORITY))

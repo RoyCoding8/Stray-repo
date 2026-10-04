@@ -64,6 +64,31 @@ def unique(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:8]}"
 
 
+def live_mission(objective: str, environments: list) -> dict:
+    """The charter shape `ensure_live_store` accepts, for fixtures.
+
+    This was `live_construct.live_mission`, deleted in 8d354a5 because it had
+    zero production callers: the live entry passes `None` and the declaration is
+    read from `investigations`. Nine test files still need the shape, and
+    inlining it nine times is worse than the one function it replaces, so it
+    lives here where it is honestly labelled a fixture.
+
+    The refusals are kept because they are the contract: an empty objective or
+    an empty environment list names no mission, and a fixture that built such a
+    dict would be asserting against a store that refuses to open.
+    """
+    from experiments.ad01.live_construct import LiveRefused
+
+    if not isinstance(objective, str) or not objective.strip():
+        raise LiveRefused("live mission needs an objective")
+    if not isinstance(environments, list) or not environments:
+        raise LiveRefused("live mission needs frozen environments")
+    return {"objective": objective,
+            "environments": list(environments),
+            "constraints": [],
+            "success_criteria": []}
+
+
 @pytest.fixture(autouse=True)
 def _isolate_campaign_namespace():
     """Reset the process-global campaign namespace around every test.

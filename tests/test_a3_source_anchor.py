@@ -21,11 +21,15 @@ from experiments.ad01 import frontier
 from experiments.ad01 import improve_channel as channel
 from experiments.ad01 import live_construct as live
 
+# The charter shape `ensure_live_store` accepts, as a fixture. It was a
+# production helper with no production caller, deleted in 8d354a5.
+from conftest import live_mission
+
 
 def _store(tmp_path, name="store.json"):
     return live.ensure_live_store(
         tmp_path / name,
-        live.live_mission(
+        live_mission(
             live.LIVE_MISSION_OBJECTIVE,
             [{"instrument": "boolean-rule-v1", "split": "dev", "seed": 4}]),
         dict(live.LIVE_AUTHORITY))
