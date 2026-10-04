@@ -204,10 +204,9 @@ def test_each_structure_ran_more_than_one_episode(store):
     holds more than one episode per structure, so a run that executed one
     episode and reported two cannot pass.
     """
-    _cross(store)
-    from experiments.ad01 import mission
+    out = _cross(store)
 
-    crossing = mission.read_mission(store, MISSION_ID).frontier["crossing"]
+    crossing = out["crossing"]
 
     for instrument in ("boolean-rule-v1", "software-fault-repair-v1"):
         episodes = crossing[instrument]["episodes"]
