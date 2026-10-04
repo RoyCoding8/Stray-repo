@@ -1,187 +1,180 @@
-# Worker assignment: finish consolidation, build the connected prototype
+# Worker assignment: one persistent mission, then informative learning studies
 
-You are the implementation and experiment coordinator in a fresh local session.
-The goal is general autonomous investigation, acquired executable competence and
-improvement of the procedure that acquires competence. Complete the milestones
-below; infrastructure tests alone do not complete them. Valid negative studies
-are useful. Do not search indefinitely for a positive result.
+Continue from the canonical `codex/agent-society` checkpoint in
+reports/PROJECT-LEDGER.md. Work in D:/AI/Agent-Society-v2. This assignment applies
+to a fresh session or the previous worker resuming. Inspect local changes before
+switching; the remote is a backup, not the authority for local active work.
 
-## Starting point and authority
+The goal remains general autonomous discovery and executable competence across
+SWE, mathematics and scientific work. The selected small worlds are instruments.
+This batch must connect the mission and test its decisions, not replace the
+product with a Boolean benchmark or an ever-growing engineering audit.
 
-Work in D:/AI/Agent-Society-v2. Start from the latest review snapshot named in
-reports/PROJECT-LEDGER.md, then create your integration branch. The canonical
-branch is codex/agent-society. Its 2026-10-02 consolidation preserves the final
-source tree and archives the original histories; see docs/HISTORY.md.
-Milestones A-C below remain the acceptance scope; the consolidation worker did
-not complete their research and connected-mission requirements.
-Inspect local changes before switching or merging; do not reset an active checkout.
-The remote default is an alias of the canonical snapshot. Archived branch names
-and historical SHAs are recovery references, not current integration targets.
-Remote sync is a backup; local worktrees and stores hold current working state.
+Read AGENTS.md, IMPLEMENTATION-WORKFLOW.md, the current ledger checkpoint,
+docs/design/REFINEMENT-ROADMAP.md and the current completion matrix. Keep one
+task graph in reports/PLAN.md. Reuse these documents rather than creating a
+competing instruction hierarchy. Jev is unavailable. Use your available models;
+the researcher's Luna preference does not restrict this worker harness.
 
-The closure checks used WSL Ubuntu, PostgreSQL 18.6 and real POSIX child
-processes. Use that existing runtime for the selected child profile; Windows
-host execution is not a substitute. Fixture gateways in these checks establish
-durable behavior, not live acquisition or containment qualification.
+The 2026-10-03 closure did useful repairs but left the main ownership migration
+unfinished. Do not repeat its whole audit or count its fixture pipeline as that
+migration. Root has separately repaired refusal checking, post-publication
+restart cleanup and method proposal identity. Preserve their regressions.
 
-Read AGENTS.md, reports/PROJECT-LEDGER.md, reports/PROJECT-INVENTORY.md,
-docs/design/REFINEMENT-ROADMAP.md and section 13 of
-docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md. IMPLEMENTATION-WORKFLOW.md owns
-the reusable engineering rules. Update reports/PLAN.md for your dependency graph.
-Do not recreate competing prompts, ledgers or current design documents.
+## M0. Establish the implementation contract
 
-The user authorizes fresh live experiments on verified free routes and is not
-concerned about token consumption. This is standing authority for the finite
-prospective studies in this assignment. Write their grant and cap sheet from
-the complete matrix before effects; a missing grant file is setup work, not a
-reason to ask for authorization again. Discover the actual current route locally;
-no paid fallback, credential commits or Jev calls. A vanished route or absent
-credentials is a specific external dependency, not model failure.
+The architecture decision is made: the existing SQL AD01 investigation and
+trajectory lifecycle own the production mission. JSON FrontierStore files remain
+historical replay/export formats. They may not independently admit production
+work, choose the active program, or declare a live mission quiescent.
 
-Old exposure remains under its original grants. Do not settle unknowns, reuse
-spent grants, redispatch terminal historical rounds or edit frozen evidence to
-unblock a new study. Account for carried-in spend separately. Freeze source,
-route, model, effort, protocols, selectors and finite ceilings. A change creates
-a new freeze; it does not make the old and new runs comparable.
+Map current private state, active package/version lineage, frontier choices,
+pending effects, retained-use history and round continuation to their existing
+SQL owners and linked records. One logical owner can use several linked tables;
+this does not require one giant JSON row. Identify each writer and real reader.
+Keep the map small enough to use during implementation. Do not postpone the
+migration as an undecided research question or add synchronization between two
+live authorities. A reviewer challenges this concrete map before dependent lanes.
 
-## A — consolidate the causal path
+## M1. Finish production ownership
 
-Start with the remaining ownership migration. The coordinator repaired initial
-SQL mission admission and experiment reporting, but did not connect the live
-JSON FrontierStore path to the SQL investigation owner. This is substantial
-implementation work, not a missing status projection. Inventory private state,
-active source/version lineage, pending effects and continuation identity; give
-each one a single durable owner using the existing AD01 lifecycle. Migrate the
-public live entry and its callers, then retire duplicate production persistence.
-Preserve historical replay formats without making them another authority.
+Migrate scripts/invl02_live.py's _run_frontier_investigation, the operational and
+improvement entry paths in live_construct.py/improve_channel.py, twodomain.py and
+all their production continuation callers to the selected owner. Consume the
+stored mission state. Retire duplicate writable production persistence and dead
+branches. Preserve old frozen readers behind explicit historical replay entry.
 
-Keep the existing AD01 trajectory as investigation owner. Reuse the broker,
-store, bounded executors, artifact bytes and binding machinery. Converge the
-frontier's useful decision/view semantics into this owner; retire duplicate
-production authority and continuation, preserving old frozen instruments.
-Do not introduce another coordinator or a generic framework around the studies.
+A policy step receives permitted experience, an admissible frontier and private
+state scoped to its program version. Persist its admitted next_action, state
+transition, program/artifact identity and input identity coherently. Rejected
+steps do not silently advance the state. Reuse existing transactions and effect
+machinery; do not introduce another coordinator, broker or polling loop.
 
-Trace all production callers of model inference and executable policy source.
-Finish migration to broker-owned effects and bounded source execution. Each
-accepted operation must have persistent identity, allocation, result or unknown
-outcome, and exposure. Pending work must retain its old program/input identity
-through restart. No source file may become trusted merely because it is local.
+Admitted work must survive a process death with its original source bytes,
+version, inputs, allocation and operation identities. Resume must finish or
+report that work, not recompute it under the current program. Reconcile completed
+work idempotently. Unknown dispatched exposure stays attributable and cannot be
+erased to obtain quiescence. Use one definition of readiness/quiescence for live
+admission and program adoption. Resolve existing pending stores explicitly;
+never silently import unrelated or uncertain historical work.
 
-Use one action meaning across the chosen representations. Inspect existing
-policy_action translations by actual admitted effects, observations, refusals
-and resource use. A round-trip enum test is insufficient. Preserve distinctions
-between checking a task result and proposing a learner revision where they alter
-execution. Do not create a Python interpreter hidden behind an AST/graph label.
+Method releases and policy bindings have separate identities. A retained method
+that runs in a new process resolves its actual binding and source, rather than
+being selected through an unbound repertoire scan. Update retained-use history
+from real executions. The public mission must read active lineage and frontier
+state, not merely write summaries into SQL columns nobody consumes.
 
-Prove the full chain through the public entry:
-permitted experience -> program decision -> admitted effect -> observation ->
-checked artifact -> retention/binding -> fresh-process use. Method release and
-policy identity remain separate. Check unrelated-route replay, changed bytes,
-missing authority, no candidate, partial response, timeout and pending resume.
-Use independent reviewer-written source and clean-baseline counterexamples.
+## M2. Prove the connected behavior
 
-## B — finish the informative Stage 9 comparison
+Through one public mission entry, demonstrate permitted experience, program
+choice, admitted effect, observation, checked artifact, retention/binding and
+fresh-process use. Include both supported domains in the mission. The charter
+may seed opportunities; the executable program selects later work from the
+frontier. Show a real choice of probe, construction, reuse, continuation or stop
+which changes with permitted evidence. Fixed task schedules do not establish
+this. Labels and observation IDs alone do not demonstrate causal influence.
 
-Before a large run, qualify measurable headroom and competent controls. The
-fresh evidence-headroom diagnostic is an authored equal-query comparison,
-not acquired learning. Its historical blind-query metric is not an adaptive
-learner result. Do not reuse its now-observed cohort as sealed assessment.
+Use independently written policies and candidates. Prove a pending restart with
+unchanged bytes/input identity, a post-publication restart with no duplicate
+send, program adoption with version-scoped state, and a fresh-process bound use.
+Refuse changed source, unrelated ownership, a disconnected action and missing
+authority. Keep no-candidate, partial response and timeout outcomes explicit.
+A refused task result can still carry admitted policy operations and liabilities;
+do not delete those IDs to make a checker pass. Fixture runs qualify mechanisms
+only. Do not edit historical evidence to make it agree with today's path.
 
-Use two genuinely different task structures: function identification from
-observations and software diagnosis/repair through interventions. Reuse existing
-worlds where they meet this requirement. Ordering/reduction can remain regression
-or transfer instruments. Deduplicate hidden targets and separate templates or
-families before evaluation. An oracle using held-out answers is diagnostic only.
+## M3. Qualify and run the operational study
 
-Freeze the supported representation/world matrix after an expressive-action
-probe. Compare canonical STEP with the existing typed AST and graph where they
-can express the same required behavior. Unsupported cells need a concrete witness
-and an architectural disposition, not a new DSL built merely to fill the table.
-Plan at least four independent construction opportunities per supported cell.
+Use function identification by observations and software diagnosis/repair by
+interventions where the existing worlds support those claims. If a world exposes
+the supposed hidden answer or only measures reduction, label that scope and
+repair the instrument before claiming discovery. Do not add a world merely to
+increase a cluster count. First demonstrate measurable headroom and competent
+controls on development information, plus cases where the program's next-action
+choice changes an operational outcome under the same resource ceiling.
 
-Compare relevant, absent and equal-sized irrelevant experience with matched
-interfaces and opportunity. Pin each actual permitted view. Select and repair
-using development information only. Score operational quality, intermediate
-behavior and complete resources; constant preservation is not a benefit metric.
-Failed acquisition never becomes an authored learned arm.
+Freeze the supported STEP/typed-AST/graph cells after an expressive-action probe.
+All supported cells share action meaning, public interfaces and opportunity.
+Unsupported cells get a witness and keep/change/remove decision; no new DSL just
+to fill a table. Run at least four independent construction opportunities per
+supported cell and experience condition. Compare relevant, absent and equal-size
+irrelevant permitted experience. Select and repair using development information
+only. Keep actual context bytes and construction failures, not only winners.
 
-Measure retained reuse versus cold acquisition and adaptation to a held-out
-family/domain. Follow acquired bytes and scoped applicability into a new process.
-An archive with no usable members is a no-acquisition result, not transfer evidence.
-Use a second independent namespace for replication where the first run supports
-the comparison; an apparatus repair rerun is not replication.
+Estimate held-out task utility as matched normalized quality/resource differences
+against a development-fitted competent control. Report task rows and cluster
+summaries, retained-use rate and full policy/constructor/child costs. Compare
+retained reuse with cold acquisition and adaptation to fresh tasks. Freeze units
+and a task sampling model before effects. Coarse output signatures are not
+independent samples. Different hashes or labels are not replication. Minimum
+attainable sign-flip p is not prospective power. Use descriptive conclusions when
+exchangeability or statistical power is not justified; a useful pilot need not
+manufacture a population-level significance claim.
 
-The investigation program must choose a diagnostic, construction, reuse,
-continuation or stop from the admissible frontier. Compare it with a competent
-development-fitted allocation control. Initial mission seeds are allowed; a
-scripted subsequent task order is not autonomous selection.
+Use a second independent run namespace when a first comparison has usable arms.
+If construction produces no eligible artifact, finish that bounded attempt and
+leave utility/transfer unmeasured. Missing arms never become authored fallbacks
+inside a learned arm. An apparatus repair rerun is not replication.
 
-## C — connect inherited learning behavior and Stage 10
+## M4. Test an inherited learning decision
 
-Make an acquisition decision executable and inheritable: evidence selection,
-probe allocation, constructor inputs or development-only repair. The improvement
-program chooses it from permitted experience through the same action executor.
-The model constructor is a leaf effect, not the owner of a fixed research script.
-The program cannot edit grants, accounting, execution limits or sealed assessment.
+Make evidence selection, probe allocation, constructor inputs or development-only
+repair an executable acquisition decision through the same owner. Qualify it with
+effectful, no-op and disconnected controls from identical starting conditions.
+The effectful control must change the next descendant-producing episode after
+restart under the selected version. Cosmetic source edits are not this control.
+The program cannot alter grants, accounting, executor limits or sealed assessment.
 
-Qualify the channel with independently written effectful, no-op and disconnect
-controls. From identical starting conditions, the first control must change an
-acquisition decision and the disconnect must refuse. Restart under the selected
-version and observe its effect in the next descendant-producing episode.
+Attempt live acquisition of an eligible revised learning program. Eligibility is
+an inherited change to the acquisition procedure, not a favorable solver score.
+Compare parent and revised learners on fresh acquisition episodes with matched
+opportunity; assess the descendants they produce on independent tasks. Record
+both decisions and actual executed bytes. A task solver delegating to a fixed
+reducer is not a revised learner. If no eligible revision is acquired, finish the
+attempt honestly and do not create empty comparison panels.
 
-Attempt live acquisition of a revised learning program. Eligibility concerns a
-change to the acquisition procedure, not whether its score happens to improve.
-Compare revised and parent learners on fresh acquisition episodes with matched
-opportunity and complete resource accounting. Assess the descendants they produce
-on independent tasks. The reviser's own solver score is not this measurement.
-If no eligible revision exists, finish the bounded attempt honestly; do not run
-empty panels or claim a negative learner-benefit comparison.
+## Live authority, workflow and finish
 
-Build one persistent mission entry with frontier, permitted experience, active
-program, acquired artifacts, retained use and improvement mode. Demonstrate a
-multi-episode mission across the two selected domains, including suspend/resume
-with pending work. Teams and background replay use this same authority and
-evidence path; add them only for a demonstrated dependency. A static study driver
-does not meet the general prototype requirement. Move domain-neutral code out of
-experiments only by migrating callers and deleting the duplicate implementation.
+The human's standing authorization covers fresh finite experiments on verified
+free routes. Token consumption is not a financial concern on those routes. Write
+the complete prospective grant/cap sheet yourself; a missing grant file is setup
+work, not a reason to request the same authorization again. Verify the actual
+configured route and model. Use no paid fallback and commit no credentials.
+An absent route/credential or transport failure is not model incapability.
 
-## Workflow, self-checks and delivery
+Derive caps from the frozen matrix, including smoke calls, constructors, repairs,
+policy decisions, child executions and replication. For example, C supported
+cells with three experience conditions, four opportunities and at most one repair
+need at most 24C constructor calls. Budget inherited-learning and operational
+model calls separately and include them in one durable aggregate ceiling. Freeze
+before effects; changes to route, source or protocol create a new freeze. Preserve
+old unknown exposure under its original grant. Do not reuse spent rounds.
 
-Use 12–16 substantive isolated lanes where the harness permits, and queue additional
-independent review, world, representation and experiment work. Expand concurrency
-when disjoint work and runtime capacity support it. Assign disjoint
-paths/stores; never two writers in one worktree. Follow git-worktree-discipline,
-tdd and the other available applicable skills. Coordinator integration is serial,
-with affected checks on every merged source tip. Reviewers use their own cases.
+Follow IMPLEMENTATION-WORKFLOW.md and git-worktree-discipline. Use 12-16 useful
+isolated agents if the harness supports them, plus queued independent reviews.
+Parallelize disjoint owner implementation, caller migration, instrument
+qualification and review. Integrate serially and rerun affected checks on the
+merged source. Keep one campaign authority. Never remove a still-running lane
+because its last commit was merged; check its process and uncommitted work first.
 
-Run two broad search/repair passes over material behavioral and evidence defects,
-then a final independent acceptance pass. Keep each reviewer separate from the
-author of its target. Prioritize authority, causal disconnects, invalid assessment,
-identity and lost data. Ledger minor issues instead of allowing them to replace
-the experiments. Never weaken a contract merely to make inherited tests green.
+Use two finite material search/repair passes and a final independent acceptance
+pass. Prioritize shared ownership, causal disconnects, invalid assessment and
+lost identity/data. Ledger minor archival/environment issues without letting them
+replace M1-M4. Check that each regression ran and each negative control changes
+behavior. Tamper tests start from a clean baseline and measure added failures.
+Do not report missing allocation or identity as a provider problem, bypass
+mandatory execution authority, or sum separate runs into a fictional green suite.
 
-Specifically guard against our recurring failures: skipped regressions reported
-as passes; fixture bytes relabeled live; missing policy passed as a method release;
-route drift on replay; raw source executed on the host; file-based crash-losable
-counters; unknown usage reported zero; double-counted or omitted policy compute;
-sealed feedback in prompts; stale lane gates after merge; and tamper tests whose
-baseline already fails. Counterchecks must add failures to a clean baseline.
+Complete M1-M2 before freezing live studies; qualify instruments in parallel.
+If an external live dependency is genuinely absent, deliver the connected
+mechanism and precise attempted/unrun dispositions while completing independent
+work. Otherwise run the authorized studies. Stop after the frozen opportunities;
+do not spend days seeking a positive result or polishing unrelated CI.
 
-Freeze live execution before effects. Continue independent reviews against other
-worktrees while it runs, without mutating its pinned source. Check the entire
-relevant suite on the final implementation, report every skip/failure/timeout by
-scope, and never add counts from different runs into a fictional green suite.
-Export/recompute raw evidence offline before deleting receipt stores. A store
-snapshot supports attribution; it does not cryptographically prove provider truth.
-
-Give separate dispositions for mechanism, acquisition, utility, transfer,
-autonomous selection and learner improvement. Stage 9 needs explicit keep/change/
-remove decisions under the completed supported protocols. Stage 10 needs the
-connected mission prototype; its existence does not claim beneficial RSI.
-Deployment qualification and product release are stages 11–12.
-
-Update the ledger, roadmap and one completion matrix. Give no more than three
-architecture-relevant bottlenecks. Push and verify remote equality. Remove only
-owned worktrees, task refs, disposable databases and scratch; preserve unrelated
-work and historical evidence. Stop after the frozen scope and analysis, not after
-finding a flattering outcome or exhausting an arbitrary number of bug passes.
+Deliver requirement-to-evidence mapping and separate mechanism, acquisition,
+utility, transfer, autonomous-selection and learner-improvement verdicts. Export
+and recompute before deleting receipt stores. Update the ledger, completion
+matrix and roadmap consistently. Commit additively, push backups normally,
+verify remote equality and remove only owned inactive worktrees/databases. Leave
+stages 9/10 open for actual missing obligations; a valid null completes a study,
+not automatically the whole product.

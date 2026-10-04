@@ -1,5 +1,82 @@
 # Project ledger
 
+## Researcher review and surgical closure, 2026-10-03
+
+Reviewed worker source `64e1f63`, 70 commits above `5349dab`, using three
+isolated Luna readers. Both remote backups matched that source. The supplied
+[closure report](AB-CLOSURE-BATCH-2026-10-03-REPORT.md) was untracked at handback;
+this review preserves it as the worker's snapshot, not independent proof.
+
+**Decision: give the worker substantial work again.** The main assignment
+was not completed. `scripts/invl02_live.py` records an SQL mission and then
+executes through a JSON FrontierStore. Private state, active lineage, pending
+effects and continuation still live in that file. SQL's quiescence predicate
+does not read the JSON pending effects; `twodomain.py` writes projections which
+production does not consume. Adding more fixture gates cannot finish this
+migration. SQL AD01 is the selected production owner; JSON remains a historical
+replay/export format. WORKER-PROMPT.md specifies the remaining implementation
+and studies without requiring another permission decision about ownership.
+
+The chain claim needs scope. The A42 instrument explicitly observes a retained
+member with no method release and fresh-process use by repertoire scan.
+Separately, A43 exercises durable method binding. The worker's larger fixture
+pilot table is not the same demonstration as A42. Neither fixture demonstrates
+live acquisition, and neither makes the split mission owners a connected system.
+The existing strict CLI repairs are present; the earlier ledger paragraph listing
+four unconditionally successful CLIs is superseded for this tip.
+
+Root repaired three bounded defects on `a1d6faa`:
+
+- R-AB01: a refused method result preserves selection and operation IDs. Its
+  checker now rejects claimed execution/quality and malformed IDs without
+  forcing receipt-bearing work to disappear. This checker validates record
+  shape; campaign receipt verification still owns operation attribution.
+- R-AB02: restarting after boundary publication drains the completed in-flight
+  entry without dispatching another effect. A fresh-process, real-DB regression
+  failed with a stranded entry before the fix and passes afterward.
+- R-AB03: two method candidates qualified on the same task no longer reuse one
+  proposal request ID. Method opportunities include boundary, capability and
+  source identity. Existing proposal IDs without that opportunity stay stable.
+  The adjacent no-reduction control now returns the unchanged task; adding a
+  comment to a greedy reducer did not make it a behavioral negative control.
+
+The refusal regression produced 11 failures before repair. The affected gate
+then gave **26 passed, zero skips** on PostgreSQL 18.6, Python 3.14.4 and real
+POSIX child processes. It contains test_s09_use_refusal_verification.py,
+test_a43_method_release.py and the new post-publication restart case in
+test_a40_admission_wired.py. No inference or deployment qualification ran.
+A broader adjacent run gave **47 passed, 3 failed**, not a green suite. The
+three failures concern missing execution allocations/identity in older M34
+tests. All three reproduce on worker baseline `64e1f63`, with 1 neighboring
+case passing in that baseline comparison. They are inherited test-callers to
+migrate, not justification for removing execution authority. This review did
+not run a full suite. Reproduce the 26-case gate in the verified WSL runtime:
+
+```text
+S09ISO_DISABLE=1 PYTHONPATH=<checkout>:<checkout>/src python -m pytest --confcutdir=/tmp -q -p no:cacheprovider tests/test_s09_use_refusal_verification.py tests/test_a43_method_release.py tests/test_a40_admission_wired.py::test_restart_releases_a_boundary_published_before_process_death
+```
+
+`<checkout>` names the actual WSL path, not an empty lookalike directory. The
+broader run also exercised the corrected signature-count report and legacy
+proposal retry semantics. Historical source digests and evidence bytes were
+not changed by these repairs.
+An independent GPT-6 Luna source review found no material defect in these fixes;
+it did not run DB or live checks.
+
+**Research correction.** independent_units.py counts a coarse projection of
+fault and witness types. Four template names spanning two signatures does not
+prove two independent sampling units. The helper's prose and report now state
+that limit. The 402,233-program enumeration covers lengths 1–5 with two values,
+not every program the world accepts. Minimum attainable sign-flip p-value is
+not prospective power. Keep historical freezes unchanged; choose an explicit
+descriptive estimand and sampling assumptions for the next study.
+
+Stages 9 and 10 remain active/incomplete. Keep the bounded executors, broker,
+artifact/assessment machinery and demonstrated continuity. Next build the one
+persistent owner, then measure program-selected acquisition/reuse and an
+inherited acquisition decision. A valid null result may close a study; missing
+arms, fixtures and unsupported significance claims cannot close those questions.
+
 ## Coordinator batch: A–C closure, 2026-10-02 → 2026-10-03
 
 Integration branch `codex/ab-closure-2026-10-02`, from `5349dab`. 67 commits,

@@ -23,6 +23,14 @@ Stages are not a waterfall: an experiment may force a revision to the formal mod
 
 ## The current decision
 
+The [2026-10-03 researcher review](../../reports/PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03)
+selects SQL AD01 as the production mission owner. The latest worker repaired
+useful mechanisms but left live JSON ownership separate. Finish that migration,
+then test program-selected acquisition/reuse and an inherited acquisition
+decision. Coarse witness signatures describe a projection; they do not prove
+statistical independence. The next study may report scoped descriptive utility
+without pretending its cluster count establishes statistical power.
+
 The [surgical closure](../../reports/PROJECT-LEDGER.md#surgical-closure-and-recoverable-history-2026-10-02)
 repairs initial mission admission, actual coverage reporting, source identity
 and limited-run lineage summaries. These fixes do not connect the two mission

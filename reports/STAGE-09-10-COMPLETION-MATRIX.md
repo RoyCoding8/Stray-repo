@@ -1,5 +1,13 @@
 # Stage 9–10 completion matrix — consolidation batch 2026-10-01
 
+Current checkpoint: the [2026-10-03 researcher review](PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03)
+keeps stages 9/10 incomplete. Durable method binding and fresh-process restart
+repairs qualify bounded mechanisms; production still has separate JSON and SQL
+mission owners. No new live acquisition, utility, transfer or learner-benefit
+result was obtained in this batch. The tables below preserve the older studies'
+scoped dispositions; the current ledger distinguishes the public A42 instrument
+from the worker's separate fixture pilot and the next ownership assignment.
+
 The current completion report for the consolidation batch
 `codex/stage09-consolidation-2026-10-01`, first integrated at `8a207ab` from
 `70223fb`, reviewed and repaired at `8cc1927` after an independent review
