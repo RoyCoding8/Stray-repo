@@ -1,12 +1,22 @@
 # Stage 9–10 completion matrix — consolidation batch 2026-10-01
 
-Current checkpoint: the [2026-10-03 researcher review](PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03)
-keeps stages 9/10 incomplete. Durable method binding and fresh-process restart
-repairs qualify bounded mechanisms; production still has separate JSON and SQL
-mission owners. No new live acquisition, utility, transfer or learner-benefit
-result was obtained in this batch. The tables below preserve the older studies'
-scoped dispositions; the current ledger distinguishes the public A42 instrument
-from the worker's separate fixture pilot and the next ownership assignment.
+Current checkpoint: the [2026-10-04 mission-ownership batch](PROJECT-LEDGER.md#mission-ownership-and-instrument-census-2026-10-04)
+at `ff5b767` over `0ee4699`. The six dispositions below are updated from that
+batch. **No lane in it ran a test suite**, so its behavioral claims are static
+arguments from source, probes against frozen artifacts, or arithmetic on an
+existing CI log. The earlier checkpoint, the
+[2026-10-03 researcher review](PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03),
+kept stages 9/10 incomplete; nothing since has closed that.
+
+The 2026-10-04 batch changed two things that bear on the dispositions. The five
+write-only mission columns are gone (`migrations/0021`), so the public mission
+no longer carries a projection nobody reads; what remains is that the two
+investigation rows are not the same row. And M3's supported-cell count is
+**zero, measured**. Neither reaches utility, transfer or learner improvement.
+
+The tables below retain the older studies' scoped dispositions; no historical
+disposition has been softened, and the current ledger distinguishes the public
+A42 instrument from the worker's separate fixture pilot.
 
 The current completion report for the consolidation batch
 `codex/stage09-consolidation-2026-10-01`, first integrated at `8a207ab` from
@@ -52,12 +62,25 @@ because the first does not license the rest.
 
 | # | Question | Disposition | One line of why |
 |---|---|---|---|
-| 1 | Mechanism | **SCOPED QUALIFICATION** | Durable effect identity and mandatory execution authority are repaired. Two current real-database scorer checks pass. The unused static freeze is not a live authority boundary; SQL and JSON mission ownership remain separate. |
-| 2 | Acquisition | **OBSERVED NO ACQUISITION** | B12 acquired 0 of 4 scheduled lineages, with only one returned artifact among five operations. Transport failures do not measure model capability. |
-| 3 | Utility | **UNMEASURED** | No usable acquired arm exists in this comparison. No benefit verdict follows. |
-| 4 | Retention/transfer | **UNMEASURED BENEFIT** | B14 found a constant reachable terminal verdict. This diagnoses the instrument; it does not test whether retained competence can help. |
-| 5 | Autonomous selection | **NOT ESTABLISHED** | The two-domain crossing schedules fixed authored episodes. The public live mission and SQL mission entry are still separate. |
-| 6 | Learner improvement | **LIVE STUDY UNRUN** | Live C4 and its fresh-descendant comparison did not run. Executable probe selection can influence descendants, but benefit is unmeasured. |
+| 1 | Mechanism | **SCOPED QUALIFICATION**, with the mission projection now gone | Durable effect identity and mandatory execution authority remain repaired. As of `ff5b767` the public mission no longer carries five columns nobody read, and the live path refuses to execute a round on a store that names an owner. SQL and JSON mission ownership are still separate, and no test suite has run since `0ee4699`. The two real-database scorer checks above belong to the 2026-10-02 review tree and this batch neither reruns nor retracts them. |
+| 2 | Acquisition | **OBSERVED NO ACQUISITION** | Unchanged. B12 acquired 0 of 4 scheduled lineages, with only one returned artifact among five operations. Transport failures do not measure model capability. The 2026-10-04 batch attempted no acquisition; no live route exists on this host. |
+| 3 | Utility | **UNMEASURED** | Unchanged. No usable acquired arm exists in this comparison, and the batch created none. No benefit verdict follows. |
+| 4 | Retention/transfer | **UNMEASURED BENEFIT** | Unchanged. B14 found a constant reachable terminal verdict. This diagnoses the instrument; it does not test whether retained competence can help. Dropping the write-only `retained_use` column removed a claim, not a measurement. |
+| 5 | Autonomous selection | **NOT ESTABLISHED**, and one of its two known causes is repaired while the other blocks it | The five mission columns are dropped, so "the public mission writes summaries nobody consumes" no longer holds. What blocks it now is row identity: the live arm and the campaign mint different SQL rows, so the SQL quiescence predicate has no production caller and two predicates remain. `twodomain.run_two_domain_crossing` also no longer writes a mission row at all, having zero production callers. |
+| 6 | Learner improvement | **LIVE STUDY UNRUN**, and not runnable on this host | Unchanged. Live C4 and its fresh-descendant comparison did not run, and `SETTLEMENT_GATEWAY_ENDPOINT` and `SETTLEMENT_GATEWAY_KEY` are both absent, so nothing could have run it. Executable probe selection can influence descendants, but benefit is unmeasured. |
+
+**What the 2026-10-04 batch measured, as new rows.**
+
+| Measurement | State | Evidence |
+|---|---|---|
+| Mission projection | **`measured`. Five write-only columns dropped | `migrations/0021` removes `frontier`, `permitted_experience`, `active_program`, `acquired_artifacts`, `retained_use`. No production reader existed for any of them; `retained_use` had no writer either. Forward migration, not an edit to `0019`, because `apply_migrations` records file names in `schema_migrations`. |
+| Execution authority on an owned store | **`confirmed` as a source argument, unrun** | `drive_improve_round` refuses `authority=None` when `store.identity` is set. The production live path passed none, so a database was created and dropped per round. `_disposable_authority` still serves nameless fixture stores, which `test_inv_a8_improve_authority.py:231-247` requires. No run confirms the refusal fires as written. |
+| Member/grader task split | **`measured` two ways, against frozen artifacts** | `packet.member_task_view` is an allowlist at the executor. Static replay of all 54 frozen tasks under both control strategies gave 0 of 27 mismatches per family per strategy; 108 real subprocess runs through the real reducer graded `preserved` on 27 of 27 per strategy with 0 leaked fields. Filtering at a call site would have stripped the grader too and measured `invalid` for every candidate. |
+| Expressive-action probe (M3) | **`negative`, closes M3** | 33 of 39 SWE tasks admit exactly one repair; **0 of 39** admit two semantically plausible ones. The 8 second repairs disagree with the reference on 81 to 1575 of 2106 swept inputs. Zero dispatch cost, so it runs on every task of every world. |
+| SWE scorer | **`over-claimed`, a defect found by the probe** | `tasks.score` decides from two public cases plus one protected case and already credits programs disagreeing with the reference on up to 75 percent of inputs. Any SWE freeze taken now would freeze an over-counting verdict. Fix belongs to `s09_swe_tasks.py`. |
+| CI starting state | **`measured`, and it is red** | Run `37172638343`: **259 distinct failing IDs** (245 FAILED, 14 ERROR), 4 of 7 suite matrix entries cancelled, 160 failures unrooted. **No green baseline exists.** Measured at `0ee4699`, not tip, so the counts are a floor and describe a tree behind this one. |
+| Row identity | **`measured` broken, and the outstanding item** | `_live_investigation_id` mints `study_root-run_id-label`; `campaign_id` mints `ad01-w{world}-{arm}-{seq}-{token}`. Nothing carries one to the other, so `mission.is_quiescent` has no production caller. |
+| Deliberate reds | **4, expected** | `test_r123_gates.py:192,204,210` and `test_invl02_causality.py:348,1042` drive a round on an owned store. Green at `0ee4699`, red now, because each was measuring the authority defect. The other 38 store-creating call sites across five test files are nameless and unaffected. |
 
 **The limit on disposition 1, corrected by the independent review and recorded
 here so it is not lost.** At `8a207ab` the gap was wider than a computed
@@ -202,6 +225,8 @@ in its own `not_claimed`.
 | Crossing power, SWE side | `software-fault-repair-v1` reports **9** clusters, `powered: True` | **This 9 is a union.** `_swe_clusters` (`twodomain.py:119-126`) returns `len(set(DEV_TEMPLATES) \| set(HELD_OUT_TEMPLATES))`, and the two splits hold 3 and 6 templates. Per split that is **3 or 6 against 6 required**: dev is unpowered, held-out is exactly at threshold with zero margin. The union clears the bar through the census the split exists to prevent. |
 | Crossing power, Boolean side | `boolean-rule-v1` offers **1** cluster against 6 required, shortfall 5, `powered: False` | The comparison is unavailable from these two instruments. |
 | Boolean hypothesis classes | **exactly one** distinct descriptor, identical `class_digest`, `class_size`, `form` and `n_inputs` across 3 splits x 24 seeds | A contrast over it has one independent unit however many tasks it runs. No panel choice can move it. |
+| Mission row ownership, **as of `ff5b767`** | **repaired.** `run_two_domain_crossing` takes no dsn, writes no mission row and returns the crossing whole; the five write-only columns are dropped in `migrations/0021` | One of the two named causes is gone. The crossing was the only writer of the projections production did not consume, and it had zero production callers to begin with. |
+| Row identity, **as of `ff5b767`** | **broken, and now the blocker.** `_live_investigation_id` (`scripts/invl02_live.py:1899`) and `campaign_id` (`experiments/ad01/trajectory.py:110`) mint different SQL rows | The SQL quiescence predicate has **no production caller** and two quiescence predicates remain. Wiring the SQL predicate into adoption would ask about a row the store's effects were never admitted to; deleting the JSON one would erase a real signal. |
 
 **A two-domain demonstration is not a two-domain result.** The lane does not
 claim otherwise and is honest about what its demonstration is.
@@ -222,6 +247,7 @@ supplies no way to raise that without new generator families.
 | Inheritable construction procedure | `confirmed` (mechanism only) | C4 deleted the two-member fixed menu; a descendant now inherits its parent's construction input, so `reachable_evidence` is a function of the program rather than a constant published beside it. `_revision_source(3)`, `(8)`, `(11)` all build ~1067-character sources and all pass the frozen-write check. |
 | Revised descendant cohort | **does not exist** | No eligible revision was attempted, so nothing was compared and no learner improved. |
 | Per-task policy state in sealed assessment | `never run` | `b5-sealed-state` has no report, no evidence and no test. |
+| Runnable on this host, **as of `ff5b767`** | **no** | `SETTLEMENT_GATEWAY_ENDPOINT` and `SETTLEMENT_GATEWAY_KEY` are both absent from the environment, verified by name, and `config/.env` does not exist. 37 modules require the endpoint. An absent route or credential is not model incapability, and it is recorded as an external absence rather than a result. |
 
 Per `WORKER-PROMPT.md`, the prototype's existence does not claim beneficial RSI.
 Nothing here claims it.
@@ -376,11 +402,28 @@ learner improved and nothing here supports such a claim. It is prototype level,
 not the connected general prototype Stage 10's own definition requires, and it
 is not qualified for deployment.
 
+**Corrected by the 2026-10-04 batch.** Five of the six fields this paragraph
+names were the write-only columns, and they no longer exist. The persistent
+entry carries the charter and `improvement_mode`; `in_flight` is the only other
+mission column, and it has real readers. The sentence above is retained as what
+C7 landed, and this paragraph is what remains of it. The prototype is further
+from stage 10 than that sentence implies: M2 is not started, the two
+investigation rows are not the same row, and M4 cannot run without a live route.
+
 ## 12. Outstanding
+
+Rows marked 2026-10-04 are new in that batch. Nothing below was softened; the
+rows the batch did not touch keep their prior state and wording.
 
 | Item | State | Why it is not closed |
 |---|---|---|
-| `c4-live` | **never run** | The milestone-C deliverable. The mechanism that would make it runnable exists and is eligible; nothing was attempted against it. |
+| **Row identity (2026-10-04)** | **blocking** | `_live_investigation_id` and `campaign_id` mint different SQL rows and nothing carries one to the other. Upstream of M2 and of the quiescence repair. |
+| **Mission round-result writer (2026-10-04)** | **outstanding** | `improve_channel.py` still appends to `store._doc["round_results"]` directly. The entry now asks the store's validator before the save, so a document the store would refuse to reopen can no longer be written. That is not the repair; the repair is a `FrontierStore.record_round_result` method or moving the projection to SQL. |
+| **S09 scorer equivalence check (2026-10-04)** | **outstanding, outranks the freeze** | `tasks.score` credits programs disagreeing with the reference on up to 75 percent of inputs. Any SWE cell frozen before this is repaired freezes an over-counting verdict. Owner is `s09_swe_tasks.py`. |
+| **Green CI baseline (2026-10-04)** | **does not exist** | 259 distinct failing IDs at `0ee4699`, 4 of 7 suite matrix entries cancelled, 160 unrooted. Counts are a floor and describe a tree behind the tip. A lane cannot separate its own regression from pre-existing red without re-measuring. |
+| **Four deliberate reds (2026-10-04)** | **expected red** | `test_r123_gates.py:192,204,210` and `test_invl02_causality.py:348,1042` drive a round on an owned store and now hit the refusal. Each was measuring the defect. Restoring them means supplying real authority from `live_construct.py` and `invl02_live.py`. |
+| M3 supported cells | **`negative`, closes the study** | 0 of 39 SWE tasks admit two semantically plausible repairs; AD01 fails on four independent grounds; Boolean and ordering cannot execute a program. The supported-cell count is zero, measured. Repairing the SWE scorer does not change that, because the alternative repairs are overfitted to three cases rather than correct. A **valid** null: M3's own question is answered, and stages 9 and 10 are not thereby closed. |
+| `c4-live` | **never run, and not runnable here** | The milestone-C deliverable. The mechanism that would make it runnable exists and is eligible; nothing was attempted against it, and no live route is configured on this host. |
 | `b5-sealed-state` | **never run** | Per-task policy state in sealed assessment, asked for in `WORKER-PROMPT.md` §B. |
 | B4 crossover | **unmeasured** | The single `control_competence(40)` sweep was cancelled for resource reasons before it returned. A cancelled measurement is not a null measurement: nothing about the crossover is known in either direction. |
 | Acquisition | **open** | 0 of 4, on one returned artifact. The output budget is **not** the binding constraint; B17 falsified that and the remaining live question is a route-and-protocol one, since 3 of 3 responses were prose where the protocol asked for code. |

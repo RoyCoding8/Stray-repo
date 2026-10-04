@@ -14,8 +14,8 @@ General autonomous discovery remains the goal. Memory, background development, t
 | 6. Practical specification | Builder protocols and acceptance conditions | Foundation specified |
 | 7. Foundation prototype | Durable bounded execution, evidence, trials and continuity | Built; deployment validation remains partial |
 | 8. Cognitive-policy refinement | Acquired competence, memory, agenda, representations and teams | Closed at bounded mechanism scope; broader learning questions remain open |
-| 9. Architecture consolidation | Compare executable operational and improvement behavior; keep, replace or remove mechanisms | **Active, incomplete.** Engineering repairs are scoped; acquisition was unsuccessful, benefit comparisons are unmeasured, autonomous selection is not established and live learner revision is unrun. |
-| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | **Incomplete.** Mission components exist, but the SQL entry and JSON live path remain separate; the two-domain crossing is scripted. |
+| 9. Architecture consolidation | Compare executable operational and improvement behavior; keep, replace or remove mechanisms | **Active, incomplete.** The write-only mission columns are gone as of `ff5b767`, and the live path now refuses to execute on a store that names an owner. Acquisition was unsuccessful, benefit comparisons are unmeasured, autonomous selection is not established and live learner revision is unrun. No test suite has run since `0ee4699`. |
+| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | **Incomplete.** The two investigation rows are still different rows, so the SQL quiescence predicate governs nothing and two predicates remain. M2 is not started, and M4 cannot run because no live route is configured. |
 | 11. Operational qualification | Supported deployment, containment, recovery and controls | Partial groundwork; not qualified. Unchanged by the 2026-10-01 batch. |
 | 12. Final implementation/release | Supported infrastructure product with migrations, installation, lifecycle UI and evidence | Not started as a release milestone |
 
@@ -23,13 +23,34 @@ Stages are not a waterfall: an experiment may force a revision to the formal mod
 
 ## The current decision
 
+The SQL mission ownership work is **partly done**. The write-only half of the
+defect is closed: the five mission columns `migrations/0019` added had no
+production reader, and `retained_use` had no writer at all, so
+`migrations/0021` drops them forward rather than rewriting `0019`. The AD01
+software and graph worlds are removed from the discovery matrix, and the one
+world offering interventions is measured degenerate, so M3's supported-cell
+count is zero by measurement.
+
+What remains is not a column migration. **The two investigation rows are not the
+same row**, so unifying them comes first: the live arm and the campaign mint
+different SQL identities, the SQL quiescence predicate has no production caller,
+and two quiescence predicates still exist. Until that is repaired, one
+definition of readiness cannot govern both live admission and program
+adoption, and no connected study can be frozen on top of it.
+
+The [2026-10-04 batch](../../reports/PROJECT-LEDGER.md#mission-ownership-and-instrument-census-2026-10-04)
+is the source for this paragraph. Its scope labels are earned: the AD01 worlds
+are removed from the discovery matrix on four independent grounds, and the SWE
+cell is measured degenerate. M3 closes as a valid null. It does not close
+stages 9 or 10, and it says so.
+
 The [2026-10-03 researcher review](../../reports/PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03)
-selects SQL AD01 as the production mission owner. The latest worker repaired
-useful mechanisms but left live JSON ownership separate. Finish that migration,
-then test program-selected acquisition/reuse and an inherited acquisition
-decision. Coarse witness signatures describe a projection; they do not prove
-statistical independence. The next study may report scoped descriptive utility
-without pretending its cluster count establishes statistical power.
+selected SQL AD01 as the production mission owner and left the migration
+unfinished. Finish it, then test program-selected acquisition/reuse and an
+inherited acquisition decision. Coarse witness signatures describe a
+projection; they do not prove statistical independence. The next study may
+report scoped descriptive utility without pretending its cluster count
+establishes statistical power.
 
 The [surgical closure](../../reports/PROJECT-LEDGER.md#surgical-closure-and-recoverable-history-2026-10-02)
 repairs initial mission admission, actual coverage reporting, source identity
