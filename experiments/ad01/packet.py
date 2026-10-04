@@ -74,8 +74,14 @@ def with_held_out_canary(task: dict, marker: str) -> dict:
         raise ValueError("a canary needs a marker")
     return {**task, "witness": {"canary": str(marker)}}
 
+# `seed` was in this allowlist and was a second copy of a value the task
+# id already gives away: `task_id` names the world, the kind and the
+# index, and `splits._ad01_seed` is arithmetic on those three. Dropping
+# the field deletes a redundant authority and nothing else. The hole it
+# appeared to close is still open, and `template` still carries the fault
+# name verbatim. See reports/workstreams/ad01-leak-assessment.md.
 PUBLIC_TASK_FIELDS = frozenset({
-    "family", "seed", "task_id", "template", "split", "world", "kind",
+    "family", "task_id", "template", "split", "world", "kind",
     "ops", "vertices", "edges", "instrument", "max_queries", "remaining",
     "observed", "hypothesis_class", "instruction", "committed",
     "public_ops", "public_observations", "examples", "spec",
