@@ -1,5 +1,205 @@
 # Project ledger
 
+## Mission ownership and instrument census, 2026-10-04
+
+18 commits over `0ee4699` (`9b12277` through `ff5b767`), 12 lane commits and 6
+merges, 24 files, +1867/−230. **No lane in this batch ran a test suite, WSL, or
+a live route.** Every behavioral claim below is a static argument from source, a
+probe against a frozen artifact, or arithmetic on an existing CI log. The two
+exceptions are named as such. CI is the first place any of this executes, and
+259 tests are already red there.
+
+**M0 is complete.** `reports/workstreams/m0-ownership-map.md` maps mission state
+from four independent readers, with its load-bearing claims re-verified before
+the document was written. Its central finding: `migrations/0019:24-30` put six
+JSONB columns on `investigations`, and **five of them have no production reader
+anywhere in the tree** (`m0-ownership-map.md:26-49`). Every attribute access to
+`.frontier`, `.permitted_experience`, `.active_program`, `.acquired_artifacts`
+or `.retained_use` outside `mission.py` lands in `tests/`. The only production
+readers of the mission row are `read_declaration` and `read_improvement_mode`,
+and the first returns four charter fields through `as_declaration()`, discarding
+all six (`m0-ownership-map.md:33-35`). `retained_use` is the extreme case: it
+has no **writer** anywhere either, in `experiments/`, `scripts/` or `src/`.
+
+The challenge was commissioned to refute the map rather than confirm it, and it
+did (`reports/workstreams/m0-map-challenge.md`). **The lane split was REFUTED.**
+The map named **one** source-text gate; there are **nineteen**, resolved from
+real imports rather than guessed aliases (`m0-map-challenge.md:52-53`). Two of
+them contradict the map's own Lane C contract, and two files those gates read
+belonged to no lane. The map's lane section was superseded in place by a
+five-lane split before any lane was dispatched against it
+(`m0-ownership-map.md:122-162`). The refutation cost a document revision rather
+than three lanes' rework.
+
+### What merged, and the measurement that authorized it
+
+| Change | Commit | Measurement that justified it |
+|---|---|---|
+| Drop the five write-only mission columns | `54112be` | The ownership map's reader census, re-verified before deletion. `retained_use` had no writer at all; `permitted_experience` declared `DEFAULT '[]'` against a module requiring `dict`; `acquired_artifacts` was only ever written empty. |
+| Delete `StoreIdentity.durable` | `4ab7997` | It returned `self.dsn is not None`, but `_validated_identity` already refuses any identity whose dsn is `None`. It could only return `True` for an identity that could exist, so it asserted nothing the two tests above it did not. |
+| Correct the `in_flight` sole-owner claim | `4ab7997` | The claim named one writer. There are **four**, in two modules. Both sides hold `FOR UPDATE` across their read-then-write, so the locking was right and the claim was wrong. |
+| Remove `seed` from the public allowlist | `21b4c17` | It was arithmetic on three integers the public `task_id` already publishes. Redundant authority, closing no hole. |
+| Refuse a disposable authority on an owned store | `0bc02d3` | The production live path passed no authority. See below. |
+| Split the member's task from the grader's | `7ac77bb` | The frozen task carries its answer as a literal key. See below. |
+| Read withheld keys with `get` in two fixture members | `ff5b767` | Two fixture sources subscripted `task["fault"]` after `7ac77bb` removed it. |
+| Migrate four test files off the dropped columns | `2fcc217` | No lane owned them, and leaving them broken would have made the deletion unverifiable. No assertion was deleted; each was pointed at where the content lives now. |
+
+**The five columns are dropped in `migrations/0021`, forward, not by rewriting
+`0019`.** `apply_migrations` records each file by name in `schema_migrations`, so
+a store that already applied `0019` would keep the old definition while a fresh
+store got a new one under the same name. Two schemas both claiming to be the
+schema is the failure the ledger's own history warns about.
+`in_flight` and `improvement_mode` stay. The content the five named is not lost:
+what is open, what the mission may have learned, which program may act, what it
+retains and what it acquired are read from the document that actually owns them,
+and the admitting program records its own identity in `in_flight`.
+
+**The authority defect, which is why M1 could not be a column migration.**
+`run_live_improve_round` called `drive_improve_round` without the `authority`
+keyword, so `granted is None` reached `_disposable_authority`, which runs
+`CREATE DATABASE` and `DROP DATABASE ... WITH (FORCE)`. The live path held a
+real named `investigations` row while executing against a database destroyed
+when the round ended, and production receipts did not survive the round
+(`m0-map-challenge.md:94-107`).
+
+The repair is a **refusal keyed on `store.identity`**, not a required argument.
+`ensure_live_store(dsn=..., investigation_id=...)` sets an identity;
+`create_store()` without one leaves it `None`, so the fixture boundary still
+gets a disposable store and the refusal is inert there. A required argument
+would have forced `run_live_improve_round` to *write* `authority=None`, which is
+the same silent substitution with a TypeError wrapped around it. The question a
+round needs answered is not whether the caller replied but whether this store
+names an owner whose investigation the receipts must reach. `_disposable_authority`
+is untouched, because `test_inv_a8_improve_authority.py:231-247` requires it and
+its invariant is sound.
+
+**The task-view seam.** The frozen AD01 task carries its answer as a literal
+key, `fault = "stale-read"`, with `template = "stale-read-2chain"` naming the
+same fault by substring on **27 of 27** frozen software tasks. Six call sites
+handed a member the raw dict, so the answer needed no import, no inversion and
+no source read.
+
+**Filtering at a call site would have measured a silent null.**
+`run_member_out_of_process` builds the host's grading oracle from `task` and
+writes that same dict to the child's `task.json`. A call site that stripped
+`fault` would strip the grader too, and the grader needs it
+(`checkers.py:83`, `:89`). Measured at the seam: grader on the raw task grades
+`preserved`; grader on the member view grades `invalid`. Every candidate would
+have come back invalid and the study would have recorded a null it never ran.
+
+So the split is at the executor, not the call sites. `packet.member_task_view`
+is an **allowlist**. `MEMBER_TASK_FIELDS` is `{family, task_id, ops, vertices,
+edges, witness}` and `MEMBER_WITNESS_FIELDS` is `{observation}`, the opposite
+of `method_task_view`'s `SEALED_KEYS` denylist that let `fault` and `witness`
+through. A field added to the world later is denied until someone argues for it.
+The executor signature is unchanged; a `graded_task` parameter was built first
+and deleted, because zero callers made it a second way to say what the signature
+already says.
+
+### M3 closes as a measured zero, not a deferral
+
+**33 of 39 SWE tasks admit exactly one repair. Zero of 39 admit two plausible
+ones** (`m3-expressive-probe.md:134-142`). The probe M3 requires is specified,
+runnable offline at zero dispatch cost, and it has been run. It enumerates edits
+rather than `program.variants`, because `SweSession.repair` admits `replace` and
+`delete` over any line, so a variant enumeration would have measured the
+generator's table.
+
+Two findings cut against M3 as written, and both matter more than the count.
+Where a second repair is reachable, it carries a widened or reversed `window`
+alongside the reference edit, passes all three scorer cases, and disagrees with
+the reference on **81 to 1575 of 2106** swept inputs. Those are overfitted
+coincidences on three cases, not alternative correct repairs. And the scorer
+cannot tell the difference, because `tasks.score` decides from two public cases
+plus one protected case. A SWE freeze taken before that is repaired would freeze
+an over-counting verdict; the fix belongs to `s09_swe_tasks.py`, and outranks the
+freeze question.
+
+**This is a valid null that closes M3.** The supported-cell count is **zero,
+measured**, not merely unproven: the AD01 cells fail on four independent grounds
+(the first being the literal `fault` key), the SWE cell is `degenerate` on every
+instance, and Boolean and ordering are clean function-identification
+instruments that cannot execute a program. A valid null closes a study. What it
+does not do is close stage 9 or 10.
+
+### CI baseline, and what it does not license
+
+`reports/evidence/ci-baseline-37172638343.md`, measured 2026-10-04 from run
+`37172638343`.
+
+**259 distinct failing test IDs: 245 FAILED, 14 ERROR. No green baseline
+exists.** Four of the seven suite matrix entries were cancelled at roughly
+100 minutes, so about a quarter of the intended coverage has no measurement at
+all, and the 245 FAILED are a **floor**. The run tested `0ee4699`, not tip, so
+it describes a tree behind this one.
+
+The previous accounting named the wrong shards: `py3.133` was **not** cancelled,
+it ran and failed with 103 FAILED and 8 ERROR, the largest single contributor.
+The cancelled set is exactly the unsharded entries plus one group.
+**160 failures are unrooted** and are treated as opaque. The prior figures were
+raw line counts rather than distinct test IDs, and each count here was
+cross-checked three ways.
+
+`tests/check_execution_authority.py` prints `OK: every call carries authority`
+over 48 calls in 4 files while **11 tests fail on exactly the property it claims
+to enforce**. Its `FILES` is a hardcoded literal list with no glob, and its
+`TARGETS` do not name the functions that actually raise, so broadening the list
+would not help. This is the project's named recurring failure recurring inside
+the gate built for it.
+
+### Four tests go red deliberately
+
+`test_r123_gates.py:192,204,210` and `test_invl02_causality.py:348,1042` drive a
+round on an **owned** store, so Lane C's refusal fires. **They were green at
+`0ee4699` and this batch turns them red, and that is the intent.** Each was
+measuring the defect. A green assertion there could not tell whether the
+receipts behind a returned candidate survived. Verified by AST that the other 38
+store-creating call sites across five test files are nameless and unaffected.
+The restoration is supplying real authority, which is the only correct fix, and
+it belongs to the lanes that own `live_construct.py` and `invl02_live.py`.
+
+### M1 is not complete
+
+The outstanding item is **row identity**, and it blocks the quiescence repair.
+The live arm and the campaign name different SQL rows.
+`invl02_live._live_investigation_id` (`scripts/invl02_live.py:1899`) mints
+`study_root-run_id-label`. `trajectory.campaign_id`
+(`experiments/ad01/trajectory.py:110`) mints `ad01-w{world}-{arm}-{seq}-{token}`.
+Nothing carries one to the other.
+
+Consequences, both measured. `mission.is_quiescent` has **no production caller**,
+so the SQL quiescence predicate governs nothing. And **two quiescence predicates
+remain**: the JSON one reads the document's own pending effects, the SQL one
+reads `jsonb_array_length(in_flight) = 0`. Wiring the SQL predicate into adoption
+would ask about a row the store's effects were never admitted to, and deleting
+the JSON one would erase a real signal. Two predicates is the correct state until
+the row identity is repaired. A test at
+`tests/test_a34_quiescence.py:241-255` argues the two answer different questions
+because "nothing carries one to the other". That reasoning was true when
+written, its conclusion expires the moment the routing field exists, and the
+routing field is precisely what is missing.
+
+Also outstanding and not worked around: `improve_channel.py` still appends to
+`store._doc["round_results"]` directly. The entry now asks the store's validator
+before the save and is withdrawn if it refuses, so a document the store would
+refuse to reopen can no longer be written by the code that wrote it. That is
+not the repair. The repair is a `record_round_result` method on `FrontierStore`,
+or moving the projection to SQL and deleting it.
+
+### M2 is not started
+
+Nothing in this batch touched a public mission entry, permitted experience, an
+admitted effect, a checked artifact or a fresh-process bound use. M2 is not
+started, and the row-identity repair above is upstream of it.
+
+### M4 is not started and is not runnable on this host
+
+**No live route is configured.** `SETTLEMENT_GATEWAY_ENDPOINT` and
+`SETTLEMENT_GATEWAY_KEY` are both absent from the environment, verified by name,
+and `config/.env` does not exist, so nothing sets them from a file either. 37
+modules name the endpoint. **This is an external absence, not model
+incapability**, and it is recorded as such rather than as a result.
+
 ## Researcher review and surgical closure, 2026-10-03
 
 Reviewed worker source `64e1f63`, 70 commits above `5349dab`, using three
