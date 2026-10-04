@@ -1856,6 +1856,19 @@ def _authorize(dsn: str, study_root: str, authorized: int,
         ceilings=ceilings)
 
 
+def _study_authority(dsn: str, allocation_id: str | None) -> dict | None:
+    """The `{dsn, allocation_id}` every execution of this leg runs under.
+
+    One construction, because this is one authority and a second derivation
+    would be a second allocation for the same leg. `_authorize` already
+    refuses to yield an arm without one, so a caller reaching here holds
+    both names or has already stopped.
+    """
+    if not allocation_id:
+        return None
+    return {"dsn": dsn, "allocation_id": allocation_id}
+
+
 def _live_environments(freeze: dict) -> list:
     envs = [{"instrument": "boolean-rule-v1", "split": "dev",
              "seed": 4}]
@@ -1988,8 +2001,7 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
     from experiments.ad01 import improve_channel as _channel
     from experiments.ad01 import live_construct as _live
     from experiments.ad01 import mission as _mission
-    authority = {"dsn": dsn, "allocation_id": allocation_id} \
-        if allocation_id else None
+    authority = _study_authority(dsn, allocation_id)
     investigation_id = _record_live_mission(
         dsn, _live_investigation_id(freeze, label), freeze)
     if _mission.read_improvement_mode(dsn, investigation_id) != "improve":
@@ -2263,7 +2275,8 @@ def run_e0(dsn: str, out) -> dict:
         revision = _live.bind_retained_acquisition(
             live.get("store_path", ""), acquisition,
             _rules.make_task("dev", 4), dsn=dsn,
-            investigation_id=live["investigation_id"])
+            investigation_id=live["investigation_id"],
+            authority=_study_authority(dsn, allocation_id))
     else:
         revision = "absent"
     live["store_digest"] = _file_digest(Path(live["store_path"]))
@@ -2763,7 +2776,8 @@ def run_e12(dsn: str, out) -> dict:
                 revision = _live.bind_retained_acquisition(
                     frontier.get("store_path", ""), acquisition,
                     _rules.make_task("dev", 4), dsn=dsn,
-                    investigation_id=frontier["investigation_id"])
+                    investigation_id=frontier["investigation_id"],
+                    authority=_study_authority(dsn, allocation_id))
             program_freeze = _freeze_arm_program(frontier, revision, arm)
             if acquisition.get("status") == "retained" and program_freeze is None:
                 raise ValueError("arm program was not frozen before qualification")

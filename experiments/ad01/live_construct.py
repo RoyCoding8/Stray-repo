@@ -1496,7 +1496,23 @@ def _construct_receipts(probe: dict, round_no) -> list:
 
 def bind_live_revision(store_path, package: dict, task: dict,
                         arm: str, dsn: str | None = None,
-                        investigation_id: str | None = None) -> dict:
+                        investigation_id: str | None = None,
+                        *, authority: dict | None = None) -> dict:
+    """Bind a retained revision, running its round under a named authority.
+
+    `authority` is the `{dsn, allocation_id}` the post-restart round settles
+    against, the same allocation the improve rounds of the leg that
+    retained this package already ran under. It is threaded rather than
+    derived because the caller is where the study authority is bought, and a
+    second derivation inside this function would be a second authority for
+    one leg.
+
+    A round that refuses is not automatically a rejection of the package.
+    The round records every execution in `round_journal` before it acts on
+    one, so `bind_retained_acquisition` can tell a round that ran from a
+    round that refused before executing. This function keeps both as
+    `LiveRefused` and lets the caller that holds the store make that call.
+    """
     from . import frontier as _frontier
     store = _open_owned_store(store_path, dsn, investigation_id)
     store._validate_active_package()
@@ -1521,10 +1537,11 @@ def bind_live_revision(store_path, package: dict, task: dict,
     if restarted.active_digest != bound.get("package_digest"):
         raise LiveRefused("retained without binding: durable active"
                           " digest differs from the retained package")
+    round_no = int(bound.get("version", 0))
     try:
         probe = run_live_improve_round(
             restarted, task, package=restarted.active_package,
-            round_no=int(bound.get("version", 0)), arm=arm)
+            round_no=round_no, arm=arm, authority=authority)
     except LiveRefused as exc:
         raise LiveRefused("rejected: post-restart round refused: %s"
                           % exc) from exc
@@ -1555,7 +1572,32 @@ def bind_live_revision(store_path, package: dict, task: dict,
 
 def bind_retained_acquisition(store_path, acquisition: dict,
                               task: dict, dsn: str | None = None,
-                              investigation_id: str | None = None) -> dict:
+                              investigation_id: str | None = None,
+                              *, authority: dict | None = None) -> dict:
+    """Bind what the leg retained, or report why it could not be bound.
+
+    The catch is broad and this is where that is decided. Every fault below
+    the store open is either a fact about this document, which the
+    dispositions record, or a refusal the round itself raised, which is not.
+    Those two were told apart by reading the message for a `rejected:`
+    marker, and that was wrong in the direction that hides faults: an owned
+    store with no authority named refuses the ownership check before it
+    executes anything, the message was re-read as an answer about the
+    package, and the caller was told a candidate had been rejected when no
+    round had run.
+
+    It is told apart by what the store durably holds. The round records every
+    execution in `round_journal` before it acts on one, so a refusal for a
+    round that ran leaves the first step's entry and a refusal that
+    executed nothing leaves none. That is the fact the caller needs and the
+    message never carried. The marker still decides among the refusals that
+    did run, which is all it was ever good for.
+
+    `authority` is the study allocation the round settles against, threaded
+    from the leg that authorized it. It is not derived here: the caller is
+    where the study authority is bought, and a second derivation would be a
+    second authority for one leg.
+    """
     from . import frontier as _frontier
     control_id = acquisition.get("control_id", "")
     digest = acquisition.get("package_digest", "")
@@ -1581,9 +1623,15 @@ def bind_retained_acquisition(store_path, acquisition: dict,
     try:
         return bind_live_revision(
             str(store_path), matches[0], task, str(acquisition.get("arm", "")),
-            dsn=dsn, investigation_id=investigation_id)
+            dsn=dsn, investigation_id=investigation_id, authority=authority)
     except (LiveRefused, _frontier.Refused) as exc:
         message = str(exc)
+        round_ran = store.round_command(int(matches[0].get("version", 0)),
+                                        0) is not None
+        if not round_ran:
+            raise LiveRefused(
+                "retained without binding: the round refused before it"
+                " executed anything: %s" % message) from exc
         if message.startswith("rejected:"):
             return {"disposition": "rejected", "reason": message,
                     "release_id": control_id, "bound_digest": digest}
