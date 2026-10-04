@@ -1838,9 +1838,8 @@ def _derived_operation_id(package: dict, purpose: str, view: dict, *,
 
     `purpose` is what the execution is for — `op`, `imp`, `rev` — and was
     named `arm`, which is how the arm went missing from the id while the
-    docstring claimed it was there. Only `run_improve_step` knows an arm; the
-    operate and revision paths reach the executor without one, and their ids
-    say so rather than reading as a name.
+    docstring claimed it was there. Only the revision path reaches the
+    executor without one, and its id says so rather than reading as a name.
     """
     return "invl02-%s-%s-%s-v%s" % (
         purpose,
@@ -1885,17 +1884,32 @@ def _unwrap(outer: dict) -> dict:
 
 def run_operate_step(package: dict, view: dict, state: dict, *,
                      authority: dict | None = None,
-                     operation_id: str | None = None) -> dict:
+                     operation_id: str | None = None,
+                     arm: str | None = None) -> dict:
+    """Execute the operate source under the authority the caller holds.
+
+    `arm` is the arm this execution is one arm's work, and it reaches the
+    operation id beside the package digest. Every live arm binds the same
+    deterministic `make_control("low")`, so without it two arms of one study
+    offer the ledger one id per view and the second reads the first's settled
+    receipt. It also reaches the executor, which annotates the receipt with
+    the arm the work belonged to.
+
+    Production does not supply it yet. `live_construct.choose_next_work`
+    reaches this wrapper without one, and the id says `noarm` rather than
+    reading as a name. Making the arm arrive is that file's seam to thread,
+    from the arm `_run_frontier_investigation` already holds as `label`.
+    """
     _frontier.validate_view(view)
     if view["purpose"] != _frontier.OPERATE:
         raise _frontier.Refused("operate runner got a %s view" % (
             view.get("purpose"),))
     with _execution_ledger(authority, "invl02-operate",
                            operation_id or _derived_operation_id(
-                               package, "op", view)) as held:
+                               package, "op", view, arm=arm)) as held:
         stepped = _run_source(package["op_source"], view, state,
                               authority=held,
-                              operation_id=held["operation_id"])
+                              operation_id=held["operation_id"], arm=arm)
     action = _frontier.validate_operate_action(_unwrap(
         stepped["action"]))
     return {"action": action, "state": stepped["state"],
