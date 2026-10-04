@@ -1,9 +1,8 @@
 """One durable mission entry.
 
-A mission is six things and one record holds all of them: what is still open,
-what the mission is allowed to have learned, which program is authorised to
-act, what it has acquired, what of that it retains and uses, and whether it is
-operating or improving.
+A mission is the charter plus one thing: whether it is operating or improving.
+Everything else the assignment called a mission is read from where it is
+actually produced, and this module says so rather than holding a second copy.
 
 Before this module, three aggregates each held a part. `s09_policy_state` held
 the accepted decisions, `FrontierStore.pending_effects` the unresolved work,
@@ -13,13 +12,18 @@ places and reconciling them, and a crash between two of the writes left a
 mission that answered all three differently.
 
 The entry is one row on `investigations`, which already owns an
-investigation's identity and objective. Adding six columns there keeps the
-entry reachable with no join, and it means no sixth aggregate is introduced.
-The fields are deliberately opaque JSON: a mission is the study's to
-describe, and a schema here would make every new study a migration. What this
-module does own is the identity of the six, so a caller cannot record a
-seventh thing by accident and a second table cannot take one of them without
-being caught.
+investigation's identity and objective, so the charter is reachable with no
+join and no sixth aggregate is introduced.
+
+Migration 0019 added six JSONB columns here and five of them never had a
+production reader. `retained_use` never had a writer either. Migration 0021
+dropped those five, so `MISSION_FIELDS` is one field, and a caller cannot
+record a phantom part of a mission by naming one. What each of the five named is
+still owned somewhere real: what is still open and what the mission has learned
+are read from the document the run produces, and what it acquired and what it
+retains are the retention ledger's own records. The one thing that genuinely
+had no other owner is the mode, because the mode decides which executor holds
+authority rather than describing what the study is doing.
 """
 
 from __future__ import annotations
@@ -27,32 +31,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterable
 
-MISSION_FIELDS = (
-    "frontier",
-    "permitted_experience",
-    "active_program",
-    "acquired_artifacts",
-    "retained_use",
-    "improvement_mode",
-)
+MISSION_FIELDS = ("improvement_mode",)
 
-# `improvement_mode` is the one field with a closed value set. The other five
-# are the study's own descriptions and stay opaque, so constraining them here
-# would make every new study a migration to this module. The mode is not the
-# study's: "improve" versus "operate" decides which executor holds authority,
-# so an unrecognised value has to be a refusal rather than a typo that leaves
-# a mission silently inert.
+# `improvement_mode` is the one field with a closed value set. It is not the
+# study's: "improve" versus "operate" decides which executor holds authority, so
+# an unrecognised value has to be a refusal rather than a typo that leaves a
+# mission silently inert.
 IMPROVEMENT_MODES = ("operate", "improve")
 
-# The six are per-field JSON types, so a caller writing the wrong shape is
-# refused at the boundary rather than read back as something else.
-_JSON_TYPES = {
-    "frontier": dict,
-    "permitted_experience": dict,
-    "active_program": (dict, type(None)),
-    "acquired_artifacts": list,
-    "retained_use": (dict, type(None)),
-}
+# Nothing here is opaque JSON any more. The five fields 0019 declared beside it
+# were removed in 0021 rather than typed, because a type table is only worth its
+# place when something is written and read back. Of the five, `retained_use` had
+# no writer at all and `permitted_experience` a declared default of `'[]'` that
+# this dict contradicted, which `read_mission` hid with `dict(row[...] or {})`.
+# That coercion is gone with the column: the module makes no promise about a
+# shape, so it cannot launder a disagreement about one.
 
 
 class MissionRefused(Exception):
@@ -64,10 +57,9 @@ class MissionEntry:
     """One investigation's mission, read whole.
 
     `objective`, `environments`, `constraints` and `success_criteria` are the
-    study's charter and are already on the row; the six fields are the entry.
-    Keeping the charter beside the entry is what lets a caller build a view
-    without a second read, and it is why `as_declaration` round-trips into
-    the frontier store's own constructor.
+    study's charter and are already on the row. Keeping the charter beside the
+    entry is what lets a caller build a view without a second read, and it is
+    why `as_declaration` round-trips into the frontier store's own constructor.
     """
 
     investigation_id: str
@@ -75,11 +67,6 @@ class MissionEntry:
     environments: list
     constraints: list
     success_criteria: list
-    frontier: dict
-    permitted_experience: dict
-    active_program: dict | None
-    acquired_artifacts: list
-    retained_use: dict | None
     improvement_mode: str
 
     def as_declaration(self) -> dict:
@@ -179,15 +166,6 @@ def _validate(fields: dict) -> None:
     unknown = sorted(set(fields) - set(MISSION_FIELDS))
     if unknown:
         raise MissionRefused("unknown mission field: %s" % unknown[0])
-    for name, expected in _JSON_TYPES.items():
-        if name not in fields:
-            continue
-        value = fields[name]
-        if not isinstance(value, expected):
-            wanted = (expected.__name__ if isinstance(expected, type)
-                      else " or ".join(t.__name__ for t in expected))
-            raise MissionRefused("%s must be %s, not %s" % (
-                name, wanted, type(value).__name__))
     mode = fields.get("improvement_mode")
     if mode is not None and mode not in IMPROVEMENT_MODES:
         raise MissionRefused("improvement mode must be one of %s"
@@ -207,15 +185,13 @@ def record_mission(dsn: str, investigation_id: str, *,
     admission from recording would leave the same two-step window the old
     three-aggregate arrangement had.
 
-    A field the caller does not pass is left as it is. A mission is built
-    over its life -- the charter is frozen first, and experience, program
-    and retained use are written as they are acquired -- so an update naming
-    one of the six must not blank the other five, and naming the charter must
-    not blank the six. The columns below are assembled from what was
-    actually supplied, which is why this is a partial UPDATE rather than a
-    wholesale overwrite. `scope` and `obligations` merge rather than replace
-    for the same reason, and because the steward writes other keys into
-    `obligations`.
+    A field the caller does not pass is left as it is. The charter is frozen
+    first and the mode may be recorded later, so an update naming the mode must
+    not blank the charter and naming the charter must not blank the mode. The
+    columns below are assembled from what was actually supplied, which is why
+    this is a partial UPDATE rather than a wholesale overwrite. `scope` and
+    `obligations` merge rather than replace for the same reason, and because
+    the steward writes other keys into `obligations`.
     """
     _validate(fields)
     if not isinstance(investigation_id, str) or not investigation_id.strip():
@@ -242,8 +218,7 @@ def record_mission(dsn: str, investigation_id: str, *,
         if name not in fields:
             continue
         columns.append(name)
-        values.append(fields[name] if name == "improvement_mode"
-                      else _j(fields[name]))
+        values.append(fields[name])
         supplied.add(name)
 
     updates = ["updated_at = now()"]
@@ -252,7 +227,7 @@ def record_mission(dsn: str, investigation_id: str, *,
             continue
         # The two charter bags are shared with the steward and hold keys this
         # module does not own, so a mission update merges rather than
-        # replaces. The six are this module's alone and are written whole.
+        # replaces. The mode is this module's alone and is written whole.
         updates.append("%s = investigations.%s || EXCLUDED.%s" % (name, name, name)
                        if name in merged
                        else "%s = EXCLUDED.%s" % (name, name))
@@ -300,12 +275,24 @@ def _j(value: Any):
 
 
 def read_mission(dsn: str, investigation_id: str) -> MissionEntry:
-    """The whole mission, or a refusal. Never a partial entry."""
+    """The whole mission, or a refusal. Never a partial entry.
+
+    The five columns this used to read are gone with migration 0021, and with
+    them a coercion. `permitted_experience` was declared `DEFAULT '[]'` in 0019
+    and required to be a `dict` by `_JSON_TYPES`, and `dict(row[...] or {})`
+    made that disagreement read back as agreement. There was no disagreement to
+    handle, so nothing replaced the coercion.
+
+    `scope` and `obligations` keep theirs, and the difference is the point. They
+    are `NOT NULL DEFAULT '{}'` in `0001_schema.sql`, and both writers build a
+    dict: `store.admit_commitment` sends `p.get("scope", {})` and this module
+    sends `{key: list(value)}`. There is no schema disagreement there to hide,
+    so the coercion is left alone rather than swept up in a change about a
+    different column.
+    """
     with connect(dsn) as conn:
         row = conn.execute(
-            "SELECT id, objective, scope, obligations, frontier,"
-            " permitted_experience, active_program, acquired_artifacts,"
-            " retained_use, improvement_mode"
+            "SELECT id, objective, scope, obligations, improvement_mode"
             " FROM investigations WHERE id = %s",
             (investigation_id,)).fetchone()
         conn.commit()
@@ -320,13 +307,6 @@ def read_mission(dsn: str, investigation_id: str) -> MissionEntry:
         environments=list(scope.get("environments") or []),
         constraints=list(obligations.get("constraints") or []),
         success_criteria=list(obligations.get("success_criteria") or []),
-        frontier=dict(row["frontier"] or {}),
-        permitted_experience=dict(row["permitted_experience"] or {}),
-        active_program=(None if row["active_program"] is None
-                        else dict(row["active_program"])),
-        acquired_artifacts=list(row["acquired_artifacts"] or []),
-        retained_use=(None if row["retained_use"] is None
-                      else dict(row["retained_use"])),
         improvement_mode=row["improvement_mode"])
 
 
@@ -379,14 +359,12 @@ def seed_program_digest() -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-# `in_flight` is the mission's, not one of `MISSION_FIELDS`. Those six are a
-# study's own descriptions and `mission` refuses an unknown key against them;
-# the in-flight list is this module's own bookkeeping and is written by a
-# different function, so folding it in would let a caller overwrite a held
-# operation's program identity by naming a seventh field. The column name is
-# therefore spelled where it is used, and `read_mission` does not return it,
-# because a caller that can write the whole list is an owner this module does
-# not intend to have.
+# `in_flight` is the mission's, not one of `MISSION_FIELDS`. That field is the
+# module's own bookkeeping, written by a different function; folding it in would
+# let a caller overwrite a held operation's program identity by naming a second
+# field alongside the mode. The column name is therefore spelled where it is
+# used, and `read_mission` does not return it, because a caller that can write
+# the whole list is an owner this module does not intend to have.
 
 
 def _wire(decision: dict, task_id: str, capability_id: str) -> dict:
