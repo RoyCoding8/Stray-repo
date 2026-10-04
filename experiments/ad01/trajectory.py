@@ -556,9 +556,16 @@ def admit_boundary(dsn: str, cid: str, seq: int, decision: dict, *,
     program, and an arm that runs something else says so through the
     `capability_id` it records.
 
-    This adds no writer. `mission.admit_operation` is the only code in the tree
-    that writes `investigations.in_flight`, and this reaches it through
-    `accept_action` rather than beside it.
+    This adds no writer, which is a claim about this seam rather than about
+    the column. `investigations.in_flight` has four writers in two modules:
+    `mission.admit_operation`, `mission.resume_operation` and
+    `mission.release_operation`, which own the column, and
+    `run._hold_on_mission_entry`, which the barrier suspension path reaches.
+    `admit_operation` is not the only one, so the correctness here is that
+    this reaches the owning writer through `accept_action` rather than beside
+    it. Both sides hold `FOR UPDATE` across their read-then-write, which is
+    what makes two writers to this column safe rather than a lost update;
+    that argument belongs to each writer's own docstring, not to this one.
     """
     return accept_action(dsn, cid, seq, decision,
                          program_digest=program_digest,
