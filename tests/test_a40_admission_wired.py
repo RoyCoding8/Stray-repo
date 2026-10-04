@@ -126,6 +126,46 @@ def _effect_record(store: str, cid: str, seq: int = 0) -> dict | None:
     return None if row is None else row["effect_record"]
 
 
+def test_restart_releases_a_boundary_published_before_process_death(store):
+    from experiments.ad01 import mission
+
+    cid = _cid(94)
+    source = (
+        "import os, sys\n"
+        "from experiments.ad01 import trajectory\n"
+        "dsn, cid = sys.argv[1:3]\n"
+        "trajectory.set_namespace_token('')\n"
+        "trajectory.authorize_campaign(dsn, cid, authorized=100000)\n"
+        "trajectory._s09_release = lambda *args: os._exit(9)\n"
+        "trajectory.run_campaign(0, 'I', %r, %r, tasks=[%r], dsn=dsn,\n"
+        "                        campaign_seq=94, capability_id=%r)\n"
+        % (CHARTER, CAPS, DEV_TASK, ADMITTED_PROGRAM))
+    stopped = subprocess.run([sys.executable, "-c", source, store, cid],
+                             cwd=str(ROOT), env=_env(), capture_output=True,
+                             text=True, timeout=60)
+    assert stopped.returncode == 9, stopped.stderr
+    assert len(mission.read_in_flight(store, cid)) == 1
+    assert _effect_record(store, cid) is not None
+    with mission.connect(store) as conn:
+        operations_before = conn.execute(
+            "SELECT count(*) AS count FROM operations").fetchone()["count"]
+
+    resumed = subprocess.run([
+        sys.executable, "-c",
+        "import json, sys; from experiments.ad01 import trajectory, mission; "
+        "trajectory.resume_campaign(sys.argv[1], sys.argv[2], %r, %r, "
+        "tasks=[%r]); print(json.dumps([item.as_json() for item in "
+        "mission.read_in_flight(sys.argv[1], sys.argv[2])]))"
+        % (CHARTER, CAPS, DEV_TASK), store, cid],
+        cwd=str(ROOT), env=_env(), capture_output=True, text=True, timeout=60)
+    assert resumed.returncode == 0, resumed.stderr
+    assert json.loads(resumed.stdout) == []
+    assert mission.read_in_flight(store, cid) == []
+    with mission.connect(store) as conn:
+        assert conn.execute("SELECT count(*) AS count FROM operations").fetchone()[
+            "count"] == operations_before
+
+
 def _s09_row(store: str, cid: str, seq: int = 0):
     from experiments.ad01 import trajectory
 

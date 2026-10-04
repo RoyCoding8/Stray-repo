@@ -6,12 +6,14 @@ as corrupt evidence. The tests that hit it were rewritten to assert the
 refusal contract rather than the old incumbent fallback, and the verifier
 had to learn the difference between "ran and was scored" and "never ran".
 
-A refusal is now checked for the fields that make it honest: it carries a
-reason, its executed fields all read `refused`, and it names no operation.
+A refusal carries a reason and no method result. It preserves selection and
+operation identities for the campaign's separate attribution checks.
 """
 
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -54,19 +56,42 @@ def test_a_refusal_without_a_reason_is_a_problem():
                for problem in problems), problems
 
 
-def test_a_refusal_that_also_names_a_method_is_a_problem():
-    """The shape the distinct `status` was added to prevent."""
-    problems = _own(_refusal(selected="seed-sw-greedy"))
+def test_a_refusal_preserves_the_selected_method_and_prior_operations():
+    record = _refusal(requested="seed-sw-greedy", selected="seed-sw-greedy",
+                      operation_ids=["ad01-policy-op-1"])
+    assert _own(record) == []
+    assert record["selected"] == "seed-sw-greedy"
+    assert record["operation_ids"] == ["ad01-policy-op-1"]
+
+
+@pytest.mark.parametrize("field,value", [
+    ("executed", "seed-sw-greedy"),
+    ("executed_source", "def method(): pass"),
+])
+def test_a_refusal_cannot_claim_method_execution(field, value):
+    problems = _own(_refusal(**{field: value}))
 
     assert any("refused-record-claims-execution" in problem
                for problem in problems), problems
 
 
-def test_a_refusal_carrying_operations_is_a_problem():
-    problems = _own(_refusal(operation_ids=["ad01-op-1"]))
+@pytest.mark.parametrize("operation_ids", ["ad01-op-1", [""],
+                                               ["op-1", "op-1"], [None]])
+def test_a_refusal_rejects_malformed_operation_identities(operation_ids):
+    problems = _own(_refusal(operation_ids=operation_ids))
 
-    assert any("refused-record-has-operations" in problem
+    assert any("refused-record-bad-operations" in problem
                for problem in problems), problems
+
+
+@pytest.mark.parametrize("field,value", [
+    ("verdict", "preserved"), ("normalized_reduction", 0.5),
+    ("output", {"answer": True}), ("initial_measure", 10),
+    ("final_measure", 5), ("query_trace", {"query": "x"}),
+])
+def test_a_refusal_cannot_claim_task_quality(field, value):
+    assert any("refused-record-claims-quality" in problem
+               for problem in _own(_refusal(**{field: value})))
 
 
 def test_an_execution_record_is_still_held_to_the_four_verdicts():

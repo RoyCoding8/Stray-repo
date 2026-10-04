@@ -177,7 +177,9 @@ def test_a_method_the_assessment_does_not_bind_is_not_released(store):
     """Bytes that fail `bind_revision`'s own gates are reported, not bound."""
     from experiments.ad01 import selection, trajectory
 
-    member = _member(source=METHOD_SOURCE + "\n# no reduction\n",
+    member = _member(source=(
+        "def acquired_sw_greedy(task, oracle, max_queries=16):\n"
+        "    return task\n"),
                      member_id="acquired-sw-a43-noreduce")
     release = trajectory.bind_method_release(
         {"dsn": store, "cid": CID, "world": 0}, member,
@@ -269,19 +271,7 @@ def test_a_legitimate_incumbent_fallback_still_works():
 
 
 def test_a_refused_record_verifies_as_a_refusal(store, allocated):
-    """The independent checker reads the refusal as a refusal.
-
-    `checker._verify_record` is the verifier that already separates "ran and
-    was scored" from "never ran". It is the check that would have caught
-    the defect, and the new record must satisfy it.
-
-    The refusal keeps its `operation_ids` -- the admitted policy child
-    settled before the member ran, and dropping that receipt would leave
-    settled work out of the study's accounting -- so the checker's
-    `refused-record-has-operations` rule applies here. This asserts the
-    requirement explicitly rather than letting the record's shape decide
-    it by accident.
-    """
+    """Refusal preserves the settled policy operation without claiming quality."""
     from experiments.ad01 import checker, trajectory, worlds
 
     member = _member(source=FORBIDDEN_SOURCE, member_id="acquired-sw-a43-bad")
@@ -292,10 +282,13 @@ def test_a_refused_record_verifies_as_a_refusal(store, allocated):
         dsn=store, allocation_id=allocated)
     problems = checker._verify_record(record, worlds.FROZEN_DIR, [])
 
-    assert problems == ["refused-record-has-operations %s"
-                        % record["record_id"]]
-    stripped = {**record, "operation_ids": []}
-    assert checker._verify_record(stripped, worlds.FROZEN_DIR, []) == []
+    assert problems == []
+    assert record["operation_ids"]
+    from experiments.ad01 import mission
+    with mission.connect(store) as conn:
+        operation_ids = {row["id"] for row in conn.execute(
+            "SELECT id FROM operations WHERE settled = true").fetchall()}
+    assert set(record["operation_ids"]) <= operation_ids
 
 
 def test_the_refusal_field_is_distinct_from_the_executed_field(store, allocated):

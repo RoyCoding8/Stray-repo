@@ -827,7 +827,9 @@ def bind_method_release(construction: dict, member: dict,
         proposal = records.open_revision_proposal(
             dsn, investigation_id=cid, parent_digest=parent_digest,
             failure_record=failure_record, scope=scope,
-            protocol_id=protocol_id, allocation_id=_alloc_id(cid))
+            protocol_id=protocol_id, allocation_id=_alloc_id(cid),
+            opportunity_id="method:%s:%s:%s" % (
+                boundary["seq"], member["capability_id"], digest))
         freeze = records.freeze_candidate(
             dsn, proposal_id=proposal["proposal_id"],
             source_bytes=member["method_source"], entry=member["entry"])
@@ -1641,6 +1643,7 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
                     dsn, cid, seq, decision=old["decision"],
                     observation=old["observation"], episode=old["episode"],
                     spend=int(old["spend"]), provenance="s09-m1")
+                _s09_release(dsn, cid, seq)
             queries += int(old["spend"])
             if old["episode"].get("kind", "development") == "development" \
                     and old["episode"]["disposition"] in (
@@ -2029,7 +2032,7 @@ def _member_refused_record(repertoire: dict, world: int, arm: str,
     method. This is the other refusal: the method was admitted and named,
     and then the executor refused it. `requested` and `selected` name that
     admitted method, because they were real decisions, but `executed` and
-    `executed_source` read `refused` because no bytes ran. `operation_ids`
+    `executed_source` read `refused` because no verified method result exists. `operation_ids`
     keeps what it found: the refusal can follow a durable operation the
     current authority owns, and dropping it would lose the receipt of work
     that did happen.

@@ -107,22 +107,31 @@ def _verify_record(record: dict, root, unevaluable: list) -> list:
 
 
 def _verify_refusal(record: dict, rid: str) -> list:
-    """What a refusal still has to be true about.
+    """Check absence of a method result, retaining decisions and exposure IDs.
 
-    The reason is the whole content of a refusal, so an empty one is
-    indistinguishable from a crash. The executed fields must all read
-    `refused` too: a record that refused and also names a selected method is
-    the exact shape the distinct `status` was added to prevent.
+    Operation attribution belongs to the campaign's receipt verifier. A
+    policy operation may have settled before the selected method refused.
     """
     problems = []
     if not str(record.get("fallback_reason") or "").strip():
         problems.append("refusal-without-reason %s" % rid)
-    for field in ("requested", "selected", "executed", "executed_source"):
+    for field in ("executed", "executed_source"):
         if record.get(field) != "refused":
             problems.append("refused-record-claims-execution %s" % rid)
             break
-    if record.get("operation_ids"):
-        problems.append("refused-record-has-operations %s" % rid)
+    if (record.get("verdict") != "refused"
+            or record.get("initial_measure") != 0
+            or record.get("final_measure") != 0
+            or record.get("normalized_reduction") != 0.0
+            or record.get("output") != {}
+            or record.get("query_trace") is not None):
+        problems.append("refused-record-claims-quality %s" % rid)
+    operation_ids = record.get("operation_ids", [])
+    if (not isinstance(operation_ids, list)
+            or any(not isinstance(item, str) or not item.strip()
+                   for item in operation_ids)
+            or len(set(operation_ids)) != len(operation_ids)):
+        problems.append("refused-record-bad-operations %s" % rid)
     return problems
 
 

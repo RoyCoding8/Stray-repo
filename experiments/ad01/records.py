@@ -1364,14 +1364,15 @@ REVISION_PROTOCOL = "s09-revision-v1"
 
 
 def proposal_id_for(investigation_id: str, parent_digest: str,
-                    task_id: str, scope: dict) -> str:
+                    task_id: str, scope: dict, *, opportunity_id: str = "") -> str:
     import hashlib
     import json
-    raw = json.dumps({"investigation": investigation_id,
-                      "parent": parent_digest,
-                      "task": task_id,
-                      "scope": dict(scope or {})},
-                     sort_keys=True).encode()
+    identity = {"investigation": investigation_id,
+                "parent": parent_digest, "task": task_id,
+                "scope": dict(scope or {})}
+    if opportunity_id:
+        identity["opportunity"] = opportunity_id
+    raw = json.dumps(identity, sort_keys=True).encode()
     return "s09-rev-%s-%s" % (investigation_id,
                               hashlib.sha256(raw).hexdigest()[:12])
 
@@ -1389,7 +1390,8 @@ def open_revision_proposal(dsn: str, *, investigation_id: str,
                            failure_record: dict,
                            scope: dict,
                            protocol_id: str = REVISION_PROTOCOL,
-                           allocation_id: str = "") -> dict:
+                           allocation_id: str = "",
+                           opportunity_id: str = "") -> dict:
     from settlement import store
     from settlement.common import Command, ResultCode
     if not investigation_id or not parent_digest:
@@ -1405,7 +1407,7 @@ def open_revision_proposal(dsn: str, *, investigation_id: str,
                          % (pinned, parent_digest))
     task_id = str(failure_record["task_id"])
     proposal_id = proposal_id_for(investigation_id, parent_digest,
-                                  task_id, scope)
+                                  task_id, scope, opportunity_id=opportunity_id)
     proposal = {"proposal_id": proposal_id,
                 "investigation_id": investigation_id,
                 "parent_digest": parent_digest,

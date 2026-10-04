@@ -1,15 +1,4 @@
-"""How many independent units each task structure can really present.
-
-The panel census counts `(family, template)` pairs. These tests pin the
-other question: whether those templates are different draws, or different
-names for one draw.
-
-Every assertion below is a literal a reader can check against
-`experiments/representation/software.py` by hand. The software signatures
-are forced by the two fault branches, so if a future change to those
-branches makes a third behaviour reachable, the literal here is what says
-so and the change has to come here and argue with it.
-"""
+"""Coarse witness-signature counts and their limited interpretation."""
 
 from __future__ import annotations
 
@@ -62,13 +51,7 @@ def test_the_software_panel_reaches_exactly_two_observable_behaviours():
     ]
 
 
-def test_every_software_template_reports_the_behaviour_it_actually_has():
-    """`stale-read-2chain` and `stale-read-3chain` are one unit by behaviour.
-
-    They are two clusters by the rule. They are indistinguishable by
-    anything the world publishes. This is the gap the whole bottleneck is
-    about, asserted as a literal rather than described.
-    """
+def test_every_software_template_reports_its_coarse_witness_signature():
     observation = iu.software_family_observation(FROZEN)
     stale_read_templates = {
         name for name, sigs in observation.signatures_by_template.items()
@@ -91,13 +74,8 @@ def test_the_surplus_templates_are_the_whole_shortfall_and_more():
     assert observation.signature_count == observation.template_count - 2
 
 
-def test_no_legal_op_program_reaches_a_third_behaviour():
-    """Exhaustive, so this bounds the generators rather than sampling them.
-
-    402,233 programs of length up to five over the world's own key and value
-    alphabets. A third behaviour would need a fault branch that reports
-    absence where the reference reports a value; neither branch does that.
-    """
+def test_programs_up_to_length_five_with_two_values_reach_two_signatures():
+    """Exhaustive over this bounded alphabet, not all accepted programs."""
     programs = _programs(max_length=5, values=("v1", "v2"))
     reached = iu.reachable_software_signatures(programs)
     assert len(programs) == 402233, len(programs)
@@ -147,8 +125,8 @@ def test_the_report_states_the_gap_in_words_and_numbers():
     assert report["collapses"] is True
     assert report["surplus_templates"] == 2
     assert report["reading"] == (
-        "4 templates carry 2 distinct observable behaviours, so 2 templates "
-        "are duplicate names for behaviour already present.")
+        "4 template names span 2 coarse witness signatures. "
+        "This projection does not measure statistical independence.")
     assert len(report["unreachable_in_observable_space"]) == 6
 
 
