@@ -96,11 +96,6 @@ class StoreIdentity:
     investigation_id: str
     dsn: str | None = None
 
-    @property
-    def durable(self) -> bool:
-        """Whether the store can address the durable owner at all."""
-        return self.dsn is not None
-
 
 def _validated_identity(identity) -> StoreIdentity | None:
     """A partial identity names nothing, so it is a refusal, not a default.
