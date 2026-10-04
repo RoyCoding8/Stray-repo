@@ -34,7 +34,8 @@ def store():
 def test_initial_mission_rejects_missing_charter(store):
     with pytest.raises(mission.MissionRefused, match="initial mission"):
         mission.record_mission(
-            store, "mjr-missing-charter", frontier={"open": ["x"]})
+            store, "mjr-missing-charter",
+            improvement_mode="operate")
 
     with mission.connect(store) as conn:
         row = conn.execute(

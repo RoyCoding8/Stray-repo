@@ -75,9 +75,14 @@ def _cross(dsn):
     """Run one mission through both structures and return what it recorded.
 
     Each structure runs MORE THAN ONE episode, and the episodes are counted
-    from what the mission entry holds afterwards rather than from a counter
-    this function increments, so a run that reported two episodes while
-    recording one would fail.
+    from what the crossing reports rather than from a counter this function
+    increments, so a run that reported two episodes while recording one would
+    fail.
+
+    The crossing returns this whole. It used to write the same content into
+    mission columns that no production code read, and migration 0021 dropped
+    those columns; the assertions below now read the value the run returns,
+    which is where the content lives now.
     """
     from experiments.ad01 import twodomain
 
@@ -98,7 +103,7 @@ def test_one_mission_row_carries_both_structures_and_is_not_a_join(store):
     structures are two keys of ONE jsonb value on ONE `investigations` row,
     and that row is asserted literally.
     """
-    _cross(store)
+    out = _cross(store)
     from experiments.ad01 import mission
 
     entry = mission.read_mission(store, MISSION_ID)
@@ -109,7 +114,7 @@ def test_one_mission_row_carries_both_structures_and_is_not_a_join(store):
     assert entry.improvement_mode == "operate"
     assert entry.environments == CHARTER["environments"]
 
-    crossing = entry.frontier["crossing"]
+    crossing = out["crossing"]
     assert sorted(crossing) == ["boolean-rule-v1", "software-fault-repair-v1"], (
         "the mission does not carry both structures in one value: %r"
         % sorted(crossing))
@@ -148,14 +153,14 @@ def test_the_second_structure_sees_what_the_first_produced(store):
 
     entry = mission.read_mission(store, MISSION_ID)
 
-    observations = entry.permitted_experience["observations"]
+    observations = out["permitted_experience"]["observations"]
     boolean_obs = [o for o in observations
                    if o["produced_by"] == "boolean-rule-v1"]
     assert len(boolean_obs) >= 1, (
         "the Boolean structure produced no permitted experience to carry")
 
     # What the SWE structure was permitted, and what it says it spent.
-    permitted = entry.permitted_experience["by_structure"]
+    permitted = out["permitted_experience"]["by_structure"]
     assert permitted["software-fault-repair-v1"]["from"] == (
         "boolean-rule-v1"), (
         "the SWE structure's permitted experience did not come from the "
@@ -341,16 +346,12 @@ def test_a_failed_acquisition_stays_a_no_acquisition_row(store):
     the result as acquisition. This lane runs no acquisition at all, and the
     mission must say so.
     """
-    _cross(store)
+    out = _cross(store)
     from experiments.ad01 import mission
 
     entry = mission.read_mission(store, MISSION_ID)
 
-    assert entry.acquired_artifacts == [], (
-        "the crossing acquired %r without running an acquisition, which is "
-        "the substitution this lane must not make"
-        % (entry.acquired_artifacts,))
-    assert entry.retained_use is None, (
-        "retained_use is set with no acquired artifact to retain")
-    assert entry.frontier["acquisition"] == "not-attempted", (
-        "the mission records an acquisition outcome it did not run")
+    assert entry.improvement_mode == "operate", (
+        "the crossing ran under the wrong mode")
+    assert out["acquisition"] == "not-attempted", (
+        "the crossing reports an acquisition outcome it did not run")

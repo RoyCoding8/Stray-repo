@@ -209,9 +209,7 @@ def test_live_mission_declares_the_full_charter_shape():
     assert declared == mission.MissionEntry(
         investigation_id="unused", objective=live.LIVE_MISSION_OBJECTIVE,
         environments=ENVIRONMENTS, constraints=[],
-        success_criteria=[], frontier={}, permitted_experience={},
-        active_program=None, acquired_artifacts=[], retained_use=None,
-        improvement_mode="improve").as_declaration()
+        success_criteria=[], improvement_mode="improve").as_declaration()
 
 
 def test_the_live_entry_records_its_own_mission(store, tmp_path):

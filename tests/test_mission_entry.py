@@ -73,53 +73,73 @@ def store():
 
 @pytest.fixture(scope="module")
 def entered(store):
-    """One mission, opened and fully recorded."""
+    """One mission, opened and fully recorded.
+
+    The five descriptive columns this used to write are gone (migration 0021).
+    Each had no production reader anywhere in the tree, and `retained_use` had no
+    writer either. The content they named is read from the document that owns it,
+    so what is left here is the charter plus the one field production reads back.
+    """
     mission.record_mission(
         store, INVESTIGATION, objective="probe boolean rules",
         environments=[{"instrument": "boolean-rule-v1", "split": "dev",
                        "seed": 4}],
         constraints=EXPECTED["permitted_experience"]["constraints"],
-        success_criteria=EXPECTED["frontier"]["success_criteria"])
-    mission.record_mission(
-        store, INVESTIGATION,
-        frontier={"open": EXPECTED["frontier"]["open"],
-                  "success_criteria": EXPECTED["frontier"]["success_criteria"]},
-        permitted_experience=EXPECTED["permitted_experience"],
-        active_program=EXPECTED["active_program"],
-        acquired_artifacts=EXPECTED["acquired_artifacts"],
-        retained_use=EXPECTED["retained_use"],
+        success_criteria=EXPECTED["frontier"]["success_criteria"],
         improvement_mode=EXPECTED["improvement_mode"])
     return store
 
 
-def test_entry_carries_all_six_fields(entered):
-    """Every one of the six, as a literal value, read back from the entry."""
+def test_entry_carries_only_the_fields_production_reads(entered):
+    """The one field, as a literal value, read back from the entry."""
     entry = mission.read_mission(entered, INVESTIGATION)
 
-    assert entry.frontier == {
-        "open": ["does the boundary express the decision"],
-        "success_criteria": ["committed predictor"]}
-    assert entry.permitted_experience == {
-        "constraints": ["deterministic only", "no live network"],
-        "observations": [
-            {"observation_id": "obs-1", "verdict": "unmeasured"}]}
-    assert entry.active_program == {
-        "program_id": "prog-7",
-        "source_digest": "b" * 64,
-        "version": 3}
-    assert entry.acquired_artifacts == [
-        {"package_digest": "c" * 64, "origin": "acquired"}]
-    assert entry.retained_use == {
-        "package_digest": "c" * 64,
-        "used_on": ["ad01-w0-dev-sw-00"]}
     assert entry.improvement_mode == "improve"
-
-    # And as the module declares them, so a field cannot be dropped from the
-    # dataclass while the row still happens to carry it.
-    assert mission.MISSION_FIELDS == (
-        "frontier", "permitted_experience", "active_program",
-        "acquired_artifacts", "retained_use", "improvement_mode")
     assert entry.as_declaration()["objective"] == "probe boolean rules"
+
+
+def test_the_dropped_columns_are_gone_from_the_row(entered):
+    """Not unread: absent. A column nobody reads is a claim, not a record.
+
+    This is the regression for migration 0021. If one of the five returns, either
+    a migration was reverted or a writer was reintroduced, and in the second case
+    it is a writer with no reader again.
+    """
+    with mission.connect(entered) as conn:
+        columns = [row["column_name"] for row in conn.execute(
+            "SELECT column_name FROM information_schema.columns"
+            " WHERE table_name = 'investigations'").fetchall()]
+        conn.commit()
+
+    assert "in_flight" in columns, "the owning column must survive"
+    assert "improvement_mode" in columns, "the read column must survive"
+    for dropped in ("frontier", "permitted_experience", "active_program",
+                    "acquired_artifacts", "retained_use"):
+        assert dropped not in columns, (
+            "%s came back; either a migration was reverted or something writes"
+            " it with nothing reading it" % dropped)
+
+
+def test_mission_fields_is_exactly_what_is_written(entered):
+    """The declared set is one field, and the module refuses anything else.
+
+    A field can no longer be dropped from the dataclass while the row still
+    happens to carry it, because the row and the declaration are the same list.
+    """
+    assert mission.MISSION_FIELDS == ("improvement_mode",)
+    with mission.connect(entered) as conn:
+        names = conn.execute(
+            "SELECT improvement_mode FROM investigations WHERE id = %s",
+            (INVESTIGATION,)).fetchall()
+        conn.commit()
+    assert [row["improvement_mode"] for row in names] == ["improve"]
+
+    with pytest.raises(mission.MissionRefused):
+        mission.record_mission(
+            store=None, investigation_id=INVESTIGATION,
+            objective="probe boolean rules",
+            environments=[], constraints=[], success_criteria=[],
+            retained_use={"package_digest": "c" * 64})
 
 
 def test_entry_is_one_row_not_a_join(entered):
@@ -129,22 +149,15 @@ def test_entry_is_one_row_not_a_join(entered):
             "SELECT count(*) AS n FROM investigations WHERE id = %s",
             (INVESTIGATION,)).fetchone()
         row = conn.execute(
-            "SELECT frontier, permitted_experience, active_program,"
-            " acquired_artifacts, retained_use, improvement_mode"
-            " FROM investigations WHERE id = %s",
+            "SELECT improvement_mode FROM investigations WHERE id = %s",
             (INVESTIGATION,)).fetchone()
         conn.commit()
 
     assert int(count["n"]) == 1
     assert row is not None
-    # Every one of the six came back from that single row. The SQL above
-    # touches exactly one relation; a join or a per-field lookup would need
-    # a second name here.
-    assert dict(row["frontier"]) == EXPECTED["frontier"]
-    assert dict(row["permitted_experience"]) == EXPECTED["permitted_experience"]
-    assert dict(row["active_program"]) == EXPECTED["active_program"]
-    assert list(row["acquired_artifacts"]) == EXPECTED["acquired_artifacts"]
-    assert dict(row["retained_use"]) == EXPECTED["retained_use"]
+    # The declared field came back from that single row. The SQL above touches
+    # exactly one relation; a join or a per-field lookup would need a second
+    # name here.
     assert row["improvement_mode"] == "improve"
 
     with mission.connect(entered) as conn:
