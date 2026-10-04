@@ -12,10 +12,62 @@ from experiments.ad01 import offline_recompute as m4
 from scripts import invl02_live as driver
 from settlement.gateway import GatewayError, GatewayErrorKind, ModelResponse, Usage
 from test_m4_offline_recompute import _digest, demo_bundle
+from conftest import unique
 from test_r123_gates import (
     _fake_e12_bundle,
     _write_authoritative_ledger as _write_unbound_authoritative_ledger,
 )
+
+
+@pytest.fixture()
+def live_allocation(dsn):
+    """The study allocation these two live investigations execute under.
+
+    `_run_frontier_investigation` opens an owned store through
+    `ensure_live_store(dsn=...)` and then drives improve rounds on it, and
+    `drive_improve_round` refuses an owned store entered with no authority: a
+    round settling against a database created and dropped inside itself leaves
+    the investigation unable to reach its own receipts. The refusal is correct
+    and stays. What was missing was a caller here able to satisfy it, so both
+    live tests in this file refused before reaching the thing each measures --
+    one before its route-mismatch assertion and one before its prompt
+    assertion. Neither was a deliberate red: neither test drives a round on an
+    owned store in order to measure the ownership rule, and each asserts on
+    something downstream of the round that ran.
+
+    The allocation is bought here because this is where the study authority is
+    bought, and `scripts/invl02_live._study_authority` forwards it rather than
+    deriving one. A second derivation inside the investigation would be a
+    second authority for one leg, which `WORKER-PROMPT.md:158` forbids.
+
+    Two properties of the grant are load-bearing rather than decorative.
+
+    The study root is per-test. `_study_operation_counts`
+    (`store.py:1550-1559`) walks the subtree under one
+    `study_authority.allocation_id`, so a root shared with a sibling test
+    would price that sibling's child executions against this test's ceiling
+    and make the pass depend on the order the file ran in. One root per
+    investigation is also what `authorize_study` is immutable per, so a
+    second test cannot re-bind this one with different fields.
+
+    `sandbox_calls` is declared rather than omitted, because an undeclared
+    ceiling is not a zero ceiling: `_check_study_ceilings` returns early on an
+    empty `ceilings` and iterates only the names a study declared, so a grant
+    omitting it admits every child execution and is bounded only by its unit
+    allowance. One investigation makes eight (`choose_next_work` twice and
+    three steps in each of two rounds, per
+    `reports/cap-sheets/e0-e12-child-execution-caps.md`), so 24 is the figure
+    with headroom. `model_calls` is not declared because neither test's guard
+    reaches the broker: one substitutes a `Gateway` class behind `LiveGuard`
+    and the other raises before a delegate is called, so nothing draws on that
+    currency here and declaring a ceiling for it would price nothing.
+    """
+    from settlement import authority
+
+    handle = authority.authorize_study(
+        dsn, unique("invl02-causality-live"), authorized=200_000,
+        ceilings={"sandbox_calls": 24})
+    return handle.allocation_id
 
 
 def _output_task_ids_by_split() -> dict:
@@ -334,7 +386,8 @@ def test_e12_refuses_history_drift_before_authority(tmp_path, monkeypatch):
     assert "history" in result["reason"]
 
 
-def test_route_metadata_must_match_before_e0_retention(tmp_path, dsn):
+def test_route_metadata_must_match_before_e0_retention(tmp_path, dsn,
+                                                      live_allocation):
     freeze = driver.freeze_e0(tmp_path / "e0")
     route = freeze["route"]
 
@@ -347,7 +400,7 @@ def test_route_metadata_must_match_before_e0_retention(tmp_path, dsn):
         expected_route=route)
     record = driver._run_frontier_investigation(
         tmp_path / "frontier.json", freeze, "live", dsn=dsn, guard=guard,
-        model=route["requested_model"])
+        model=route["requested_model"], allocation_id=live_allocation)
     assert record["acquisition"]["status"] == "unavailable"
 
 
@@ -1020,7 +1073,8 @@ def test_verify_output_rejects_repair_after_accepted_response(tmp_path):
         first["arm"], split) in verified["problems"]
 
 
-def test_p2_frontier_construction_prompt_contains_permitted_history(tmp_path, dsn):
+def test_p2_frontier_construction_prompt_contains_permitted_history(
+        tmp_path, dsn, live_allocation):
     from experiments.ad01 import live_construct as live
 
     class Guard:
@@ -1041,7 +1095,8 @@ def test_p2_frontier_construction_prompt_contains_permitted_history(tmp_path, ds
     guard = Guard()
     driver._run_frontier_investigation(
         tmp_path / "frontier-P2.json", freeze, "P2", dsn=dsn, guard=guard,
-        model="test-model", history=permitted)
+        model="test-model", history=permitted,
+        allocation_id=live_allocation)
 
     assert len(guard.prompts) == 1
     assert driver._canonical(permitted) in guard.prompts[0]

@@ -2509,8 +2509,23 @@ def _round_identity(dsn: str | None, investigation_id: str | None):
     return _frontier.StoreIdentity(investigation_id=investigation_id, dsn=dsn)
 
 
+def _round_authority(dsn: str | None, allocation_id: str | None) -> dict | None:
+    """The `{dsn, allocation_id}` this round's executions settle against.
+
+    Half the pair names nothing and is not offered as an authority, exactly as
+    `_round_identity` refuses half an identity beside it. Both absent returns
+    `None` rather than raising because `drive_improve_round` owns the question
+    of whether a nameless round may mint a disposable ledger, and refuses an
+    owned store that has no authority.
+    """
+    if not dsn or not allocation_id:
+        return None
+    return {"dsn": dsn, "allocation_id": allocation_id}
+
+
 def fresh_round(store_path: str, round_no: int, *, dsn: str | None = None,
-                investigation_id: str | None = None) -> dict:
+                investigation_id: str | None = None,
+                allocation_id: str | None = None) -> dict:
     """Continue a live store's next improvement round in a fresh process.
 
     A restart is the same mission continuing, so it opens under the identity the
@@ -2522,6 +2537,16 @@ def fresh_round(store_path: str, round_no: int, *, dsn: str | None = None,
     a `dsn` with no investigation names no row, and an investigation with no
     `dsn` names no row to address it on. Both absent is the fixture boundary
     and stays open.
+
+    `allocation_id` is the third name, for the same leg. Opening a store under
+    its owner is not authority to execute against it: the round's executions
+    settle somewhere, and against a store the investigation owns, a disposable
+    database created and dropped inside the round settles them where that
+    investigation cannot reach them. So an owned store that is named but holds
+    no allocation still refuses, at `drive_improve_round`, exactly as it does
+    when the round is entered in this process rather than a fresh one. It is
+    threaded rather than resolved for the reason `WORKER-PROMPT.md:158` gives,
+    and the caller here is `main`, which a second process supplies it to.
     """
     store = _frontier.FrontierStore(
         store_path, identity=_round_identity(dsn, investigation_id))
@@ -2532,7 +2557,8 @@ def fresh_round(store_path: str, round_no: int, *, dsn: str | None = None,
     task = _boolean_rule.make_task(environment["split"],
                                    environment["seed"])
     result = drive_improve_round(
-        store, task, round_no=int(round_no), admit_probes=True)
+        store, task, round_no=int(round_no), admit_probes=True,
+        authority=_round_authority(dsn, allocation_id))
     candidate = result["candidate"]
     return {"candidate_id": candidate["control_id"],
             "parent_digest": candidate["parent_digest"],
@@ -2544,21 +2570,25 @@ def fresh_round(store_path: str, round_no: int, *, dsn: str | None = None,
 def main(argv) -> int:
     """Drive the argv surface a second process uses to continue a round.
 
-    The two owner names are named options rather than trailing positionals. A
+    The owner names are named options rather than trailing positionals. A
     positional pair made `fresh_round(store_path, round_no)` ambiguous between
     "a nameless store" and "an owned store whose names were forgotten", and it
     put the reader inside `fresh_round` when a call failed. Naming them makes
     the two-argument call the fixture boundary it always was, and makes an
-    owned store a store that said so.
+    owned store a store that said so. `--allocation-id` is the third name
+    under the same rule, for the same reason: an owned store reached without one
+    is refused rather than quietly given a disposable ledger.
     """
     parser = argparse.ArgumentParser(prog="improve_channel")
     parser.add_argument("store_path")
     parser.add_argument("round_no", type=int)
     parser.add_argument("--dsn")
     parser.add_argument("--investigation-id", dest="investigation_id")
+    parser.add_argument("--allocation-id", dest="allocation_id")
     args = parser.parse_args(argv[1:])
     summary = fresh_round(args.store_path, args.round_no, dsn=args.dsn,
-                          investigation_id=args.investigation_id)
+                          investigation_id=args.investigation_id,
+                          allocation_id=args.allocation_id)
     sys.stdout.write(json.dumps(summary, sort_keys=True) + "\n")
     return 0
 
