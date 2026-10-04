@@ -91,7 +91,6 @@ def test_the_live_store_carries_the_dsn_in_process_only(entered, tmp_path):
 
     assert store.identity.investigation_id == investigation_id
     assert store.identity.dsn == database
-    assert store.identity.durable is True
     assert database not in Path(path).read_text(encoding="utf-8")
 
 

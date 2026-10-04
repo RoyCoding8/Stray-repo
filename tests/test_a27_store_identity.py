@@ -57,11 +57,17 @@ OTHER_DSN = "dbname=s09a27b host=/var/run/postgresql user=ubuntu"
 
 
 def test_store_carries_the_durable_identity_it_was_given(tmp_path):
-    """A store holds the two names that reach `investigations.in_flight`."""
+    """A store holds the two names that reach `investigations.in_flight`.
+
+    The two assertions below are the whole contract. A `durable` property once
+    sat here and was deleted: `_validated_identity` already refuses any
+    identity whose `dsn` is `None`, so the property could only ever return
+    True for an identity that exists. It re-derived a decision the constructor
+    had already made, so it asserted nothing this test did not already say.
+    """
     store = _store(tmp_path / "id.json", "inv-a27", DSN)
     assert store.identity.investigation_id == "inv-a27"
     assert store.identity.dsn == DSN
-    assert store.identity.durable is True
 
 
 def test_admit_and_spend_routes_against_that_identity(tmp_path):
