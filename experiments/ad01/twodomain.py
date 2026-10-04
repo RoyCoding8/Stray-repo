@@ -1,15 +1,16 @@
 """One mission crossing both task structures.
 
-`mission.py` owns a mission as a durable entry: six fields on one
-`investigations` row, reachable with no join. What it does not own is what
-that mission does. A mission existed, and nothing had ever run one through
-more than one task structure, so "does a mission cross both domains" was
-unanswerable rather than answered.
+`mission.py` owns a mission as a durable entry: the charter and the mode on one
+`investigations` row, reachable with no join. What it does not own is what that
+mission does. A mission existed, and nothing had ever run one through more than
+one task structure, so "does a mission cross both domains" was unanswerable
+rather than answered.
 
 This module is that crossing, and it is deliberately small. It records the
-mission's declaration through `mission.record_mission` rather than writing
-the row itself, because the entry has one owner and this is a caller of it,
-not a second owner.
+mission's declaration through `mission.record_mission` rather than writing the
+row itself, because the entry has one owner and this is a caller of it,
+not a second owner. The crossing itself writes nothing: `run_two_domain_crossing`
+takes no dsn, runs the two worlds and returns what they did.
 
 **What crosses is real, and it is thin.** The Boolean/reducer structure
 observes a hidden function; each probe returns the value of that function
@@ -38,8 +39,8 @@ does not turn that assessment into a powered comparison.
 **No acquisition runs here.** B12 measured zero acquired lineages on the SWE
 construction run and B17 measured the route answering in prose rather than
 emitting a policy at a served budget of 2048 tokens. So the crossing drives
-the real worlds, records what they actually did, and leaves
-`acquired_artifacts` empty. An authored arm handed to a world and recorded
+the real worlds, reports what they actually did, and leaves `acquisition`
+reported as `not-attempted`. An authored arm handed to a world and recorded
 as an acquisition would be the substitution this module must not make.
 """
 
@@ -373,8 +374,16 @@ def record_two_domain_mission(dsn: str, investigation_id: str, *,
     """Declare the mission, through the module that owns the entry.
 
     The entry is written by `mission.record_mission` and not here. A second
-    writer of the six fields would be a second owner of the mission, which
-    is the arrangement lane C1 removed; this module is a caller of it.
+    writer of the mission would be a second owner of it, which is the
+    arrangement lane C1 removed; this module is a caller of it.
+
+    What this used to write past the charter is gone. It passed `frontier`,
+    `permitted_experience`, `acquired_artifacts` and `active_program` into the
+    entry, and migration 0021 dropped those columns because nothing in the tree
+    read any of them back. The crossing's own result still has to be recorded
+    somewhere, and `run_two_domain_crossing` returns it whole to its caller; it
+    is a measurement this driver hands back, not a claim the mission row carries
+    for an investigation that will never ask.
     """
     mission.record_mission(
         dsn, investigation_id,
@@ -382,19 +391,30 @@ def record_two_domain_mission(dsn: str, investigation_id: str, *,
         environments=charter["environments"],
         constraints=charter.get("constraints"),
         success_criteria=charter.get("success_criteria"),
-        frontier={"crossing": {}, "acquisition": "not-attempted"},
-        permitted_experience={"observations": [], "by_structure": {}},
-        acquired_artifacts=[],
         improvement_mode="operate")
 
 
-def run_two_domain_crossing(dsn: str, investigation_id: str) -> dict:
-    """Run one mission through both structures and record what it did.
+def run_two_domain_crossing() -> dict:
+    """Run one mission through both structures and report what it did.
 
-    More than one episode per structure, because a single episode in each
-    is a demonstration that a crossing is possible and not evidence that
-    anything survives it. The episodes are recorded whole on the entry, so
-    the count a caller reads is the count that ran.
+    More than one episode per structure, because a single episode in each is a
+    demonstration that a crossing is possible and not evidence that anything
+    survives it.
+
+    This used to take a dsn and an investigation id, and record the whole
+    crossing on the mission row. The row is not where a result belongs: it held
+    four columns that no production code read, so what came back out was an
+    entry nobody consulted while the measured episodes were discarded with it.
+    It is now a pure run over the two worlds. The episodes, the census, the
+    transferred experience and the driver's own identity come back to the caller
+    whole, so the count a caller reads is the count that ran and the caller
+    decides where the record belongs.
+
+    `program` is the identity of the driver that produced the crossing rather
+    than a digest of this run's transcript. That is what made it worth keeping
+    when the column went: a crossing read back months later has to be
+    attributable to the bytes that ran it, and an entry that only held its own
+    output could not say which authored driver authored it.
     """
     census = cluster_census()
 
@@ -465,20 +485,12 @@ def run_two_domain_crossing(dsn: str, investigation_id: str) -> dict:
         },
     }
 
-    mission.record_mission(
-        dsn, investigation_id,
-        frontier={"crossing": crossing,
-                  "acquisition": "not-attempted",
-                  "crossing_coverage_sufficient": census[
-                      "crossing_coverage_sufficient"]},
-        permitted_experience=permitted_experience,
-        acquired_artifacts=[],
-        active_program=_active_program(crossing),
-        improvement_mode="operate")
-
     return {"boolean-episodes": boolean_runs,
             "software-episodes": swe_runs,
             "census": census,
+            "crossing": crossing,
+            "permitted_experience": permitted_experience,
+            "program": _active_program(crossing),
+            "acquisition": "not-attempted",
             "crossing_coverage_sufficient": census[
-                "crossing_coverage_sufficient"],
-            "acquisition": "not-attempted"}
+                "crossing_coverage_sufficient"]}
