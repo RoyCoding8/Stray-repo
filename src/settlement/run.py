@@ -14,7 +14,7 @@ from typing import Any, Literal, Union
 from pydantic import BaseModel, Field
 
 from . import db, store
-from .common import Command, SettlementError
+from .common import Command
 
 COMPOSITION_VERSION = "run/v1"
 
@@ -533,108 +533,3 @@ def consume_operation_outcome(comp: Composition, cont: Continuation, node_id: st
                                if e != node_id and not e.startswith(f"{node_id}:")]
         return _refresh(comp, cont)
     return register_ops(comp, cont, {node_id: operation_id})
-
-
-def suspend_for_barrier(dsn: str, attempt_id: str, barrier_ref: str,
-                        ownership_generation: int | None = None) -> Any:
-    """Suspend an attempt and name the operation the barrier is holding.
-
-    The attempt's lifecycle said the work was paused; nothing said WHICH work.
-    That is what this now records. A barrier is a reason to wait on an admitted
-    operation, so the operation goes on the mission entry's own in-flight list
-    with its program digest and input identity, and that is the record a resume
-    routes at.
-
-    Recording happens before the lifecycle write, so the record exists if the
-    write is refused. The two are not one transaction: this function is the
-    layer that decides an attempt has an admitted operation to hold, and
-    `store.suspend_attempt` owns the lifecycle change and its own refusals.
-    A barrier that recorded and then failed to suspend leaves an operation
-    marked suspended on a still-running attempt, which the next barrier or a
-    resume reads and resolves -- the visible state is preferable to the
-    alternative, where the attempt is paused with no memory of why.
-
-    An attempt with no admitted operation has nothing to hold, and that is a
-    refusal rather than a bare lifecycle write. The attempt stays running,
-    because suspending work that was never admitted is how an unrecorded
-    operation comes to look like a held one.
-    """
-    investigation_id = _attempt_investigation(dsn, attempt_id)
-    _hold_on_mission_entry(dsn, investigation_id, attempt_id, barrier_ref)
-    payload: dict[str, Any] = {"attempt_id": attempt_id}
-    if ownership_generation is not None:
-        payload["ownership_generation"] = ownership_generation
-    return store.suspend_attempt(
-        dsn, Command(request_id=f"run-barrier-{barrier_ref}-{attempt_id}", payload=payload))
-
-
-def _attempt_investigation(dsn: str, attempt_id: str) -> str:
-    from psycopg.rows import dict_row
-
-    with db.read_connect(dsn) as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT investigation_id FROM attempts WHERE id = %s",
-                        (attempt_id,))
-            row = cur.fetchone()
-            conn.commit()
-    if row is None:
-        raise SettlementError(f"unknown attempt {attempt_id}")
-    return str(row["investigation_id"])
-
-
-def _hold_on_mission_entry(dsn: str, investigation_id: str, attempt_id: str,
-                           barrier_ref: str) -> None:
-    """Record the held operation on the mission entry, or refuse.
-
-    A store without the mission entry's column predates the entry, and a
-    barrier there has no record to write. Refusing would strand the attempt in
-    `running` on a schema that cannot express a hold, so an absent column falls
-    through to the lifecycle write alone. That is a schema state, not a claim
-    that the operation is recorded.
-
-    The held entry is rewritten wholesale rather than field by field, because
-    the shape is the migration's and a partially written entry should read back
-    as what it is rather than as an operation with a missing identity.
-
-    The read and the write are one transaction under `FOR UPDATE`, which is
-    what `mission.admit_operation` and `mission.resume_operation` already do
-    to this column. Split across two connections the rewrite is a lost update:
-    two barriers suspending two attempts of one investigation both read the
-    pre-barrier list and the second write drops the first barrier's
-    `status` and `barrier_ref`, so a held attempt reads back as never
-    marked. That is the same defect lane A4b repaired on the other side of
-    the batch, reintroduced by a second writer to a column that already had
-    one owner.
-    """
-    from psycopg import errors as _pgerrors
-    from psycopg.rows import dict_row
-    from psycopg.types.json import Json
-
-    try:
-        with db.read_connect(dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute("SELECT in_flight FROM investigations WHERE id = %s"
-                            " FOR UPDATE", (investigation_id,))
-                row = cur.fetchone()
-                if row is None:
-                    raise SettlementError(
-                        f"no mission entry for investigation {investigation_id}")
-
-                entries = [dict(raw) for raw in (row["in_flight"] or [])]
-                if not any(str(raw.get("attempt_id") or "") == attempt_id
-                           for raw in entries):
-                    raise SettlementError(
-                        f"attempt {attempt_id} holds no admitted operation on"
-                        f" its mission entry: a barrier suspends admitted"
-                        f" work, so record it first")
-                updated = [
-                    dict(raw, status="suspended", barrier_ref=barrier_ref)
-                    if str(raw.get("attempt_id") or "") == attempt_id else raw
-                    for raw in entries]
-                cur.execute(
-                    "UPDATE investigations SET in_flight = %s,"
-                    " updated_at = now() WHERE id = %s",
-                    (Json(updated), investigation_id))
-                conn.commit()
-    except _pgerrors.UndefinedColumn:
-        return

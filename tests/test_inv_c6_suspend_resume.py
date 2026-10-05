@@ -12,8 +12,6 @@ resume":
   was admitted under, so a restart cannot know which program it is finishing;
 - `context.resume_package` reads `continuation_docs`, a parallel
   continuation document with its own key and its own `unresolved_ops`;
-- `run.suspend_for_barrier` suspends an attempt and writes nothing that names
-  the operation it suspended.
 
 The property under test is narrow and is the reason this lane exists: a
 pending operation that crosses a restart keeps the program identity and input
@@ -69,8 +67,6 @@ C6_DECISION_DIGEST = (
     "398b8f96218af6d1922c8202613b292a76b537b549c752261daeb297acf83bac")
 C6_INPUT_IDENTITY = (
     "85273e1514b9f5cd370d91c73315b856be3a9a3c6a9189c81a548de7f1bf529b")
-
-BARRIER_REF = "c6-barrier-ref-1"
 
 
 def _import_hashlib():
@@ -328,61 +324,6 @@ def test_the_continuation_document_is_no_longer_a_resume_owner(store, tmp_path):
     assert "op-c6-conflicting" in package["continuation"]["unresolved_ops"], (
         "the continuation document stopped carrying its own position, which is"
         " what it is for")
-
-
-def test_suspend_for_barrier_routes_at_the_mission_entry(store):
-    """The barrier names the operation it suspended, on the mission entry.
-
-    `suspend_for_barrier` used to mark the attempt and leave nothing that
-    said which operation was in flight, so the resume side had nothing to
-    route at. It now records the barrier against the mission entry's own
-    in-flight operation, and refuses when there is no such operation rather
-    than inventing one.
-    """
-    from settlement import run
-    from settlement.common import SettlementError
-    from experiments.ad01 import mission, trajectory
-
-    cid, held = _held(store, SEQ + 3)
-    outcome = run.suspend_for_barrier(store, "att-%s-0" % cid, BARRIER_REF)
-    assert outcome.code.name == "APPLIED", (
-        "the barrier did not suspend: %s" % outcome.detail)
-
-    entry = mission.read_in_flight(store, cid)[0]
-    assert entry.barrier_ref == BARRIER_REF, (
-        "the barrier was not recorded against the mission entry: %r"
-        % entry.barrier_ref)
-    assert entry.status == "suspended"
-    assert entry.input_identity == C6_INPUT_IDENTITY, (
-        "the barrier rewrote the suspended operation's identity")
-
-    with trajectory._read_conn(store) as conn:
-        lifecycle = conn.execute(
-            "SELECT lifecycle FROM attempts WHERE id = %s",
-            ("att-%s-0" % cid,)).fetchone()
-        conn.commit()
-    assert lifecycle["lifecycle"] == "suspended", (
-        "the attempt itself was not suspended: %r" % lifecycle["lifecycle"])
-
-    # An investigation with no held operation has nothing to suspend. That is
-    # a refusal, not a barrier written over a default.
-    from settlement.common import Command
-    from settlement import store as settlement_store
-
-    settlement_store.admit_commitment(
-        store, Command(request_id="c6-empty",
-                       payload={"investigation_id": "c6-empty-inv",
-                                "objective": "nothing held"}))
-    attempt_id = settlement_store.acquire_work(
-        store, Command(request_id="c6-empty-attempt",
-                       payload={"attempt_id": "c6-empty-att",
-                                "investigation_id": "c6-empty-inv"})
-    ).data["attempt_id"]
-    with pytest.raises(SettlementError) as refusal:
-        run.suspend_for_barrier(store, attempt_id, BARRIER_REF)
-    assert str(refusal.value) == (
-        "attempt c6-empty-att holds no admitted operation on its mission entry:"
-        " a barrier suspends admitted work, so record it first")
 
 
 def test_resume_refuses_a_campaign_it_did_not_mint(store, monkeypatch):

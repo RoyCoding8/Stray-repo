@@ -1,17 +1,16 @@
 """Releasing a settled operation must not drop another writer's entry.
 
-`mission.py` owns `investigations.in_flight`. Three of its four writers read
-under `FOR UPDATE` and rewrite the column in the same transaction:
-`admit_operation` (line 422), `resume_operation` (line 507), and, since
-pass 1, `run._hold_on_mission_entry` (line 617). `_replace` (line 449) is the
-fourth writer and takes no lock at all, on a *separate connection* from the
-`read_in_flight` that computed its argument.
+`mission.py` owns `investigations.in_flight`, and every writer of that column
+reads under `FOR UPDATE` and rewrites it in the same transaction:
+`admit_operation` (:468), `resume_operation` (:581) and `release_operation`
+(:627). What this test pins is the third.
 
-`release_operation` calls `read_in_flight`, filters one attempt out in Python,
-then hands the whole list to `_replace`, which overwrites the column with a
-list built from a read that can be arbitrarily stale. Two writers on the same
-column, one of them unlocked, is the asymmetry that let pass 1's defect
-survive in the first place.
+`release_operation` used to call `read_in_flight`, filter one attempt out in
+Python, then hand the whole list to an unlocked `_replace` helper, which
+overwrote the column on a *separate connection* with a list built from a read
+that could be arbitrarily stale. That helper is gone. Expressing the removal
+through the locked read-modify-write deleted the unlocked path rather than
+adding a second guard to it, which is why there is no helper named here.
 
 The live caller is `trajectory._s09_release`, which incorporation runs per
 settled boundary. Two boundaries of one campaign settling at the same moment
