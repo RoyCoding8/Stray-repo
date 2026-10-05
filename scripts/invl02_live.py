@@ -1863,6 +1863,11 @@ def _study_authority(dsn: str, allocation_id: str | None) -> dict | None:
     would be a second allocation for the same leg. `_authorize` already
     refuses to yield an arm without one, so a caller reaching here holds
     both names or has already stopped.
+
+    The `None` it returns for a falsy `allocation_id` is still reachable, from
+    `bind_retained_acquisition` in the two study runners. It is not reachable
+    from `_run_frontier_investigation`, which takes `allocation_id` as a
+    required parameter for exactly that reason.
     """
     if not allocation_id:
         return None
@@ -2038,25 +2043,39 @@ def _control_triple(store, active: dict, label: str) -> dict:
 
 
 def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
-                                dsn: str, guard=None, model: str = "",
-                                history: list | None = None,
-                                allocation_id: str | None = None) -> dict:
+                                dsn: str, allocation_id: str,
+                                guard=None, model: str = "",
+                                history: list | None = None) -> dict:
     """Drive one live investigation, under the study allocation it runs under.
 
     `allocation_id` is the study's own allocation, already bound by the caller
     through `_authorize`. It is threaded to both improve rounds rather than
     resolved here, because the caller is where the study authority is bought
     and a second derivation of it inside this function would be a second
-    authority for one leg. It stays optional because a caller that holds no
-    allocation is not fabricating one: `run_live_improve_round` forwards it to
-    `drive_improve_round`, which refuses an owned store that has none. That
-    refusal is correct and is left standing -- a round executing against a
-    disposable database settles receipts the investigation's row cannot
-    reach -- so a caller on this path supplies the allocation rather than
-    having the store's own ownership quietly papered over.
+    authority for one leg.
+
+    It is REQUIRED, and it was optional until the two `test_r123_gates.py`
+    callers that omitted it were found refusing. `dsn` is required too, and
+    `ensure_live_store(dsn=dsn, investigation_id=...)` returns a store whose
+    identity `_live_identity` builds from that non-None `dsn`
+    (`live_construct.py:1062-1077`), so the store this function drives is
+    ALWAYS owned. `drive_improve_round` refuses an owned store entered with no
+    authority (`improve_channel.py:2328-2332`), and that refusal is correct and
+    stays: a round settling against a disposable database leaves the
+    investigation unable to reach its own receipts, which is the condition
+    `6f0baeb` exists to prevent.
+
+    So `allocation_id=None` was never a valid input to this function. It
+    reached the round as `authority=None` and could only ever raise. Leaving
+    the default said a caller could omit the authority and find out inside the
+    executor, which is the same defect `_run_source` was closed against: its
+    `authority` and `operation_id` carry no default
+    (`improve_channel.py:1782-1798`), and
+    `tests/test_inv_a8_improve_authority.py:136-167` asserts that structurally.
+    A required parameter makes the omission a `TypeError` at the call instead.
 
     `dsn` alone is not the authority. `_run_source` demands both
-    `{"dsn", "allocation_id"}` (`improve_channel.py:1773-1776`), and the store
+    `{"dsn", "allocation_id"}` (`improve_channel.py:1782-1798`), and the store
     the round runs on is the owned one `ensure_live_store(dsn=...)` opens
     below.
     """

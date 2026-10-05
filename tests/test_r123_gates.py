@@ -17,13 +17,16 @@ from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import frontier as _frontier
 from experiments.ad01 import improve_channel as channel
 from experiments.ad01 import live_construct as live
+from experiments.ad01 import method_exec
 from experiments.ad01 import offline_recompute as m4
 from experiments.ad01 import rule_learner
 from scripts import invl02_live as driver
+from settlement import authority as settlement_authority
+from settlement import broker
 
 # The charter shape `ensure_live_store` accepts, as a fixture. It was a
 # production helper with no production caller, deleted in 8d354a5.
-from conftest import live_mission
+from conftest import live_mission, unique
 
 
 class _ScriptGateway:
@@ -85,6 +88,89 @@ def _make_store(tmp_path, name="store.json"):
         _opportunity("opp-first", "rule-dev-0004", 3),
         _opportunity("opp-followup", "rule-dev-0005", 11)])
     return store
+
+
+#: What one child execution costs, read from the two places the broker reads
+#: it rather than chosen. `broker.exposure_schedule` is the formula and
+#: `broker.ensure_operation` refuses any `retries` but zero
+#: (`src/settlement/broker.py:263-269`), so this is the whole multiplier and
+#: not the first of several. A budget sized at a guess is a budget that fails
+#: on the reservation rather than on the thing being measured.
+R123_SANDBOX_EXPOSURE = broker.exposure_schedule(
+    broker.SANDBOX_EXEC,
+    {"timeout_ms": method_exec.STEP_TIMEOUT_MS})[0]
+
+#: How many improve steps one investigation runs, which is what actually draws
+#: on the allocation. `drive_improve_round` bounds a round at `for step in
+#: range(3)` (`improve_channel.py:2375`) and `_run_frontier_investigation`
+#: runs exactly two rounds, so 6 per investigation. The `choose_next_work` calls
+#: in `_control_triple` are NOT counted: `choose_next_work` reaches
+#: `run_operate_step` without an authority (`live_construct.py:1193-1211`), so
+#: those executions settle on `_disposable_authority`'s own database rather
+#: than on this one, and the `execute_chosen_work` probes are in-process
+#: `RuleSession.query` calls that reach no executor at all.
+R123_STEPS_PER_INVESTIGATION = 6
+
+#: The three `_run_frontier_investigation` calls this file makes. Counted by
+#: the AST census over the tree, not read off by eye: `test_r1_driver_routes_
+#: through_frontier` makes one ("gate") and `test_r1_live_improver_via_
+#: doubles` makes two ("live", "bad"). Sizing the ceiling from the number of
+#: test FUNCTIONS instead would undercount by one, because the second test
+#: drives two.
+R123_INVESTIGATIONS = 3
+
+R123_SANDBOX_CALLS = R123_STEPS_PER_INVESTIGATION * R123_INVESTIGATIONS
+
+
+@pytest.fixture()
+def live_allocation(dsn):
+    """The study allocation this file's three live investigations run under.
+
+    `_run_frontier_investigation` opens an owned store through
+    `ensure_live_store(dsn=..., investigation_id=...)`, and
+    `drive_improve_round` refuses an owned store entered with no authority:
+    a round settling against a disposable database leaves the investigation
+    unable to reach its own receipts. That refusal is the invariant and it
+    stays. What was missing was a caller able to satisfy it, so all three
+    investigations in this file refused before reaching the thing each
+    measures.
+
+    The allocation is bought HERE rather than inside `_run_frontier_investigation`
+    for the same reason `run_e0` buys it in the driver: the caller is where the
+    study authority is bought, and a derivation inside the investigation would
+    be a second authority for one leg. It is also made a required parameter of
+    that function, so the next caller that omits it fails at the call rather
+    than deep inside the executor.
+
+    It is minted on the SAME dsn the store's `StoreIdentity` names, because an
+    allocation on another database leaves the round's receipts settling where
+    the investigation cannot reach them. `dsn` is this file's own fixture, so
+    that holds by construction rather than by agreement between two fixtures.
+
+    The study root is per-test. `_study_operation_counts`
+    (`store.py:1550-1559`) walks the subtree under one
+    `study_authority.allocation_id`, so a root shared with a sibling would
+    price that sibling's child executions against this test's ceiling and make
+    the pass depend on the order the file ran in. One root per test is also
+    what `authorize_study` is immutable per.
+
+    `sandbox_calls` is declared rather than omitted, because an undeclared
+    ceiling is not a zero ceiling: `_check_study_ceilings` returns early on an
+    empty `ceilings` and iterates only the names a study declared, so a grant
+    omitting it admits every child execution and is bounded only by its unit
+    allowance. `authorized` is that unit allowance, so it is the exposure the
+    declared executions cost rather than a number chosen large enough.
+
+    `model_calls` is not declared. The one guard in this file
+    (`test_r1_live_improver_via_doubles`) is a `_ScriptGateway` behind
+    `LiveGuard`, so no operation is ever admitted on the allocation for it;
+    declaring a ceiling for a currency nothing draws on would price nothing.
+    """
+    handle = settlement_authority.authorize_study(
+        dsn, unique("r123-live"), authorized=R123_SANDBOX_CALLS
+        * R123_SANDBOX_EXPOSURE,
+        ceilings={"sandbox_calls": R123_SANDBOX_CALLS})
+    return handle.allocation_id
 
 
 def test_r1_observation_dependent_choice(tmp_path):
@@ -238,7 +324,7 @@ def test_r1_disconnect_improvement_refused_or_changes(tmp_path):
         live.adopt_live_revision(store, dict(low))
 
 
-def test_r1_driver_routes_through_frontier(tmp_path, dsn):
+def test_r1_driver_routes_through_frontier(tmp_path, dsn, live_allocation):
     source = Path(driver.__file__).read_text()
     e0_body = source[source.index("def run_e0"):source.index(
         "def restart_use")]
@@ -252,7 +338,8 @@ def test_r1_driver_routes_through_frontier(tmp_path, dsn):
     freeze = driver.freeze_e0(tmp_path / "e0")
     record = driver._run_frontier_investigation(
         tmp_path / "frontier.json", freeze, "gate",
-        dsn=dsn, guard=None, model="test-model")
+        dsn=dsn, allocation_id=live_allocation,
+        guard=None, model="test-model")
     # M2's clause is whether the observation changed the arm's action, so the
     # field compares the arm that ran against that same arm given no evidence.
     # The E0 freeze probes the dev-4 rule at x=3 and then at x=11, and a
@@ -290,19 +377,21 @@ def test_r1_driver_routes_through_frontier(tmp_path, dsn):
     assert record["adopted"]["status"] == "activated-control"
 
 
-def test_r1_live_improver_via_doubles(tmp_path, dsn):
+def test_r1_live_improver_via_doubles(tmp_path, dsn, live_allocation):
     freeze = driver.freeze_e0(tmp_path / "e0b")
     text = json.dumps({"entry": channel.IMPROVE_HIGH_SOURCE})
     guard = _guard([text], ceiling=12)
     record = driver._run_frontier_investigation(
         tmp_path / "frontier-live.json", freeze, "live",
-        dsn=dsn, guard=guard, model="test-model")
+        dsn=dsn, allocation_id=live_allocation,
+        guard=guard, model="test-model")
     assert record["acquisition"]["status"] == "retained"
     assert guard.dispatch_count == 1
     bad = _guard(['{"entry": "import os"}'], ceiling=12)
     refused = driver._run_frontier_investigation(
         tmp_path / "frontier-bad.json", freeze, "bad",
-        dsn=dsn, guard=bad, model="test-model")
+        dsn=dsn, allocation_id=live_allocation,
+        guard=bad, model="test-model")
     assert refused["acquisition"]["status"] == "unavailable"
 
 
