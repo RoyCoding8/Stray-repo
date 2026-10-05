@@ -1,5 +1,45 @@
 # Project ledger
 
+## The 247 CI failures are mostly rooted now, 2026-10-05
+
+A cause census against run `37261826154` roots **188 of 247** distinct failure
+IDs and leaves **59 honestly unrooted**
+(`reports/evidence/ci-failure-causes-37261826154.md`, plus a 77-file CSV). The
+baseline this replaces left **160** unrooted. Only the unrooted bucket moved, and
+the two runs do not sum arithmetically because the baseline had four cancelled
+jobs and so did not measure the same universe.
+
+**The largest cause was mislabelled twice, by two different documents.** There is
+no `experiments/ad01/store.py`. `class _Store` is defined in exactly one file in
+the tree, `tests/test_posix_paths_checkpoint_restore.py:110`, whose fixture
+assigns a one-method stub at `sys.modules["settlement"].store` and never restores
+it. All nine attributes named in the resulting failures still exist on the real
+module as module-level functions taking a `dsn` — `is_ceiling_name` at
+`store.py:129`, `seed_grant` at `:693`, `seed_allocation` at `:804`,
+`subdivide_allocation` at `:831`, `operation_receipts` at `:2133`. So **82
+failures are one leaked test stub reached two ways** (66 direct calls, 16
+`monkeypatch.setattr`, differing only in message form), and the fix is test-side.
+A lane acting on the baseline's "production `_Store` API drift" would have
+edited production and fixed **zero** of them. `ci-run-37251210268.md:231` made
+the same error with the right count.
+
+**Execution-authority refusal did not shrink where the brief expected it to:
+11 at both trees**, same five files. `LiveRefused` on store-authority binding went
+0 → 8, and 5 strict `xfail`s are now XPASS because the SWE unit-guard fix landed.
+
+**The pinned git refs all resolve.** The baseline's "refs that no longer
+resolve" was a shallow clone: `actions/checkout@v4` with no `fetch-depth` gives
+depth 1, and the three SHAs sit 180–201 commits back. Reproduced against a real
+depth-1 clone, which exits 128 with `fatal: invalid object name`, matching CI.
+Fixed in `1a8a2697` for the two jobs that run tests; the `consistency` job reads
+no pinned path and is left at the default.
+
+The remaining 59 are unrooted for a reason worth naming: **the census only had
+the console slice of the logs, never the uploaded `suite.log` artifacts**, which
+`ci.yml` does write under `if: always()`. That gap is being closed against the
+full tracebacks. 7 stale-pin detectors in `test_m0_plan_claims.py`, 3
+credential-vacuity, and 8 stale-claim re-derivation are named but unclaimed.
+
 ## What the corpus can and cannot show, 2026-10-04 night
 
 Five commits over the evening section below: `0f30afb9` gave the operate choice
