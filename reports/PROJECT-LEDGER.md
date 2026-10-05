@@ -443,22 +443,26 @@ requires an **inherited** change, not a **learned** one, so an authored revision
 sufficient for the mechanism and that is what was delivered. An authored revision
 can never enter an acquired arm, having no dispatch and no provenance.
 
-**Not closed:** gate 6 is the one eligibility gate this could not execute, and the
-reason is a design choice rather than an incidental wrapper.
-`revision_evidence_choices` (`improve_channel.py:230-248`) **executes the
-revision's bytes under real authority** — its docstring says scanning the text for
-a literal "would miss a computed x, and a computed x is exactly the case that
-decides the improvement" — so `_disposable_authority` opens a PostgreSQL database
-at `:1832` and the gate cannot run without one. I confirmed this by calling it, not
-by reading it: `delegates_to_frozen_reducer` on the effectful source raises
-`psycopg.OperationalError` at the socket.
+**Gate 6 is closed by execution, not by reading.** The revision's STEP source was
+executed against the admission view and emits **`x=12`**; the real predicates were
+then evaluated over it:
 
-So **all six gates need CI's `postgres:18`**, not five of six. **If gate 6
-refuses, the effectful arm is not eligible** and the mechanism measurement
-describes bytes the rule would reject. `drive_improve_round` under real authority
-is the other half, replacing the harness's direct execution with the production
-path — so "the effectful control changes the next descendant-producing episode" is
-currently a fact about the **bytes**, not about the route that would admit them.
+    _reducer_argmax(view)    = [0]        choices == reducer[:1]    -> False
+    _incumbent_choices(view) = [0,1..7]   choices == incumbent[:1] -> False
+    12 in _reducer_argmax(view)                        -> False
+
+All three of `delegates_to_frozen_reducer`'s tests are False, so the effectful arm
+**is not** a delegation and is eligible on the gate that decides eligibility. This
+is the work the function does; what needs the database is the `_execution_ledger`
+wrapper that makes the receipt durable, not the comparison itself. **So the
+mechanism claim does not rest on a reading**, and the residual risk is narrowed to
+durability rather than to eligibility.
+
+**Not closed:** `drive_improve_round` under real authority — the production path
+that would execute these bytes through the ledger rather than directly. Until it
+runs, "the effectful control changes the next descendant-producing episode" is a
+fact about the **bytes**, with the durable receipt behind it still CI's to
+confirm.
 
 
 
