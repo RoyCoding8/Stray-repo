@@ -32,14 +32,33 @@ structurally instead of by evaluating the data:
     <anything else>                 -> UNRESOLVED, contributes a floor of 1
 
 Every site that could not be counted structurally is reported by name rather
-than estimated. `--verify` then checks the reproduction against the anchors
-and exits non-zero unless every one of them lands exactly.
+than estimated. `--verify` then checks the reproduction against the anchors and
+exits non-zero unless every one of them lands at the index CI reported.
+
+Tied to one commit
+------------------
+The anchors describe the collection of ONE commit, and a reproduction from a
+different commit is not a near miss to be tuned -- it is meaningless, and it
+does not look like that. A test file added between the two commits shifts every
+index after it by a constant, so nearly every anchor still matches and the run
+reads as a handful of stragglers. Measured: against this repo's HEAD instead of
+the anchors' commit, the result is 150 exact, 19 off by exactly +19, 5 absent,
+where the 19 are one added file.
+
+So `--sha` is REQUIRED to verify, and `anchors.json` records the commit it
+describes. An unnamed tree is refused rather than silently compared. Note the
+limit: `--sha` is asserted by the caller, so the tool cannot detect a run that
+lies about its tree. It prevents the unnamed case, not the deliberate one.
+
+For the same reason this script writes nothing unless `--out` is given. An
+earlier version wrote `collection.json` beside itself, so a later run against a
+different tree silently overwrote the earlier run's artifact, and the committed
+one no longer matched the commit it was committed against.
 
 Usage
 -----
-    python collection_order.py <tests_dir> [--verify <anchors.json>] [--report]
-
-Writes `collection.json` beside itself.
+    python collection_order.py <tests_dir> --sha <commit> \\
+        [--out collection.json] [--verify anchors.json] [--report]
 """
 
 from __future__ import annotations
@@ -411,12 +430,41 @@ def collect(tests_dir):
 
 # --- verification ---------------------------------------------------------
 
-def verify(result, anchors_path):
+def verify(result, anchors_path, anchors_sha=None):
     """Check the reproduction against CI-reported anchors.
 
     Each anchor is (collection_index, node_id). A correct reproduction puts
-    every one of them at exactly the index CI reported."""
-    anchors = json.load(open(anchors_path, encoding="utf-8"))
+    every one of them at exactly the index CI reported.
+
+    The anchors describe ONE commit's collection. Verifying them against a
+    different tree's collection is meaningless and, read carelessly, looks
+    like a partial pass: a file added between the two commits shifts every
+    index after it by a constant, so most anchors still land and the failure
+    reads as "a few stragglers" rather than "wrong tree". So when the anchors
+    record a commit and the caller names one, a mismatch is a hard error
+    before any counting happens.
+    """
+    anchors_doc = json.load(open(anchors_path, encoding="utf-8"))
+    if isinstance(anchors_doc, dict):
+        anchors = anchors_doc["anchors"]
+        anchors_sha = anchors_doc.get("sha")
+    else:
+        anchors = anchors_doc
+
+    # A wrong tree does not fail loudly. It shifts every index after the
+    # differing file by a constant, so most anchors still land and the run
+    # reads as a near miss rather than as the category error it is. So
+    # verifying without naming the commit is refused outright.
+    if anchors_sha and not result.get("sha"):
+        print("REFUSING TO VERIFY: the anchors record the commit they describe "
+              f"({anchors_sha[:12]}), but this run did not name one. Pass --sha "
+              "so a mismatch is caught instead of being read as stragglers.")
+        return False
+    if anchors_sha and result.get("sha") and anchors_sha != result["sha"]:
+        print(f"REFUSING TO VERIFY: anchors are for {anchors_sha[:12]}, "
+              f"this collection is from {result['sha'][:12]}")
+        return False
+
     by_id = {}
     for node in result["nodes"]:
         by_id.setdefault(node["id"], []).append(node["index"])
@@ -448,15 +496,26 @@ def main():
     ap.add_argument("tests_dir")
     ap.add_argument("--verify", metavar="ANCHORS_JSON")
     ap.add_argument("--report", action="store_true")
+    ap.add_argument("--out", metavar="PATH",
+                    help="where to write the reproduction. Defaults to stdout only.")
+    ap.add_argument("--sha", metavar="HEX",
+                    help="the commit the tests_dir was checked out from, recorded in "
+                         "the output. The anchors below belong to one specific commit, "
+                         "so an unrecorded run cannot be told apart from a wrong one.")
     args = ap.parse_args()
 
     result = collect(args.tests_dir)
-    here = os.path.dirname(os.path.abspath(__file__))
-    dest = os.path.join(here, "collection.json")
-    with open(dest, "w", encoding="utf-8") as fh:
-        json.dump(result, fh)
+    result["tests_dir"] = os.path.abspath(args.tests_dir)
+    result["sha"] = args.sha or None
+
+    dest = args.out
+    if dest:
+        with open(dest, "w", encoding="utf-8") as fh:
+            json.dump(result, fh)
 
     unresolved = [p for p in result["files"] if p["unresolved"]]
+    print(f"tests_dir:            {result['tests_dir']}")
+    print(f"sha:                  {result['sha'] or '(not recorded -- pass --sha)'}")
     print(f"files collected:      {len(result['files'])}")
     print(f"tests reproduced:     {result['count']}")
     print(f"complete:             {result['complete']}")
@@ -465,7 +524,10 @@ def main():
         print(f"   {p['file']} (index {p['start']}..{p['end']})")
         for u in p["unresolved"]:
             print(f"      {u}")
-    print(f"written:              {dest}")
+    if dest:
+        print(f"written:              {dest}")
+    else:
+        print("written:              (nothing; pass --out to write a file)")
 
     if args.report:
         for p in result["files"]:

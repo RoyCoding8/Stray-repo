@@ -4,6 +4,14 @@ The four shards that lost the 100-minute timeout stop at the same collection
 index. This names the test at that index, with the chain that gets there and
 the bounds on how wrong it can be.
 
+**Read the two claims separately.** The *mechanism* is a self-deadlock on an
+advisory lock and is the part to act on. The *name* is derived from a
+reproduction of the collection order that is verified exactly at 174 indices CI
+reported, all of them below 3523. Index 3829 sits **306 indices past the last
+verified point**, in a window with no anchor at all. The name is model-derived
+and the bound on it is stated in full below. The mechanism does not depend on
+the index arithmetic at all.
+
 ## Answer
 
 ```
@@ -13,6 +21,13 @@ tests/test_s09_verdict.py::test_the_mechanism_verdict_can_be_computed_from_a_rea
 Collection index **3829**, file `tests/test_s09_verdict.py`, which occupies
 indices 3807–3836 (30 tests). The stall begins at the first character of this
 test's result: the preceding test at index 3828 completed and printed its dot.
+
+**Confidence, stated plainly.** The name rests on a static reconstruction
+verified exactly below index 3523 and on the 306-index window after it being
+free of any site the reconstruction could not resolve. It is not verified at
+3829 and no CI artifact names a test there. A reader who wants certainty should
+run the experiment at the end, which settles the mechanism regardless of the
+index.
 
 The test body is `src/tests/test_s09_verdict.py:525`:
 
@@ -86,6 +101,13 @@ lock-wait evidence appears in the CI logs, because PostgreSQL logs nothing for a
 session waiting on an advisory lock it never acquires. Marked INFERRED below
 where it matters.
 
+**What the mechanism does and does not depend on.** It does not depend on the
+index arithmetic. "A test spawns a nested pytest that inherits the run's
+advisory-lock token" is a fact about two source files, and it holds regardless
+of whether the stall sits at index 3829 or 3900. The index only decides *which*
+test a reader should look at first. A reader who distrusts the index should
+still read this section; a reader who trusts it should still run the experiment.
+
 ## Evidence chain
 
 ### 1. The stall index is 3829, from two independent routes
@@ -146,18 +168,59 @@ verification step rather than by inspection:
 
 **Validation.** The three completed shards each print a short summary naming
 every failed and erroring test. Pairing those node ids, in report order, with
-the positions of `F` and `E` in their outcome strings yields **174 anchors**, each
-a (collection index, node id) pair that CI reported directly. The reproduction
-places **all 174 at exactly the indices CI reported**, with zero mismatches and
-zero unmatched.
+the positions of `F` and `E` in their outcome strings yields **174 anchors**,
+each a (collection index, node id) pair that CI reported directly.
+
+Three counts must be kept apart, because they are different claims:
+
+| count | value | meaning |
+|---|---|---|
+| ids matched at any index | 174 | the reproduction knows the test |
+| ids inside that test's index range | 174 | the test lands nearby |
+| **ids at the exact reported index** | **174** | the index is right |
+
+Only the third is verification. The tool's `--verify` counts the third and
+prints it as `exact index match`. On the correct tree it reports **174/174,
+0 off, 0 absent**, and exits 0.
 
 The anchors are not all at one end. They span indices 0 to 3523, across 57
-files, and they are dense enough to catch an off-by-one in any single file: an
-earlier version of the tool matched 1 of 174 and each fix moved the count
-(19, then 43, then 169, then 174). The residual between the reproduction and
-CI's indices is zero at every anchor from index 0 to index 3523.
+files, and they are dense enough to catch an off-by-one in any single file. An
+earlier version of the tool matched 1 of 174, and each fix moved the exact-match
+count: 19, then 43, then 169, then 174. Every one of those numbers was read off
+the tool's own `exact index match` counter, so the progression was the strict
+count throughout, not a mixture of the three rows above. On a correct tree the
+middle two rows cannot differ from the third, because a test's generated
+indices are contiguous; I checked that they agree on all 174.
 
-### 3. The bound on the error
+The residual between the reproduction and CI's indices is zero at every anchor
+from 0 to 3523.
+
+### The reproduction is tied to one commit, and that matters
+
+Running the tool against this worktree's own `tests/` instead of the CI SHA's
+gives **150 exact, 19 off by exactly +19, 5 absent** — the shape a wrong tree
+produces. The cause is `tests/test_s09_normalizers.py`, which exists in this
+worktree and not at the CI SHA, and contributes 19 collected tests. Those 19
+nodes occupy indices 3374–3393, so every anchor after that point shifts by a
+constant 19, with the sharp boundary the anchors 3358 / 3386 describe.
+
+A constant offset is the signature of a wrong input, not of a wrong method. It
+is also invisible to a count check, because the file is simply absent at the
+older commit. Two changes follow, and both are in the tool:
+
+- `--sha` is required to verify. Without it the tool refuses, because an unnamed
+  tree cannot be told apart from the right one.
+- `collection.json` is no longer written beside the script, so a run against one
+  tree can no longer silently overwrite the artifact from another. It is written
+  only when `--out` is passed.
+
+One honest limit on that guard: `--sha` is a value the caller asserts. The tool
+cannot check that the tree it was handed really is that commit, so a run that
+passes a false `--sha` still verifies against the wrong tree. What the guard
+prevents is the failure that actually happened, which was an unnamed run reading
+another tree's anchors.
+
+### The bound on the name
 
 The reproduction accounts for 4763 of CI's 4783 tests. The 20-test gap is three
 `parametrize` sites whose arity is not statically derivable:
@@ -168,14 +231,20 @@ The reproduction accounts for 4763 of CI's 4783 tests. The 20-test gap is three
 | `tests/test_s09o_export.py` | `test_mutations_name_the_failed_check` | `_mutations(None)`, a local function |
 | `tests/test_s09swe_world.py` | `test_exceeding_any_tool_budget_is_refused` | `world.BUDGET_LIMITS.items()`, cross-module |
 
-These sit at reproduced indices 3937, 4252 and 4415. **All three are after
-index 3829.** They can only add tests to indices beyond the stall, so they
-cannot move the test at 3829 in either direction. The residual is zero at every
-anchor, and the nearest anchor after the correction is at index 3523, with no
-shortfall file anywhere between 3523 and 3829.
+These sit at reproduced indices 3937, 4252 and 4415, all **after** 3829, so they
+cannot move the test at 3829.
 
-The identified test is therefore the test at index 3829 exactly, not
-approximately.
+That leaves the unanchored window, 3524 to 3829, 306 indices across 16 files.
+Within it the reconstruction resolves every `parametrize` site exactly; there is
+no shortfall file anywhere in the window. So the exposure is narrower than "306
+unverified indices": it is 306 indices whose per-file counts come from the model
+rather than from a CI-reported index, with no known site in that window that the
+model gets wrong.
+
+**This is the bound, stated as a bound.** If a future change to any of those 16
+files alters its collected count, or if the CI SHA tree is reconstructed from
+anything other than the commit itself, the name moves. I did not measure inside
+that window and no artifact names a test there.
 
 ## Where the prior analysis stood, and what changed
 
@@ -264,12 +333,15 @@ independently corroborated by the unsharded teardowns.
   `reports/workstreams/windows-env.md` forbids running pytest here. The
   inference is from the two source sites and the absence of any other
   indefinite-block path, which is strong but is not a measurement.
-- **The reproduction is not verified past index 3523.** The last CI-reported
-  anchor is at 3523. From there to 3829 the reproduction rests on the
-  collection model plus the absence of any unresolvable site in that window,
-  not on a CI-reported index. The three known unresolvable sites are all beyond
-  3829, so the bound holds, but it is a bound derived from the model rather
-  than from a measurement in the window itself.
+- **The reproduction is not verified at index 3829.** The highest index CI
+  independently confirmed is 3523, so 3829 is 306 indices into a window with no
+  anchor. Within that window the reconstruction resolves every `parametrize`
+  site and no unresolvable site falls in it, which bounds the exposure but does
+  not measure it. The name is model-derived below 3524 and exact above it. This
+  is the single largest caveat on the identification.
+- **The tool cannot check which commit it was handed.** `--sha` is an assertion
+  by the caller. It prevents the unnamed-tree failure that occurred here; it
+  does not prevent a run that asserts a false SHA.
 - **No per-test duration data exists.** Confirmed, not assumed. No shard passes
   `--durations`, `pytest -q` carries no per-test timing, and every artifact
   contains `No test durations found`, which is why `pytest-split` split by
@@ -284,32 +356,45 @@ independently corroborated by the unsharded teardowns.
   run is meant to share the parent's databases, which is a design question I
   did not settle.
 
-## Smallest experiment that would settle the inference
+## Smallest experiment that would settle it
 
-One command in CI, on a shard that reaches index 3829:
+One command in CI, against the CI SHA:
 
 ```
-S09ISO_TOKEN= <distinct token> python -m pytest -q -p no:cacheprovider \
+S09ISO_TOKEN=<distinct 8 hex chars> python -m pytest -q -p no:cacheprovider \
   tests/test_s09_verdict.py::test_the_mechanism_verdict_can_be_computed_from_a_real_suite_run
 ```
 
-If it completes with the shared token and hangs with a distinct one, the
-advisory-lock deadlock is confirmed and the index is confirmed at the same time.
-If it hangs either way, the cause is in the nested suite and not the lock. A
-variant that runs `SELECT pg_locks` from a second connection during the stall
-would show the waiter directly.
+**This is worth more than the index arithmetic, because it tests the mechanism
+rather than the position.** If the test completes when the child is given a
+distinct token and hangs when it inherits the parent's, the advisory-lock
+deadlock is confirmed, and with it the identification of the stall as sitting at
+this test. The index reconstruction does not enter into it.
+
+A second variant, running `SELECT * FROM pg_locks` from another connection
+while it hangs, would show the waiter directly and settle it without a
+differential. If it hangs under either token, the cause is in the nested suite
+and not the lock.
 
 ## Reproducing this
 
 ```
-git archive 91b36f8755cafc8281e152a29b9c0117b38f0908 tests src experiments scripts | tar -x
+SHA=91b36f8755cafc8281e152a29b9c0117b38f0908
+git archive $SHA tests | tar -x
 python reports/workstreams/hang-tool/collection_order.py <dir>/tests \
+    --sha $SHA \
+    --out reports/workstreams/hang-tool/collection.json \
     --verify reports/workstreams/hang-tool/anchors.json
 ```
 
-`91b36f8` is the head SHA of run `37251210268`, the run that hung, not the
-worktree's `d4eb4126`. The tree differs by 5 test files including
-`tests/test_s09_normalizers.py` at +875 lines.
+Expect `exact index match: 174`, `matched but wrong idx: 0`,
+`node id not in repro: 0`, `VERIFIED`, and exit 0.
+
+`91b36f8` is the head SHA of run `37251210268`, the run that hung, **not** this
+worktree's HEAD. The trees differ by 5 test files, including
+`tests/test_s09_normalizers.py` at +875 lines, and running against the wrong one
+shifts every index after that file by 19. The tool refuses to verify without
+`--sha` for that reason.
 
 Artifacts read, all from run `37251210268`:
 - `suite-py3.12-`, `suite-py3.13-`, `suite-py3.14-`, `suite-py3.13-1/2/3/4`
