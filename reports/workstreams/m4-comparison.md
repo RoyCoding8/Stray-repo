@@ -310,3 +310,22 @@ meant nothing.
   Rerun with `python tools/m4_mechanism_harness.py --out <path>`.
 - `tests/test_m4_mechanism_offline.py` — 23 tests, no database required.
 - `reports/evidence/invl02-m4-mechanism/mechanism.json` — the artifact.
+
+## Correction: these tests never needed a database
+
+The docstring above says it and I did not act on it. "Every test here runs
+without a database. That is a property of the boundary, not an accident of the
+host" — and the file carries zero skip markers.
+
+I spent hours attributing them to CI shards that do not collect them, and
+reporting them as "written but unexecuted" in the ledger. Both were wrong:
+they run on the coordinator host in 17 seconds. **23 passed.**
+
+Two lessons, since both cost real time. The first is that "not executed here"
+was read as "needs CI", when the file said otherwise in its first paragraph. The
+second is a census question I never asked: **which shard collects this file**,
+answered in one command and worth asking before deferring anything to CI.
+
+The CI deferral for this file was mine, not the harness's. CI still owns gate 6
+and `drive_improve_round`, because those genuinely open a disposable PostgreSQL
+through `_execution_ledger`. This file exists precisely because it does not.
