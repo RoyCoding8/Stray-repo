@@ -1145,13 +1145,13 @@ def _qualification_authority():
     from experiments.ad01 import s09_run_isolation as isolation
     from settlement import authority as _authority
 
-    token = "preflight-qualify-%s" % uuid.uuid4().hex[:8]
+    token = "preflight-%s" % uuid.uuid4().hex[:8]
     database = isolation.create_disposable_db(token,
                                               admin_dsn=isolation.admin_dsn())
     try:
         handle = _authority.authorize_study(
             database.dsn, isolation.study_root_for(token), authorized=1000,
-            allocation_id="preflight-qualify-%s" % token)
+            allocation_id=token)
     except BaseException:
         isolation.drop_disposable_db(database,
                                      admin_dsn=isolation.admin_dsn())
