@@ -71,6 +71,34 @@ and the first time any of this suite has run on Windows or macOS. The port
 jobs, the allocation correction, and the four gap repairs are all live bets
 until it completes.
 
+**Measured since: run `37367150028` (`791b2f03`) settled the live bets.**
+Ubuntu runner capacity, not the workflow, cancelled the two db shards, the
+ubuntu port job and the first Windows attempt at 20:21:30 — no runner was
+ever assigned (empty `runner_name`, zero steps, queued 15 minutes, one batch
+cancellation; no push, no second run attempt, no API cancel cause). The
+macOS port job completed — **the first portable suite measurement ever**:
+3584 passed, 548 skipped, 288 failed, 428 errors, 39 minutes. It refuted
+the port job's founding comment: the missing-DSN gate at
+`tests/conftest.py:20` only governs fixtures that consult it. About 554 of
+the 716 failure lines connect to PostgreSQL on hardcoded
+`host=/var/run/postgresql` DSNs of their own (`DEFAULT_ADMIN_DSN` at
+`conftest_isolation.py:91` and dozens of module-level test DSNs), so they
+error on any host without that socket instead of skipping. That is the
+portable lane's measured noise floor, and closing the DSN authority back to
+one gate is its outstanding work. The genuinely OS-specific defects are
+short: `dlopen(libc.so.6)` and `prctl`-family `_no_new_privs` are
+Linux-only APIs, `preexec_fn` child setup fails on macOS, `git
+safe.directory` invocation fails on the macOS runner, and two tests assume
+the Linux checkout path. The heavy archived job failed only its known
+baseline (61 ids, 12 fixed since baseline, **0 new**), and the consistency
+job passed. Windows measured one defect of ours: the port job's
+`run:` steps are bash but a Windows `run:` defaults to pwsh —
+`ParserError: The '<' operator is reserved for future use` before any
+test ran (`37365655000`). Fixed in `59360bb8`: one job-level
+`defaults.run.shell: bash` (Git Bash ships on every runner), and the port
+comment now states the measured floor instead of the disproved
+every-other-test-skips claim.
+
 ## The pg_dump remedy was wrong twice, and the premise was the environment, 2026-10-05
 
 Run `37315773898` reported **seven failed suite jobs and the suite never ran on
