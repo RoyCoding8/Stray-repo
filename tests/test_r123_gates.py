@@ -255,29 +255,37 @@ def test_r1_driver_routes_through_frontier(tmp_path, dsn):
         dsn=dsn, guard=None, model="test-model")
     # M2's clause is whether the observation changed the arm's action, so the
     # field compares the arm that ran against that same arm given no evidence.
-    # The E0 freeze probes `opp-rule-dev-4` at x=3 exactly once, and a first
-    # measurement on a rule has no prior evidence to disagree with, so it
-    # earns `unknown` and nothing earned ever moved the choice. Preserved and
-    # disconnected therefore both land on `opp-first` and the field reads
-    # False. That False is this freeze's answer rather than a field stuck
-    # False: `test_r1_observation_dependent_choice` builds the earned case on
-    # the same comparison and reads True, so a fixture that stops short of the
-    # refutation is what turns it.
-    assert record["observation_dependent"] is False
-    # The falsifier is the separate question, kept under its own name. It
-    # moves the decision here, but only because `_control_triple` wrote the
-    # disagreement: the arm ran against a verdict no measurement produced.
-    assert record["falsifier_moves_decision"] is True
-    assert record["choice_effectful"] == record["choice_disconnected"]
-    assert record["choice_effectful"] == "opp-first"
+    # The E0 freeze probes the dev-4 rule at x=3 and then at x=11, and a
+    # measurement with a prior to disagree against can earn `not_preserved`
+    # rather than the `unknown` a rule's first probe earns by construction.
+    # The refuted rule is then a frontier member with a non-refuted
+    # alternative, so the preserved arm moves off `frontier[0]` and the field
+    # reads True. It reads it by having earned the verdict, not by counting
+    # probes: `test_r1_observation_dependent_choice` shows the same field
+    # True on an earned refutation, and the arm does not move where the
+    # instrument confirms the predictor instead.
+    assert record["observation_dependent"] is True
+    # The falsifier is the separate question, kept under its own name, and it
+    # cannot move the decision here: the rewrite writes a verdict the run had
+    # already earned, so the two arms agree. Where the falsifier does move a
+    # decision it is the falsifier that wrote the disagreement, which is why
+    # this field and not that one is the clause.
+    assert record["falsifier_moves_decision"] is False
+    assert record["choice_effectful"] != record["choice_disconnected"]
+    assert record["choice_effectful"] == "opp-followup"
+    assert record["choice_disconnected"] == "opp-first"
+    assert record["choice_refuted"] == record["choice_effectful"]
     assert record["refuted_rewritten"] is True
     # The rewrite is anchored to an observation the run really made, so this
-    # is a relation over the record rather than a restated id. What it
-    # cannot be is a refutation the instrument earned, and the probe count is
-    # what says so: one probe on a rule leaves no prior to disagree with.
+    # is a relation over the record rather than a restated id.
     assert record["refuted_from"] is not None
-    assert record["choice_refuted"] != record["choice_effectful"]
-    assert record["observations"] == 1
+    # Two probes on one rule: the first earns `unknown` for having no prior,
+    # the second earns its verdict against it. This is the count that says
+    # the amendment bought a prior rather than a second opinion.
+    assert record["observations"] == 2
+    assert record["effect"]["verdict"] == "unknown"
+    assert record["second_probe_effect"]["verdict"] == "not_preserved"
+    assert record["second_probe_effect"]["x"] == driver.SECOND_PROBE_X
     assert record["second_candidate"] != record["first_candidate"]
     assert record["adopted"]["status"] == "activated-control"
 
