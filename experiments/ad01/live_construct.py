@@ -1190,18 +1190,49 @@ def bind_live_control(store, which: str = "low"):
     return active
 
 
-def choose_next_work(store, package: dict, experience: list,
-                     *, arm: str | None = None) -> dict:
+def choose_next_work(store, package: dict, experience: list, *,
+                     arm: str | None = None,
+                     authority: dict | None = None) -> dict:
+    """Choose the next operate action, under the authority the caller holds.
+
+    `authority` is the `{dsn, allocation_id}` this choice's execution settles
+    against, and it is forwarded to `run_operate_step` rather than defaulted
+    away. It was absent, and the executor's default is a database created for
+    the execution and dropped when it ends
+    (`improve_channel._disposable_authority`). A choice M2 then reports as
+    `observation_dependent` is therefore a choice whose receipt the
+    investigation cannot reach, which is the condition `6f0baeb` exists to
+    prevent -- the same condition `drive_improve_round` refuses an owned store
+    for, and for the same reason.
+
+    So the absence is refused here too, on the same rule and not a new one: a
+    store that names an owner executes under the authority that owner
+    authorized. Both names or neither, which is `_execution_ledger`'s rule
+    restated where the omission happens. An unowned store is the fixture
+    boundary and keeps the disposable ledger, so a caller that genuinely has no
+    study to settle under is not broken.
+
+    `arm` is the arm this choice is one arm's work, and it reaches the
+    operation id beside the package digest. Every live arm binds the same
+    deterministic `make_control("low")`, so without it two arms of one study
+    offer the ledger one id per view and the second reads the first's settled
+    receipt instead of executing.
+    """
     from . import frontier as _frontier
     from . import improve_channel as _channel
     if not isinstance(package, dict) or not package.get("package_digest"):
         raise LiveRefused("live choice needs the bound package digest")
     if package.get("package_digest") != store.active_digest:
         raise LiveRefused("live choice program is not the bound program")
+    if authority is None and getattr(store, "identity", None) is not None:
+        raise LiveRefused(
+            "live choice on an owned store executes under the authority its"
+            " investigation authorizes, not under a disposable one")
     view = store.step_view(_frontier.OPERATE, package)
     view["experience"] = list(experience)
     try:
-        result = _channel.run_operate_step(package, view, {}, arm=arm)
+        result = _channel.run_operate_step(
+            package, view, {}, authority=authority, arm=arm)
     except _frontier.Refused as exc:
         raise LiveRefused("live frontier choice refused: %s" % exc) \
             from exc

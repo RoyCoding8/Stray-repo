@@ -34,19 +34,34 @@ from experiments.ad01.live_construct import LiveGuard as _LiveGuard
 STUDY_ROOT_E0 = "invl02-live-e0"
 STUDY_ROOT_E12 = "invl02-live-e12"
 #: How many child executions one study may admit, per
-#: `reports/cap-sheets/e0-e12-child-execution-caps.md`, which froze both
-#: numbers before any model call was made under them. They are ceilings, not
+#: `reports/cap-sheets/e0-e12-child-execution-caps.md`, which froze the earlier
+#: figures before any model call was made under them. They are ceilings, not
 #: targets: an undeclared `sandbox_calls` is not a zero ceiling but an
 #: unbounded resource wearing a grant's clothes, because `_check_study_ceilings`
 #: only iterates the names a study declared.
 #:
-#: E0 is two investigations (the control and the live arm) at eight
+#: E0 is two investigations (the control and the live arm) at nine
 #: executions each, plus the one retained-acquisition binding only the live arm
-#: can pay. E12 is three investigations at eight each, plus one binding per
+#: can pay. E12 is three investigations at nine each, plus one binding per
 #: retained arm. `boolean_live_round` makes model calls only and draws on no
 #: executor, so it is not in either figure.
-E0_SANDBOX_CALLS = 19
-E12_SANDBOX_CALLS = 30
+#:
+#: Nine is six improve steps plus the three operate choices `_control_triple`
+#: makes on `preserved`, `refuted` and `disconnected`. Recounted by AST over the
+#: current tree rather than by eye, which is the sheet's own method.
+#:
+#: Two corrections to the sheet's eight, and they are different in kind. It
+#: listed two `choose_next_work` calls where the triple makes three, so it
+#: understated the per-investigation count by one even before this change.
+#: More to the point, all three settled on `_disposable_authority`'s own
+#: database, under its own study root and its own allocation, on a different
+#: `dsn` -- so `_study_operation_counts` never walked them and no ceiling was
+#: charged for them. The sheet counted them as though they were charged, which
+#: was the one way they could have been. They settle under this study's
+#: allocation now, which is the point of the thread and the reason these two
+#: figures moved rather than staying put.
+E0_SANDBOX_CALLS = 21
+E12_SANDBOX_CALLS = 33
 OUTPUT_ROUND = _live_output.OUTPUT_ROUND
 STUDY_ROOT_OUTPUT = _live_output.OUTPUT_STUDY_ROOT
 E0_PROTOCOL_ID = "invl02-live-e0-v1"
@@ -2001,7 +2016,8 @@ def _record_live_mission(dsn: str, investigation_id: str,
     return investigation_id
 
 
-def _control_triple(store, active: dict, label: str) -> dict:
+def _control_triple(store, active: dict, label: str, *,
+                    authority: dict) -> dict:
     """Three operate choices over one store, differing only in evidence.
 
     The effectful arm is the store's own recorded observations, as the
@@ -2022,11 +2038,27 @@ def _control_triple(store, active: dict, label: str) -> dict:
     one authority, because `choose_next_work` replaces only
     `view["experience"]` (`live_construct.py:1184`) and the frontier is
     `admissible()` over the same opportunities.
+
+    `authority` is REQUIRED and is the caller's, not a derivation. It is the
+    same `{dsn, allocation_id}` the two improve rounds run under, built once
+    by `_run_frontier_investigation` from the study's own allocation. These
+    three choices are what `observation_dependent` and
+    `falsifier_moves_decision` are computed from
+    (`invl02_live.py:2234-2237`), so a triple whose executions settle on a
+    disposable database reports a decision the investigation cannot reach the
+    provenance for -- measured, but unattributable. Required rather than
+    optional, for the same reason `_run_frontier_investigation`'s own
+    `allocation_id` is: an optional authority here reads as "this caller may
+    omit it", and the omission is exactly the defect. It is the thread from
+    `_run_frontier_investigation`, not a second derivation: a second
+    allocation for one leg is what `WORKER-PROMPT.md:158` forbids, and the
+    r123 repair already moved the derivation out of this function once.
     """
     from experiments.ad01 import live_construct as _live
     from experiments.ad01 import improve_channel as _channel
     recorded = store.observations
-    disconnected = _live.choose_next_work(store, active, [], arm=label)
+    disconnected = _live.choose_next_work(
+        store, active, [], arm=label, authority=authority)
     if not recorded:
         return {"preserved": disconnected, "refuted": disconnected,
                 "disconnected": disconnected, "refuted_rewritten": False,
@@ -2034,9 +2066,9 @@ def _control_triple(store, active: dict, label: str) -> dict:
     refuted = [dict(o) for o in recorded]
     refuted[-1] = {**refuted[-1], "verdict": _channel.NOT_PRESERVED}
     return {"preserved": _live.choose_next_work(
-                store, active, recorded, arm=label),
+                store, active, recorded, arm=label, authority=authority),
             "refuted": _live.choose_next_work(
-                store, active, refuted, arm=label),
+                store, active, refuted, arm=label, authority=authority),
             "disconnected": disconnected,
             "refuted_rewritten": True,
             "refuted_from": refuted[-1].get("observation_id")}
@@ -2130,7 +2162,7 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
             store, second_probe_action, task)
     except Exception as exc:
         second_effect = {"status": "refused", "reason": str(exc)}
-    choices = _control_triple(store, active, label)
+    choices = _control_triple(store, active, label, authority=authority)
     first = _live.run_live_improve_round(store, task, active, 1,
                                         authority=authority)
     candidate = first["candidate"]
