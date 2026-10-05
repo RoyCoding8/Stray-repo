@@ -1,5 +1,76 @@
 # Project ledger
 
+## The 41 measured fixes, the four gaps behind them, and a five-job matrix, 2026-10-05
+
+Run `37335011361` at `e485a75c` — the first full measurement of the authority
+migration — closed **41 suite failures against the prior baseline, with 0 new**.
+The token fix (11 `test_s09_study_preflight` IDs), the substitution gate (5),
+mission admission (3 `test_s09c1_continuity`), the s89 rerunners (5 across
+`test_s89a2_rerun` and `test_s89a3_closeout`), and the six environment repairs
+(`test_evidence_integrity` ×5, `test_r02_authority` ×4, `test_rec_checkpoint`
+×3, `test_m2_frontier_inherit`, `test_p2c_ad01_resweep`, `test_r123_gates`,
+`test_ag01_experiment::test_privileged_access_raises`,
+`test_production_execution_authority::test_the_conditional_production_callers_refuse_before_executing`)
+are all green on Linux. Verified by parsing the shard artifacts' `failures.txt`
+sets and the unsharded `py3.13` set — every count below is distinct test IDs,
+not raw lines.
+
+**The run predates `15041b8f`, so its 14 `refused: unknown allocation` failures
+measure the defect that commit corrects, not the migration.** The four
+assessment-allocation files (`test_s09c2b_bind` ×7, `test_s09m34_bind` ×2,
+`test_s09m6fix_bind` ×4, `test_s09m34_visibility` ×1) all fail at the same
+place: `_alloc_id(cid)` only formats the string, and `store.py:340` `_get_alloc`
+raises on a grant nobody opened. Pushed now; the next run carries it.
+
+**Four gaps the run exposed, closed in `25adeee2`:**
+
+1. **The preflight CLI crashed on an unreachable store.**
+   `observe_database` connected at `s09_study_preflight.py:787` *outside* its
+   own `try:`, so a bad DSN raised `psycopg.OperationalError` through `main`
+   instead of becoming a `refused` observation. A preflight whose whole job is
+   to report refusals must not crash on one — the connect moved inside the try.
+   The CLI test named the database through `admin_url`, the session's own
+   route, rather than the hand-minted `postgresql://user@127.0.0.1/...` whose
+   role does not exist on the CI service. Both facts (`agenda01_exp` is not
+   disposable, and it does not exist) are the point of the test.
+
+2. **`test_sweep_token_grammar` pins drifted.** `426f9337` inserted 38 lines
+   above `conftest_isolation.py`'s two `derived_name` return sites, so the
+   pins at `:124/:131` no longer named the creators. Re-pinned to the actual
+   lines `:162/:169`, each verified against the file.
+
+3. **Three new readers of `S09ISO_TOKEN`.** `test_s09_verdict.py` and
+   `test_a42_chain_demonstration.py` pin the token-inheritance behavior (a
+   nested suite must neither claim its parent's token nor present a
+   different one) — legitimate, added to the reader allowlist.
+   `experiments/ad01/s09_verdict.py` named the variable only in a comment;
+   production code has no business naming the token variable at all, and
+   adding it to the list would hide the next real reader behind an entry
+   that only ever held a comment. The comment now says "run token" without
+   the literal.
+
+4. **The portable job would have died at configure.** The first draft set
+   `S09ISO_TOKEN` on the port job; with a token and no `S09ISO_DISABLE`,
+   `pytest_configure` claims a per-token advisory lock and creates a
+   disposable database *before collecting anything* — on runners with no
+   PostgreSQL. Caught by reading `conftest_isolation.py:745-759` before the
+   push; the job now sets `S09ISO_DISABLE: "1"` and no token.
+
+**The matrix is now five jobs, not seven, and three of them are not Linux.**
+The old matrix ran the whole suite seven times (three unsharded on 3.12/3.13/
+3.14 plus four 3.13 shards) — 3.13 executed the identical code path twice and
+the other two Pythons repeated it. Per the standing directive: Python pinned
+to 3.13 (inside `requires-python >=3.12`), the suite sharded twice on ubuntu
+with PostgreSQL, and a new `port` job running the ~316 tests that need no
+database on ubuntu/windows/macos — the cross-OS claim that keeps the suite
+off the WSL host, which was the point of CI in the first place. The heavy
+archived job and the consistency job are unchanged.
+
+**Not measured yet:** run `37365655000` is the first execution of this matrix
+and the first time any of this suite has run on Windows or macOS. The port
+jobs, the allocation correction, and the four gap repairs are all live bets
+until it completes.
+
 ## The pg_dump remedy was wrong twice, and the premise was the environment, 2026-10-05
 
 Run `37315773898` reported **seven failed suite jobs and the suite never ran on
