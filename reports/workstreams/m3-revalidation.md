@@ -192,7 +192,12 @@ error, when the freeze is what moved it. The output now says
 
 ## 5. Honest reporting
 
-**Ran here, on Windows, Python 3.14.5, at base `8f10cd6e`.** Every figure above.
+**Ran here, on Windows, Python 3.14.5, at base `8f10cd6e`, and re-verified after
+rebasing onto `f3145187`.** Every figure above. Three commits from other lanes
+(`learner_revision.py`, `s09_verdict.py`, `PROJECT-LEDGER.md`) landed on the
+branch mid-task and are in the pushed history; none is mine and none touches
+the learner or the ladder. The base commit the freeze sits behind is still
+`8f10cd6e`.
 
 **Inferred.** That the pre-freeze learner reconstruction is faithful. It is
 verbatim from `44ec6c52~1` apart from an explicit rng attribute, and its

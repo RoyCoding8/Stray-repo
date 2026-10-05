@@ -3,48 +3,54 @@
     "blind": "choose_query with zero vectors, observe never called",
     "informed": "choose_query reading each real answer, observe called"
   },
+  "attains_bound": {
+    "budget": 8,
+    "informed_identifies_every_seed": true,
+    "informed_seeds_short_of_bound": 0
+  },
+  "blind_sequence": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "blind_sequence_is_seed_independent": true,
   "cohort": "fresh_a",
-  "expected_budget_8": {
-    "blind": 0.5208,
-    "delta": 0.375,
-    "informed": 0.8958
-  },
   "n_seeds": 150,
-  "reconciles": {
-    "blind": true,
-    "delta": true,
-    "informed": true
-  },
   "rows": [
     {
-      "blind_unqueried": 0.05466666666666666,
+      "blind_unqueried": 0.05644444444444444,
       "budget": 1,
       "delta": 0.0,
-      "informed_unqueried": 0.05466666666666666,
+      "informed_unqueried": 0.05644444444444444,
       "n_queried": 1.0,
       "unqueried_denominator": 15.0
     },
     {
-      "blind_unqueried": 0.05809523809523809,
+      "blind_unqueried": 0.05285714285714285,
       "budget": 2,
       "delta": 0.0,
-      "informed_unqueried": 0.05809523809523809,
+      "informed_unqueried": 0.05285714285714285,
       "n_queried": 2.0,
       "unqueried_denominator": 14.0
     },
     {
-      "blind_unqueried": 0.095,
+      "blind_unqueried": 0.055,
       "budget": 4,
-      "delta": 0.015,
-      "informed_unqueried": 0.11,
+      "delta": 0.13,
+      "informed_unqueried": 0.185,
       "n_queried": 4.0,
       "unqueried_denominator": 12.0
     },
     {
-      "blind_unqueried": 0.5208333333333334,
+      "blind_unqueried": 0.059166666666666666,
       "budget": 8,
-      "delta": 0.375,
-      "informed_unqueried": 0.8958333333333334,
+      "delta": 0.9408333333333333,
+      "informed_unqueried": 1.0,
       "n_queried": 8.0,
       "unqueried_denominator": 8.0
     }
