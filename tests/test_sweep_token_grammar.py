@@ -420,8 +420,8 @@ def test_every_creator_is_enumerated_below():
 # database, which is why they are bystanders rather than creators.
 PINNED_CREATORS = (
     Creator(REPO / "experiments" / "ad01" / "s09_run_isolation.py", 256, "", True),
-    Creator(REPO / "tests" / "conftest_isolation.py", 124, "", True),
-    Creator(REPO / "tests" / "conftest_isolation.py", 131, "", True),
+    Creator(REPO / "tests" / "conftest_isolation.py", 162, "", True),
+    Creator(REPO / "tests" / "conftest_isolation.py", 169, "", True),
 )
 
 
@@ -520,7 +520,15 @@ def test_the_harness_own_token_source_is_outside_the_creators_reach():
     rather than out of the environment. Naming it here would pin a fact about
     the sweep's imports rather than about anyone's liveness.
 
-    The third entry is the archived copy, at the path it now holds. It read
+    ``test_s09_verdict.py`` and ``test_a42_chain_demonstration.py`` are on the
+    list because they pin the inheritance behaviour itself: both set or pop
+    the variable to assert that a nested suite run neither claims its parent's
+    token nor presents a different one. ``s09_verdict.py`` is not, because
+    production names only ``S09ISO_DISABLE``; a production file on this list
+    would hide the next real reader behind an entry that only ever held a
+    comment.
+
+    The archived entry is at the path it now holds. It read
     ``tests/test_s09iso_stale_sweep.py`` until the heavy-archive move of
     2026-09-29, and the stale spelling is why this assertion was red in the
     integration checkout before this lane touched it: the scan could not see a
@@ -532,8 +540,10 @@ def test_the_harness_own_token_source_is_outside_the_creators_reach():
                        and "S09ISO_TOKEN" in path.read_text(encoding="utf-8"))
     assert offenders == ["tests/_heavy_archived/test_s09iso_stale_sweep.py",
                          "tests/conftest_isolation.py",
-                         "tests/test_conftest_isolation.py"], (
-        "only the harness and the two files that pin its behaviour may read "
+                         "tests/test_a42_chain_demonstration.py",
+                         "tests/test_conftest_isolation.py",
+                         "tests/test_s09_verdict.py"], (
+        "only the harness and the files that pin its behaviour may read "
         "the variable that mints bare hex; these others do: %s" % (offenders,))
 
 

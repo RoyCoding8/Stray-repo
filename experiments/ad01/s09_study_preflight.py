@@ -781,12 +781,12 @@ def observe_database(database: StudyDatabase, freeze: StudyFreeze, *,
     named the same way whichever lane reads it.
     """
     owned = client is None
-    if owned:
-        from psycopg.rows import dict_row
-        from settlement import db
-        client = db.connect(database.dsn, row_factory=dict_row,
-                            connect_timeout=5)
     try:
+        if owned:
+            from psycopg.rows import dict_row
+            from settlement import db
+            client = db.connect(database.dsn, row_factory=dict_row,
+                                connect_timeout=5)
         if "operations" not in _table_names(client):
             return DatabaseObservation(
                 database, refused="%s has no operations table" % database.name)

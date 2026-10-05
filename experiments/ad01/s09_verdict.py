@@ -442,7 +442,7 @@ def run_representation_suite(root: os.PathLike | str,
         [str(root), str(root / "src"),
          env["PYTHONPATH"] if env.get("PYTHONPATH") else ""])
     # The child reads the repository's own tests, so it needs no database of
-    # its own, and it must not claim one. `S09ISO_TOKEN` is inherited above
+    # its own, and it must not claim one. The run token is inherited above
     # because `dict(os.environ)` copies everything, and the nested run then
     # contends with this process for the same per-token advisory lock: the
     # parent holds it for the whole suite, so the child waits forever. Measured

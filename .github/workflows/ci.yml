@@ -15,23 +15,26 @@ concurrency:
 
 jobs:
   suite:
-    name: suite (py${{ matrix.python }}${{ matrix.group }})
+    name: suite (db, shard ${{ matrix.group }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      # One axis, fully enumerated. A `python-version` axis plus `include`
-      # entries multiplies them, and GitHub substitutes a missing key to the
-      # empty string before the shell runs - which produced a literal
-      # `--splits 4 --group ` and silently ran the whole suite unsharded.
+      # Two sharded jobs carrying PostgreSQL, and nothing else. The previous
+      # matrix ran the whole suite seven times: three unsharded jobs on 3.12,
+      # 3.13 and 3.14 each ran every test, and four sharded jobs on 3.13 ran
+      # them again in quarters, so 3.13's suite executed twice over identical
+      # code paths and 3.12 and 3.14 repeated both. Wall clock bought no
+      # additional claim.
+      #
+      # One Python, pinned. `pyproject.toml` declares `requires-python >=3.12`,
+      # so 3.13 is inside the declared range and a version axis is not where
+      # a regression would first appear. Cross-OS coverage is below, where it
+      # is currently absent entirely -- every job here was ubuntu, which is
+      # what kept the suite tied to WSL.
       matrix:
         include:
-          - { python: "3.12", token: "b3120000", group: "" }
-          - { python: "3.13", token: "b3130000", group: "" }
-          - { python: "3.14", token: "b3140000", group: "" }
-          - { python: "3.13", token: "b31300a1", group: "1" }
-          - { python: "3.13", token: "b31300a2", group: "2" }
-          - { python: "3.13", token: "b31300a3", group: "3" }
-          - { python: "3.13", token: "b31300a4", group: "4" }
+          - { token: "b31300a1", group: "1" }
+          - { token: "b31300a2", group: "2" }
     timeout-minutes: 100
 
     services:
@@ -66,7 +69,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.13"
 
       - name: Install the client the service can be dumped by
         uses: ./.github/actions/postgres-client
@@ -94,14 +97,16 @@ jobs:
         # unsound - a py3.12 run reported 65 failed and kept 16 FAILED lines,
         # a 3.13 shard reported 23 failed and kept 2. Every count read off the
         # console is a floor, so the artifact below is what counts.
+        #
+        # Always sharded. The unsharded branch is gone because every job in
+        # this matrix is a shard: an `if [ -n "$group" ]` that cannot take
+        # its other branch is a second way to describe the same job, and the
+        # last time the matrix carried an empty group it ran the entire suite
+        # three more times.
         run: |
-          if [ -n "${{ matrix.group }}" ]; then
-            args="--splits 4 --group ${{ matrix.group }}"
-          else
-            args=""
-          fi
           rc=0
-          python -m pytest -q -p no:cacheprovider $args > suite.log 2>&1 || rc=$?
+          python -m pytest -q -p no:cacheprovider \
+            --splits 2 --group ${{ matrix.group }} > suite.log 2>&1 || rc=$?
           grep -E '^(FAILED|ERROR)' suite.log | sort -u > failures.txt || true
           echo "distinct failure lines: $(wc -l < failures.txt)"
           head -150 failures.txt
@@ -113,7 +118,76 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: suite-py${{ matrix.python }}-${{ matrix.group }}
+          name: suite-db-${{ matrix.group }}
+          path: |
+            suite.log
+            failures.txt
+          retention-days: 14
+
+  port:
+    name: suite (portable, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    # The suite has only ever run on ubuntu, and that is what kept it tied to a
+    # WSL host for the 21 files that touch POSIX-only APIs and for everything
+    # else that a Windows checkout would exercise differently. This job is the
+    # cross-OS claim, and it is cheap because it does not need a database.
+    #
+    # No SETTLEMENT_TEST_DSN is set, deliberately. `tests/conftest.py:20` calls
+    # `pytest.skip` when it is absent, so the database tests select themselves
+    # out and the ~300 that need no server run on all three platforms. No file
+    # list is maintained here: a second list is a second authority on which
+    # tests need a database, and the tree already answers the question itself.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    env:
+      PYTHONPATH: src
+      # No token and no DSN, and the isolation plugin disabled. With a token
+      # and no DISABLE, `pytest_configure` claims a per-token advisory lock
+      # and creates a disposable database before collecting anything -- on a
+      # runner with no PostgreSQL, which dies at configure on all three OSes.
+      # Disabled, the plugin returns before the claim, and every test that
+      # needs a database skips itself on the missing DSN instead.
+      S09ISO_DISABLE: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the same pinned-history reads as the suite job
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+
+      - name: Collect
+        run: |
+          python -m pytest --collect-only -q > collect.log 2>&1
+          tail -3 collect.log
+
+      - name: Suite
+        run: |
+          rc=0
+          python -m pytest -q -p no:cacheprovider > suite.log 2>&1 || rc=$?
+          grep -E '^(FAILED|ERROR)' suite.log | sort -u > failures.txt || true
+          echo "distinct failure lines: $(wc -l < failures.txt)"
+          head -100 failures.txt
+          echo "--- tail of suite.log ---"
+          tail -25 suite.log
+          exit $rc
+
+      - name: Upload suite log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-port-${{ matrix.os }}
           path: |
             suite.log
             failures.txt
