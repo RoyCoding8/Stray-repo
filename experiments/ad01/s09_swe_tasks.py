@@ -88,8 +88,8 @@ FAULT_LABEL_KEYS = frozenset({"mechanism", "patch", "reference_source",
 
 ASSESSOR_ENTRY_POINTS = frozenset({
     "enumerate_instances", "instance", "make_task", "support", "score",
-    "protected_verdict", "run_program", "trace_lines", "rendered",
-    "fault_label_keys", "TEMPLATES_BY_NAME", "PROGRAMS_BY_NAME", "PROGRAMS",
+    "protected_verdict", "run_program", "trace_lines",
+    "PROGRAMS_BY_NAME", "PROGRAMS",
 })
 
 
@@ -715,9 +715,9 @@ def score(record: dict, lines: list) -> dict:
     # It runs only for a candidate that already cleared the drawn cases,
     # which is rare enough that it does not price the verdict.
     answered = passed == len(public) and protected["outcome"] == "pass"
-    equivalent = (equivalence_verdict(record, lines)
-                  if answered else {"outcome": "fail"})
-    if equivalent["outcome"] == "pass":
+    equivalent = equivalence_verdict(record, lines)["outcome"] \
+        if answered else "fail"
+    if equivalent == "pass":
         outcome = "repaired"
     elif any(item["kind"] == "error" for item in public):
         outcome = "crashed"
@@ -725,7 +725,7 @@ def score(record: dict, lines: list) -> dict:
         outcome = "unrepaired"
     return {"public": public, "public_passed": passed,
             "public_total": len(public), "protected": protected,
-            "equivalent": equivalent, "outcome": outcome}
+            "outcome": outcome}
 
 
 def protected_verdict(program: Program, record: dict, lines: list) -> dict:
