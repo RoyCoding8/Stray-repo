@@ -1973,6 +1973,47 @@ def _record_live_mission(dsn: str, investigation_id: str,
     return investigation_id
 
 
+def _control_triple(store, active: dict, label: str) -> dict:
+    """Three operate choices over one store, differing only in evidence.
+
+    The effectful arm is the store's own recorded observations, as the
+    chain produced them. The refuted arm is the same list with the last
+    verdict and its measured rule rewritten to the refuting values, which
+    is the falsifier the design names: take the decision the evidence
+    selected, delete the evidence, and the decision must move. The
+    disconnected arm passes nothing, so it must land on `frontier[0]`
+    whatever ran before it.
+
+    The refuted arm rewrites rather than fabricates because the store may
+    hold no refuted observation on a run whose first probe had no prior
+    evidence to contradict, and a triple that invents the contradiction it
+    wants to observe is the tautology this replaced. What it does not do
+    is invent the decision: the choice is executed either way.
+
+    All three run against one store, one program digest, one frontier and
+    one authority, because `choose_next_work` replaces only
+    `view["experience"]` (`live_construct.py:1184`) and the frontier is
+    `admissible()` over the same opportunities.
+    """
+    from experiments.ad01 import live_construct as _live
+    from experiments.ad01 import improve_channel as _channel
+    recorded = store.observations
+    disconnected = _live.choose_next_work(store, active, [], arm=label)
+    if not recorded:
+        return {"preserved": disconnected, "refuted": disconnected,
+                "disconnected": disconnected, "refuted_rewritten": False,
+                "refuted_from": None}
+    refuted = [dict(o) for o in recorded]
+    refuted[-1] = {**refuted[-1], "verdict": _channel.NOT_PRESERVED}
+    return {"preserved": _live.choose_next_work(
+                store, active, recorded, arm=label),
+            "refuted": _live.choose_next_work(
+                store, active, refuted, arm=label),
+            "disconnected": disconnected,
+            "refuted_rewritten": True,
+            "refuted_from": refuted[-1].get("observation_id")}
+
+
 def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
                                 dsn: str, guard=None, model: str = "",
                                 history: list | None = None,
@@ -2017,15 +2058,6 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
     else:
         active = store.active_package
     assert active.get("origin") == "authored-control"
-    dev_task = _rules.make_task("dev", 4)["task_id"]
-    preserved = [{"observation_id": "obs-seed",
-                  "task": dev_task, "verdict": "preserved"}]
-    mismatch = [{"observation_id": "obs-seed",
-                 "task": dev_task, "verdict": "mismatch"}]
-    choice_preserved = _live.choose_next_work(store, active, preserved,
-                                             arm=label)
-    choice_mismatch = _live.choose_next_work(store, active, mismatch,
-                                             arm=label)
     task = _rules.make_task("dev", 4)
     probe_action = {"kind": "probe",
                     "inputs": {"opportunity_id": "opp-rule-dev-4",
@@ -2035,6 +2067,7 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
         effect = _live.execute_chosen_work(store, probe_action, task)
     except Exception as exc:
         effect = {"status": "refused", "reason": str(exc)}
+    choices = _control_triple(store, active, label)
     first = _live.run_live_improve_round(store, task, active, 1,
                                         authority=authority)
     candidate = first["candidate"]
@@ -2126,11 +2159,14 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
             "store_path": str(store_path),
             "investigation_id": investigation_id,
             "active_digest": active["package_digest"],
-            "choice_preserved": choice_preserved["choice"],
-            "choice_mismatch": choice_mismatch["choice"],
+            "choice_effectful": choices["preserved"]["choice"],
+            "choice_refuted": choices["refuted"]["choice"],
+            "choice_disconnected": choices["disconnected"]["choice"],
+            "refuted_rewritten": choices["refuted_rewritten"],
+            "refuted_from": choices["refuted_from"],
             "observation_dependent": (
-                choice_preserved["choice"] != choice_mismatch["choice"]),
-            "executed_digest": choice_preserved["executed_digest"],
+                choices["preserved"]["choice"] != choices["refuted"]["choice"]),
+            "executed_digest": choices["preserved"]["executed_digest"],
             "effect": effect,
             "first_candidate": candidate["control_id"],
             "first_parent": candidate["parent_digest"],
@@ -2312,8 +2348,8 @@ def run_e0(dsn: str, out) -> dict:
               "frontier": {
                   "observation_dependent": bool(
                       live.get("observation_dependent")),
-                  "control_choice": control.get("choice_mismatch"),
-                  "live_choice": live.get("choice_mismatch"),
+                  "control_choice": control.get("choice_refuted"),
+                  "live_choice": live.get("choice_refuted"),
                   "second_round": live.get("second_candidate")}}
     (out / "e0-run.json").write_text(
         json.dumps(result, sort_keys=True, indent=1, default=str) + "\n")
