@@ -172,10 +172,9 @@ class ScriptedModelBoundaryDouble:
 def _lifecycle(dsn, investigation, source, entry,
                parent_digest="seed-sw-greedy"):
     from experiments.ad01 import records, trajectory
-    # `trajectory._alloc_id(investigation)` is what production names, and the
-    # grant is the one `_campaign` already opened for this investigation.
-    # Re-authorizing is idempotent, so this reads the campaign's own
-    # allocation back rather than minting a second one.
+    # The allocation is the campaign's own, which `_campaign` already opened
+    # for this investigation. `authorize_campaign` is idempotent on it, so
+    # this reads that grant's allocation back rather than minting a second.
     allocation = trajectory.authorize_campaign(
         dsn, investigation, authorized=100000)["allocation_id"]
     proposal = records.open_revision_proposal(

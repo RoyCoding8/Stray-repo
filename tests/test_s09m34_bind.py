@@ -104,15 +104,15 @@ def _authorize(dsn, cid):
 
 def _lifecycle(dsn, tag):
     from experiments.ad01 import records
-    cid = "ad01-w0-I-%s" % tag
+    investigation = "m34-inv-%s" % tag
     proposal = records.open_revision_proposal(
-        dsn, investigation_id=cid,
+        dsn, investigation_id=investigation,
         parent_digest="seed-sw-greedy",
         failure_record={"task_id": USE_TASK,
                         "parent_digest": "seed-sw-greedy",
                         "verdict": "not_preserved"},
         scope={"family": "software"},
-        allocation_id=_authorize(dsn, cid))
+        allocation_id=_authorize(dsn, investigation))
     freeze = records.freeze_candidate(
         dsn, proposal_id=proposal["proposal_id"],
         source_bytes=GOOD_SOURCE, entry=GOOD_ENTRY)
