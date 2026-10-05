@@ -74,14 +74,26 @@ against **disconnected**, the same arm given no evidence, which is M2's actual
 clause. Re-measured through the production path on the real E0 freeze (dev
 seed 4, one probe at x=3, bound control package):
 
-| Field | Value |
-|---|---|
-| earned verdict | `unknown` — no prior to disagree with |
-| `choice_preserved` | `opp-first` |
-| `choice_disconnected` | `opp-first` |
-| `choice_refuted` | `opp-followup` |
-| **`observation_dependent`** | **`False`** (was `True`) |
-| **`falsifier_moves_decision`** | **`True`** |
+| Field | Value | Where the value comes from |
+|---|---|---|
+| earned verdict | `unknown` — no prior to disagree with | re-measurement |
+| `choice_preserved` | `opp-first` | re-measurement |
+| `choice_disconnected` | `opp-first` | re-measurement |
+| `choice_refuted` | `opp-followup` | re-measurement |
+| **`observation_dependent`** | **`False`** (was `True`) | re-measurement |
+| **`falsifier_moves_decision`** | **`True`** | re-measurement |
+
+**This table was previously headed as though every row were a recorded value. It
+is not, and reading it that way is what produced a false conclusion.** The
+committed artifact `invl02-r123/e0-run.json` records `choice_preserved =
+opp-first` beside `choice_mismatch = opp-followup`, with
+`observation_dependent = True`. `choice_mismatch` was the *falsifier* arm under
+its old name, so the recorded run compared preserved against a rewritten
+verdict — which is the very defect above. The `False` in this table is what the
+**fixed** comparison produces when run today on this freeze, whose single probe
+earns `unknown` and whose preserved and disconnected arms therefore choose
+alike. Two different comparisons, two different values, and the ledger presented
+one as the record of the other.
 
 The falsifier's question is real and separately interesting, so it survives
 under its own name rather than being deleted. What the freeze can show is that
@@ -94,6 +106,50 @@ A fresh freeze is required regardless, since `invl02_live.py` is in
 `LIVE_CODE_PATHS`. No cap-sheet change: `RESOURCE_KEYS` is `("queries",
 "steps")`, so a probe draws on the store's own authority and never on the
 study's `sandbox_calls`; 19/30 is untouched.
+
+### M2's deliverable is decided: amend the protocol, and the amendment is worth one probe
+
+`reports/workstreams/m2-deliverable-decision.md` argues it and I accept it. The
+choice was between changing the protocol so M2's clause becomes demonstrable, and
+restating M2 on the mechanism that actually moves. **The protocol changes.**
+
+Measured on 600 two-probe runs over 40 dev seeds, on real production source: the
+arm moves in **574** and stands still in **26**, and the split is the split in the
+verdict the measurement earned — every `not_preserved` moves it, every `observed`
+does not. A protocol that moved on two observations of any kind would move in all
+600, so "the arm responds to evidence" is too weak to be what was measured. The
+no-op control keeps the refuting observation and rewrites only its verdict; it
+lands where the disconnected arm lands and disagrees with the effectful arm, in
+all 600. That is what makes it causal influence rather than responsiveness.
+
+This is **not** a claim about the freeze as shipped. Its single probe earns
+`unknown` by construction. The claim is available under an amendment costing one
+extra probe.
+
+**The strongest argument the other way, which is a research judgement and not
+mine to settle:** if a milestone whose clause needs a protocol amendment to be
+demonstrable was *mis-specified* rather than *under-sampled*, then restating on
+the mechanism is the honest instrument and the amendment papers over the error.
+
+### The version space does collapse, and the ledger said it never did
+
+Earlier in this batch a lane propagated "never collapses within the query budget"
+as measured. **That is false.** Under `rule_learner`'s own `choose_query`, **15 of
+40 seeds reach size 1 at exactly 8 queries** and the other 25 at nine; under the
+docstring's own tie-break, all 40 collapse at exactly 8. The figures this ledger
+carried ("3 of 40 at nine, 40 of 40 at thirteen") reproduce exactly under a
+**fixed input order `x=0..15`** — a third selection rule the study never runs.
+
+The sensitivity is large and the seed was never frozen: at seeds 2, 4 or 5 all 40
+collapse at eight; at seeds 0, 1, 3, 6 or 7, between 10 and 15 do. So "the
+version space collapses" is a true claim with a policy-dependent rate, and the
+policy was never part of the design. **Freezing the learner's query-selection rule
+is now a prerequisite for M4**, which inherits a decision from this space.
+
+Separately: the widely-repeated "28 of 40" collapse figure **appears nowhere** in
+any `.md`, `.json`, `.py` or `.txt` file on the tree, and `git log --all -S` finds
+nothing. It was never committed. Nothing needs withdrawing, but nothing should
+cite it either.
 
 **Extending the freeze was measured and rejected.** Sweeping every second probe
 input against the real dev rule: 14 of 15 earn `not_preserved` (all but x=0 and
