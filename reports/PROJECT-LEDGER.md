@@ -42,6 +42,31 @@ alias.
 11 at both trees**, same five files. `LiveRefused` on store-authority binding went
 0 → 8, and 5 strict `xfail`s are now XPASS because the SWE unit-guard fix landed.
 
+**The 11 was wrong, and it was wrong in a file I already had.** Counting the
+refusal string in the downloaded `failures.txt` of run `37277929945` gives **7
+distinct IDs across 2 files**, not 11 across 5: five in
+`tests/test_evidence_integrity.py` and two in
+`tests/test_r123_gates.py::test_r1_driver_routes_through_frontier` and
+`::test_r1_live_improver_via_doubles`. Verified identically at `91b36f8` and at
+`e3be0703` — never 11. The figure had been carried from an earlier pass and never
+re-counted against the log sitting in the repository.
+
+The two `r123` IDs carry the same refusal and are **not** fixed by the E3 fixture
+repair (`baa14031`). They enter through `driver._run_frontier_investigation`,
+which opens an owned store via `ensure_live_store(dsn=, investigation_id=)` and
+reaches the round with `_study_authority(dsn, allocation_id)`, which returns `None`
+unless the caller supplies an `allocation_id`. Both call sites omit it. The repair
+is to authorize a study allocation first, as `run_e0` does at
+`invl02_live.py:2344`, and thread `allocation_id=` into the call.
+
+**The census tool that measured this ships with the limit that explains the error.**
+`tools/census_improve_round_authority.py` resolves ownership within one file, so it
+reports 0 for a caller that builds its store in another module — and the live path
+in `scripts/invl02_live.py` is exactly that shape. For a cross-module census, read
+the CI log for the refusal string rather than trusting that count of 0. The wrong
+figure came from taking a single-file structural count as a tree-wide one.
+
+
 **The pinned git refs all resolve.** The baseline's "refs that no longer
 resolve" was a shallow clone: `actions/checkout@v4` with no `fetch-depth` gives
 depth 1, and the three SHAs sit 180–201 commits back. Reproduced against a real
@@ -118,8 +143,10 @@ from any log**, because CPython discards the child exception. A lane chasing thi
 should start from the kernel-availability check, not from a syscall.
 
 
-**G, execution-authority refusal, is still 11 and did not shrink.** That is the
-clearest negative result in the run and stays a negative.
+**G, execution-authority refusal, is 7 and did not shrink.** That is the
+clearest negative result in the run and stays a negative. Five of the seven are
+repaired in `baa14031` and two are not; the figure was 11 in earlier passes and
+was wrong, as counted above.
 
 ## What the corpus can and cannot show, 2026-10-04 night
 
