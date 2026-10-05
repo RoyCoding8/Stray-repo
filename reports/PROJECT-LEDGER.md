@@ -11,17 +11,32 @@ jobs and so did not measure the same universe.
 
 **The largest cause was mislabelled twice, by two different documents.** There is
 no `experiments/ad01/store.py`. `class _Store` is defined in exactly one file in
-the tree, `tests/test_posix_paths_checkpoint_restore.py:110`, whose fixture
-assigns a one-method stub at `sys.modules["settlement"].store` and never restores
-it. All nine attributes named in the resulting failures still exist on the real
-module as module-level functions taking a `dsn` — `is_ceiling_name` at
-`store.py:129`, `seed_grant` at `:693`, `seed_allocation` at `:804`,
+the tree, `tests/test_posix_paths_checkpoint_restore.py:110`, and the fix
+(`f53bec7d`) deletes it. All nine attributes named in the resulting failures still
+exist on the real module as module-level functions taking a `dsn` — `is_ceiling_name`
+at `store.py:129`, `seed_grant` at `:693`, `seed_allocation` at `:804`,
 `subdivide_allocation` at `:831`, `operation_receipts` at `:2133`. So **82
 failures are one leaked test stub reached two ways** (66 direct calls, 16
 `monkeypatch.setattr`, differing only in message form), and the fix is test-side.
 A lane acting on the baseline's "production `_Store` API drift" would have
 edited production and fixed **zero** of them. `ci-run-37251210268.md:231` made
 the same error with the right count.
+
+**The census mis-described the mechanism, and the repair corrected it.** The census
+says the fixture assigned into `sys.modules`. It did not: it ran
+`_types["settlement"].store = _Store`, which rebinds the attribute on the
+**`settlement` package**, not on `sys.modules`. That is why the leak outlived the
+test, and it is a different bug with a different fix. The repair swaps only
+`restore_fence` on the real module via `monkeypatch`, which owns its own undo, so
+the manual `finally` block is gone. Proof in one process: before, 1 of 9 store
+attributes survives and a victim lookup raises `AttributeError`; after, 9 of 9.
+
+The design lesson is the one the eight lazy `import settlement.store` sites
+teach: the fixture and the module shared the name `store`, and `monkeypatch.setattr`
+fixes an attribute while module assignment fixes a binding. Nothing in production
+needed to change, and **no compatibility alias was added** — there was nothing to
+alias.
+
 
 **Execution-authority refusal did not shrink where the brief expected it to:
 11 at both trees**, same five files. `LiveRefused` on store-authority binding went
