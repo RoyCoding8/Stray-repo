@@ -55,9 +55,40 @@ The two `r123` IDs carry the same refusal and are **not** fixed by the E3 fixtur
 repair (`baa14031`). They enter through `driver._run_frontier_investigation`,
 which opens an owned store via `ensure_live_store(dsn=, investigation_id=)` and
 reaches the round with `_study_authority(dsn, allocation_id)`, which returns `None`
-unless the caller supplies an `allocation_id`. Both call sites omit it. The repair
-is to authorize a study allocation first, as `run_e0` does at
-`invl02_live.py:2344`, and thread `allocation_id=` into the call.
+unless the caller supplies an `allocation_id`. Both call sites omit it.
+
+**The repair was at the signature, not the call site, and the earlier read of this
+was wrong.** An AST census found **9 call sites** of `_run_frontier_investigation`:
+4 in `run_e0`/`run_e12` and 2 in `test_invl02_causality.py` all pass
+`allocation_id`. Only the 3 in `test_r123_gates.py` omit it. So `baa14031` and
+`0d66125f` did not each patch one shared defective site — **they patched different
+files correctly.** There was one defective **signature**, reached by three call
+sites in one file.
+
+What made the default a defect: `dsn` is required, and `_live_identity` builds a
+`StoreIdentity` whenever `dsn` is not `None` (`live_construct.py:1062-1077`), so
+**the store is always owned and `allocation_id=None` had no input for which it
+could succeed.** The default described a mode that cannot exist. `allocation_id` is
+now a required parameter, so omission is a `TypeError` at the call — the same hole
+`_run_source` was closed against, one hop further out. Verified by execution: with
+an authority the run gets *past* the refusal and fails later on the socket, which
+shows the refusal was cleared rather than reworded.
+
+**The seam this exposed, left open.** `run_operate_step` (`improve_channel.py:1907`)
+takes `authority=None`, and `live_construct.choose_next_work`
+(`live_construct.py:1193-1211`) reaches it without one, so **those executions settle
+on a disposable database** — and the receipts for the arms
+`observation_dependent` compares do not sit under the study allocation.
+
+This is **not** the same defect, and the difference is the point. The case above
+had a default describing an impossible mode; here the default is **documented** —
+`run_operate_step`'s docstring says production does not supply it yet, that the id
+reads `noarm` rather than impersonating a name, and that the arm is already held by
+`_run_frontier_investigation` as `label`. A known seam with a named fix is not a
+default that lies. It stays open because closing it changes which database a
+research verdict is measured against, which is a decision with evidence attached.
+M2's comparison is what depends on it.
+
 
 **The census tool that measured this ships with the limit that explains the error.**
 `tools/census_improve_round_authority.py` resolves ownership within one file, so it
