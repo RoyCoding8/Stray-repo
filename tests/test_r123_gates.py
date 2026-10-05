@@ -124,6 +124,40 @@ def test_r1_observation_dependent_choice(tmp_path):
     assert second["choice"] == "opp-followup"
     assert first["choice"] != second["choice"]
     assert first["executed_digest"] == package["op_digest"]
+    # `second` is the preserved arm `_control_triple` compares, and this is
+    # the comparison `invl02_live` reduces to `observation_dependent`:
+    # preserved against the same arm given no evidence. It reads True here,
+    # because the refutation was earned rather than written into the store's
+    # last verdict. That is what makes the E0 freeze's False informative --
+    # a field hardwired to False would read False there too and only this
+    # fixture can tell the two apart.
+    disconnected = live.choose_next_work(store, package, [])
+    assert disconnected["choice"] == "opp-first"
+    assert second["choice"] != disconnected["choice"]
+    # Through production's own arm builder, so this pins the field and not a
+    # restatement of it. The rewrite is a no-op on an already-refuted store,
+    # so the falsifier cannot move the decision here and must read False --
+    # the two fields are separate answers, not one value under two names.
+    arms = driver._control_triple(store, package, "earned")
+    assert arms["preserved"]["choice"] == "opp-followup"
+    assert arms["disconnected"]["choice"] == "opp-first"
+    assert arms["refuted_rewritten"] is True
+    # The field itself, computed the way `invl02_live._run_frontier_investigation`
+    # computes it from the arms `_control_triple` returns. Spelled out rather
+    # than taken from a helper so this pins the comparison, and not a restatement
+    # of whatever a helper happens to do. Without the True here, a field
+    # hardwired to False would satisfy the E0 freeze just as well.
+    assert (arms["preserved"]["choice"]
+            != arms["disconnected"]["choice"]) is True
+    # The rewrite cannot move a decision here: the recorded last verdict is
+    # already `not_preserved`, so the refuted arm is handed the same evidence
+    # as the preserved one and lands on the same opportunity. On the E0 freeze
+    # this same comparison reads True, because there the rewrite is the only
+    # thing that moved it. The two are separate answers, and reading either
+    # as the other is the defect this pins shut.
+    assert (arms["preserved"]["choice"]
+            != arms["refuted"]["choice"]) is False
+    assert arms["preserved"]["choice"] == arms["refuted"]["choice"]
 
 
 def test_r1_second_round_after_restart(tmp_path):
@@ -219,16 +253,23 @@ def test_r1_driver_routes_through_frontier(tmp_path, dsn):
     record = driver._run_frontier_investigation(
         tmp_path / "frontier.json", freeze, "gate",
         dsn=dsn, guard=None, model="test-model")
-    assert record["observation_dependent"] is True
+    # M2's clause is whether the observation changed the arm's action, so the
+    # field compares the arm that ran against that same arm given no evidence.
     # The E0 freeze probes `opp-rule-dev-4` at x=3 exactly once, and a first
     # measurement on a rule has no prior evidence to disagree with, so it
-    # earns `unknown`. The refuted arm is therefore rewritten from the
-    # recorded observations (`invl02_live._control_triple`), not earned by
-    # one: `observation_dependent` here is the falsifier moving the decision,
-    # not a real refutation having moved it. The capability is real and this
-    # freeze does not exercise it. `refuted_rewritten` is in the record so
-    # that is legible instead of inferred, and pinning it here is what stops
-    # the two meanings being read as one.
+    # earns `unknown` and nothing earned ever moved the choice. Preserved and
+    # disconnected therefore both land on `opp-first` and the field reads
+    # False. That False is this freeze's answer rather than a field stuck
+    # False: `test_r1_observation_dependent_choice` builds the earned case on
+    # the same comparison and reads True, so a fixture that stops short of the
+    # refutation is what turns it.
+    assert record["observation_dependent"] is False
+    # The falsifier is the separate question, kept under its own name. It
+    # moves the decision here, but only because `_control_triple` wrote the
+    # disagreement: the arm ran against a verdict no measurement produced.
+    assert record["falsifier_moves_decision"] is True
+    assert record["choice_effectful"] == record["choice_disconnected"]
+    assert record["choice_effectful"] == "opp-first"
     assert record["refuted_rewritten"] is True
     # The rewrite is anchored to an observation the run really made, so this
     # is a relation over the record rather than a restated id. What it
