@@ -55,6 +55,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Three tests read a pinned path out of the history with
+          # `git cat-file blob <sha>:<path>`. The SHAs sit 180 to 201 commits
+          # behind the tip, so the depth-1 default clone does not carry them
+          # and `cat-file` exits 128 on a name it has never heard of. Run
+          # 37261826154 failed 7 on exactly this. The commit itself is enough;
+          # the history is what the tests ask for.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -135,6 +143,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # same pinned-history reads as the matrix job above
 
       - uses: actions/setup-python@v5
         with:
