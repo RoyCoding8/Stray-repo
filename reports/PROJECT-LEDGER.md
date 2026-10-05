@@ -406,6 +406,52 @@ the study's `sandbox_calls`: `E0_SANDBOX_CALLS = 19`, `E12_SANDBOX_CALLS = 30` a
 `E0_CALL_CEILING = 12` are unchanged. The store's headroom moves `3/16` queries and
 `7/12` steps to `4/16` and `8/12` — one probe, one query, one step, nothing refuses.
 
+### M4's mechanism is demonstrated; its benefit comparison is a measured negative
+
+`reports/workstreams/m4-comparison.md`, harness `tools/m4_mechanism_harness.py`,
+artifact `reports/evidence/invl02-m4-mechanism/mechanism.json`. **The answer is
+split, and the split is the result.**
+
+**The mechanism is measured, offline, without a model call.** The effectful
+control genuinely changes the next descendant-producing episode after restart, and
+it is proven by **a second interpreter rather than asserted**: the store is written,
+the process exits, a fresh `python -c` reopens it and reads `x=12` where the
+parent's store reads `x=3`. Six frozen-field writes into real revision bytes are
+each refused by name, and the clean source is admitted, so a refuse-everything
+guard fails the suite rather than passing it.
+
+**The benefit comparison is a real negative, and the panel was not built.** Across
+all sixteen reachable inputs on 150 audit seeds, ten beat the incumbent, the best
+is **+0.006667 at z = +1.49, and nothing reaches 1.96**. The reachable spread sits
+inside the cohort's own resampling spread of `0.009778`, and the argmax disagrees
+with itself across quarters (`9, 12, 4, 4`). The panel rule returns
+`built: false` with `arms: []` and the reason recorded.
+
+**That rule is a rule, not a hardcoded no.** A test hands `panels()` rows that
+clear the bar and requires arms back; a stub that always refuses fails it. So the
+empty panel is the rule's answer, which is the difference between a measured zero
+and an absent measurement.
+
+**A live acquisition would buy a panel whose every arm is inside the noise
+floor**, reporting `eligible: 1` beside a zero that was available in advance.
+Acquiring closes the acquisition question E4 left open. **It will not produce a
+benefit number**, and the standing authorization for a free route does not change
+what the arithmetic supports.
+
+**The boundary is drawn at provenance, not effort.** `WORKER-PROMPT.md:128-129`
+requires an **inherited** change, not a **learned** one, so an authored revision is
+sufficient for the mechanism and that is what was delivered. An authored revision
+can never enter an acquired arm, having no dispatch and no provenance.
+
+**Not closed:** gate 6 is the one eligibility gate this could not execute, because
+`_execution_ledger` opens a disposable PostgreSQL for every execution of policy
+source. Five of six run with no database. **If gate 6 refuses, the effectful arm
+is not eligible** and the mechanism measurement describes bytes the rule would
+reject. That needs CI's `postgres:18`, along with `drive_improve_round` under real
+authority.
+
+
+
 ### M2's clause is earned on the amended freeze, and the caps did not move
 
 Not verified: the end-to-end path through `run_step_out_of_process`, which needs a
