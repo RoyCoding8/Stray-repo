@@ -92,18 +92,19 @@ def _digest(source):
 
 
 def _lifecycle(dsn, tag, source, entry):
-    from experiments.ad01 import records, trajectory
+    from experiments.ad01 import records
     investigation = "c2b-inv-%s" % tag
     failure = {"task_id": USE_TASK, "parent_digest": "seed-sw-greedy",
                "verdict": "not_preserved"}
-    # Production names the allocation from the same campaign id it opens the
-    # proposal for (`trajectory.py:833-835`). Deriving the two from different
-    # strings would mint a second authority for one leg.
+    # Production opens the proposal for the campaign that runs the assessment
+    # and names that campaign's own allocation (`trajectory.py:833-835`). The
+    # proposal is executed under the allocation, so naming one that no grant
+    # ever created is a refusal, not a weaker assertion.
     proposal = records.open_revision_proposal(
         dsn, investigation_id=investigation,
         parent_digest="seed-sw-greedy", failure_record=failure,
         scope={"family": "software"},
-        allocation_id=trajectory._alloc_id(investigation))
+        allocation_id=_authorize(dsn, investigation))
     freeze = records.freeze_candidate(
         dsn, proposal_id=proposal["proposal_id"],
         source_bytes=source, entry=entry)
@@ -199,7 +200,7 @@ def test_refuses_absent_assessment(store):
 
 
 def test_refuses_empty_assessment_panel(store):
-    from experiments.ad01 import records, trajectory
+    from experiments.ad01 import records
     cid = "c2b-inv-empty-panel"
     proposal = records.open_revision_proposal(
         store, investigation_id=cid,
@@ -208,7 +209,7 @@ def test_refuses_empty_assessment_panel(store):
                         "parent_digest": "seed-sw-greedy",
                         "verdict": "not_preserved"},
         scope={"family": "software"},
-        allocation_id=trajectory._alloc_id(cid))
+        allocation_id=_authorize(store, cid))
     records.freeze_candidate(store, proposal_id=proposal["proposal_id"],
                              source_bytes=GOOD_SOURCE, entry=GOOD_ENTRY)
     with pytest.raises(ValueError, match="non-empty task panel"):

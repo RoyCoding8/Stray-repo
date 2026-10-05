@@ -92,7 +92,7 @@ def _member(capability_id, source, entry):
 
 
 def _lifecycle(dsn, tag, source, entry):
-    from experiments.ad01 import records, trajectory
+    from experiments.ad01 import records
     cid = "m6f-inv-%s" % tag
     proposal = records.open_revision_proposal(
         dsn, investigation_id=cid,
@@ -101,7 +101,7 @@ def _lifecycle(dsn, tag, source, entry):
                         "parent_digest": "seed-sw-greedy",
                         "verdict": "not_preserved"},
         scope={"family": "software"},
-        allocation_id=trajectory._alloc_id(cid))
+        allocation_id=_authorize(dsn, cid))
     freeze = records.freeze_candidate(
         dsn, proposal_id=proposal["proposal_id"],
         source_bytes=source, entry=entry)

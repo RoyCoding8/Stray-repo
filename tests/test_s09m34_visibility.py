@@ -92,6 +92,20 @@ def _task():
     return worlds.load_task(worlds.FROZEN_DIR, "ad01-w0-dev-sw-00")
 
 
+def _authorize(dsn, cid):
+    """The grant whose allocation the proposal is executed under.
+
+    Production opens the proposal for the campaign that runs the assessment
+    and names that campaign's own allocation (`trajectory.py:833-835`). The
+    name alone is not enough: the executor looks the allocation up and
+    refuses an unknown one, so a proposal naming a grant nobody opened fails
+    with "refused: unknown allocation" instead of exercising the panel.
+    """
+    from experiments.ad01 import trajectory
+    return trajectory.authorize_campaign(
+        dsn, cid, authorized=100000)["allocation_id"]
+
+
 def test_hidden_answer_perturbation_leaves_request_unchanged():
     from experiments.ad01 import packet
     base = _task()
@@ -145,7 +159,7 @@ def test_protected_reference_refused_in_visible_context():
 
 
 def test_stale_bind_cannot_replace_newer(store):
-    from experiments.ad01 import records, selection, trajectory
+    from experiments.ad01 import records, selection
     from settlement.common import Command
     scope = {"family": "software"}
     cid = "m34v-inv-stale"
@@ -156,7 +170,7 @@ def test_stale_bind_cannot_replace_newer(store):
                         "parent_digest": "seed-sw-greedy",
                         "verdict": "not_preserved"},
         scope=dict(scope),
-        allocation_id=trajectory._alloc_id(cid))
+        allocation_id=_authorize(store, cid))
     freeze = records.freeze_candidate(
         store, proposal_id=proposal["proposal_id"],
         source_bytes=GOOD_SOURCE, entry=GOOD_ENTRY)

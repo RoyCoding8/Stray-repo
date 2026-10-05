@@ -88,12 +88,22 @@ def _env():
     return env
 
 
+def _authorize(dsn, cid):
+    """The grant whose allocation the proposal is executed under.
+
+    Production opens the proposal for the campaign that runs the assessment
+    and names that campaign's own allocation (`trajectory.py:833-835`). The
+    name alone is not enough: the executor looks the allocation up and
+    refuses an unknown one, so a proposal naming a grant nobody opened fails
+    with "refused: unknown allocation" instead of exercising the panel.
+    """
+    from experiments.ad01 import trajectory
+    return trajectory.authorize_campaign(
+        dsn, cid, authorized=100000)["allocation_id"]
+
+
 def _lifecycle(dsn, tag):
-    from experiments.ad01 import records, trajectory
-    # Production opens a proposal for the campaign that runs the assessment and
-    # names the allocation from that same campaign id (`trajectory.py:833-835`).
-    # Deriving the two from different strings would mint a second authority for
-    # one leg, which is the split this seam exists to prevent.
+    from experiments.ad01 import records
     cid = "ad01-w0-I-%s" % tag
     proposal = records.open_revision_proposal(
         dsn, investigation_id=cid,
@@ -102,7 +112,7 @@ def _lifecycle(dsn, tag):
                         "parent_digest": "seed-sw-greedy",
                         "verdict": "not_preserved"},
         scope={"family": "software"},
-        allocation_id=trajectory._alloc_id(cid))
+        allocation_id=_authorize(dsn, cid))
     freeze = records.freeze_candidate(
         dsn, proposal_id=proposal["proposal_id"],
         source_bytes=GOOD_SOURCE, entry=GOOD_ENTRY)
