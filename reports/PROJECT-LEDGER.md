@@ -72,6 +72,15 @@ those 60 rootable next run** — it cannot produce a body for an XPASS, so 60 is
 honest figure, not 65. That single CI-config change is worth more than any
 individual cause in the table.
 
+**Confirmed against the tree that still had the defect.** Run `37277929945`
+uploaded `heavy-failures.txt` alone: 17,423 bytes, **72 distinct failure IDs**, and
+**no usable traceback body** — the only two matches for a pytest frame pattern are
+incidental text. Archiving `heavy.log` alone would not have fixed it either: the
+loop overwrites that path per file, so the artifact would retain the last file and
+lose the rest. Fixed in `8f10cd6e` by appending each failing file's body to its own
+file as the loop goes. **72 is the whole heavy side of the 247, so this one change
+covers every one of them.**
+
 **An earlier version of this entry blamed job cancellation for the 60. That was
 wrong and would have wasted a repair lane.** The four cancelled jobs are *suite*
 shards and hold none of the 65; every ID assigned to them already has a body from
