@@ -71,6 +71,14 @@ jobs:
         with:
           python-version: "3.13"
 
+      # uv replaces the pip resolver in every job. `uv pip install` targets
+      # the setup-python interpreter's environment, and there is no uv
+      # lockfile: `uv sync` would want one and would pin `requires-python`
+      # to whatever it resolved, so the resolver stays unpinned on purpose.
+      # Install is the longest setup step on windows/macos runners; its
+      # before/after is the measurement this swap answers for.
+      - uses: astral-sh/setup-uv@v10.2.0
+
       - name: Install the client the service can be dumped by
         uses: ./.github/actions/postgres-client
         with:
@@ -78,9 +86,8 @@ jobs:
 
       - name: Install
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[test]"
-          pip install pytest-split
+          uv pip install -e ".[test]"
+          uv pip install pytest-split
 
       - name: Collect
         run: |
@@ -176,10 +183,11 @@ jobs:
         with:
           python-version: "3.13"
 
+      - uses: astral-sh/setup-uv@v10.2.0
+
       - name: Install
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[test]"
+          uv pip install -e ".[test]"
 
       - name: Collect
         run: |
@@ -252,11 +260,12 @@ jobs:
         with:
           major: "18"
 
+      - uses: astral-sh/setup-uv@v10.2.0
+
       - name: Install
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[test]"
-          pip install pytest-split
+          uv pip install -e ".[test]"
+          uv pip install pytest-split
 
       - name: Heavy archived, one file at a time
         # `exit` belongs after the loop, not inside it: inside, the first
