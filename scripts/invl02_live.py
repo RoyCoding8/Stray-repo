@@ -2155,6 +2155,18 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
     for which in ("low", "high"):
         assert _channel.make_control(
             which)["package_digest"] not in acquired_digests
+    # M2's clause is whether the observation changed the arm's action, so
+    # this compares the arm that ran against the store's own recorded
+    # evidence with the same arm given none. The falsifier arm is a
+    # different question -- whether a rewritten verdict can move the
+    # decision -- and it is reported beside this under its own name, never
+    # folded in here: `_control_triple` rewrites the last verdict, so on a
+    # freeze whose single probe earned `unknown` the two arms differ only
+    # because the falsifier wrote the disagreement itself. Measured on the
+    # E0 freeze at `7a00676`: preserved and disconnected both choose
+    # `opp-first`, so this reads False there, while `choice_refuted` reads
+    # `opp-followup`. Reading the falsifier as causal influence is what
+    # this line previously did.
     return {"label": label,
             "store_path": str(store_path),
             "investigation_id": investigation_id,
@@ -2165,6 +2177,9 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
             "refuted_rewritten": choices["refuted_rewritten"],
             "refuted_from": choices["refuted_from"],
             "observation_dependent": (
+                choices["preserved"]["choice"]
+                != choices["disconnected"]["choice"]),
+            "falsifier_moves_decision": (
                 choices["preserved"]["choice"] != choices["refuted"]["choice"]),
             "executed_digest": choices["preserved"]["executed_digest"],
             "effect": effect,
@@ -2222,6 +2237,8 @@ def _e0_unavailable(out: Path, freeze: dict, reason: str) -> dict:
         "durable_receipts": [],
         "revision": "absent",
         "frontier": {"observation_dependent": False,
+                      "falsifier_moves_decision": False,
+                      "refuted_rewritten": False,
                       "control_choice": None, "live_choice": None,
                       "second_round": None},
     }
@@ -2348,6 +2365,9 @@ def run_e0(dsn: str, out) -> dict:
               "frontier": {
                   "observation_dependent": bool(
                       live.get("observation_dependent")),
+                  "falsifier_moves_decision": bool(
+                      live.get("falsifier_moves_decision")),
+                  "refuted_rewritten": bool(live.get("refuted_rewritten")),
                   "control_choice": control.get("choice_refuted"),
                   "live_choice": live.get("choice_refuted"),
                   "second_round": live.get("second_candidate")}}
