@@ -62,8 +62,12 @@ def study(tmp_path):
     order.
     """
     admin = _isolation.admin_dsn()
+    # A hyphen, not `unique()`'s underscore. The isolation token grammar is
+    # `\A[a-z0-9][a-z0-9-]{0,23}\Z`, so `opauth_666b95f5` is refused before any
+    # test runs — which is how CI found it, on the shard where the database was
+    # actually present, so it was never a host limitation.
     database = _isolation.create_disposable_db(
-        unique("opauth"), admin_dsn=admin)
+        unique("opauth").replace("_", "-"), admin_dsn=admin)
     try:
         handle = _settlement_authority.authorize_study(
             database.dsn, unique("opauth-root"), authorized=100_000,
