@@ -210,7 +210,6 @@ Recorded here rather than by editing either file.
 1. **`invl02-live-grant.md` declared E0 at `model_calls` and
    `construction_calls` with no child-execution ceiling.** At the time it was
    written that was not a live defect, because every round ran against a
-   written that was not a live defect, because every round ran against a
    disposable store whose own `sandbox_calls: 1000` applied
    (`improve_channel.py:1812-1813`) and was discarded with it. It is a defect
    now, because `0bc02d3` routes the round onto the durable allocation.
