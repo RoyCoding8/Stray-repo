@@ -1,6 +1,6 @@
 {
  "sha": "91b36f8755cafc8281e152a29b9c0117b38f0908",
- "note": "174 anchors CI reported for run 37251210268, at head commit 91b36f8. Each is [collection_index, node_id], paired from that shard's short-summary FAILED/ERROR list against the positions of F and E in its -q progress output.",
+ "note": "174 anchors CI reported for run 37251210268. Each is [collection_index, node_id], paired from that shard's short-summary FAILED/ERROR list against the positions of F and E in its -q progress output. tree_digest is over the tests/ tree at commit 91b36f8.",
  "anchors": [
   [
    0,
@@ -698,5 +698,7 @@
    3523,
    "tests/test_s09_run_use_policy.py::test_a_real_decision_consumer_is_refused_not_guessed_at"
   ]
- ]
+ ],
+ "tree_digest": "sha256:155c8282a73f02645f77cacefdc32a0691fc6d574e3911b36ddb9e75184b250a",
+ "sha_note": "Label for the tree above, for a reader's benefit. Verification compares tree_digest, which is derived from the files, never this string."
 }

@@ -208,17 +208,29 @@ A constant offset is the signature of a wrong input, not of a wrong method. It
 is also invisible to a count check, because the file is simply absent at the
 older commit. Two changes follow, and both are in the tool:
 
-- `--sha` is required to verify. Without it the tool refuses, because an unnamed
-  tree cannot be told apart from the right one.
 - `collection.json` is no longer written beside the script, so a run against one
   tree can no longer silently overwrite the artifact from another. It is written
   only when `--out` is passed.
+- Verification compares a **tree digest** against the digest recorded in
+  `anchors.json`, not a commit string against a commit string. The digest is
+  sha256 over every `*.py` under `tests/`, in sorted relative-path order, each
+  contributing its path, a NUL and its bytes. It is derived from the files, so a
+  caller cannot satisfy the check by asserting anything. `--sha` survives only
+  as optional documentation of which commit the caller believes the tree is; it
+  is recorded in the output as an unverified claim and never compared.
 
-One honest limit on that guard: `--sha` is a value the caller asserts. The tool
-cannot check that the tree it was handed really is that commit, so a run that
-passes a false `--sha` still verifies against the wrong tree. What the guard
-prevents is the failure that actually happened, which was an unnamed run reading
-another tree's anchors.
+Measured behaviour of the guard, on the two trees in question:
+
+| tree | `--sha` | result |
+|---|---|---|
+| CI commit `91b36f8` | omitted | `VERIFIED`, exit 0 |
+| CI commit `91b36f8` | the matching commit | `VERIFIED`, exit 0 |
+| worktree HEAD | the anchors' commit | `REFUSING TO VERIFY`, exit 1 |
+| worktree HEAD | omitted | `REFUSING TO VERIFY`, exit 1 |
+
+The third row is the case that matters. Passing the anchors' commit while
+holding a different tree satisfies every string comparison there is, and is
+caught only by the digest.
 
 ### The bound on the name
 
@@ -241,10 +253,11 @@ unverified indices": it is 306 indices whose per-file counts come from the model
 rather than from a CI-reported index, with no known site in that window that the
 model gets wrong.
 
-**This is the bound, stated as a bound.** If a future change to any of those 16
-files alters its collected count, or if the CI SHA tree is reconstructed from
-anything other than the commit itself, the name moves. I did not measure inside
-that window and no artifact names a test there.
+**This is the bound, stated as a bound.** It narrows the exposure; it does not
+measure it. The window has no anchor, and narrowing is not measuring. If a
+change to any of those 16 files alters its collected count, or if the tree is
+reconstructed from anything other than commit `91b36f8`, the name moves. I did
+not measure inside that window and no artifact names a test there.
 
 ## Where the prior analysis stood, and what changed
 
@@ -339,9 +352,12 @@ independently corroborated by the unsharded teardowns.
   site and no unresolvable site falls in it, which bounds the exposure but does
   not measure it. The name is model-derived below 3524 and exact above it. This
   is the single largest caveat on the identification.
-- **The tool cannot check which commit it was handed.** `--sha` is an assertion
-  by the caller. It prevents the unnamed-tree failure that occurred here; it
-  does not prevent a run that asserts a false SHA.
+- **The tool cannot check which commit it was handed.** It checks the tree's
+  content digest, which catches every tree I have to compare, but a digest is
+  not a commit: two different commits with byte-identical `tests/` would verify
+  against each other. For this report that distinction does not bite, since the
+  anchors were derived from the very run being reproduced, but a reader reusing
+  the tool across commits should know it.
 - **No per-test duration data exists.** Confirmed, not assumed. No shard passes
   `--durations`, `pytest -q` carries no per-test timing, and every artifact
   contains `No test durations found`, which is why `pytest-split` split by
@@ -380,21 +396,21 @@ and not the lock.
 
 ```
 SHA=91b36f8755cafc8281e152a29b9c0117b38f0908
-git archive $SHA tests | tar -x
-python reports/workstreams/hang-tool/collection_order.py <dir>/tests \
+git archive $SHA tests | tar -x -C /tmp/tree
+python reports/workstreams/hang-tool/collection_order.py /tmp/tree/tests \
     --sha $SHA \
     --out reports/workstreams/hang-tool/collection.json \
     --verify reports/workstreams/hang-tool/anchors.json
 ```
 
-Expect `exact index match: 174`, `matched but wrong idx: 0`,
-`node id not in repro: 0`, `VERIFIED`, and exit 0.
+Expect `tree digest matches`, `exact index match: 174`, `matched but wrong idx:
+0`, `node id not in repro: 0`, `VERIFIED`, and exit 0. `--sha` is optional and
+is not compared; the digest is what is checked.
 
 `91b36f8` is the head SHA of run `37251210268`, the run that hung, **not** this
 worktree's HEAD. The trees differ by 5 test files, including
 `tests/test_s09_normalizers.py` at +875 lines, and running against the wrong one
-shifts every index after that file by 19. The tool refuses to verify without
-`--sha` for that reason.
+shifts every index after that file by 19. The digest check refuses it.
 
 Artifacts read, all from run `37251210268`:
 - `suite-py3.12-`, `suite-py3.13-`, `suite-py3.14-`, `suite-py3.13-1/2/3/4`

@@ -35,36 +35,43 @@ Every site that could not be counted structurally is reported by name rather
 than estimated. `--verify` then checks the reproduction against the anchors and
 exits non-zero unless every one of them lands at the index CI reported.
 
-Tied to one commit
-------------------
-The anchors describe the collection of ONE commit, and a reproduction from a
-different commit is not a near miss to be tuned -- it is meaningless, and it
-does not look like that. A test file added between the two commits shifts every
-index after it by a constant, so nearly every anchor still matches and the run
-reads as a handful of stragglers. Measured: against this repo's HEAD instead of
-the anchors' commit, the result is 150 exact, 19 off by exactly +19, 5 absent,
-where the 19 are one added file.
+Tied to one tree, proven rather than asserted
+----------------------------------------------
+The anchors describe the collection of ONE tree, and a reproduction from a
+different tree is not a near miss to be tuned -- it is meaningless, and it does
+not look like that. A test file added between two commits shifts every index
+after it by a constant, so nearly every anchor still matches and the run reads
+as a handful of stragglers. Measured: against this repo's HEAD instead of the
+anchors' tree, the result is 155 exact, 19 off by exactly +19, 0 absent, where
+the 19 are one added file.
 
-So `--sha` is REQUIRED to verify, and `anchors.json` records the commit it
-describes. An unnamed tree is refused rather than silently compared. Note the
-limit: `--sha` is asserted by the caller, so the tool cannot detect a run that
-lies about its tree. It prevents the unnamed case, not the deliberate one.
+So verification compares a digest DERIVED FROM THE TREE against the digest
+recorded in `anchors.json`. It needs no git and cannot be satisfied by the
+caller agreeing with itself:
+
+    sha256( sorted relative path + \\0 + file bytes, for every *.py )
+
+`--sha` is optional documentation of which commit the caller believes this is,
+recorded in the output as an unverified claim. It is never compared. A caller
+who passes the right SHA while holding the wrong tree still fails, because the
+digest is the evidence and the SHA is a label.
 
 For the same reason this script writes nothing unless `--out` is given. An
 earlier version wrote `collection.json` beside itself, so a later run against a
 different tree silently overwrote the earlier run's artifact, and the committed
-one no longer matched the commit it was committed against.
+one no longer matched the tree it was committed against.
 
 Usage
 -----
-    python collection_order.py <tests_dir> --sha <commit> \\
-        [--out collection.json] [--verify anchors.json] [--report]
+    python collection_order.py <tests_dir> [--out collection.json]
+        [--verify anchors.json] [--sha <commit>] [--report]
 """
 
 from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 import sys
@@ -430,6 +437,40 @@ def collect(tests_dir):
 
 # --- verification ---------------------------------------------------------
 
+def tree_digest(tests_dir):
+    """A digest of the test tree's CONTENT, derived without git.
+
+    sha256 over every `*.py` under tests_dir, in sorted relative-path order,
+    each contributing its relative path, a NUL, and its bytes. Sorted order and
+    the path both go in, so renaming a file changes the digest as surely as
+    editing one does, and a path added or removed changes it too.
+
+    This is what makes verification mean something: it describes the tree that
+    was actually read, so a caller cannot satisfy the check by asserting a
+    commit. It is deliberately not a git object id -- an extraction, a worktree
+    and an archive of one commit all produce the same digest, which is the
+    property wanted here."""
+    h = hashlib.sha256()
+    for rel in sorted(_py_files(tests_dir)):
+        h.update(rel.encode("utf-8"))
+        h.update(b"\0")
+        with open(os.path.join(tests_dir, rel), "rb") as fh:
+            h.update(fh.read())
+    return "sha256:" + h.hexdigest()
+
+
+def _py_files(tests_dir):
+    """Relative POSIX paths of every .py file under tests_dir, sorted."""
+    out = []
+    for dirpath, dirnames, filenames in os.walk(tests_dir):
+        dirnames[:] = sorted(d for d in dirnames if d != "__pycache__")
+        for name in filenames:
+            if name.endswith(".py"):
+                full = os.path.join(dirpath, name)
+                out.append(os.path.relpath(full, tests_dir).replace(os.sep, "/"))
+    return sorted(out)
+
+
 def verify(result, anchors_path, anchors_sha=None):
     """Check the reproduction against CI-reported anchors.
 
@@ -447,23 +488,39 @@ def verify(result, anchors_path, anchors_sha=None):
     anchors_doc = json.load(open(anchors_path, encoding="utf-8"))
     if isinstance(anchors_doc, dict):
         anchors = anchors_doc["anchors"]
-        anchors_sha = anchors_doc.get("sha")
+        anchors_sha = anchors_sha or anchors_doc.get("sha")
+        anchors_digest = anchors_doc.get("tree_digest")
     else:
         anchors = anchors_doc
+        anchors_digest = None
 
-    # A wrong tree does not fail loudly. It shifts every index after the
-    # differing file by a constant, so most anchors still land and the run
-    # reads as a near miss rather than as the category error it is. So
-    # verifying without naming the commit is refused outright.
-    if anchors_sha and not result.get("sha"):
-        print("REFUSING TO VERIFY: the anchors record the commit they describe "
-              f"({anchors_sha[:12]}), but this run did not name one. Pass --sha "
-              "so a mismatch is caught instead of being read as stragglers.")
-        return False
+    # The tree identity check is a digest comparison, never a comparison of two
+    # strings the caller supplied. A wrong tree does not fail loudly: it shifts
+    # every index after the differing file by a constant, so most anchors still
+    # match and the run reads as a near miss rather than as the category error
+    # it is.
+    if anchors_digest:
+        actual = result.get("tree_digest")
+        if not actual:
+            print("REFUSING TO VERIFY: could not derive a digest for the tree read.")
+            return False
+        if anchors_digest != actual:
+            print(f"REFUSING TO VERIFY: anchors describe tree {anchors_digest[:23]}...")
+            print(f"                       this run read      {actual[:23]}...")
+            if result.get("sha") == anchors_sha:
+                print("                       the --sha you passed matches the anchors', "
+                      "which is exactly why it is not the check: the tree differs.")
+            return False
+        print(f"tree digest matches:  {actual[:23]}...")
+        if result.get("sha") and anchors_sha and result["sha"] != anchors_sha:
+            print(f"note: --sha {result['sha'][:12]} differs from the anchors' "
+                  f"{anchors_sha[:12]}, and is recorded as an unverified claim.")
+    else:
+        print("WARNING: anchors.json carries no tree_digest; the tree identity "
+              "was NOT checked. Regenerate anchors.json against the tree you mean.")
     if anchors_sha and result.get("sha") and anchors_sha != result["sha"]:
-        print(f"REFUSING TO VERIFY: anchors are for {anchors_sha[:12]}, "
-              f"this collection is from {result['sha'][:12]}")
-        return False
+        print(f"note: --sha {result['sha'][:12]} differs from the anchors' commit "
+              f"{anchors_sha[:12]}; the digest above is what was compared.")
 
     by_id = {}
     for node in result["nodes"]:
@@ -506,7 +563,9 @@ def main():
 
     result = collect(args.tests_dir)
     result["tests_dir"] = os.path.abspath(args.tests_dir)
-    result["sha"] = args.sha or None
+    result["tree_digest"] = tree_digest(args.tests_dir)
+    # Recorded, never compared. See the module docstring.
+    result["sha_asserted"] = args.sha or None
 
     dest = args.out
     if dest:
@@ -515,7 +574,8 @@ def main():
 
     unresolved = [p for p in result["files"] if p["unresolved"]]
     print(f"tests_dir:            {result['tests_dir']}")
-    print(f"sha:                  {result['sha'] or '(not recorded -- pass --sha)'}")
+    print(f"tree digest:          {result['tree_digest'][:23]}...")
+    print(f"sha (asserted, unused for checks): {result['sha_asserted'] or '(not given)'}")
     print(f"files collected:      {len(result['files'])}")
     print(f"tests reproduced:     {result['count']}")
     print(f"complete:             {result['complete']}")
