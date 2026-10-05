@@ -163,11 +163,18 @@ def test_the_frozen_r4_host_query_arrangement_scores_nothing():
     result = active.run_episode(
         _frozen_r4_host_queries(), split="dev", seed=4)
 
-    assert result["queried"] == [1, 2, 4, 7, 8, 13, 14, 15]
+    # The arrangement is frozen because the host learner is now a total
+    # order on (state, budget), so these literals are reproducible rather
+    # than incidental. They previously read
+    # [1, 2, 4, 7, 8, 13, 14, 15], which came from the seed-driven
+    # random tie-break that `rule_learner` no longer has. What the test
+    # is about is unchanged: a host that spends all eight queries on
+    # probes and never commits scores nothing.
+    assert result["queried"] == [0, 1, 2, 4, 7, 8, 11, 13]
     assert [step["action"]["inputs"]["x"]
-            for step in result["trace"]] == [7, 4, 1, 15, 13, 14, 2, 8]
+            for step in result["trace"]] == [0, 1, 2, 4, 8, 7, 11, 13]
     assert result["trace"][-1]["state_before"] == {
-        "remaining": 1, "queried": [1, 2, 4, 7, 13, 14, 15]}
+        "remaining": 1, "queried": [0, 1, 2, 4, 7, 8, 11]}
     assert result["committed"] is False
     assert result["final"] is None
 

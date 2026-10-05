@@ -5,20 +5,51 @@ every observed query. Chooses the unqueried input with the largest total
 disagreement across the four version spaces, smallest index on ties.
 Predicts the version-space member nearest the majority vote, so the
 committed predictor is always legal and consistent with all queries.
-Deterministic in the seed. Tuned on development instances only.
+Tuned on development instances only.
+
+**Query selection is a total order on (state, budget).** The rule is
+"largest total disagreement, smallest index on ties", and nothing else
+enters it: not a seed, not the order inputs happen to be presented in.
+So the next query is a pure function of the observed answers and the
+remaining budget, and the same task replays the same query sequence for
+every caller. That is what makes a learning decision inheritable: a
+decision taken at some budget can be handed to another owner and
+replayed to the same state.
+
+`seed` is still accepted because every call site passes one, but it no
+longer enters selection. An earlier version broke ties with
+`random.Random(seed)`, which made the query sequence depend on a seed
+that was never frozen: two call sites passed different values (`0` and
+`int(seed)`), and 22 of 40 dev tasks then scored differently depending
+on which one the caller used.
+
+**The version space is a singleton once the budget is spent.**
+`MAX_QUERIES` is `ceil(log2(len(CLASS_TABLES))) == 8`, and the policy
+below attains that information-theoretic bound: over all 224 members of
+the class, every one is identified within eight probes, and the worst
+case needs exactly eight. Collapse at the budget is therefore the
+instrument working as designed, not a defect, and a policy that has
+*not* collapsed by eight has spent its budget badly.
+
+The guarantee is "by" the budget rather than "only at" it: 32 of the
+224 members are already pinned after seven probes and the other 192 at
+eight. So the budget is a tight worst-case bound, not a modal outcome,
+and no downstream study may read a collapse at seven as a bug.
+`tests/test_m3_rule_instrument.py` holds both halves as invariants over
+the whole class rather than as figures over sampled tasks.
 """
 
 from __future__ import annotations
-
-import random
 
 from . import boolean_rule as br
 
 
 class VersionSpaceLearner:
     def __init__(self, class_tables: tuple, seed: int):
+        # `seed` is accepted for call-site compatibility only. See the
+        # module docstring: selection is a total order, so there is
+        # nothing left for a seed to decide.
         self._tables = tuple(class_tables)
-        self._rng = random.Random(seed)
         self._candidates = [set(self._tables) for _ in range(br.N_OUTPUTS)]
 
     def observe(self, x: int, y: tuple) -> None:
@@ -44,10 +75,8 @@ class VersionSpaceLearner:
         open_inputs = [x for x in range(br.N_STATES) if x not in queried]
         if not open_inputs:
             return None
-        scored = [(self._disagreement(x), x) for x in open_inputs]
-        best = max(s for s, _ in scored)
-        cands = sorted(x for s, x in scored if s == best)
-        return cands[self._rng.randrange(len(cands))]
+        best = max(self._disagreement(x) for x in open_inputs)
+        return min(x for x in open_inputs if self._disagreement(x) == best)
 
     def predict(self, queried: dict) -> dict:
         specs = []
