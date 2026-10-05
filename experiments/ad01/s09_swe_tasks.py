@@ -30,7 +30,8 @@ case ever drawn from a set and still be wrong everywhere else. A sweep of the
 input domain cannot decide it either, at any width, for the same reason. So
 the verdict is a rewriting check against the reference, which holds for every
 input or for none, and a candidate that agrees only where it was shown is
-refused rather than credited.
+refused rather than credited. The check reads the two programs as trees, so a
+rename is not equivalence here; see the comment above the rewriting rules.
 """
 
 from __future__ import annotations
@@ -776,9 +777,36 @@ def protected_verdict(program: Program, record: dict, lines: list) -> dict:
 # That is a refusal to call a correct repair correct, and it is deliberate.
 # The alternative, sampling, is the failure this replaced: it credits a
 # program that is wrong outside the region it was asked about, which is the
-# direction that corrupts a repair rate. A repair rate read off this is a
-# lower bound on the repairs a policy found, and never an upper bound on the
-# wrong ones it credited.
+# direction that corrupts a repair rate.
+#
+# The bias of the whole check is in that direction, and it is a bias rather
+# than a guarantee. An earlier version of this list claimed it was a lower
+# bound on the repairs credited and never an upper bound on the wrong ones.
+# That claim was false and was measured false: `_canonical_test` admitted nine
+# comparison operators while its own justification held for one, so it
+# credited candidates that compute something other than the reference. Over
+# 1,673 single-line mutations built from the forward images of these four
+# rules, 78 of the 425 credited were wrong on an input outside the drawn
+# domain, in four distinct forms. Narrowing the allowlist to `!=` alone does
+# not repair that by itself, because the same rule also stripped a `not` and
+# swapped the branches and rewrote the operator in one step, which is three
+# negations where the conditional had one. Each rule is now the identity it is
+# documented as, and the same census credits 230 with none wrong.
+#
+# The residual bias is the deliberate one above. This refuses correct repairs
+# whose equivalence it cannot state, so a repair rate read off it is a lower
+# bound on the repairs a policy found; the census is what checks that the
+# bound holds in the other direction too, rather than being assumed. It is a
+# measurement with a script behind it, not a property of the list.
+#
+# What this does not decide is alpha-equivalence. The normal form is a tree
+# compared with `ast.dump`, so names compare by name: a candidate that
+# renames `seen` to `count` everywhere, and so computes exactly what the
+# reference computes, is refused rather than credited. That is the same
+# deliberate direction as everything else above - a refusal, never a wrong
+# credit - and it is stated here rather than only in the history of this file
+# because a reader deciding whether to trust a certificate needs the whole
+# set of refusals in front of them, not the ones that happened to be found.
 def _drop_unit_factor(node):
     """`x * 1` and `1 * x` are `x`, for any `x` Python can multiply."""
     if not isinstance(node, ast.BinOp) or not isinstance(node.op, ast.Mult):
@@ -817,26 +845,52 @@ def _fill_missing_slice_bound(node):
 def _canonical_test(node):
     """Normalise a conditional's predicate to one `==` comparison.
 
-    The normal form is `a if x == y else b`. A `!=` reaches it by swapping
-    the branches and rewriting the comparison, because `a if P else b` is
-    `b if not P else a` and `not (x != y)` is `x == y`. A `not` reaches it
-    the same way, and a predicate that is neither is left alone rather than
-    forced into a form it was never written in.
+    The normal form is `a if x == y else b`. A conditional reaches it by
+    accounting for its negation exactly once, in one of two places, and a
+    predicate whose negation lives in neither is left alone rather than forced
+    into a form it was never written in.
+
+    In the operator. `a if x != y else b` is `b if x == y else a`: the swap is
+    the negation, so the operator is rewritten with it and the branches with
+    it. `!=` is the only operator this admits, because it is the only one
+    whose negation is `==`.
+
+    In a leading `not`. `a if not (x != y) else b` is `a if x == y else b`: the
+    `not` is the negation, so it is peeled and the operator is rewritten with
+    it, and the branches are left alone.
+
+    The two are not composed, and composing them is what this rule used to do
+    and why it was wrong. On a `not`-stripped predicate it stripped the `not`,
+    swapped the branches and rewrote the operator, which is three negations
+    where the conditional had one, and it rewrote the operator on all nine
+    Python comparison operators while justifying `!=` alone. Stripping the
+    `not` and swapping the branches is what makes the operator rewrite sound;
+    doing that on a predicate that carried no `not` applies a negation the
+    conditional never had.
+
+    The other eight operators are left alone, and that is not a matter of
+    taste. `not (x < y)` is `x >= y`, not `x == y`; `not (x is y)` is
+    `x is not y`, which is not `x == y` either, because `is` and `==` part
+    company on distinct objects of equal value and on a number and its float.
+    An allowlist of the operators whose negation is `==` has one member in it.
     """
     if not isinstance(node, ast.IfExp):
         return None
     test = node.test
     if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not):
-        test = test.operand
+        inner = test.operand
+        if not isinstance(inner, ast.Compare) or len(inner.ops) != 1 or \
+                len(inner.comparators) != 1:
+            return None
+        if not isinstance(inner.ops[0], ast.NotEq):
+            return None
+        node.test = ast.Compare(left=inner.left, ops=[ast.Eq()],
+                                comparators=inner.comparators)
+        return node
     if not isinstance(test, ast.Compare) or len(test.ops) != 1 or \
             len(test.comparators) != 1:
         return None
-    operator = test.ops[0]
-    if isinstance(operator, ast.Eq):
-        return None
-    if not isinstance(operator, (ast.NotEq, ast.Lt, ast.LtE, ast.Gt,
-                                 ast.GtE, ast.Is, ast.IsNot, ast.In,
-                                 ast.NotIn)):
+    if not isinstance(test.ops[0], ast.NotEq):
         return None
     node.test = ast.Compare(left=test.left, ops=[ast.Eq()],
                             comparators=test.comparators)
@@ -884,7 +938,10 @@ def equivalence_verdict(record: dict, lines: list) -> dict:
 
     Decided on structure, so the answer does not turn on which inputs anyone
     thought to try, and a candidate cannot pass by agreeing on the inputs it
-    was shown.
+    was shown. Structural, and not alpha-equivalent: a consistent rename of
+    the reference's names is refused. Each rule this reduces by is an identity
+    over all inputs, which is what makes "all inputs" the claim, and a rewrite
+    this list cannot state is a refusal rather than a credit.
     """
     mine = _normal_form(lines)
     theirs = _normal_form(record["reference_source"])
