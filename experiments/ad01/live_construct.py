@@ -78,6 +78,24 @@ class LiveRefused(Exception):
         self.reason = reason
 
 
+class PreRoundRefusal(LiveRefused):
+    """A binding refused before `bind_live_revision` entered a round.
+
+    `bind_retained_acquisition` reports what the store durably holds about a
+    package. A refusal raised before the round is a fact about this document
+    -- the package is not retained, or is no longer the active program, or the
+    investigation is not quiescent -- and those belong in the returned record,
+    which is where the caller looks for them. A refusal from inside the round
+    is not: the round executed against the store and its outcome is an
+    execution result.
+
+    Reading that boundary off the store afterwards cannot work, because every
+    refusal that precedes a round leaves the same evidence a round that
+    refused before executing would: no entry in `round_journal`. This says
+    where the refusal happened instead of inferring it from an absence.
+    """
+
+
 class PreGatewayRefusal(Exception):
     """Raised by a delegate for a request it never put on the wire.
 
@@ -1531,7 +1549,10 @@ def bind_live_revision(store_path, package: dict, task: dict,
     if store.active_digest == retained[0]["package_digest"]:
         bound = store.active_package
     else:
-        bound = adopt_live_revision(store, retained[0], arm=arm)
+        try:
+            bound = adopt_live_revision(store, retained[0], arm=arm)
+        except (LiveRefused, _frontier.Refused) as exc:
+            raise PreRoundRefusal(str(exc)) from exc
     restarted = restart_store(str(store_path), dsn=dsn,
                               investigation_id=investigation_id)
     if restarted.active_digest != bound.get("package_digest"):
@@ -1579,19 +1600,21 @@ def bind_retained_acquisition(store_path, acquisition: dict,
     The catch is broad and this is where that is decided. Every fault below
     the store open is either a fact about this document, which the
     dispositions record, or a refusal the round itself raised, which is not.
-    Those two were told apart by reading the message for a `rejected:`
-    marker, and that was wrong in the direction that hides faults: an owned
-    store with no authority named refuses the ownership check before it
-    executes anything, the message was re-read as an answer about the
-    package, and the caller was told a candidate had been rejected when no
-    round had run.
 
-    It is told apart by what the store durably holds. The round records every
-    execution in `round_journal` before it acts on one, so a refusal for a
-    round that ran leaves the first step's entry and a refusal that
-    executed nothing leaves none. That is the fact the caller needs and the
-    message never carried. The marker still decides among the refusals that
-    did run, which is all it was ever good for.
+    A refusal is assigned to one side or the other by where it was raised,
+    then by what the round left behind. `PreRoundRefusal` says a refusal
+    happened before a round was entered. Among the refusals that came out of
+    a round, one that executed nothing is not an answer about the package,
+    and the round's own journal is what says so.
+
+    An earlier attempt told the first two apart by reading the message for a
+    `rejected:` marker, which hid faults in the direction that loses facts.
+    A later one replaced the marker with the journal read alone, which cannot
+    work: a refusal before the round and a round that refused before
+    executing anything both leave no entry. Each of those distinguishes two
+    cases and conflates the other. What says which happened is where the
+    refusal was raised and what the round recorded, so both are used and
+    neither stands in for the other.
 
     `authority` is the study allocation the round settles against, threaded
     from the leg that authorized it. It is not derived here: the caller is
@@ -1626,6 +1649,16 @@ def bind_retained_acquisition(store_path, acquisition: dict,
             dsn=dsn, investigation_id=investigation_id, authority=authority)
     except (LiveRefused, _frontier.Refused) as exc:
         message = str(exc)
+        if isinstance(exc, PreRoundRefusal):
+            # Refused before a round was entered. The package was not judged
+            # and no round ran, so this is a record, not an exception.
+            return {"disposition": "retained", "reason": message,
+                    "release_id": control_id, "bound_digest": digest}
+        # A refusal that came out of the round is a round refusal whichever
+        # way it went, but a round that executed nothing is not an answer
+        # about the package. The round records each execution in
+        # `round_journal` before acting on it, so a refusal that ran leaves
+        # the first step's entry and one that executed nothing leaves none.
         round_ran = store.round_command(int(matches[0].get("version", 0)),
                                         0) is not None
         if not round_ran:
