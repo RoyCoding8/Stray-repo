@@ -71,8 +71,10 @@ jobs:
         with:
           python-version: "3.13"
 
-      # uv replaces the pip resolver in every job. `uv pip install` targets
-      # the setup-python interpreter's environment, and there is no uv
+      # uv replaces the pip resolver in every job. `--system` is load-bearing:
+      # setup-python provides a bare interpreter with no venv, and a bare
+      # `uv pip install` refuses it ("No virtual environment found", run
+      # 37384577025) while `--system` matches what pip did. There is no uv
       # lockfile: `uv sync` would want one and would pin `requires-python`
       # to whatever it resolved, so the resolver stays unpinned on purpose.
       # Install is the longest setup step on windows/macos runners; its
@@ -86,8 +88,8 @@ jobs:
 
       - name: Install
         run: |
-          uv pip install -e ".[test]"
-          uv pip install pytest-split
+          uv pip install --system -e ".[test]"
+          uv pip install --system pytest-split
 
       - name: Collect
         run: |
@@ -187,7 +189,7 @@ jobs:
 
       - name: Install
         run: |
-          uv pip install -e ".[test]"
+          uv pip install --system -e ".[test]"
 
       - name: Collect
         run: |
@@ -264,8 +266,8 @@ jobs:
 
       - name: Install
         run: |
-          uv pip install -e ".[test]"
-          uv pip install pytest-split
+          uv pip install --system -e ".[test]"
+          uv pip install --system pytest-split
 
       - name: Heavy archived, one file at a time
         # `exit` belongs after the loop, not inside it: inside, the first
