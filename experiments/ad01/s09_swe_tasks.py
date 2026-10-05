@@ -828,9 +828,11 @@ def _drop_unit_factor(node):
     operands this instrument actually uses, digit strings and small integers,
     with no disagreements on the grid in
     `test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain`,
-    and no reference source multiplies by a constant at all, so no candidate
-    in this catalogue reaches this rule. That is why an identity overstated
-    here survived: nothing in the task exercised it.
+    and no reference multiplies by the constant one - the 39 references carry
+    93 multiplications by a constant, `marker * 11` on all 39 of them, and
+    none of those constants is 1 - so this rule fires on nothing in the
+    catalogue. That is why an identity overstated here survived: nothing in
+    the task exercised it.
     """
     if not isinstance(node, ast.BinOp) or not isinstance(node.op, ast.Mult):
         return None

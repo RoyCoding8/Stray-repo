@@ -38,12 +38,17 @@ acceptance pass called that a documentation inaccuracy that was not a live
 defect, because no reference source reaches either rule. Measuring it again
 from the candidate's side found 44 of 44 candidates ending `* 1.0` scored
 `repaired` and returned a float where the reference returned an int, which
-is a wrong credit and not only a false sentence. Those tests are marked
-`xfail(strict=True)`: they state the claim the module makes about itself,
-they fail today, and a fix turns them into a failure. Writing them to assert
-the documented behaviour instead would mean a test that passes against a
-docstring known to be false, which is the check that reads green while
-matching nothing.
+is a wrong credit and not only a false sentence. Those tests ask the module
+whether its guard fires, and are marked `xfail(strict=True)`: they fail
+today, and a fix turns them into a failure, so the marker cannot outlive the
+fix. Writing them to assert the documented behaviour instead would mean a test
+that passes against a docstring known to be false, which is the check that
+reads green while matching nothing.
+
+`x * 1` is also not an identity for every `x`. A bool operand gives an int and
+an operand with a custom `__mul__` observes the dropped call. That is stated
+in one test rather than left to a reader to infer, and no guard narrowing
+fixes it, since `1` is an int and the guard admits an int.
 """
 
 from __future__ import annotations
@@ -61,8 +66,11 @@ RULE_NAMES = ("_drop_unit_factor", "_drop_unit_step",
 # The operands these programs actually see: a digit string for `body` and
 # a small non-negative integer for `n`. "An identity over all inputs" can
 # only be tested on a domain, and this is the domain the catalogue draws
-# from, so it is the domain the identity claims are checked on.
-DIGITS = ("", "1", "12", "123", "213", "2231", "1111")
+# from, so it is the domain the identity claims are checked on. `BODY_RANGE`
+# draws 4 to 6 characters, so every length in that range is represented and a
+# grid of only the short strings would be a claim about a domain the
+# instrument never visits.
+DIGITS = ("", "1", "12", "123", "213", "1213", "2231", "1111", "31213")
 COUNTS = (0, 1, 2, 3, 4, 5, 6, 12)
 
 ONE_ARG = [(value,) for value in DIGITS + COUNTS]
@@ -114,6 +122,68 @@ def _normal_form_with(source: str, names) -> str:
     rules = [_rule(name) for name in names]
     tree = ast.parse(source)
     return ast.dump(ast.fix_missing_locations(_rewrite_with(tree, rules)))
+
+
+def _production_form(source: str) -> str:
+    return ast.dump(ast.fix_missing_locations(
+        tasks._rewrite(ast.parse(source))))
+
+
+def test_the_local_traversal_agrees_with_the_production_one():
+    """`_rewrite_with` is a copy, so it is pinned against the original.
+
+    A per-rule test needs that one rule alone, and production applies all four
+    until one fires. That makes the copy a second implementation of the
+    traversal, and an unchecked second implementation is the kind this repo has
+    been bitten by: truncating production `_rewrite` to the first rule in the
+    tuple left every other test in this file green, because no reference source
+    contains a `* 1` or a three-argument `range`, so nothing on the catalogue
+    path exercises the traversal at all.
+
+    Production takes no rule argument, so the two can only be compared where
+    they are answering the same question: a source exactly one rule rewrites,
+    where applying all four and applying that one coincide. Each rule gets its
+    own nested source, since a single source containing all four would let
+    first-match-wins hide a divergence.
+    """
+    per_rule = [
+        ("_drop_unit_factor",
+         "def probe(x, b):\n"
+         "    for index in range(b):\n"
+         "        step = index * 1\n"
+         "    return step\n"),
+        ("_drop_unit_step",
+         "def probe(x, b):\n"
+         "    for index in range(0, b, 1):\n"
+         "        step = x * 2\n"
+         "    return step\n"),
+        ("_fill_missing_slice_bound",
+         "def probe(x, b):\n"
+         "    for index in range(b):\n"
+         "        step = x[:b]\n"
+         "    return step\n"),
+        ("_canonical_test",
+         "def probe(x, b):\n"
+         "    for index in range(b):\n"
+         "        step = 0 if not (x != b) else 1\n"
+         "    return step\n"),
+    ]
+
+    for name, source in per_rule:
+        assert _normal_form_with(source, ()) != _normal_form_with(source, (name,)), (
+            "%s: this source is not a single-rule case, so the comparison "
+            "below would prove nothing" % name)
+        assert _normal_form_with(source, (name,)) == _production_form(source), (
+            "%s: the local traversal and the production one disagree, so every "
+            "per-rule assertion in this file is measuring the copy"
+            % name)
+
+    untouched = ("def probe(x, b):\n"
+                 "    for index in range(b):\n"
+                 "        step = index + b\n"
+                 "    return step\n")
+
+    assert _normal_form_with(untouched, ()) == _production_form(untouched)
 
 
 def _probe(source: str):
@@ -379,21 +449,24 @@ def test_a_bare_not_eq_does_not_reach_the_peeled_form():
 
 # The unit guards compare a node's value against 1, and `1.0 == 1` and
 # `True == 1` in Python, so both rules fire on shapes that are not identities.
+# `x * 1.0` returns a float where `x` returns an int, and on a digit string it
+# raises where `x` returns it. `range(a, b, 1.0)` raises on every argument.
 #
-# What the rewrite has to do to `x * 1.0` and `range(a, b, 1.0)` is damage the
-# candidate's own program can observe: the rewrite drops a multiplication whose
-# type and whose errors differ from `x`. So each test below runs the two forms
-# as real programs and asserts they agree. They do not, and the assertion is
-# about behaviour rather than about the normal form, so narrowing either guard
-# to `type(value) is int` makes the pair agree and the test passes with nothing
-# changed but the marker.
+# What that costs is a credit rather than a false sentence. Measured: all 44
+# candidates ending `* 1.0` scored `repaired` and returned a float where the
+# reference returned an int.
 #
-# The tests are marked `xfail(strict=True)` because that pass is exactly the
-# failure this file exists to prevent: a rule the module calls an identity over
-# all inputs, computing something else, with a wrong credit behind it. A fix
-# turns each into an XPASS, which strict=True reports as a failure, so the
-# marker cannot outlive the guard. Marking them is what stops the defect being
-# rediscovered as an accident.
+# The tests below ask the module directly, through `_rule`, whether it fires.
+# An earlier version of this file instead ran `x * 1.0` and `x` as two
+# programs and asserted they agreed, which is a fact about Python rather than
+# about this module: those tests still failed with both rules deleted outright,
+# so they could never XPASS and would have advertised a fixed defect forever.
+# The evidence that the rewrite is harmful lives in the grid assertions here
+# and in `test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain`;
+# what belongs in a guard test is whether the guard fires.
+#
+# `xfail(strict=True)` means a narrowed guard turns these into XPASS, which
+# pytest reports as a failure, so the marker cannot outlive the fix.
 
 FLOAT_XFAIL = ("the guard is a value comparison, so 1.0 is admitted; measured "
                "44 of 44 candidates ending `* 1.0` scored repaired and "
@@ -406,133 +479,70 @@ BOOL_XFAIL = ("the guard is a value comparison, so True is admitted; "
               "a custom `__mul__` can observe")
 
 
+def _fires(rule_name: str, source: str) -> bool:
+    """Whether this one named rule fires anywhere in `source`."""
+    rule = _rule(rule_name)
+    for node in ast.walk(ast.parse(source)):
+        if rule(node) is not None:
+            return True
+    return False
+
+
 @pytest.mark.xfail(strict=True, reason=FLOAT_XFAIL)
-def test_a_unit_factor_does_not_hide_the_multiplication_it_drops():
-    """`x * 1.0` is not `x`, and the rewrite credits the two as the same.
+@pytest.mark.parametrize("side", ("x * 1.0", "1.0 * x"),
+                         ids=["right-hand", "left-hand"])
+def test_a_unit_factor_refuses_a_float_constant_on_either_side(side):
+    """The float is admitted on both sides of the product.
 
-    Measured on this module's own domain, not on exotic operands. The
-    catalogue's `body` is a digit string and its `n` is a small integer; on
-    those the rewrite returns `2.0` where `x` returns `2`, and raises
-    `TypeError` on a string where `x` returns it. `x * 1` and `1 * x` pass
-    over the identical grid, so the drift is the float and not the grid.
+    Both sides matter. The guard has two operand clauses and a fix that
+    narrows only one leaves the other admitting the same wrong rewrite, which
+    is why this is a pair rather than a single case.
     """
-    shaped = "def probe(x):\n    return x * 1.0\n"
-    plain = "def probe(x):\n    return x\n"
-    grid = [(value,) for value in DIGITS + COUNTS]
+    source = "def probe(x):\n    return %s\n" % side
 
-    assert _diverge(shaped, plain, grid) == [], (
-        "%r is rewritten to `x` and does not compute `x` on this grid"
-        % shaped)
-
-
-@pytest.mark.xfail(strict=True, reason=STEP_XFAIL)
-def test_a_unit_range_step_does_not_hide_the_step_it_drops():
-    """`range(a, b, 1.0)` raises where `range(a, b)` yields, and is credited.
-
-    The clearest of the three. Every argument in the grid gives a `TypeError`
-    where the plain form yields a list, so the equivalence check calls two
-    programs that agree on no input at all the same function. `range(a, b, 1)`
-    passes over the same grid.
-    """
-    shaped = "def probe(a, b):\n    return list(range(a, b, 1.0))\n"
-    plain = "def probe(a, b):\n    return list(range(a, b))\n"
-
-    assert _diverge(shaped, plain, RANGE_ARG) == [], (
-        "%r is rewritten to `range(a, b)` and does not compute it" % shaped)
+    assert not _fires("_drop_unit_factor", source), (
+        "_drop_unit_factor rewrites %r to `x`, and %r is not `x` on this "
+        "module's own digit-string and integer domain"
+        % (side, side))
 
 
 @pytest.mark.xfail(strict=True, reason=BOOL_XFAIL)
-def test_a_unit_factor_does_not_hide_a_boolean_multiplication():
-    """`x * True` and `True * x` are not `x` for every `x` Python can multiply.
+@pytest.mark.parametrize("side", ("x * True", "True * x"),
+                         ids=["right-hand", "left-hand"])
+def test_a_unit_factor_refuses_a_bool_constant_on_either_side(side):
+    """A bool is admitted on both sides too, and `True * 1` is the integer 1.
 
-    Over the catalogue's own domain this is invisible, which is how the rule
-    has been credited with being an identity for as long as it has existed.
-    It is not one: `True * 1` is the integer `1`, so the rewrite drops a type
-    an `==` downstream distinguishes, and on an operand with a custom
-    `__mul__` it drops the call altogether, returning the tuple the operator
-    produced where `x` returns the operand.
+    A rewrite that drops the multiplication also drops the type a downstream
+    `==` distinguishes, and on an operand with a custom `__mul__` it drops the
+    call altogether. Both facts are in
+    `test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain`.
     """
-    observable = ("class W:\n"
-                  "    def __mul__(self, other):\n"
-                  "        return ('mul', other)\n"
-                  "    def __rmul__(self, other):\n"
-                  "        return ('rmul', other)\n")
-    plain = "def probe(x):\n    return x\n"
-    namespace = {}
-    exec(observable + plain, namespace)
-    operand = namespace["W"]()
-    expected = namespace["probe"](operand)
+    source = "def probe(x):\n    return %s\n" % side
 
-    for shaped in ("def probe(x):\n    return x * True\n",
-                   "def probe(x):\n    return True * x\n"):
-        namespace = {}
-        exec(observable + shaped, namespace)
-        got = namespace["probe"](namespace["W"]())
-
-        assert got == expected, (
-            "%r drops a multiplication the operand observed: %r, where x is %r"
-            % (shaped, got, expected))
+    assert not _fires("_drop_unit_factor", source), (
+        "_drop_unit_factor rewrites %r to `x`, which is a different function"
+        % side)
 
 
-@pytest.mark.xfail(strict=True, reason="this guard admits a float or a bool, "
-                   "which `type(value) is int` would refuse")
-def test_the_unit_factor_guard_admits_only_an_integer_one():
-    """Names what the guard accepts, so narrowing it is a red the day it lands.
+@pytest.mark.xfail(strict=True, reason=STEP_XFAIL)
+def test_a_unit_range_step_refuses_a_float_step():
+    """`range(a, b, 1.0)` is rewritten to a form that raises on every input."""
+    source = "def probe(a, b):\n    return list(range(a, b, 1.0))\n"
 
-    Without this, nothing in this file would notice the guard change shape at
-    all: `x * 1` and `x * 1.0` are both rewritten today, so any test of the
-    rule's firing that only used those two shapes passes either way. The
-    acceptance of a float is the observable, and it is an accidental property
-    of `1.0 == 1`, which is what makes it worth writing down.
-    """
-    def fires(source: str) -> bool:
-        tree = ast.parse(source)
-        for node in ast.walk(tree):
-            if _rule("_drop_unit_factor")(node) is not None:
-                return True
-        return False
-
-    assert not fires("def probe(x):\n    return x * 1.0\n"), (
-        "_drop_unit_factor still rewrites `x * 1.0`, so a candidate can lose a "
-        "type and be credited for it")
-    assert not fires("def probe(x):\n    return x * True\n"), (
-        "_drop_unit_factor still rewrites `x * True`, so a candidate can lose "
-        "a multiplication an operand observed")
-    assert fires("def probe(x):\n    return x * 1\n")
-
-
-@pytest.mark.xfail(strict=True, reason="this guard admits a float or a bool "
-                   "step, which `type(value) is int` would refuse")
-def test_the_unit_step_guard_admits_only_an_integer_one():
-    """The same for `range(a, b, 1)`, whose guard is the same value comparison.
-
-    Kept apart from the factor guard because the two rules are independent. A
-    fix that narrows one and not the other has to be caught on the one it
-    missed, and a single combined test would only report the pair.
-    """
-    def fires(source: str) -> bool:
-        tree = ast.parse(source)
-        for node in ast.walk(tree):
-            if _rule("_drop_unit_step")(node) is not None:
-                return True
-        return False
-
-    assert not fires("def probe(a, b):\n    return list(range(a, b, 1.0))\n"), (
-        "_drop_unit_step still rewrites `range(a, b, 1.0)`, which raises where "
-        "`range(a, b)` yields")
-    assert not fires("def probe(a, b):\n    return list(range(a, b, True))\n"), (
-        "_drop_unit_step still rewrites `range(a, b, True)`")
-    assert fires("def probe(a, b):\n    return list(range(a, b, 1))\n")
+    assert not _fires("_drop_unit_step", source), (
+        "_drop_unit_step rewrites `range(a, b, 1.0)` to `range(a, b)`, which "
+        "yields a list where the original raises TypeError")
 
 
 def test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain():
     """`x * 1`, `1 * x` and `range(a, b, 1)` really are the rewrites claimed.
 
-    The xfails above are only honest if the rules are sound on the shapes they
-    were documented for. They are, on this module's own operands, so the
-    over-breadth is the constant and not the rule. `x * 1` is also not an
-    identity on an operand that observes `__mul__`, which is stated here rather
-    than left to the reader to infer from a docstring that claims otherwise.
+    The xfails above say the guards are too wide. That is only worth saying if
+    they are not too narrow, so this pins the shapes they must keep admitting
+    and shows the rewrite is sound on them. `x * 1` is not an identity for
+    every `x`: a bool operand gives an int, `True * 1` being `1`, and an
+    operand with a custom `__mul__` observes the dropped call. It is an
+    identity on the operands this instrument uses.
     """
     for shaped, plain in (
             ("def probe(x):\n    return x * 1\n",
@@ -540,9 +550,38 @@ def test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain():
             ("def probe(x):\n    return 1 * x\n",
              "def probe(x):\n    return x\n")):
         assert _diverge(shaped, plain, ONE_ARG) == []
+        assert _fires("_drop_unit_factor", shaped)
     assert _diverge(
         "def probe(a, b):\n    return list(range(a, b, 1))\n",
         "def probe(a, b):\n    return list(range(a, b))\n", RANGE_ARG) == []
+    assert _fires(
+        "_drop_unit_step",
+        "def probe(a, b):\n    return list(range(a, b, 1))\n")
+
+
+def test_the_unit_factor_identity_breaks_on_a_call_the_operand_observes():
+    """`x * 1` drops a call, which an operand with a `__mul__` can see.
+
+    Not an xfail. No guard narrowing fixes it, because `1` is an int and the
+    guard admits an int. It is stated as a fact about the documented rewrite
+    so the docstring's "for the operands this instrument uses" cannot be read
+    as a claim about Python, and so a reader knows the boundary.
+    """
+    observable = ("class W:\n"
+                  "    def __mul__(self, other):\n"
+                  "        return ('mul', other)\n"
+                  "    def __rmul__(self, other):\n"
+                  "        return ('rmul', other)\n")
+    namespace = {}
+    exec(observable + "def probe(x):\n    return x\n", namespace)
+    expected = namespace["probe"](namespace["W"]())
+    namespace = {}
+    exec(observable + "def probe(x):\n    return x * 1\n", namespace)
+    got = namespace["probe"](namespace["W"]())
+
+    assert got != expected, (
+        "`x * 1` no longer calls the operand, so the rewrite is an identity "
+        "for builtins only; a docstring claiming otherwise is false")
 
 
 # --- The certificate itself, over the whole catalogue. ---
@@ -803,19 +842,35 @@ def test_a_consistently_renamed_reference_is_refused_structurally():
 
 
 def test_an_unparseable_program_refuses_through_the_normal_form():
-    """The `None` path is real and is distinct from the structural refusal.
+    """The `None` path is real, and it is distinct from the structural refusal.
 
-    Pinned so the two refusals above and here cannot be confused: this one has
-    no normal form at all, so a future edit that made `None` compare equal to
-    anything would turn every broken candidate into a credit rather than a
-    refusal.
+    Two cases, because `None` reaching the comparison at all is the hole. With
+    a parseable reference, `mine` is `None` and `theirs` is a string, so a
+    verdict of `fail` follows whether or not the `is not None` guard is there.
+    With a reference that also does not parse, both sides are `None` and
+    `None == None` is true, so dropping the guard credits a candidate that was
+    never compared with anything. Measured: removing
+    `mine is not None and` from `equivalence_verdict` leaves every other test
+    in this file green and turns this one red.
     """
     record = _all_instances()[0]
+    broken = ["def broken(:\n"]
 
-    assert tasks._normal_form(["def broken(:\n"]) is None
+    assert tasks._normal_form(broken) is None
     assert tasks._normal_form(["def broken(x)\n    return x\n"]) is None
     assert tasks._normal_form(["class :::\n"]) is None
-    assert tasks.equivalence_verdict(record, ["def broken(:\n"])["outcome"] \
-        == "fail"
+    assert tasks._normal_form(["x = = 1\n"]) is None
+    # `this is not python` parses: it is a chained comparison.
+    assert tasks._normal_form(["this is not python\n"]) is not None
+
+    assert tasks.equivalence_verdict(record, broken)["outcome"] == "fail"
+
+    both_broken = {"reference_source": broken}
+
+    assert tasks._normal_form(both_broken["reference_source"]) is None
+    assert tasks.equivalence_verdict(both_broken, broken)["outcome"] == "fail", (
+        "an unparseable reference normalises to None as well, so the verdict "
+        "compares None with None; a candidate that was never compared with "
+        "anything must still be refused")
     assert tasks.equivalence_verdict(
         record, record["reference_source"])["outcome"] == "pass"
