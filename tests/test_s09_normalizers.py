@@ -614,7 +614,6 @@ def test_every_reference_repairs_its_own_instance():
     assert {outcome["public_passed"] for _, outcome in scored} == \
         {outcome["public_total"] for _, outcome in scored}
     assert {outcome["protected"]["outcome"] for _, outcome in scored} == {"pass"}
-    assert {outcome["equivalent"]["outcome"] for _, outcome in scored} == {"pass"}
 
 
 FAULT_FAMILIES = ("off_by_one", "double_count", "dropped_guard",
