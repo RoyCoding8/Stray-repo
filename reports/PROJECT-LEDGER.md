@@ -1,5 +1,59 @@
 # Project ledger
 
+## The pg_dump remedy was wrong twice, and the premise was the environment, 2026-10-05
+
+Run `37315773898` reported **seven failed suite jobs and the suite never ran on
+that commit**. The step added in `f2e45a06` exited 100 with `E: Unable to
+locate package postgresql-client-18`, so `Install`, `Collect` and `Suite` were
+all **skipped**. No shard artifact existed. Every claim I made from that run
+about it was read off absent files.
+
+**The package name was never wrong; the archive is unreachable at run time.** The
+runner image installs PostgreSQL from PGDG and then removes both the source list
+and the keyring — `actions/runner-images` →
+`images/ubuntu/scripts/build/install-postgresql.sh` ends with `rm
+/etc/apt/sources.list.d/pgdg.list` and `rm /usr/share/keyrings/postgresql.gpg`.
+Ubuntu 24.04's own archive carries only `postgresql-client-16`, which is what
+the runner ships. PGDG does publish `postgresql-client-18` for noble at
+`18.6-1.pgdg24.04+2`, the exact server version shard 3 of `37261826154`
+reports. Adding the repo is the repair.
+
+**The mismatch itself is real and measured.** `37261826154` shard 3 carries 26
+such lines, `server version: 18.6 (Debian 18.6-1.pgdg13+2); pg_dump version:
+16.15`. Run `37305881683`'s heavy artifact carries **7** `pg_dump` failures of
+its own. So the environment claim in `ci-baseline-37172638343.md:106` stands;
+only its implied remedy was wrong.
+
+**Two records disagreed about the target version, and both were deliberate.**
+`reports/DECISIONS.md` D-001 says build and test on PostgreSQL 16 and declare 18
+the deployment target. `ac8f4e87` set the CI service to `postgres:18` when the
+suite moved off the WSL host, whose PostgreSQL is 18.6. Service 18 with client
+16 was never a coherent pairing, so both "install client 18" and "downgrade the
+service to 16" repair a target that was set on purpose.
+
+**The cost of each direction was measured before choosing.** Across all 21
+migrations: **zero** PG18-only features — `MERGE INTO`, `RETURNING OLD/NEW`,
+`JSON_TABLE`, `JSON_VALUE`, virtual generated columns, `uuidv7()`, `NULLS NOT
+DISTINCT`, `ANY_VALUE`, `random_uuid()`, `|| ANY`, `CREATE EXTENSION` all
+absent. The single site that reads a server version is
+`scripts/manifest.py:32`, which records it in the manifest rather than
+branching. Downgrading would cost nothing functionally and would silently
+narrow what CI proves, and my own M4 reports name `postgres:18` as the thing
+CI must confirm. Matching the client up keeps the claim intact.
+
+**One action, two call sites, and a check that reads the server.** The step
+existed only in `suite` while `heavy` runs the same service and had six of its
+85 archived files driving checkpoint or restore. Two copies of setup logic is
+how the heavy job came to lack it, so `.github/actions/postgres-client`
+replaces both. It ends by comparing the installed client against the live
+`server_version_num` rather than against the constant passed in, which is what
+keeps `inputs.major` and the service image from drifting apart unnoticed.
+
+**Not claimed.** 65 of the heavy job's 72 failures are **not** `pg_dump`. Those
+are separately real. And run `37320129823` at `3a4ae428` is the first
+measurement of any of this; until it completes with shard artifacts present,
+the repair is committed and unverified.
+
 ## The 247 CI failures are mostly rooted now, 2026-10-05
 
 A cause census against run `37261826154` roots **188 of 247** distinct failure
