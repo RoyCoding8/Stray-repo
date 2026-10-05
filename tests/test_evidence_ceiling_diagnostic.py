@@ -57,6 +57,36 @@ def test_blind_path_never_observes_but_informed_path_requires_observe(monkeypatc
         diagnostic._sequence(diagnostic.FRESH_SEEDS[0], informed=True)
 
 
+def test_blind_arm_is_one_fixed_subset_not_a_sample():
+    """Measured. The blind column cannot be read as an average over subsets.
+
+    Under the frozen tie-break the blind arm emits `[0..7]` on every seed.
+    Before the freeze it drew a distinct subset per seed, so this assertion
+    is what distinguishes a sample from a single subset.
+    """
+    result = diagnostic.run()
+
+    assert result["blind_arm_is_seed_independent"] is True
+    sequences = {tuple(row["sequences"]["blind8"])
+                 for row in result["raw_rows"]}
+    assert sequences == {tuple(range(rules.MAX_QUERIES))}
+
+
+def test_historical_blind_reference_is_labelled_as_recomputed():
+    """The withdrawn figure is 0.5017; the recomputed one is not.
+
+    Reporting the recomputed value under the key `withdrawn_blind8` without
+    saying so invites a reader to conclude the withdrawal corrected an error,
+    when the freeze is what moved it.
+    """
+    result = diagnostic.run()
+    historical = result["historical_e4_references"]
+
+    assert historical["withdrawn_blind8"]["reducer_mean"] != 0.5017
+    assert "RECOMPUTED" in historical["withdrawn_blind8_note"]
+    assert historical["narrow_probe_ceiling"]["measured"] is True
+
+
 def test_run_enforces_unique_fresh_cohort_and_primary_overall_contrast():
     result = diagnostic.run()
     cohort = result["fresh_cohort"]

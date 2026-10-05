@@ -9,6 +9,14 @@ printed as JSON. Overall accuracy is the primary metric; unqueried accuracy
 is retained as a secondary diagnostic because the three arms have unequal
 query counts.
 
+The blind arm is **not** a sample of eight inputs.  ``44ec6c52`` froze
+``choose_query`` into a total order, and with nothing observed every open
+input's total disagreement ties, so "smallest index on ties" returns the
+lowest unqueried input every time: the blind arm emits ``[0..7]`` on all 150
+seeds.  Before the freeze it drew a fresh random 8-subset per seed.  The
+``blind_arm_is_seed_independent`` field reports which regime produced the
+numbers beside it, so no reader mistakes one for the other.
+
 Run from the repository root:
 
     python experiments/ad01/evidence_ceiling_diagnostic.py
@@ -123,6 +131,11 @@ def run() -> dict:
     fresh_digests = {_task_digest(SPLIT, seed) for seed in FRESH_SEEDS}
     blind_changed = sum(row["blind8"]["evidence"] !=
                         row["informed8"]["evidence"] for row in rows)
+    # With nothing observed every open input's total disagreement ties, so the
+    # frozen "smallest index on ties" returns the lowest unqueried input on
+    # every seed. That is what makes the blind column a single subset rather
+    # than a sample, and it is why no blind mean can be pinned to a literal.
+    blind_is_fixed = len({tuple(row["sequences"]["blind8"]) for row in rows}) == 1
     assert not set(OLD_E4_SEEDS) & set(FRESH_SEEDS)
     assert len(old_task_ids) == len(OLD_E4_SEEDS)
     assert len(fresh_task_ids) == len(FRESH_SEEDS)
@@ -136,6 +149,13 @@ def run() -> dict:
     # Recompute the two historical numbers without editing their frozen
     # artifact.  The narrow value is the old one-probe boundary; the wide
     # value is the old blind harness described above.
+    #
+    # `44ec6c52` froze `choose_query` into a total order, so `evidence_ceiling`
+    # recomputed under it returns 0.06 rather than the 0.5017 the withdrawn
+    # artifact holds. Both numbers are reported, each labelled with the
+    # tie-break that produced it, because a reader who saw only "0.06" under
+    # the key "withdrawn" would take it for the historical value and conclude
+    # the withdrawal was a correction rather than a re-derivation.
     narrow = revision.ceiling(SPLIT, list(OLD_E4_SEEDS))
     withdrawn = revision.evidence_ceiling(SPLIT, list(OLD_E4_SEEDS))
 
@@ -170,10 +190,22 @@ def run() -> dict:
         "sequence_difference_count": blind_changed,
         "historical_e4_references": {
             "narrow_probe_ceiling": narrow,
+            "narrow_probe_ceiling_note": (
+                "tie-break-independent: the argmax is over one-input means, "
+                "so the freeze cannot move it"),
             "withdrawn_blind8": withdrawn,
             "withdrawn_blind8_interpretation": (
                 "historical blind policy range, not evidence-learner headroom"),
+            "withdrawn_blind8_note": (
+                "RECOMPUTED under the frozen tie-break, so this is NOT the "
+                "0.5017 the withdrawn artifact holds. That figure came from a "
+                "random 8-subset drawn per seed from an unfrozen "
+                "random.Random(seed) tie-break, whose per-cohort mean over "
+                "uniform 8-subsets is 0.5195 (sd 0.025 over 20 reps). Both "
+                "measure the same quantity; only the tie-break differs, so "
+                "the gap between them is the freeze, not a correction."),
         },
+        "blind_arm_is_seed_independent": blind_is_fixed,
         "contrasts": {
             "primary_overall": {
                 "informed8_vs_blind8_equal_cost": _contrast(
