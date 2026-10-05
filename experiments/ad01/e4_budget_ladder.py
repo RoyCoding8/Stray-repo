@@ -1,46 +1,73 @@
 """Measure the E4 budget ladder that `STAGE-09-RECOMMENDATION.md` §3 reports.
 
-The ladder table in that document carried four rows of per-budget `unqueried`
-means. An earlier revision of the table carried blind `0.0611`/`0.0560`/
-`0.1125` and informed `0.1250`/`0.9083` at budgets 1/2/4/8. No artifact on
-HEAD held any of them, so nothing could check them; a grep for `0.9083` returns
-exactly one hit, which reads as clean. This script is that check, and it writes
-its own output so the next reader does not have to re-derive it.
-
-Three of four cells in each column were wrong. Only the budget-8 blind cell
-matched. The `0.9083` was `0.5208 + 0.3750 + 0.0125` -- the budget-4 delta
-added into the budget-8 row, an arithmetic slip on a column never measured.
-
 Two arms, both scored by the shipped evaluator
-(`improve_channel.descendant_score`, `improve_channel.py:507-535`):
+(`improve_channel.descendant_score`, `improve_channel.py:849-877`):
 
-- **blind** -- the shipped construction. `choose_query` is called with zero
-  vectors and `observe` is never called, so `self._candidates` stays the full
-  224-table class and the pick is `cands[rng.randrange(16)]`, a uniform draw
-  over open inputs (`rule_learner.py:33-50`).
+- **blind** -- the shipped construction. `choose_query` is called and
+  `observe` is never called, so `self._candidates` stays the full 224-table
+  class. The pick is the *smallest index among the inputs that tie on total
+  disagreement* (`rule_learner.py:71-79`).
 - **informed** -- `observe` is called with each real answer as it is gathered,
   which is the `observe=True` cell of the w4-leakage factorial.
 
-Cost is 150 seeds x 4 budgets x 2 arms. The budget-8 row reproduces the
-`0.5208`/`0.8958`/`+0.3750` triple the recommendation already reports, which is
-what confirms the construction is the intended one.
+Cost is 150 seeds x 4 budgets x 2 arms. Writes
+`reports/evidence/inv_r1_e4/budget-ladder.json`.
+
+## Why this script reconciles against a derived bound, not a table of literals
+
+An earlier revision held `EXPECTED_BUDGET_8`, three cohorts x three cells of
+decimals copied out of the recommendation document, and reported
+`reconciles: {blind, informed, delta}`. Two of those nine cells could never
+have been pinned to four places, and the freeze in `44ec6c52` proved it.
+
+**The blind cell was never a competence number.** Before the freeze the
+tie-break was `cands[self._rng.randrange(len(cands))]`, so the blind arm drew
+a fresh random 8-subset per seed: 150 distinct sequences over 150 seeds. Its
+`0.5017`/`0.5208`/`0.5292` is a draw from that distribution, whose per-cohort
+mean over uniform 8-subsets is `0.5195`/`0.5182`/`0.5134` (20 reps, sd
+`0.025`/`0.023`/`0.019`). Pinning a draw to four places pins the seed.
+
+**After the freeze it is not chance either.** With nothing observed, every
+open input's total disagreement is the same (448), so "smallest index on
+ties" always returns the lowest unqueried input and the blind arm emits
+`[0, 1, 2, 3, 4, 5, 6, 7]` for every seed. Measured over all 12870
+eight-subsets on 40 seeds, that subset ranks **22nd from the bottom**. So the
+`0.0600` is not "what blindness scores"; it is what this one unlucky subset
+scores. Either way the cell measures the tie-break, not the ladder.
+
+So the two blind cells and the two blind-derived deltas are deleted rather
+than re-pinned, and `reconciles` is replaced by `attains_bound`, which is
+computed from the instrument and holds or fails on its own:
+
+- `bound = ceil(log2(len(CLASS_TABLES))) = ceil(log2(224)) = 8`, the fewest
+  binary probes that can pin one member of the class.
+- The informed arm must reach `unqueried == 1.0` on **every** seed at that
+  budget, because the version space is then a singleton.
+- The blind arm must identify **nothing** at that budget, because it never
+  observes.
+
+Both halves are properties of the instrument and the data, not of a document.
+Both fail on the pre-freeze tree, where the informed arm's budget-8 mean was
+`0.8500`/`0.8958`/`0.9142` rather than `1.0`: the old tie-break spent probes
+on coin flips and left a non-singleton space. That is the regression this
+check now catches, and it is the check the frozen table could not express.
 
     uv run python -m experiments.ad01.e4_budget_ladder
     uv run python -m experiments.ad01.e4_budget_ladder --cohort original
-
-Writes `reports/evidence/inv_r1_e4/budget-ladder.json`.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
+import statistics
 import sys
 from pathlib import Path
 
 # The cohorts `STAGE-09-RECOMMENDATION.md` §1.1 reports, by name. `fresh_a` is
 # the default because it is the cohort the ladder's budget-8 blind cell named,
-# so it is the cohort against which the other three rows have to reconcile.
+# so it is the cohort against which the other rows have to reconcile.
 COHORTS = {
     "original": list(range(150)),
     "fresh_a": list(range(1000, 1150)),
@@ -48,17 +75,6 @@ COHORTS = {
 }
 
 BUDGETS = (1, 2, 4, 8)
-
-# The budget-8 figures `STAGE-09-RECOMMENDATION.md` §1.1 already reports for each
-# cohort, so `--cohort fresh_b` checks itself against what the document says
-# rather than against fresh_a's numbers. An earlier revision of this script
-# asserted fresh_a's literals unconditionally, which made a correct fresh_b run
-# print three `false` and read as a failed reconciliation.
-EXPECTED_BUDGET_8 = {
-    "original": {"blind": 0.5017, "informed": 0.8500, "delta": 0.3483},
-    "fresh_a": {"blind": 0.5208, "informed": 0.8958, "delta": 0.3750},
-    "fresh_b": {"blind": 0.5292, "informed": 0.9142, "delta": 0.3850},
-}
 
 
 def _sequences(seed: int, *, informed: bool, split: str) -> list:
@@ -96,8 +112,42 @@ def _sequences(seed: int, *, informed: bool, split: str) -> list:
     return chosen
 
 
-def _mean(values: list) -> float:
-    return sum(values) / len(values)
+def information_bound() -> int:
+    """Fewest binary probes that can pin one member of the hypothesis class."""
+    from . import boolean_rule as _rules
+    return math.ceil(math.log2(len(_rules.CLASS_TABLES)))
+
+
+def _attains_bound(cohort: str, split: str, seeds: list) -> dict:
+    """Did the informed arm earn the bound, and did the blind arm miss it?
+
+    Computed per seed and reduced with `all`, so one seed short of the bound
+    fails the check. A mean would hide it.
+    """
+    from . import boolean_rule as _rules
+    from . import rule_learner as _reducer
+
+    bound = information_bound()
+    informed_perfect = []
+    blind_perfect = []
+    for seed in seeds:
+        task = _rules.make_task(split, int(seed))
+        session = _rules.RuleSession(task)
+        learner = _reducer.VersionSpaceLearner(_rules.CLASS_TABLES, int(seed))
+        for x in _sequences(int(seed), informed=True, split=split)[:bound]:
+            learner.observe(x, session.query(x))
+        informed_perfect.append(max(learner.version_space_sizes()) == 1)
+        # The blind arm never observes, so its space is the whole class by
+        # construction. That is the claim under test, so assert it as one.
+        blind = _reducer.VersionSpaceLearner(_rules.CLASS_TABLES, int(seed))
+        blind_perfect.append(max(blind.version_space_sizes()) == 1)
+
+    return {
+        "budget": bound,
+        "informed_identifies_every_seed": all(informed_perfect),
+        "informed_seeds_short_of_bound": informed_perfect.count(False),
+        "blind_identifies_any_seed": any(blind_perfect),
+    }
 
 
 def measure(cohort: str, split: str = "audit") -> dict:
@@ -115,7 +165,7 @@ def measure(cohort: str, split: str = "audit") -> dict:
              for s in seeds]
         i = [descendant_score(informed[s][:budget], split, s)["unqueried"]
              for s in seeds]
-        mb, mi = _mean(b), _mean(i)
+        mb, mi = statistics.fmean(b), statistics.fmean(i)
         rows.append({
             "budget": budget,
             "n_queried": float(budget),
@@ -124,6 +174,11 @@ def measure(cohort: str, split: str = "audit") -> dict:
             "informed_unqueried": mi,
             "delta": mi - mb,
         })
+
+    # The blind arm is a property of the tie-break, so name the tie-break
+    # instead of pinning its mean. A reader who sees one sequence for every
+    # seed knows the column is not sampling.
+    blind_sequences = {tuple(v) for v in blind.values()}
 
     return {
         "cohort": cohort,
@@ -135,16 +190,10 @@ def measure(cohort: str, split: str = "audit") -> dict:
             "blind": "choose_query with zero vectors, observe never called",
             "informed": "choose_query reading each real answer, observe called",
         },
+        "blind_sequence": list(next(iter(blind_sequences))),
+        "blind_sequence_is_seed_independent": len(blind_sequences) == 1,
         "rows": rows,
-        "expected_budget_8": EXPECTED_BUDGET_8[cohort],
-        "reconciles": {
-            "blind": round(rows[-1]["blind_unqueried"], 4)
-            == EXPECTED_BUDGET_8[cohort]["blind"],
-            "informed": round(rows[-1]["informed_unqueried"], 4)
-            == EXPECTED_BUDGET_8[cohort]["informed"],
-            "delta": round(rows[-1]["delta"], 4)
-            == EXPECTED_BUDGET_8[cohort]["delta"],
-        },
+        "attains_bound": _attains_bound(cohort, split, seeds),
     }
 
 
@@ -165,8 +214,11 @@ def main(argv=None) -> int:
         print("%-7d %-8d %-9.4f %-9.4f %+-9.4f" % (
             r["budget"], r["unqueried_denominator"],
             r["blind_unqueried"], r["informed_unqueried"], r["delta"]))
-    print("reconciles with the recommendation's budget-8 row: %s"
-          % (result["reconciles"],))
+    print("blind arm emits %s for every seed: %s" % (
+        result["blind_sequence"], result["blind_sequence_is_seed_independent"]))
+    print("attains ceil(log2(class)) = %d: %s" % (
+        result["attains_bound"]["budget"],
+        result["attains_bound"]["informed_identifies_every_seed"]))
 
     out = Path(args.out) if args.out else (
         Path(__file__).resolve().parents[2]
