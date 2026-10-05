@@ -59,9 +59,10 @@ DISTINCT TOTAL:                   247
 
 An inferred cause is not a guess dressed as a finding. It is the exception type
 read off the summary line and nothing more, and it is labelled `inferred` in
-every row of the table and in the CSV. All 65 are concentrated in two files whose
-job printed no traceback bodies at all, and the reason is structural rather than
-incidental.
+every row of the table and in the CSV. They sit in **10 files** and split by
+mechanism: **60 across 9 `_heavy_archived` files** whose job printed no traceback
+bodies at all, and **5 XPASS in `tests/test_s09_normalizers.py`**, a different
+mechanism that does not yield to a log change.
 
 ## What the artifacts do and do not contain
 
@@ -74,21 +75,22 @@ are not.** The run was created 2026-10-05 and all 9 artifacts report
 | `suite-py3.13-1/suite.log` | 296,648 bytes, full tracebacks, 29 failures |
 | `suite-py3.13-2/suite.log` | 92,988 bytes, full tracebacks, 33 failures |
 | `suite-py3.13-3/suite.log` | 321,363 bytes, full tracebacks, 113 failures |
-| `heavy-archived` console + `heavy-failures.txt` | 72 IDs, bodies for 12 of 20 files |
+| `heavy-archived` console + `heavy-failures.txt` | 72 IDs, bodies for 11 of 20 files, covering 12 IDs |
 | `suite-py3.12-`, `suite-py3.13-`, `suite-py3.14-`, `suite-py3.13-4` | **progress dots only, 630 to 4,324 bytes, no FAILURES block** |
 
-The four jobs with no bodies were **cancelled** in this run, so their shard logs
-stop mid-progress. That is the whole reason 65 IDs stay inferred:
-`test_run_bounded.py` (27) and `test_s09iso_stale_sweep.py` (7) fail with a
-one-line `FileNotFoundError` that `pytest -q` prints without a body, plus
-`test_s09_bound_use_proof.py` (9), `test_r01_recovery.py` (5),
-`test_r03_flow.py` (4), `test_rec_restore.py` (4), `test_broker_dbos.py` (2),
-`test_ec02ad_verif.py` (1) and `test_rpr07_resume.py` (1).
+Those four cancelled jobs are **suite** shards, and they hold **none** of the 65; every
+ID assigned to one of them already has a body from a different shard. **The 60
+hheavy-side inferred IDs come from the `heavy-archived` job, which is not one of the
+cancelled jobs.** The reason is mechanical: that job runs `pytest -q` once per file, and
+under `-q` pytest prints a single-line `FileNotFoundError` with no body and no blame
+line. The 60 sit in:
 
 **The highest-value fix in this document is a CI-config fix, not a code fix.**
 The heavy job runs `pytest -q` once per file, which suppresses the FAILURES block
 and prints each ID twice, truncated then full. Dropping `-q`, or archiving the
-full stdout, makes every one of the 65 inferred IDs rootable on the next run.
+full stdout, makes the 60 heavy-side inferred IDs rootable on the next run. The
+other 5 are `XPASS(strict)`, which pytest reports without a traceback body under any
+verbosity, so those need a decision about the xfail markers rather than a log change.
 That single change is worth more than any cause below it.
 
 ## Three parser bugs, recorded because each produced confident wrong answers
@@ -122,9 +124,9 @@ Groups are disjoint and sum to **247**. `R` is rooted (traceback or blame line),
 | E PostgreSQL unavailable | **8** | 3 | 5 | open | `connection to server on socket ... failed` |
 | H `PolicyNotProved` on bound-use proof | **8** | 0 | 8 | open | `needs a store, an allocation and an operation` |
 | C Git pinned-ref unresolvable in a depth-1 clone | **7** | 7 | 0 | open | `CalledProcessError ... exit status 128` |
-| I `LiveRefused` on store authority binding | **7** | 7 | 0 | open | `live_construct.py:1369` |
+| I `LiveRefused` on store authority binding | **7** | 7 | 0 | open | `improve_channel.py:2330` |
 | N Stale citation line, 7 distinct defects | **7** | 7 | 0 | open | `test_m0_plan_claims.py:82,128,145,163,197,216,318` |
-| P Stale claim needing re-derivation | **6** | 6 | 0 | open | `final_accept_findings.py:148,242`, `supersession.py:67,159`, `r_final_freeze_and_chain.py:207,325` |
+| P Stale claim needing re-derivation | **6** | 6 | 0 | open | `test_final_accept_findings.py:148,242`, `test_evidence_supersession.py:67,159`, `test_r_final_freeze_and_chain.py:207,325` |
 | L Regex no-match | **6** | 4 | 2 | open | `AssertionError: Regex pattern did not match` |
 | AR XPASS(strict) xfail, no traceback body | **5** | 0 | 5 | open | `[XPASS(strict)] the guard is a value comparison` |
 | AA Use path refuses where acquired bytes were expected | **4** | 4 | 0 | open | `test_aleb_construct.py:156`, `test_alec_episode.py:54`, `test_bacq_method.py:75`, `test_aled_campaign.py:272` |
@@ -161,10 +163,16 @@ Per-file distribution for all 77 failing files is in
 `reports/evidence/ci-failure-causes-37261826154-files.csv`. One row per file,
 columns `test_file,total,categories`. Each category cell is
 `CODE=count(evidence source-line)`, where the code is the same letter used in
-the table above, the evidence is `rooted`, `inferred`, or `nR/mI` when one cause
-holds both kinds across two files in that row's family, and the trailing
-`file:line` is a representative blame line for the cause in that file. The CSV's
-per-cause counts sum to 247, and to 182 rooted and 65 inferred.
+the table above and the evidence is `rooted` or `inferred`. A `nR/mI` form is
+defined for a cause holding both kinds across two files, but this data never
+produces it: within any one file each cause is uniformly one kind. The trailing
+`file:line` is a pytest blame line: the frame pytest names for that failure, which is
+the line to read first but **not always the raising line**. pytest names the deepest
+frame it treats as the test's own, so for a fixture-built failure it can be a setup
+line. Where the raising site is knowable from the exception text it is named in the
+cause table instead: cause `I` raises at `improve_channel.py:2330`, not at the
+`live_construct.py` line 1369 frame an earlier draft cited, which is a blank line
+docstring. The CSV's per-cause counts sum to 247, and to 182 rooted and 65 inferred.
 
 ## The three named clusters, settled
 
@@ -212,59 +220,71 @@ for 3 of 4 and wrong for the fourth, which it had folded in. **The 3 refusals
 must not be "fixed".** They are the tests refusing to run vacuously, and the fix
 is to configure the credential in CI, not to weaken the assertion.
 
-### Cluster 3, stale-claim re-derivation: 5 need re-reading, 1 is unfixable here, 2 are live defects
+### Cluster 3, stale-claim re-derivation: 6 IDs, and only 3 need re-reading
 
-The prior pass grouped 8 under "needs a human re-read". They are three things:
+The prior pass grouped 8 under "needs a human re-read". **It is 6 IDs, not 8, and
+only 3 of those are genuine documentation drift.** An earlier draft of this document
+counted `test_r_final_freeze_and_chain.py:207` and `:325` under both "stale" and
+"live defect", which is why it said 8. The counts below partition the 6:
 
-- **Genuinely stale claims, 5.** `test_final_accept_findings.py:148` (the B4
-  freeze artifact's own text no longer matches), `:242` (an archived generator
-  reads `channel.REACHABLE_EVIDENCE`, which lane C4 deleted with the fixed menu,
-  and its own message says the deletion is correct),
-  `test_evidence_supersession.py:159`, `test_r_final_freeze_and_chain.py:207`
-  and `:325` (`amend_protocol no longer opens two connections; re-derive RF-03`).
+- **Genuinely stale claims, 3.** `test_final_accept_findings.py:148` (the B4 freeze
+  artifact's own text no longer matches) and `:242` (an archived generator reads
+  `channel.REACHABLE_EVIDENCE`, which lane C4 deleted with the fixed menu, and its own
+  message says the deletion is correct), and `test_evidence_supersession.py:159`.
 - **Unresolvable reference, 1.** `test_evidence_supersession.py:67`:
-  `intact_at_ref 'd422c93' is not a commit in this repository`. This is not
-  staleness, it is a marker pointing at a ref that does not exist in this repo.
-- **Live defects, 2.** Both in `test_r_final_freeze_and_chain.py`. At `:207` the
-  verdict stopped claiming `informs_decision`, so the row that would hide a
-  smuggled write is no longer produced, which means the guard is no longer
-  exercised. At `:325` the protocol opens 0 connections where 2 were required.
+  `intact_at_ref 'd422c93' is not a commit in this repository`. Not staleness, but a
+  marker pointing at a ref that does not exist in this repo.
+- **Live defects, 2.** Both in `test_r_final_freeze_and_chain.py`. At `:207` the verdict
+  stopped claiming `informs_decision`, so the row that would hide a smuggled write is no
+  longer produced and the guard is no longer exercised. At `:325` the protocol opens 0
+  connections where 2 were required.
 
-**Verdict.** Reading all 8 as "needs a human re-read" would have left two live
-defects unexamined and one unfixable reference looking like a documentation task.
+**Verdict.** 3 + 1 + 2 = 6. Reading all 8 as "needs a human re-read" would have left two
+live defects unexamined and one unfixable reference looking like a documentation task.
 
-## Cause K: narrowed from four candidates to one, and why
+## Cause K: the baseline had already narrowed it; what is new is the raise above the four
 
-The baseline left K (containment preexec, 3 IDs) unattributable across four
-raising sites in `launcher_local.py`, and the prior pass did not narrow it. **It
-narrows, and not from the log. From the test side.**
+**The baseline got here first, and this section should not pretend otherwise.**
+`ci-baseline-37172638343.md:94-104` already identified `read_deny` as the
+discriminator: *"All three failures declare a read deny list; the passing sibling in
+the same file dispatches through the identical helper and declares none.
+`_child_setup` (`launcher_local.py:991`) calls `_landlock_restrict` only when
+`deny` is non-empty."* It also already grouped the four candidate raising sites
+(`prctl` :296, `landlock_create_ruleset` :299, `landlock_add_rule` :312,
+`landlock_restrict_self` :318). **An earlier draft of this document claimed the
+narrowing as new. That was wrong, and it is corrected here.**
 
-All 3 fail at the same assertion, `assert outcome.sent is True`, with
-`child-setup-failed: SubprocessError: Exception occurred in preexec_fn`. The
-body shows the only branch that can produce that string, the `except Exception`
-around `Popen` at `launcher_local.py:888`. CPython discards the child's real
-exception in `_posixsubprocess.c`, so the log alone cannot name the site.
+**What this pass adds is a fifth candidate the baseline's four do not include.**
+The baseline stopped at "the log cannot say which", correctly, because CPython
+discards the child exception before the parent sees it. Reading the source shows a
+raise *above* all four syscall sites, before any of them is reached.
+`_landlock_restrict` opens with:
 
-The test side can. In `test_n36_containment.py` the two failing tests both guard
-on `landlock_available()` and then pass `deny=[str(REPO_ROOT / "experiments")]`.
-The three passing siblings either pass no `deny` or declare none.
-`_child_setup` calls `_landlock_restrict` **only when `deny` is truthy**
-(`launcher_local.py:999-1000`), and `_landlock_restrict` raises
-`OSError(ENOSYS, probe.reason)` when the kernel probe is unavailable
-(`:257-258`).
+```
+probe = probe_landlock()
+if not probe.available:
+    raise OSError(_errno.ENOSYS, probe.reason)
+```
 
-**So the failing set is exactly the set that declares a read deny list, and the
-raising site is the Landlock install at `launcher_local.py:1000`, not the other
-three candidates.** The passing sibling passes for a mechanical reason: no deny
-list, no Landlock call, nothing to fail. Verified that `launcher_local.py` and
-both n36 test files are byte-identical between `d4eb4126` and HEAD, so the code
-read is the code that ran.
+at `launcher_local.py:256-258`. A child raising `ENOSYS` there produces exactly the
+observed `SubprocessError: Exception occurred in preexec_fn`, without calling a
+syscall at all. **The four baseline candidates all sit below that check, so if the
+probe is what failed, none of the four is the answer** and the candidate set is five
+deep, not four, with the shallowest being a kernel-availability check rather than a
+syscall.
 
-**Residual limit, stated plainly.** Which Landlock syscall failed cannot be
-named, and cannot be, because the child exception is discarded before the parent
-sees it. Narrowing four candidates to one is what the evidence supports;
-naming the syscall would be invention.
+All 3 failures also reach the same assertion, `assert outcome.sent is True` at
+`test_n36_containment.py:70` and `test_n36_refusal_strand.py:257`, with the refusal
+string built at `launcher_local.py:932`. I verified `launcher_local.py` and both n36
+test files are byte-identical between `d4eb4126` and HEAD, so the code read is the
+code that ran.
 
+**Residual limit, stated plainly.** Which of the five failed cannot be named from any
+log, and cannot be, because the child exception is discarded before the parent sees
+it. A run that captured child-side stderr, or a run on a kernel where
+`probe_landlock()` is known-good, would separate these in a single run. **The
+baseline's "not identifiable from this log" still holds; the candidate list is
+five, not four.**
 ## Causes the prior pass classified from the message, re-derived from tracebacks
 
 The prior pass classified D, E, F, G, H, I and J from summary lines. Re-derived:
@@ -280,7 +300,7 @@ The prior pass classified D, E, F, G, H, I and J from summary lines. Re-derived:
 | G exec-authority | 11 | **11** | Holds at 11, in the same files. **Still did not shrink**, the clearest negative result in the run |
 | H `PolicyNotProved` | 8 | **8** | Holds. All 8 inferred; no traceback exists for that file |
 | I `LiveRefused` | 8 | **7** | **Shrank by 1.** `test_binding_provenance.py` fails with `revision parent is not the active program`, a different defect, now cause AQ |
-| J XPASS | 5 | **5** | Holds. pytest prints no body for XPASS, so these stay inferred; the reason line is authoritative |
+| AR XPASS | 5 | **5** | Holds. pytest prints no body for XPASS, so these stay inferred; the reason line is authoritative |
 | L regex | 8 | **6** | **Shrank by 2**, both reattributed to D |
 | K preexec | 3 | **3** | Holds, but narrowed from 4 sites to 1 |
 
