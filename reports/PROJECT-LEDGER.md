@@ -266,6 +266,46 @@ any `.md`, `.json`, `.py` or `.txt` file on the tree, and `git log --all -S` fin
 nothing. It was never committed. Nothing needs withdrawing, but nothing should
 cite it either.
 
+### M3's valid null survives the learner freeze, all three legs
+
+`reports/workstreams/m3-revalidation.md` re-derives it. The question was whether
+the null's legs rested on the learner whose selection rule was frozen; the answer
+is assessed **per leg by whether that leg constructs a version space at all**,
+which is the structural test rather than a re-assertion.
+
+- **Leg (a), the four independent AD01 grounds — survives untouched.** None
+  constructs a `VersionSpaceLearner`, and grep for the ladder in
+  `m3-instrument-census.md` and `m3-expressive-probe.md` returns zero hits.
+- **Leg (b), the SWE cell is `degenerate` on every instance — survives
+  untouched.** That probe enumerates edits and scores through `tasks.score`; it
+  never builds a version space, and its inputs are the task's source text and the
+  scorer's three cases, neither of which the freeze touched.
+- **Leg (c), Boolean and ordering cannot execute a program — survives as stated,
+  and its own numbers improve.** The claim is about the world's grammar, and
+  `RuleSession` exposes no execution action. One distinction matters inside it:
+  the census's "8 of 8 probes are sufficient in principle" is
+  information-theoretic and unmoved; what the freeze changed is **attainment**, not
+  sufficiency. The frozen rule reaches the bound on all 224 where the old
+  tie-break missed 64.
+
+**So M3 still closes as a measured zero**, and the supported-cell count is zero for
+reasons that never touched the learner.
+
+**What the freeze did invalidate was a separate claim, and that check was deleted
+rather than re-pinned.** `e4_budget_ladder`'s `reconciles` compared measured
+cohort values against frozen literals, and after the freeze two of its nine cells
+were unreachable by construction. It is replaced by `attains_bound`, computed from
+`ceil(log2(224)) = 8` and reduced with `all` per seed so one seed short of the
+bound fails it, where a mean would hide it. **It has no blind-arm half, and the
+absence is the finding:** a learner never given an observation retains the whole
+class by construction, so a blind check there is a tautology dressed as a
+measurement. That check fails on the pre-freeze tree, where the informed arm's
+budget-8 mean was 0.8500/0.8958/0.9142 rather than 1.0 — the old tie-break spent
+probes on coin flips and left a non-singleton space.
+
+This re-run is an **apparatus repair, not a replication**, and no independent-run
+claim is made from it.
+
 ### M2's clause is earned on the amended freeze, and the caps did not move
 
 The amendment adds **one** probe (`SECOND_PROBE_OPPORTUNITY = "z-extra"`, x=11) so
