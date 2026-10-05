@@ -44,14 +44,18 @@ from conftest import live_mission, unique
 DRIVER_PATH = ROOT / "scripts" / "invl02_live.py"
 LIVE_PATH = ROOT / "experiments" / "ad01" / "live_construct.py"
 
-#: Six child executions per investigation are already priced by
-#: `reports/cap-sheets/e0-e12-child-execution-caps.md`, which counted the two
-#: operate choices at one each. The thread does not add executions -- the same
-#: three choices still run, on the study's ledger instead of a disposable one --
-#: so the ceiling stays declared at a figure with room and the test asserts the
-#: count rather than raising it. It is declared because an undeclared
-#: `sandbox_calls` is an unbounded resource wearing a grant's clothes
-#: (`store.py:1439-1441` iterates only the names a study declared).
+#: A per-test budget for the disposable study this file authorizes, and
+#: nothing more. It is generous rather than derived: the figure the driver
+#: budgets for a real study is `E0_SANDBOX_CALLS`/`E12_SANDBOX_CALLS` at
+#: `scripts/invl02_live.py:63-64`, which is a different number about a different
+#: allocation. An earlier comment here claimed this one was priced by the cap
+#: sheet, that the thread left the execution count unchanged, and that the test
+#: asserted the count. None of that was true: the cap sheet's per-investigation
+#: figure is 9 rather than the 6 it named, the count did change, and `CEILING`
+#: is referenced exactly twice in this file -- its definition and this fixture.
+#: It is declared because an undeclared `sandbox_calls` is an unbounded resource
+#: wearing a grant's clothes (`store.py:1439-1441` iterates only the names a
+#: study declared).
 CEILING = 12
 
 
@@ -248,12 +252,19 @@ def test_the_compared_choices_settle_under_the_study_allocation(
     execution, so a receipt naming it names nothing that survives. The test
     therefore reads the operations row rather than trusting a returned value,
     because the returned value is the same dict in both worlds.
+
+    What this does NOT establish, and previously appeared to: that three arms
+    settled. With no recorded observation, `_control_triple` returns one dict
+    three times (`scripts/invl02_live.py:2062-2065`), so there is exactly one
+    execution and three copies of it. The earlier `assert choices` and
+    `assert operate` were truthiness checks on one-element sets and could not
+    fail for any return value. Proving three distinct executions needs a
+    fixture carrying a recorded observation, which this one deliberately does
+    not; the claim it does make -- that whatever executed landed on the study's
+    allocation rather than a disposable database -- is the one that was broken.
     """
     store, package = owned_store
-    arms = _driver._control_triple(store, package, "control",
-                                   authority=study)
-    choices = {arms["preserved"]["choice"], arms["disconnected"]["choice"],
-               arms["refuted"]["choice"]}
+    _driver._control_triple(store, package, "control", authority=study)
 
     rows = _rows(study["dsn"],
                  "SELECT id, allocation_id FROM operations"
@@ -269,17 +280,10 @@ def test_the_compared_choices_settle_under_the_study_allocation(
     # is the only thing separating their operations, and an id reading
     # `noarm` would offer the ledger one operation for both.
     operate = {op for op in ids if op.startswith("invl02-op-")}
-    assert operate, sorted(ids)
     assert all("-control-" in op or "-live-" in op for op in operate), (
         "an operate operation id does not name its arm: %s" % (sorted(operate),))
     assert not any("noarm" in op for op in operate), (
         "an operate operation id still reads noarm: %s" % (sorted(operate),))
-    # The three compared choices are three distinct executions, not one
-    # execution read back three times. On this store the recorded evidence is
-    # empty, so the triple collapses to the disconnected arm by its own
-    # documented rule; the distinction is asserted on the arm labels rather
-    # than on the choice values, which coincide here by design.
-    assert choices
 
 
 def test_two_arms_of_one_study_do_not_share_an_operation(study):
