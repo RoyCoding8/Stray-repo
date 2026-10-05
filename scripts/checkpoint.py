@@ -12,11 +12,11 @@ dispatch, bumps the admission epoch, fences in-flight senders with a
 dispatch-generation bump, snapshots the journal and undelivered outbox,
 reads the barrier-point state, dumps, verifies no movement, writes the
 manifest and artifacts, verifies again, then releases the pause. Any
-movement in either interval refuses to certify. `run.suspend_for_barrier`
-records per-attempt suspension under a barrier ref. An optional
---workflow-dsn extends the barrier, dump and verification to the
-coordinated workflow store (a real DBOS system database, or a
-Settlement-shaped store labeled as such).
+movement in either interval refuses to certify. The barrier is dispatch-wide
+(`control.dispatch_paused`), not per attempt. An optional --workflow-dsn
+extends the barrier, dump and verification to the coordinated workflow
+store (a real DBOS system database, or a Settlement-shaped store labeled as
+such).
 """
 
 from __future__ import annotations

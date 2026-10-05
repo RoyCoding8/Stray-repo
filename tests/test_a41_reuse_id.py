@@ -20,16 +20,14 @@ disposition in `agenda.py`, which does not read ids at all.
 
 What actually makes the row inert is the signature of the boundary, not the
 shape of the id. `run_campaign` mints its own id with `campaign_id(world, arm,
-campaign_seq)` and takes no cid, so no id of any shape can enter it. Four
-production sites write `investigations.in_flight` -- `admit_operation`,
-`resume_operation`, `release_operation` and `_hold_on_mission_entry` -- and
-every one of them is reachable only with an id `run_campaign` minted:
-`accept_action` and `execute_pending` are its two doors into the operation
-lifecycle, `execute_pending`'s only production caller is `run_campaign`, and
-`suspend_for_barrier` derives its investigation from the attempt row rather
-than from a caller-supplied id. `run_use` -- the arm the reuse panel actually
-runs -- calls none of them, and `method_exec.py`, which runs the member, names
-no attempt or investigation at all.
+campaign_seq)` and takes no cid, so no id of any shape can enter it. The three
+production writers of `investigations.in_flight` are `admit_operation`,
+`resume_operation` and `release_operation`, and every one of them is reachable
+only with an id `run_campaign` minted: `accept_action` and `execute_pending`
+are its two doors into the operation lifecycle, and `execute_pending`'s only
+production caller is `run_campaign`. `run_use` -- the arm the reuse panel
+actually runs -- calls none of them, and `method_exec.py`, which runs the
+member, names no attempt or investigation at all.
 
 So the reuse panels admit a commitment that holds nothing. That is a reuse
 panel, not a half-built campaign: there is no admitted operation to restore,

@@ -394,12 +394,12 @@ def test_no_production_path_writes_the_column_beside_the_mission_module():
     at runtime.
 
     `AGENTS.md` asks for the earliest wrong ownership boundary repaired
-    rather than a second authority beside it. `mission.admit_operation` is
-    the only code that writes `investigations.in_flight`; this enumerates
-    the writers of that column across `experiments/`, `src/` and `scripts/`
-    and requires the set to be the one that was already there. A repair that
+    rather than a second authority beside it. `experiments/ad01/mission.py`
+    owns `investigations.in_flight`, and this enumerates every function that
+    writes that column across `experiments/`, `src/` and `scripts/` and
+    requires the set to be the three writers in that one module. A repair that
     had the frontier store or the campaign driver write the column itself
-    would show up here as a second function.
+    would show up here as a second module in the set.
     """
     import ast
     import re
@@ -458,12 +458,10 @@ def test_no_production_path_writes_the_column_beside_the_mission_module():
 
 
 # Measured by the enumeration above at 655d684, and re-derived from the tree
-# rather than remembered. Four writers in two modules: three in `mission`,
-# which owns the column, and `run._hold_on_mission_entry`, which the barrier
-# suspension path reaches and which this lane does not own.
+# rather than remembered. Three writers, all in `mission`, which owns the
+# column. A fourth writer outside this module would add a key here.
 _EXPECTED_WRITERS = [
     "experiments/ad01/mission.py :: admit_operation",
     "experiments/ad01/mission.py :: release_operation",
     "experiments/ad01/mission.py :: resume_operation",
-    "src/settlement/run.py :: _hold_on_mission_entry",
 ]

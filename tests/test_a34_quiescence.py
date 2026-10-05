@@ -119,14 +119,15 @@ def test_an_admitted_operation_is_not_quiescent(store, inv):
 
 @pytest.mark.parametrize("state", ["held", "restored", "suspended"])
 def test_every_in_flight_state_is_not_quiescent(store, inv, state):
-    """All three of the column's own states, reached by their own writers.
+    """All three of the column's own states, each reached as its own writer
+    reaches it.
 
     Not by writing the literal into the column. `resume_operation` is what
-    makes a state `restored`, and a store's `settle` has no bearing on either
-    side. The suspended state is the one the mission module does not write, so
-    it is written the way the barrier writes it: the same list with one
-    entry's `status` and `barrier_ref` replaced, which is what
-    `run.suspend_for_barrier` does at `run.py:631`.
+    makes a state `restored`. `suspended` is declared by `IN_FLIGHT_STATES` and
+    is what a barrier records, so it is written as a barrier writes it: the
+    same list with one entry's `status` and `barrier_ref` replaced. No barrier
+    caller exists in this tree, so the fixture writes it directly rather than
+    inventing a seam to call.
 
     If a state were added to the column later and turned out to mean the work
     is finished, this is the test that says so.

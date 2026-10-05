@@ -557,15 +557,13 @@ def admit_boundary(dsn: str, cid: str, seq: int, decision: dict, *,
     `capability_id` it records.
 
     This adds no writer, which is a claim about this seam rather than about
-    the column. `investigations.in_flight` has four writers in two modules:
-    `mission.admit_operation`, `mission.resume_operation` and
-    `mission.release_operation`, which own the column, and
-    `run._hold_on_mission_entry`, which the barrier suspension path reaches.
-    `admit_operation` is not the only one, so the correctness here is that
-    this reaches the owning writer through `accept_action` rather than beside
-    it. Both sides hold `FOR UPDATE` across their read-then-write, which is
-    what makes two writers to this column safe rather than a lost update;
-    that argument belongs to each writer's own docstring, not to this one.
+    the column. `investigations.in_flight` has three writers and all three are
+    in `mission`, which owns the column: `admit_operation`, `resume_operation`
+    and `release_operation`. The correctness here is that this reaches the
+    owning writer through `accept_action` rather than beside it. `mission`
+    holds `FOR UPDATE` across its read-then-write, which is what makes a
+    writer to this column safe rather than a lost update; that argument
+    belongs to each writer's own docstring, not to this one.
     """
     return accept_action(dsn, cid, seq, decision,
                          program_digest=program_digest,

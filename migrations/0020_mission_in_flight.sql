@@ -6,8 +6,8 @@
 -- it resume": `s09_policy_state.accepted_action` held the admitted decision but
 -- named neither the program that admitted it nor the inputs it was admitted
 -- under, `continuation_docs` held a parallel continuation document with its own
--- key and its own `unresolved_ops`, and `run.suspend_for_barrier` suspended an
--- attempt while recording nothing about the operation it suspended.
+-- key and its own `unresolved_ops`, and the settlement-side barrier suspended
+-- an attempt while recording nothing about the operation it suspended.
 --
 -- The consequence was the one this program cannot afford. A restart reads the
 -- admitted decision and knows what to run, but not WHICH PROGRAM admitted it or
@@ -25,9 +25,12 @@
 ALTER TABLE investigations
   ADD COLUMN in_flight JSONB NOT NULL DEFAULT '[]';
 
--- The operations whose restoration a barrier is waiting on. A barrier is a
--- reason to hold work; without naming the operation there is nothing for a
--- resume to route at, which is how `suspend_for_barrier` came to suspend an
--- attempt and record no operation at all.
+-- The in-flight list, indexed for containment queries over its entries. The
+-- column's reason for existing is the paragraph above: a restart must read the
+-- identity an operation was admitted under rather than recompute one. A
+-- barrier used to be a reason to hold work and needed an operation named to
+-- resume at, which is what this column was introduced to provide; nothing
+-- writes `barrier_ref` a second time now, so it is indexed as the recorded
+-- state of an investigation rather than as a barrier's private channel.
 CREATE INDEX investigations_in_flight_idx ON investigations
   USING gin (in_flight jsonb_path_ops);
