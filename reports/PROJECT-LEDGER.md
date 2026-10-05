@@ -50,9 +50,48 @@ replaces both. It ends by comparing the installed client against the live
 keeps `inputs.major` and the service image from drifting apart unnoticed.
 
 **Not claimed.** 65 of the heavy job's 72 failures are **not** `pg_dump`. Those
-are separately real. And run `37320129823` at `3a4ae428` is the first
-measurement of any of this; until it completes with shard artifacts present,
-the repair is committed and unverified.
+are separately real. And the first measurement of this repair, run `37320129823`
+at `3a4ae428`, **failed too**, in the place it was built to catch.
+
+### The first measurement failed, and the check caught it
+
+That run's log is unambiguous. The archive step succeeded. The install
+succeeded — `postgresql-client-18 (18.6-1.pgdg24.04+2)` unpacked and set up.
+Then the action's third step printed:
+
+```text
+pg_dump client major: 16
+postgres server major: 18
+##[error]pg_dump 16 cannot dump a PostgreSQL 18 server
+```
+
+So all seven suite jobs again stopped before `Suite`. **The repair installed the
+right package and it still was not the `pg_dump` anything calls.**
+
+The archive's own `Contents-amd64` index says why:
+
+```text
+usr/bin/pg_dump                 database/postgresql-client-common
+usr/lib/postgresql/18/bin/pg_dump  database/postgresql-client-18
+```
+
+`/usr/bin/pg_dump` is not 18's binary. It belongs to
+`postgresql-client-common`, a wrapper that dispatches to the newest *registered*
+client, and the runner image had already registered 16. Installing 18 beside it
+put the binary on disk at a path nothing on `PATH` reaches. `48c187e2` prepends
+`/usr/lib/postgresql/<major>/bin` to `GITHUB_PATH`.
+
+**The check is what made this cheap.** It read the live server rather than the
+constant, so the mismatch surfaced as a setup error in the step that caused it,
+one line of output, instead of as 7 unrelated checkpoint failures spread across
+four shards. That is the whole argument for the check, and it is now measured
+rather than asserted. Without it the second attempt would have gone in
+unnoticed and I would have reported a third unverifiable "fixed".
+
+**Three attempts, and the third is still unmeasured.** The package name was
+right and unreachable (`f2e45a06`), the archive is now reachable and the binary
+still shadowed (`3a4ae428`), `PATH` is now set (`48c187e2`). Only a run with
+**shard artifacts present and non-zero size** settles it.
 
 ## The 247 CI failures are mostly rooted now, 2026-10-05
 
