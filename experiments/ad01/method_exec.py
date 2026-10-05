@@ -1340,9 +1340,17 @@ def _validator_refuses(literal) -> bool:
     every refusal recorded above this line is unchanged: `None` is still
     inert, and a `{"kind": "teleport"}` dict is still refused here exactly
     as `validate_step_result` refuses it one step later.
+
+    The field check is asked of a dict alone, and that is the whole of its
+    scope. It used to be asked of anything, so a non-dict was refused here
+    without a contract ever being consulted -- which meant a contract that
+    stopped refusing `None` could not re-admit it, and the gate answered a
+    question about shape before asking the thing that owns the answer. The
+    monotonicity above is now true on every path rather than only where the
+    literal happens to be a dict.
     """
     from . import policy_action, policy_step
-    if not isinstance(literal, dict) or any(
+    if isinstance(literal, dict) and any(
             field not in literal for field in policy_step.ACTION_REQUIRED):
         return True
     try:
