@@ -463,7 +463,52 @@ currently a fact about the **bytes**, not about the route that would admit them.
 
 
 
-### M2's clause is earned on the amended freeze, and the caps did not move
+### M2's compared arms now settle under the study allocation
+
+The `run_operate_step` seam is closed. `choose_next_work`
+(`live_construct.py:1193`) reached `run_operate_step` with no authority, so the
+arms `observation_dependent` compares executed against a **disposable** ledger and
+their receipts never touched the study allocation. That was the qualification
+recorded above, and it is now a repair rather than a note.
+
+`_run_frontier_investigation` already built `authority = _study_authority(dsn,
+allocation_id)` for the improve rounds 46 lines above the `_control_triple` call,
+so the thread was short: `authority` is a **required keyword** on `_control_triple`
+and is forwarded to all three `choose_next_work` calls. **No second derivation** —
+a test asserts `_study_authority` is called exactly once inside
+`_run_frontier_investigation` and zero times inside `_control_triple`.
+`WORKER-PROMPT.md:158` requires one campaign authority per study, and deriving a
+second inside the investigation is the mistake the r123 repair avoided.
+
+**The ceilings moved, and that is the finding rather than a detail.** Threading
+the authority does not *add* executions — it **moves** three per investigation onto
+the study's allocation, where `_check_study_ceilings` counts them. They settled on
+a different `dsn` under a different study root before, so no ceiling was ever
+charged for them. **`E0_SANDBOX_CALLS` 19 → 21 and `E12_SANDBOX_CALLS` 30 → 33**,
+re-derived by AST. Left unchanged they would have refused the very run this repair
+exists to enable.
+
+**Neither pinned verdict moved.** `observation_dependent` stays `True` and
+`falsifier_moves_decision` stays `False` on the E0 freeze, measured across all 16
+second inputs rather than assumed.
+
+Two further findings. **`preserved` and `refuted` share one operation id on this
+freeze**, because the rewrite is a no-op where the run already earned
+`not_preserved` — so the views are equal and the second reads the first's receipt.
+That is the executor's designed idempotence and it is sound, but it put
+`falsifier_moves_decision` at risk of reading `False` for the wrong reason. The
+invariant that actually holds is sharper: an id is shared exactly when the
+evidence is equal, and `disconnected` never collides with `preserved`. The lane's
+first tool asserted "three distinct ids", was wrong, and said so. Separately, the
+`noarm` docstring was **stale rather than descriptive** — the arm has reached the
+operation id since `a54a103c`.
+
+**Not verified here:** three PostgreSQL-backed tests are written and unexecuted, so
+the durable-receipt claim rests on CI alone.
+
+
+
+### M2's clause is earned on the amended freeze (superseded on the caps by the section above)
 
 Not verified: the end-to-end path through `run_step_out_of_process`, which needs a
 real allocation row and a subprocess. The shipped operate bytes run and the
@@ -473,12 +518,12 @@ confirms the durable route.**
 **What "earned" does and does not cover here, stated precisely.** The verdict is
 earned in the sense that matters for the clause: the arm moves only where the
 instrument's own evaluator earned a refutation, 14 of 14 on `not_preserved` and
-0 of 1 on `observed`. What is **not** yet covered is the execution provenance
-underneath that verdict. `choose_next_work` reaches `run_operate_step` with no
-authority, so the arms `observation_dependent` compares settle their receipts on
-a **disposable** database rather than under the study allocation. The selection
-is therefore earned; the executions behind it are not yet what the milestone
-assumes, and closing that is the open seam recorded above.
+0 of 1 on `observed`. **The execution provenance underneath it was not covered
+when this was written**: `choose_next_work` reached `run_operate_step` with no
+authority, so the arms `observation_dependent` compares settled their receipts on
+a **disposable** database. **That is now repaired** — see the section above, which
+records the thread and the ceilings it moved. The qualification applied to the
+moment this was measured; it no longer describes the tree.
 
 **Extending the freeze was measured and rejected.** Sweeping every second probe
 input against the real dev rule: 14 of 15 earn `not_preserved` (all but x=0 and
