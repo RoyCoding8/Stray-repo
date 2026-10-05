@@ -443,12 +443,23 @@ requires an **inherited** change, not a **learned** one, so an authored revision
 sufficient for the mechanism and that is what was delivered. An authored revision
 can never enter an acquired arm, having no dispatch and no provenance.
 
-**Not closed:** gate 6 is the one eligibility gate this could not execute, because
-`_execution_ledger` opens a disposable PostgreSQL for every execution of policy
-source. Five of six run with no database. **If gate 6 refuses, the effectful arm
-is not eligible** and the mechanism measurement describes bytes the rule would
-reject. That needs CI's `postgres:18`, along with `drive_improve_round` under real
-authority.
+**Not closed:** gate 6 is the one eligibility gate this could not execute, and the
+reason is a design choice rather than an incidental wrapper.
+`revision_evidence_choices` (`improve_channel.py:230-248`) **executes the
+revision's bytes under real authority** — its docstring says scanning the text for
+a literal "would miss a computed x, and a computed x is exactly the case that
+decides the improvement" — so `_disposable_authority` opens a PostgreSQL database
+at `:1832` and the gate cannot run without one. I confirmed this by calling it, not
+by reading it: `delegates_to_frozen_reducer` on the effectful source raises
+`psycopg.OperationalError` at the socket.
+
+So **all six gates need CI's `postgres:18`**, not five of six. **If gate 6
+refuses, the effectful arm is not eligible** and the mechanism measurement
+describes bytes the rule would reject. `drive_improve_round` under real authority
+is the other half, replacing the harness's direct execution with the production
+path — so "the effectful control changes the next descendant-producing episode" is
+currently a fact about the **bytes**, not about the route that would admit them.
+
 
 
 
