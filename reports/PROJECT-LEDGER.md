@@ -93,6 +93,57 @@ right and unreachable (`f2e45a06`), the archive is now reachable and the binary
 still shadowed (`3a4ae428`), `PATH` is now set (`48c187e2`). Only a run with
 **shard artifacts present and non-zero size** settles it.
 
+### Measured, run `37320655078`
+
+All four shard artifacts present and non-zero (36352 / 24579 / 15629 /
+26467 B). **The `pg_dump` version-mismatch count is 0 in every shard body.**
+Shard 3 fell 113 → 25. Like-for-like against `37305881683` over shards 1–3:
+**96 fixed, 3 new**, and the 3 are `bf2104a5`.
+
+**Shard 4's 52 are not a regression.** That run hit the 100-minute limit and
+never uploaded, so shard 4 has no prior set. "55 new" is an artifact of
+comparing four shards against three.
+
+**All three `test_m4_mechanism_offline.py` risks cleared.** The `PATH=""` with
+`SYSTEMROOT=C:\Windows` shape passed on Linux; `test_evidence_integrity.py`'s
+E3 fixture rewrite passed. Both were live bets, now measurements.
+
+### The 132 remaining suite failures, censused
+
+A cause census over the 132 (134 minus the 3 just fixed) roots **28** honestly
+unrooted. The largest single mechanism is **24 IDs: the authority guards from
+`8e06980a` landed, and the callers that satisfy them were never migrated** — 18
+on the assessment allocation guard at `records.py:1601`, 5 on the substitution
+gate at `learner.py:873`, 2 on the s89 rerunner. The guards are correct and
+should stay; the callers are the defect, and the repair touches **tests only**.
+
+**Nine pinned SHAs are unreachable from any ref, and this is not a clone-depth
+problem.** `ci.yml:57-65` already sets `fetch-depth: 0`. Decided by exit code:
+`merge-base --is-ancestor` returns 1 for `a1f514c`, `794520f`, `d183cbe`,
+`2b7050a`, `9a1884d`, `8c535e3`, `b74f216`, `a49a9c5`, `d422c93` against both
+HEAD and `codex/ab-closure-2026-10-02`, and none is in the 278-commit
+`rev-list --all` union. The objects resolve in the local object store, which is
+why they work for a developer and fail on the runner. `codex/ab-closure-2026-10-02`
+**is** an ancestor of HEAD (`64e1f639`), so it is not the missing history. The
+repair is re-pinning onto the merged line, not widening the clone.
+
+**I nearly overrode this with a broken check and must record it.** A helper
+returned `''` on non-zero exit, so `!result.startsWith('ERR')` was true for
+failure, and I reported all nine SHAs as "ancestor of
+`codex/ab-closure-2026-10-02`". `git merge-base --is-ancestor` exits **1** for
+*not* an ancestor. The census was right and I was wrong. Same shape as reading
+an empty artifact as a clean result: **a check whose failure mode is
+indistinguishable from its success must be tested before its output is
+trusted.** Every git-ancestry claim in this ledger is now decided by exit code.
+
+**Stale worktrees removed.** Three `.claude/worktrees/` lanes holding 250–260
+commits each, all verified merged into HEAD by exit code before deletion, and
+`git branch -d` accepted all three. Nothing unmerged was removed.
+
+**Not measured.** Whether M2's seam assertion is load-bearing or passes
+vacuously. Whether `CEILING = 12` still holds now that the thread moved three
+child executions onto a counted ledger.
+
 ## The 247 CI failures are mostly rooted now, 2026-10-05
 
 A cause census against run `37261826154` roots **188 of 247** distinct failure
