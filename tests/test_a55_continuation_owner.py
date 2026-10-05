@@ -17,9 +17,19 @@ needs a dsn" rule.
 
 The tests that drive a round need a disposable PostgreSQL database, so they
 are stubbed and run anywhere. The refusal itself needs no SQL: it is decided
-in `_check_identity`. Of the seven tests, three were red before the repair and
-four held throughout; the four are the invariants that keep this from becoming
-a general "every open needs a dsn" rule.
+in `_check_identity`. Of the round-driving tests, three were red before the
+repair and the rest held throughout; the ones that held are the invariants
+that keep this from becoming a general "every open needs a dsn" rule.
+
+The stub that replaces the round records what `fresh_round` forwarded. Opening
+a store under its owner is not authority to execute against it -- an owned
+store's round settles receipts somewhere that investigation has to reach -- so
+the entry forwards the caller's allocation and, where there is none, forwards
+nothing at all and lets `drive_improve_round` refuse. The refusal is decided
+above `fresh_round`'s reach and no test here drives it, so what each
+round-driving test pins is the forwarding: that the entry passes the authority
+its caller holds rather than passing nothing and relying on the round to
+notice.
 """
 
 from __future__ import annotations
@@ -71,6 +81,37 @@ def _nameless(tmp_path, name):
 
 def _read(path) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _stub_round():
+    """The round, replaced by the summary `fresh_round` reads.
+
+    Each call site patched this inline as a lambda naming `store`, `task`,
+    `round_no` and `admit_probes`. That is `drive_improve_round`'s signature
+    restated by hand, so every keyword added to it since reached a double with
+    no word for it as a `TypeError`, and the breakage said nothing about the
+    store -- which is what this file measures.
+
+    The keyword arguments are collected and recorded rather than enumerated or
+    dropped. Collecting them means a signature that grows leaves the stub
+    working without a second edit, and recording them means a keyword that
+    changes the round's authority is still something a test can read. The
+    positional parameters are named because `fresh_round` passes `store` and
+    `task` positionally, which the production call sites are checked against.
+
+    `round_calls` is where those assertions read.
+    """
+    calls = []
+
+    def stub(store, task, round_no=None, **forwarded):
+        calls.append({"store": store, "task": task, "round_no": round_no,
+                      **forwarded})
+        return {"candidate": {"control_id": "cand",
+                              "parent_digest": "p" * 64,
+                              "imp_digest": "i" * 64}}
+
+    stub.round_calls = calls
+    return stub
 
 
 def test_the_owned_store_cannot_be_opened_namelessly(tmp_path):
@@ -137,17 +178,50 @@ def test_fresh_round_names_an_owner_when_one_is_supplied(tmp_path, monkeypatch):
         investigation_id="a55-owned", dsn=DSN))
     live.bind_live_control(bound, "low")
     monkeypatch.setattr(channel._frontier, "FrontierStore", Spy)
-    monkeypatch.setattr(
-        channel, "drive_improve_round",
-        lambda store, task, round_no, admit_probes=False: {
-            "candidate": {"control_id": "cand", "parent_digest": "p" * 64,
-                          "imp_digest": "i" * 64}})
+    round_stub = _stub_round()
+    monkeypatch.setattr(channel, "drive_improve_round", round_stub)
 
     channel.fresh_round(path, 2, dsn=DSN, investigation_id="a55-owned")
 
     assert opened["path"] == path
     assert opened["identity"] == frontier.StoreIdentity(
         investigation_id="a55-owned", dsn=DSN)
+    # Naming the owner opens it; it is not authority to execute against it.
+    # With no allocation the entry forwards `None` and `drive_improve_round`
+    # refuses the round, which is the refusal this thread exists to reach.
+    assert round_stub.round_calls[0]["authority"] is None
+
+
+def test_fresh_round_forwards_the_allocation_it_was_given(tmp_path, monkeypatch):
+    """The entry passes the round an allocation when the caller holds one.
+
+    The other round-driving tests supply no allocation, so all three read a
+    forwarded authority of `None`. That is the right value for each of them
+    and it cannot see an entry that dropped the caller's allocation, which is
+    the defect this leg repaired: an owned store names an investigation whose
+    unresolved work settles somewhere, so a round holding no authority mints a
+    disposable ledger whose receipts the investigation cannot reach.
+
+    This is the fourth test, and the only one here that supplies the third
+    name. It reads the forwarded pair rather than calling `_round_authority`,
+    so it measures the wiring and not the constructor.
+    """
+    path = _owned(tmp_path, "owned.json", "a55-owned")
+    store = frontier.FrontierStore(path, identity=frontier.StoreIdentity(
+        investigation_id="a55-owned", dsn=DSN))
+    live.bind_live_control(store, "low")
+    round_stub = _stub_round()
+    monkeypatch.setattr(channel, "drive_improve_round", round_stub)
+
+    channel.fresh_round(path, 2, dsn=DSN, investigation_id="a55-owned",
+                        allocation_id="a55-alloc")
+
+    assert round_stub.round_calls[0]["authority"] == {
+        "dsn": DSN, "allocation_id": "a55-alloc"}
+    # Half the pair names nothing, so the entry offers no authority at all
+    # rather than one half of it. `drive_improve_round` owns the refusal.
+    assert channel._round_authority(DSN, None) is None
+    assert channel._round_authority(None, "a55-alloc") is None
 
 
 def test_fresh_round_still_continues_a_nameless_store(tmp_path, monkeypatch):
@@ -155,16 +229,16 @@ def test_fresh_round_still_continues_a_nameless_store(tmp_path, monkeypatch):
     path = _nameless(tmp_path, "nameless.json")
     store = frontier.FrontierStore(path)
     live.bind_live_control(store, "low")
-    monkeypatch.setattr(
-        channel, "drive_improve_round",
-        lambda store, task, round_no, admit_probes=False: {
-            "candidate": {"control_id": "cand", "parent_digest": "p" * 64,
-                          "imp_digest": "i" * 64}})
+    round_stub = _stub_round()
+    monkeypatch.setattr(channel, "drive_improve_round", round_stub)
 
     summary = channel.fresh_round(path, 2)
 
     assert summary["candidate_id"] == "cand"
     assert summary["round"] == 2
+    # The fixture boundary spends nothing and mints no ledger, which is what
+    # forwarding `None` means on a store that names no owner.
+    assert round_stub.round_calls[0]["authority"] is None
 
 
 def test_fresh_round_requires_both_halves_of_an_identity(tmp_path):
@@ -240,12 +314,10 @@ def test_main_still_runs_the_two_argument_call(tmp_path, monkeypatch, capsys):
     path = _nameless(tmp_path, "nameless.json")
     store = frontier.FrontierStore(path)
     live.bind_live_control(store, "low")
-    monkeypatch.setattr(
-        channel, "drive_improve_round",
-        lambda store, task, round_no, admit_probes=False: {"candidate": {
-            "control_id": "cand", "parent_digest": "p" * 64,
-            "imp_digest": "i" * 64}})
+    round_stub = _stub_round()
+    monkeypatch.setattr(channel, "drive_improve_round", round_stub)
 
     assert channel.main(["improve_channel", str(path), "3"]) == 0
 
     assert json.loads(capsys.readouterr().out)["round"] == 3
+    assert round_stub.round_calls[0]["authority"] is None
