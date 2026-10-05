@@ -162,14 +162,24 @@ jobs:
         run: |
           rc=0
           : > heavy-failures.txt
+          : > heavy-tracebacks.log
           for f in tests/_heavy_archived/test_*.py; do
             echo "=== $f"
-            if python -m pytest -q -p no:cacheprovider "$f" > heavy.log 2>&1; then
+            # No -q. It suppresses the FAILURES block, so a failing file left
+            # only its summary line and no traceback body: 60 of the 247 IDs in
+            # run 37261826154 could not be rooted from any artifact for that
+            # reason alone. Full output is redirected either way, so the console
+            # stays the same shape.
+            if python -m pytest -p no:cacheprovider "$f" > heavy.log 2>&1; then
               tail -2 heavy.log
             else
               rc=1
               echo "=== $f FAILED" | tee -a heavy-failures.txt
               grep -E '^(FAILED|ERROR)' heavy.log | sort -u | tee -a heavy-failures.txt
+              # Keep only the failing files' bodies, and keep them all: one
+              # heavy.log is overwritten per iteration, so archiving it alone
+              # would retain the last file and lose every earlier one.
+              { echo "=== $f"; cat heavy.log; } >> heavy-tracebacks.log
               tail -30 heavy.log
             fi
           done
@@ -190,7 +200,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: heavy-archived
-          path: heavy-failures.txt
+          path: |
+            heavy-failures.txt
+            heavy-tracebacks.log
           retention-days: 14
 
   consistency:
