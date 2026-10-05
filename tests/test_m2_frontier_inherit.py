@@ -12,6 +12,7 @@ namespace invl02_m2.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -444,7 +445,12 @@ def test_fresh_process_inherited_bytes_generate_candidate(tmp_path):
         [sys.executable, "-m", "experiments.ad01.improve_channel",
          str(store.path), "2"],
         cwd=str(ROOT),
-        env={"PATH": "/usr/bin:/bin", "PYTHONPATH": env["PYTHONPATH"]},
+        # The child resolves its database through the environment, so the
+        # environment is copied rather than replaced. A wholesale replacement
+        # dropped SETTLEMENT_TEST_DSN and the child fell back to the socket
+        # default at s09_run_isolation.py:41, a path the CI service does not
+        # have. The copy is also what lets the child find its interpreter.
+        env={**os.environ, **env},
         capture_output=True,
         text=True,
         timeout=120,

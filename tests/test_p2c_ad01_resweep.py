@@ -92,6 +92,27 @@ class _Made:
         self.data = {"attempt_id": attempt_id}
 
 
+def _no_settled_read(monkeypatch):
+    """Stop the trajectory reading the absent database before a guard fires.
+
+    `UNUSED_DSN`'s database must stay absent -- these tests assert a refusal and
+    creating it would invert them -- so a real read of it raises
+    `OperationalError` before the guard under test is reached. Two of them do.
+    `resume_campaign` reads at `trajectory.py:36` through `_settled_attempts`
+    before `run_campaign` is called, which is why stubbing `run_campaign` alone
+    did not stop the connect. `_publish_boundary` reads through
+    `_s09_effect_id` -> `_s09_get` -> `_read_conn` at `:1540` before its store
+    calls, which is why stubbing `acquire_work` alone did not stop it either.
+
+    Both stubs answer the question the caller actually asks -- is there a
+    settled attempt, is there an effect id -- with "no", which is the state an
+    unused database is in by definition. The dbname stays the absent one the
+    assertion depends on; what changes is that nothing reads it.
+    """
+    monkeypatch.setattr(trajectory, "_settled_attempts", lambda dsn, cid: [])
+    monkeypatch.setattr(trajectory, "_s09_effect_id", lambda dsn, cid, seq: None)
+
+
 def test_record_decision_store_mismatch_refuses(monkeypatch):
     import settlement.store as _store
     monkeypatch.setattr(_store, "acquire_work",
@@ -104,6 +125,7 @@ def test_record_decision_store_mismatch_refuses(monkeypatch):
 
 
 def test_publish_boundary_store_mismatch_refuses(monkeypatch):
+    _no_settled_read(monkeypatch)
     import settlement.store as _store
     monkeypatch.setattr(_store, "acquire_work",
                         lambda dsn, cmd: _Made("att-ad01-w0-I-00-0"))
@@ -117,6 +139,7 @@ def test_publish_boundary_store_mismatch_refuses(monkeypatch):
 
 
 def test_resume_campaign_id_mismatch_refuses(monkeypatch):
+    _no_settled_read(monkeypatch)
     monkeypatch.setattr(trajectory, "run_campaign",
                         lambda *a, **k: {"campaign_id": "ad01-w0-I-99"})
     with pytest.raises(ValueError, match="unexpected campaign"):

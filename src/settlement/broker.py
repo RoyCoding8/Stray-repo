@@ -1419,7 +1419,7 @@ _TERMINAL_LIFECYCLE = ("completed", "failed", "cancelled")
 def init_dbos(system_dsn: str, app_name: str = "settlement-s1") -> None:
     from dbos import DBOS, DBOSConfig
 
-    config: DBOSConfig = {"name": app_name, "database_url": db.database_url(system_dsn),
+    config: DBOSConfig = {"name": app_name,
                           "system_database_url": db.database_url(system_dsn)}
     DBOS(config=config)
     DBOS.launch()

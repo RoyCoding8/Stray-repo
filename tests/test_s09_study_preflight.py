@@ -884,7 +884,11 @@ def test_the_cli_exits_non_zero_on_the_contaminated_bundle(
     monkeypatch.setenv(preflight.LIVE_GRANT_ENV, "granted-for-this-test")
     monkeypatch.setenv(preflight.STUDY_CONFIG_ENV, str(tmp_path / "absent.env"))
 
-    code = preflight.main(["--dsn", "postgresql:///?dbname=agenda01_exp",
+    # A host, because a URL without one makes libpq reach for the Unix socket
+    # at /var/run/postgresql, and the CI service listens on TCP with no socket
+    # file. The bundle is refused on its contents, so the database behind this
+    # DSN is never the thing under test -- only the route has to resolve.
+    code = preflight.main(["--dsn", "postgresql://user@127.0.0.1/agenda01_exp",
                            "--bundle", str(DOUBLED_BUNDLE)])
 
     report = json.loads(capsys.readouterr().out)
