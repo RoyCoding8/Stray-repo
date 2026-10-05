@@ -169,22 +169,70 @@ the mechanism is the honest instrument and the amendment papers over the error.
 ### The version space does collapse, and the ledger said it never did
 
 Earlier in this batch a lane propagated "never collapses within the query budget"
-as measured. **That is false.** Under `rule_learner`'s own `choose_query`, **15 of
-40 seeds reach size 1 at exactly 8 queries** and the other 25 at nine; under the
-docstring's own tie-break, all 40 collapse at exactly 8. The figures this ledger
-carried ("3 of 40 at nine, 40 of 40 at thirteen") reproduce exactly under a
-**fixed input order `x=0..15`** — a third selection rule the study never runs.
+as measured. **That was false, and it was false in a way that made the claim beside
+the point.** The ledger's own figures ("3 of 40 at nine", "40 of 40 at thirteen")
+reproduce only under a **fixed input order `x=0..15`**, and both are *past*
+`MAX_QUERIES = 8`. At the budget itself that policy collapses **none** of 40.
+"Never collapses within the budget" was therefore true of the one policy nobody ran,
+and beside the point about the other two.
 
-The sensitivity is large and the seed was never frozen: at seeds 2, 4 or 5 all 40
-collapse at eight; at seeds 0, 1, 3, 6 or 7, between 10 and 15 do. So "the
-version space collapses" is a true claim with a policy-dependent rate, and the
-policy was never part of the design. **Freezing the learner's query-selection rule
-is now a prerequisite for M4**, which inherits a decision from this space.
+**Frozen, and the premise corrected.** `VersionSpaceLearner` broke ties with
+`random.Random(seed)`, and the docstring said it did not. The docstring is what the
+module meant, so the code was wrong and is now subtractive: `import random` and
+`self._rng` are gone, and `choose_query` is "largest total disagreement, smallest
+index on ties" — a total order on (state, budget). `seed` stays in the signature
+because 13 call sites pass one, and now has nothing to decide.
+
+Over **all 224 class members** the frozen rule identifies every one within 8
+queries, worst case exactly 8. The old random tie-break missed **64 of 224**;
+fixed order identified **0**. `ceil(log2(224)) == 8` is exactly `MAX_QUERIES`, so
+this is the information-theoretic bound, attained. Collapse at the budget is the
+instrument working as designed; the guarantee is *by* the budget, not *only at* it
+(32 of 224 are pinned after seven).
+
+**The real M4 blocker was neither of these.** Callers disagreed about what seed to
+pass: `improve_channel.py:507,529,2177` pass literal `0` while `:865` passes
+`int(seed)`, and four other modules pass `int(seed)` too. **22 of 40 dev tasks
+scored differently depending on which site ran them.** That would have survived any
+fix to the selection rule alone.
+
+**Freezing it exposed that a recorded blind score was never a competence figure.**
+`e4_budget_ladder`'s blind arm moves 0.5017 → **0.0600**, because 0.5017 was the
+mean over *random* 8-subsets (measured: 20 reps, mean 0.5138, sd 0.0169) while the
+fixed `[0..7]` subset scores 0.0600. The blind arm's real score was chance. The
+informed arm reaches 1.0000. These are improvements; the frozen instrument specs
+must be re-recorded rather than left describing the old arrangement.
 
 Separately: the widely-repeated "28 of 40" collapse figure **appears nowhere** in
 any `.md`, `.json`, `.py` or `.txt` file on the tree, and `git log --all -S` finds
 nothing. It was never committed. Nothing needs withdrawing, but nothing should
 cite it either.
+
+### M2's clause is earned on the amended freeze, and the caps did not move
+
+The amendment adds **one** probe (`SECOND_PROBE_OPPORTUNITY = "z-extra"`, x=11) so
+the store holds a measurement with a prior to disagree with; `measured_verdict`
+returns `unknown` for a rule's first measurement by construction, which is why the
+one-probe freeze could not earn a refutation at all. Measured on the merged tree:
+**`observation_dependent` reads True on 14 of 15 second inputs**, and the split is
+the earned verdict — every `not_preserved` moves the arm (14/14), every `observed`
+does not (0/1, at x=0). That selectivity is what makes it causal rather than
+merely responsive.
+
+`frontier[0]` stays `opp-first` on both E0 and E12, because `admissible()` orders by
+`(queries + steps, opportunity_id)` and every probe costs 2 — so the id must sort
+*after* `opp-first`, and that constraint is written down rather than left to the id.
+
+**Caps did not move, and that was checked rather than assumed.** `RESOURCE_KEYS` is
+`("queries","steps")`, so a probe draws on the store's own authority and never on
+the study's `sandbox_calls`: `E0_SANDBOX_CALLS = 19`, `E12_SANDBOX_CALLS = 30` and
+`E0_CALL_CEILING = 12` are unchanged. The store's headroom moves `3/16` queries and
+`7/12` steps to `4/16` and `8/12` — one probe, one query, one step, nothing refuses.
+
+Not verified: the end-to-end path through `run_step_out_of_process`, which needs a
+real allocation row and a subprocess. The shipped operate bytes run and the
+validators pass on that exact pair in-process; **CI with PostgreSQL is what
+confirms the durable route.**
 
 **Extending the freeze was measured and rejected.** Sweeping every second probe
 input against the real dev rule: 14 of 15 earn `not_preserved` (all but x=0 and
