@@ -72,6 +72,14 @@ def e3_database():
     `sandbox_calls` counts executions and `authorized` carries the exposure
     they cost. A ceiling that fit the executions but not their exposure would
     fail on the reservation rather than on the thing being measured.
+
+    The pair it yields is `{dsn, authority}`, which is the shape every call
+    site spreads and the shape `_bound_acquired_store` and
+    `_write_bound_e3_fixture` take. It used to yield `allocation_id` instead,
+    which reached them as an unexpected keyword: the allocation was authorized
+    correctly and then handed to a parameter that did not exist, so all five
+    E3 tests failed on `TypeError` before reaching the thing being measured.
+    The authority is resolved here, once, rather than by each caller.
     """
     database = create_disposable_db("e3evidence", migrations_dir=MIGRATIONS)
     try:
@@ -80,7 +88,9 @@ def e3_database():
             authorized=E3_SANDBOX_CALLS * E3_SANDBOX_EXPOSURE,
             allocation_id="e3evidence-alloc",
             ceilings={"sandbox_calls": E3_SANDBOX_CALLS})
-        yield {"dsn": database.dsn, "allocation_id": handle.allocation_id}
+        yield {"dsn": database.dsn,
+               "authority": {"dsn": database.dsn,
+                             "allocation_id": handle.allocation_id}}
     finally:
         drop_disposable_db(database)
 
