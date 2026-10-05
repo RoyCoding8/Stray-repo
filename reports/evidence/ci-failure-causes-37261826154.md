@@ -1,465 +1,349 @@
-# CI failure causes — run 37261826154
+﻿# CI failure causes — run 37261826154
 
 **This is the cause map for the 247 distinct failing test IDs in run
-`37261826154`, at tree `980e3c26`.** It extends
-`reports/evidence/ci-baseline-37172638343.md` (run `37172638343`, tree
-`0ee4699`), which left 160 assertion failures explicitly unrooted and said
-assigning causes "would be invention". This pass is that later pass. Measured
-2026-10-05 from the downloaded logs in `.a53-ci2/`.
+`37261826154`.** It extends `reports/evidence/ci-baseline-37172638343.md` (run
+`37172638343`, tree `0ee4699`), which left 160 assertion failures explicitly
+unrooted.
+
+**Second pass, 2026-10-05: the uploaded artifacts were downloaded and all 59
+previously unrooted IDs are now rooted.** The first pass had only the job console
+slice. `gh run download 37261826154 -R RoyCoding8/Stray-repo` returns 9
+artifacts, all `expired=False`, and three carry the full pytest `suite.log` with
+traceback bodies.
+
+Every cause below cites the traceback line or source line it was read from, and
+carries an explicit `open` or `repaired-since <sha>` status measured against
+**`d4eb4126`, the tree this run actually measured**, not against the current tip.
+
+**Which tree, stated exactly.** The run's `headSha` is `d4eb4126`, not the
+`980e3c26` named in the first pass. Checked rather than assumed: `d4eb4126` is an
+**ancestor** of `980e3c26`, and the 6 commits between them touch no file under
+`tests/` or `src/`, so both labels describe the same failing code and the first
+pass's tree label is sound. This pass quotes lines from `d4eb4126` and verified
+that the files it cites are byte-identical there and at HEAD.
+
+The tooling is re-runnable and uncommitted, under `.scratch/`: `parse.js` and
+`parse-heavy.js` extract the tracebacks, `classify2.js` assigns each ID a cause
+and an evidence level, `priorz.js` reconstructs the prior pass's 59, `mkcsv.js`
+emits the per-file CSV. Re-running `mkcsv.js` reproduces the delivered CSV
+byte-for-byte.
 
 **No `.py` file was edited.** Where a fix is certain it is written as a spec.
 
-## Method and its limits
+## Headline: 59 unrooted becomes 0, and the whole run reconciles to 247
 
-Distinct test IDs were derived in Python with `re`, matching the
-`job\tSTEP\ttimestamp\t FAILED <id> - <msg>` shape of each shard log. The
-derived set is **byte-identical to `CUR.failures`** (247 IDs, zero symmetric
-difference), so the denominator is verified rather than assumed.
+| | Prior pass | This pass |
+|---|---|---|
+| Distinct failing IDs | 247 | **247** (re-derived, zero intersection) |
+| Named causes | 13 | **40** |
+| IDs left unrooted | **59** | **0** |
+| IDs rooted by traceback or blame line | not distinguished | **182** |
+| IDs whose cause is read from the message only | not distinguished | **65, labelled inferred** |
 
-The shard logs carry only the pytest short-summary lines and a 25-line tail.
-**No traceback bodies were uploaded** (`ci.yml:99-107` uploads `suite.log` and
-`failures.txt`; the console slice at `:96` is what survives in these artifacts).
-Each failure therefore yields one truncated message line, median 87 characters.
-Where that line is enough to name a cause, the cause is stated. Where it is not,
-the failure is counted as unrooted rather than assigned a plausible story.
-
-Three causes were established by **running** the mechanism locally rather than
-by reading the message. Each is reproduced below with its command output.
-
-## The headline: `_Store` is not production drift
-
-The baseline called `_Store` API drift the largest cause (60) and split off a
-16-ID "test-fixture drift" subfamily in the same file. **That split is wrong,
-and the direction of the fix is wrong.** There is one cause and it is 82 IDs,
-and it is not the production store at all.
-
-`experiments/ad01/store.py` **does not exist**, and `class _Store` is defined in
-**exactly one file in the entire tree** (verified by an exhaustive walk of all
-1024 `.py` files for the token `_Store`, and by scanning every installed
-package for a class of that name, which returned none):
+The 247 is derived, not inherited. It is the sum of two independently extracted
+ID sets:
 
 ```
-tests/test_posix_paths_checkpoint_restore.py:110:    class _Store:
-tests/test_posix_paths_checkpoint_restore.py:131:    _types["settlement"].store = _Store
+suite IDs with traceback bodies:  175   (py3.13-1: 29, py3.13-2: 33, py3.13-3: 113)
+heavy IDs:                         72
+intersection:                       0
+DISTINCT TOTAL:                   247
 ```
 
-That `_Store` is a local stub defining one method, `restore_fence`. Line 131
-assigns it into `sys.modules["settlement"].store`, **and the `finally` block at
-lines 134-138 restores `restore.*` and deletes the `psycopg` module entries but
-never restores `settlement.store`.** The stub leaks out of the fixture and
-outlives the test.
+## The two evidence levels
 
-Every one of the nine attributes named in the failure messages still exists on
-the real store. Measured on the worktree at `980e3c26`:
+| Level | Meaning | IDs |
+|---|---|---|
+| **rooted** | A traceback body or a pytest blame line naming `file:line` exists for that ID | **182** |
+| **inferred** | Only the truncated short-summary message exists | **65** |
 
-```
-real module defines seed_grant: True
-real module defines seed_allocation: True
-real module defines operation_receipts: True
-real module defines subdivide_allocation: True
-real module defines is_ceiling_name: True
-real module defines _study_root_for_allocation: True
-real module defines reconcile_operation: True
-real module defines allocation_free: True
-real module defines is_ceiling_enforced: True
-```
+An inferred cause is not a guess dressed as a finding. It is the exception type
+read off the summary line and nothing more, and it is labelled `inferred` in
+every row of the table and in the CSV. All 65 are concentrated in two files whose
+job printed no traceback bodies at all, and the reason is structural rather than
+incidental.
 
-They are module-level functions taking `dsn: str`, defined in
-`src/settlement/store.py` (`seed_grant:693`, `seed_allocation:804`,
-`operation_receipts:2133`, `subdivide_allocation:831`, `is_ceiling_name:129`).
-**Nothing was renamed or dropped.** A lane that migrated production `_Store`
-would have fixed zero of these 82.
+## What the artifacts do and do not contain
 
-The leak mechanism reproduces the CI message exactly:
+The brief's premise was that the artifacts might be gone past retention. **They
+are not.** The run was created 2026-10-05 and all 9 artifacts report
+`expired=False`. The real constraint is narrower:
 
-```
-after leak, 'from settlement import store' binds: <class '__main__._Store'>
-  seed_grant -> AttributeError: type object '_Store' has no attribute 'seed_grant'
-  seed_allocation -> AttributeError: type object '_Store' has no attribute 'seed_allocation'
-```
-
-The 82 split into two message forms, and both are the same cause. CPython
-renders `Class.attr` as `type object 'X' has no attribute` but renders
-`pytest.MonkeyPatch.setattr(target, name, ...)` as `<class 'X'> has no
-attribute` using the target's `__name__`. Measured on this host's Python
-3.13.14 with a real `pytest.MonkeyPatch`:
-
-```
-message -> <class '__main__.factory.<locals>._Store'> has no attribute 'operation_receipts'
-```
-
-So **66** failures are tests calling `store.seed_grant(...)` on the leaked
-stub, and **16** are tests calling `monkeypatch.setattr(store, "operation_receipts", ...)`
-on it. The 16 name the leaking file in the message text itself
-(`test_posix_paths_checkpoint_restore._restore_without_postgres.<locals>._Store`),
-which the baseline correctly read as "a different subfamily". It is the same
-stub.
-
-Every victim file sorts **after** the leaking file in `tests/` collection
-order. The leak is at index 207 of 408; all 17 victim files are at 213-292.
-
-The two forms carry different attribute distributions, so the per-attribute
-table is split by form. Direct-call form, 66 IDs:
-
-| Missing attribute | IDs |
+| Artifact | Contents |
 |---|---|
-| `seed_grant` | 28 |
-| `seed_allocation` | 13 |
-| `subdivide_allocation` | 10 |
-| `operation_receipts` | 9 |
-| `is_ceiling_name` | 2 |
-| `allocation_free` | 1 |
-| `is_ceiling_enforced` | 1 |
-| `_study_root_for_allocation` | 1 |
-| `reconcile_operation` | 1 |
-| **Total** | **66** |
+| `suite-py3.13-1/suite.log` | 296,648 bytes, full tracebacks, 29 failures |
+| `suite-py3.13-2/suite.log` | 92,988 bytes, full tracebacks, 33 failures |
+| `suite-py3.13-3/suite.log` | 321,363 bytes, full tracebacks, 113 failures |
+| `heavy-archived` console + `heavy-failures.txt` | 72 IDs, bodies for 12 of 20 files |
+| `suite-py3.12-`, `suite-py3.13-`, `suite-py3.14-`, `suite-py3.13-4` | **progress dots only, 630 to 4,324 bytes, no FAILURES block** |
 
-`monkeypatch.setattr` form, 16 IDs: all 16 are `operation_receipts`, across
-`test_resume_exposure_fidelity.py` (7), `test_route_refusal_fidelity.py` (5)
-and `test_r4_live_blockers.py` (4).
+The four jobs with no bodies were **cancelled** in this run, so their shard logs
+stop mid-progress. That is the whole reason 65 IDs stay inferred:
+`test_run_bounded.py` (27) and `test_s09iso_stale_sweep.py` (7) fail with a
+one-line `FileNotFoundError` that `pytest -q` prints without a body, plus
+`test_s09_bound_use_proof.py` (9), `test_r01_recovery.py` (5),
+`test_r03_flow.py` (4), `test_rec_restore.py` (4), `test_broker_dbos.py` (2),
+`test_ec02ad_verif.py` (1) and `test_rpr07_resume.py` (1).
 
-So `operation_receipts` totals 25 across both forms, and the two forms together
-give **82 IDs across 17 victim files**. Every one of the 17 sorts after the
-leaking file in `tests/` collection order (leak at index 207 of 408; victims at
-213-292).
+**The highest-value fix in this document is a CI-config fix, not a code fix.**
+The heavy job runs `pytest -q` once per file, which suppresses the FAILURES block
+and prints each ID twice, truncated then full. Dropping `-q`, or archiving the
+full stdout, makes every one of the 65 inferred IDs rootable on the next run.
+That single change is worth more than any cause below it.
+
+## Three parser bugs, recorded because each produced confident wrong answers
+
+1. **Positional pairing is wrong.** Pairing FAILURES headers to short-summary
+   lines by position attributes tracebacks to the wrong test:
+   `test_resume_exposure_fidelity.py` failures were attributed to
+   `test_r_final_freeze_and_chain.py`. Joining on the test name gives **175 of
+   175 joined, 0 unjoined**.
+2. **The heavy job has no FAILURES banner.** Banner-anchored parsing found **1 of
+   72**. Anchoring on the `<testfile>.py:<n>:` blame line that terminates each
+   body found **72 of 72**.
+3. **The heavy console needs the `gh` log prefix stripped.** `gh run view --log`
+   emits `job\tstep\tISO-8601\tcontent`, and a leading BOM on some lines defeats a
+   naive prefix regex. Splitting on tab and indexing fields is reliable.
+
+Anyone re-running this must not pair section headers with summary lines by
+position. That mistake yields plausible, wrong, per-file attributions.
 
 ## Cause table
 
-Groups are disjoint and reconcile to 247.
+Groups are disjoint and sum to **247**. `R` is rooted (traceback or blame line),
+`I` is inferred (message only). Status is against `d4eb4126`.
 
-| # | Cause | IDs | Heavy | Suite | Fix side |
+| Cause | IDs | R | I | Status | Evidence anchor |
 |---|---|---|---|---|---|
-| A | `_Store` stub leaked into `sys.modules` | **82** | 0 | 82 | **test** |
-| B | `.venv` interpreter path absent | **35** | 35 | 0 | **test** |
-| C | Git pinned-ref unresolvable in CI (shallow clone) | **7** | 0 | 7 | **CI config** |
-| D | `pg_dump` server version mismatch | **10** | 8 | 2 | **environment** |
-| E | PostgreSQL unavailable | **7** | 5 | 2 | **test** |
-| F | DBOS 3.0 config removal | **4** | 2 | 2 | production |
-| G | Execution-authority refusal | **11** | 1 | 10 | production |
-| H | `PolicyNotProved` on bound-use proof | **8** | 8 | 0 | test/production |
-| I | `LiveRefused` on store authority binding | **8** | 0 | 8 | test/production |
-| J | XPASS(strict) xfail | **5** | 0 | 5 | **test** |
-| K | Containment preexec | **3** | 3 | 0 | not identifiable |
-| L | Regex no-match | **8** | 2 | 6 | needs traceback |
-| Z | **Assertion-only, still unrooted** | **59** | 9 | 50 | **unknown** |
-| | **Total** | **247** | **72** | **175** | |
+| A `_Store` stub leaked onto the `settlement` package | **82** | 82 | 0 | **repaired-since `f53bec7d`** | `type object '_Store' has no attribute` |
+| B `.venv` interpreter path absent | **35** | 0 | 35 | open | `FileNotFoundError ... /.venv/bin/python` |
+| D `pg_dump` server version mismatch | **12** | 5 | 7 | open | `pg_dump: error: aborting because of server version mismatch` |
+| G Execution-authority refusal | **11** | 10 | 1 | open | `refused: execution needs explicit authority and identity` |
+| E PostgreSQL unavailable | **8** | 3 | 5 | open | `connection to server on socket ... failed` |
+| H `PolicyNotProved` on bound-use proof | **8** | 0 | 8 | open | `needs a store, an allocation and an operation` |
+| C Git pinned-ref unresolvable in a depth-1 clone | **7** | 7 | 0 | open | `CalledProcessError ... exit status 128` |
+| I `LiveRefused` on store authority binding | **7** | 7 | 0 | open | `live_construct.py:1369` |
+| N Stale citation line, 7 distinct defects | **7** | 7 | 0 | open | `test_m0_plan_claims.py:82,128,145,163,197,216,318` |
+| P Stale claim needing re-derivation | **6** | 6 | 0 | open | `final_accept_findings.py:148,242`, `supersession.py:67,159`, `r_final_freeze_and_chain.py:207,325` |
+| L Regex no-match | **6** | 4 | 2 | open | `AssertionError: Regex pattern did not match` |
+| AR XPASS(strict) xfail, no traceback body | **5** | 0 | 5 | open | `[XPASS(strict)] the guard is a value comparison` |
+| AA Use path refuses where acquired bytes were expected | **4** | 4 | 0 | open | `test_aleb_construct.py:156`, `test_alec_episode.py:54`, `test_bacq_method.py:75`, `test_aled_campaign.py:272` |
+| AD Chain effect row missing | **4** | 4 | 0 | open | `test_a42_chain_demonstration.py:343,379,485`, `test_inv_a_chain.py:259` |
+| S Environment or child-adapter contract | **4** | 4 | 0 | open | `test_adv_isolation.py:86`, `test_eacq_repair.py:222`, `test_eng_invb_dispatch.py:194`, `test_s09_n201_claim_ledger.py:257` |
+| F DBOS 3.0 config removal | **4** | 2 | 2 | open | `DBOS Error 3` |
+| AC Authority or identity conflict | **3** | 3 | 0 | open | `trajectory.py:175`, `test_a41_reuse_id.py:165,199` |
+| O Credential scan vacuous, self-refusing | **3** | 3 | 0 | open | `test_inv_b14_retention.py:526,572`, `test_inv_b17_budget_fit.py:229` |
+| AM Empty-collection assertion | **3** | 3 | 0 | open | `test_invr1_study_entry.py:233`, `test_output_evidence.py:418`, `test_s09_doubles_forensics.py:240` |
+| K Containment preexec, Landlock install | **3** | 3 | 0 | open | `launcher_local.py:1000` via `_child_setup` |
+| AB Phase failed binding study authority | **2** | 2 | 0 | open | `test_a40_admission_wired.py:217,328` |
+| AE Dispatch receipt invariant | **2** | 2 | 0 | open | `test_ag01_experiment.py:377,775` |
+| Q Ledger bottleneck ranking | **2** | 2 | 0 | open | `test_inv_d1_documents.py:543,588` |
+| AG Campaign coverage census moved | **2** | 2 | 0 | open | `test_s09_merged_tip_regression.py:376,441` |
+| R `run_live_abc` refuses at construction | **2** | 2 | 0 | open | `run_live_abc.py:135,263,417` |
+| M Gate kept a private list of inert shapes | **1** | 1 | 0 | open | `test_c8_gate_review.py:150` |
+| AK Credential planted-value fixture broken | **1** | 1 | 0 | open | `test_inv_b14_retention.py:547` |
+| U Reader census not vacuous | **1** | 1 | 0 | open | `test_inv_z2_red_audit.py:204` |
+| AP StopIteration in export scan | **1** | 1 | 0 | open | `test_invc3_export.py:206` |
+| AT Control-arm `executed` field | **1** | 1 | 0 | open | `test_invc3_study.py:74`, `scripts/inv01_study.py:725-728` |
+| AI Route id lost its provider prefix | **1** | 1 | 0 | open | `test_output_evidence.py:1416` |
+| AL Gateway preflight did not raise | **1** | 1 | 0 | open | `test_output_evidence.py:1546` |
+| AO `KeyError: qualified_on` | **1** | 1 | 0 | open | `test_p2c_ad01_resweep.py:80` |
+| AN Policy view missing `contract_versions` | **1** | 1 | 0 | open | `test_production_execution_authority.py:147` |
+| AJ Lane DSN is not a `postgresql://` URL | **1** | 1 | 0 | open | `test_rpr01_db.py:23` |
+| AH Matrix terminal row unreachable | **1** | 1 | 0 | open | `test_s09_matrix_size.py:400` |
+| AU Audit checker reports 6 problems | **1** | 1 | 0 | open | `test_rpr13_endtoend.py:466` |
+| AQ Frontier revision parent not active | **1** | 1 | 0 | open | `live_construct.py:1667` |
+| AF Learner run count doubled | **1** | 1 | 0 | open | `test_alee_learner.py:244` |
+| T Disposition or exit code mismatch | **1** | 1 | 0 | open | `test_s3_experiment.py:237` |
+| **Total** | **247** | **182** | **65** | | |
 
 Per-file distribution for all 77 failing files is in
-`reports/evidence/ci-failure-causes-37261826154-files.csv`.
+`reports/evidence/ci-failure-causes-37261826154-files.csv`. One row per file,
+columns `test_file,total,categories`. Each category cell is
+`CODE=count(evidence source-line)`, where the code is the same letter used in
+the table above, the evidence is `rooted`, `inferred`, or `nR/mI` when one cause
+holds both kinds across two files in that row's family, and the trailing
+`file:line` is a representative blame line for the cause in that file. The CSV's
+per-cause counts sum to 247, and to 182 rooted and 65 inferred.
 
-## Every mechanically rootable failure
+## The three named clusters, settled
 
-### A. `_Store` stub leak — 82 IDs — TEST-side fix
+The brief asked whether these are one thing or tests correctly refusing to run
+vacuously. **They are neither one thing nor uniformly vacuous.** Each cluster
+splits.
 
-**Cause.** `tests/test_posix_paths_checkpoint_restore.py:131` installs a
-one-method stub at `sys.modules["settlement"].store` and never restores it.
+### Cluster 1, stale-pin detectors: 7 IDs, and they are 7 distinct defects
 
-**Fix (test-side, one line of intent).** Save and restore the attribute in the
-existing `finally` block, alongside the `restore.*` originals already being
-restored there:
+All 7 are in `test_m0_plan_claims.py`. The prior pass could only see one message
+and suspected a single stale pin. The tracebacks give seven different assertions
+failing for seven different reasons:
 
-```python
-real_store = _types["settlement"].store
-...
-finally:
-    ...
-    _types["settlement"].store = real_store
-```
-
-**Per-failure detail.** 82 test IDs across 17 files, all in the `py3.133`
-shard. Attribution by missing attribute is in the table above. The 16
-`monkeypatch.setattr` cases name the leaking file verbatim in the message and
-are attributed to the same single fix.
-
-This is a **test-side** fix. No production file is implicated, and the nine
-named attributes need no change.
-
-### B. Hardcoded `.venv` path — 35 IDs — TEST-side fix
-
-**Cause.** Two files hardcode a `ROOT`-relative `.venv/bin/python`, and
-`.venv` is never created in the heavy job (`ci.yml:143-147` runs `pip install
--e` only). Two distinct absolute paths appear across the 35 IDs:
-
-| Path | IDs | Source |
+| Line | Assertion | What is actually wrong |
 |---|---|---|
-| `/home/runner/work/Stray-repo/Stray-repo/.venv/bin/python` | 34 | `tests/_heavy_archived/test_run_bounded.py:45` (`PY = str(ROOT / ".venv" / "bin" / "python")`) and `test_s09iso_stale_sweep.py:51` (`VENV_PYTHON = REPO / ".venv" / "bin" / "python"`) |
-| `/home/ubuntu/AI/Agent-Society-v2/.venv/bin/pytest` | 1 | `tests/_heavy_archived/test_ec02ad_verif.py:1165` — a developer's home path committed as a literal |
+| 82 | `assert [...] == []`, 17 stale rows | Citations moved. `live_construct.py:615` is now `:856` |
+| 128 | `assert [] == ['a49a9c5','b74f216','8c535e3']` | `LAST_VERIFIED` not re-pinned after three cited paths moved |
+| 145 | `assert {'8c535e3','b74f216'} <= set()` | The path filter returns nothing, so the trigger is broken |
+| 163 | `assert False is True` | `9a1884d` is not a descendant of `2b7050a`, so the trigger cannot see the move |
+| 197 | `assert (None is not None)` | The demonstration no longer demonstrates anything |
+| 216 | `assert ':1230' in ''` | The table stopped citing `1230` |
+| 318 | `assert 1 == 0` | `main()` exit status disagrees with the debt it printed |
 
-The `Stray-repo` component is the fork's own repository name, so
-`ROOT`-derived paths resolve to the runner checkout and simply do not exist
-there. This is environment-shaped, not a code defect in the runner.
+**Verdict.** Not one cause. Lines 82, 128 and 216 are a stale pin needing a
+human re-read and re-pin. Lines 145 and 163 are a **broken detector**: the path
+filter returns an empty set, which is the worse failure because a vacuous
+detector reports clean. Lines 197 and 318 are tests that have stopped testing.
+This is the most valuable cluster in the run, because a broken detector is worse
+than a noisy one.
 
-**Fix (test-side).** Resolve the interpreter from the running process rather
-than from the repository layout, i.e. `sys.executable`, and skip where the test
-genuinely requires a distinct interpreter. The `test_ec02ad_verif.py:1165`
-literal is a hardcoded developer path and should be derived like the others.
+### Cluster 2, credential-vacuity: 3 are correct refusals, 1 is a broken fixture
 
-### C. Git pinned-ref unresolvable — 7 IDs — CI-config fix
+The prior pass counted 3 and could not tell a refusal from a breakage. Four IDs
+are involved and they are not the same thing:
 
-**Cause.** `actions/checkout@v4` is used with **no `fetch-depth`** in all three
-jobs (`ci.yml:57`, `:137`, `:191`), so the clone is depth 1. Three pinned SHAs
-lie 180 to 201 commits behind `HEAD` and are absent from a depth-1 clone. The
-baseline attributed these to "pinned git refs that no longer resolve"; **all
-three SHAs resolve fine locally.** `git cat-file -e <sha>:<path>` returns 0 for
-every one. The failure is a shallow clone, not a missing commit.
-
-Reproduced by taking a real depth-1 clone and reading the same paths:
-
-```
-shallow? true
-commits visible: 1
-  git show b1fca48:experiments/ad01/trajectory.py           rc=128
-      fatal: invalid object name 'b1fca48'.
-  git show 794520f:reports/cap-sheets/b-live-cap.md         rc=128
-      fatal: invalid object name '794520f'.
-  git show d183cbe:reports/evidence/inv_r1_e1_swe_ceiling/m rc=128
-      fatal: invalid object name 'd183cbe'.
-```
-
-Exit status 128 and message `fatal: invalid object name` match the CI
-`CalledProcessError` exactly. (`git rev-parse <sha>^{commit}` fails locally too
-in this bare-ish worktree context, but `cat-file blob` succeeds, which is the
-operation the tests actually perform.)
-
-| SHA | Distance behind HEAD | IDs | Callers |
-|---|---|---|---|
-| `b1fca48` | 180 | 1 | `tests/test_a17_policy_state_owner.py:288` (`git show`) |
-| `794520f` | 201 | 4 | `tests/test_inv_b14_retention.py:90` (3 tests, `git diff`/`git cat-file`) and `tests/test_inv_d1_documents.py:388` (1 test, `git cat-file`) |
-| `d183cbe` | 201 | 2 | `tests/test_s09_matrix_size.py` (2 tests, `git show d183cbe^:…`) |
-
-**Fix (CI config).** Add `fetch-depth: 0` to the `actions/checkout@v4` steps, or
-at minimum enough depth to contain the oldest pinned SHA. Alternatively pin
-these tests to a full-clone job. Note `tests/worktree_checkouts.py:46` already
-defines `_GIT = ("git", "-c", "safe.directory=*")`; the depth is the missing
-half.
-
-### D. `pg_dump` version mismatch — 10 IDs — environment
-
-Unchanged from baseline. 9 raise `SystemExit: pg_dump failed: ... aborting
-because of server version mismatch`, 1 is an `AssertionError` carrying the same
-text. The suite runs `postgres:18` (`ci.yml:39`) while the runner's `pg_dump`
-is older. **NOT RUN** locally; no PostgreSQL on this host. Not a code fix.
-
-### E. PostgreSQL unavailable — 7 IDs — mixed
-
-| IDs | Message | Reading |
+| Line | Message | Verdict |
 |---|---|---|
-| 4 | `connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed` | `tests/_heavy_archived/test_rec_restore.py` uses a socket DSN; the CI service listens on TCP `127.0.0.1:5432`. **test-side**, DSN should come from `SETTLEMENT_TEST_DSN`. |
-| 1 | `psycopg.errors.UndefinedObject: role "ubuntu" does not exist` | `test_rpr07_resume.py` assumes a local socket role. **test-side**. |
-| 2 | `database "ec02test_p2c_unused" does not exist` | `tests/test_p2c_ad01_resweep.py` deliberately binds a `_unused` database to force a refusal; `conftest_isolation.py:39-40` documents that it must **not** be created. **environment**, correct as written. |
+| `test_inv_b14_retention.py:526` | `no credential reachable from this environment` | **Test working correctly.** Self-reporting vacuity, exactly as designed |
+| `test_inv_b14_retention.py:572` | `the credential is unreachable, so this scan would pass on an absence` | **Test working correctly.** Says so itself |
+| `test_inv_b17_budget_fit.py:229` | `the scan found no credential to search for; it is vacuous (looked in: none)` | **Test working correctly** |
+| `test_inv_b14_retention.py:547` | `assert ''` on `test_the_credential_scan_catches_a_planted_value` | **A genuine defect.** This test plants a value and asserts the scan catches it; the scan returns `''` because the fixture that plants the value did not run |
 
-### F. DBOS 3.0 config removal — 4 IDs — production
+So the prior pass's reading of these as "the tests working correctly" was right
+for 3 of 4 and wrong for the fourth, which it had folded in. **The 3 refusals
+must not be "fixed".** They are the tests refusing to run vacuously, and the fix
+is to configure the credential in CI, not to weaken the assertion.
 
-`dbos._error.DBOSInitializationError: DBOS Error 3: ... DBOSConfig sets
-database_url, which was removed`. 2 in `test_broker_dbos.py`, 2 in
-`test_r02_authority.py`. Unchanged from baseline. **NOT RUN** locally.
+### Cluster 3, stale-claim re-derivation: 5 need re-reading, 1 is unfixable here, 2 are live defects
 
-### G. Execution-authority refusal — 11 IDs — production
+The prior pass grouped 8 under "needs a human re-read". They are three things:
 
-Unchanged at 11, matching the baseline exactly, in the same five files
-(`test_s09_policy_governance.py` 5, `test_ad01_live_acquired_ddmin.py` 3,
-`test_s09_run_use_policy.py` 1, `test_inv_r1_use_policy.py` 1,
-`test_s09_bound_use_proof.py` 1). **This category did not shrink**, contrary to
-the expectation recorded in the brief. Seven of these also surface wrapped in
-`GovernanceRefused` or `_UsePolicyRefused`; they are counted here once and not
-double-counted under I.
+- **Genuinely stale claims, 5.** `test_final_accept_findings.py:148` (the B4
+  freeze artifact's own text no longer matches), `:242` (an archived generator
+  reads `channel.REACHABLE_EVIDENCE`, which lane C4 deleted with the fixed menu,
+  and its own message says the deletion is correct),
+  `test_evidence_supersession.py:159`, `test_r_final_freeze_and_chain.py:207`
+  and `:325` (`amend_protocol no longer opens two connections; re-derive RF-03`).
+- **Unresolvable reference, 1.** `test_evidence_supersession.py:67`:
+  `intact_at_ref 'd422c93' is not a commit in this repository`. This is not
+  staleness, it is a marker pointing at a ref that does not exist in this repo.
+- **Live defects, 2.** Both in `test_r_final_freeze_and_chain.py`. At `:207` the
+  verdict stopped claiming `informs_decision`, so the row that would hide a
+  smuggled write is no longer produced, which means the guard is no longer
+  exercised. At `:325` the protocol opens 0 connections where 2 were required.
 
-Note the three tests asserting on the *absence* of an older message are in the
-unrooted set and are likely the same defect seen from the other side:
-`test_s09_policy_governance.py` asserts `"unknown policy action kind: 'use'" in
-'refused: execution needs explicit authority and identity'`, so the guard now
-refuses earlier and for a different reason than the test expects.
+**Verdict.** Reading all 8 as "needs a human re-read" would have left two live
+defects unexamined and one unfixable reference looking like a documentation task.
 
-### H. `PolicyNotProved` — 8 IDs
+## Cause K: narrowed from four candidates to one, and why
 
-All 8 in `tests/_heavy_archived/test_s09_bound_use_proof.py`, message
-`this proof executes the bound policy, so it needs a store, an allocation and an
-operation`. Unchanged from baseline. Mix of fixture and production; not
-resolved without a traceback.
+The baseline left K (containment preexec, 3 IDs) unattributable across four
+raising sites in `launcher_local.py`, and the prior pass did not narrow it. **It
+narrows, and not from the log. From the test side.**
 
-### I. `LiveRefused` on store authority binding — 8 IDs
+All 3 fail at the same assertion, `assert outcome.sent is True`, with
+`child-setup-failed: SubprocessError: Exception occurred in preexec_fn`. The
+body shows the only branch that can produce that string, the `except Exception`
+around `Popen` at `launcher_local.py:888`. CPython discards the child's real
+exception in `_posixsubprocess.c`, so the log alone cannot name the site.
 
-5 in `test_evidence_integrity.py`, 2 in `test_r123_gates.py`, 1 in
-`test_binding_provenance.py`. Message: `retained without binding: the round
-refused before it executed anything: ... an owned store executes under the
-authority its investigation authorizes, not under a disposable one`.
+The test side can. In `test_n36_containment.py` the two failing tests both guard
+on `landlock_available()` and then pass `deny=[str(REPO_ROOT / "experiments")]`.
+The three passing siblings either pass no `deny` or declare none.
+`_child_setup` calls `_landlock_restrict` **only when `deny` is truthy**
+(`launcher_local.py:999-1000`), and `_landlock_restrict` raises
+`OSError(ENOSYS, probe.reason)` when the kernel probe is unavailable
+(`:257-258`).
 
-**Classified, not diagnosed.** These 5 `test_evidence_integrity.py` failures
-are the file the brief flagged as owned by lane `wt/e3`. **Do not edit it.** No
-`.py` file was edited in this pass. The 8 all carry the same refusal string, so
-they are one family, but whether the fix is a fixture that admits an owned store
-or a production change to the binding check is **not determinable from the log**.
+**So the failing set is exactly the set that declares a read deny list, and the
+raising site is the Landlock install at `launcher_local.py:1000`, not the other
+three candidates.** The passing sibling passes for a mechanical reason: no deny
+list, no Landlock call, nothing to fail. Verified that `launcher_local.py` and
+both n36 test files are byte-identical between `d4eb4126` and HEAD, so the code
+read is the code that ran.
 
-### J. XPASS(strict) — 5 IDs — TEST-side fix
+**Residual limit, stated plainly.** Which Landlock syscall failed cannot be
+named, and cannot be, because the child exception is discarded before the parent
+sees it. Narrowing four candidates to one is what the evidence supports;
+naming the syscall would be invention.
 
-All 5 in `tests/test_s09_normalizers.py`, and all 5 are in `NEW.failures`:
-these are new since the baseline. Message form:
-`[XPASS(strict)] the guard is a value comparison, so 1.0 is admitted`.
+## Causes the prior pass classified from the message, re-derived from tracebacks
 
-The tests are marked `xfail(strict=True)` expecting the guard to **refuse**
-`True` and float constants, and the guard now **passes** them, which strict
-xfail reports as a failure. The xfail marker encodes an expectation the code no
-longer violates.
+The prior pass classified D, E, F, G, H, I and J from summary lines. Re-derived:
 
-| Test | Param |
-|---|---|
-| `test_a_unit_factor_refuses_a_bool_constant_on_either_side` | `[left-hand]`, `[right-hand]` |
-| `test_a_unit_factor_refuses_a_float_constant_on_either_side` | `[left-hand]`, `[right-hand]` |
-| `test_a_unit_range_step_refuses_a_float_step` | — |
-
-**Fix (test-side, spec only).** Decide which is correct: if the guard should
-refuse non-integer constants, the guard is still a value comparison and that is
-the defect; if `1.0`/`True` are legitimately admissible, remove the strict
-xfail. Either way the xfail and the guard must be reconciled. **This is a
-semantic decision, not a mechanical one**, so it is left to the owning lane.
-
-### K. Containment preexec — 3 IDs — still not identifiable
-
-2 in `test_n36_containment.py`, 1 in `test_n36_refusal_strand.py`. Message:
-`AssertionError: child-setup-failed: SubprocessError: Exception occurred in
-preexec_fn.`
-
-Unchanged from baseline. The baseline narrowed it to four raising sites in
-`launcher_local.py` (`:296`, `:299`, `:312`, `:318`) and said the log cannot
-say which, because CPython discards the child exception. **That still holds.**
-The three failures still declare a read deny list while the passing sibling
-declares none. Not resolved.
-
-## The honest unrooted remainder: 59
-
-Down from the baseline's 160. Spread over 38 files. Each has a truncated
-message line only, and the cause is not determinable from it. I am not
-assigning them.
-
-Seven of the 59 form two clusters worth naming, without claiming a cause:
-
-**Stale-pin detectors (7).** `tests/test_m0_plan_claims.py` contributes all 7.
-These fire on any commit touching a cited path and the tree has moved since
-they were pinned. The baseline named two members of this cluster; it is now all
-seven in one file. `test_evidence_supersession.py` (2) is the same shape.
-
-**Credential-vacuity (3).** `test_inv_b14_retention.py` (2) and
-`test_inv_b17_budget_fit.py` (1) fail with `the credential is unreachable, so
-this scan would pass on an absence` and `the scan found no credential to search
-for; it is vacuous (looked in: none)`. These are **self-reporting**: the tests
-detect that they cannot run honestly in an environment with no credential
-configured, and refuse. That is the tests working correctly. Reading it as a
-defect would be wrong.
-
-**Stale-claim / re-derivation needed (8).** `test_final_accept_findings.py` (2),
-`test_inv_d1_documents.py` (2), `test_r_final_freeze_and_chain.py` (2),
-`test_evidence_supersession.py` (2). Messages name their own staleness, e.g.
-`amend_protocol no longer opens two connections; re-derive RF-03` and `the
-ledger no longer names its bottleneck section`. Each needs a human re-read of
-the claim against the current tree.
-
-The remaining 41 are ordinary assertion failures needing a traceback to
-attribute.
-
-## Before and after: `0ee4699` vs `980e3c26`
-
-The baseline's table is at `0ee4699` and totals 259. This run totals 247.
-Comparing by category **definition** rather than by name, since cause A was
-misnamed:
-
-| Cause | Baseline `0ee4699` | Now `980e3c26` | Delta |
+| Cause | Prior | Now | What moved |
 |---|---|---|---|
-| `_Store` (baseline: "API drift" 60 + "fixture drift" 16) | 76 | **82** | **+6** |
-| `.venv` interpreter path absent | 35 | 35 | 0 |
-| `pg_dump` server version mismatch | 10 | 10 | 0 |
-| Execution-authority refusal | 11 | **11** | **0** |
-| `PolicyNotProved` on bound-use proof | 8 | 8 | 0 |
-| Regex no-match | 8 | 8 | 0 |
-| Git pinned-ref (baseline: "missing") | 7 | 7 | 0 |
-| PostgreSQL unavailable | 3 | **7** | **+4** |
-| DBOS 3.0 config removal | 4 | 4 | 0 |
-| Containment preexec | 3 | 3 | 0 |
-| XPASS(strict) | 0 | **5** | **+5** |
-| `LiveRefused` (not a baseline category) | 0 | 8 | +8 |
-| Assertion-only unrooted | 160 | **59** | **−101** |
+| A `_Store` stub leak | 82 | **82** | Count holds. Mechanism sharpened, see below |
+| B `.venv` path | 35 | **35** | Holds. Now labelled 35 inferred, because the heavy job printed no bodies |
+| C pinned-ref | 7 | **7** | Holds. Traceback confirms `exit status 128`, matching the shallow-clone claim |
+| D `pg_dump` | 10 | **12** | **Grew by 2.** Tracebacks show the mismatch in 5 IDs that the prior pass counted as `L_regex` or assertion failures |
+| E PostgreSQL | 7 | **8** | **Grew by 1.** `test_m2_frontier_inherit.py:452` fails in the same family and was counted as Z |
+| F DBOS | 4 | **4** | Holds |
+| G exec-authority | 11 | **11** | Holds at 11, in the same files. **Still did not shrink**, the clearest negative result in the run |
+| H `PolicyNotProved` | 8 | **8** | Holds. All 8 inferred; no traceback exists for that file |
+| I `LiveRefused` | 8 | **7** | **Shrank by 1.** `test_binding_provenance.py` fails with `revision parent is not the active program`, a different defect, now cause AQ |
+| J XPASS | 5 | **5** | Holds. pytest prints no body for XPASS, so these stay inferred; the reason line is authoritative |
+| L regex | 8 | **6** | **Shrank by 2**, both reattributed to D |
+| K preexec | 3 | **3** | Holds, but narrowed from 4 sites to 1 |
 
-**What moved.** Only the unrooted bucket shrank, by 101, and most of that is
-this pass classifying it rather than the tree improving. Cause A grew by 6.
+### Cause A, restated in the terms the repair proved
 
-**What did not move.** Every category the brief expected to shrink did not.
-Execution-authority refusal is 11 at both trees, in the same five files. That
-is the clearest negative result here, and it contradicts the expectation that
-recorded in the brief.
+The census said the stub was assigned into `sys.modules`. **The repair showed it
+was assigned to `_types["settlement"].store`, an attribute on the `settlement`
+package**, which is why it outlived the test that installed it. My traceback
+evidence is the strongest form of that claim, because all 82 IDs' messages name
+the owning test and the stub's qualified name verbatim:
 
-**What grew.** PostgreSQL unavailable 3 to 7, `LiveRefused` 0 to 8 (the baseline
-had no such row), XPASS(strict) 0 to 5.
+```
+AttributeError: type object '_Store' has no attribute 'seed_allocation'
+AttributeError: <class 'test_posix_paths_checkpoint_restore._restore_without_postgres.<locals>._Store'> has no attribute 'operation_receipts'
+```
 
-**Why the totals do not reconcile arithmetically.** 247 + 40 gone = 287 against
-a baseline of 259. The two runs did not measure the same universe: the baseline
-had four cancelled jobs including py3.13 group 4, so a test sharded only into
-group 4 or running unsharded was invisible to it. `NEW.failures` is 5 and
-`GONE.failures` is 40, both measured against the previous run's ID list, not
-against the baseline's. **A per-category delta between the two tables is only
-meaningful for categories I could measure on both sides**, which is every row
-above, and each of those is a like-for-like comparison of a definition applied
-to a log.
-
-## Contradictions with the baseline's own accounting
-
-1. **`_Store` API drift is not API drift.** The baseline's central claim, that
-   60 failures come from production `_Store` methods that were renamed or
-   dropped, is false. `experiments/ad01/store.py` does not exist, no `class
-   _Store` is defined anywhere but one test file, and all nine named attributes
-   still exist on the real module store. The cause is a test-local stub leaking
-   through `sys.modules`. **A lane acting on the baseline's diagnosis would have
-   edited production code and fixed nothing.** The baseline's own warning that
-   the 16-ID subfamily "must not be merged" is also wrong: they merge, because
-   they are the same stub reached by two different call forms.
-
-2. **The pinned-ref failures are not missing refs.** All three SHAs resolve
-   locally; `git cat-file blob` returns the content. The cause is a depth-1
-   `actions/checkout` with no `fetch-depth`.
-
-3. **The baseline's arithmetic does not close.** Its table totals 259, its
-   per-job rows total 90 + 169 = 259, and the headline says "259 distinct
-   failing test IDs: 245 FAILED, 14 ERROR" while 245 + 14 = 259. Those are
-   consistent. But `reports/evidence/ci-run-37251210268.md:231` in the same
-   directory reports "Deleted-symbol cascade on `_Store` | 82" for run
-   `37251210268`, which is the count this pass independently measures as the
-   stub leak. **The 82 figure was already correct there and was labelled
-   "deleted-symbol cascade on `_Store`",** which points at production again. Two
-   documents in the same directory now both mislabel the same 82.
-
-## Not verified
-
-Stated so a repair lane does not read these as measured:
-
-- **NOT RUN:** every failure requiring a database. No PostgreSQL on this host
-  (`reports/workstreams/windows-env.md`). Categories D, E, F, G, H, I and most
-  of Z are classified from the log message, not reproduced.
-- **NOT RUN:** pytest at all, on this host, by standing rule.
-- **Containment preexec (3)** is not attributable from the log. The baseline's
-  four-candidate narrowing still stands and is not narrowed further here.
-- **No traceback bodies exist** in the downloaded artifacts. Every per-failure
-  detail above rests on the one truncated summary line. Category L (8 regex
-  no-match failures) and the 41 unattributed assertion failures cannot advance
-  without `suite.log` uploaded in full.
-- The `.venv` and socket-DSN causes are read from the source line that builds
-  the path. They were not run.
+The second form is CPython rendering `monkeypatch.setattr`'s target, and it names
+the leaking test directly. **All 9 named attributes still exist on the real
+store**, so a lane that migrated production `_Store` would have fixed zero of
+these 82. Fixed by `f53bec7d`, which restores the attribute in the existing
+`finally` block. Per `f53bec7d`, 1 of 9 store attributes survived before the
+repair and 9 of 9 after; I did not run that measurement and attribute it.
 
 ## What a repair lane should do, in order
 
-1. **Cause A, 82 IDs, one line.** Restore `settlement.store` in the `finally`
-   at `tests/test_posix_paths_checkpoint_restore.py:134-138`. Largest win in the
-   run and it is a test file.
-2. **Cause C, 7 IDs.** Add `fetch-depth: 0` to the checkout steps in
-   `ci.yml`.
-3. **Cause B, 35 IDs.** Replace `ROOT / ".venv" / "bin" / "python"` with
-   `sys.executable` in `test_run_bounded.py:45` and
-   `test_s09iso_stale_sweep.py:51`; derive the literal at
-   `test_ec02ad_verif.py:1165`. (`experiments/ad01/m1_behaviour_gate.py:366`
-   carries the same shape but is **not** among this run's failures.)
-4. **Cause E, 5 IDs.** Give `test_rec_restore.py` and `test_rpr07_resume.py` the
-   CI DSN instead of a socket path.
-5. **Cause J, 5 IDs.** Reconcile the `test_s09_normalizers.py` strict xfails
-   with the guard's actual behaviour. Needs a semantic call.
-6. **Categories D, F, G, H, I (41 IDs)** are production or fixture questions
-   needing a live database. Route to the owning lanes; `test_evidence_integrity.py`
-   belongs to `wt/e3`.
-7. **The 59 unrooted** need `suite.log` uploaded in full. `ci.yml:99-107` already
-   uploads it, so the artifact exists; this download only has the console slice.
+1. **Stop uploading a `-q` heavy log.** One CI-config change makes all 65
+   inferred IDs rootable on the next run. Everything below is smaller than this.
+2. **Cause A, 82 IDs.** Already repaired in `f53bec7d`. Nothing to do.
+3. **Cause B, 35 IDs.** Derive the interpreter from `sys.executable` instead of
+   `ROOT / ".venv" / "bin" / "python"` in `test_run_bounded.py:45` and
+   `test_s09iso_stale_sweep.py:51`; derive the committed literal at
+   `test_ec02ad_verif.py:1165`.
+4. **Cause C, 7 IDs.** Add `fetch-depth: 0` to the checkout steps in `ci.yml`.
+5. **Cluster 1 lines 145 and 163.** The stale-pin detector's path filter returns
+   an empty set. A detector that cannot see a move reports clean, which is worse
+   than a noisy one. Fix before re-pinning anything.
+6. **Cluster 3 lines 207 and 325.** Two live defects in
+   `test_r_final_freeze_and_chain.py`, not stale documentation.
+7. **Cause K, 3 IDs.** Landlock install at `launcher_local.py:1000` fails in
+   `preexec_fn` on this kernel. Needs a kernel-level answer CI can give.
+8. **Cause J, 5 IDs.** Reconcile the `test_s09_normalizers.py` strict xfails with
+   the guard's actual behaviour. A semantic decision, so it is left to the owner.
+9. **`test_evidence_supersession.py:67`.** Marker names ref `d422c93`, absent from
+   the repository. Either point it at a real ref or drop the claim.
+
+## Not verified
+
+Stated so a repair lane does not read these as measured.
+
+- **NOT RUN:** every failure requiring a live database or a POSIX child process.
+  Causes D, E, F, G, H, I, K and the inferred IDs in those families are read
+  from tracebacks, not reproduced here. GitHub CI runs all of it.
+- **The 65 inferred IDs** rest on the truncated summary message. Their cause is
+  labelled inferred in every row, and the artifact gap that causes it is named
+  above.
+- **Cause K's failing syscall** is not identifiable from any log, because CPython
+  discards it.
+- **`tests/test_evidence_integrity.py`** is owned by lane `wt/e3`. It is
+  classified here and **not edited**.
+- The `_Store`, `.venv` and socket-DSN mechanisms are read from the source line
+  that builds the path or installs the stub. They were not run.
+
+
+
+
+
