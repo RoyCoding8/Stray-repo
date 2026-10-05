@@ -1,0 +1,344 @@
+{
+  "arms": {
+    "disconnect": {
+      "adopted_imp_digest": "37de511f941badf537e04c39eab95fdb949cd14d81693b318706f33f5a4976f3",
+      "control_id": "disconnect-x16",
+      "declared_x_under_revision": 16,
+      "descendant_built": false,
+      "executed_bytes_digest": "37de511f941badf537e04c39eab95fdb949cd14d81693b318706f33f5a4976f3",
+      "executed_x": 16,
+      "expects_changed_decision": true,
+      "frozen_unchanged": true,
+      "in_instrument_range": false,
+      "known_effect": "The decision is reached and the input is named, but the instrument's own action validator refuses input 16 because the task exposes only inputs 0..15. The probe returns no observation, no descendant is built and the round ends without a candidate. The difference from a no-op is the point: a no-op learns what the incumbent learns, and this learns nothing at all, and both would score flat under an evaluator that looked only at the number.",
+      "label": "reviewer-authored",
+      "refusal": "illegal-input",
+      "refused_by_instrument": true,
+      "role": "disconnect",
+      "source_digest": "37de511f941badf537e04c39eab95fdb949cd14d81693b318706f33f5a4976f3"
+    },
+    "disconnect-bytes": {
+      "adopted_imp_digest": "c605653a69123e5f18625db8afe8704597d01601fe3276860c6a4afed680204c",
+      "control_id": "disconnect-bytes-x7-unreachable",
+      "declared_x_under_revision": 3,
+      "descendant_built": true,
+      "executed_bytes_digest": "c605653a69123e5f18625db8afe8704597d01601fe3276860c6a4afed680204c",
+      "executed_x": 3,
+      "expects_changed_decision": false,
+      "frozen_unchanged": true,
+      "in_instrument_range": true,
+      "known_effect": "The bytes differ from the incumbent and are admitted as eligible, because the only thing that differs is the expression bound to the probed input. The decision does not change: on the step that spends the probe, `view[\"experience\"]` is empty, so the expression takes its `else 3` arm and the learner probes the incumbent's own input. The descendant is therefore the incumbent's descendant and the paired difference is exactly zero, while the source digest is not the incumbent's digest. This is the C15 shape: different bytes, same behaviour.",
+      "label": "reviewer-authored",
+      "refused_by_instrument": false,
+      "role": "disconnect-bytes",
+      "source_digest": "c605653a69123e5f18625db8afe8704597d01601fe3276860c6a4afed680204c"
+    },
+    "effectful": {
+      "adopted_imp_digest": "3ee5a5d36237de49b20a8683aa4db5a3defb514fd4600706304e84efff7ebddc",
+      "control_id": "authored-eligible-x12",
+      "declared_x_under_revision": 12,
+      "descendant_built": true,
+      "executed_bytes_digest": "3ee5a5d36237de49b20a8683aa4db5a3defb514fd4600706304e84efff7ebddc",
+      "executed_x": 12,
+      "expects_changed_decision": true,
+      "expression": "(len(view.get(\"experience\", [])) or 12)",
+      "frozen_unchanged": true,
+      "in_instrument_range": true,
+      "known_effect": "Reads the view and names 12 where the incumbent names 3, so the descendant the next episode builds is a different one. The size of the difference is a property of the substrate, measured below, and not of the revision.",
+      "label": "reviewer-authored",
+      "refused_by_instrument": false,
+      "role": "effectful",
+      "source_digest": "3ee5a5d36237de49b20a8683aa4db5a3defb514fd4600706304e84efff7ebddc"
+    },
+    "incumbent": {
+      "control_id": "incumbent-low",
+      "declared_x_under_revision": 3,
+      "descendant_built": true,
+      "executed_bytes_digest": "6bb3f35162cc95470c5600e03b2397b97a482723986d8318b6ed0d50657f5b0d",
+      "executed_x": 3,
+      "expects_changed_decision": false,
+      "in_instrument_range": true,
+      "known_effect": "The authored evidence-selection procedure this study replaces. It fails the data-dependence gate on its own bytes, which is why an eligible revision is not a second copy of it.",
+      "label": "incumbent",
+      "refused_by_instrument": false,
+      "role": "incumbent",
+      "source_digest": "6bb3f35162cc95470c5600e03b2397b97a482723986d8318b6ed0d50657f5b0d"
+    },
+    "known-effect": {
+      "adopted_imp_digest": "4fbeb55c4c82a4b8a266cea70ee1e8320bcb6cbd73c31c3a7940a465f19714a3",
+      "control_id": "reviewer-authored-x8",
+      "declared_x_under_revision": 8,
+      "descendant_built": true,
+      "executed_bytes_digest": "4fbeb55c4c82a4b8a266cea70ee1e8320bcb6cbd73c31c3a7940a465f19714a3",
+      "executed_x": 8,
+      "expects_changed_decision": true,
+      "frozen_unchanged": true,
+      "in_instrument_range": true,
+      "known_effect": "The reviewer read `reachable_descendant_means` in the qualified headroom artifact, where 8 is the highest of the sixteen inputs the instrument accepts, and wrote a selector that names that input unless the learner has already spent it. The effect is known before the arm is run: on the first step the view carries no observation, so the control names 8, the descendant it selects differs from the incumbent's, and the size and direction of that difference are properties of the substrate rather than of the reviewer.",
+      "label": "reviewer-authored",
+      "refused_by_instrument": false,
+      "role": "known-effect",
+      "source_digest": "4fbeb55c4c82a4b8a266cea70ee1e8320bcb6cbd73c31c3a7940a465f19714a3"
+    },
+    "no-op": {
+      "adopted_imp_digest": "a35da522dbb6e511c8b6a1c79de0f0636d69249dca310bd051a3773f65d4d618",
+      "control_id": "no-op-incumbent-x3",
+      "declared_x_under_revision": 3,
+      "descendant_built": true,
+      "executed_bytes_digest": "a35da522dbb6e511c8b6a1c79de0f0636d69249dca310bd051a3773f65d4d618",
+      "executed_x": 3,
+      "expects_changed_decision": false,
+      "frozen_unchanged": true,
+      "in_instrument_range": true,
+      "known_effect": "The incumbent's own input, 3, selected by the same view read the known-effect control uses. On the first step nothing has been spent, so it names 3, the descendant it builds is the incumbent's descendant, and the paired difference is exactly zero by construction rather than by a measurement that happened to be small.",
+      "label": "reviewer-authored",
+      "refused_by_instrument": false,
+      "role": "no-op",
+      "source_digest": "a35da522dbb6e511c8b6a1c79de0f0636d69249dca310bd051a3773f65d4d618"
+    }
+  },
+  "benefit_measured": false,
+  "benefit_note": "No panel is built, so no benefit number is reported. A benefit claim needs an acquired arm from a live route; this artifact measures the apparatus that would carry it.",
+  "cohort_size": 150,
+  "effectful_changed_decision": true,
+  "effectful_descendant_sample": {
+    "learned_inputs": 1,
+    "n_queried": 1,
+    "overall": 0.0625,
+    "queried": 1.0,
+    "refused_inputs": 0,
+    "unqueried": 0.0
+  },
+  "eligibility": {
+    "executed": 5,
+    "frozen_write_reason": "",
+    "gates": {
+      "at least one learner view": "pass",
+      "bytes emit a probe": "pass",
+      "differs at x and nowhere else": "pass",
+      "does not reproduce the frozen reducer's choice": "not executed: opens a disposable PostgreSQL through _execution_ledger; _reducer_argmax at this view is [0] and the executed x is 12, which is the reading the gate compares against",
+      "non-empty executable STEP source": "pass",
+      "the probed x is computed from the view": "pass"
+    },
+    "not_executed": [
+      "delegates-to-unchanged-reducer"
+    ]
+  },
+  "freeze_guard": {
+    "attacks": {
+      "authority-pop": {
+        "reason": "view.pop writes the frozen field 'authority'",
+        "refused": true
+      },
+      "evaluator": {
+        "reason": "writes view['evaluator'], a frozen field",
+        "refused": true
+      },
+      "execution-limits": {
+        "reason": "writes view['execution_limits'], a frozen field",
+        "refused": true
+      },
+      "grant-assignment": {
+        "reason": "writes view['grant'], a frozen field",
+        "refused": true
+      },
+      "sealed-results": {
+        "reason": "writes view['sealed_results'], a frozen field",
+        "refused": true
+      },
+      "used-update": {
+        "reason": "view.update writes the frozen field 'used'",
+        "refused": true
+      }
+    },
+    "clean_source_refused": false,
+    "every_attack_refused": true
+  },
+  "frozen": {
+    "channel_version": "invl02-improve-v1",
+    "decision_under_study": "diagnostic-evidence-selection",
+    "descendant_rule": "unqueried-input accuracy, frozen evaluator",
+    "evaluator": "invl02-frozen-version-space-v1",
+    "execution_limits": {
+      "max_policy_steps": 6,
+      "max_queries": 8,
+      "step_cpu_seconds": 10,
+      "step_max_output_bytes": 65536,
+      "step_timeout_ms": 10000
+    }
+  },
+  "frozen_fields": [
+    "grant",
+    "used",
+    "authority",
+    "evaluator",
+    "sealed_results",
+    "execution_limits"
+  ],
+  "incumbent_x": 3,
+  "noise": {
+    "argmax_stable": false,
+    "best_probe_agrees": false,
+    "half_best_probes": [
+      12,
+      4
+    ],
+    "note": "the cohort's own argmax is the check on any argmax measured against it; an input that wins on one half and loses on the other has not been shown to win",
+    "quarter_argmaxes": [
+      9,
+      12,
+      4,
+      4
+    ],
+    "resample_spread": 0.009777777777777781
+  },
+  "panel": {
+    "arms": [],
+    "best_delta": 0.006666666666666667,
+    "best_input": 12,
+    "best_z": 1.4888750009563954,
+    "built": false,
+    "noise_floor_z": 1.96,
+    "reason": "no reachable input clears the noise floor"
+  },
+  "per_input": [
+    {
+      "delta": 0.001777777777777778,
+      "mean": 0.06088888888888889,
+      "measured": true,
+      "x": 0,
+      "z": 0.37156154853998075
+    },
+    {
+      "delta": 0.001777777777777778,
+      "mean": 0.06088888888888889,
+      "measured": true,
+      "x": 1,
+      "z": 0.39626626943781607
+    },
+    {
+      "delta": 0.004000000000000001,
+      "mean": 0.06311111111111112,
+      "measured": true,
+      "x": 2,
+      "z": 0.8003241475201823
+    },
+    {
+      "delta": 0.0,
+      "mean": 0.059111111111111114,
+      "measured": true,
+      "x": 3,
+      "z": null
+    },
+    {
+      "delta": 0.00488888888888889,
+      "mean": 0.064,
+      "measured": true,
+      "x": 4,
+      "z": 0.9951050473805102
+    },
+    {
+      "delta": -0.001333333333333333,
+      "mean": 0.057777777777777775,
+      "measured": true,
+      "x": 5,
+      "z": -0.361314686764962
+    },
+    {
+      "delta": 0.0004444444444444441,
+      "mean": 0.059555555555555556,
+      "measured": true,
+      "x": 6,
+      "z": 0.10976866845847487
+    },
+    {
+      "delta": -1.8503717077085944e-19,
+      "mean": 0.059111111111111114,
+      "measured": true,
+      "x": 7,
+      "z": -5.204170427930421e-17
+    },
+    {
+      "delta": 0.00044444444444444463,
+      "mean": 0.059555555555555556,
+      "measured": true,
+      "x": 8,
+      "z": 0.08606842175484027
+    },
+    {
+      "delta": -0.002222222222222222,
+      "mean": 0.056888888888888885,
+      "measured": true,
+      "x": 9,
+      "z": -0.536570470191722
+    },
+    {
+      "delta": 0.0,
+      "mean": 0.059111111111111114,
+      "measured": true,
+      "x": 10,
+      "z": 0.0
+    },
+    {
+      "delta": -0.00044444444444444463,
+      "mean": 0.05866666666666667,
+      "measured": true,
+      "x": 11,
+      "z": -0.10483232375438348
+    },
+    {
+      "delta": 0.006666666666666667,
+      "mean": 0.06577777777777778,
+      "measured": true,
+      "x": 12,
+      "z": 1.4888750009563954
+    },
+    {
+      "delta": 0.004,
+      "mean": 0.06311111111111112,
+      "measured": true,
+      "x": 13,
+      "z": 0.8979371142339831
+    },
+    {
+      "delta": 0.004444444444444445,
+      "mean": 0.06355555555555556,
+      "measured": true,
+      "x": 14,
+      "z": 0.9652341781316803
+    },
+    {
+      "delta": 0.0008888888888888895,
+      "mean": 0.06,
+      "measured": true,
+      "x": 15,
+      "z": 0.2063135156559994
+    }
+  ],
+  "restart": {
+    "effectful": {
+      "environment": {
+        "instrument": "boolean-rule-v1",
+        "seed": 4,
+        "split": "dev"
+      },
+      "imp_digest": "3ee5a5d36237de49b20a8683aa4db5a3defb514fd4600706304e84efff7ebddc",
+      "restarted": true,
+      "x": 12
+    },
+    "effectful_changed_after_restart": true,
+    "effectful_matches_in_process": true,
+    "parent": {
+      "environment": {
+        "instrument": "boolean-rule-v1",
+        "seed": 4,
+        "split": "dev"
+      },
+      "imp_digest": "6bb3f35162cc95470c5600e03b2397b97a482723986d8318b6ed0d50657f5b0d",
+      "restarted": true,
+      "x": 3
+    }
+  },
+  "run_version": "invl02-e4-run-v2",
+  "split": "audit"
+}
