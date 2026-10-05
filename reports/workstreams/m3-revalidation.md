@@ -165,8 +165,13 @@ own:
 - `bound = ceil(log2(len(CLASS_TABLES))) = ceil(log2(224)) = 8`.
 - The informed arm must reach `unqueried == 1.0` on **every** seed at that
   budget, reduced with `all` so one short seed fails the check.
-- The blind arm must identify nothing, asserted rather than assumed, since that
-  is the claim the column rests on.
+
+**There is no blind-arm half, and that absence is the finding.** A learner
+given no observation retains the whole class by construction, so any test
+asserting it identifies nothing is a tautology. I wrote that half first and
+deleted it. The blind column's honest content is which subset the tie-break
+picks, and the artifact reports that (`blind_sequence`,
+`blind_sequence_is_seed_independent`) instead of scoring it.
 
 The artifact now also carries `blind_sequence` and
 `blind_sequence_is_seed_independent`, so a reader sees that the blind column is

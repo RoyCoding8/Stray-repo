@@ -35,22 +35,24 @@ eight-subsets on 40 seeds, that subset ranks **22nd from the bottom**. So the
 `0.0600` is not "what blindness scores"; it is what this one unlucky subset
 scores. Either way the cell measures the tie-break, not the ladder.
 
-So the two blind cells and the two blind-derived deltas are deleted rather
-than re-pinned, and `reconciles` is replaced by `attains_bound`, which is
-computed from the instrument and holds or fails on its own:
+So the blind cell and the blind-derived delta are deleted rather than
+re-pinned, and `reconciles` is replaced by `attains_bound`, which is computed
+from the instrument and holds or fails on its own:
 
 - `bound = ceil(log2(len(CLASS_TABLES))) = ceil(log2(224)) = 8`, the fewest
   binary probes that can pin one member of the class.
 - The informed arm must reach `unqueried == 1.0` on **every** seed at that
   budget, because the version space is then a singleton.
-- The blind arm must identify **nothing** at that budget, because it never
-  observes.
 
-Both halves are properties of the instrument and the data, not of a document.
-Both fail on the pre-freeze tree, where the informed arm's budget-8 mean was
-`0.8500`/`0.8958`/`0.9142` rather than `1.0`: the old tie-break spent probes
-on coin flips and left a non-singleton space. That is the regression this
-check now catches, and it is the check the frozen table could not express.
+That check fails on the pre-freeze tree, where the informed arm's budget-8 mean
+was `0.8500`/`0.8958`/`0.9142` rather than `1.0`: the old tie-break spent probes
+on coin flips and left a non-singleton space. This is the check the frozen
+table could not express.
+
+There is no blind-arm half to this check, and its absence is the finding. A
+learner given no observation retains the whole class by construction, so any
+such test is a tautology. The blind column's honest content is which subset the
+tie-break picks, which `measure` reports rather than scores.
 
     uv run python -m experiments.ad01.e4_budget_ladder
     uv run python -m experiments.ad01.e4_budget_ladder --cohort original
@@ -119,34 +121,36 @@ def information_bound() -> int:
 
 
 def _attains_bound(cohort: str, split: str, seeds: list) -> dict:
-    """Did the informed arm earn the bound, and did the blind arm miss it?
+    """Did the informed arm earn the bound on every seed?
 
     Computed per seed and reduced with `all`, so one seed short of the bound
     fails the check. A mean would hide it.
+
+    There is deliberately no matching blind-arm check. A learner that was
+    never given an observation has the whole class by construction, so
+    reporting that would be a tautology dressed as a measurement. What the
+    blind column actually shows is that its evidence, once `descendant_score`
+    observes it for real, scores near the bottom of all 12870 subsets. That is
+    a property of the subset the tie-break picks, which `measure` reports as
+    `blind_sequence` and `blind_sequence_is_seed_independent`.
     """
     from . import boolean_rule as _rules
     from . import rule_learner as _reducer
 
     bound = information_bound()
-    informed_perfect = []
-    blind_perfect = []
+    per_seed = []
     for seed in seeds:
         task = _rules.make_task(split, int(seed))
         session = _rules.RuleSession(task)
         learner = _reducer.VersionSpaceLearner(_rules.CLASS_TABLES, int(seed))
         for x in _sequences(int(seed), informed=True, split=split)[:bound]:
             learner.observe(x, session.query(x))
-        informed_perfect.append(max(learner.version_space_sizes()) == 1)
-        # The blind arm never observes, so its space is the whole class by
-        # construction. That is the claim under test, so assert it as one.
-        blind = _reducer.VersionSpaceLearner(_rules.CLASS_TABLES, int(seed))
-        blind_perfect.append(max(blind.version_space_sizes()) == 1)
+        per_seed.append(max(learner.version_space_sizes()) == 1)
 
     return {
         "budget": bound,
-        "informed_identifies_every_seed": all(informed_perfect),
-        "informed_seeds_short_of_bound": informed_perfect.count(False),
-        "blind_identifies_any_seed": any(blind_perfect),
+        "informed_identifies_every_seed": all(per_seed),
+        "informed_seeds_short_of_bound": per_seed.count(False),
     }
 
 
