@@ -282,11 +282,23 @@ which is the structural test rather than a re-assertion.
   scorer's three cases, neither of which the freeze touched.
 - **Leg (c), Boolean and ordering cannot execute a program — survives as stated,
   and its own numbers improve.** The claim is about the world's grammar, and
-  `RuleSession` exposes no execution action. One distinction matters inside it:
-  the census's "8 of 8 probes are sufficient in principle" is
-  information-theoretic and unmoved; what the freeze changed is **attainment**, not
-  sufficiency. The frozen rule reaches the bound on all 224 where the old
-  tie-break missed 64.
+  `RuleSession` exposes only `query` and `commit_predictor`, so freezing a query
+  selector cannot change it. One distinction matters inside it: the census's "8 of
+  8 probes are sufficient in principle" is information-theoretic and unmoved; what
+  the freeze changed is **attainment**, not sufficiency. The frozen rule reaches the
+  bound on **224 of 224** members, where the pre-freeze tie-break left a
+  non-singleton space on a seed-dependent fraction.
+
+**Two figures in this ledger did not survive re-derivation, and both are
+withdrawn as stated.** The pre-freeze comparator's "**missed 64 of 224**" appears
+only under one seed convention; it is 125 and 126 under two others and ranges 0 to
+192 across 200 conventions, so there is no convention-free figure and none is
+claimed. The chance-level pair `0.5138 / sd 0.0169` has no matching convention
+either, though 28 of 192 hit its mean within 0.001 and the closest sd gap is
+0.0001 — so it is very likely a real measurement whose convention was never
+recorded. The qualitative claim it supported, that the old blind figure was
+chance, **holds and is now measured more firmly**: after the freeze the blind arm
+emits `[0..7]` on every seed, and that subset ranks 22 of 12870 from the bottom.
 
 **So M3 still closes as a measured zero**, and the supported-cell count is zero for
 reasons that never touched the learner.
