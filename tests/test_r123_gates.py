@@ -89,14 +89,37 @@ def _make_store(tmp_path, name="store.json"):
 
 def test_r1_observation_dependent_choice(tmp_path):
     store = _make_store(tmp_path)
+    # Two more probe-only opportunities on the rule `opp-first` intervenes
+    # on, so a measurement can earn `not_preserved` against a prior one
+    # instead of the assertion carrying a verdict it typed. They are proposed
+    # here rather than in `_make_store` because no other test in this file
+    # needs the refuted arm to be reachable.
+    live.propose_live_work(store, [
+        _opportunity("opp-seed", "rule-dev-0004", 7),
+        _opportunity("opp-extra", "rule-dev-0004", 5)])
     package = channel.make_control("low")
     store.bind_active(package)
-    preserved = [{"observation_id": "o1", "task": "rule-dev-0004",
-                  "verdict": "preserved"}]
-    mismatch = [{"observation_id": "o1", "task": "rule-dev-0004",
-                 "verdict": "mismatch"}]
-    first = live.choose_next_work(store, package, preserved)
-    second = live.choose_next_work(store, package, mismatch)
+    task = rules.make_task("dev", 4)
+    seeded = live.execute_chosen_work(
+        store,
+        {"kind": "probe", "inputs": {"opportunity_id": "opp-seed", "x": 7},
+         "requested_resources": {"queries": 1, "steps": 1}},
+        task)
+    assert seeded["verdict"] == "unknown"
+    refuted = live.execute_chosen_work(
+        store,
+        {"kind": "probe", "inputs": {"opportunity_id": "opp-extra", "x": 5},
+         "requested_resources": {"queries": 1, "steps": 1}},
+        task)
+    # The version space fitted to (7, y) predicted a different vector at 5
+    # than the instrument returned, so the instrument refuted it and this
+    # observation earned `not_preserved` by being measured.
+    assert refuted["verdict"] == "not_preserved"
+    assert refuted["target"] == "rule-dev-0004"
+    # `store.observations` is what the chain produced. The two arms differ
+    # only in which of them the operate source is handed.
+    first = live.choose_next_work(store, package, [seeded])
+    second = live.choose_next_work(store, package, store.observations)
     assert first["choice"] == "opp-first"
     assert second["choice"] == "opp-followup"
     assert first["choice"] != second["choice"]
@@ -197,6 +220,23 @@ def test_r1_driver_routes_through_frontier(tmp_path, dsn):
         tmp_path / "frontier.json", freeze, "gate",
         dsn=dsn, guard=None, model="test-model")
     assert record["observation_dependent"] is True
+    # The E0 freeze probes `opp-rule-dev-4` at x=3 exactly once, and a first
+    # measurement on a rule has no prior evidence to disagree with, so it
+    # earns `unknown`. The refuted arm is therefore rewritten from the
+    # recorded observations (`invl02_live._control_triple`), not earned by
+    # one: `observation_dependent` here is the falsifier moving the decision,
+    # not a real refutation having moved it. The capability is real and this
+    # freeze does not exercise it. `refuted_rewritten` is in the record so
+    # that is legible instead of inferred, and pinning it here is what stops
+    # the two meanings being read as one.
+    assert record["refuted_rewritten"] is True
+    # The rewrite is anchored to an observation the run really made, so this
+    # is a relation over the record rather than a restated id. What it
+    # cannot be is a refutation the instrument earned, and the probe count is
+    # what says so: one probe on a rule leaves no prior to disagree with.
+    assert record["refuted_from"] is not None
+    assert record["choice_refuted"] != record["choice_effectful"]
+    assert record["observations"] == 1
     assert record["second_candidate"] != record["first_candidate"]
     assert record["adopted"]["status"] == "activated-control"
 

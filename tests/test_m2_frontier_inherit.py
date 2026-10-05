@@ -96,18 +96,46 @@ def _operate_choice(store, experience):
     return result["action"]
 
 
+def _probe(store, opportunity_id, x, task):
+    """Run one real probe and return the observation the store recorded.
+
+    The verdict on the returned observation is the one the instrument's own
+    disagreement earned (`improve_channel.measured_verdict`), so a test that
+    passes this into an operate choice is handing over what production hands
+    over rather than a verdict typed next to the assertion.
+    """
+    outcome = channel.execute_operate_action(
+        store,
+        {"kind": "probe",
+         "inputs": {"opportunity_id": opportunity_id, "x": x},
+         "requested_resources": {"queries": 1, "steps": 1}},
+        task,
+    )
+    assert outcome["status"] == "observed"
+    return outcome
+
+
 def test_frontier_choice_is_observation_dependent(tmp_path):
     store = _make_store(tmp_path)
-    mismatch = [
-        {"observation_id": "obs-1", "task": "rule-dev-0004",
-         "verdict": "mismatch"}
-    ]
-    preserved = [
-        {"observation_id": "obs-1", "task": "rule-dev-0004",
-         "verdict": "preserved"}
-    ]
-    first_choice = _operate_choice(store, preserved)
-    second_choice = _operate_choice(store, mismatch)
+    # A second probe on the rule `opp-first` intervenes on, so the second
+    # measurement has a prior observation to disagree with. `opp-seed` sorts
+    # after the others on cost, so probing it leaves `opp-first` in the
+    # frontier and the refuted arm still has somewhere to move to.
+    store.propose(_opportunity("opp-seed", "rule-dev-0004", 7))
+    package = channel.make_control("low")
+    store.bind_active(package)
+    task = br.make_task("dev", 4)
+    seeded = _probe(store, "opp-seed", 7, task)
+    assert seeded["verdict"] == "unknown"
+    refuted = _probe(store, "opp-extra", 5, task)
+    # The version space fitted to (7, y) predicted a different vector at 5
+    # than the instrument returned, so this observation earned `not_preserved`
+    # rather than having been typed.
+    assert refuted["verdict"] == "not_preserved"
+    assert refuted["target"] == "rule-dev-0004"
+
+    first_choice = _operate_choice(store, [seeded])
+    second_choice = _operate_choice(store, store.observations)
     assert first_choice["inputs"]["opportunity_id"] == "opp-first"
     assert second_choice["inputs"]["opportunity_id"] == "opp-followup"
     assert first_choice["inputs"]["opportunity_id"] != second_choice[
@@ -178,12 +206,20 @@ def test_investigation_survives_restart(tmp_path):
     assert restarted.active_digest == digest_before
     assert len(restarted.observations) == 1
     assert restarted.is_quiescent() is True
-    choice = _operate_choice(
-        restarted,
-        [{"observation_id": restarted.observations[0]["observation_id"],
-          "task": "rule-dev-0004", "verdict": "mismatch"}],
-    )
-    assert choice["inputs"]["opportunity_id"] == "opp-followup"
+    # What the restart has to carry is the measurement itself, so that the
+    # measured rule and the verdict earned on it are still there to decide
+    # from. The first probe on a rule has no prior evidence to disagree
+    # with, so it earns `unknown`; that is a fact about this sequence and not
+    # a substitute for a refutation. The choice this test used to assert was
+    # reached with no experience at all, so it pinned nothing about the
+    # evidence surviving.
+    survived = restarted.observations[0]
+    assert survived["observation_id"] == "obs-opp-first-x3"
+    assert survived["verdict"] == "unknown"
+    assert survived["target"] == "rule-dev-0004"
+    assert survived["x"] == 3
+    assert tuple(survived["y"]) == tuple(
+        (task["tables"][b] >> 3) & 1 for b in range(4))
 
 
 def test_improvement_channel_known_difference(tmp_path):
