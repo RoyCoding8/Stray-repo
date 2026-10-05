@@ -133,15 +133,29 @@ jobs:
     # else that a Windows checkout would exercise differently. This job is the
     # cross-OS claim, and it is cheap because it does not need a database.
     #
-    # No SETTLEMENT_TEST_DSN is set, deliberately. `tests/conftest.py:20` calls
-    # `pytest.skip` when it is absent, so the database tests select themselves
-    # out and the ~300 that need no server run on all three platforms. No file
-    # list is maintained here: a second list is a second authority on which
-    # tests need a database, and the tree already answers the question itself.
+    # No SETTLEMENT_TEST_DSN is set, deliberately, and `tests/conftest.py:20`
+    # calls `pytest.skip` when it is absent. That gate holds only for the
+    # fixtures that consult it. The first portable measurement (macOS, run
+    # 37367150028) passed 3584 and skipped 548, but still failed 288 and
+    # errored 428 -- roughly 554 of those lines are tests that connect to
+    # PostgreSQL on a hardcoded `host=/var/run/postgresql` DSN of their own
+    # instead of going through the gate, and they are this lane's measured
+    # noise floor until the DSN authority is single again. No file list is
+    # maintained here: a second list is a second authority on which tests
+    # need a database, and the tree already answers the question itself.
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+
+    # Every step below is bash, and on windows-latest a `run:` without an
+    # explicit shell is pwsh: run 37365655000 died there with "The '<'
+    # operator is reserved for future use" before producing any log. Git Bash
+    # ships on every GitHub runner, so one job-level default covers all three
+    # OSes and the steps stay free of per-step shell noise.
+    defaults:
+      run:
+        shell: bash
 
     env:
       PYTHONPATH: src
