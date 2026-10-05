@@ -300,3 +300,20 @@ HIGH template is never used. That is harmless today and the docstring's claim
 that both procedures are independently reachable is true in effect, because
 rewriting the one integer reaches either. Worth knowing before anyone
 "repairs" the loop.
+## How the repaired prompt was checked, and what was not executed
+
+The prompt repair (`eb0538fa`, content identical to `6fa5130f`) is justified
+gate by gate: `_emits_probe`, `_x_is_data_dependent` and `unauthorised_change`
+were each **executed**, and the two worked examples name 8 and 12 at the
+admission view against a reducer first choice of 0.
+
+**Gate 6 was not executed.** It was checked by reading the probed expression
+and evaluating it against `_reducer_argmax(ADMISSION_VIEW) == [0]`, because
+`classify_revision` opens a disposable PostgreSQL database and this host has
+none. So the claim "the repaired prompt's guidance passes every gate" rests on
+four gates run and one gate read. CI with the `postgres:18` service is what
+closes the fifth.
+
+This note exists because the commit that carried this reasoning was re-authored
+during a merge, and the re-authored message dropped the caveat. The caveat
+belongs to the claim, not to a message that can be overwritten.
