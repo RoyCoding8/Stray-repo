@@ -68,6 +68,17 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - name: Match pg_dump to the server
+        # The service is postgres:18 and the runner ships pg_dump 16, so
+        # `pg_dump` aborts on a server version mismatch rather than on anything
+        # the restore code did. 12 IDs in run 37261826154 carried exactly that
+        # message, up from 10 the run before, and none of them is a defect in
+        # the code under test.
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+          pg_dump --version
+
       - name: Install
         run: |
           python -m pip install --upgrade pip
