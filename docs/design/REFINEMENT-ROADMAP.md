@@ -14,8 +14,8 @@ General autonomous discovery remains the goal. Memory, background development, t
 | 6. Practical specification | Builder protocols and acceptance conditions | Foundation specified |
 | 7. Foundation prototype | Durable bounded execution, evidence, trials and continuity | Built; deployment validation remains partial |
 | 8. Cognitive-policy refinement | Acquired competence, memory, agenda, representations and teams | Closed at bounded mechanism scope; broader learning questions remain open |
-| 9. Architecture consolidation | Compare executable operational and improvement behavior; keep, replace or remove mechanisms | **Active, incomplete.** The write-only mission columns are gone as of `ff5b767`, and the live path now refuses to execute on a store that names an owner. Acquisition was unsuccessful, benefit comparisons are unmeasured, autonomous selection is not established and live learner revision is unrun. No test suite has run since `0ee4699`. |
-| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | **Incomplete.** The two investigation rows are still different rows, so the SQL quiescence predicate governs nothing and two predicates remain. M2 is not started, and M4 cannot run because no live route is configured. |
+| 9. Architecture consolidation | Compare executable operational and improvement behavior; keep, replace or remove mechanisms | **Active, incomplete.** Dispositions as acceptance issued them: mechanism CONFIRMED as to the durable chain, with the freeze half repaired by X3 and the effect-identity half by X4b; acquisition NEGATIVE; utility NEGATIVE and not measurable; transfer NEGATIVE; autonomous selection NOT ESTABLISHED; learner improvement NEGATIVE. **The mechanism result is not evidence for any of the other five.** The write-only mission columns are gone as of `ff5b767`. |
+| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | **Incomplete.** The two investigation rows are still different rows, so the SQL quiescence predicate governs nothing and two predicates remain. M2 is not started, and its central clause is undemonstrable as written. **Its existence does not claim beneficial RSI**: no eligible revision ran, so no learner improved. |
 | 11. Operational qualification | Supported deployment, containment, recovery and controls | Partial groundwork; not qualified. Unchanged by the 2026-10-01 batch. |
 | 12. Final implementation/release | Supported infrastructure product with migrations, installation, lifecycle UI and evidence | Not started as a release milestone |
 
@@ -43,6 +43,16 @@ is the source for this paragraph. Its scope labels are earned: the AD01 worlds
 are removed from the discovery matrix on four independent grounds, and the SWE
 cell is measured degenerate. M3 closes as a valid null. It does not close
 stages 9 or 10, and it says so.
+
+Two facts decide what stage 9 does next, and neither is a stage-10 concern.
+**The served output budget is 2048 tokens** (`invr1b12-swe/campaign.json`:
+`max_output_tokens`), which is the figure that bounds what the route can return
+for a construction attempt. **The Boolean instrument is not powered**: it offers
+exactly one hypothesis class against six required, and that class is a
+published constant all 72 tasks carry by construction, so no panel choice moves
+it. **A two-domain demonstration is not a two-domain result.** Acquisition
+returned 0 of 4 lineages on one returned artifact, which is a rate of nothing
+rather than a measured zero capability.
 
 The [2026-10-03 researcher review](../../reports/PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03)
 selected SQL AD01 as the production mission owner and left the migration
