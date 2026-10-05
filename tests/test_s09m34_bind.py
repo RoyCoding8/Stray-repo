@@ -89,14 +89,20 @@ def _env():
 
 
 def _lifecycle(dsn, tag):
-    from experiments.ad01 import records
+    from experiments.ad01 import records, trajectory
+    # Production opens a proposal for the campaign that runs the assessment and
+    # names the allocation from that same campaign id (`trajectory.py:833-835`).
+    # Deriving the two from different strings would mint a second authority for
+    # one leg, which is the split this seam exists to prevent.
+    cid = "ad01-w0-I-%s" % tag
     proposal = records.open_revision_proposal(
-        dsn, investigation_id="m34-inv-%s" % tag,
+        dsn, investigation_id=cid,
         parent_digest="seed-sw-greedy",
         failure_record={"task_id": USE_TASK,
                         "parent_digest": "seed-sw-greedy",
                         "verdict": "not_preserved"},
-        scope={"family": "software"})
+        scope={"family": "software"},
+        allocation_id=trajectory._alloc_id(cid))
     freeze = records.freeze_candidate(
         dsn, proposal_id=proposal["proposal_id"],
         source_bytes=GOOD_SOURCE, entry=GOOD_ENTRY)

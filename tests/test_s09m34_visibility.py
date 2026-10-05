@@ -145,16 +145,18 @@ def test_protected_reference_refused_in_visible_context():
 
 
 def test_stale_bind_cannot_replace_newer(store):
-    from experiments.ad01 import records, selection
+    from experiments.ad01 import records, selection, trajectory
     from settlement.common import Command
     scope = {"family": "software"}
+    cid = "m34v-inv-stale"
     proposal = records.open_revision_proposal(
-        store, investigation_id="m34v-inv-stale",
+        store, investigation_id=cid,
         parent_digest="seed-sw-greedy",
         failure_record={"task_id": USE_TASK,
                         "parent_digest": "seed-sw-greedy",
                         "verdict": "not_preserved"},
-        scope=dict(scope))
+        scope=dict(scope),
+        allocation_id=trajectory._alloc_id(cid))
     freeze = records.freeze_candidate(
         store, proposal_id=proposal["proposal_id"],
         source_bytes=GOOD_SOURCE, entry=GOOD_ENTRY)
