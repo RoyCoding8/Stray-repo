@@ -1869,6 +1869,25 @@ def _study_authority(dsn: str, allocation_id: str | None) -> dict | None:
     return {"dsn": dsn, "allocation_id": allocation_id}
 
 
+#: The second probe opportunity on the dev-4 rule, added so a measurement on
+#: that rule has a prior to disagree with. `measured_verdict` returns
+#: `unknown` for a rule's first measurement and for a re-probe at the same
+#: input (`improve_channel.py:2174`, a version space fitted to `(x, y)` is
+#: consistent with `(x, y)`), so a freeze carrying one probe cannot earn a
+#: refutation at all and `observation_dependent` reads False on it by
+#: construction rather than by evidence. This is the opportunity that supplies
+#: the prior.
+#:
+#: The id must sort AFTER `opp-first`. `admissible()` orders by
+#: `(queries + steps, opportunity_id)` (`frontier.py:1824-1826`) and every
+#: probe opportunity costs 2, so an id sorting before `opp-first` would make
+#: this one `frontier[0]`. That would move the disconnected arm along with the
+#: preserved one and collapse the comparison the field is computed from. The
+#: leading `z` is that constraint written down, not decoration.
+SECOND_PROBE_OPPORTUNITY = "z-extra"
+SECOND_PROBE_X = 11
+
+
 def _live_environments(freeze: dict) -> list:
     envs = [{"instrument": "boolean-rule-v1", "split": "dev",
              "seed": 4}]
@@ -1928,8 +1947,12 @@ def _live_opportunities(freeze: dict) -> list:
             "opp-rule-dev-4", dev_four,
             "what does input 3 reveals on the dev rule task",
             instrument="boolean-rule-v1", x=3))
-    if _rules.make_task("dev", 5)["task_id"] not in have_tasks:
-        pass
+    if SECOND_PROBE_OPPORTUNITY not in have_ids:
+        opportunities.append(_live.live_opportunity(
+            SECOND_PROBE_OPPORTUNITY, dev_four,
+            "what does input %d reveals on the dev rule task"
+            % SECOND_PROBE_X,
+            instrument="boolean-rule-v1", x=SECOND_PROBE_X))
     if not opportunities:
         opportunities.append(_live.live_opportunity(
             "opp-rule-dev-4", dev_four,
@@ -2063,10 +2086,31 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
                     "inputs": {"opportunity_id": "opp-rule-dev-4",
                                "x": 3},
                     "requested_resources": {"queries": 1, "steps": 1}}
+    second_probe_action = {
+        "kind": "probe",
+        "inputs": {"opportunity_id": SECOND_PROBE_OPPORTUNITY,
+                   "x": SECOND_PROBE_X},
+        "requested_resources": {"queries": 1, "steps": 1}}
     try:
         effect = _live.execute_chosen_work(store, probe_action, task)
     except Exception as exc:
         effect = {"status": "refused", "reason": str(exc)}
+    # The second probe runs on the same rule at a different input, so
+    # `measured_verdict` finds the first probe as a prior and the measurement
+    # earns `observed` or `not_preserved` instead of `unknown`. That earned
+    # verdict is what the operate branch reads, and it is the only thing on
+    # this freeze that can make `observation_dependent` read True. It runs
+    # before `_control_triple` because that triple is a reading of the store,
+    # and a store holding one measurement is a store that has not earned the
+    # claim. One probe, one query and one step: the added probe is a
+    # `RuleSession` oracle call, so `E0_CALL_CEILING` is untouched, and the
+    # store's own authority absorbs it from `queries_used 1, steps_used 1` to
+    # `2, 2` against `LIVE_AUTHORITY`.
+    try:
+        second_effect = _live.execute_chosen_work(
+            store, second_probe_action, task)
+    except Exception as exc:
+        second_effect = {"status": "refused", "reason": str(exc)}
     choices = _control_triple(store, active, label)
     first = _live.run_live_improve_round(store, task, active, 1,
                                         authority=authority)
@@ -2160,13 +2204,17 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
     # evidence with the same arm given none. The falsifier arm is a
     # different question -- whether a rewritten verdict can move the
     # decision -- and it is reported beside this under its own name, never
-    # folded in here: `_control_triple` rewrites the last verdict, so on a
-    # freeze whose single probe earned `unknown` the two arms differ only
-    # because the falsifier wrote the disagreement itself. Measured on the
-    # E0 freeze at `7a00676`: preserved and disconnected both choose
-    # `opp-first`, so this reads False there, while `choice_refuted` reads
-    # `opp-followup`. Reading the falsifier as causal influence is what
-    # this line previously did.
+    # folded in here.
+    #
+    # Both fields are earned rather than arranged. The second probe exists so
+    # the store holds a measurement with a prior to disagree with; where it
+    # earns `not_preserved` the preserved arm moves off `frontier[0]` and this
+    # reads True, and where the instrument confirms the predictor the arm
+    # correctly stands still. `_control_triple` rewrites the last verdict, so
+    # on a freeze whose probes earn `observed` the falsifier arm and the
+    # preserved arm agree and `falsifier_moves_decision` reads False. The two
+    # fields answer two questions, and on this freeze only one of them is the
+    # clause.
     return {"label": label,
             "store_path": str(store_path),
             "investigation_id": investigation_id,
@@ -2183,6 +2231,7 @@ def _run_frontier_investigation(store_path, freeze: dict, label: str, *,
                 choices["preserved"]["choice"] != choices["refuted"]["choice"]),
             "executed_digest": choices["preserved"]["executed_digest"],
             "effect": effect,
+            "second_probe_effect": second_effect,
             "first_candidate": candidate["control_id"],
             "first_parent": candidate["parent_digest"],
             "adopted": adopted,
