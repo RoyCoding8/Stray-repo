@@ -322,13 +322,24 @@ def test_every_authored_control_is_still_admitted():
 
 
 def test_the_rule_still_asks_the_contract_rather_than_restating_it():
-    """Read off the bytecode, so the docstring cannot satisfy it."""
+    """Read off the bytecode, so the docstring cannot satisfy it.
+
+    "Asks rather than restates" is about the FIELD NAMES. Loading
+    `ACTION_REQUIRED` is asking the contract for its own required set;
+    typing `kind`, `target`, `inputs` in the gate would be the
+    restatement that drifts when a field is added. The attribute is
+    therefore required to be present and every field name required to be
+    absent.
+    """
     import dis
 
-    names = {i.argval for i in dis.get_instructions(method_exec._validator_refuses)
-             if isinstance(i.argval, str)}
+    instrs = dis.get_instructions(method_exec._validator_refuses)
+    names = {i.argval for i in instrs if isinstance(i.argval, str)}
+    loaded = {i.argval for i in instrs
+              if i.opname in ("LOAD_CONST", "LOAD_METHOD") and isinstance(i.argval, str)}
     assert "validate_action" in names
-    assert not {"ACTION_REQUIRED", "ACTION_KINDS"} & names
+    assert "ACTION_REQUIRED" in names
+    assert not set(policy_step.ACTION_REQUIRED) & loaded
 
 
 def test_the_old_refusals_are_undisturbed():

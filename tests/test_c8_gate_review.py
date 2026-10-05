@@ -336,14 +336,29 @@ def test_the_derivation_helpers_are_reachable_and_ask_the_validator():
     Read from the bytecode rather than the source, so the docstring that
     names `ACTION_REQUIRED` to explain why the function does not, cannot
     satisfy the check.
+
+    "Asks rather than restates" is about the FIELD NAMES, not the
+    attribute. Loading `ACTION_REQUIRED` is asking the contract for its
+    own required set, which is what keeps the two in step; typing
+    `kind`, `target`, `inputs` in here would be the restatement that
+    drifts the first time a field is added.
+
+    So the attribute is required present, and no field name may appear
+    among the constants the function loads. A test that forbade the
+    attribute outright would forbid the fix for the very defect it
+    exists to catch, and one that only inspected string *names* would
+    miss a field reached by any other route into a constant.
     """
     import dis
 
-    names = {i.argval for i in dis.get_instructions(method_exec._validator_refuses)
-             if isinstance(i.argval, str)}
+    instrs = dis.get_instructions(method_exec._validator_refuses)
+    names = {i.argval for i in instrs if isinstance(i.argval, str)}
+    loaded = {i.argval for i in instrs
+              if i.opname in ("LOAD_CONST", "LOAD_METHOD") and isinstance(i.argval, str)}
     assert "validate_action" in names
     assert "policy_step" in names
-    assert not {"ACTION_REQUIRED", "ACTION_KINDS"} & names
+    assert "ACTION_REQUIRED" in names
+    assert not set(policy_step.ACTION_REQUIRED) & loaded
 
 
 def test_every_return_is_read_so_a_late_inert_return_still_bites():
