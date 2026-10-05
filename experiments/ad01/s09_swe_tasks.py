@@ -810,17 +810,32 @@ def protected_verdict(program: Program, record: dict, lines: list) -> dict:
 def _drop_unit_factor(node):
     """`x * 1` and `1 * x` are `x`, for the operands this instrument uses.
 
-    The guard is a value comparison, so `1.0 == 1` and `True == 1` admit
-    this rule too, and neither of those is an identity. `2 * 1.0` is the
-    float `2.0` where `2` is the integer `2`, and a string raises `TypeError`
-    where `x` returns it. Measured across all 39 instances: every candidate
-    ending in `* 1.0` was credited `repaired`, 44 of 44, and every one of
-    them returned a float where the reference returned an int.
+    The operand has to be an integer one. It used to be compared by value, so
+    `1.0 == 1` and `True == 1` admitted this rule and neither of those is an
+    identity. `2 * 1.0` is the float `2.0` where `2` is the integer `2`, and a
+    string raises `TypeError` where `x` returns it. Measured across all 39
+    instances: every candidate carrying a `1.0` factor was credited
+    `repaired`, 186 of 186, and every one of them returned a float where the
+    reference returned an int.
 
-    `type(value) is int` would admit the documented shape and nothing else.
-    `test_the_unit_factor_guard_admits_only_an_integer_one` in
-    `tests/test_s09_normalizers.py` reports that change as a failure, as an
-    XPASS, the day it lands, so the marker cannot outlive the fix.
+    `type(value) is int` rather than `isinstance(value, int) and not
+    isinstance(value, bool)`. The two agree on every value the operand clause
+    above can reach, and disagree on exactly one: an `int` subclass that is not
+    `bool`, such as an `IntEnum` member. That value cannot arrive here from
+    source. The clause reads `isinstance(node, ast.Constant)`, so the operand
+    has to be a literal in the text being reduced, and the only `Constant`
+    values `ast.parse` produces for an `IntEnum` are the `int` members of its
+    own definition, because a reference to the member parses as an `Attribute`.
+    Admitting `IntEnum` would need a caller to build that `Constant` by hand,
+    and the normal form is built by parsing text, so nothing this function is
+    reachable from can hold one: `ast.unparse` writes such a value out as
+    `<Colour.ONE: 1>`, which does not parse. The wider predicate therefore
+    buys nothing reachable and states an intent this rule does not hold to -
+    `x * Colour.ONE` returns a `Colour`, not the `int` `x` returns, and
+    dropping the factor drops that type.
+
+    The same test reads `True` as what it is. `bool` is an `int` subclass, so
+    `x * True` is refused, and it is refused on both sides of the product.
 
     The identity does not hold at `* 1` either, for every `x`. A bool
     operand gives an int, `True * 1` being `1`, and an operand with a custom
@@ -831,14 +846,15 @@ def _drop_unit_factor(node):
     and no reference multiplies by the constant one - the 39 references carry
     93 multiplications by a constant, `marker * 11` on all 39 of them, and
     none of those constants is 1 - so this rule fires on nothing in the
-    catalogue. That is why an identity overstated here survived: nothing in
-    the task exercised it.
+    catalogue.
     """
     if not isinstance(node, ast.BinOp) or not isinstance(node.op, ast.Mult):
         return None
-    if isinstance(node.left, ast.Constant) and node.left.value == 1:
+    if isinstance(node.left, ast.Constant) and type(node.left.value) is int \
+            and node.left.value == 1:
         return node.right
-    if isinstance(node.right, ast.Constant) and node.right.value == 1:
+    if isinstance(node.right, ast.Constant) and type(node.right.value) is int \
+            and node.right.value == 1:
         return node.left
     return None
 
@@ -846,13 +862,14 @@ def _drop_unit_factor(node):
 def _drop_unit_step(node):
     """`range(a, b, 1)` yields what `range(a, b)` yields.
 
-    The guard is a value comparison on the same terms as `_drop_unit_factor`'s,
-    so `1.0` and `True` are admitted here too. `range(a, b, 1.0)` is the
-    sharpest of those: it raises `TypeError` on every argument, so the
+    The step has to be an integer one, on the same test as
+    `_drop_unit_factor`'s and for the same reason. It used to be compared by
+    value, so `1.0` and `True` were admitted here too. `range(a, b, 1.0)` is
+    the sharpest of those: it raises `TypeError` on every argument, so the
     equivalence check calls two programs that agree on no input at all the
-    same function, and it credits it. `type(value) is int` would admit the
-    documented shape and nothing else, and the test named in
-    `_drop_unit_factor` above is what would report that change.
+    same function, and it credits it. Measured across all 39 instances: the
+    26 whose `range` was given a `1.0` third argument were all certified
+    equivalent.
 
     No reference source writes a three-argument `range`, so this rule fires on
     nothing in the catalogue. It is here for a candidate that writes one.
@@ -863,7 +880,8 @@ def _drop_unit_step(node):
         return None
     if len(node.args) != 3 or node.keywords:
         return None
-    if not isinstance(node.args[2], ast.Constant) or node.args[2].value != 1:
+    if not isinstance(node.args[2], ast.Constant) \
+            or type(node.args[2].value) is not int or node.args[2].value != 1:
         return None
     node.args = node.args[:2]
     return node
