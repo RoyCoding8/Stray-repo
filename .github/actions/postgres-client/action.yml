@@ -29,10 +29,21 @@ runs:
         sudo apt-get update -qq
 
     - name: Install the client
+      # The deb unpacks to /usr/lib/postgresql/<major>/bin, which is not on
+      # PATH. /usr/bin/pg_dump belongs to postgresql-client-common, a wrapper
+      # that dispatches to the newest registered client, so installing 18
+      # beside the runner's 16 leaves `pg_dump` still reporting 16.15. Run
+      # 37320129823 installed 18.6-1.pgdg24.04+2 successfully and the check
+      # below then read "pg_dump client major: 16".
       shell: bash
       run: |
         set -euo pipefail
         sudo apt-get install -y -qq postgresql-client-${{ inputs.major }}
+        # Applies to the steps after this one, not to this shell, so the echo
+        # reads the versioned binary directly. `pg_dump --version` here would
+        # still be the wrapper and still report 16.
+        echo "/usr/lib/postgresql/${{ inputs.major }}/bin" >> "$GITHUB_PATH"
+        /usr/lib/postgresql/${{ inputs.major }}/bin/pg_dump --version
 
     - name: Refuse a client the server cannot be dumped by
       # pg_dump aborts on a version mismatch rather than on anything the
