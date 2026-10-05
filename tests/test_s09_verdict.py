@@ -727,3 +727,42 @@ def test_a_nested_suite_run_does_not_claim_a_database(monkeypatch):
     # silently present a different one either, because that would still collide
     # with a sibling holding the same job token.
     assert captured["env"].get("S09ISO_TOKEN") == "b3130000"
+
+
+def test_a_nested_suite_run_reports_a_hang_rather_than_waiting_forever(monkeypatch):
+    """A nested run with no bound is invisible, so it gets one.
+
+    pytest emits nothing at all about a test that never returns. The parent
+    therefore waits until the job's own `timeout-minutes` kills it, and the run
+    is recorded as `failure` rather than as a hang: nine of the last 25 runs hit
+    exactly the 100-minute limit on the job owning this file, and every one of
+    those nine reads as a failure. Nothing in the log distinguishes that from a
+    slow suite.
+
+    The bound is this call's, not the job's, and reaching it is a verdict input
+    rather than a crash, so the caller still gets a `SuiteResult`.
+    """
+    def _hang(cmd, **kwargs):
+        raise subprocess.TimeoutExpired(cmd, kwargs.get("timeout"))
+
+    monkeypatch.setattr(verdict.subprocess, "run", _hang)
+
+    result = verdict.run_representation_suite(REPO, "tests/test_x.py")
+
+    assert result.returncode == verdict.NESTED_SUITE_TIMEOUT_RC, (
+        "a hung nested run must report the project's bound-reached status, "
+        "not a status a passing child could produce")
+    assert result.returncode not in (0, 1), (
+        "0 or 1 would read as a verdict about the suite")
+    assert (result.passed, result.failed, result.errored) == (0, 0, 0)
+
+    # And the bound is passed down, rather than left to the job's timeout.
+    captured: dict = {}
+
+    def _capture(cmd, **kwargs):
+        captured["timeout"] = kwargs.get("timeout")
+        return subprocess.CompletedProcess(cmd, 0, "3 passed", "")
+
+    monkeypatch.setattr(verdict.subprocess, "run", _capture)
+    verdict.run_representation_suite(REPO, "tests/test_x.py")
+    assert captured["timeout"] == verdict.NESTED_SUITE_TIMEOUT_S

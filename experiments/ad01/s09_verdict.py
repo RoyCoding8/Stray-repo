@@ -406,6 +406,19 @@ REPRESENTATION_BINDING = {
 
 _PYTEST_COUNT = re.compile(r"(\d+) (passed|failed|error)")
 
+#: How long a nested representation suite may take, and the status it reports if
+#: it does not finish inside that. The bound is the project's own convention from
+#: `docs/LONG-RUNNING-TESTS.md`: a timeout is not a pass, and the value is a
+#: child's, not the parent's. `scripts/run_bounded.py --timeout` uses the same
+#: reading, where reaching the bound is reported as `timeout` rather than as the
+#: child's own status.
+#:
+#: 280 seconds is the slowest currently-collected file in that document plus
+#: margin. The nested suites here are three small files; an hour was the
+#: previous effective bound and it was the job's, not this call's.
+NESTED_SUITE_TIMEOUT_S = 280
+NESTED_SUITE_TIMEOUT_RC = 124  # the project's "our bound was reached" value.
+
 
 @dataclass(frozen=True)
 class SuiteResult:
@@ -439,10 +452,27 @@ def run_representation_suite(root: os.PathLike | str,
     # exists". `S09ISO_DISABLE` returns from `pytest_configure` before the
     # claim, which is the whole of what a suite that reads test files needs.
     env["S09ISO_DISABLE"] = "1"
-    completed = subprocess.run(
-        [sys.executable, "-m", "pytest", test_file,
-         "-q", "--tb=no", "-p", "no:cacheprovider"],
-        cwd=str(root), env=env, capture_output=True, text=True)
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-m", "pytest", test_file,
+             "-q", "--tb=no", "-p", "no:cacheprovider"],
+            cwd=str(root), env=env, capture_output=True, text=True,
+            timeout=NESTED_SUITE_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        # A nested run with no bound is invisible: pytest says nothing about a
+        # test that never returns, so the parent waits until the job's own
+        # `timeout-minutes` kills it and the whole run reads as `failure`.
+        # That is not hypothetical. Nine of the last 25 runs hit exactly the
+        # 100-minute limit on the job owning this file, and every one of the
+        # nine is recorded as a failure rather than a hang.
+        #
+        # Returning a result rather than raising keeps the caller's shape: the
+        # verdict is computed from the counts, and a suite that did not finish
+        # reports zero of each, which `mechanism_verdict` already treats as a
+        # leg that cannot pass. A timeout is therefore a verdict input here and
+        # not a crash.
+        return SuiteResult(test_file=test_file, passed=0, failed=0, errored=0,
+                           returncode=NESTED_SUITE_TIMEOUT_RC)
     counts = {"passed": 0, "failed": 0, "error": 0}
     for digits, word in _PYTEST_COUNT.findall(completed.stdout):
         counts[word] = int(digits)
