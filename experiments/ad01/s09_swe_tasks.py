@@ -808,7 +808,32 @@ def protected_verdict(program: Program, record: dict, lines: list) -> dict:
 # because a reader deciding whether to trust a certificate needs the whole
 # set of refusals in front of them, not the ones that happened to be found.
 def _drop_unit_factor(node):
-    """`x * 1` and `1 * x` are `x`, for any `x` Python can multiply."""
+    """`x * 1` and `1 * x` are `x`, for the operands this instrument uses.
+
+    The guard is a value comparison, so `1.0 == 1` and `True == 1` admit
+    this rule too, and neither of those is an identity. `2 * 1.0` is the
+    float `2.0` where `2` is the integer `2`, and a string raises `TypeError`
+    where `x` returns it. Measured across all 39 instances: every candidate
+    ending in `* 1.0` was credited `repaired`, 44 of 44, and every one of
+    them returned a float where the reference returned an int.
+
+    `type(value) is int` would admit the documented shape and nothing else.
+    `test_the_unit_factor_guard_admits_only_an_integer_one` in
+    `tests/test_s09_normalizers.py` reports that change as a failure, as an
+    XPASS, the day it lands, so the marker cannot outlive the fix.
+
+    The identity does not hold at `* 1` either, for every `x`. A bool
+    operand gives an int, `True * 1` being `1`, and an operand with a custom
+    `__mul__` observes the call the rewrite drops. It does hold on the
+    operands this instrument actually uses, digit strings and small integers,
+    with no disagreements on the grid in
+    `test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain`,
+    and no reference multiplies by the constant one - the 39 references carry
+    93 multiplications by a constant, `marker * 11` on all 39 of them, and
+    none of those constants is 1 - so this rule fires on nothing in the
+    catalogue. That is why an identity overstated here survived: nothing in
+    the task exercised it.
+    """
     if not isinstance(node, ast.BinOp) or not isinstance(node.op, ast.Mult):
         return None
     if isinstance(node.left, ast.Constant) and node.left.value == 1:
@@ -819,7 +844,19 @@ def _drop_unit_factor(node):
 
 
 def _drop_unit_step(node):
-    """`range(a, b, 1)` yields what `range(a, b)` yields."""
+    """`range(a, b, 1)` yields what `range(a, b)` yields.
+
+    The guard is a value comparison on the same terms as `_drop_unit_factor`'s,
+    so `1.0` and `True` are admitted here too. `range(a, b, 1.0)` is the
+    sharpest of those: it raises `TypeError` on every argument, so the
+    equivalence check calls two programs that agree on no input at all the
+    same function, and it credits it. `type(value) is int` would admit the
+    documented shape and nothing else, and the test named in
+    `_drop_unit_factor` above is what would report that change.
+
+    No reference source writes a three-argument `range`, so this rule fires on
+    nothing in the catalogue. It is here for a candidate that writes one.
+    """
     if not isinstance(node, ast.Call):
         return None
     if not isinstance(node.func, ast.Name) or node.func.id != "range":
