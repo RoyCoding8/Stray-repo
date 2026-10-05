@@ -128,14 +128,21 @@ those 60 rootable next run** — it cannot produce a body for an XPASS, so 60 is
 honest figure, not 65. That single CI-config change is worth more than any
 individual cause in the table.
 
-**Confirmed against the tree that still had the defect.** Run `37277929945`
-uploaded `heavy-failures.txt` alone: 17,423 bytes, **72 distinct failure IDs**, and
-**no usable traceback body** — the only two matches for a pytest frame pattern are
-incidental text. Archiving `heavy.log` alone would not have fixed it either: the
-loop overwrites that path per file, so the artifact would retain the last file and
-lose the rest. Fixed in `8f10cd6e` by appending each failing file's body to its own
-file as the loop goes. **72 is the whole heavy side of the 247, so this one change
-covers every one of them.**
+**Confirmed, and it closes the census's largest unrootable block.** Run
+`37290195949`'s `heavy-archived` artifact is **36,565 bytes** against 17,423
+before: `heavy-failures.txt` (17,608) plus **`heavy-tracebacks.log` (417,766)**,
+which holds **209 traceback frames** across **21 archived files**. Measured
+coverage: **73 of 73 distinct heavy failure IDs have a captured body.**
+
+So the whole heavy side of the 247 is now rootable from an artifact, where
+before it was 72 IDs resting on a truncated summary line. That was one CI-config
+change, no test touched.
+
+The unsharded jobs terminate too. `heavy archived` 55.6 min, `py3.13` 57.8 min,
+`py3.134` 40.0 min — every one of them previously cancelled at the 100-minute
+limit without reporting.
+
+
 
 **An earlier version of this entry blamed job cancellation for the 60. That was
 wrong and would have wasted a repair lane.** The four cancelled jobs are *suite*
