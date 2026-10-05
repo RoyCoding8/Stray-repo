@@ -349,7 +349,36 @@ probes on coin flips and left a non-singleton space.
 This re-run is an **apparatus repair, not a replication**, and no independent-run
 claim is made from it.
 
-### M2's clause is earned on the amended freeze, and the caps did not move
+### The CI hang is fixed, measured on the job that used to die
+
+Run `37290195949` at `32bf4ba4`, on the tree that carries `9e164b29` and
+`32bf4ba4`.
+
+**Shard 4 — the job that owns `tests/test_s09_verdict.py` — completed in 38
+minutes: `52 failed, 1160 passed, 2 skipped, 1 xfailed`, and it dropped its 38
+databases cleanly.** It had never finished. Across the last 25 runs, that job hit
+exactly the 100-minute `timeout-minutes` limit **nine times**, and every one of
+those nine is recorded as `failure` rather than as a hang, because pytest emits
+nothing at all about a test that never returns. Its artifact here is **180 KB**
+against 615-byte fragments in every run that hung, which is what a suite that
+actually ran looks like. `tests/test_s09_verdict.py`: **0 failures.**
+
+The mechanism was measured twice by hand before the fix: the cancel lands, and
+24ms later a `CREATE DATABASE` naming that job's own token returns `already
+exists`. `run_representation_suite` copied the parent's environment into the
+child, `S09ISO_TOKEN` with it, and the child then waited on the same per-token
+advisory lock the parent holds for the whole suite.
+
+**The failure count rose from 90 to 143 across the four sharded shards, and that
+is visibility rather than regression.** Shard 4 never reported before, so its 52
+IDs are newly *reported*, not newly broken. Compared against the shards that did
+report in the prior run, the figure is **0 new**.
+
+The two repairs for the execution-authority block are **not** in this run: `baa14031`
+and `64850501` both landed after it started. All 7 authority IDs still fail here,
+which is the expected reading and not evidence against either.
+
+
 
 The amendment adds **one** probe (`SECOND_PROBE_OPPORTUNITY = "z-extra"`, x=11) so
 the store holds a measurement with a prior to disagree with; `measured_verdict`
@@ -369,6 +398,8 @@ merely responsive.
 the study's `sandbox_calls`: `E0_SANDBOX_CALLS = 19`, `E12_SANDBOX_CALLS = 30` and
 `E0_CALL_CEILING = 12` are unchanged. The store's headroom moves `3/16` queries and
 `7/12` steps to `4/16` and `8/12` — one probe, one query, one step, nothing refuses.
+
+### M2's clause is earned on the amended freeze, and the caps did not move
 
 Not verified: the end-to-end path through `run_step_out_of_process`, which needs a
 real allocation row and a subprocess. The shipped operate bytes run and the
