@@ -1917,10 +1917,12 @@ def run_operate_step(package: dict, view: dict, state: dict, *,
     receipt. It also reaches the executor, which annotates the receipt with
     the arm the work belonged to.
 
-    Production does not supply it yet. `live_construct.choose_next_work`
-    reaches this wrapper without one, and the id says `noarm` rather than
-    reading as a name. Making the arm arrive is that file's seam to thread,
-    from the arm `_run_frontier_investigation` already holds as `label`.
+    `authority` is the study store and allocation this execution settles
+    against, and it defaults to the disposable ledger only for the fixture
+    boundary. The live driver supplies it now: `live_construct.
+    choose_next_work` forwards its caller's authority, and the arm it already
+    received reaches the operation id, so the id names the arm rather than
+    reading `noarm`.
     """
     _frontier.validate_view(view)
     if view["purpose"] != _frontier.OPERATE:

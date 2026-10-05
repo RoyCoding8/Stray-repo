@@ -100,16 +100,22 @@ R123_SANDBOX_EXPOSURE = broker.exposure_schedule(
     broker.SANDBOX_EXEC,
     {"timeout_ms": method_exec.STEP_TIMEOUT_MS})[0]
 
-#: How many improve steps one investigation runs, which is what actually draws
-#: on the allocation. `drive_improve_round` bounds a round at `for step in
-#: range(3)` (`improve_channel.py:2375`) and `_run_frontier_investigation`
-#: runs exactly two rounds, so 6 per investigation. The `choose_next_work` calls
-#: in `_control_triple` are NOT counted: `choose_next_work` reaches
-#: `run_operate_step` without an authority (`live_construct.py:1193-1211`), so
-#: those executions settle on `_disposable_authority`'s own database rather
-#: than on this one, and the `execute_chosen_work` probes are in-process
-#: `RuleSession.query` calls that reach no executor at all.
-R123_STEPS_PER_INVESTIGATION = 6
+#: How many child executions one investigation runs against THIS study's
+#: allocation. `drive_improve_round` bounds a round at `for step in
+#: range(3)` (`improve_channel.py:2377`) and `_run_frontier_investigation`
+#: runs exactly two rounds, so 6 improve steps, plus the three operate choices
+#: `_control_triple` makes on `preserved`, `refuted` and `disconnected` = 9.
+#: The `execute_chosen_work` probes reach no executor at all, in-process
+#: `RuleSession.query` calls, so they are not counted.
+#:
+#: The three operate choices were previously NOT counted, and they were not
+#: free either: they settled on `_disposable_authority`'s own database under
+#: its own study root and a different `dsn`, so `_study_operation_counts` never
+#: walked them. They settle under this grant now, so they are counted. Leaving
+#: the figure at six would make this file's own tests refuse on the last
+#: investigation, which is the failure mode a ceiling is supposed to produce
+#: and not one to be argued with.
+R123_STEPS_PER_INVESTIGATION = 9
 
 #: The three `_run_frontier_investigation` calls this file makes. Counted by
 #: the AST census over the tree, not read off by eye: `test_r1_driver_routes_
@@ -224,7 +230,15 @@ def test_r1_observation_dependent_choice(tmp_path):
     # restatement of it. The rewrite is a no-op on an already-refuted store,
     # so the falsifier cannot move the decision here and must read False --
     # the two fields are separate answers, not one value under two names.
-    arms = driver._control_triple(store, package, "earned")
+    #
+    # `authority` is required, and the store here is a fixture boundary: it
+    # names no owner, because `_make_store` opens it with no `dsn`. There is
+    # no study for it to settle under, so it is handed `None` explicitly rather
+    # than a fabricated authority. An owned store would refuse instead, which
+    # is `tests/test_operate_step_authority.py`'s claim, and passing a made-up
+    # `{dsn, allocation_id}` here would make the three choices settle against
+    # a database this file does not stand up.
+    arms = driver._control_triple(store, package, "earned", authority=None)
     assert arms["preserved"]["choice"] == "opp-followup"
     assert arms["disconnected"]["choice"] == "opp-first"
     assert arms["refuted_rewritten"] is True
