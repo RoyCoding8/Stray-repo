@@ -49,11 +49,46 @@ depth-1 clone, which exits 128 with `fatal: invalid object name`, matching CI.
 Fixed in `1a8a2697` for the two jobs that run tests; the `consistency` job reads
 no pinned path and is left at the default.
 
-The remaining 59 are unrooted for a reason worth naming: **the census only had
-the console slice of the logs, never the uploaded `suite.log` artifacts**, which
-`ci.yml` does write under `if: always()`. That gap is being closed against the
-full tracebacks. 7 stale-pin detectors in `test_m0_plan_claims.py`, 3
-credential-vacuity, and 8 stale-claim re-derivation are named but unclaimed.
+The remaining 59 are rooted, and the reason they were not is worth recording: **the
+first census only had the console slice of the logs, never the uploaded
+`suite.log` artifacts**, which `ci.yml` writes under `if: always()`. Those artifacts
+exist and had not expired — 9 artifacts, all `expired=False`. The prior lane's Z
+set was reconstructed from its own CSV rather than inherited, so these are the same
+59 by construction, and all 59 now carry a pytest blame line. None is inferred.
+
+    suite IDs with traceback bodies: 175  (29 + 33 + 113)
+    heavy IDs:                        72
+    intersection:                      0
+    DISTINCT TOTAL:                  247
+      rooted                         182
+      inferred                        65
+
+**The 65 inferred are one structural cause, not 65 mysteries.** The heavy job runs
+`pytest -q` per file, which suppresses the FAILURES block, so those files rest on a
+truncated summary line. Archiving full heavy stdout makes all 65 rootable next run,
+and that single CI-config change is worth more than any individual cause in the
+table.
+
+The three named clusters each split, and **none is the single cause previously
+suspected**. A stale-pin detector's path filter returns an empty set, so it cannot
+see a move — a detector that cannot see a move reports clean, which is worse than a
+noisy one. A planted-credential test asserts its scan returns a value and the scan
+returns `''`. And two **live defects** sit among eight stale claims: at
+`test_r_final_freeze_and_chain.py:207` the verdict stopped claiming
+`informs_decision`, so the row that would hide a smuggled write is no longer
+produced and the guard is no longer exercised; at `:325` the protocol opens 0
+connections where 2 were required. Reading all eight as "needs a human re-read"
+would have left both unexamined.
+
+Cause K narrows from four candidates to one, and the narrowing comes from the test
+side rather than the log: the failing set is exactly the tests that declare a read
+deny list, because `_child_setup` calls `_landlock_restrict` only when `deny` is
+truthy (`launcher_local.py:999-1000`) and that raises `OSError(ENOSYS)` at
+`:257-258`. Which syscall failed cannot be named from any log, because CPython
+discards the child exception — stated as the residual limit it is.
+
+**G, execution-authority refusal, is still 11 and did not shrink.** That is the
+clearest negative result in the run and stays a negative.
 
 ## What the corpus can and cannot show, 2026-10-04 night
 

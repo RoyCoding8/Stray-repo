@@ -289,13 +289,29 @@ whole job. I would not change it as part of this fix.
 
 ## 9. Honest gaps
 
-1. **The exact hanging test is NOT MEASURED.** Index 3829 of 4783 is measured.
-   The name is not, because CI collects 53 more tests than a Windows
-   collection and platform skips make the mapping non-uniform.
-2. **The cause of the 57.8-minute stall is NOT MEASURED.** The serialization
-   contention is real and precedes it; the causal link is inference.
-3. Whether a lock wait, a `lock_timeout` retry loop, or the isolation teardown
-   is responsible is unresolved.
+**Superseded in part by `nested-run-isolation-design.md`, which measured what this
+document could only bound.** The mechanism is now identified and does not depend on
+naming a test, so gap 1 below is retired as a *blocker* even though the index-to-name
+mapping was never confirmed. What follows is the state as of this document's
+writing, annotated where later measurement overtook it.
+
+1. ~~**The exact hanging test is NOT MEASURED.**~~ **No longer load-bearing.**
+   Index 3829 of 4783 was measured; the name never was. The repair does not require
+   it, because the defect is the nested child inheriting `S09ISO_TOKEN` and
+   deadlocking on a per-token advisory lock — not a property of one test.
+2. ~~**The cause of the 57.8-minute stall is NOT MEASURED.**~~ **Now measured.** In
+   run `37261826154`, the cancel lands at `05:42:56.135` and 24ms later a `CREATE
+   DATABASE "s09iso_b3130000_acct"` returns `already exists`, from a pid that
+   appears only for those two lines. Confirmed independently on the py3.12 shard
+   (`05:42:54.192` → `05:42:54.198`, `s09iso_b3120000_acct`). Each pinned job token
+   is the first of 38 databases a fresh run derives, and only `IsolatedSuite._create`
+   issues a `CREATE`. The stall is a nested child contending with its own parent.
+   The serialization contention described above is real and precedes it, but it is
+   not the cause of the stall.
+3. Whether a lock wait, a `lock_timeout` retry loop, or the isolation teardown is
+   responsible **is now answered**: `RunClaim.acquire` blocks on
+   `pg_advisory_lock`, and the child's `CREATE DATABASE` collides with a name the
+   parent already holds.
 4. The 143-failure figure for `heavy archived` could not be reproduced from
    the available artifacts. This run shows 21 of 85 files failing.
 5. Per-test durations are **NOT MEASURED** anywhere. No shard passed
