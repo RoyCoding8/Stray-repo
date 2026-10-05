@@ -4,9 +4,9 @@
 "still going" and shared no status string. They are not two names for one
 thing. The frontier's list lives in a JSON document in a file, is keyed on
 opportunities, and its states are `pending` and `settled`; the mission entry's
-list lives in a SQL column, is keyed on attempts, and its states are `held`,
-`restored` and `suspended`. Nothing in the repository writes a frontier effect
-into `investigations.in_flight` or an in-flight row into `pending_effects`, and
+list lives in a SQL column, is keyed on attempts, and its states are `held` and
+`restored`. Nothing in the repository writes a frontier effect into
+`investigations.in_flight` or an in-flight row into `pending_effects`, and
 `StoreIdentity.dsn` -- the field that was supposed to route one to the other --
 is validated, never persisted and never dereferenced. So the disjointness is
 two records of two different units of work, not one duplicated enumeration.
@@ -14,7 +14,7 @@ two records of two different units of work, not one duplicated enumeration.
 What that leaves is a question the durable side could not answer at all:
 whether an investigation has admitted work it has not run. Three vocabularies
 were answering adjacent versions of it -- `pending`/`settled` in the document,
-`held`/`restored`/`suspended` on the entry, `accepted`/`incorporated` plus
+`held`/`restored` on the entry, `accepted`/`incorporated` plus
 `effect_record IS NULL` on `s09_policy_state` -- and none of them was a
 predicate over the row. `mission.is_quiescent` is that predicate, and it reads
 the in-flight list alone, which is the only one of the three that `mission`
@@ -117,17 +117,16 @@ def test_an_admitted_operation_is_not_quiescent(store, inv):
     assert mission.is_quiescent(store, inv) is False
 
 
-@pytest.mark.parametrize("state", ["held", "restored", "suspended"])
+@pytest.mark.parametrize("state", ["held", "restored"])
 def test_every_in_flight_state_is_not_quiescent(store, inv, state):
-    """All three of the column's own states, each reached as its own writer
+    """Both of the column's own states, each reached as its own writer
     reaches it.
 
-    Not by writing the literal into the column. `resume_operation` is what
-    makes a state `restored`. `suspended` is declared by `IN_FLIGHT_STATES` and
-    is what a barrier records, so it is written as a barrier writes it: the
-    same list with one entry's `status` and `barrier_ref` replaced. No barrier
-    caller exists in this tree, so the fixture writes it directly rather than
-    inventing a seam to call.
+    Not by writing the literal into the column. `admit_operation` writes
+    `held`; `resume_operation` is what makes a state `restored`. The list is
+    the module's whole state set, so this parametrization is complete by
+    construction and a state added later fails here rather than joining a set
+    nothing tests.
 
     If a state were added to the column later and turned out to mean the work
     is finished, this is the test that says so.
@@ -135,16 +134,6 @@ def test_every_in_flight_state_is_not_quiescent(store, inv, state):
     _admit(store, inv, "a34q-all-%s" % state)
     if state == "restored":
         mission.resume_operation(store, inv)
-    elif state == "suspended":
-        with mission.connect(store) as conn:
-            conn.execute(
-                "UPDATE investigations"
-                " SET in_flight = jsonb_set("
-                " jsonb_set(in_flight, '{0,status}', %s::jsonb),"
-                " '{0,barrier_ref}', to_jsonb(%s::text)),"
-                " updated_at = now() WHERE id = %s",
-                ('"suspended"', "barrier-a34q", inv))
-            conn.commit()
 
     assert [item.status for item in mission.read_in_flight(store, inv)] \
         == [state]

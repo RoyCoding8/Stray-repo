@@ -93,7 +93,27 @@ class MissionEntry:
 # Neither state means the effect happened: only `s09_policy_state.effect_record`
 # does, and a resume that wrote one would be re-running the work rather than
 # restoring it.
-IN_FLIGHT_STATES = ("held", "restored", "suspended")
+#
+# These two are the whole set, and each names a writer in this module:
+# `admit_operation` writes `held`, `resume_operation` writes `restored`. A third
+# state, `suspended`, was declared here for the settlement barrier and its
+# writers are gone: `settlement.run.suspend_for_barrier` and
+# `settlement.run._hold_on_mission_entry` were deleted, and nothing else in the
+# tree writes the column. It was removed because a state with no writer is one
+# this module would accept on read and could not account for on write, which is
+# the same reason `MISSION_FIELDS` refuses a field nothing records.
+#
+# A row carrying any other status is refused, not coerced, and the two kinds of
+# reader answer differently on purpose. `is_quiescent` counts entries and never
+# reads their status, so an uninterpretable row is still non-quiescence -- the
+# conservative answer a caller gating on readiness can act on. Every reader
+# that does parse status refuses it: `read_in_flight`, `held_operation`, and the
+# read half of all three writers. That includes `release_operation`, so a column
+# holding a row this module cannot interpret is not writable at all, because
+# each writer round-trips the whole list and would otherwise have to invent a
+# value for a field it cannot read. A row left by the deleted barrier is
+# therefore repaired by hand, not by this API.
+IN_FLIGHT_STATES = ("held", "restored")
 
 
 @dataclass(frozen=True)
@@ -106,6 +126,24 @@ class InFlightOperation:
     substituting a different program. A study that resumes under a
     substituted program is measuring a different thing than it claims, and
     nothing downstream would say so.
+
+    `barrier_ref` is kept for the shape of the record rather than for its
+    content, and it is the one field here with no writer. Its writer was
+    `settlement.run._hold_on_mission_entry`, deleted with the rest of the
+    barrier path; `admit_operation` writes the empty string and nothing in this
+    tree writes anything else, so the field is always `""` on any row this
+    module produces.
+
+    It is kept rather than removed because the column is JSONB with no schema
+    over its entries, so a stored row from a barrier-carrying build still
+    carries the key, and dropping it from the dataclass would make this module
+    silently discard a value it is reading rather than refuse it. What it must
+    not do is imply a barrier exists. No reader branches on it -- the resume
+    path carries it through untouched and no caller inspects it -- so a
+    non-empty value in a stored row is inert here and is reported as inert by
+    this comment rather than interpreted. If a barrier route is ever rebuilt it
+    belongs in this module beside `admit_operation`, `resume_operation` and
+    `release_operation`, which is where the one owner of this column is.
     """
 
     investigation_id: str
@@ -445,9 +483,9 @@ def admit_operation(dsn: str, investigation_id: str, *, seq: int,
     prevent.
 
     Idempotent on `(seq, attempt_id)`. Re-admitting an operation already
-    present leaves it exactly as it is, including its `restored_at` and
+    present leaves it exactly as it is, including its `restored_at` and its
     `barrier_ref`: a restart that re-reads an admitted decision must not
-    silently un-hold an operation a barrier is waiting on.
+    silently un-hold an operation, whatever else is waiting on it.
     """
     if not isinstance(program_digest, str) or not program_digest.strip():
         raise MissionRefused("an admitted operation needs the program digest"
@@ -549,9 +587,9 @@ def held_operation(dsn: str, investigation_id: str,
                    attempt_id: str) -> InFlightOperation | None:
     """The one operation an attempt is holding, or None.
 
-    Keyed on the attempt because that is what a suspension names. A barrier
-    arrives holding an attempt id and nothing else, so looking it up by the
-    attempt is the only lookup that answers the question as asked.
+    Keyed on the attempt because that is how this module's callers mint one:
+    `trajectory._attempt_id` derives it from the campaign id and the boundary
+    seq, so the lookup is by that name rather than by seq alone.
     """
     for item in read_in_flight(dsn, investigation_id):
         if item.attempt_id == attempt_id:
