@@ -142,11 +142,14 @@ Two findings cut against M3 as written, and both matter more than the count.
 Where a second repair is reachable, it carries a widened or reversed `window`
 alongside the reference edit, passes all three scorer cases, and disagrees with
 the reference on **81 to 1575 of 2106** swept inputs. Those are overfitted
-coincidences on three cases, not alternative correct repairs. And the scorer
-cannot tell the difference, because `tasks.score` decides from two public cases
-plus one protected case. A SWE freeze taken before that is repaired would freeze
-an over-counting verdict; the fix belongs to `s09_swe_tasks.py`, and outranks the
-freeze question.
+coincidences on three cases, not alternative correct repairs. The scorer could
+not tell the difference, because `tasks.score` decided from two public cases
+plus one protected case. **That is repaired** (`cb7012c`): the verdict is now a
+structural normal-form comparison rather than a sampled box, and a gate reading
+only public module constants scores 0 of 30 where the sampled sweep scored 30 of
+30. The repair is not alpha-equivalent, so it errs toward refusing, and a repair
+rate read off it is a lower bound on repairs and never an upper bound on wrong
+ones.
 
 **This is a valid null that closes M3.** The supported-cell count is **zero,
 measured**, not merely unproven: the AD01 cells fail on four independent grounds
