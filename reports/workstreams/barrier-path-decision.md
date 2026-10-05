@@ -1,5 +1,14 @@
 # The fate of `settlement.run:suspend_for_barrier`
 
+> **Decided and executed.** This report recommended the deletion; the deletion
+> landed in `437007e` ("Give investigations.in_flight back the single owner it
+> had"), which removed all three functions and moved the `in_flight` writer
+> count from 4 to 3, all three now in `experiments/ad01/mission.py`. A later
+> commit removed the `suspended` state entirely, at `b2d90cf`. **What follows is
+> the reasoning as it stood before the change**, kept because a reader deciding
+> a similar question needs the argument, not the outcome. Where it says the
+> count "will move 4 -> 3", that has happened.
+
 Read-only investigation, lane `barrier`, branch `wt/barrier`, base `7c09e19`.
 No production code, test, or other report was touched. Every count below was
 measured on this worktree; where I did not measure something it says so.
