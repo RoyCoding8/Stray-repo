@@ -201,6 +201,24 @@ def _consumer(dsn, cid, source, gateway=None, max_steps=6):
         max_policy_steps=max_steps)
 
 
+def _admit_campaign(dsn, cid, tasks):
+    """The admission `run_campaign` performs before any boundary runs.
+
+    Three gates here drive `consumer.decide` directly rather than through
+    `run_campaign`, so the investigation row `resume_campaign` restores from
+    was never written and the resume refused with "no mission". This is the
+    call `run_campaign` itself makes, reached here so the restart has the
+    same admission a live run would have left behind. `tasks` must be the
+    schedule the resuming run supplies, because the schedule is journalled
+    under `schedule-<cid>` and a different payload for one request id is a
+    conflict rather than an update.
+    """
+    from experiments.ad01 import trajectory
+    return trajectory.ensure_campaign(
+        dsn, cid, 0, "I", CHARTER,
+        {"max_boundaries": 6, "diagnostic_queries": 16}, tasks=list(tasks))
+
+
 def _s09_row(dsn, cid, seq):
     from experiments.ad01 import trajectory
     with trajectory._read_conn(dsn) as conn:
@@ -477,6 +495,7 @@ def test_pre_effect_step_resumes_without_rerunning_accepted_step(store,
     cid = trajectory.campaign_id(0, "I", 86)
     gateway = RecordingGatewayAdapter([{"text": "resumed bytes"}])
     consumer = _consumer(store, cid, CRASH_SOURCE, gateway=gateway)
+    _admit_campaign(store, cid, [TASK])
     boundary = {"world": 0, "arm": "I", "seq": 0}
     seen = packet.decision_packet(
         charter=CHARTER, visible=learner.visible_opportunities(0),
@@ -553,6 +572,7 @@ def test_settled_receipt_replays_at_zero_remaining(store, monkeypatch,
     cid = trajectory.campaign_id(0, "I", 87)
     gateway = RecordingGatewayAdapter([{"text": "settled before crash"}])
     consumer = _consumer(store, cid, CRASH_SOURCE, gateway=gateway)
+    _admit_campaign(store, cid, [TASK])
     boundary = {"world": 0, "arm": "I", "seq": 0}
     seen = packet.decision_packet(
         charter=CHARTER, visible=learner.visible_opportunities(0),
@@ -628,6 +648,7 @@ def test_prepared_operation_replays_at_zero_remaining(store, monkeypatch,
     cid = trajectory.campaign_id(0, "I", 88)
     gateway = RecordingGatewayAdapter([{"text": "prepared before crash"}])
     consumer = _consumer(store, cid, CRASH_SOURCE, gateway=gateway)
+    _admit_campaign(store, cid, [TASK])
     boundary = {"world": 0, "arm": "I", "seq": 0}
     seen = packet.decision_packet(
         charter=CHARTER, visible=learner.visible_opportunities(0),

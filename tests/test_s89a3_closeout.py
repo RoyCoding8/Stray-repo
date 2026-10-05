@@ -23,6 +23,8 @@ import pytest
 
 from test_s09_migrate_callers import admit
 
+from execution_authority import authority_for, execution_store
+
 from experiments.ad01.s09_run_isolation import DB_PREFIX, \
     create_disposable_db, disposable_db, drop_disposable_db
 
@@ -35,6 +37,11 @@ LOCAL_HOST = "/var/run/postgresql"
 LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
 
 RUN_TOKEN = "s89a3%s" % uuid.uuid4().hex[:10]
+
+# The diagnostic rerun needs a store of its own: the campaign store above is
+# scoped to the ad01 study this module runs, and a rerun of archived bytes
+# under a study's allocation would charge that study for a diagnosis.
+RERUN_TOKEN = "s89a3rerun"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -75,6 +82,19 @@ def _dbname(dsn: str) -> str:
 def _admin_dsn() -> str:
     """The DSN names the instance to create on, never a store to empty."""
     return os.environ.get("SETTLEMENT_TEST_DSN") or LOCAL_DSN
+
+
+@pytest.fixture(scope="module")
+def rerun_authority():
+    """The store `diag.current_tree_execute` reruns archived bytes under.
+
+    The rerunner forwards its authority to the child executor, which refuses
+    without all three. Without them the rerun reports `gate-refusal`, which
+    claims the bytes were never admitted to execute rather than reporting
+    what happened when they ran.
+    """
+    with execution_store(RERUN_TOKEN) as authority_store:
+        yield authority_store
 
 
 @pytest.fixture(scope="module")
@@ -151,14 +171,21 @@ class ScriptedModelBoundaryDouble:
 
 def _lifecycle(dsn, investigation, source, entry,
                parent_digest="seed-sw-greedy"):
-    from experiments.ad01 import records
+    from experiments.ad01 import records, trajectory
+    # `trajectory._alloc_id(investigation)` is what production names, and the
+    # grant is the one `_campaign` already opened for this investigation.
+    # Re-authorizing is idempotent, so this reads the campaign's own
+    # allocation back rather than minting a second one.
+    allocation = trajectory.authorize_campaign(
+        dsn, investigation, authorized=100000)["allocation_id"]
     proposal = records.open_revision_proposal(
         dsn, investigation_id=investigation,
         parent_digest=parent_digest,
         failure_record={"task_id": USE_TASK,
                         "parent_digest": parent_digest,
                         "verdict": "not_preserved"},
-        scope={"family": "software"})
+        scope={"family": "software"},
+        allocation_id=allocation)
     freeze = records.freeze_candidate(
         dsn, proposal_id=proposal["proposal_id"],
         source_bytes=source, entry=entry)
@@ -477,14 +504,16 @@ def test_source_policy_cost_survives_member_refusal(store, monkeypatch):
     assert amount > 0
 
 
-def test_archived_model_bytes_execute_through_fixed_child():
+def test_archived_model_bytes_execute_through_fixed_child(rerun_authority):
     from scripts import s89_diagnose as diag
     export_dir = str(ROOT / "evidence_inv01_live" / "exports")
     [candidate] = [c for c in diag.extract_candidates(export_dir)
                    if c["digest"].startswith("d8fa9e5e")]
     assert "NameError" in candidate["old_failure"]
     report = diag.run_candidate(
-        candidate, execute_fn=diag.current_tree_execute, max_queries=16)
+        candidate, execute_fn=diag.current_tree_execute, max_queries=16,
+        authority=authority_for(rerun_authority,
+                                "s89a3-archived-fixed-child"))
     assert report["new_outcome"] == "executed"
     assert report["next_failure"] is None
 

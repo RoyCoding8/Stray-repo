@@ -141,15 +141,23 @@ def test_the_conditional_production_callers_refuse_before_executing():
     mapping, and the refusal the executor then raises is indistinguishable
     from a refusal the caller intended.
     """
-    from experiments.ad01 import learner
+    from experiments.ad01 import learner, method_exec, packet, policy_step
     from experiments.ad01 import s09_causal_proof
 
+    # The versions the STEP ABI itself stamps onto every view it builds, so
+    # the fixture carries the same contract the executor would have been
+    # handed. A view missing them is refused before the authority under test
+    # is ever consulted.
+    contracts = {"policy_step": policy_step.POLICY_STEP_VERSION,
+                 "child": method_exec.CHILD_CONTRACT_VERSION,
+                 "packet": packet.PACKET_VERSION}
     run = s09_causal_proof.PolicyRun(
         policy_source="def STEP(view, state):\n    return view, state\n",
         view={"task_content": {"task_id": "t"}, "observations": [],
               "open_questions": [], "last_result": None,
               "eligible_methods": [],
-              "remaining": {"steps": 1, "queries": 1}},
+              "remaining": {"steps": 1, "queries": 1},
+              "contract_versions": contracts},
         state={}, entry="STEP", dsn=None, allocation_id=None)
 
     assert s09_causal_proof._authority(run) == {}

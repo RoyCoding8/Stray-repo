@@ -18,6 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
+from execution_authority import authority_for, execution_store
+
 from experiments.ad01 import worlds
 from experiments.ad01.learner import TreatmentRefused
 from experiments.ad01.learner import observation_substitution_plan
@@ -28,6 +30,7 @@ from experiments.ad01.learner import substitution_gate
 
 TASK = "ad01-w1-dev-sw-01"
 OTHER = "ad01-w1-dev-sw-02"
+STORE_TOKEN = "s09expsub"
 EVIDENCE_POLICY = (
     "def STEP(view, state):\n"
     "    target = view[\"task_content\"][\"task_id\"]\n"
@@ -76,59 +79,81 @@ def _originals() -> list:
     return substituted_observations(_task(), verdict="not-preserved")
 
 
-def test_a_policy_that_reads_its_evidence_changes_its_action():
+@pytest.fixture(scope="module")
+def store():
+    """The store the gate executes policy source under.
+
+    `_action_of` runs the policy source in a real child, so the gate needs the
+    same store, allocation and operation identity any other execution needs.
+    Without them it refuses, and a refusal is not a verdict: both the
+    evidence-reading policy and the blind one would look identical.
+    """
+    with execution_store(STORE_TOKEN) as authority_store:
+        yield authority_store
+
+
+def test_a_policy_that_reads_its_evidence_changes_its_action(store):
     original = _originals()
     swapped, plan = substitute_observations_for(
         _task(), original, verdict="preserved")
 
     assert substitution_changes_action(
-        EVIDENCE_POLICY, _task(), original, swapped), (
+        EVIDENCE_POLICY, _task(), original, swapped,
+        authority=authority_for(store, "s09exp-evidence")), (
         "a policy that reads the substituted verdict must move")
 
 
-def test_a_policy_that_keys_on_the_task_identifier_fails():
+def test_a_policy_that_keys_on_the_task_identifier_fails(store):
     original = _originals()
     swapped, _ = substitute_observations_for(
         _task(), original, verdict="preserved")
 
     assert not substitution_changes_action(
-        IDENTIFIER_POLICY, _task(), original, swapped), (
+        IDENTIFIER_POLICY, _task(), original, swapped,
+        authority=authority_for(store, "s09exp-identifier")), (
         "a policy keyed on the task identifier alone is not reading its"
         " evidence, and the gate exists to catch exactly that")
 
 
-def test_a_policy_that_keys_on_a_hardcoded_family_label_fails():
+def test_a_policy_that_keys_on_a_hardcoded_family_label_fails(store):
     original = _originals()
     swapped, _ = substitute_observations_for(
         _task(), original, verdict="preserved")
 
     assert not substitution_changes_action(
-        FAMILY_LABEL_POLICY, _task(), original, swapped), (
+        FAMILY_LABEL_POLICY, _task(), original, swapped,
+        authority=authority_for(store, "s09exp-family-label")), (
         "a policy that reads the family label and nothing else is as blind"
         " as one keyed on the identifier")
 
 
-def test_the_gate_passes_a_policy_and_fails_a_blind_one():
+def test_the_gate_passes_a_policy_and_fails_a_blind_one(store):
     task = _task()
     original = _originals()
     swapped, _ = substitute_observations_for(
         task, original, verdict="preserved")
 
-    passed = substitution_gate(EVIDENCE_POLICY, task, original, swapped)
+    passed = substitution_gate(
+        EVIDENCE_POLICY, task, original, swapped,
+        authority=authority_for(store, "s09exp-gate-pass"))
     assert passed["responds_to_evidence"] is True
     assert passed["verdict"] == "responds-to-evidence"
 
-    blind = substitution_gate(IDENTIFIER_POLICY, task, original, swapped)
+    blind = substitution_gate(
+        IDENTIFIER_POLICY, task, original, swapped,
+        authority=authority_for(store, "s09exp-gate-blind"))
     assert blind["responds_to_evidence"] is False
     assert blind["verdict"] == "responds-only-to-identifier"
 
 
-def test_the_gate_reports_the_two_actions_it_compared():
+def test_the_gate_reports_the_two_actions_it_compared(store):
     task = _task()
     original = _originals()
     swapped, _ = substitute_observations_for(
         task, original, verdict="preserved")
-    report = substitution_gate(EVIDENCE_POLICY, task, original, swapped)
+    report = substitution_gate(
+        EVIDENCE_POLICY, task, original, swapped,
+        authority=authority_for(store, "s09exp-gate-report"))
 
     assert report["original_action"]["inputs"]["question"] == \
         "verdict not-preserved"

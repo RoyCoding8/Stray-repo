@@ -6,13 +6,34 @@ NameError through the real method_exec child path. No model calls.
 """
 import hashlib
 import os
+import sys
+from pathlib import Path
 
 import pytest
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
+
+from execution_authority import authority_for, execution_store
 
 from scripts import s89_diagnose as diag
 
 EXPORT_DIR = os.path.join(os.path.dirname(__file__), "..",
                           "evidence_inv01_live", "exports")
+
+
+@pytest.fixture(scope="module")
+def store():
+    """The store the rerun executes archived candidate source under.
+
+    `current_tree_execute` forwards its authority to the child executor, and
+    the executor refuses without a store, an allocation and an operation
+    identity. A refusal here reads as `gate-refusal`, which is a claim about
+    the candidate that was never measured: the bytes did not run at all.
+    """
+    with execution_store("s89a2rerun") as authority_store:
+        yield authority_store
 
 
 def _stub_fixed(member, task, max_queries=16):
@@ -47,26 +68,29 @@ def test_runner_records_next_failure_from_injected_path():
         "not_preserved/witness-lost-bipartite"
 
 
-def test_fixed_tree_executes_archived_candidates_past_nameerror():
+def test_fixed_tree_executes_archived_candidates_past_nameerror(store):
     found = diag.extract_candidates(EXPORT_DIR)
     assert len(found) == 4
-    for cand in found:
+    for index, cand in enumerate(found):
         report = diag.run_candidate(
-            cand, execute_fn=diag.current_tree_execute, max_queries=16)
+            cand, execute_fn=diag.current_tree_execute, max_queries=16,
+            authority=authority_for(store, "s89a2-archived-%d" % index))
         assert "NameError" in report["old_failure"]
         assert report["new_outcome"] == "executed"
         assert report["next_failure"] is None
 
 
-def test_rerun_leaves_committed_evidence_untouched():
+def test_rerun_leaves_committed_evidence_untouched(store):
     before = {}
     for name in sorted(os.listdir(EXPORT_DIR)):
         path = os.path.join(EXPORT_DIR, name)
         with open(path, "rb") as handle:
             before[name] = hashlib.sha256(handle.read()).hexdigest()
-    for cand in diag.extract_candidates(EXPORT_DIR):
+    for index, cand in enumerate(diag.extract_candidates(EXPORT_DIR)):
         diag.run_candidate(cand, execute_fn=diag.current_tree_execute,
-                           max_queries=16)
+                           max_queries=16,
+                           authority=authority_for(
+                               store, "s89a2-untouched-%d" % index))
     for name, digest in before.items():
         with open(os.path.join(EXPORT_DIR, name), "rb") as handle:
             assert hashlib.sha256(handle.read()).hexdigest() == digest
