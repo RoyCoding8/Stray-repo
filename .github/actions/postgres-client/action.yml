@@ -1,0 +1,56 @@
+name: postgres-client
+description: Install the pg_dump/pg_restore client matching the service container's PostgreSQL major, and refuse to continue if it does not match the running server.
+
+inputs:
+  major:
+    description: PostgreSQL major version the service container runs.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Add the PGDG archive
+      # The runner image installs PostgreSQL from PGDG and then removes both
+      # the source list and the keyring, so the archive is unreachable when a
+      # job runs. `apt-get install postgresql-client-18` therefore exited 100
+      # with "Unable to locate package" and every step after it was skipped:
+      # run 37315773898 reported seven failed suite jobs and no suite ever
+      # executed on that commit. Ubuntu 24.04's own archive carries only
+      # postgresql-client-16, so the install cannot resolve without this.
+      shell: bash
+      run: |
+        set -euo pipefail
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq curl gnupg
+        curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+          | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
+        echo "deb [signed-by=/usr/share/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" \
+          | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+        sudo apt-get update -qq
+
+    - name: Install the client
+      shell: bash
+      run: |
+        set -euo pipefail
+        sudo apt-get install -y -qq postgresql-client-${{ inputs.major }}
+
+    - name: Refuse a client the server cannot be dumped by
+      # pg_dump aborts on a version mismatch rather than on anything the
+      # checkpoint or restore code did, so the tool's own refusal is the only
+      # evidence and it surfaces as an unrelated test failure. Comparing the
+      # installed client against the running server turns that into a setup
+      # error at the step that caused it. The comparison is against the server
+      # and not against `inputs.major`, which is what keeps this constant and
+      # the service image from drifting apart without anything noticing.
+      shell: bash
+      run: |
+        set -euo pipefail
+        client=$(pg_dump --version | awk '{print $3}' | cut -d. -f1)
+        server=$(psql "${SETTLEMENT_TEST_DSN:?job env must set SETTLEMENT_TEST_DSN}" \
+                 -tAc 'SHOW server_version_num' | tr -d '[:space:]' | cut -c1-2)
+        echo "pg_dump client major: $client"
+        echo "postgres server major: $server"
+        if [ "$client" != "$server" ]; then
+          echo "::error::pg_dump $client cannot dump a PostgreSQL $server server"
+          exit 1
+        fi
