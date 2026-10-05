@@ -221,6 +221,19 @@ def main() -> None:
     for (name, target), count in sorted(counts.items()):
         print("  %-52s %-28s x%d" % (name, target, count))
 
+    print("\nWHAT THIS CENSUS CANNOT SEE")
+    print("  It resolves ownership within one file, so it reports 0 for a")
+    print("  caller that builds its store in another module. The live path in")
+    print("  `scripts/invl02_live.py` is exactly that shape:")
+    print("  `_run_frontier_investigation` opens an OWNED store via")
+    print("  `ensure_live_store(dsn=, investigation_id=)` and then reaches")
+    print("  `run_live_improve_round` with `authority=_study_authority(dsn,")
+    print("  allocation_id)`, which is None when the caller supplies no")
+    print("  allocation. Two tests in tests/test_r123_gates.py call it that")
+    print("  way and fail on the execution-authority refusal.")
+    print("  For a cross-module census, read the CI log for the refusal")
+    print("  string rather than trusting this count of 0.")
+
 
 if __name__ == "__main__":
     main()
