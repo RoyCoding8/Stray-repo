@@ -441,7 +441,7 @@ rows the batch did not touch keep their prior state and wording.
 |---|---|
 | `reports/evidence/inv_r1_e4/make_evidence.py:238` reads `channel.REACHABLE_EVIDENCE`, deleted by C4. | **Recorded, not fixed.** Archived evidence. Its outputs remain valid history. |
 | `reports/evidence/inv_r1_e2_offline/make_evidence.py:242` mints only `seed-%s-%s` ids, the convention B3 opened. | **Recorded, not fixed.** Not a dangling reader — it still runs — but its output describes a world where a `seed-` prefix was the only admissible id. |
-| `experiments/ad01/twodomain.py:102` and `tests/test_inv_c7_two_domain.py:16` say the Boolean instrument "publishes 120 tasks"; the census iterates 3 x 24 = **72**. | **Recorded, not fixed.** One propagated figure across two agreeing files. It changes no measured claim: the cluster count is 1 across 72 and would be 1 across 120, because every task comes from one class. Left to the owning lanes. |
+| `experiments/ad01/twodomain.py:128` and `tests/test_inv_c7_two_domain.py:16` say the Boolean instrument "publishes 120 tasks"; the census iterates 3 x 24 = **72** (`twodomain.py:116`). | **Recorded, not fixed.** One propagated figure across two agreeing files. It changes no measured claim: the cluster count is 1 across 72 and would be 1 across 120, because every task comes from one class. Left to the owning lanes. |
 
 No file under `reports/evidence/` was edited. The two archived generators are
 recorded here and in [`FINAL-ACCEPTANCE.md`](FINAL-ACCEPTANCE.md) rather than
