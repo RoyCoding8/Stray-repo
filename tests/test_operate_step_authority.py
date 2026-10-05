@@ -15,8 +15,11 @@ derivation: `WORKER-PROMPT.md:158` requires one campaign authority per leg,
 and the r123 repair already moved this derivation out of the investigation
 once.
 
-These tests need `SETTLEMENT_TEST_DSN` and are skipped without it. CI runs them
-with PostgreSQL; a local Windows checkout skips rather than lying.
+Four of these tests need a real PostgreSQL, through the `study` fixture. There
+is no skip guard here and there never was: the earlier claim that they were
+"skipped without SETTLEMENT_TEST_DSN" was a docstring with no code behind it,
+and it hid two defects that could not pass anywhere. With no DSN the fixtures
+raise, which is the honest failure.
 """
 from __future__ import annotations
 
@@ -195,7 +198,8 @@ def test_every_production_choice_names_an_authority():
 # --------------------------------------------------------------- the refusal
 
 
-def test_an_owned_store_refuses_to_choose_without_an_authority(study, tmp_path):
+def test_an_owned_store_refuses_to_choose_without_an_authority(
+        study, owned_store, tmp_path):
     """The omission is loud, not silent.
 
     `drive_improve_round` refuses this for the improve rounds and that refusal
@@ -291,8 +295,13 @@ def test_two_arms_of_one_study_do_not_share_an_operation(study):
     view = {"purpose": "op"}
     ids = {arm: _channel._derived_operation_id(package, "op", view, arm=arm)
            for arm in ("control", "live", "P1")}
-    assert len(set(ids.values())) == 3, ids
-    assert len(set(ids.values())) == len({package["package_digest"]}), ids
+    # One id per arm, and every arm distinct. `len(ids)` is the count of arms
+    # asked for and `len(set(ids.values()))` the count of distinct results, so
+    # asserting them equal is exactly the collision check. The sibling test in
+    # the same file compared against `len({package["package_digest"]})`, a set
+    # holding one string, so it asserted 3 == 1 and could not pass anywhere.
+    assert len(ids) == 3, ids
+    assert len(set(ids.values())) == len(ids), ids
 
 
 def test_the_census_tool_agrees_with_the_tree():
