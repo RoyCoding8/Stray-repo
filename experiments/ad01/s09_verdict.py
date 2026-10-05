@@ -428,6 +428,17 @@ def run_representation_suite(root: os.PathLike | str,
     env["PYTHONPATH"] = os.pathsep.join(
         [str(root), str(root / "src"),
          env["PYTHONPATH"] if env.get("PYTHONPATH") else ""])
+    # The child reads the repository's own tests, so it needs no database of
+    # its own, and it must not claim one. `S09ISO_TOKEN` is inherited above
+    # because `dict(os.environ)` copies everything, and the nested run then
+    # contends with this process for the same per-token advisory lock: the
+    # parent holds it for the whole suite, so the child waits forever. Measured
+    # in runs 37261826154 and 37277929945, where the four shards that stall are
+    # exactly the four that reach this call, and the cancel is followed 24ms
+    # later by a `CREATE DATABASE` for this job's own token returning "already
+    # exists". `S09ISO_DISABLE` returns from `pytest_configure` before the
+    # claim, which is the whole of what a suite that reads test files needs.
+    env["S09ISO_DISABLE"] = "1"
     completed = subprocess.run(
         [sys.executable, "-m", "pytest", test_file,
          "-q", "--tb=no", "-p", "no:cacheprovider"],

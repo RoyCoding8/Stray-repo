@@ -15,6 +15,7 @@ one from the contaminated run cannot be the thing that reissues a verdict.
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -687,3 +688,42 @@ def test_a_record_outside_the_repertoire_still_fails_the_leg(tmp_path):
         bundle, "C")
     leg = verdict._comparability_leg(bundle, (), ("C",))
     assert leg.status == verdict.LEG_FAIL
+
+
+def test_a_nested_suite_run_does_not_claim_a_database(monkeypatch):
+    """The nested run must not contend with its parent for the run token.
+
+    `run_representation_suite` copies this process's environment into the
+    child, which carries `S09ISO_TOKEN` with it. The child then asks the same
+    database for the same per-token advisory lock this process is holding for
+    the whole suite, and waits for it indefinitely. That is what stalled the
+    `py3.12`, `py3.13`, `py3.134` and `py3.14` shards in runs 37261826154 and
+    37277929945 while the other four finished, and the cancel is followed 24ms
+    later by a `CREATE DATABASE` naming this job's own token returning "already
+    exists".
+
+    The child reads test files and needs no database, so the environment it is
+    given says so. Reading the environment back out of the real function is what
+    makes this a check on the child rather than a restatement of the constant:
+    a test asserting only that `S09ISO_DISABLE` appears in this module would
+    pass with the line commented out, since the docstring above would still
+    name it.
+    """
+    captured: dict = {}
+
+    def _capture(cmd, **kwargs):
+        captured["env"] = kwargs.get("env") or {}
+        captured["cmd"] = cmd
+        return subprocess.CompletedProcess(cmd, 0, "10 passed", "")
+
+    monkeypatch.setattr(verdict.subprocess, "run", _capture)
+    monkeypatch.setenv("S09ISO_TOKEN", "b3130000")
+
+    verdict.run_representation_suite(REPO, "tests/test_x.py")
+
+    assert captured["env"].get("S09ISO_DISABLE") == "1", (
+        "the nested run would claim the parent's run token")
+    # The parent's token is inherited and then made inert; the child must not
+    # silently present a different one either, because that would still collide
+    # with a sibling holding the same job token.
+    assert captured["env"].get("S09ISO_TOKEN") == "b3130000"
