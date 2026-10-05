@@ -63,7 +63,8 @@ def _recovery_set(root: Path) -> tuple[Path, list[dict]]:
     return out, entries
 
 
-def _restore_without_postgres(backup_dir: Path, artifacts_dir: Path) -> dict:
+def _restore_without_postgres(monkeypatch, backup_dir: Path,
+                              artifacts_dir: Path) -> dict:
     """Run the real run_restore, substituting only its database calls."""
     empty = {name: 0 for name in ROW_COUNTS}
     schema = {"SELECT name FROM schema_migrations": [],
@@ -77,7 +78,7 @@ def _restore_without_postgres(backup_dir: Path, artifacts_dir: Path) -> dict:
         def __enter__(self):
             return self
 
-        def __exit__(self, *exc):
+        def __exit__(self, *_exc):
             return False
 
         def execute(self, sql, *_args):
@@ -93,7 +94,7 @@ def _restore_without_postgres(backup_dir: Path, artifacts_dir: Path) -> dict:
         def __enter__(self):
             return self
 
-        def __exit__(self, *exc):
+        def __exit__(self, *_exc):
             return False
 
         def cursor(self, **_kw):
@@ -107,35 +108,30 @@ def _restore_without_postgres(backup_dir: Path, artifacts_dir: Path) -> dict:
         def connect(_dsn):
             return _Conn()
 
-    class _Store:
-        @staticmethod
-        def restore_fence(_dsn, _command):
-            class _Result:
-                code = type("C", (), {"value": "applied"})()
-                data = {}
-                detail = ""
-            return _Result()
+    def _fake_fence(_dsn, _command):
+        class _Result:
+            code = type("C", (), {"value": "applied"})()
+            data = {}
+            detail = ""
 
-    originals = (restore._check_fresh, restore._restore_dump, restore._target_rows,
-                 restore._extract_tar, restore._verify_restored_workflow)
-    restore._check_fresh = lambda _dsn: []
-    restore._restore_dump = lambda *_a, **_k: None
-    restore._target_rows = lambda _dsn: dict(empty)
-    restore._verify_restored_workflow = lambda m, *_a: (m, 0)
-    real_extract = originals[3]
-    restore._extract_tar = real_extract
-    import sys as _sys
-    _types = _sys.modules
-    _types["psycopg"] = _Psycopg
-    _types["psycopg.rows"] = type("rows", (), {"dict_row": None})
-    _types["settlement"].store = _Store
-    try:
-        return restore.run_restore(backup_dir, "dbname=target_db", artifacts_dir)
-    finally:
-        (restore._check_fresh, restore._restore_dump, restore._target_rows,
-         restore._extract_tar, restore._verify_restored_workflow) = originals
-        del _types["psycopg"]
-        del _types["psycopg.rows"]
+        return _Result()
+
+    monkeypatch.setattr(restore, "_check_fresh", lambda _dsn: [])
+    monkeypatch.setattr(restore, "_restore_dump", lambda *_a, **_k: None)
+    monkeypatch.setattr(restore, "_target_rows", lambda _dsn: dict(empty))
+    monkeypatch.setattr(restore, "_verify_restored_workflow",
+                        lambda m, *_a: (m, 0))
+    monkeypatch.setitem(sys.modules, "psycopg", _Psycopg)
+    monkeypatch.setitem(sys.modules, "psycopg.rows",
+                        type("rows", (), {"dict_row": None}))
+    # Swap the one store attribute run_restore calls, never the module itself.
+    # Assigning settlement.store replaces it in the package namespace for the
+    # rest of the process, so every later test that resolves settlement.store
+    # binds this stub, which is how the store's whole surface read as missing.
+    from settlement import store as _store
+
+    monkeypatch.setattr(_store, "restore_fence", _fake_fence)
+    return restore.run_restore(backup_dir, "dbname=target_db", artifacts_dir)
 
 
 def test_the_checkpoint_manifest_names_its_artifacts_with_forward_slashes():
@@ -144,17 +140,17 @@ def test_the_checkpoint_manifest_names_its_artifacts_with_forward_slashes():
     assert [e["path"] for e in entries] == [NESTED, TOP]
 
 
-def test_an_intact_recovery_set_restores_without_an_artifact_mismatch():
+def test_an_intact_recovery_set_restores_without_an_artifact_mismatch(monkeypatch):
     with tempfile.TemporaryDirectory() as root:
         root = Path(root)
         backup, _ = _recovery_set(root)
-        report = _restore_without_postgres(backup, root / "restored")
+        report = _restore_without_postgres(monkeypatch, backup, root / "restored")
     assert "artifact tar contents differ from manifest" not in report["mismatches"]
     assert report["mismatches"] == []
     assert report["ok"] is True
 
 
-def test_a_recovery_set_restored_onto_another_host_verifies():
+def test_a_recovery_set_restored_onto_another_host_verifies(monkeypatch):
     """The cross-host case: the manifest is the artifact that travels.
 
     A recovery set is copied off the machine that made it. This asserts the
@@ -170,16 +166,16 @@ def test_a_recovery_set_restored_onto_another_host_verifies():
                                  for e in entries]
         assert [e["path"] for e in manifest["artifacts"]] == [NESTED, TOP]
         (backup / "manifest.json").write_text(json.dumps(manifest, sort_keys=True))
-        report = _restore_without_postgres(backup, root / "restored")
+        report = _restore_without_postgres(monkeypatch, backup, root / "restored")
     assert "artifact tar contents differ from manifest" not in report["mismatches"]
     assert report["mismatches"] == []
 
 
-def test_the_restored_tree_lands_where_the_manifest_names_it():
+def test_the_restored_tree_lands_where_the_manifest_names_it(monkeypatch):
     with tempfile.TemporaryDirectory() as root:
         root = Path(root)
         backup, entries = _recovery_set(root)
-        _restore_without_postgres(backup, root / "restored")
+        _restore_without_postgres(monkeypatch, backup, root / "restored")
         restored = root / "restored"
         for entry in entries:
             assert (restored / entry["path"]).is_file(), \
