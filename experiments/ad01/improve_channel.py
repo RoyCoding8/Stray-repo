@@ -44,6 +44,24 @@ CONTROL_HIGH_ID = "authored-control-high-01"
 
 IMPROVE_KINDS = ("probe", "construct", "select", "wait", "stop")
 
+# The verdict vocabulary a probe can earn. `not_preserved` is the repo's
+# existing word for a measurement that came back wrong
+# (`checker.VERDICTS`), so the operate branch reads a judgement rather
+# than a label nobody computed. `unknown` is what a first probe earns:
+# with no evidence on the rule yet there is no prediction to disagree
+# with, and `checker` already reserves the word for exactly that.
+OBSERVED = "observed"
+UNKNOWN_VERDICT = "unknown"
+NOT_PRESERVED = "not_preserved"
+
+# How the operate source is told which rule a verdict was earned on. The
+# frontier names its members' rule in `task`, so the observation carries
+# the same field in the same namespace. It used to carry the settled
+# opportunity's id there, which never equals a frontier member's `task`,
+# so the filter the branch applied removed nothing and both arms named
+# the same member.
+MEASURED_TARGET = "target"
+
 SHARED_OPERATE_SOURCE = """def STEP(view, state):
     frontier = view["frontier"]
     exp = view["experience"]
@@ -56,10 +74,14 @@ SHARED_OPERATE_SOURCE = """def STEP(view, state):
         outer = "stop"
     else:
         last = exp[-1] if exp else None
-        if last is not None and last.get("verdict") == "mismatch":
+        refuted = last is not None and last.get("verdict") == "not_preserved"
+        if refuted and last.get("target") is not None:
             alt = [o for o in frontier
-                   if o.get("task") != last.get("task")]
-            choice = alt[0] if alt else frontier[0]
+                   if o.get("task") != last.get("target")]
+            if alt:
+                choice = alt[0]
+            else:
+                choice = frontier[0]
         else:
             choice = frontier[0]
         inner = {"kind": "investigate",
@@ -2118,6 +2140,49 @@ def _release_round_effect(store, attempt_id: str) -> None:
     mission.release_operation(dsn, investigation_id, attempt_id)
 
 
+def measured_verdict(store, opportunity_id: str, x: int,
+                     y) -> tuple:
+    """The verdict a measurement earns, and the rule it was measured on.
+
+    A measurement is `not_preserved` when the frozen version-space
+    evaluator, given everything already observed on this rule, predicted
+    a different output vector for this input than the instrument returned.
+    That is the repo's existing judgement vocabulary
+    (`checker.VERDICTS`), applied to a real disagreement rather than
+    typed into a study script.
+
+    It is `unknown` when the rule has no prior evidence here, because
+    there is then no prediction to disagree with, and when the only prior
+    evidence is at this same input, because a version space fitted to
+    `(x, y)` is consistent with `(x, y)` by construction and would call
+    every re-probe preserved. Both are facts about the evidence rather
+    than defaults that would hide a branch.
+
+    The rule is returned because the operate branch has to exclude work
+    on the rule that was refuted, and the frontier names the rule in
+    `task` (`frontier.step_view`). The observation also keeps
+    `task` as the opportunity it settled, because
+    `frontier._prepare_observation` holds an observation's `task` to
+    its effect's opportunity (`frontier.py:2020-2022`) and refuses a
+    record that names another. That check is correct and stays.
+    """
+    record = store._doc["opportunities"].get(opportunity_id) or {}
+    target = str(record.get("intervention", {}).get("target") or "")
+    prior = [(o["x"], tuple(o["y"])) for o in store.observations
+             if o.get(MEASURED_TARGET) == target
+             and o.get("x") != x and isinstance(o.get("y"), (list, tuple))]
+    if not prior:
+        return UNKNOWN_VERDICT, target
+    from . import rule_learner as _reducer
+    learner = _reducer.VersionSpaceLearner(_boolean_rule.CLASS_TABLES, 0)
+    for px, py in prior:
+        learner.observe(int(px), py)
+    specs = learner.predict({})["specs"]
+    predicted = _boolean_rule.execute_predictor({"specs": specs}, int(x))
+    verdict = NOT_PRESERVED if list(predicted) != list(y) else OBSERVED
+    return verdict, target
+
+
 def execute_operate_action(store, action: dict, task=None) -> dict:
     _frontier.validate_operate_action(action)
     kind = action["kind"]
@@ -2141,11 +2206,14 @@ def execute_operate_action(store, action: dict, task=None) -> dict:
             found = session.query(int(inputs["x"]))
         except _boolean_rule.RuleRefused as exc:
             return {"status": "refused", "reason": exc.reason}
+        verdict, target = measured_verdict(
+            store, inputs["opportunity_id"], int(inputs["x"]), list(found))
         observation = {
             "observation_id": "obs-%s-x%d" % (
                 inputs["opportunity_id"], inputs["x"]),
             "task": inputs["opportunity_id"],
-            "verdict": "observed",
+            "verdict": verdict,
+            MEASURED_TARGET: target,
             "x": inputs["x"],
             "y": list(found),
             "effect_id": effect["effect_id"],
@@ -2402,11 +2470,14 @@ def drive_improve_round(store, task, package=None,
                 entry = {"x": int(action["inputs"]["x"]),
                          "y": list(found)}
                 if effect is not None:
+                    verdict, target = measured_verdict(
+                        store, probe_opportunity_id, entry["x"], entry["y"])
                     observation = {
                         "observation_id": "obs-improve-r%d-s%d-x%d" % (
                             int(round_no), step, entry["x"]),
                         "task": probe_opportunity_id,
-                        "verdict": "observed",
+                        "verdict": verdict,
+                        MEASURED_TARGET: target,
                         "x": entry["x"],
                         "y": entry["y"],
                         "effect_id": effect["effect_id"],
