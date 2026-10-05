@@ -264,6 +264,50 @@ def uniform_subset_distribution(reps=20):
     return out
 
 
+# `reports/PROJECT-LEDGER.md` states the old blind arm was "the mean over
+# *random* 8-subsets (measured: 20 reps, mean 0.5138, sd 0.0169)". Those two
+# numbers are only reproducible if the re-derivation's own random seed and
+# rep-seed convention are known, so the sweep below reports the range the
+# pair could have come from instead of assuming the ledger's.
+LEDGER_CHANCE_PAIR = (0.5138, 0.0169)
+
+
+def ledger_chance_pair(reps=20, offsets=64):
+    """Does any cohort/offset convention land on the ledger's exact pair?"""
+    cells, hits = [], []
+    for name, seeds in COHORTS.items():
+        for offset in range(offsets):
+            means = []
+            for rep in range(reps):
+                rng = random.Random(offset * 1000 + rep)
+                means.append(statistics.fmean(
+                    descendant_score(sorted(rng.sample(range(br.N_STATES),
+                                                       br.MAX_QUERIES)),
+                                     SPLIT, s)["unqueried"] for s in seeds))
+            cell = {"cohort": name, "offset": offset,
+                    "mean": statistics.fmean(means),
+                    "sd": statistics.stdev(means)}
+            cells.append(cell)
+            if (abs(cell["mean"] - LEDGER_CHANCE_PAIR[0]) < 5e-4
+                    and abs(cell["sd"] - LEDGER_CHANCE_PAIR[1]) < 5e-4):
+                hits.append(cell)
+    means = [c["mean"] for c in cells]
+    sds = [c["sd"] for c in cells]
+    near_mean = sum(1 for c in cells if abs(c["mean"] - LEDGER_CHANCE_PAIR[0]) < 1e-3)
+    closest_sd = min(sds, key=lambda v: abs(v - LEDGER_CHANCE_PAIR[1]))
+    return {
+        "target_pair": list(LEDGER_CHANCE_PAIR),
+        "conventions_swept": len(cells),
+        "exact_hits": hits,
+        "mean_range": [min(means), max(means)],
+        "sd_range": [min(sds), max(sds)],
+        "conventions_within_1e_3_of_mean": near_mean,
+        "closest_sd_to_target": closest_sd,
+        "closest_sd_gap": abs(closest_sd - LEDGER_CHANCE_PAIR[1]),
+        "reproduces": bool(hits),
+    }
+
+
 def ladder_table(learner_cls):
     return {c: {b: {"blind": ladder_mean(learner_cls, c, False, b),
                     "informed": ladder_mean(learner_cls, c, True, b)}
@@ -310,6 +354,7 @@ def main(argv=None) -> int:
         "identification": identification(),
         "blind_arm": blind_arm_mechanism(),
         "uniform_8_subset": uniform_subset_distribution(),
+        "ledger_chance_pair": ledger_chance_pair(),
     }
     if args.json:
         print(json.dumps(out, indent=2, sort_keys=True))
@@ -365,6 +410,19 @@ def main(argv=None) -> int:
     print("\n== 4. the distribution the old blind figure was a draw from ==")
     for c, v in out["uniform_8_subset"].items():
         print("  %-9s uniform-8 mean %.4f  sd %.4f" % (c, v["mean"], v["sd"]))
+
+    pair = out["ledger_chance_pair"]
+    print("\n== 5. the ledger's chance pair (%.4f, sd %.4f) ==" % tuple(
+        pair["target_pair"]))
+    print("  swept %d cohort/offset conventions at 20 reps: reproduces: %s"
+          % (pair["conventions_swept"], pair["reproduces"]))
+    print("  mean across conventions %.4f-%.4f, sd %.4f-%.4f"
+          % (pair["mean_range"][0], pair["mean_range"][1],
+             pair["sd_range"][0], pair["sd_range"][1]))
+    print("  %d conventions land within 0.001 of the target mean; the closest"
+          " any sd comes is %.4f, a gap of %.4f"
+          % (pair["conventions_within_1e_3_of_mean"],
+             pair["closest_sd_to_target"], pair["closest_sd_gap"]))
     return 0
 
 
