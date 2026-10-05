@@ -413,6 +413,16 @@ real allocation row and a subprocess. The shipped operate bytes run and the
 validators pass on that exact pair in-process; **CI with PostgreSQL is what
 confirms the durable route.**
 
+**What "earned" does and does not cover here, stated precisely.** The verdict is
+earned in the sense that matters for the clause: the arm moves only where the
+instrument's own evaluator earned a refutation, 14 of 14 on `not_preserved` and
+0 of 1 on `observed`. What is **not** yet covered is the execution provenance
+underneath that verdict. `choose_next_work` reaches `run_operate_step` with no
+authority, so the arms `observation_dependent` compares settle their receipts on
+a **disposable** database rather than under the study allocation. The selection
+is therefore earned; the executions behind it are not yet what the milestone
+assumes, and closing that is the open seam recorded above.
+
 **Extending the freeze was measured and rejected.** Sweeping every second probe
 input against the real dev rule: 14 of 15 earn `not_preserved` (all but x=0 and
 the re-probe x=3), so the falsifier arm is reachable — but on every one of them
