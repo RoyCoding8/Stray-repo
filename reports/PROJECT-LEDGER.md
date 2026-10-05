@@ -63,29 +63,51 @@ set was reconstructed from its own CSV rather than inherited, so these are the s
       rooted                         182
       inferred                        65
 
-**The 65 inferred are one structural cause, not 65 mysteries.** The heavy job runs
-`pytest -q` per file, which suppresses the FAILURES block, so those files rest on a
-truncated summary line. Archiving full heavy stdout makes all 65 rootable next run,
-and that single CI-config change is worth more than any individual cause in the
-table.
+**The 65 inferred are not 65 mysteries, but they are not one cause either.** They
+sit in **10 files** under two mechanisms: **60** across 9 `_heavy_archived` files
+whose job printed no traceback bodies at all, and **5** strict-`xfail` XPASSes in
+`test_s09_normalizers.py`, which is unrelated. The heavy job runs `pytest -q` once
+per file, which suppresses the FAILURES block. **Archiving full heavy stdout makes
+those 60 rootable next run** — it cannot produce a body for an XPASS, so 60 is the
+honest figure, not 65. That single CI-config change is worth more than any
+individual cause in the table.
+
+**An earlier version of this entry blamed job cancellation for the 60. That was
+wrong and would have wasted a repair lane.** The four cancelled jobs are *suite*
+shards and hold none of the 65; every ID assigned to them already has a body from
+another shard. The cause is the heavy job's per-file `-q`, nothing to do with
+cancellation.
 
 The three named clusters each split, and **none is the single cause previously
 suspected**. A stale-pin detector's path filter returns an empty set, so it cannot
 see a move — a detector that cannot see a move reports clean, which is worse than a
 noisy one. A planted-credential test asserts its scan returns a value and the scan
-returns `''`. And two **live defects** sit among eight stale claims: at
-`test_r_final_freeze_and_chain.py:207` the verdict stopped claiming
-`informs_decision`, so the row that would hide a smuggled write is no longer
-produced and the guard is no longer exercised; at `:325` the protocol opens 0
-connections where 2 were required. Reading all eight as "needs a human re-read"
-would have left both unexamined.
+returns `''`. And two **live defects** sit among the stale claims in cluster 3 (6
+IDs, not 8 — two were double-counted): at `test_r_final_freeze_and_chain.py:207`
+the verdict stopped claiming `informs_decision`, so the row that would hide a
+smuggled write is no longer produced and the guard is no longer exercised; at
+`:325` the protocol opens 0 connections where 2 were required. Reading all of them
+as "needs a human re-read" would have left both unexamined.
 
-Cause K narrows from four candidates to one, and the narrowing comes from the test
-side rather than the log: the failing set is exactly the tests that declare a read
-deny list, because `_child_setup` calls `_landlock_restrict` only when `deny` is
-truthy (`launcher_local.py:999-1000`) and that raises `OSError(ENOSYS)` at
-`:257-258`. Which syscall failed cannot be named from any log, because CPython
-discards the child exception — stated as the residual limit it is.
+**One anchor in the first version of the failure map cited a blank line inside a
+docstring** as a raising site; the refusal is raised at `improve_channel.py:2330`.
+The CSV's `file:line` column is a **pytest blame line**, which is the frame to read
+first and not always the raising line. All 78 anchors were then audited against
+source: 78 resolve, 0 blank, 1 was the bad one.
+
+Cause K was **re-attributed after review, and the narrowing is not mine to claim as
+new.** The `read_deny` grouping was already in the baseline
+(`ci-baseline-37172638343.md:94-104`), including the four raising sites. What the
+review adds is a **fifth candidate above all four**: `_landlock_restrict` raises
+`OSError(ENOSYS)` at `launcher_local.py:256-258` when the kernel probe is
+unavailable. So if the probe is what failed, **none of the four is the answer**, and
+the candidate list is five rather than four. What the grouping does establish is
+that the failing set is exactly the tests declaring a read-deny list, because
+`_child_setup` calls `_landlock_restrict` only when `deny` is truthy
+(`launcher_local.py:999-1000`). **Which syscall failed is still not identifiable
+from any log**, because CPython discards the child exception. A lane chasing this
+should start from the kernel-availability check, not from a syscall.
+
 
 **G, execution-authority refusal, is still 11 and did not shrink.** That is the
 clearest negative result in the run and stays a negative.
