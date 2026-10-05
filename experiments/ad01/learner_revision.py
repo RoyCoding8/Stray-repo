@@ -55,7 +55,13 @@ from experiments.ad01 import frontier as _frontier
 from experiments.ad01 import improve_channel as channel
 from experiments.ad01 import method_exec as _method_exec
 
-RUN_VERSION = "invl02-e4-run-v1"
+# The prompt text is part of the freeze, so a change to it needs a new run
+# version. `-v2` is the repaired acquisition prompt: `USER_TEMPLATE` now
+# states the refused integer and the empty-experience case instead of asking
+# for a computed value that lands on the refusal. Comparing an arm acquired
+# under one against an arm acquired under the other is the cross-freeze
+# comparison `WORKER-PROMPT.md:150` forbids, so the version moves with the text.
+RUN_VERSION = "invl02-e4-run-v2"
 
 # The reviewer's own revision, the no-op and the two disconnects are written
 # in `channel_controls`, which the reviewer owns. They were written here,
@@ -103,6 +109,22 @@ REVISION_INTERFACE = "improve_channel.STEP.frontier_action.probe.inputs.x"
 # alone. So the constant is the anchor the identity check is written against,
 # and the test beside it says which of the two is a giveaway and which is the
 # interface.
+#
+# The instruction below states two facts the model cannot infer from the
+# template, and E4's six replies establish that it cannot infer them. It did not
+# say which integer the frozen reducer picks first, and it did not say that
+# every natural reading of `experience` is empty on the step that spends the
+# probe. Six replies computed x over that empty list and all six landed on 0,
+# which is the one integer the delegation gate refuses
+# (`reports/workstreams/m4-eligibility.md:162-196`). The rule was right and the
+# prompt was incomplete: it withheld the only instruction under which a reply
+# could be admitted while leaving the excluded answer reachable.
+#
+# Binding x to a name first is a second, separately measured constraint. It is
+# refused `step-skeleton`, because the name binding is a statement the incumbent
+# does not contain and `unauthorised_change` compares the two programs with the
+# probed input blanked. The prompt now says so rather than leaving a model to
+# discover it after a dispatch has been spent.
 SYSTEM_PROMPT = (
     "You are revising one decision inside a learning agent. The agent is "
     "learning a four-output Boolean rule over sixteen inputs by probing them. "
@@ -114,16 +136,39 @@ SYSTEM_PROMPT = (
 USER_TEMPLATE = """\
 Rewrite the agent's improvement step so it chooses which input to probe.
 
-The only thing you may change is the `x` in the probe action below. Emit the
-whole function, unchanged except for that one integer.
+Replace the `x` in the probe action below with one Python expression, and
+change nothing else. Emit the whole function.
 
 ```python
 {template}
 ```
 
-The integer must satisfy 0 <= x < 16. It must be computed from the view or
-the state, never written as a constant. Reply with the function only. Start
-your reply with ```python and end it with ```."""
+The expression must satisfy 0 <= x < 16 on every step.
+
+Three facts govern what is acceptable, and the first two are why the plain
+reading of this task does not work.
+
+1. `view["experience"]` is empty on the step that spends the probe, because the
+   probe has not run yet. Any expression built only from `len(...)` of it, from
+   its `.get(...)` form, or from a sum over it, yields 0 here. 0 is refused.
+   Give the empty case an explicit value of your own instead.
+
+2. The frozen reducer that this step replaces picks input 0 first, by the same
+   argument. A revision is measured as a decision only if it names something
+   other than 0. Anything in 1..15 clears this.
+
+3. The expression must read the view rather than be a bare literal, and it must
+   be written in place. Binding it to a name first is read as a different
+   program and refused.
+
+So: an expression that reads the view and evaluates to a non-zero integer when
+the experience is empty. For example,
+`8 if 8 not in [o.get("x") for o in view["experience"]] else 3`, or
+`len(view["experience"]) or 12`. Both read the view, both name a non-zero
+integer here, and either is acceptable.
+
+Reply with the function only. Start your reply with ```python and end it with
+```."""
 
 CONSTANT_X = re.compile(r'"x"\s*:\s*(-?\d+)')
 STEP_HEADER = "def STEP(view, state):"
