@@ -1,5 +1,38 @@
 # Project ledger
 
+## Instrument repairs and what remains unmeasured, 2026-10-04 evening
+
+Eleven merges over `7a00676`, none pushed. **No test suite, WSL, or live route
+ran in this stretch.** Every claim below is a source reading, a commit message,
+an artifact read, or arithmetic on a CI log. The CI number that exists
+(268 distinct failing IDs) measures `7a00676`, which is **26 commits behind
+this tip**, so it is a floor and licenses nothing about the tip.
+
+| What | State | Evidence |
+|---|---|---|
+| `investigations.in_flight` writers | **4 -> 3, all in `experiments/ad01/mission.py`** (`admit_operation`, `resume_operation`, `release_operation`) | `437007e`. The deleted fourth wrote raw dicts, bypassing `InFlightOperation.from_json`/`as_json`, so it could not round-trip the two kinds of reader the module's own contract distinguishes. |
+| The `suspended` in-flight state | **removed; the enum is two states** (`held`, `restored`) | `b2d90cf`. Its only producers were the barrier helpers `d2c6106` deleted. `is_quiescent` counts `jsonb_array_length(in_flight)` and **never reads a status**, so a row carrying an uninterpretable status reads as NOT quiescent. Measured by reading the predicate, not assumed. |
+| Execution authority at four call sites | **threaded** | `ded63a8`, `2a3bff4`, `5f1354a`. `6f0baeb`'s owned-store refusal shipped with no compliant caller. Each site now carries the leg's study allocation rather than minting a second one. |
+| SWE repair verdicts | **structural, not sampled** | `cb7012c`. `bb40300` replaced a 3-case draw with an 1815-case sweep and was defeated by a gate reading only public module constants. `equivalence_verdict` now reduces both sides through four rewriting identities holding for all inputs. |
+
+**The scorer's bias must travel with every number read off it.** The normal form
+is **not alpha-equivalent**, so a behaviourally identical rename is refused. A
+repair rate read off this instrument is a **lower bound on repairs and never an
+upper bound on wrong ones**. **Any SWE freeze taken on the pre-`cb7012c` counts
+is over-counting and must be re-taken.**
+
+**M2's central clause is undemonstrable as written.** `SHARED_OPERATE_SOURCE`
+(`improve_channel.py:59`) branches on `verdict == "mismatch"`, and the only
+producers of that string are `invl02_live.py:2024`, a literal typed into the
+script, and the branch itself. Both arms are identical code and
+`observation_dependent` reads `True` in the frozen evidence with zero causal
+content behind it. M2 therefore cannot be demonstrated by the study it names.
+
+**The live route IS live on this host.** A process listens on `127.0.0.1:4000`
+and answers `401 invalid api key`, so the router is up and a credential would be
+required. The earlier claim that no live route was configured was wrong and is
+corrected in place below.
+
 ## Mission ownership and instrument census, 2026-10-04
 
 18 commits over `0ee4699` (`9b12277` through `ff5b767`), 12 lane commits and 6
@@ -37,7 +70,7 @@ than three lanes' rework.
 |---|---|---|
 | Drop the five write-only mission columns | `54112be` | The ownership map's reader census, re-verified before deletion. `retained_use` had no writer at all; `permitted_experience` declared `DEFAULT '[]'` against a module requiring `dict`; `acquired_artifacts` was only ever written empty. |
 | Delete `StoreIdentity.durable` | `4ab7997` | It returned `self.dsn is not None`, but `_validated_identity` already refuses any identity whose dsn is `None`. It could only return `True` for an identity that could exist, so it asserted nothing the two tests above it did not. |
-| Correct the `in_flight` sole-owner claim | `4ab7997` | The claim named one writer. There are **four**, in two modules. Both sides hold `FOR UPDATE` across their read-then-write, so the locking was right and the claim was wrong. |
+| Correct the `in_flight` sole-owner claim | `4ab7997` | The claim named one writer. There were **four**, in two modules. Both sides hold `FOR UPDATE` across their read-then-write, so the locking was right and the claim was wrong. The fourth is since deleted; see the evening section above. |
 | Remove `seed` from the public allowlist | `21b4c17` | It was arithmetic on three integers the public `task_id` already publishes. Redundant authority, closing no hole. |
 | Refuse a disposable authority on an owned store | `0bc02d3` | The production live path passed no authority. See below. |
 | Split the member's task from the grader's | `7ac77bb` | The frozen task carries its answer as a literal key. See below. |
@@ -122,23 +155,39 @@ instance, and Boolean and ordering are clean function-identification
 instruments that cannot execute a program. A valid null closes a study. What it
 does not do is close stage 9 or 10.
 
-### CI baseline, and what it does not license
+### CI, measured twice, and what it does not license
 
-`reports/evidence/ci-baseline-37172638343.md`, measured 2026-10-04 from run
-`37172638343`.
+`reports/evidence/ci-baseline-37172638343.md`, run `37172638343` at `0ee4699`:
+**259 distinct failing test IDs: 245 FAILED, 14 ERROR.**
 
-**259 distinct failing test IDs: 245 FAILED, 14 ERROR. No green baseline
-exists.** Four of the seven suite matrix entries were cancelled at roughly
-100 minutes, so about a quarter of the intended coverage has no measurement at
-all, and the 245 FAILED are a **floor**. The run tested `0ee4699`, not tip, so
-it describes a tree behind this one.
+Run `37236035655` at `7a00676`: **268 distinct failing IDs across 81 files**,
+cross-checked by summing the per-job distinct sets (heavy 72, py3.133 113,
+py3.132 55, py3.131 28), which reconciles exactly and so admits no
+double-counting across shards. **No green baseline exists.**
 
-The previous accounting named the wrong shards: `py3.133` was **not** cancelled,
-it ran and failed with 103 FAILED and 8 ERROR, the largest single contributor.
-The cancelled set is exactly the unsharded entries plus one group.
-**160 failures are unrooted** and are treated as opaque. The prior figures were
-raw line counts rather than distinct test IDs, and each count here was
-cross-checked three ways.
+**That run did not measure the work below it, and this is the load-bearing
+caveat.** Its head is `7a00676`, and `git merge-base --is-ancestor` returns false
+for `7c09e19` against that head. Every authority-threading and scorer commit in
+this section is ahead of it, so 268 describes a tree 26 commits behind the tip
+and licenses nothing about the tip. Ten failures are new against the baseline
+(`test_evidence_integrity.py` x5, `test_r123_gates.py` x2,
+`test_invl02_causality.py` x2, `test_inv_c7_two_domain.py` x1) and one is fixed
+(`tests/_heavy_archived/test_r02_exec.py::test_stop_uses_kill_fallback_and_clears_tracking`).
+
+**The 15 failures in `tests/test_inv_a_action_meaning.py` are pre-existing.**
+Their IDs are byte-identical between `37172638343` and `37236035655`, confirmed
+by diffing the two extracted sets rather than by counting matches in a log.
+
+Four shards (py3.12, py3.13, py3.134, py3.14) were **cancelled at the
+`timeout-minutes: 100` ceiling**, all four ending within seconds of each other
+at 21:27 to 23:07 UTC, and each produced no measurement. About a quarter of the
+intended coverage has none, and this ledger's own B4 standard applies: a
+cancelled measurement is not a null measurement. **160 of the baseline failures
+are unrooted** and are treated as opaque.
+
+The earlier accounting named the wrong shards: `py3.133` was **not** cancelled,
+it ran and failed, and in both runs it is the largest single contributor. The
+prior figures were raw line counts rather than distinct test IDs.
 
 `tests/check_execution_authority.py` prints `OK: every call carries authority`
 over 48 calls in 4 files while **11 tests fail on exactly the property it claims
@@ -192,13 +241,27 @@ Nothing in this batch touched a public mission entry, permitted experience, an
 admitted effect, a checked artifact or a fresh-process bound use. M2 is not
 started, and the row-identity repair above is upstream of it.
 
-### M4 is not started and is not runnable on this host
+### M4 is not started. It is not blocked by an absent route
 
-**No live route is configured.** `SETTLEMENT_GATEWAY_ENDPOINT` and
-`SETTLEMENT_GATEWAY_KEY` are both absent from the environment, verified by name,
-and `config/.env` does not exist, so nothing sets them from a file either. 37
-modules name the endpoint. **This is an external absence, not model
-incapability**, and it is recorded as such rather than as a result.
+**The route is live on this host.** A process listens on `127.0.0.1:4000` and
+answers `401 invalid api key`, which is a router refusing an unauthenticated
+probe. `SETTLEMENT_GATEWAY_ENDPOINT` and `SETTLEMENT_GATEWAY_KEY` are absent
+from this shell's environment and `config/.env` does not exist, so **this
+session** holds no credential; that is an absence here, not an absent route.
+The earlier claim that no live route was configured was wrong. M4 is unstarted
+work, not blocked work.
+
+### Two corrections to what an earlier pass recorded
+
+**The 15 failures in `tests/test_inv_a_action_meaning.py` are not a regression.**
+Their IDs are byte-identical between baseline `37172638343` and `37236035655`.
+An earlier pass reported them as newly caused; the grep used to check was too
+narrow and returned a false zero.
+
+**An unreachable `in_flight` status cannot read as quiescent.** `is_quiescent`
+counts entries and never reads their status. An earlier pass speculated the
+opposite; the predicate's own docstring (`mission.py:99-116`) and its SQL
+(`:577`) settle it. A row this module cannot interpret is still non-quiescence.
 
 ## Researcher review and surgical closure, 2026-10-03
 
@@ -609,7 +672,9 @@ The assignment permits no more than three. The analysis concludes **two**, and
 the cap is a maximum rather than a target. The third this ledger previously
 named, the output budget, was measured and falsified by B17; it is recorded
 above as a corrected inference, not as a bottleneck. Full argument in
-[bottlenecks.md](workstreams/bottlenecks.md).
+[bottlenecks.md](workstreams/bottlenecks.md). Two claims about it are NOT
+MEASURED: the software panel's maximum attainable positive delta, and any
+cross-structure rate for the Boolean side.
 
 1. **The system has no independent unit for any learning claim.** Every
    disposition above acquisition rests on comparing two arms, and the design
