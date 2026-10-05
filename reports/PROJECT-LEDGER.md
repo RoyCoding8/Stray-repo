@@ -1,32 +1,166 @@
 # Project ledger
 
+## What the corpus can and cannot show, 2026-10-04 night
+
+Five commits over the evening section below: `0f30afb9` gave the operate choice
+a computed verdict, `cb7012c` made repair equivalence structural, `4a768596`
+added the measurement scripts behind the certificate claim, `1a47029b` repaired
+a real hole in that certificate, `581c7a4b`/`1d7e8564` corrected what
+`observation_dependent` compares. **No test suite, WSL, or live route ran.**
+Every figure here is re-derived from source on this tree.
+
+**E0 does not demonstrate causal influence, and no document may read as though
+it does.** `observation_dependent` used to compare the **preserved** arm
+against the **refuted** arm, and `_control_triple`
+(`invl02_live.py:1976`) builds that arm by rewriting the last verdict to
+`not_preserved`. So the two arms differed only because the falsifier wrote the
+disagreement it was then credited with discovering. It now compares preserved
+against **disconnected**, the same arm given no evidence, which is M2's actual
+clause. Re-measured through the production path on the real E0 freeze (dev
+seed 4, one probe at x=3, bound control package):
+
+| Field | Value |
+|---|---|
+| earned verdict | `unknown` — no prior to disagree with |
+| `choice_preserved` | `opp-first` |
+| `choice_disconnected` | `opp-first` |
+| `choice_refuted` | `opp-followup` |
+| **`observation_dependent`** | **`False`** (was `True`) |
+| **`falsifier_moves_decision`** | **`True`** |
+
+The falsifier's question is real and separately interesting, so it survives
+under its own name rather than being deleted. What the freeze can show is that
+a rewritten verdict moves the decision. What it cannot show is that a recorded
+observation moved anything, because the one probe it takes earns `unknown` and
+the arms are identical. `test_r1_driver_routes_through_frontier`
+(`tests/test_r123_gates.py:207`) asserts `observation_dependent is True` and now
+fails by design; `wt/r123fix` owns re-pinning it, and it needs CI's PostgreSQL.
+A fresh freeze is required regardless, since `invl02_live.py` is in
+`LIVE_CODE_PATHS`. No cap-sheet change: `RESOURCE_KEYS` is `("queries",
+"steps")`, so a probe draws on the store's own authority and never on the
+study's `sandbox_calls`; 19/30 is untouched.
+
+**Extending the freeze was measured and rejected.** Sweeping every second probe
+input against the real dev rule: 14 of 15 earn `not_preserved` (all but x=0 and
+the re-probe x=3), so the falsifier arm is reachable — but on every one of them
+the preserved arm *already* moves to `opp-followup`, which makes the refuted arm
+redundant. Under either definition `observation_dependent` reads `False`. The
+two reach the same value by different routes and the earned one is honest, so no
+probe opportunity is added.
+
+**The verdict skew is NOT the halving it was reported as.** Re-measured over
+40 dev seeds with the same objects `measured_verdict` calls. Chance at one held
+input is 1/16 = 0.0625. Held input x=0..7: 1.000 at every prior depth from 1 to
+7. Held input x=8..15: 0.000 to 0.150, at or near chance. **Neither is the
+reported "0.062 after one prior rising to 0.469 at seven priors", and the
+mechanism offered for it is false on this tree**: candidate sets do not halve
+at every input. They halve exactly through three observations (224 → 112 → 56 →
+28) and then stop, because the class is affine over four inputs and later
+observations are dependent on the first. Means per bit over 40 dev seeds are
+19.5 at depth 4 and 9.8 at depth 5, where a pure halving predicts 14 and 7. The
+version space **never collapses to size 1 within the query budget**: `MAX_QUERIES`
+is 8, and 0 of 40 seeds collapse at 8. The first collapse is 3 of 40 at nine
+queries and 40 of 40 only at thirteen, which is past the budget. So the earlier
+account — chance through three priors, rising only when the space collapsed to
+size 1 at seven — does not describe this predictor. Recorded as a correction,
+not as a replacement figure: what the predictor's true accuracy is per task
+depends on which inputs a policy chooses, and that has not been measured.
+**NOT MEASURED** beyond the per-held-input sweep above.
+
+**The scorer's certificate hole is real, and its repair is verified here.**
+`_canonical_test` stripped a leading `not`, swapped the branches and rewrote the
+comparison operator — three negations where the conditional had one — across
+nine operators while its docstring justified `!=` alone. Re-derived from the
+pre-repair source: of the 36 shapes the old rule fired on, **34 were not the
+identity it documented**. Re-running the deleted census harness (recoverable at
+`4a768596`) against both module versions over the same 4,572 mutations:
+
+| | credited | credited **and wrong** |
+|---|---:|---:|
+| pre-`1a47029b` | 425 | **78** |
+| shipped | 230 | **0** |
+
+The four wrong forms were `not seen < 0`, `seen >= 0`, `not state < 0`,
+`state >= 0`, all on the guard line. The shipped rule fires on 4 shapes with 0
+identity failures, and still fires: `a if not (x != y) else b` becomes
+`a if x == y else b`, a different function. **The bias statement carried in the
+evening section below is therefore withdrawn as false**; the correction is at
+the end of this section.
+
+### Three findings with no owner in the tree
+
+| Finding | State |
+|---|---|
+| **The four normalisers in `experiments/ad01/s09_swe_tasks.py` have zero regression coverage.** `_canonical_test`, `_normal_form`, `equivalence_verdict`, `_drop_unit_factor` and `_drop_unit_step` have **no hits anywhere in `tests/`**; the only references are the module itself and this row. A future edit widening any rule fails nothing in CI. | **uncovered.** `wt/normalizers` is writing the coverage. |
+| **`_drop_unit_factor` and `_drop_unit_step` docstrings overstate their identity.** Both guard on `value == 1`, and `1.0 == 1` and `True == 1` in Python, so `x * 1.0`, `1.0 * x`, `x * True`, `True * x` and `range(a, b, True)` all reduce. `_drop_unit_factor` documents "for any `x` Python can multiply", which is false: `x * 1.0` is not `x` for a non-int `x`. | **not a live defect, but a real inaccuracy.** No reference source triggers either rule: **0 firings across all 39 instances**, re-derived here. The module's whole argument is that each rule is the identity it documents, so an inaccurate docstring is an inaccuracy in the one place the argument is made. |
+| **`observation_dependent` can never read `True` on the shipped freeze.** Its measurement is above. The field is honest and the freeze cannot exercise the capability it names. | **re-derived here.** `wt/r123fix` is writing the pin. |
+
+### Corrections to the evening section below
+
+Three present-tense claims in that section were true on the branch it was
+written on and are false on this tree. Each is corrected here rather than
+edited in place, because that section records its own stretch.
+
+**The bias statement was withdrawn as false.** The evening section says a repair
+rate is "never an upper bound on wrong ones". That is precisely what the
+78 credited-and-wrong candidates were: wrong credits, found by measurement.
+The surviving statement is the one in `s09_swe_tasks.py:781-809`: a repair rate
+read off this instrument is a **lower bound on the repairs a policy found**, and
+the bound in the other direction is **held by the census rather than assumed** —
+"a measurement with a script behind it, not a property of the list". The
+census that supports it is not on this tree; `4a768596` holds it.
+
+**M2's clause was not undemonstrable, and the string it named was already
+gone.** The section quotes `SHARED_OPERATE_SOURCE` branching on
+`verdict == "mismatch"` at `improve_channel.py:59`. That branch was replaced by
+`0f30afb9`, which ran **before** the section was written but landed **after** it
+in the merge order, so the section describes a pre-merge tree. The shipped
+branch is `last.get("verdict") == "not_preserved"` at `improve_channel.py:77`
+and the string `"mismatch"` survives in no production reader or writer of an
+observation verdict. What the section's underlying worry was remains true and
+is now measured: `observation_dependent` read `True` with zero causal content,
+because the arm it compared against was built by the falsifier. That is the
+first row of this section. M2 is still not started, and the row identity above
+still blocks it.
+
+**The CI lag figure drifted.** Run `37236035655` measures `7a00676`, which is now
+**41 commits** behind the tip, not 26. The figure is a floor either way and
+licenses nothing about the tip.
+
 ## Instrument repairs and what remains unmeasured, 2026-10-04 evening
 
 Eleven merges over `7a00676`, none pushed. **No test suite, WSL, or live route
 ran in this stretch.** Every claim below is a source reading, a commit message,
 an artifact read, or arithmetic on a CI log. The CI number that exists
-(268 distinct failing IDs) measures `7a00676`, which is **26 commits behind
-this tip**, so it is a floor and licenses nothing about the tip.
+(268 distinct failing IDs) measures `7a00676`, which was 26 commits behind this
+stretch's tip and is 41 behind the current one, so it is a floor and licenses
+nothing about either tip.
 
 | What | State | Evidence |
 |---|---|---|
 | `investigations.in_flight` writers | **4 -> 3, all in `experiments/ad01/mission.py`** (`admit_operation`, `resume_operation`, `release_operation`) | `437007e`. The deleted fourth wrote raw dicts, bypassing `InFlightOperation.from_json`/`as_json`, so it could not round-trip the two kinds of reader the module's own contract distinguishes. |
 | The `suspended` in-flight state | **removed; the enum is two states** (`held`, `restored`) | `b2d90cf`. Its only producers were the barrier helpers `d2c6106` deleted. `is_quiescent` counts `jsonb_array_length(in_flight)` and **never reads a status**, so a row carrying an uninterpretable status reads as NOT quiescent. Measured by reading the predicate, not assumed. |
 | Execution authority at four call sites | **threaded** | `ded63a8`, `2a3bff4`, `5f1354a`. `6f0baeb`'s owned-store refusal shipped with no compliant caller. Each site now carries the leg's study allocation rather than minting a second one. |
-| SWE repair verdicts | **structural, not sampled** | `cb7012c`. `bb40300` replaced a 3-case draw with an 1815-case sweep and was defeated by a gate reading only public module constants. `equivalence_verdict` now reduces both sides through four rewriting identities holding for all inputs. |
+| SWE repair verdicts | **structural, not sampled** | `cb7012c`. `bb40300` replaced a 3-case draw with an 1815-case sweep and was defeated by a gate reading only public module constants. `equivalence_verdict` now reduces both sides through four rewriting identities holding for all inputs. Each of those identities was itself defective until `1a47029b`; see the section above. |
 
-**The scorer's bias must travel with every number read off it.** The normal form
-is **not alpha-equivalent**, so a behaviourally identical rename is refused. A
-repair rate read off this instrument is a **lower bound on repairs and never an
-upper bound on wrong ones**. **Any SWE freeze taken on the pre-`cb7012c` counts
-is over-counting and must be re-taken.**
+**The scorer's bias, corrected.** The normal form is **not alpha-equivalent**,
+so a behaviourally identical rename is refused. **This section originally claimed
+a repair rate was "never an upper bound on wrong ones". That claim was measured
+false and is withdrawn**: 78 of 425 credited candidates were wrong before
+`1a47029b`. A repair rate read off the repaired instrument is a **lower bound on
+the repairs a policy found**, and the bound in the other direction is held by
+the mutation census rather than assumed. **Any SWE freeze taken on the
+pre-`cb7012c` counts is over-counting and must be re-taken**, and a freeze taken
+between `cb7012c` and `1a47029b` was taken on a certificate that credited wrong
+candidates.
 
-**M2's central clause is undemonstrable as written.** `SHARED_OPERATE_SOURCE`
-(`improve_channel.py:59`) branches on `verdict == "mismatch"`, and the only
-producers of that string are `invl02_live.py:2024`, a literal typed into the
-script, and the branch itself. Both arms are identical code and
-`observation_dependent` reads `True` in the frozen evidence with zero causal
-content behind it. M2 therefore cannot be demonstrated by the study it names.
+**M2's central clause, as this stretch measured it.** `0f30afb9` found
+`SHARED_OPERATE_SOURCE` branching on `verdict == "mismatch"`, a string two call
+sites hand-wrote between them and no production path ever emitted, so both arms
+named the same opportunity and `observation_dependent` read true over two
+constants. It computed the verdict from the frozen version-space evaluator
+instead. The field still read `True`, and for a second reason this section did
+not have; see the section above.
 
 **The live route IS live on this host.** A process listens on `127.0.0.1:4000`
 and answers `401 invalid api key`, so the router is up and a credential would be
@@ -147,9 +281,11 @@ not tell the difference, because `tasks.score` decided from two public cases
 plus one protected case. **That is repaired** (`cb7012c`): the verdict is now a
 structural normal-form comparison rather than a sampled box, and a gate reading
 only public module constants scores 0 of 30 where the sampled sweep scored 30 of
-30. The repair is not alpha-equivalent, so it errs toward refusing, and a repair
-rate read off it is a lower bound on repairs and never an upper bound on wrong
-ones.
+30. The repair is not alpha-equivalent, so it errs toward refusing. `1a47029b`
+then found a hole in it — 34 of the 36 shapes `_canonical_test` fired on were not
+the identity it documented, and 78 credited candidates were wrong — so a repair
+rate read off the instrument is a lower bound on the repairs a policy found, with
+the other direction held by the mutation census rather than assumed.
 
 **This is a valid null that closes M3.** The supported-cell count is **zero,
 measured**, not merely unproven: the AD01 cells fail on four independent grounds
@@ -171,7 +307,7 @@ double-counting across shards. **No green baseline exists.**
 **That run did not measure the work below it, and this is the load-bearing
 caveat.** Its head is `7a00676`, and `git merge-base --is-ancestor` returns false
 for `7c09e19` against that head. Every authority-threading and scorer commit in
-this section is ahead of it, so 268 describes a tree 26 commits behind the tip
+this section is ahead of it, so 268 describes a tree behind the tip
 and licenses nothing about the tip. Ten failures are new against the baseline
 (`test_evidence_integrity.py` x5, `test_r123_gates.py` x2,
 `test_invl02_causality.py` x2, `test_inv_c7_two_domain.py` x1) and one is fixed
@@ -201,7 +337,7 @@ the gate built for it.
 
 ### Four tests go red deliberately
 
-`test_r123_gates.py:192,204,210` and `test_invl02_causality.py:348,1042` drive a
+`test_r123_gates.py:177,194,207` and `test_invl02_causality.py:389,1076` drive a
 round on an **owned** store, so Lane C's refusal fires. **They were green at
 `0ee4699` and this batch turns them red, and that is the intent.** Each was
 measuring the defect. A green assertion there could not tell whether the
@@ -830,6 +966,20 @@ deleted menu, which would undo milestone C's boundary. FA-02 names
 `reports/evidence/invr1b4-mean-score/b4-crossover-mean.json`, **which was never
 committed** — the one `control_competence(40)` sweep was cancelled for resource
 reasons, and the artifact must not be fabricated to satisfy a gate.
+
+**A third pair is red for the same reason, and was verified here rather than
+inherited.** `test_the_ledger_ranks_exactly_three_bottlenecks` and
+`test_the_three_ranked_bottlenecks_are_architecture_relevant` in
+`tests/test_inv_d1_documents.py` demand a third ranked bottleneck. The third the
+ledger named was the output budget, and B17 measured it falsified:
+`reports/evidence/invr1b17-budgetfit/budget-fit.json` records a repairing policy
+at 5551 characters, which fits the served 2048-token budget, so the budget was
+sufficient and the cause is prose-not-code. **Making either test green means
+reinstating a falsified constraint**, which is this repo's named recurring
+failure in the shape of a gate that would read green over a false claim. Both
+were introduced in `753ea2ed`, in the same commit that wrote the two-bottleneck
+section, so they were never green with a third bottleneck behind them. The other
+34 gates in that file were re-derived against this tree and pass.
 
 ## Current closure work (2026-09-30)
 
