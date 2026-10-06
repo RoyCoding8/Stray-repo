@@ -377,19 +377,7 @@ def _signal_group(pid: int, signum: int, proc=None, *, force: bool = False) -> b
 def _pid_alive(pid: int) -> bool:
     """Check a pid without sending it a signal, on either supported host."""
     if os.name == "nt":
-        import ctypes
-        from ctypes import wintypes
-
-        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-        kernel32.OpenProcess.argtypes = (
-            wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
-        kernel32.OpenProcess.restype = wintypes.HANDLE
-        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
-        handle = kernel32.OpenProcess(0x1000, False, pid)
-        if not handle:
-            return False
-        kernel32.CloseHandle(handle)
-        return True
+        return _windows_pid_alive(pid)
     try:
         os.kill(pid, 0)
     except (ProcessLookupError, OverflowError, ValueError):
@@ -397,6 +385,38 @@ def _pid_alive(pid: int) -> bool:
     except PermissionError:
         return True
     return True
+
+
+def _windows_pid_alive(pid: int) -> bool:
+    """Conservatively check a Windows pid, including access-denied holders."""
+    if isinstance(pid, bool) or not isinstance(pid, int) or not 0 < pid <= 0xFFFFFFFF:
+        return False
+
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.argtypes = (
+        wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.GetExitCodeProcess.argtypes = (
+        wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+    kernel32.GetExitCodeProcess.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+
+    handle = kernel32.OpenProcess(0x1000, False, pid)
+    if not handle:
+        # ERROR_INVALID_PARAMETER means the PID cannot identify a process.
+        # Access denied and other errors do not establish that it is dead.
+        return ctypes.get_last_error() != 87
+
+    try:
+        exit_code = wintypes.DWORD()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
+            return True
+        return exit_code.value == 259  # STILL_ACTIVE
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def _terminate(proc, grace_s: float) -> int:
@@ -574,7 +594,7 @@ def _run_child(argv, *, timeout_s, log_path, expect, kill_grace_s, cwd,
             target = "child process" if os.name == "nt" else "child's process group"
             return Outcome(
                 "refused", "interrupted by signal %d; the %s was terminated"
-                " so nothing is left running" % (killed.signum, target),
+                % (killed.signum, target),
                 status=status, limit_s=timeout_s, summary=scanner.summary,
                 elapsed_s=time.monotonic() - started, log=log_path,
                 slot=slot.name if slot else None, signal_sent=(signum_sent, 0))
