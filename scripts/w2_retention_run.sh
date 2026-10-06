@@ -50,7 +50,10 @@ ROUTE_ENDPOINT="http://127.0.0.1:${RELAY_PORT}/v1"
 # `/v1/models` attributes the catalog entry to. `_returned_route` reads
 # `provider` off the response and `route_matches` is case-insensitive on it.
 export SETTLEMENT_EXPECTED_ROUTE="{\"endpoint\":\"$ROUTE_ENDPOINT\",\"requested_model\":\"$MODEL\",\"resolved_model\":\"$MODEL\",\"provider\":\"Nvidia\",\"tier\":\"free\"}"
-export SETTLEMENT_ADMIN_DSN="dbname=postgres host=/var/run/postgresql user=root"
+# Named, not defaulted: this script runs on the WSL host that owns the
+# socket, and the value passes straight into create_disposable_db, whose
+# refusal on an empty route is what keeps the script from guessing a box.
+export SETTLEMENT_ADMIN_DSN="${SETTLEMENT_ADMIN_DSN:-dbname=postgres host=/var/run/postgresql user=root}"
 
 # The relay is verified, not assumed. A relay left behind by another lane
 # answers on its port and can still be wired to a bridge half that no longer

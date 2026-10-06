@@ -627,8 +627,9 @@ def test_the_age_bound_on_the_command_line_is_the_one_that_runs(
     seen = {}
     monkeypatch.setattr(cli, "stale_plan",
                         lambda dsn, *, age: (seen.setdefault("age", age), [])[1])
-    argv = ["--dry-run"] if given is None else \
-        ["--dry-run", "--older-than-hours", given]
+    argv = ["--dry-run", "--admin-dsn", "dbname=postgres"] if given is None \
+        else ["--dry-run", "--admin-dsn", "dbname=postgres",
+              "--older-than-hours", given]
     assert cli.main(argv) == 0
     assert seen["age"] == expected
 

@@ -179,11 +179,15 @@ def run_trajectories(out_dir: Path, dsn: str, *, agenda_authorized: int) -> dict
 
 if __name__ == "__main__":
     import os
+    from experiments.ad01.s09_run_isolation import MissingRouteError
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else \
         Path("evidence-ad01/c3-trajectories")
-    dsn = os.environ.get(
-        "EC02_C3_DSN",
-        "dbname=ec02test_c3 host=/var/run/postgresql user=ubuntu")
+    # No socket default: a session that named no database store refuses
+    # rather than connecting to a box the operator never pointed at.
+    dsn = os.environ.get("EC02_C3_DSN", "")
+    if not dsn:
+        raise MissingRouteError(
+            "EC02_C3_DSN must name the qualification's database store")
     assert "live" not in dsn
     from settlement import db
     from experiments.coord02 import experience as E

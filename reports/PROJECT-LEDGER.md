@@ -1,5 +1,56 @@
 # Project ledger
 
+## One route to name a database, and a directory-fsync that never held on Windows, 2026-10-06
+
+Run `37385370187`'s Windows port job measured the noise floor at **902
+failure lines**, and classifying them produced two root causes, both now
+repaired. The remaining classes are not repairs this batch makes.
+
+**619 lines — the socket default was the defect.** "No route configured"
+degraded to `DEFAULT_ADMIN_DSN = "dbname=postgres host=/var/run/postgresql
+user=ubuntu"`, held identically in
+`experiments/ad01/s09_run_isolation.py` and `tests/conftest_isolation.py`,
+plus six per-file `LOCAL_DSN` fallbacks — a session with no route named
+would guess a WSL box and error on any other host, instead of skipping.
+The repair deletes every fallback. `s09_run_isolation._admin_dsn` raises
+`MissingRouteError` when no route is named (`SETTLEMENT_TEST_DSN`); the
+conftest's `admin_dsn()` funnels through it and the plan records the
+empty route as a state, not an error. `pytest_configure` steps aside when
+routeless, so the portable CI job no longer sets `S09ISO_DISABLE` — its
+claim is now "routeless, everything needing a database skips," which is a
+statement about portability, not a suppression flag. The six test-file
+fallbacks re-root on the shared authority; `scripts/sweep_stale_test_databases.py`
+takes a required `--admin-dsn` (a sweep that drops databases must not be
+aimed by a default); the dead `SETTLEMENT_DSN_TEMPLATE` is deleted; the
+two WSL shell scripts export their own explicit socket default with a
+comment naming it. The parsed-data/connection-route distinction the AST
+census tests pin is intact — DSN strings that are only *parsed* as data
+are untouched, and the census passes.
+
+**76 lines — directories cannot be `fsync`ed on Windows.** `os.open(dir,
+os.O_RDONLY)` raises `PermissionError` there, and it flowed through
+`scripts/invl02_live.py::_write_output_bundle`,
+`src/settlement/artifacts.py::_fsync_tree` and `src/settlement/context.py`'s
+rename-fsync — 42 of the lines in `test_output_evidence` alone. Win32
+early-returns now stand at all three production sites; on that platform
+the file's own fsync is the whole durability claim.
+`scripts/checkpoint.py::_fsync` already swallows via `except OSError`.
+
+**What remains is not this batch's repair.** ~65 lines are Linux-only
+platform claims by design (no POSIX `resource` module, `dlopen`/`prctl`,
+`gvisor`/`runsc`, `O_NOFOLLOW`, `SIGKILL`, POSIX temp paths) — task
+material for the platform-boundary statement, not defects. ~140 residual
+lines are genuine cross-platform failures (assertions, `KeyError:'specs'`,
+strict-XPASS unit guards, `git` path assumptions on the `D:\a` checkout)
+that need the next measurement before triage: most route-needing files
+will now skip rather than error, which changes the failure set first.
+
+**uv, measured.** The CI install step now runs under `uv pip install
+--system` (setup-uv v10.2.0): Windows 30s→13s, macOS 9s→2s, ubuntu
+14s→2s, with the failure sets unchanged — the migration question is
+closed. Next measurement is against run `37385370187`: db shards 53+34
+ids, port ubuntu 708 / macos 716 / windows 902 lines, heavy 61 ids.
+
 ## The 41 measured fixes, the four gaps behind them, and a five-job matrix, 2026-10-05
 
 Run `37335011361` at `e485a75c` — the first full measurement of the authority

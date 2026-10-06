@@ -30,9 +30,7 @@ def _gateway():
 
 def main(argv: list | None = None) -> int:
     parser = argparse.ArgumentParser(description="C2 live acquisition")
-    parser.add_argument("--dsn", default=os.environ.get(
-        "EC02_C2_DSN",
-        "dbname=ec02test_c2live host=/var/run/postgresql user=ubuntu"))
+    parser.add_argument("--dsn", default=os.environ.get("EC02_C2_DSN", ""))
     parser.add_argument("--campaign", default="c2live")
     parser.add_argument("--out", default="evidence-live/c2-acquisition.json")
     args = parser.parse_args(argv)

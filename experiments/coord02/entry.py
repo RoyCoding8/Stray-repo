@@ -830,9 +830,9 @@ def main(argv: list | None = None) -> int:
     parser.add_argument("--panel", default="development",
                         choices=["development", "evaluation", "transfer"])
     parser.add_argument("--model", default="")
-    parser.add_argument("--dsn", default=os.environ.get(
-        "EC02_E_DSN",
-        "dbname=ec02test_e host=/var/run/postgresql user=ubuntu"))
+    # No socket default: an operator who named no store refuses at connect
+    # instead of landing on a box the default's author worked from.
+    parser.add_argument("--dsn", default=os.environ.get("EC02_E_DSN", ""))
     parser.add_argument("--evidence-root", default="evidence-coord02")
     parser.add_argument("--freeze-id", default="coord02-live")
     parser.add_argument("--source-sha", default="entry-base")

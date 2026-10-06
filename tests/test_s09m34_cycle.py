@@ -50,7 +50,7 @@ def _dbname(dsn: str) -> str:
 
 def _admin_dsn() -> str:
     """The DSN names the instance to create on, never a store to empty."""
-    return os.environ.get("SETTLEMENT_TEST_DSN") or LOCAL_DSN
+    return _route()
 
 
 @pytest.fixture(scope="module")

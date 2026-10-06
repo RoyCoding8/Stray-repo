@@ -1323,6 +1323,12 @@ def _write_output_bundle(out: Path, result: dict) -> None:
         stream.flush()
         os.fsync(stream.fileno())
     temporary.replace(path)
+    if sys.platform == "win32":
+        # Windows has no directory fsync: opening a directory at all is
+        # the error there, and it raised PermissionError for 76 portable
+        # lines (run 37385370187). The file's own fsync above is the
+        # whole durability claim on that platform.
+        return
     directory = os.open(out, os.O_RDONLY)
     try:
         os.fsync(directory)

@@ -55,6 +55,7 @@ from pathlib import Path
 from collections.abc import Callable, Iterator
 
 from experiments.ad01.s09_run_isolation import DisposableDatabase
+from experiments.ad01.s09_run_isolation import MissingRouteError
 
 TESTS_DIR = Path(__file__).resolve().parent
 MIGRATIONS = TESTS_DIR.parent / "migrations"
@@ -88,20 +89,36 @@ REDIRECTABLE = "redirectable"
 PINNED = "pinned"
 ABSENT = "absent-by-design"
 
-DEFAULT_ADMIN_DSN = "dbname=postgres host=/var/run/postgresql user=ubuntu"
-
 
 def admin_dsn() -> str:
-    """The route this session reaches its server over.
+    """The route this session reaches its server over, or a refusal.
 
-    The socket is a local convenience, not a route every host has: the CI
-    service listens on TCP and has no socket file at all, so a name that
-    reaches here carrying the socket cannot connect anywhere. Every DSN a
-    test binds is built from this answer, so the route is named once rather
-    than carried by each file.
+    The two spellings of the route (``S09ISO_ADMIN_DSN`` and
+    ``SETTLEMENT_TEST_DSN``) are read here and nowhere else, so the route is
+    named once rather than carried by each file. There is deliberately no
+    local default: a default names a route the caller never chose, and the
+    socket this used to fall back to exists only where the author worked.
+    A caller that must not connect when no route is named catches
+    :class:`MissingRouteError` and skips; a caller that intends to connect
+    lets the refusal surface.
     """
-    return os.environ.get(ADMIN_ENV, "") or os.environ.get(DSN_ENV, "") \
-        or DEFAULT_ADMIN_DSN
+    route = os.environ.get(ADMIN_ENV, "") or os.environ.get(DSN_ENV, "")
+    if not route:
+        raise MissingRouteError(
+            "no route to a PostgreSQL server: set SETTLEMENT_TEST_DSN"
+            " (conninfo, e.g. 'dbname=postgres host=127.0.0.1"
+            " port=5432 user=postgres')")
+    return route
+
+
+def admin_dsn_or_empty() -> str:
+    """The same route, but empty when none is named rather than refusing.
+
+    The shape a caller that has not decided to connect yet needs: the plan
+    computes before it touches the server, so it records "no route" as the
+    empty string and the session gate decides what that means.
+    """
+    return os.environ.get(ADMIN_ENV, "") or os.environ.get(DSN_ENV, "")
 
 
 def admin_url(dbname: str) -> str:
@@ -191,7 +208,10 @@ class SuitePlan:
 
     token: str
     seams: list[Seam] = field(default_factory=list)
-    admin_dsn: str = DEFAULT_ADMIN_DSN
+    # The empty string is "no route named", a state the plan records rather
+    # than one it repairs with a guessed default. `IsolatedSuite._admin`
+    # refuses on it, so a plan that never starts a suite never connects.
+    admin_dsn: str = ""
 
     @property
     def redirectable(self) -> list[Seam]:
@@ -218,7 +238,12 @@ class SuitePlan:
         """
         if not seam.redirectable:
             raise ValueError("%s is %s: %s" % (seam.env_var, seam.mode, seam.reason))
-        return dsn_with_dbname(admin_dsn(), derived_name(self.token, seam.db_name))
+        # The plan's own route, not a fresh read of the environment. A plan
+        # with no route builds a dbname-only value: the plugin never starts a
+        # suite on such a plan (the configure gate steps aside), so this
+        # value names the database and inherits no route it did not earn.
+        return dsn_with_dbname(self.admin_dsn or "",
+                              derived_name(self.token, seam.db_name))
 
 
 def _literals_in(node: ast.AST) -> list[str]:
@@ -350,7 +375,7 @@ def _merge(left: Seam, right: Seam) -> Seam:
 
 def plan(token: str | None = None, directory: Path | None = None) -> SuitePlan:
     """Decide every redirection, without connecting to anything."""
-    admin = admin_dsn()
+    admin = admin_dsn_or_empty()
     if directory is None:
         scanned = os.environ.get(SCAN_DIR_ENV, "")
         if scanned:
@@ -543,12 +568,16 @@ class StaleDatabase:
     modified: datetime
 
 
-def stale_plan(admin_dsn: str = DEFAULT_ADMIN_DSN, *,
+def stale_plan(admin_dsn: str, *,
                age: timedelta = STALE_AFTER,
                now: datetime | None = None,
                only: frozenset[str] | None = None,
                ) -> list[StaleDatabase]:
     """Per-run databases no live process owns, older than ``age``.
+
+    The route is a required argument, not a defaulted one: the sweep drops
+    databases, and a default would aim it at a server the caller never
+    named.
 
     Selection is name shape, then lock, then age, in that order. The lock test
     comes before the age test so that a live run is refused even if it has
@@ -575,7 +604,7 @@ def stale_plan(admin_dsn: str = DEFAULT_ADMIN_DSN, *,
     return sorted(plan, key=lambda s: s.name)
 
 
-def sweep_stale(admin_dsn: str = DEFAULT_ADMIN_DSN, *,
+def sweep_stale(admin_dsn: str, *,
                 age: timedelta = STALE_AFTER,
                 dry_run: bool = False,
                 only: frozenset[str] | None = None,
@@ -672,7 +701,10 @@ class IsolatedSuite:
         self.env_applied: dict[str, str] = {}
 
     def _admin(self) -> str:
-        return self.plan.admin_dsn or DEFAULT_ADMIN_DSN
+        if not self.plan.admin_dsn:
+            raise MissingRouteError(
+                "no route to a PostgreSQL server: set SETTLEMENT_TEST_DSN")
+        return self.plan.admin_dsn
 
     def _create(self, name: str) -> DisposableDatabase:
         import psycopg
@@ -743,8 +775,18 @@ class IsolatedSuite:
 
 
 def pytest_configure(config) -> None:
-    """Claim this run's token, reclaim what was abandoned, then create."""
+    """Claim this run's token, reclaim what was abandoned, then create.
+
+    A session with no route named (``SETTLEMENT_TEST_DSN`` empty) has no
+    database to isolate toward, so the plugin steps aside entirely rather
+    than dying at configure: it seeds nothing, and every test that needs a
+    database refuses or skips on its own missing route. The route was a
+    guessed socket default until this gate existed, which is what made a
+    routeless runner error 554 lines instead of skipping.
+    """
     if os.environ.get(DISABLE_ENV):
+        return
+    if not admin_dsn_or_empty():
         return
     suite = IsolatedSuite(plan())
     config._s09iso_suite = suite

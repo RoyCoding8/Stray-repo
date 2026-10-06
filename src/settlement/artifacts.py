@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -211,6 +212,13 @@ def _final_path(artifacts_root: Path, digest: str) -> Path:
 def _fsync_tree(path: Path) -> None:
     with open(path, "rb") as handle:
         os.fsync(handle.fileno())
+    if sys.platform == "win32":
+        # Windows has no directory fsync: opening a directory at all is
+        # the error (a directory handle cannot be opened with O_RDONLY
+        # there, so this raised PermissionError on windows-latest). The
+        # file's own fsync above is the whole durability claim on that
+        # platform, same as every other Windows program.
+        return
     fd = os.open(path.parent, os.O_RDONLY)
     try:
         os.fsync(fd)

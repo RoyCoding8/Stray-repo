@@ -27,7 +27,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tests.conftest_isolation import (  # noqa: E402
-    DEFAULT_ADMIN_DSN,
     STALE_AFTER,
     StaleDatabase,
     _admin_connection,
@@ -111,7 +110,10 @@ def _drop(admin_dsn: str, name: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--admin-dsn", default=DEFAULT_ADMIN_DSN,
+    # Required, not defaulted. A default named a route the operator never
+    # chose, and this tool drops databases: a sweep aimed by a guess is the
+    # one place the socket default was most dangerous.
+    parser.add_argument("--admin-dsn", required=True,
                         help="conninfo with rights to drop databases")
     parser.add_argument("--older-than-hours", type=float, default=None,
                         help="reclaim databases untouched for this long "

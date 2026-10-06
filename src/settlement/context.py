@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -94,11 +95,16 @@ def save_continuation(dsn: str, cmd: Command, artifacts_root: str | Path, invest
             handle.flush()
             os.fsync(handle.fileno())
         os.rename(tmp, target)
-        fd = os.open(roots, os.O_RDONLY)
-        try:
-            os.fsync(fd)
-        finally:
-            os.close(fd)
+        if sys.platform == "win32":
+            # Windows has no directory fsync; opening a directory there is
+            # the error. The file's own fsync above is the whole claim.
+            pass
+        else:
+            fd = os.open(roots, os.O_RDONLY)
+            try:
+                os.fsync(fd)
+            finally:
+                os.close(fd)
         created = True
 
     def _fn(cur, control):

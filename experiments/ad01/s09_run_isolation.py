@@ -38,7 +38,6 @@ from urllib.parse import urlparse, urlunparse
 MIGRATIONS = Path(__file__).resolve().parents[2] / "migrations"
 
 DB_PREFIX = "s09iso"
-DEFAULT_ADMIN_DSN = "dbname=postgres host=/var/run/postgresql user=ubuntu"
 
 TOKEN_RE = re.compile(r"\A[a-z0-9][a-z0-9-]{0,23}\Z")
 NAME_RE = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._:/-]*\Z")
@@ -199,19 +198,41 @@ def _quoted(name: str) -> str:
     return '"%s"' % name
 
 
+class MissingRouteError(RuntimeError):
+    """No route was named for reaching a PostgreSQL server.
+
+    A caller that reaches this never guessed: ``SETTLEMENT_TEST_DSN`` (or the
+    ``admin_dsn`` argument) is the one way to name the route, and a session
+    with none configured has no database to reach. The string this replaces
+    was a ``host=/var/run/postgresql user=ubuntu`` default, which turned
+    "no route named" into "connect to the author's WSL box" on every host
+    that never had that socket -- the measured 554-line portable noise
+    floor (run 37367150028).
+    """
+
+
 def _admin_dsn(admin_dsn: str | None) -> str:
     import os
 
-    return admin_dsn or os.environ.get("SETTLEMENT_TEST_DSN") \
-        or DEFAULT_ADMIN_DSN
+    route = admin_dsn or os.environ.get("SETTLEMENT_TEST_DSN") or ""
+    if not route:
+        raise MissingRouteError(
+            "no route to a PostgreSQL server: set SETTLEMENT_TEST_DSN"
+            " (conninfo, e.g. 'dbname=postgres host=127.0.0.1"
+            " port=5432 user=postgres')")
+    return route
 
 
 def admin_dsn() -> str:
-    """The connection ``SETTLEMENT_TEST_DSN`` names, defaulting to local.
+    """The connection ``SETTLEMENT_TEST_DSN`` names, or a refusal.
 
     Exposed as a function so a test module can resolve the admin once and
     pass the same value to create and drop, rather than letting each call
     re-read the environment and land on a different instance mid-test.
+
+    There is deliberately no local default. A default names a route the
+    caller never chose, so an unconfigured session refuses here instead of
+    connecting somewhere it cannot reach.
     """
     return _admin_dsn(None)
 

@@ -47,7 +47,10 @@ ROUTE_ENDPOINT="http://127.0.0.1:${RELAY_PORT}/v1"
 # distinction matters: the catalog is a listing and the response is the
 # attestation, and the adapter reads the attestation.
 export SETTLEMENT_EXPECTED_ROUTE="{\"endpoint\":\"$ROUTE_ENDPOINT\",\"requested_model\":\"$MODEL\",\"resolved_model\":\"$MODEL\",\"provider\":\"Nvidia\",\"tier\":\"free\"}"
-export SETTLEMENT_ADMIN_DSN="dbname=postgres host=/var/run/postgresql user=root"
+# Named, not defaulted: this script runs on the WSL host that owns the
+# socket, and the value passes straight into create_disposable_db, whose
+# refusal on an empty route is what keeps the script from guessing a box.
+export SETTLEMENT_ADMIN_DSN="${SETTLEMENT_ADMIN_DSN:-dbname=postgres host=/var/run/postgresql user=root}"
 
 if ! pgrep -f "wsl_gateway_relay.py serve" >/dev/null; then
   nohup "$PY" scripts/wsl_gateway_relay.py serve --port "$RELAY_PORT" \

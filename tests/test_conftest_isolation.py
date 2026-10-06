@@ -31,11 +31,22 @@ import pytest
 from conftest_isolation import (  # noqa: E402
     TESTS_DIR,
     admin_dsn,
+    admin_dsn_or_empty,
     dbname_of,
     derived_name,
     plan,
     scan,
 )
+
+# The RED/GREEN probe runs the real plugin, which claims a lock and creates
+# databases -- a live server, not a parsed one. A session with no route has
+# nothing to redirect toward, so the probe battery skips rather than
+# reporting the socket-era failure ("still bound the shared database")
+# that the single-route repair turned into a refusal.
+if not admin_dsn_or_empty():
+    import pytest  # noqa: E402
+    pytest.skip("SETTLEMENT_TEST_DSN is not configured",
+                allow_module_level=True)
 
 PROBE = '''\
 import json
@@ -178,13 +189,12 @@ def test_a_literal_with_no_assertion_is_redirectable(tmp_path, monkeypatch):
     assert seams["ec02test_plain"].mode == "redirectable"
     built = plan(token="a1b2c3d4").env_for(seams["ec02test_plain"])
     assert dbname_of(built) == "s09iso_a1b2c3d4_plain"
-    # The connection fields come from the session's route, so they are equal
-    # here only because this run has no route configured. That is the point:
-    # the default's fields are not consulted at all, which
-    # `test_a_redirected_seam_carries_the_session_route_and_not_the_default`
-    # reads against a CI-shaped environment.
-    assert set(built.split()) - {"dbname=s09iso_a1b2c3d4_plain"} \
-        == set(admin_dsn().split()) - {"dbname=postgres"}
+    # The connection fields come from the session's route, and this run has
+    # none, so the built value is the dbname alone: the default's fields are
+    # not consulted at all, and a routeless plan inherits no route it did
+    # not earn. `test_a_redirected_seam_carries_the_session_route_and_not_
+    # the_default` reads the routed half against a CI-shaped environment.
+    assert set(built.split()) - {"dbname=s09iso_a1b2c3d4_plain"} == set()
 
 
 def test_one_variable_shared_by_four_files_moves_all_four(tmp_path, monkeypatch):

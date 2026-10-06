@@ -28,6 +28,7 @@ from experiments.ad01.agenda_policy import step_policy_consumer
 from experiments.ad01.policy_step import make_policy_artifact
 from experiments.ad01.s09_run_isolation import DB_PREFIX, create_disposable_db, \
     drop_disposable_db, disposable_db
+from experiments.ad01.s09_run_isolation import admin_dsn as _route
 
 LOCAL_HOST = "/var/run/postgresql"
 LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
@@ -166,7 +167,10 @@ def store():
     that truncates it destroys the rows of whichever file ran before.
     """
     env_dsn = os.environ.get("SETTLEMENT_TEST_DSN", "")
-    admin_dsn = env_dsn or LOCAL_DSN
+    # No local default: the module refuses rather than guess a route the
+    # operator never named, so an unconfigured session skips on the refusal
+    # instead of connecting to a socket it does not have.
+    admin_dsn = env_dsn or _route()
     migrations = Path(__file__).resolve().parent.parent / "migrations"
     before = set(p.name for p in RUNS.iterdir()) if RUNS.is_dir() else set()
     database = create_disposable_db(RUN_TOKEN, admin_dsn=admin_dsn,

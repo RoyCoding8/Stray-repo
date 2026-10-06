@@ -44,6 +44,3 @@ class Settings(BaseModel):
             staging_root=staging_root,
             gateway=GatewayConfig(endpoint=endpoint),
         )
-
-
-SETTLEMENT_DSN_TEMPLATE = "postgresql://ubuntu@/DBNAME?host=/var/run/postgresql"
