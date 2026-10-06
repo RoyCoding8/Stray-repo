@@ -147,7 +147,7 @@ def test_prose_is_refused_and_the_reason_is_kept():
     assert verdict["reply"]
 
 
-def test_a_reply_that_is_the_incumbent_verbatim_is_refused_by_the_study():
+def test_a_reply_that_is_the_incumbent_verbatim_is_refused_by_the_study(tmp_path):
     """Eligibility is not enough; there has to be a revision to attribute to.
 
     The channel's own rule would admit these bytes, and they are executable
@@ -155,9 +155,9 @@ def test_a_reply_that_is_the_incumbent_verbatim_is_refused_by_the_study():
     descendant that matches the incumbent's cannot tell anyone anything, and
     an arm that measured one would report a null with no cause.
     """
-    verdict = lr.acquire(_store_for(Path("/tmp"), "identity.json"),
+    verdict = lr.acquire(_store_for(tmp_path, "identity.json"),
                          channel.IMPROVE_LOW_SOURCE,
-                         lr._admission_views(Path("/tmp"), "identity-view.json"))
+                         lr._admission_views(tmp_path, "identity-view.json"))
 
     assert verdict["eligibility"] == "identical-to-incumbent"
 

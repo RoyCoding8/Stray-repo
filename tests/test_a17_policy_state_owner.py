@@ -105,7 +105,7 @@ def _enumerated_writers() -> list[tuple[str, int, str]]:
                     and getattr(scope, "end_lineno", line) >= line]
                 owner = (max(enclosing)[1] if enclosing
                          else "<module>")
-                found.append((str(path.relative_to(ROOT)), line, owner))
+                found.append((path.relative_to(ROOT).as_posix(), line, owner))
     return found
 
 
@@ -142,7 +142,7 @@ def _transition_callers() -> list[tuple[str, int, str]]:
                 parsed = ast.parse(path.read_text(encoding="utf-8"))
             except SyntaxError:
                 continue
-            relative = str(path.relative_to(ROOT))
+            relative = path.relative_to(ROOT).as_posix()
             for node in ast.walk(parsed):
                 if not isinstance(node, ast.Call):
                     continue
@@ -184,7 +184,7 @@ def _transition_keywords() -> list[tuple[str, int, str]]:
                 parsed = ast.parse(path.read_text(encoding="utf-8"))
             except SyntaxError:
                 continue
-            relative = str(path.relative_to(ROOT))
+            relative = path.relative_to(ROOT).as_posix()
             for node in ast.walk(parsed):
                 if not isinstance(node, ast.Call):
                     continue
@@ -331,7 +331,7 @@ def test_the_enumeration_ignores_nothing_under_experiments(tmp_path):
         " proves nothing")
 
     seeded_hits = [
-        (str(p.relative_to(tmp_path)), node.lineno, "sneaky")
+        (p.relative_to(tmp_path).as_posix(), node.lineno, "sneaky")
         for p in sorted(seeded.parent.rglob("*.py"))
         for node in ast.walk(ast.parse(p.read_text(encoding="utf-8")))
         if isinstance(node, ast.Constant) and isinstance(node.value, str)

@@ -14,6 +14,7 @@ parsing.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -27,7 +28,10 @@ def _fresh_process(body: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, "-c", body],
         cwd=str(ROOT),
-        env={"PYTHONPATH": ".", "PATH": "/usr/bin:/bin"},
+        env={**{key: os.environ[key] for key in
+                ("PATH", "SYSTEMROOT", "SystemRoot", "TEMP", "TMP")
+                if key in os.environ},
+             "PYTHONPATH": os.pathsep.join((str(ROOT), str(ROOT / "src")))},
         capture_output=True,
         text=True,
         timeout=120,

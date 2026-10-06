@@ -210,7 +210,7 @@ def test_the_bound_use_proof_refuses_without_authority_rather_than_executing():
         source=proof.seed_policy_source(proof.BASELINE_METHOD),
         recorded_digest=proof.sha256_of(
             proof.seed_policy_source(proof.BASELINE_METHOD)),
-        origin="fixture-stand-in")
+        origin="fixture-stand-in", durable=False)
 
     with pytest.raises(proof.PolicyNotProved, match="needs a store"):
         proof.execute_bound_policy(binding, {}, {})

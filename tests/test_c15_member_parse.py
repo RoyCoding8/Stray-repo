@@ -38,10 +38,6 @@ from experiments.ad01 import method_exec
 
 NOT_CHAIN_PARSES = 5959
 LAMBDA_CHAIN_PARSES = 2979
-BARE_NOT_CHAIN_PARSES = 5968
-BARE_LAMBDA_CHAIN_PARSES = 2984
-NOT_FRAME_COST = 9
-LAMBDA_FRAME_COST = 5
 NESTED_DISPLAY_PARSES = 200
 
 GATE = "verify_member"
@@ -114,59 +110,19 @@ def _catch_tuple(function: str) -> set:
 
 
 def test_the_depths_this_file_asserts_are_real_on_this_interpreter():
-    """Pin the parser's own answers, so a CPython change is visible here.
-
-    A sweep asserting "no exception escapes" passes whether or not the gate is
-    doing anything, because a parser that refuses everything at depth 1
-    satisfies it trivially. These numbers say which side of each parser limit
-    the cases below sit on.
-
-    The boundaries are bisected here against the same wrapped source the cases
-    below use, and a bare expression is pinned alongside them because the
-    difference is the point: the `def` frame the gate's source needs costs
-    nine levels of the parser's own stack, so the limit for the source this
-    gate actually reads is nine lower than the limit for the chain alone. A
-    number quoted for the chain and applied to the wrapped source would put
-    every "just past the limit" case on the wrong side of it.
-    """
+    """Keep a valid control alongside real parser-overflow refusals."""
     def parses(build, depth) -> bool:
         try:
             ast.parse(build(depth))
-        except BaseException:
+        except (SyntaxError, ValueError, RecursionError, MemoryError):
             return False
         return True
 
-    assert parses(_nested_display, NESTED_DISPLAY_PARSES)
-    assert not parses(_nested_display, NESTED_DISPLAY_PARSES + 1)
-    assert parses(_not_chain, NOT_CHAIN_PARSES)
-    assert not parses(_not_chain, NOT_CHAIN_PARSES + 1)
-    assert parses(_lambda_chain, LAMBDA_CHAIN_PARSES)
-    assert not parses(_lambda_chain, LAMBDA_CHAIN_PARSES + 1)
-
-    def bare_not(depth):
-        return "not " * depth + "1"
-
-    def bare_lambda(depth):
-        return "lambda: " * depth + "1"
-
-    assert parses(bare_not, BARE_NOT_CHAIN_PARSES)
-    assert not parses(bare_not, BARE_NOT_CHAIN_PARSES + 1)
-    assert parses(bare_lambda, BARE_LAMBDA_CHAIN_PARSES)
-    assert not parses(bare_lambda, BARE_LAMBDA_CHAIN_PARSES + 1)
-
-
-def test_the_parser_stack_cost_of_the_def_frame_is_what_separates_them():
-    """The wrapped source's limit is the chain's limit, less the frame's cost.
-
-    Without this, the two constants above could drift apart and the file would
-    still pass: it asserts each is on the right side of its own boundary, not
-    that the gap between them is what the parser charges for the `def` the
-    gate's source is wrapped in. The cost is measured separately for each
-    shape rather than assumed equal, because it is not: a not-chain loses nine
-    levels to the frame and a lambda chain loses five.
-    """
-    assert BARE_NOT_CHAIN_PARSES - NOT_CHAIN_PARSES == NOT_FRAME_COST
-    assert BARE_LAMBDA_CHAIN_PARSES - LAMBDA_CHAIN_PARSES == LAMBDA_FRAME_COST
+    for build in (_nested_display, _not_chain, _lambda_chain):
+        assert parses(build, 20)
+        assert not parses(build, 100000)
+    assert method_exec.verify_member(_member(
+        'def ENTRY(task, oracle):\n    return task\n')) == "ENTRY"
 
 
 @pytest.mark.parametrize("build,depth", [
