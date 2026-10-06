@@ -1,18 +1,10 @@
 # Stage 9–10 completion matrix — consolidation batch 2026-10-01
 
-Current checkpoint: the [2026-10-04 mission-ownership batch](PROJECT-LEDGER.md#mission-ownership-and-instrument-census-2026-10-04)
-at `ff5b767` over `0ee4699`. The six dispositions below are updated from that
-batch. **No lane in it ran a test suite**, so its behavioral claims are static
-arguments from source, probes against frozen artifacts, or arithmetic on an
-existing CI log. The earlier checkpoint, the
-[2026-10-03 researcher review](PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03),
-kept stages 9/10 incomplete; nothing since has closed that.
-
-The 2026-10-04 batch changed two things that bear on the dispositions. The five
-write-only mission columns are gone (`migrations/0021`), so the public mission
-no longer carries a projection nobody reads; what remains is that the two
-investigation rows are not the same row. And M3's supported-cell count is
-**zero, measured**. Neither reaches utility, transfer or learner improvement.
+Current checkpoint: the [2026-10-06 researcher review](PROJECT-LEDGER.md#researcher-review-ownership-and-evidence-boundaries-2026-10-06)
+assessed local e8e7911e and supersedes the six-part report's completion
+interpretation. Stages 9 and 10 remain incomplete. The focused Windows gate
+passed 88 tests after removal of obsolete strict-XFAIL labels; no PostgreSQL,
+live inference or full-suite qualification ran in that review.
 
 The tables below retain the older studies' scoped dispositions; no historical
 disposition has been softened, and the current ledger distinguishes the public
@@ -53,21 +45,17 @@ not reach at all.
 
 ## 0. The six dispositions
 
-This section and the current ledger govern the 2026-10-02 assessment. Detailed
-rows below retain the worker's earlier scoped inventories and named revisions;
-this review did not rerun every gate or endorse every historical disposition.
+This table gives current claim boundaries. Later sections describe historical
+studies at their own revisions and do not override these dispositions.
 
-Each is the independent acceptance pass's own verdict. They are kept separate
-because the first does not license the rest.
-
-| # | Question | Disposition | One line of why |
+| # | Question | Current disposition | Evidence boundary |
 |---|---|---|---|
-| 1 | Mechanism | **SCOPED QUALIFICATION**, with the mission projection now gone | Durable effect identity and mandatory execution authority remain repaired. As of `ff5b767` the public mission no longer carries five columns nobody read, and the live path refuses to execute a round on a store that names an owner. SQL and JSON mission ownership are still separate, and no test suite has run since `0ee4699`. The two real-database scorer checks above belong to the 2026-10-02 review tree and this batch neither reruns nor retracts them. |
-| 2 | Acquisition | **OBSERVED NO ACQUISITION** | Unchanged. B12 acquired 0 of 4 scheduled lineages, with only one returned artifact among five operations. Transport failures do not measure model capability. The 2026-10-04 batch attempted no acquisition. The route is live on this host (a process answers on `127.0.0.1:4000` with `401 invalid api key`); this session holds no credential, so no send was made. |
-| 3 | Utility | **UNMEASURED** | Unchanged. No usable acquired arm exists in this comparison, and the batch created none. No benefit verdict follows. |
-| 4 | Retention/transfer | **UNMEASURED BENEFIT** | Unchanged. B14 found a constant reachable terminal verdict. This diagnoses the instrument; it does not test whether retained competence can help. Dropping the write-only `retained_use` column removed a claim, not a measurement. |
-| 5 | Autonomous selection | **NOT ESTABLISHED**, and one of its two known causes is repaired while the other blocks it | The five mission columns are dropped, so "the public mission writes summaries nobody consumes" no longer holds. What blocks it now is row identity: the live arm and the campaign mint different SQL rows, so the SQL quiescence predicate has no production caller and two predicates remain. `twodomain.run_two_domain_crossing` also no longer writes a mission row at all, having zero production callers. |
-| 6 | Learner improvement | **LIVE STUDY UNRUN** | Unchanged. Live C4 and its fresh-descendant comparison did not run. **Its existence does not claim beneficial RSI**: no eligible revision ran, so no learner improved. Executable probe selection can influence descendants, but benefit is unmeasured. The earlier "not runnable on this host" clause was wrong and is withdrawn; the route is live and this session holds no credential. |
+| 1 | Mechanism | Scoped qualification | Execution-authority and instrument repairs are useful. JSON still owns live mission state; one SQL-owned connected public mission is unconfirmed. |
+| 2 | Acquisition | No new live attempt | Historic no-acquisition outcomes remain scoped to their runs. The latest assignment made no model call; transport failures do not establish model inability. |
+| 3 | Utility | Unmeasured | Zero supported cells under the chosen qualification is not zero utility. Unique correct answers do not rule out different investigation procedures; development headroom still needs a proper gate. |
+| 4 | Retention/transfer | Benefit unmeasured | Existing mechanism cases do not establish acquired transfer gain. |
+| 5 | Autonomous selection | Offline controlled choice supported | The earned verdict affected offline next-action choice with controls. Durable public-mission selection and integrated agenda autonomy remain unconfirmed. |
+| 6 | Learner improvement | Benefit unmeasured | An authored revision changes the next acquisition decision after a JSON restart. No acquired reviser was tested. No input clearing the sixteen-input screen is not an equivalence or no-effect result. |
 
 **What the 2026-10-04 batch measured, as new rows.**
 

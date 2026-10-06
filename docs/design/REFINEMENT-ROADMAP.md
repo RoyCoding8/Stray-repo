@@ -14,8 +14,8 @@ General autonomous discovery remains the goal. Memory, background development, t
 | 6. Practical specification | Builder protocols and acceptance conditions | Foundation specified |
 | 7. Foundation prototype | Durable bounded execution, evidence, trials and continuity | Built; deployment validation remains partial |
 | 8. Cognitive-policy refinement | Acquired competence, memory, agenda, representations and teams | Closed at bounded mechanism scope; broader learning questions remain open |
-| 9. Architecture consolidation | Compare executable operational and improvement behavior; keep, replace or remove mechanisms | **Active, incomplete.** Dispositions as acceptance issued them: mechanism CONFIRMED as to the durable chain, with the freeze half repaired by X3 and the effect-identity half by X4b; acquisition NEGATIVE; utility NEGATIVE and not measurable; transfer NEGATIVE; autonomous selection NOT ESTABLISHED; learner improvement NEGATIVE. **The mechanism result is not evidence for any of the other five.** The write-only mission columns are gone as of `ff5b767`. |
-| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | **Incomplete.** The two investigation rows are still different rows, so the SQL quiescence predicate governs nothing and two predicates remain. M2 is not started, and its central clause reads `False` on the shipped freeze: `observation_dependent` compares the preserved arm against a disconnected arm given no evidence, and on the real E0 freeze both choose `opp-first`, so it cannot show causal influence. **Its existence does not claim beneficial RSI**: no eligible revision ran, so no learner improved. |
+| 9. Architecture consolidation | Converge production ownership and compare executable operational/improvement behavior | Active, incomplete. SQL allocation/identity repairs landed; JSON still owns live mission state. Offline causal choice is supported; utility and learner benefit remain unmeasured. |
+| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | Incomplete. One SQL-owned public mission, connected restart/bound use, transfer and learner improvement remain outstanding. |
 | 11. Operational qualification | Supported deployment, containment, recovery and controls | Partial groundwork; not qualified. Unchanged by the 2026-10-01 batch. |
 | 12. Final implementation/release | Supported infrastructure product with migrations, installation, lifecycle UI and evidence | Not started as a release milestone |
 
@@ -23,82 +23,34 @@ Stages are not a waterfall: an experiment may force a revision to the formal mod
 
 ## The current decision
 
-The SQL mission ownership work is **partly done**. The write-only half of the
-defect is closed: the five mission columns `migrations/0019` added had no
-production reader, and `retained_use` had no writer at all, so
-`migrations/0021` drops them forward rather than rewriting `0019`. The AD01
-software and graph worlds are removed from the discovery matrix, and the one
-world offering interventions is measured degenerate, so M3's supported-cell
-count is zero by measurement.
+The [2026-10-06 researcher review](../../reports/PROJECT-LEDGER.md#researcher-review-ownership-and-evidence-boundaries-2026-10-06)
+assessed local source e8e7911e and the six-part assignment report. SQL AD01
+remains the selected production owner. Threading the study allocation and
+removing unused SQL projections were useful repairs, but the live path still
+reads and writes private state, active packages, frontier effects and round
+continuation through JSON FrontierStore. Row routing alone will not close this.
 
-What remains is not a column migration. **The two investigation rows are not the
-same row**, so unifying them comes first: the live arm and the campaign mint
-different SQL identities, the SQL quiescence predicate has no production caller,
-and two quiescence predicates still exist. Until that is repaired, one
-definition of readiness cannot govern both live admission and program
-adoption, and no connected study can be frozen on top of it.
+Finish that ownership migration and its public restart/use demonstration
+before expanding the system. Reuse the existing effect, observation, revision,
+artifact and binding records. Historical JSON remains replay/export material.
 
-The [2026-10-04 batch](../../reports/PROJECT-LEDGER.md#mission-ownership-and-instrument-census-2026-10-04)
-is the source for this paragraph. Its scope labels are earned: the AD01 worlds
-are removed from the discovery matrix on four independent grounds, and the SWE
-cell is measured degenerate. M3 closes as a valid null. It does not close
-stages 9 or 10, and it says so.
+The worker's zero supported-cell result is a qualification result under its
+chosen criteria, not zero task utility. Those criteria also need correction:
+a unique correct answer does not rule out better investigation procedures.
+Use the current function-identification and repair instruments to measure
+decision headroom against a competent baseline on development data. Do not
+add worlds merely to increase a count or use a weak blind comparator.
 
-Two facts decide what stage 9 does next, and neither is a stage-10 concern.
-**The served output budget is 2048 tokens** (`invr1b12-swe/campaign.json`:
-`max_output_tokens`), which is the figure that bounds what the route can return
-for a construction attempt. **The Boolean instrument is not powered**: it offers
-exactly one hypothesis class against six required, and that class is a
-published constant all 72 tasks carry by construction, so no panel choice moves
-it. **A two-domain demonstration is not a two-domain result.** Acquisition
-returned 0 of 4 lineages on one returned artifact, which is a rate of nothing
-rather than a measured zero capability.
+The authored M4 control changes an acquisition decision after a JSON restart.
+Its sixteen-input screen found no arm passing its cutoff. Neither observation
+is live acquisition, an equivalence test, or evidence that learner improvement
+is impossible. Keep these claim categories separate in the completion matrix.
 
-The [2026-10-03 researcher review](../../reports/PROJECT-LEDGER.md#researcher-review-and-surgical-closure-2026-10-03)
-selected SQL AD01 as the production mission owner and left the migration
-unfinished. Finish it, then test program-selected acquisition/reuse and an
-inherited acquisition decision. Coarse witness signatures describe a
-projection; they do not prove statistical independence. The next study may
-report scoped descriptive utility without pretending its cluster count
-establishes statistical power.
-
-The [surgical closure](../../reports/PROJECT-LEDGER.md#surgical-closure-and-recoverable-history-2026-10-02)
-repairs initial mission admission, actual coverage reporting, source identity
-and limited-run lineage summaries. These fixes do not connect the two mission
-owners or demonstrate learning. The canonical branch is `codex/agent-society`;
-historical snapshots are recoverable from the separate archive.
-
-The [2026-10-02 coordinator review](../../reports/PROJECT-LEDGER.md#coordinator-review-2026-10-02)
-assessed source `a7c132c`. Keep the durable effect identity, mandatory execution
-authority, bounded program execution and the repaired behavioral scorer.
-Converge the separate live JSON mission and SQL mission entry into the selected
-AD01 owner before claiming a connected autonomous mission.
-
-The [completion matrix](../../reports/STAGE-09-10-COMPLETION-MATRIX.md) separates
-observed no acquisition from unmeasured utility/transfer and unrun learner
-improvement. The worker report describes an older source tip. Its claim that all
-learning questions are unaskable is limited to its chosen family-cluster protocol.
-Minimum attainable sign-flip p-value is not statistical power, and output digest
-diversity is not construction independence. Define the claim and experimental
-unit before a fresh study; do not alter old evidence or raise alpha to obtain a
-favorable result.
-
-The A/B closure batch on `codex/ab-closure-2026-10-02` landed 25 lanes with
-workstream reports. The 2026-10-01 consolidation batch behind it ran
-`stage09-consolidation-2026-10-01`, its `invr1b12` SWE-construction
-investigation, and two search passes; PROJECT-LEDGER.md carries the detail.
-The first CI run found the suite had never executed off the author's machine:
-23 failures from test DSNs naming a local socket, now repaired at the
-isolation plugin.
-
-Next, exercise program-selected investigation, live acquisition, retained use
-and inherited acquisition decisions through one restart-safe public mission.
-Assess operational quality and complete resources, not only a terminal verdict
-that the reducer already guarantees. Valid measured negatives may close a
-question. Missing arms, degenerate measurements and unrun studies remain open.
-
-Stages 11 and 12 still require operational containment/recovery qualification
-and a supported release. Local bounded child execution is not containment.
+The external worker and Jev are unavailable. The coordinator and GPT-6 Luna
+can complete a bounded implementation checkpoint locally. The free promotion
+ended; any future live study requires an actually verified free route within
+existing finite authorization. No paid fallback is authorized. Stages 9 and
+10 stay open; deployment qualification and final release remain later work.
 
 ## Design references
 

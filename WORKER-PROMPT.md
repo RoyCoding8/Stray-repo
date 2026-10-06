@@ -1,5 +1,12 @@
 # Worker assignment: one persistent mission, then informative learning studies
 
+The external worker is unavailable as of 2026-10-06. The coordinator and
+GPT-6 Luna delegates own the remaining work. This is the retained acceptance
+scope, not an instruction to start every milestone during a report review.
+Use only available concurrency; the old worker fan-out target is not a quota.
+The promotion ended, so verify an actually free route before any model study.
+Existing authorization never permits a paid fallback or Jev calls.
+
 Continue from the canonical `codex/agent-society` checkpoint in
 reports/PROJECT-LEDGER.md. Work in D:/AI/Agent-Society-v2. This assignment applies
 to a fresh session or the previous worker resuming. Inspect local changes before
@@ -13,8 +20,8 @@ product with a Boolean benchmark or an ever-growing engineering audit.
 Read AGENTS.md, IMPLEMENTATION-WORKFLOW.md, the current ledger checkpoint,
 docs/design/REFINEMENT-ROADMAP.md and the current completion matrix. Keep one
 task graph in reports/PLAN.md. Reuse these documents rather than creating a
-competing instruction hierarchy. Jev is unavailable. Use your available models;
-the researcher's Luna preference does not restrict this worker harness.
+competing instruction hierarchy. Jev is unavailable. Use GPT-6 Luna
+for delegated work in this local checkpoint.
 
 The 2026-10-03 closure did useful repairs but left the main ownership migration
 unfinished. Do not repeat its whole audit or count its fixture pipeline as that
@@ -92,6 +99,14 @@ repair the instrument before claiming discovery. Do not add a world merely to
 increase a cluster count. First demonstrate measurable headroom and competent
 controls on development information, plus cases where the program's next-action
 choice changes an operational outcome under the same resource ceiling.
+
+Headroom concerns investigation or acquisition procedures. A unique correct
+terminal answer does not eliminate better probe selection, localization or
+construction. Do not require two correct terminal repairs to admit a cell.
+Known hypothesis classes limit the claim; they do not expose a hidden target.
+Compare against the competent existing control, not a deliberately weak blind
+subset, and separate outcome ambiguity before observations from answer
+multiplicity after grading. Qualify on development data before a new freeze.
 
 Freeze the supported STEP/typed-AST/graph cells after an expressive-action probe.
 All supported cells share action meaning, public interfaces and opportunity.

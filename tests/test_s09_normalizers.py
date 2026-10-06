@@ -447,36 +447,8 @@ def test_a_bare_not_eq_does_not_reach_the_peeled_form():
                             "    return 1 if a == b else 0\n"])
 
 
-# The unit guards compare a node's value against 1, and `1.0 == 1` and
-# `True == 1` in Python, so both rules fire on shapes that are not identities.
-# `x * 1.0` returns a float where `x` returns an int, and on a digit string it
-# raises where `x` returns it. `range(a, b, 1.0)` raises on every argument.
-#
-# What that costs is a credit rather than a false sentence. Measured: all 44
-# candidates ending `* 1.0` scored `repaired` and returned a float where the
-# reference returned an int.
-#
-# The tests below ask the module directly, through `_rule`, whether it fires.
-# An earlier version of this file instead ran `x * 1.0` and `x` as two
-# programs and asserted they agreed, which is a fact about Python rather than
-# about this module: those tests still failed with both rules deleted outright,
-# so they could never XPASS and would have advertised a fixed defect forever.
-# The evidence that the rewrite is harmful lives in the grid assertions here
-# and in `test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain`;
-# what belongs in a guard test is whether the guard fires.
-#
-# `xfail(strict=True)` means a narrowed guard turns these into XPASS, which
-# pytest reports as a failure, so the marker cannot outlive the fix.
-
-FLOAT_XFAIL = ("the guard is a value comparison, so 1.0 is admitted; measured "
-               "44 of 44 candidates ending `* 1.0` scored repaired and "
-               "returned a float where the reference returned an int")
-STEP_XFAIL = ("the guard is a value comparison, so 1.0 is admitted; "
-              "`range(a, b, 1.0)` raises TypeError on every input and is "
-              "credited as equal to `range(a, b)`")
-BOOL_XFAIL = ("the guard is a value comparison, so True is admitted; "
-              "`x * True` and `True * x` drop a multiplication an operand with "
-              "a custom `__mul__` can observe")
+# Unit rewrites accept the integer literal 1, excluding floats and bools.
+# These regression assertions remain active after the type guards were fixed.
 
 
 def _fires(rule_name: str, source: str) -> bool:
@@ -488,11 +460,10 @@ def _fires(rule_name: str, source: str) -> bool:
     return False
 
 
-@pytest.mark.xfail(strict=True, reason=FLOAT_XFAIL)
 @pytest.mark.parametrize("side", ("x * 1.0", "1.0 * x"),
                          ids=["right-hand", "left-hand"])
 def test_a_unit_factor_refuses_a_float_constant_on_either_side(side):
-    """The float is admitted on both sides of the product.
+    """A float factor must be refused on both sides of the product.
 
     Both sides matter. The guard has two operand clauses and a fix that
     narrows only one leaves the other admitting the same wrong rewrite, which
@@ -506,11 +477,10 @@ def test_a_unit_factor_refuses_a_float_constant_on_either_side(side):
         % (side, side))
 
 
-@pytest.mark.xfail(strict=True, reason=BOOL_XFAIL)
 @pytest.mark.parametrize("side", ("x * True", "True * x"),
                          ids=["right-hand", "left-hand"])
 def test_a_unit_factor_refuses_a_bool_constant_on_either_side(side):
-    """A bool is admitted on both sides too, and `True * 1` is the integer 1.
+    """A bool factor must be refused on both sides of the product.
 
     A rewrite that drops the multiplication also drops the type a downstream
     `==` distinguishes, and on an operand with a custom `__mul__` it drops the
@@ -524,9 +494,8 @@ def test_a_unit_factor_refuses_a_bool_constant_on_either_side(side):
         % side)
 
 
-@pytest.mark.xfail(strict=True, reason=STEP_XFAIL)
 def test_a_unit_range_step_refuses_a_float_step():
-    """`range(a, b, 1.0)` is rewritten to a form that raises on every input."""
+    """A float range step must not be rewritten to an integer step."""
     source = "def probe(a, b):\n    return list(range(a, b, 1.0))\n"
 
     assert not _fires("_drop_unit_step", source), (
@@ -537,8 +506,8 @@ def test_a_unit_range_step_refuses_a_float_step():
 def test_the_sound_half_of_the_unit_guards_is_an_identity_on_the_domain():
     """`x * 1`, `1 * x` and `range(a, b, 1)` really are the rewrites claimed.
 
-    The xfails above say the guards are too wide. That is only worth saying if
-    they are not too narrow, so this pins the shapes they must keep admitting
+    The refusal tests above exclude floats and bools. This test pins the
+    integer shapes the guards must keep admitting
     and shows the rewrite is sound on them. `x * 1` is not an identity for
     every `x`: a bool operand gives an int, `True * 1` being `1`, and an
     operand with a custom `__mul__` observes the dropped call. It is an

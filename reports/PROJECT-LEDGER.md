@@ -1,5 +1,101 @@
 # Project ledger
 
+## Researcher review: ownership and evidence boundaries, 2026-10-06
+
+Reviewed local codex/agent-society at e8e7911e, including the six-part
+ASSIGNMENT-REPORT-2026-10-06.md. This checkpoint supersedes its completion
+interpretation, not its original evidence bytes. Three GPT-6 Luna reviewers
+covered ownership, experiment interpretation and related folder inventory.
+The external worker and Jev are unavailable; remaining work belongs to the
+coordinator and GPT-6 Luna. No paid inference is authorized by the expired
+promotion, and no live model call ran in this review.
+
+### Completion against the actual assignment
+
+| Milestone | Current disposition |
+|---|---|
+| M0 | Writer/reader census complete; target SQL ownership map still incomplete. Finding no SQL owner is not selecting and implementing one. |
+| M1 | Useful execution-authority, task-view, identity and projection repairs landed. Production ownership is not complete; live JSON still owns private state, active packages, frontier/pending effects and round continuation. |
+| M2 | Controlled offline causal choice evidence exists. One public SQL-owned mission through real allocation, child execution, restart and bound use remains unconfirmed. |
+| M3 | The worker's chosen qualification found zero supported cells. Utility/transfer remain unmeasured. The qualification also overreaches by requiring multiple correct terminal answers; diagnostic/acquisition decision headroom was not ruled out. |
+| M4 | Authored executable decision change and JSON restart were demonstrated offline. Sixteen-input screening found no arm clearing its cutoff. Acquired learner improvement, SQL-owned continuity and live acquisition remain unmeasured. |
+| Stages 9/10 | Both incomplete. Retain the working execution/evidence foundations; finish ownership and a connected mission before expanding mechanisms. |
+
+The ownership counterexample is explicit in production source. The public
+entry opens FrontierStore after reading the SQL charter
+(scripts/invl02_live.py:2126-2139; live_construct.py:1108-1128).
+FrontierStore.save writes the JSON file (frontier.py:1803-1808).
+Private state and active packages are document fields, while improve_channel
+reads and saves round continuation at 2340-2347 and 2556-2570.
+test_a34_quiescence.py:229-256 even defends a state with a JSON pending effect
+and SQL quiescence. Routing the row IDs or wrapping the round-result append
+would not make this one SQL-owned mission. Migration 0021 is useful removal
+of unused projections; it is not the required migration of their real owners.
+
+### Research corrections
+
+A unique correct repair or hidden function does not eliminate alternative
+query, diagnosis or acquisition procedures. The SWE census tested terminal
+answer multiplicity, then incorrectly inferred no distinct program/headroom.
+WORKER-PROMPT M3 explicitly permits function identification by observations.
+The next headroom gate must compare executable decisions at equal finite
+resources against a competent control, on development data first. Keep the
+current worlds where they support this; do not add a DSL or world to fill a
+matrix. Do not substitute the near-worst fixed blind subset for that control.
+
+M4's +0.006667 at z=1.49 is a finite screening result, not an equivalence
+result or proof that improvement is absent. The harness itself exports
+benefit_measured=false. A per-arm cutoff after scanning sixteen inputs is
+not selection-aware confirmation. No live revised learner was acquired.
+
+The 224-member exhaustive identification helper repeats one table across all
+four outputs (m3_revalidate.py:144-145). Actual make_task chooses four distinct
+tables. Luna's bounded check on 40 dev and 40 audit tasks identified all four
+outputs within eight probes, 0/320 unresolved overall. That is sampled support;
+it does not expand the diagonal certificate into an exhaustive joint proof.
+
+### Direct verification and the small repair
+
+Windows Python 3.13.14, existing repo .venv. The focused gate was:
+
+    $env:PYTHONPATH='D:\AI\Agent-Society-v2;D:\AI\Agent-Society-v2\src'
+    $env:S09ISO_DISABLE='1'
+    .\.venv\Scripts\python.exe -m pytest --confcutdir=D:\AI\Agent-Society-v2\experiments tests\test_m3_rule_instrument.py tests\test_m4_eligibility.py tests\test_s09_normalizers.py -q -p no:cacheprovider --tb=short
+
+Before repair: 83 passed, 5 failed, all five strict-XPASS. Removed three
+obsolete strict-XFAIL decorators and their stale reasons, preserving every
+function body/assertion apart from docstrings, independently checked by AST
+comparison. After repair: 88 passed, zero skips, 16.07 s. No production code
+was changed. This is not a whole-suite or deployment qualification.
+
+A broader four-file diagnostic was stopped during the exhaustive blind-subset
+calculation, which scores 12,870 subsets on 40 seeds. It has no complete
+summary and is not counted as green. WSL first timed out, then returned
+WSL/Service/E_UNEXPECTED. No PostgreSQL gate or live inference was run here.
+One reviewer accidentally used uv run, creating a temporary worktree venv and
+changing its lockfile; both were removed/restored and that tree checked clean.
+
+### Next bounded work, in priority order
+
+1. Select the concrete SQL state/record mapping and migrate the production
+   mission and continuation consumers. Reuse current operations, allocations,
+   observations, revisions and bindings; remove the live JSON authority.
+2. Prove one public mission across the supported domains, including evidence-
+   sensitive action choice, pending/publication restarts, version-scoped state,
+   unchanged effect identity, one quiescence decision and fresh bound use.
+3. Qualify decision headroom on development tasks against competent controls.
+   Only then freeze a scoped acquisition/utility/transfer or learner revision
+   comparison. Use an actually verified free route if one exists; the expired
+   promotion does not permit a paid fallback. Do not chase unrelated CI greens.
+
+The worker added 202 commits over 0ee4699 and changed 176 files, including
+12,436 documentation/evidence insertions. These counts are not capabilities.
+The three persistent local branches and 294 pre-review reachable commits
+are manageable; no history rewrite was performed. The separate
+[folder inventory](WORKSPACE-INVENTORY-2026-10-06.md) records keep/archive
+paths and measured sizes. Existing scratch/evidence was preserved. The two
+owned temporary review worktrees and their branches are removed at handback.
+
 ## Routeless skips are measured, not asserted — and the platform boundary is now a number, 2026-10-06
 
 Run `37438947445` at `09a4985b` measures the socket-fallback deletion end
