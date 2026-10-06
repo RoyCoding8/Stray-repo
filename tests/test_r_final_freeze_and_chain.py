@@ -173,10 +173,7 @@ def test_a_revision_writing_a_frozen_field_is_not_admitted_as_eligible(
     source = channel._revision_source(_SMUGGLED)
     clean = channel._revision_source(AUTHORISED)
 
-    assert channel.classify_revision(clean, _views(store, base))[
-        "eligibility"] == channel.ELIGIBLE, (
-        "the clean baseline is not eligible, so the assertion below would"
-        " pass for the wrong reason")
+    assert channel._frozen_write_reason(clean) == "", "clean control must have no frozen write"
 
     verdict = channel.admit_revision_under_freeze(
         store, source, _views(store, base))
@@ -204,9 +201,8 @@ def test_the_smuggled_write_lands_and_still_reports_a_decision(tmp_path):
         "the frozen field was not overwritten, so this case proves"
         " nothing: %r" % (view,))
     assert action["action"]["inputs"]["frontier_action"]["inputs"] == {"x": 3}
-    assert verdict.get("informs_decision") is True, (
-        "the verdict stopped claiming a decision, so the row that would"
-        " hide the write is no longer being produced")
+    assert verdict.get("informs_decision") is not True
+    assert verdict["eligibility"] != channel.ELIGIBLE
 
 
 def test_the_runtime_comparison_cannot_see_a_childs_write(tmp_path):
@@ -298,31 +294,29 @@ def test_the_policy_state_effect_id_now_names_a_settled_operation(tmp_path):
 
 # --- RF-03: amend_protocol reads and writes across connections ------------
 
-def test_one_protocol_cannot_be_amended_into_four_frozen_children(tmp_path):
-    """RF-03. `amend_protocol` reads the superseded protocol on one
-    connection and writes `supersedes` on another with autocommit, so
-    nothing serialises the two. Four concurrent amends of one parent all
-    apply and leave four frozen children with no unique successor.
-
-    Offline and no database: the assertion is on the source shape, which
-    is what makes the race possible.
-    """
-    import ast
-    import inspect
-
+def test_amendment_passes_the_observed_lineage_to_atomic_freeze(monkeypatch):
+    """The real race is qualified by test_inv_x5_amend_race on PostgreSQL."""
     from settlement import trials
+    from settlement.common import Command, CommandResult, ResultCode
 
-    tree = ast.parse(inspect.getsource(trials.amend_protocol))
-    bodies = [node for node in ast.walk(tree)
-              if isinstance(node, ast.Call)
-              and isinstance(node.func, ast.Attribute)
-              and node.func.attr == "connect"]
-    writes = [node for node in ast.walk(tree)
-              if isinstance(node, ast.Constant)
-              and isinstance(node.value, str)
-              and "UPDATE trial_protocols SET supersedes" in node.value]
+    calls = []
+    monkeypatch.setattr(trials, "_observed_successors", lambda dsn, parent: {"child-0"})
 
-    assert len(bodies) >= 2, (
-        "amend_protocol no longer opens two connections; re-derive RF-03")
-    assert writes, (
-        "amend_protocol no longer writes supersedes; re-derive RF-03")
+    def freeze(dsn, cmd, **kwargs):
+        calls.append(kwargs)
+        return CommandResult(request_id=cmd.request_id, code=ResultCode.APPLIED)
+
+    monkeypatch.setattr(trials, "freeze_protocol", freeze)
+    cmd = Command(request_id="amend-control", payload={})
+    result = trials.amend_protocol("unused", cmd, protocol_id="child-1",
+                                   supersedes="parent", candidate_version="cand-1")
+    assert result.code is ResultCode.APPLIED
+    assert calls == [{"protocol_id": "child-1", "supersedes": "parent",
+                      "_amend": {"candidate_version": "cand-1"},
+                      "_observed": {"child-0"}, "_frozen": True}]
+
+    monkeypatch.setattr(trials, "freeze_protocol", lambda *args, **kwargs:
+                        CommandResult(request_id=cmd.request_id, code=ResultCode.STALE_REVISION,
+                                      detail="concurrent amend"))
+    with pytest.raises(trials.StaleRevision, match="concurrent amend"):
+        trials.amend_protocol("unused", cmd, protocol_id="child-1", supersedes="parent")

@@ -213,7 +213,9 @@ def test_a_store_never_migrated_is_refused_rather_than_read_as_empty() -> None:
     from tests.conftest_isolation import admin_dsn, dsn_with_dbname
 
     admin = admin_dsn()
-    name = "s09iso_r10-untouched_000000000000"
+    import uuid
+
+    name = f"s09iso_r10-untouched_{uuid.uuid4().hex[:12]}"
     with psycopg.connect(admin, autocommit=True) as conn:
         conn.execute('CREATE DATABASE "%s"' % name)
     try:

@@ -53,6 +53,7 @@ jobs:
     env:
       PYTHONPATH: src
       S09ISO_TOKEN: ${{ matrix.token }}
+      SETTLEMENT_REQUIRE_TEST_DB: "1"
       SETTLEMENT_TEST_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
       S09ISO_ADMIN_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
 
@@ -239,6 +240,7 @@ jobs:
     env:
       PYTHONPATH: src
       S09ISO_TOKEN: "b7ea1701"
+      SETTLEMENT_REQUIRE_TEST_DB: "1"
       SETTLEMENT_TEST_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
       S09ISO_ADMIN_DSN: dbname=postgres host=127.0.0.1 port=5432 user=postgres
 

@@ -62,10 +62,9 @@ SELF = Path(__file__).name
 # test_s09iso_stale_sweep.py exercises the reclaim path by really
 # dropping, so it is a true hazard and the ceiling is a judgement about
 # how many are acceptable, not a claim that this one is safe.
-HAZARD_CEILING = 2
+HAZARD_CEILING = 1
 
-ACCEPTED_FINDINGS = ("test_c14_live_already_spent_source.py",
-                    "test_s09iso_stale_sweep.py")
+ACCEPTED_FINDINGS = ("test_c14_live_already_spent_source.py",)
 
 # Files that have been converted to a per-run token. Reintroducing the hazard
 # in any of them fails the suite rather than quietly re-widening the census.
@@ -200,6 +199,18 @@ def test_assignment_indirection_does_not_hide_a_name(tmp_path):
 
     assert "test_planted_indirection.py" in hits
     assert "s09o_pilot_rerun_a" in hits["test_planted_indirection.py"]
+
+
+def test_a_derived_name_fragment_is_not_a_fixed_database(tmp_path):
+    subject = tmp_path / "test_unique_database.py"
+    subject.write_text(
+        "import uuid\n"
+        "name = f's09iso_test_{uuid.uuid4().hex}'\n"
+        "def cleanup():\n"
+        "    import subprocess\n"
+        "    subprocess.run(['dropdb', name])\n",
+        encoding="utf-8")
+    assert safety.files_with_literal_drops(tmp_path) == {}
 
 
 def test_a_name_mentioned_in_prose_is_not_a_database_the_suite_drops():
