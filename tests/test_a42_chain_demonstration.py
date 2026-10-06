@@ -463,7 +463,6 @@ def test_the_walk_separates_the_method_from_the_policy(walk):
 
 PROD_TREES = ("src", "experiments", "scripts")
 TEST_TREES = ("tests",)
-EXPECTED_PROD_FILES = 468
 
 CAPABILITIES = (
     ("admission", "admit an operation with durable identity",
@@ -746,11 +745,14 @@ def _census() -> dict:
 def test_the_census_walked_the_tree_it_claims():
     """A census that reads nothing reports every capability dead.
 
-    The file count is pinned, so a walk that silently stopped or a tree that
-    moved shows here rather than in the numbers the census prints.
+    Git's tracked-file list independently checks the parser's tree walk.
     """
     report = _census()
-    assert report["prod_files"] == EXPECTED_PROD_FILES, report["prod_files"]
+    tracked = subprocess.check_output(
+        ["git", "ls-files", "-z", "--", *PROD_TREES], cwd=ROOT)
+    expected = sum(path.endswith(b".py") for path in tracked.split(b"\0")
+                   if path)
+    assert report["prod_files"] == expected, report["prod_files"]
     assert report["prod_functions"] > 5000, report["prod_functions"]
     assert not report["parse_errors"], report["parse_errors"]
     assert report["star_imports"] == 0, (
