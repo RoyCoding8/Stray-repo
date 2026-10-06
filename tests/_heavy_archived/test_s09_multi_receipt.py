@@ -1,32 +1,10 @@
-"""An operation may carry several receipts, and the store must say so.
+"""Receipt identity conflicts remain distinct from operation completion.
 
-N-30 is the stall behind the full suite. `admit_receipt` treats a second
-receipt on the same operation as a conflict, and coord02 writes two:
-`LocalLauncher` admits `local:<stem>.result` for the sandbox run, which
-settles the operation, and then `policy_exec._admit` submits
-`coord-step:<op>` for the same operation. The second is refused as a
-conflict, `reconcile_state` latches, and every later receipt for that
-operation is diverted to `receipt_conflicts` - which is N-29's mechanism,
-where the episode loop's step count comes from a count of `receipts` rows
-and can therefore never advance.
-
-The guard is `if prior and not resolves_unknown`, and `resolves_unknown`
-requires `len(prior) == 1`. That length test is not arbitrary. Receipts
-are untyped - there is no family, role or producer field anywhere in the
-store - so when a resolver arrives claiming to settle an `unknown`, the
-store cannot tell *which* unknown it means, and "exactly one prior
-receipt" is the only sound way to know. Counting receipts to refuse them
-is the store being conservative about a real ambiguity.
-
-So allowing several receipts means removing that ambiguity, not deleting
-the check. A receipt that claims to resolve an `unknown` must now name
-the `receipt_identity` it resolves. An unclaimed receipt is an additional
-observation and is admitted; a receipt claiming to resolve something
-that is not there, or resolving a different receipt, is still refused.
-
-These tests pin the shape. They do not repair `store.py`: that change
-touches what a receipt means for every caller, and the `_receipt_metadata`
-comparison beside it already encodes the same rule for a single identity.
+Informational receipts may coexist. A lone unknown can resolve as before;
+a batch completion must name all prior unknowns on the locked operation.
+Decided receipts and terminal dispositions still prohibit a second decision.
+Handler-level positive and counterexample tests live in
+`test_store_authority_invariants.py`; these retain the source-boundary checks.
 """
 
 from __future__ import annotations
@@ -104,7 +82,7 @@ def test_the_count_guard_is_the_line_n30_needs_changed():
 
     assert "if prior and not (resolves_unknown" in body, (
         "the second-receipt guard is no longer the repaired predicate. It "
-        "must refuse unless the new receipt either resolves a lone unknown "
+        "must refuse unless the new receipt either resolves attributed unknowns "
         "or claims nothing terminal, and a reworded guard has to be "
         "re-aimed deliberately rather than accepted as equivalent")
     assert "additional_observation = (" in body, (
@@ -131,7 +109,10 @@ def test_the_unknown_resolution_rule_is_about_outcome_not_identity():
     # reported a condition as missing when it was present.
     rule = body[start:body.index("additional_observation = (", start)]
 
-    for condition in ('len(prior) == 1', 'prior[0]["outcome"] == "unknown"',
+    for condition in ('len(prior) == 1',
+                      'all(row["outcome"] == "unknown" for row in prior)',
+                      'content.get("resolves_unknowns")',
+                      'sorted(row["receipt_identity"] for row in prior)',
                       'outcome in ("success", "failure")',
                       'op["dispatch_state"] == "unresolved"',
                       'op["reconcile_state"] == "unresolved"',

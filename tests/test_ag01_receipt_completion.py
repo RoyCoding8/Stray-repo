@@ -7,12 +7,13 @@ from settlement import agenda, broker
 from settlement.common import CommandResult, ResultCode, SettlementError
 
 
-def _launch(monkeypatch, code=ResultCode.APPLIED):
+def _launch(monkeypatch, code=ResultCode.APPLIED, conflict=False):
     admitted = []
 
     def accept(dsn, operation_id, receipt):
         admitted.append(receipt)
-        return CommandResult(code=code, request_id="receipt", detail="refused")
+        return CommandResult(code=code, request_id="receipt", detail="refused",
+                             data={"conflict": conflict})
 
     monkeypatch.setattr(broker, "admit_launcher_receipt", accept)
     launcher = AgendaProbeLauncher("unused", lambda probe, sample, prop:
@@ -33,13 +34,17 @@ def test_one_final_receipt_completes_multiple_measurements(monkeypatch):
     assert [receipt.outcome for receipt in admitted] == ["unknown", "unknown"]
     assert result.receipt.outcome == "success"
     assert result.receipt.receipt_identity == "agenda-final:op"
+    assert result.receipt.content["adapter"] == "agenda-probe"
+    assert result.receipt.content["resolves_unknowns"] == ["base:p0", "base:p1"]
     assert result.receipt.content["results"] == {
         receipt.receipt_identity: receipt.content for receipt in admitted}
     assert [receipt.content["value"] for receipt in admitted] == ["true", "unknown"]
 
 
-def test_rejected_measurement_never_reports_completion(monkeypatch):
-    launcher, operation, admitted = _launch(monkeypatch, ResultCode.INVALID_INPUT)
+@pytest.mark.parametrize("code,conflict", [
+    (ResultCode.INVALID_INPUT, False), (ResultCode.APPLIED, True)])
+def test_rejected_measurement_never_reports_completion(monkeypatch, code, conflict):
+    launcher, operation, admitted = _launch(monkeypatch, code, conflict)
     with pytest.raises(SettlementError, match="refused"):
         launcher.dispatch(operation)
     assert len(admitted) == 1

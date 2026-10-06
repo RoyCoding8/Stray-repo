@@ -81,14 +81,17 @@ class AgendaProbeLauncher:
                 self._dsn, op.operation_id, broker.ReceiptProposal(
                     receipt_identity=content["receipt"], content=content,
                     outcome="unknown", provenance=PROVENANCE))
-            if admitted.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+            if (admitted.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+                    or admitted.data.get("conflict")):
                 raise SettlementError(admitted.detail)
         self._sent.add(op.operation_id)
         self._results[op.operation_id] = results
         return broker.LaunchOutcome(sent=True, receipt=broker.ReceiptProposal(
             receipt_identity=terminal, outcome="success", provenance=PROVENANCE,
-            content={"kind": "agenda-probe-completed", "source_attempt": attempt,
+            content={"kind": "agenda-probe-completed", "adapter": ADAPTER_NAME,
+                     "source_attempt": attempt,
                      "operation_id": op.operation_id,
+                     "resolves_unknowns": sorted(item["receipt"] for item in results.values()),
                      "results": {item["receipt"]: item for item in results.values()}}))
 
     def stop(self, operation_id: str) -> bool:

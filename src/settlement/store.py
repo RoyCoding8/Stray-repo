@@ -1940,31 +1940,19 @@ def admit_receipt(dsn: str, cmd: Command) -> CommandResult:
         )
         prior = cur.fetchall()
         resolves_unknown = (
-            len(prior) == 1
-            and prior[0]["outcome"] == "unknown"
+            bool(prior)
+            and all(row["outcome"] == "unknown" for row in prior)
+            and (len(prior) == 1 or content.get("resolves_unknowns") ==
+                 sorted(row["receipt_identity"] for row in prior))
             and outcome in ("success", "failure")
             and op["dispatch_state"] == "unresolved"
             and op["reconcile_state"] == "unresolved"
             and not bool(op["settled"])
             and _terminal_disposition(op) is None
         )
-        # A second receipt on one operation is an additional observation
-        # when it claims nothing terminal. `resolves_unknown` already
-        # admits a decided receipt replacing a lone unknown, and it is
-        # deliberately left exactly as it was: all seven conditions stay,
-        # so a `success` and a `failure` on one operation remain
-        # structurally impossible.
-        #
-        # This is narrower than it looks. coord02's step receipt carries
-        # `outcome="unknown"` and claims no resolution, and the launcher
-        # receipt that settled the operation has already run, so the
-        # settled short-circuit below would have admitted it untouched -
-        # the count guard was the only thing refusing it. No `resolves`
-        # field is needed for N-30, and none is added: a declared
-        # resolution target is the right design if several `unknown`s ever
-        # need to be told apart, and it wants a migration with a unique
-        # index so two receipts cannot claim one unknown. Until something
-        # needs it, the count stays as the sound rule for resolving.
+        # A batch completion must name every prior unknown on this locked
+        # operation. A second decided receipt still conflicts, and a missing
+        # or foreign resolution identity cannot settle the operation.
         additional_observation = (
             outcome not in _DECIDED_OUTCOMES
             and _terminal_disposition(op) is None
