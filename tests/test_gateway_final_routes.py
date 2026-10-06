@@ -208,23 +208,28 @@ def test_completed_response_late_at_deadline_keeps_evidence(
         "choices": [{"message": {"content": "late"}}],
         "usage": {"prompt_tokens": 1, "completion_tokens": 1},
     }).encode()
+    from types import SimpleNamespace
+    from settlement import gateway_http
+
+    clock = [0.0]
+
     class BlockingStream(httpx.SyncByteStream):
         def __iter__(self):
-            time.sleep(0.015)
+            clock[0] = 0.5
             yield raw
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, stream=BlockingStream())
 
-    from settlement import gateway_http
+    def delayed_digest(value):
+        digest = hashlib.sha256(value)
+        clock[0] = 1.1
+        return digest
 
-    real_sha256 = gateway_http.hashlib.sha256
-
-    def slow_sha256(value):
-        time.sleep(0.02)
-        return real_sha256(value)
-
-    monkeypatch.setattr(gateway_http.hashlib, "sha256", slow_sha256)
+    monkeypatch.setattr(gateway_http, "time",
+                        SimpleNamespace(monotonic=lambda: clock[0]))
+    monkeypatch.setattr(gateway_http, "hashlib",
+                        SimpleNamespace(sha256=delayed_digest))
     client = httpx.Client(transport=httpx.MockTransport(handler))
     adapter = HttpGatewayAdapter(
         endpoint=ENDPOINT, client=client, route_mode="paid")
@@ -233,26 +238,8 @@ def test_completed_response_late_at_deadline_keeps_evidence(
             model="model",
             messages=({"role": "user", "content": "hello"},),
             max_output_tokens=16,
-            # This test asserts a response *was* received and only the
-            # attempt deadline then expired. That needs the deadline to
-            # expire after the response lands, so the value has to clear
-            # the work this fixture induces.
-            #
-            # It used to be 20ms, which is not clear of anything: the
-            # stream sleeps 15ms and the patched sha256 sleeps 20ms, and
-            # that sleep actually costs ~37ms, so the work is ~52ms and
-            # the deadline sat inside it. The adapter is correct either
-            # way - when the stream lands after expiry it takes the
-            # `status is None` branch, returns TIMEOUT, and has no digest
-            # to record, so `response_received` is honestly False - which
-            # is what made this a coin flip rather than a failure.
-            #
-            # Chosen by measurement, not by reasoning: a sweep of
-            # 20/22/24/26/28/30/35ms over 8 runs each gave 5/6/7/6/5/7/8,
-            # and 35ms then held 20 of 20. I first tried 10ms, which
-            # expires before any response exists (0/12) and 25ms and
-            # 40ms, which are both still inside the ~52ms of work.
-            deadline_ms=35,
+            # The response arrives before expiry; hashing crosses the deadline.
+            deadline_ms=1000,
             operation_id="op-late-complete-response",
         ))
     finally:
