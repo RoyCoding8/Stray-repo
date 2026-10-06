@@ -19,8 +19,15 @@ sys.path.insert(0, str(ROOT / "tests"))
 from tests.conftest_isolation import admin_dsn, dsn_with_dbname  # noqa: E402
 
 DSN = os.environ.get("P3E_DSN", "dbname=ec02test_p3e_entry")
-MISSING_DSN = dsn_with_dbname(admin_dsn(), "ec02test_p3e_missing")
 MIGRATIONS = ROOT / "migrations"
+
+
+def _missing_dsn() -> str:
+    """A name whose database must stay absent: these tests assert a clean
+    refusal, and creating it would invert them. The route resolves at call
+    time -- an import-time binding would raise on a routeless session and
+    kill collection of the whole suite."""
+    return dsn_with_dbname(admin_dsn(), "ec02test_p3e_missing")
 
 # This battery truncates its store, so the property worth asserting is that the
 # store is disposable and private to the run -- not that it carries the name
@@ -91,7 +98,7 @@ def test_cli_unknown_task_clean(pg, capsys):
 
 def test_cli_missing_db_clean(capsys):
     from experiments.ad01.cli import main
-    rc = main(["run", "--dsn", MISSING_DSN, "--world", "0", "--arm", "I",
+    rc = main(["run", "--dsn", _missing_dsn(), "--world", "0", "--arm", "I",
                "--agenda-authorized", "10"])
     assert rc == 3
     assert "Traceback" not in capsys.readouterr().err
@@ -140,7 +147,7 @@ def test_live_abc_unknown_task_before_db(capsys, monkeypatch):
 
 def test_live_abc_missing_db_clean(capsys, monkeypatch):
     import run_live_abc
-    monkeypatch.setattr(sys, "argv", ["run_live_abc.py", "--dsn", MISSING_DSN,
+    monkeypatch.setattr(sys, "argv", ["run_live_abc.py", "--dsn", _missing_dsn(),
                                       "--allocation", "a",
                                       "--artifacts-root", "/tmp/p3e-art",
                                       "--deterministic"])
@@ -158,7 +165,7 @@ def test_dev_episode_unknown_task_clean(capsys, tmp_path):
 
 def test_dev_episode_missing_db_clean(capsys, tmp_path):
     from run_dev_episode import main
-    rc = main(["--dsn", MISSING_DSN, "--allocation", "a",
+    rc = main(["--dsn", _missing_dsn(), "--allocation", "a",
                "--artifacts-root", str(tmp_path)])
     assert rc == 3
     assert "Traceback" not in capsys.readouterr().out
@@ -176,7 +183,7 @@ def test_run_use_bad_disposition_before_db(capsys):
 
 def test_run_use_missing_db_clean(capsys):
     from run_use import main
-    rc = main(["--dsn", MISSING_DSN, "--artifacts-root", "/tmp/p3e-art",
+    rc = main(["--dsn", _missing_dsn(), "--artifacts-root", "/tmp/p3e-art",
                "--allocation", "a", "--investigation", "i",
                "--episode", "e", "--use-task", "dev-sum"])
     assert rc == 3

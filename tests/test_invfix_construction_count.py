@@ -29,7 +29,9 @@ sys.path.insert(0, str(ROOT))
 
 RUN_TOKEN = "invfix%s" % uuid.uuid4().hex[:8]
 MIGRATIONS = ROOT / "migrations"
-ADMIN = admin_dsn()
+# No module-level `ADMIN = admin_dsn()`: import-time resolution raises on a
+# routeless session and kills collection of the whole suite. The route is
+# read at call time, where the refusal skips this file's tests instead.
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -43,13 +45,13 @@ ACQUIRED_SOURCE = (
 
 
 def _fresh_db():
-    database = create_disposable_db(RUN_TOKEN, admin_dsn=ADMIN,
+    database = create_disposable_db(RUN_TOKEN, admin_dsn=admin_dsn(),
                                     migrations_dir=MIGRATIONS)
     return database, database.dsn
 
 
 def _drop_db(database):
-    drop_disposable_db(database, admin_dsn=ADMIN)
+    drop_disposable_db(database, admin_dsn=admin_dsn())
 
 
 class FlakyRepairAdapter(GatewayAdapter):
@@ -92,17 +94,17 @@ def test_the_store_is_named_for_this_run_not_for_this_process():
     sibling's. The name must carry the per-run token, and a second store
     derived in the same process must not land on this one.
     """
-    first = create_disposable_db(RUN_TOKEN, admin_dsn=ADMIN)
+    first = create_disposable_db(RUN_TOKEN, admin_dsn=admin_dsn())
     try:
-        second = create_disposable_db(RUN_TOKEN, admin_dsn=ADMIN)
+        second = create_disposable_db(RUN_TOKEN, admin_dsn=admin_dsn())
         try:
             assert first.name.startswith(DB_PREFIX + "_"), first.name
             assert RUN_TOKEN in first.name, first.name
             assert second.name != first.name
         finally:
-            drop_disposable_db(second, admin_dsn=ADMIN)
+            drop_disposable_db(second, admin_dsn=admin_dsn())
     finally:
-        drop_disposable_db(first, admin_dsn=ADMIN)
+        drop_disposable_db(first, admin_dsn=admin_dsn())
 
 
 def test_repair_transport_call_stays_counted():

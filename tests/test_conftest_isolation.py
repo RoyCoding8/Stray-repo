@@ -189,12 +189,15 @@ def test_a_literal_with_no_assertion_is_redirectable(tmp_path, monkeypatch):
     assert seams["ec02test_plain"].mode == "redirectable"
     built = plan(token="a1b2c3d4").env_for(seams["ec02test_plain"])
     assert dbname_of(built) == "s09iso_a1b2c3d4_plain"
-    # The connection fields come from the session's route, and this run has
-    # none, so the built value is the dbname alone: the default's fields are
-    # not consulted at all, and a routeless plan inherits no route it did
-    # not earn. `test_a_redirected_seam_carries_the_session_route_and_not_
-    # the_default` reads the routed half against a CI-shaped environment.
-    assert set(built.split()) - {"dbname=s09iso_a1b2c3d4_plain"} == set()
+    # The default's own fields are never consulted: whatever else the built
+    # value carries is the session's route with its dbname swapped, so
+    # routeless the built value is the dbname alone, and routed it is exactly
+    # this session's fields. Either way nothing of `host=/var/run/postgresql`
+    # survives from the default.
+    session = admin_dsn_or_empty()
+    inherited = set(built.split()) - {"dbname=s09iso_a1b2c3d4_plain"}
+    assert inherited == set(session.split()) - {
+        f for f in session.split() if f.startswith("dbname=")}, (built, session)
 
 
 def test_one_variable_shared_by_four_files_moves_all_four(tmp_path, monkeypatch):

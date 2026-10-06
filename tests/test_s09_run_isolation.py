@@ -24,8 +24,16 @@ from tests.conftest_isolation import admin_dsn
 LIVE_MODEL = "openrouter/live:1"
 DOUBLES_MODEL = "recorded-double"
 ADAPTER = "settlement.gateway_http.HttpGatewayAdapter"
-PG = " ".join(f for f in admin_dsn().split() if not f.startswith("dbname="))
 AUTHORIZED = iso.DEFAULT_AUTHORIZED
+
+
+def _pg_route_fields() -> str:
+    """The route with its dbname stripped -- the connection fields a store
+    name plugs into. Resolved at call time: an import-time binding would
+    raise on a routeless session and kill collection of the whole suite."""
+    return " ".join(f for f in admin_dsn().split()
+                    if not f.startswith("dbname="))
+
 REQUEST = {"model": DOUBLES_MODEL,
            "messages": [{"role": "user", "content": "look"}],
            "max_output_tokens": 8, "deadline_ms": 10_000}
@@ -322,7 +330,7 @@ def test_disposable_db_is_dropped_even_when_the_body_raises():
                 == expected_migrations()
             raise RuntimeError("run failed")
     with pytest.raises(psycopg.OperationalError):
-        with db.read_connect("dbname=%s %s" % (name, PG)) as conn:
+        with db.read_connect("dbname=%s %s" % (name, _pg_route_fields())) as conn:
             conn.execute("SELECT 1")
 
 
@@ -400,9 +408,9 @@ def test_check_namespace_needs_a_store_and_a_typed_freeze():
     with pytest.raises(ValueError):
         iso.check_namespace("", frozen)
     with pytest.raises(ValueError):
-        iso.check_namespace("dbname=x " + PG, {"study_root": "s"})
+        iso.check_namespace("dbname=x " + _pg_route_fields(), {"study_root": "s"})
     with pytest.raises(ValueError):
-        iso.check_namespace("dbname=x " + PG,
+        iso.check_namespace("dbname=x " + _pg_route_fields(),
                             frozen._replace(frozen_at=datetime(2026, 1, 1)))
 
 

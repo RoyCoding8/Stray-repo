@@ -262,22 +262,25 @@ def test_the_probe_ceiling_is_the_stores_count_and_not_a_seed() -> None:
 
 
 DATABASE = "v3_c14_spend_source"
-DSN = dsn_with_dbname(admin_dsn(), DATABASE)
 ALLOCATION = "ad01-campaign-invl02-live-e0"
 
 
 @pytest.fixture()
-def store():
-    """A real store, because the derivation is a query and not a lookup."""
+def dsn():
+    """A real store, because the derivation is a query and not a lookup.
+
+    The route resolves here rather than at import: a session with no route
+    skips on the refusal instead of failing to collect this file."""
     import psycopg
     from settlement import db
 
+    dsn = dsn_with_dbname(admin_dsn(), DATABASE)
     admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.execute("CREATE DATABASE %s" % DATABASE)
     admin.close()
-    db.apply_migrations(DSN, ROOT / "migrations")
-    yield DSN
+    db.apply_migrations(dsn, ROOT / "migrations")
+    yield dsn
     admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.close()
@@ -369,15 +372,15 @@ def _every_row(store_dsn: str, allocation_id: str) -> int:
     return int(total)
 
 
-def test_the_count_is_the_stores_and_not_a_declaration(store) -> None:
+def test_the_count_is_the_stores_and_not_a_declaration(dsn) -> None:
     from scripts import invl02_live as driver
 
-    _operations(store, ALLOCATION, 3)
+    _operations(dsn, ALLOCATION, 3)
 
-    assert driver._already_spent(store, ALLOCATION) == 3
+    assert driver._already_spent(dsn, ALLOCATION) == 3
 
 
-def test_a_child_execution_is_not_counted_as_a_model_send(store) -> None:
+def test_a_child_execution_is_not_counted_as_a_model_send(dsn) -> None:
     """The ceiling this count feeds is a model-send ceiling, and a round now
     executes under this same allocation, so a `sandbox-exec` row lands beside
     the sends. Counting it would price one child execution as one model call.
@@ -389,29 +392,29 @@ def test_a_child_execution_is_not_counted_as_a_model_send(store) -> None:
     """
     from scripts import invl02_live as driver
 
-    _operations(store, ALLOCATION, 3, effect="model-inference")
-    _operations(store, ALLOCATION, 4, effect="sandbox-exec")
+    _operations(dsn, ALLOCATION, 3, effect="model-inference")
+    _operations(dsn, ALLOCATION, 4, effect="sandbox-exec")
 
-    assert _every_row(store, ALLOCATION) == 7
-    assert driver._already_spent(store, ALLOCATION) == 3
+    assert _every_row(dsn, ALLOCATION) == 7
+    assert driver._already_spent(dsn, ALLOCATION) == 3
 
 
-def test_another_studys_rows_are_not_counted(store) -> None:
+def test_another_studys_rows_are_not_counted(dsn) -> None:
     """The allocation scopes the count. An unscoped `COUNT(*)` would read a
     shared study cluster's whole history as this study's spend and refuse
     every send."""
     from scripts import invl02_live as driver
 
-    _operations(store, ALLOCATION, 3)
-    _operations(store, "ad01-campaign-some-other-study", 7)
+    _operations(dsn, ALLOCATION, 3)
+    _operations(dsn, "ad01-campaign-some-other-study", 7)
 
-    assert driver._already_spent(store, ALLOCATION) == 3
+    assert driver._already_spent(dsn, ALLOCATION) == 3
 
 
-def test_an_empty_store_spends_nothing(store) -> None:
+def test_an_empty_store_spends_nothing(dsn) -> None:
     from scripts import invl02_live as driver
 
-    assert driver._already_spent(store, ALLOCATION) == 0
+    assert driver._already_spent(dsn, ALLOCATION) == 0
 
 
 def test_an_unreadable_store_refuses_rather_than_reporting_zero() -> None:
@@ -424,12 +427,12 @@ def test_an_unreadable_store_refuses_rather_than_reporting_zero() -> None:
             dsn_with_dbname(admin_dsn(), "v3_c14_absent"), ALLOCATION)
 
 
-def test_the_env_var_could_not_have_produced_that_number(store, monkeypatch) -> None:
+def test_the_env_var_could_not_have_produced_that_number(dsn, monkeypatch) -> None:
     """The defect stated as a pair: the declaration says zero, the store says
     three, and only the store moves the ceiling."""
     from scripts import invl02_live as driver
 
     monkeypatch.setenv(DEAD, "0")
-    _operations(store, ALLOCATION, 3)
+    _operations(dsn, ALLOCATION, 3)
 
-    assert driver._already_spent(store, ALLOCATION) == 3
+    assert driver._already_spent(dsn, ALLOCATION) == 3

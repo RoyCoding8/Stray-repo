@@ -59,20 +59,22 @@ from settlement import agenda, broker, store
 from settlement.common import Command
 
 DATABASE = "v3c9_repaired_key"
-DSN = dsn_with_dbname(admin_dsn(), DATABASE)
 MIGRATIONS = ROOT / "migrations"
 
 
 @pytest.fixture()
 def dsn():
+    # The route resolves here rather than at import: a session with no route
+    # skips on the refusal instead of failing to collect this file.
     from settlement import db
 
+    dsn = dsn_with_dbname(admin_dsn(), DATABASE)
     admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.execute("CREATE DATABASE %s" % DATABASE)
     admin.close()
-    db.apply_migrations(DSN, MIGRATIONS)
-    with db.connect(DSN) as conn:
+    db.apply_migrations(dsn, MIGRATIONS)
+    with db.connect(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT tablename FROM pg_tables WHERE schemaname='public'"
@@ -80,7 +82,7 @@ def dsn():
             for (table,) in cur.fetchall():
                 cur.execute('TRUNCATE TABLE "%s" CASCADE' % table)
         conn.commit()
-    yield DSN
+    yield dsn
     admin = psycopg.connect(admin_dsn(), autocommit=True)
     admin.execute("DROP DATABASE IF EXISTS %s" % DATABASE)
     admin.close()
