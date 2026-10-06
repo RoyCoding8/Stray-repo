@@ -204,17 +204,22 @@ def walk(store, tmp_path_factory):
     repertoire = trajectory.load_repertoire(repertoire_path)
 
     member_id = (repertoire.get("members") or [{}])[0].get("capability_id")
+    release_id = next((episode.get("method_release_id")
+                       for episode in out["episodes"]
+                       if episode.get("method_release_id")), None)
+    assert release_id, "the retained method has no durable release"
     policy_path = root / "use_policy.py"
     policy_path.write_text(USE_SOURCE % member_id, encoding="utf-8")
 
     use = json.loads(_cli(
         "use", "--repertoire", str(repertoire_path), "--dsn", store,
         "--allocation-id", trajectory._alloc_id(cid), "--world", "0",
-        "--arm", "I", "--tasks", USE_TASK, "--policy-source",
+        "--arm", "I", "--tasks", USE_TASK, "--release", release_id,
+        "--policy-source",
         str(policy_path)))
     return {"cid": cid, "campaign": out, "store": store, "use": use,
-            "repertoire": repertoire, "member": (repertoire.get("members")
-                                                or [{}])[0]}
+            "repertoire": repertoire, "release_id": release_id,
+            "member": (repertoire.get("members") or [{}])[0]}
 
 
 STAGES = ("permitted experience", "program decision", "admitted effect",
@@ -328,20 +333,16 @@ def test_the_decision_is_durable_in_both_vocabularies(walk):
 
 
 def test_the_admitted_effect_is_recorded_and_names_its_operation(walk):
-    """`ran_under` is absent here, and that is the measurement.
+    """A completed effect keeps the held identity after release.
 
-    `ran_under` is written only by `execute_pending`, and a clean campaign
-    does not reach it: `run_campaign` incorporates the fresh boundary
-    without an `effect_record` argument. So the chain's own admission
-    window carries `in_flight` while it is open and leaves nothing behind
-    naming the program once the effect lands. A40's resume test is where
-    `ran_under` is proved.
+    The diagnostic is host-side and has no operation receipt; construction
+    and retained use each name their settled operation.
     """
     report = _report(walk)
     stage = report["admitted effect"]
     assert stage["effect records"] == 3, report
-    assert stage["with effect_operation_id"] == 3, report
-    assert stage["with ran_under"] == 0, report
+    assert stage["with effect_operation_id"] == 2, report
+    assert stage["with ran_under"] == 3, report
     assert _rows(walk["store"],
                  "SELECT in_flight FROM investigations WHERE id = %s",
                  (walk["cid"],))[0]["in_flight"] == [], (
@@ -364,20 +365,14 @@ def test_the_checker_preserved_what_the_construction_produced(walk):
     assert member["method_source"] == ACQUIRED_METHOD
 
 
-def test_retention_happened_and_no_release_was_minted(walk):
-    """Arrow 6's binding half does not happen, and this is the finding.
-
-    `freeze_repertoire` retains the member and `run_use` selects it by
-    scope, but `selection.select_member` consults `capability_releases` only
-    when `release_id` is named and the CLI was given none. So the bytes
-    that ran are pinned to nothing the store holds. Asserting the count is
-    zero turns that into a reported stage rather than an implied one.
-    """
+def test_retention_and_use_share_the_method_release(walk):
+    """The retained bytes are bound and the use phase names that binding."""
     report = _report(walk)
     stage = report["retention/binding"]
     assert stage["repertoire members"] == 1, report
-    assert stage["releases"] == 0, report
-    assert stage["release ids"] == [], report
+    assert stage["releases"] == 1, report
+    assert stage["release ids"] == [walk["release_id"]], report
+    assert report["fresh-process use"]["release_id"] == walk["release_id"]
 
 
 def test_the_fresh_process_ran_the_method_bytes_not_the_policy_bytes(walk):
@@ -390,6 +385,7 @@ def test_the_fresh_process_ran_the_method_bytes_not_the_policy_bytes(walk):
     assert stage["verdict"] == "preserved", report
     assert stage["policy digest"] and stage["method digest"], report
     assert stage["policy digest"] != stage["method digest"], report
+    assert stage["release_id"] == walk["release_id"], report
     assert len(stage["operations"]) == 2, report
     for operation_id in stage["operations"]:
         settled = _rows(walk["store"],
@@ -415,28 +411,13 @@ def test_the_walk_is_printed_for_a_reader_who_disagrees(walk, capsys):
 
 
 GAPS = [
-    {"stage": "retention/binding",
-     "observed": "1 repertoire member, 0 capability_releases",
-     "reason": "`selection.select_member` reads `capability_releases` only "
-               "when `release_id` is named; the CLI `use` command was given "
-               "none and `freeze_repertoire` mints no release, so the bytes "
-               "that ran are pinned to nothing the store holds."},
-    {"stage": "admitted effect",
-     "observed": "3 effect records, 0 with ran_under",
-     "reason": "`ran_under` is written only by `execute_pending`, and a "
-               "clean campaign does not reach it: `run_campaign` "
-               "incorporates the fresh boundary with no `effect_record` "
-               "argument. The admission window is real and "
-               "`test_a40_admission_wired.py` proves it, but a campaign that "
-               "does not crash leaves nothing naming the program it ran "
-               "under."},
     {"stage": "fresh-process use",
      "observed": "2 operation ids, no InFlightOperation",
      "reason": "the method runs out of process and the two operations "
-               "settle, but the decision that selected it runs in the CLI "
-               "process and `run_use` never calls `trajectory.admit_boundary`, "
-               "so no held operation covers a crash between the policy "
-               "operation and the method execution."},
+               "settle under the retained method release, but `run_use` "
+               "does not record a held operation spanning the policy decision "
+               "and method execution, so a crash between them has no "
+               "InFlightOperation to resume."},
 ]
 
 
@@ -469,20 +450,13 @@ def test_a_package_digest_is_accepted_where_a_program_digest_is_required():
 
 
 def test_the_walk_separates_the_method_from_the_policy(walk):
-    """What the chain does separate, and where the separation stops.
-
-    The policy that admitted the use and the method that ran are two
-    operations with two receipts and two different digests, so neither can
-    stand in for the other. What the chain does not do is give the method a
-    release identity: `capability_releases` is empty and `release_id` is
-    null, so "retained" here names repertoire bytes and nothing durable
-    binds them.
-    """
+    """The policy and method run as separate operations under a method release."""
     use = walk["use"][0]
     assert use["policy_source_digest"] != walk["member"]["source_digest"]
     assert len(use["operation_ids"]) == 2
-    assert use["release_id"] is None
-    assert _rows(walk["store"], "SELECT id FROM capability_releases") == []
+    assert use["release_id"] == walk["release_id"]
+    releases = _rows(walk["store"], "SELECT id FROM capability_releases")
+    assert [row["id"] for row in releases] == [walk["release_id"]]
 
 
 # --- the census ----------------------------------------------------------

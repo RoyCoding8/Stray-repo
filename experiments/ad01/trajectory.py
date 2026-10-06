@@ -578,6 +578,21 @@ def mission_held(dsn: str, cid: str, seq: int):
     return mission.held_operation(dsn, cid, _attempt_id(cid, seq))
 
 
+def _effect_record_for(decision: dict, observation: dict, episode: dict,
+                       spend: int, admitted) -> dict:
+    """Persist the effect beside the admitted identity that authorized it."""
+    payload = {"observation": observation, "episode": episode,
+               "spend": spend, "decision": decision}
+    if admitted is not None:
+        payload["ran_under"] = {
+            "program_digest": admitted.program_digest,
+            "input_identity": admitted.input_identity,
+            "decision_digest": admitted.decision_digest,
+            "task_id": admitted.task_id,
+            "capability_id": admitted.capability_id}
+    return payload
+
+
 def execute_pending(dsn: str, cid: str, seq: int, *,
                     task_id: str, capability_id: str, caps: dict,
                     seed_obs: dict, charter: dict, boundary: dict,
@@ -627,19 +642,10 @@ def execute_pending(dsn: str, cid: str, seq: int, *,
         boundary=boundary, experience=experience, state=state,
         construction=construction, accepted=decision,
         journal=journal, study_root=study_root or cid)
-    payload = {"observation": observation, "episode": episode,
-               "spend": spend, "decision": decision}
-    if admitted is not None:
-        # The entry's record is released once the effect is recorded, so the
-        # identity the operation ran under is copied here. Without this,
-        # releasing the operation would erase the only record of which program
-        # produced the result, and a settled boundary could no longer say what
-        # it ran under.
-        payload["ran_under"] = {
-            "program_digest": admitted.program_digest,
-            "input_identity": admitted.input_identity,
-            "decision_digest": admitted.decision_digest,
-            "task_id": admitted.task_id, "capability_id": admitted.capability_id}
+    # The entry's record is released once the effect is recorded, so its
+    # identity is copied before release and remains available after restart.
+    payload = _effect_record_for(decision, observation, episode, spend,
+                                admitted)
     _s09_incorporate(dsn, cid, seq, decision=decision,
                      observation=observation, episode=episode, spend=spend,
                      provenance="s09-m1", effect_record=payload)
@@ -823,7 +829,7 @@ def bind_method_release(construction: dict, member: dict,
     parent_digest = hashlib.sha256(
         ("seed-%s-greedy" % _FAMILY_TAG[scope["family"]]).encode(
             "utf-8")).hexdigest()
-    failure_record = {"task_id": member["qualified_on"],
+    failure_record = {"task_id": observation["task_id"],
                       "parent_digest": parent_digest,
                       "capability_id": member["capability_id"],
                       "source_digest": digest,
@@ -1644,10 +1650,16 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
         if seq in settled:
             old = settled[seq]
             if dsn is not None:
+                admitted = mission_held(dsn, cid, seq)
                 _s09_incorporate(
                     dsn, cid, seq, decision=old["decision"],
                     observation=old["observation"], episode=old["episode"],
-                    spend=int(old["spend"]), provenance="s09-m1")
+                    spend=int(old["spend"]), provenance="s09-m1",
+                    effect_record=(
+                        _effect_record_for(
+                            old["decision"], old["observation"],
+                            old["episode"], int(old["spend"]), admitted)
+                        if admitted is not None else None))
                 _s09_release(dsn, cid, seq)
             queries += int(old["spend"])
             if old["episode"].get("kind", "development") == "development" \
@@ -1761,9 +1773,14 @@ def run_campaign(world: int, arm: str, charter: dict, caps: dict,
             entry["decision_id"] = _publish_boundary(
                 dsn, cid, seq, executed, decision, observation,
                 episode, spend)
+            admitted = mission_held(dsn, cid, seq)
             _s09_incorporate(
                 dsn, cid, seq, decision=decision, observation=observation,
-                episode=episode, spend=spend, provenance="s09-m1")
+                episode=episode, spend=spend, provenance="s09-m1",
+                effect_record=(
+                    _effect_record_for(decision, observation, episode,
+                                       spend, admitted)
+                    if admitted is not None else None))
             _s09_release(dsn, cid, seq)
         boundaries.append(entry)
     else:

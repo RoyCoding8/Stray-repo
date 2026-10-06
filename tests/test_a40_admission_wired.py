@@ -193,6 +193,7 @@ _DIE_AT_ADMISSION = (
     "trajectory.authorize_campaign(dsn, cid, authorized=100000)\n"
     "trajectory.ensure_campaign(dsn, cid, 0, 'I', %s, %s, tasks=[%r])\n"
     "trajectory.run_campaign(0, 'I', %s, %s, tasks=[%r], dsn=dsn,\n"
+    "                      campaign_seq=80,\n"
     "                      capability_id=%r)\n"
     "sys.stdout.write('DID_NOT_CRASH')\n"
     % (repr(CHARTER), repr(CAPS), DEV_TASK, repr(CHARTER), repr(CAPS),
@@ -262,7 +263,8 @@ def test_a_clean_completed_campaign_leaves_the_entry_empty(store):
     trajectory.ensure_campaign(store, cid, 0, "I", CHARTER, CAPS,
                                tasks=[DEV_TASK])
     out = trajectory.run_campaign(0, "I", CHARTER, CAPS, tasks=[DEV_TASK],
-                                  dsn=store, capability_id=ADMITTED_PROGRAM)
+                                  dsn=store, campaign_seq=81,
+                                  capability_id=ADMITTED_PROGRAM)
 
     assert len(out["boundaries"]) == 1, (
         "the campaign ran no boundary, so it proved nothing: %r" % (
