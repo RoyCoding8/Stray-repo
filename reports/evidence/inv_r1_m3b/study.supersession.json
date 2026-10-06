@@ -1,0 +1,19 @@
+{
+  "artifact": "reports/evidence/inv_r1_m3b/study.json",
+  "artifact_sha256": "ada32fd8d61c4f99f5b64be31d5dcd2ae5af0a7b33f17263db3b9e67085de450",
+  "shape": "SCOPE",
+  "verdict": "PARTIALLY_VOID",
+  "finding": "A20 panel regeneration / AD01 freeze digest",
+  "annotation": "reports/STAGE-09-SUPERSESSION.md",
+  "void_scope": [
+    {
+      "pointer": "$.panel.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    }
+  ],
+  "surviving_claim": "The file is not retracted and no measurement in it fails. Its 1 digest occurrence(s) name the panel the run was executed against, which is a true historical fact and the reason the run is comparable to the other arms. What is void is reading them as the current panel: ee1362df3f09 is a new freeze, so these fields no longer identify the panel in the tree. Nothing here recomputes quality against a rewritten cell -- the use phase this export records either produced no use records (measured: use_records is empty) or targets development cells only, so the nine regenerated cells are not reachable from this file.",
+  "superseded_by": "ee1362df3f092761e1bede3df245d4948c55b7139b0d5c1529875f4cf281b79b",
+  "container_mislabelled": false,
+  "note": "artifact_sha256 is the git blob digest, so the marker is bound to the committed bytes rather than to one host line-ending policy. On a core.autocrlf checkout sha256_file sees CRLF and reports this marker stale; that is the checkout, not the artifact, and it is fixed by scoping the evidence trees in .gitattributes. Re-stamping freeze_digest to ee1362df3f09 is not a repair: it makes the checker pass by asserting that a quality verdict obtained against a regenerated cell is current."
+}

@@ -1,0 +1,99 @@
+{
+  "artifact": "evidence-ad01/c3-authored/use-w1-I.json",
+  "artifact_sha256": "dd4ff521eb576c753336b5a7d1604de9766895b5bd2b139f19dfc83246a58a68",
+  "shape": "SCOPE",
+  "verdict": "PARTIALLY_VOID",
+  "finding": "A20 panel regeneration / AD01 freeze digest",
+  "annotation": "reports/STAGE-09-SUPERSESSION.md",
+  "void_scope": [
+    {
+      "pointer": "$[0].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[1].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[2].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[3].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[3].verdict",
+      "reason": "verdict 'preserved' was measured against cell ad01-w1-within-gr-00 under panel 15e588a86c12; against the regenerated cell it recomputes to 'invalid', because that cell is one of the nine A20 rewrote. The measurement was true when written and is not a current result.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[3].initial_measure",
+      "reason": "initial_measure 12 was measured against cell ad01-w1-within-gr-00 under panel 15e588a86c12; against the regenerated cell it recomputes to 20, because that cell is one of the nine A20 rewrote. The measurement was true when written and is not a current result.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[4].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[4].verdict",
+      "reason": "verdict 'preserved' was measured against cell ad01-w1-within-gr-01 under panel 15e588a86c12; against the regenerated cell it recomputes to 'invalid', because that cell is one of the nine A20 rewrote. The measurement was true when written and is not a current result.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[4].initial_measure",
+      "reason": "initial_measure 16 was measured against cell ad01-w1-within-gr-01 under panel 15e588a86c12; against the regenerated cell it recomputes to 13, because that cell is one of the nine A20 rewrote. The measurement was true when written and is not a current result.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[5].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[5].verdict",
+      "reason": "verdict 'preserved' was measured against cell ad01-w1-within-gr-02 under panel 15e588a86c12; against the regenerated cell it recomputes to 'invalid', because that cell is one of the nine A20 rewrote. The measurement was true when written and is not a current result.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[6].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[7].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[8].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[9].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[10].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$[11].freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09, and checker.py:73 compares this field against the panel on disk, so every archived record now reports wrong-freeze-reference. This field is the reference to the panel the record was run against, not a measurement of it, and the record is a valid record of that run.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    }
+  ],
+  "surviving_claim": "The file is not retracted and 9 of its 12 records are untouched by the defect. Every record verifies cleanly against the panel it was run under: verify_use_records returns no problem for this file against a panel materialised from the git blobs at bdf12d5 and 84d2094 (manifest 15e588a86c12, verify_freeze []). What does not survive is the reading of 3 records as current results for the regenerated panel. Those 3 claim a quality verdict on a within-graph cell that A20 rewrote, and against the new panel they recompute to a different verdict. Affected cells: ad01-w1-within-gr-00, ad01-w1-within-gr-01, ad01-w1-within-gr-02. Re-stamping the digest would convert a withdrawn measurement into a current one, which is why this is a scope and not an edit.",
+  "superseded_by": "ee1362df3f092761e1bede3df245d4948c55b7139b0d5c1529875f4cf281b79b",
+  "container_mislabelled": false,
+  "note": "artifact_sha256 is the git blob digest, so the marker is bound to the committed bytes rather than to one host line-ending policy. On a core.autocrlf checkout sha256_file sees CRLF and reports this marker stale; that is the checkout, not the artifact, and it is fixed by scoping the evidence trees in .gitattributes. Re-stamping freeze_digest to ee1362df3f09 is not a repair: it makes the checker pass by asserting that a quality verdict obtained against a regenerated cell is current."
+}
