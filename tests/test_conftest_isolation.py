@@ -429,17 +429,19 @@ def test_a_bare_dbname_is_not_a_route():
     stub, one raises on an empty migrations directory before opening a
     connection, and one asserts that the connection it gets is refused. What
     these share is that they say so. What the repair changed is the file whose
-    read happened for real, and that is what is named here -- the constant a
-    refusal input is built from must carry a route, while its dbname stays the
-    absent one the assertion depends on.
+    read happened for real, and that is what is named here -- the input a
+    refusal is built from must carry a route, while its dbname stays the
+    absent one the assertion depends on. The route is read inside the helper
+    rather than at import: an import-time binding raises on a routeless
+    session and kills collection.
     """
     import ast
     import re
 
     target = TESTS_DIR / "test_p2c_ad01_resweep.py"
     source = target.read_text(encoding="utf-8")
-    assigned = re.search(r"UNUSED_DSN = dsn_with_dbname\(\s*admin_dsn\(\),\s*"
-                         r"\"([^\"]+)\"", source)
+    assigned = re.search(
+        r"return dsn_with_dbname\(\s*admin_dsn\(\),\s*\"([^\"]+)\"", source)
     assert assigned is not None, "the refusal input must be built from one route"
     assert assigned.group(1) == "ec02test_p2c_unused", assigned.group(1)
     assert 'trajectory.record_decision("dbname=' not in source, (

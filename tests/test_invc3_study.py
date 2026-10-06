@@ -10,10 +10,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
+sys.path.insert(0, str(ROOT / "tests"))
 
-DSN = os.environ.get(
-    "INV_C3_STUDY_DSN",
-    "dbname=inv_c3_study host=/var/run/postgresql user=ubuntu")
+from conftest_isolation import admin_dsn  # noqa: E402
+
+DSN = os.environ.get("INV_C3_STUDY_DSN", "dbname=inv_c3_study")
 
 
 def test_cap_sheet_derived_from_runner_settings():
@@ -48,6 +49,9 @@ def test_study_budget_refuses_before_effects():
 
 
 def test_complete_study_on_recordings_with_recompute(tmp_path):
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of running the study against a guessed socket.
+    admin_dsn()
     import scripts.inv01_study as S
     out = tmp_path / "study"
     rc = S.main(["--dsn", DSN, "--out", str(out),

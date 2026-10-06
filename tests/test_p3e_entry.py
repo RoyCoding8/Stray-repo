@@ -54,6 +54,10 @@ def _assert_disposable_store(dsn: str) -> str:
 
 @pytest.fixture()
 def pg():
+    # The authority refuses when no route is named, and the refusal converts
+    # to a skip on a routeless session (conftest_isolation) -- a routed
+    # session that refuses has a defect worth a red line.
+    admin_dsn()
     _assert_disposable_store(DSN)
     from settlement import db
     db.apply_migrations(DSN, MIGRATIONS)

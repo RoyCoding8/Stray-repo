@@ -17,16 +17,19 @@ import pytest
 
 from experiments.coord02 import freeze as freeze_mod
 from experiments.coord02 import schemas_evidence as E
+from conftest_isolation import admin_dsn
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode
 
-DSN = os.environ.get("EC02_EVID_DSN",
-                     "dbname=ec02test_evid host=/var/run/postgresql user=ubuntu")
+DSN = os.environ.get("EC02_EVID_DSN", "dbname=ec02test_evid")
 MIGRATIONS = Path(__file__).parent.parent / "migrations"
 
 
 @pytest.fixture()
 def dsn():
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     db.apply_migrations(DSN, MIGRATIONS)
     with db.connect(DSN) as conn:
         with conn.cursor() as cur:

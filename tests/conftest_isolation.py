@@ -49,6 +49,9 @@ import os
 import re
 import secrets
 import signal
+
+import pytest
+
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -836,6 +839,58 @@ def _startup_sweep(config, plan_: SuitePlan) -> None:
     print("S09ISO: %s %d abandoned database(s) older than %s"
           % (verb, len(names), age))
     config._s09iso_swept = names
+
+
+def _routeless_session() -> bool:
+    """Whether this session named no route, so a refusal means skip not fail.
+
+    A routed session that hits ``MissingRouteError`` has a defect worth a red
+    line -- a caller that erased its own route -- and the refusal must stay
+    loud there. Only a session that named no route anywhere is the one the
+    port jobs run: there, the refusal is the session's state, not a test's
+    defect, and the test skips rather than fabricating a connection.
+    """
+    if os.environ.get(DISABLE_ENV):
+        return False
+    return not admin_dsn_or_empty()
+
+
+def _skip_on_missing_route(item, phase: str):
+    """A new-style hookwrapper tail: convert an uncaught route refusal into a skip.
+
+    The admin route is the one authority for where a store lives, and it
+    refuses -- rather than guessing a socket -- when no route is named. The
+    fixtures and test bodies legitimately let that refusal surface, which on a
+    routeless session read as one error per test instead of the skip the
+    route contract prescribes. The conversion lives here rather than in each
+    caller because the alternative is a catch-and-skip block in every battery,
+    and the wrapper leaves the refusal untouched for production callers and
+    for any test that catches ``MissingRouteError`` on purpose.
+
+    A ``wrapper=True`` hookimpl sees an inner refusal as a live exception at
+    the ``yield`` and whatever it raises becomes the outcome itself, so the
+    ``Skipped`` from ``pytest.skip`` replaces the refusal with no teardown
+    warning, and ``raise`` keeps a routed session's refusal loud.
+    """
+    try:
+        yield
+    except MissingRouteError as error:
+        if not _routeless_session():
+            raise
+        pytest.skip("no route to a PostgreSQL server (%s): %s"
+                    % (phase, error))
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_setup(item):
+    """Refusals during fixture setup read as skips on a routeless session."""
+    return (yield from _skip_on_missing_route(item, "setup"))
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_call(item):
+    """Refusals during the test body read as skips on a routeless session."""
+    return (yield from _skip_on_missing_route(item, "call"))
 
 
 def pytest_unconfigure(config) -> None:

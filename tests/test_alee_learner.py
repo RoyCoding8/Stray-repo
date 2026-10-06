@@ -26,9 +26,9 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-DSN = os.environ.get(
-    "EC02_AD01C_DSN",
-    "dbname=ec02test_ad01c host=/var/run/postgresql user=ubuntu")
+from conftest_isolation import admin_dsn  # noqa: E402
+
+DSN = os.environ.get("EC02_AD01C_DSN", "dbname=ec02test_ad01c")
 MIGRATIONS = ROOT / "migrations"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
@@ -45,6 +45,9 @@ LEARNER_PROPOSAL = {"basis_references": ["obs-ad01-w0-dev-sw-00-seed"],
 
 
 def _fresh_db():
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     assert "live" not in DSN
     from settlement import db
     from experiments.coord02 import experience as E

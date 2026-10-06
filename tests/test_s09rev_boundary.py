@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT / "experiments"))
 from experiments.ad01 import boolean_rule as br
 from experiments.ad01 import frontier
 from experiments.ad01 import improve_channel as channel
+from experiments.ad01.s09_run_isolation import MissingRouteError
 
 COHORT = list(range(24))
 ELIGIBILITY_SEEDS = (0, 1, 2, 3)
@@ -405,7 +406,10 @@ def test_grant_actually_bounds_what_a_revision_can_spend(tmp_path):
 
     A revision that asks for more than the grant is refused by the
     authority, so a revision cannot buy itself a bigger budget by
-    requesting one.
+    requesting one. The execution behind the refusal mints a disposable
+    authority (improve_channel._disposable_authority), so on a routeless
+    session the route refusal surfaces here and reads as a skip rather
+    than as this test's failure.
     """
     store, base = _bound_store(tmp_path, "grantbound.json")
     greedy = channel._revision_source("3").replace(
@@ -416,6 +420,8 @@ def test_grant_actually_bounds_what_a_revision_can_spend(tmp_path):
         channel.drive_improve_round(
             store, br.make_task("dev", 0), package=store.active_package,
             round_no=1, admit_probes=True)
+    except MissingRouteError:
+        raise
     except Exception as exc:
         assert "grant" in str(exc) or "authority" in str(exc) or \
             "candid" in str(exc), str(exc)

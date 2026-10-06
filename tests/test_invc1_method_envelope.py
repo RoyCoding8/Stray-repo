@@ -23,9 +23,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-DSN = os.environ.get(
-    "INV_C1_ENV_DSN",
-    "dbname=inv_c1_envelope host=/var/run/postgresql user=ubuntu")
+from conftest_isolation import admin_dsn  # noqa: E402
+
+DSN = os.environ.get("INV_C1_ENV_DSN", "dbname=inv_c1_envelope")
 MIGRATIONS = ROOT / "migrations"
 
 MODEL = "inv-c1-double"
@@ -120,6 +120,9 @@ EXHAUSTING_SOURCE = (
 
 
 def _fresh_db():
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     assert "live" not in DSN
     from settlement import db
     from experiments.coord02 import experience as E

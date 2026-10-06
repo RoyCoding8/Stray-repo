@@ -26,6 +26,7 @@ from test_s09_migrate_callers import admit
 from execution_authority import authority_for, execution_store
 
 from experiments.ad01.s09_run_isolation import DB_PREFIX, \
+    admin_dsn as _route, \
     create_disposable_db, disposable_db, drop_disposable_db
 
 ROOT = Path(__file__).resolve().parent.parent

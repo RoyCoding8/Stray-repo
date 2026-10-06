@@ -18,9 +18,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-DSN = os.environ.get(
-    "INV_D2_DSN",
-    "dbname=inv_d2_settle host=/var/run/postgresql user=ubuntu")
+from conftest_isolation import admin_dsn  # noqa: E402
+
+DSN = os.environ.get("INV_D2_DSN", "dbname=inv_d2_settle")
 MIGRATIONS = ROOT / "migrations"
 
 PROMPT = "x" * 1746
@@ -29,6 +29,9 @@ EXPOSURE = 1746 // 4 + 1 + MAX_OUT
 
 
 def _fresh_db():
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     assert "live" not in DSN
     from settlement import db
     db.apply_migrations(DSN, MIGRATIONS)

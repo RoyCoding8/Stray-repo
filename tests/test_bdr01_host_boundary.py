@@ -18,11 +18,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from conftest_isolation import admin_dsn  # noqa: E402
 from execution_authority import child_receipt, execution_store
 
-DSN = os.environ.get(
-    "EC02_AD01C_DSN",
-    "dbname=ec02test_ad01c host=/var/run/postgresql user=ubuntu")
+DSN = os.environ.get("EC02_AD01C_DSN", "dbname=ec02test_ad01c")
 
 CANARY_SOURCE = (
     "def bdr01_canary(task, oracle, max_queries=16):\n"
@@ -46,6 +45,9 @@ def test_acquired_execution_uses_broker_profile(tmp_path):
     from settlement import broker
     from settlement import db
     from experiments.coord02 import experience as E
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     db.apply_migrations(DSN, ROOT / "migrations")
     E.designate_db(DSN, kind="disposable", purpose="BDR-01 broker profile")
     E.prepare_disposable_db(DSN, ROOT / "migrations")
@@ -93,6 +95,9 @@ def test_broker_query_count_survives_replay():
     from experiments.ad01 import trajectory, worlds
     from experiments.coord02 import experience as E
     from settlement import db
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     db.apply_migrations(DSN, ROOT / "migrations")
     E.designate_db(DSN, kind="disposable", purpose="BDR-01 query replay")
     E.prepare_disposable_db(DSN, ROOT / "migrations")
@@ -195,6 +200,9 @@ def test_store_backed_use_attributes_sandbox_operations():
     from experiments.ad01 import trajectory
     from experiments.coord02 import experience as E
     from settlement import db
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     db.apply_migrations(DSN, ROOT / "migrations")
     E.designate_db(DSN, kind="disposable", purpose="BDR-01 use accounting")
     E.prepare_disposable_db(DSN, ROOT / "migrations")

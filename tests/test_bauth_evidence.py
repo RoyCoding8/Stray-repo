@@ -5,11 +5,11 @@ from pathlib import Path
 from experiments.coord02 import schemas_evidence as SE
 from experiments.coord02 import experience as E
 from experiments.coord02.controller import seed_episode
+from conftest_isolation import admin_dsn
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode
 
-DSN = os.environ.get("EC02_BAUTH_DSN",
-                     "dbname=ec02test_bauth host=/var/run/postgresql user=ubuntu")
+DSN = os.environ.get("EC02_BAUTH_DSN", "dbname=ec02test_bauth")
 MIGRATIONS = Path(__file__).parent.parent / "migrations"
 PURPOSE = "B-AUTH slice 1 store-derived costs"
 
@@ -63,6 +63,9 @@ def _designation_rows(dsn: str) -> list:
 
 
 def test_store_derived_costs_sum_nonuniform_receipts():
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of connecting on a guessed socket.
+    admin_dsn()
     assert "live" not in DSN
     db.apply_migrations(DSN, MIGRATIONS)
     # designate_db only ever appends, so an inherited designation is the one

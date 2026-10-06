@@ -14,9 +14,9 @@ from test_s09_migrate_callers import first_eligible
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-DSN = os.environ.get(
-    "EC02_ADTR_DSN",
-    "dbname=ec02test_adtr host=/var/run/postgresql user=ubuntu")
+from tests.conftest_isolation import admin_dsn  # noqa: E402
+
+DSN = os.environ.get("EC02_ADTR_DSN", "dbname=ec02test_adtr")
 MIGRATIONS = ROOT / "migrations"
 
 # This battery truncates its store, so the property worth asserting is that the
@@ -44,6 +44,10 @@ def _assert_disposable_store(dsn: str) -> str:
 
 @pytest.fixture()
 def pg():
+    # The authority refuses when no route is named, and the refusal converts
+    # to a skip on a routeless session (conftest_isolation) -- a routed
+    # session that refuses has a defect worth a red line.
+    admin_dsn()
     _assert_disposable_store(DSN)
     from settlement import db
     db.apply_migrations(DSN, MIGRATIONS)

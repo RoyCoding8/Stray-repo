@@ -21,9 +21,9 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-DSN = os.environ.get(
-    "INV_C1_DSN",
-    "dbname=inv_c1_lifecycle host=/var/run/postgresql user=ubuntu")
+from conftest_isolation import admin_dsn  # noqa: E402
+
+DSN = os.environ.get("INV_C1_DSN", "dbname=inv_c1_lifecycle")
 MIGRATIONS = ROOT / "migrations"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
@@ -38,6 +38,10 @@ GR0 = "ad01-w0-dev-gr-00"
 
 
 def _fresh_db():
+    # The one route authority decides whether a server exists to reach; a
+    # routeless session's refusal becomes a skip (conftest_isolation)
+    # rather than a connection on a guessed socket.
+    admin_dsn()
     assert "live" not in DSN
     from settlement import db
     from experiments.coord02 import experience as E

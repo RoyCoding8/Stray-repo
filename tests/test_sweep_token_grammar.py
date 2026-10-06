@@ -186,7 +186,8 @@ class Creator:
         """
         if self.key:
             return "%s:%d" % (self.key, self.lineno)
-        return "%s:%d" % (self.path.relative_to(REPO), self.lineno)
+        return "%s:%d" % (self.path.relative_to(REPO).as_posix(),
+                          self.lineno)
 
 
 # Functions that end in a store existing. A name built anywhere inside one of
@@ -419,9 +420,9 @@ def test_every_creator_is_enumerated_below():
 # fragment, an assertion prefix, or a ready-marker path -- none of which is a
 # database, which is why they are bystanders rather than creators.
 PINNED_CREATORS = (
-    Creator(REPO / "experiments" / "ad01" / "s09_run_isolation.py", 256, "", True),
-    Creator(REPO / "tests" / "conftest_isolation.py", 162, "", True),
-    Creator(REPO / "tests" / "conftest_isolation.py", 169, "", True),
+    Creator(REPO / "experiments" / "ad01" / "s09_run_isolation.py", 277, "", True),
+    Creator(REPO / "tests" / "conftest_isolation.py", 182, "", True),
+    Creator(REPO / "tests" / "conftest_isolation.py", 189, "", True),
 )
 
 

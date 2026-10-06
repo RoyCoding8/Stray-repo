@@ -13,11 +13,9 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from conftest_isolation import dbname_of
+from conftest_isolation import admin_dsn, dbname_of
 
-DSN = os.environ.get(
-    "INV_C3_DSN",
-    "dbname=inv_c3_export host=/var/run/postgresql user=ubuntu")
+DSN = os.environ.get("INV_C3_DSN", "dbname=inv_c3_export")
 MIGRATIONS = ROOT / "migrations"
 
 # The three stores this battery shares with a sibling study, read off the
@@ -38,6 +36,9 @@ GR0 = "ad01-w0-dev-gr-00"
 
 
 def _fresh_db(dsn: str):
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of running the name guard on a guessed socket default.
+    admin_dsn()
     assert "live" not in dsn
     # This file destroys and rebuilds its store, so the guard that matters is
     # the one refusing a store a sibling battery also uses. It used to demand a

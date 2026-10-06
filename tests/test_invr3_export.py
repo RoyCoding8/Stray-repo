@@ -10,11 +10,9 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from conftest_isolation import dbname_of
+from conftest_isolation import admin_dsn, dbname_of
 
-DSN = os.environ.get(
-    "INV_R3_DSN",
-    "dbname=inv_r3_export host=/var/run/postgresql user=ubuntu")
+DSN = os.environ.get("INV_R3_DSN", "dbname=inv_r3_export")
 MIGRATIONS = ROOT / "migrations"
 
 _SHARED_STORES = frozenset({"inv_r3_export", "inv_r3_probe", "postgres"})
@@ -30,6 +28,9 @@ SW1 = "ad01-w0-dev-sw-01"
 
 
 def _fresh_db(dsn: str):
+    # Routeless the authority refuses and the test skips (conftest_isolation)
+    # instead of running the name guard on a guessed socket default.
+    admin_dsn()
     assert "live" not in dsn
     # This file destroys and rebuilds its store, so the guard is the one that
     # matters: refuse the shared study names, and accept anything a run owns.
