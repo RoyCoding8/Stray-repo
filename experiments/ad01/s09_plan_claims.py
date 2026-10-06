@@ -211,15 +211,19 @@ def definition_line(path: Path, symbol: str) -> int | None:
     return None
 
 
-@lru_cache(maxsize=None)
+@lru_cache(maxsize=256)
+def _parse_source(text: str) -> ast.Module | None:
+    try:
+        return ast.parse(text)
+    except SyntaxError:
+        return None
+
+
 def _parsed(path: Path) -> ast.Module | None:
     text = _source_text(path)
     if text is None:
         return None
-    try:
-        return ast.parse(text, filename=str(path))
-    except SyntaxError:
-        return None
+    return _parse_source(text)
 
 
 def attribute_exists(path: Path, class_name: str, attribute: str) -> bool:

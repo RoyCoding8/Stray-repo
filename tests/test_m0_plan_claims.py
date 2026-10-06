@@ -82,3 +82,27 @@ def test_definition_lookup_ignores_docstring_mentions():
     assert _definition_line("def present():\n    pass\n", "present") == 1
     source = "'''mentions absent_function only as prose.'''\n"
     assert _definition_line(source, "absent_function") is None
+
+
+def test_caller_enumeration_reads_updated_bytes_at_the_same_path(
+        tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    source_dir = root / "experiments" / "ad01"
+    source_dir.mkdir(parents=True)
+    owner = source_dir / "owner.py"
+    caller = source_dir / "caller.py"
+    owner.write_text("def target():\n    pass\n", encoding="utf-8")
+    caller.write_text("def run():\n    owner.target()\n", encoding="utf-8")
+
+    monkeypatch.setattr(claims, "REPO_ROOT", root)
+    monkeypatch.setattr(claims, "PRODUCTION_ROOTS", ("experiments",))
+    citation = claims.Citation(
+        "experiments/ad01/owner.py", 1, "target", 1, "temporary call")
+
+    assert claims.production_callers(citation) == [
+        "experiments/ad01/caller.py"]
+    caller.write_text("def run():\n    pass\n", encoding="utf-8")
+    assert claims.production_callers(citation) == []
+    caller.write_text("def run():\n    owner.target()\n", encoding="utf-8")
+    assert claims.production_callers(citation) == [
+        "experiments/ad01/caller.py"]
