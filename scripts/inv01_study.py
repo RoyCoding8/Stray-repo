@@ -509,14 +509,24 @@ def run_study(dsn: str, out: Path, agenda_authorized: int,
                                  "model_calls", 0)),
                              "construction_calls": int(campaign.get(
                                  "construction_calls", 0))})
+    empty_path = repertoires_dir / "empty.json"
+    empty_tasks = _use_tasks(COMPARISON_WORLDS[0])
+    empty_cid = trajectory.campaign_id(COMPARISON_WORLDS[0], "I", 0)
+    _empty_incumbent_repertoire(empty_path, empty_cid)
+    empty_policy_path = Path(_v1_write_use_policy(
+        empty_path, {"task_id": empty_tasks[0] if empty_tasks else ""}))
     freeze = {}
     for entry in trajectories:
         path = repertoires_dir / ("repertoire-w%d-%s.json" % (
             entry["world"], entry["arm"]))
         raw = path.read_bytes()
         freeze[path.name] = hashlib.sha256(raw).hexdigest()
+    baseline_freeze = {
+        "repertoire": hashlib.sha256(empty_path.read_bytes()).hexdigest(),
+        "selector": hashlib.sha256(empty_policy_path.read_bytes()).hexdigest(),
+    }
     (out / "freeze.json").write_text(json.dumps(
-        {"repertoires": freeze,
+        {"repertoires": freeze, "incumbent_baseline": baseline_freeze,
          "policy": {"model": MODEL,
                     "packet_version": sheet["derivation"][
                         "packet_version"]}},
@@ -542,15 +552,27 @@ def run_study(dsn: str, out: Path, agenda_authorized: int,
         use_records.extend(records_batch)
     (out / "use_records.json").write_text(json.dumps(
         use_records, sort_keys=True, indent=1, default=str) + "\n")
-    empty_path = repertoires_dir / "empty.json"
-    empty_tasks = _use_tasks(COMPARISON_WORLDS[0])
-    empty_cid = trajectory.campaign_id(COMPARISON_WORLDS[0], "I", 0)
-    _empty_incumbent_repertoire(empty_path, empty_cid)
     empty_records = _fresh_use(
         empty_path, COMPARISON_WORLDS[0], "I", empty_tasks, dsn,
-        trajectory._alloc_id(empty_cid))
+        trajectory._alloc_id(empty_cid), policy_path=empty_policy_path)
     (out / "empty_use_records.json").write_text(json.dumps(
         empty_records, sort_keys=True, indent=1, default=str) + "\n")
+    baseline_operation_ids = sorted({operation_id
+        for record in empty_records
+        for operation_id in record.get("operation_ids", [])})
+    baseline_operations = [operation for operation in
+        records._operations_for(dsn, empty_cid)
+        if operation.get("id") in baseline_operation_ids]
+    baseline_receipts = [receipt for operation_id in baseline_operation_ids
+        for receipt in records._receipts_for(dsn, operation_id)]
+    baseline_export = {
+        "campaign_id": empty_cid,
+        "records": empty_records,
+        "operations": baseline_operations,
+        "receipts": baseline_receipts,
+    }
+    (out / "incumbent_baseline.json").write_text(json.dumps(
+        baseline_export, sort_keys=True, indent=1, default=str) + "\n")
     totals = {"model_calls": 0, "construction_calls": 0,
               "witness_queries": 0}
     for world, arm in calibration_specs + comparison_specs:
@@ -582,11 +604,9 @@ def run_study(dsn: str, out: Path, agenda_authorized: int,
                   " plus receipt usage; doubles billed false",
                   "incumbent_baseline": {
                       "records": len(empty_records),
-                      "operation_ids": sorted({operation_id
-                          for record in empty_records
-                          for operation_id in record.get(
-                              "operation_ids", [])}),
-                      "costs": incumbent_costs}}
+                      "operation_ids": baseline_operation_ids,
+                      "costs": incumbent_costs,
+                      "export": "incumbent_baseline.json"}}
     (out / "accounting.json").write_text(json.dumps(
         accounting, sort_keys=True, indent=1) + "\n")
     manifest = {"pilot": {"calibration_trajectories": 2,
@@ -608,6 +628,56 @@ def run_study(dsn: str, out: Path, agenda_authorized: int,
         {"per_trajectory": trajectories,
          "totals": disposition}, sort_keys=True, indent=1) + "\n")
     return 0
+
+
+def _incumbent_export_costs(export: dict) -> dict:
+    records = export.get("records")
+    operations = export.get("operations")
+    receipts = export.get("receipts")
+    if not isinstance(records, list) or not records \
+            or not isinstance(operations, list) \
+            or not isinstance(receipts, list):
+        raise ValueError("incumbent export is missing durable evidence")
+    expected_ids = sorted({operation_id for record in records
+                           for operation_id in record.get(
+                               "operation_ids", [])})
+    operation_by_id = {row.get("id"): row for row in operations}
+    if len(operation_by_id) != len(operations) \
+            or sorted(operation_by_id) != expected_ids:
+        raise ValueError("incumbent operation union differs from records")
+    receipts_by_id: dict[str, list] = {}
+    for receipt in receipts:
+        receipts_by_id.setdefault(receipt.get("operation_id"), []).append(
+            receipt)
+    if set(receipts_by_id) != set(expected_ids):
+        raise ValueError("incumbent receipt union differs from operations")
+    result = {"witness_queries": 0, "tokens": 0, "charge_units": 0,
+              "model_calls": 0, "sandbox_ops": 0}
+    for operation_id in expected_ids:
+        operation = operation_by_id[operation_id]
+        if not operation.get("settled"):
+            raise ValueError("incumbent operation is unsettled: %s" %
+                             operation_id)
+        op_receipts = receipts_by_id[operation_id]
+        successful = [r for r in op_receipts
+                      if r.get("outcome") == "success"]
+        if len(successful) != 1 or len(op_receipts) != 1:
+            raise ValueError("incumbent operation lacks one success receipt: %s"
+                             % operation_id)
+        content = successful[0].get("content") or {}
+        payload = operation.get("payload") or {}
+        effect = payload.get("effect")
+        if effect != "sandbox-exec":
+            raise ValueError("incumbent operation is not child execution: %s"
+                             % operation_id)
+        result["sandbox_ops"] += 1
+        worker_data = (((content.get("data") or {}).get("worker") or {})
+                       .get("data") or {})
+        queries = worker_data.get("queries", 0)
+        if type(queries) is not int or queries < 0:
+            raise ValueError("incumbent receipt has invalid query count")
+        result["witness_queries"] += queries
+    return result
 
 
 def recompute_study(out: Path, recomputed_out: Path) -> int:
@@ -645,9 +715,50 @@ def recompute_study(out: Path, recomputed_out: Path) -> int:
     totals["witness_queries"] += use_queries
     totals["use_records"] = len(use_records)
     accounting = json.loads((out / "accounting.json").read_text())
+    baseline_accounting = accounting.get("incumbent_baseline")
+    if baseline_accounting is not None:
+        try:
+            baseline_path = out / baseline_accounting.get(
+                "export", "incumbent_baseline.json")
+            if baseline_path.name != "incumbent_baseline.json":
+                raise ValueError("unexpected incumbent export path")
+            baseline_export = json.loads(baseline_path.read_text())
+            baseline_costs = _incumbent_export_costs(baseline_export)
+            empty_records = json.loads((out / "empty_use_records.json"
+                                        ).read_text())
+            if empty_records != baseline_export["records"]:
+                raise ValueError("incumbent records differ from export")
+            freeze = json.loads((out / "freeze.json").read_text())[
+                "incumbent_baseline"]
+            repertoire_path = out / "repertoires" / "empty.json"
+            selector_path = out / "repertoires" / "empty-use-policy.py"
+            if freeze.get("repertoire") != hashlib.sha256(
+                    repertoire_path.read_bytes()).hexdigest() or freeze.get(
+                        "selector") != hashlib.sha256(
+                            selector_path.read_bytes()).hexdigest():
+                raise ValueError("incumbent frozen bytes differ from artifacts")
+            if int(baseline_accounting.get("records", -1)) != len(
+                    baseline_export["records"]):
+                raise ValueError("incumbent record count differs from export")
+            operation_ids = sorted({operation_id for record in
+                baseline_export["records"] for operation_id in record.get(
+                    "operation_ids", [])})
+            if baseline_accounting.get("operation_ids") != operation_ids:
+                raise ValueError("incumbent operation union differs from export")
+            recorded_costs = baseline_accounting.get("costs") or {}
+            for key, actual in baseline_costs.items():
+                if recorded_costs.get(key) != actual:
+                    raise ValueError("incumbent %s differs from receipts" % key)
+            totals["witness_queries"] += baseline_costs["witness_queries"]
+        except (OSError, KeyError, TypeError, ValueError) as exc:
+            print("incumbent baseline verify failed: %s" % exc,
+                  file=sys.stderr)
+            return 2
     if totals["model_calls"] != int(accounting["total"][
             "model_calls"]) or totals["construction_calls"] != int(
-            accounting["total"]["construction_calls"]):
+            accounting["total"]["construction_calls"]) or totals[
+                "witness_queries"] != int(accounting["total"][
+                    "witness_queries"]):
         print("recompute mismatch: %s vs %s" % (
             totals, accounting["total"]), file=sys.stderr)
         return 2

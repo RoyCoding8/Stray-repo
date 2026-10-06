@@ -320,8 +320,7 @@ def _episode_body(policy: BoundPolicy, task_id: str, *, remaining: dict,
         effect = dispatcher(policy, task, decision.action,
                             _context(
                                 policy, task_id, step_index, remaining,
-                                operation_id=operation_id or
-                                "s09-governance-unbound",
+                                operation_id=operation_id,
                                 dsn=dsn, allocation_id=allocation_id))
         if not isinstance(effect, dict) or not effect.get("accepted"):
             raise GovernanceRefused(
@@ -355,12 +354,16 @@ def _default_dispatcher(policy: BoundPolicy, task: dict, action: dict,
 
 _EPISODE_CHILD = '''
 import json, os, sys
-work, root, policy_path, arm, task_id, remaining, max_steps, driver_pid, mode, dsn, allocation_id, operation_id = sys.argv[1:]
+work, root, policy_path, arm, task_id, remaining, max_steps, driver_pid, authority_path = sys.argv[1:]
 sys.path.insert(0, root)
 sys.path.insert(0, root + "/src")
 from experiments.ad01 import s09_policy_governance as gov
 from experiments.ad01 import policy_step
 from pathlib import Path
+authority = json.loads(Path(authority_path).read_text())
+dsn = authority["dsn"]
+allocation_id = authority["allocation_id"]
+operation_id = authority["operation_id"]
 
 def emit(status, data, error=""):
     # WorkerOutput sets extra="forbid", so a structured refusal stage cannot be
@@ -377,7 +380,7 @@ else:
     policy = gov.bind(staged.decode("utf-8"), arm=arm, recorded_digest=recorded,
                       entry=policy_step.STEP_ENTRY, origin="authored-control",
                       source_path=policy_path, disposition="staged")
-    dispatcher = None if mode == "disconnected" else gov._default_dispatcher
+    dispatcher = gov._default_dispatcher
     try:
         episode = gov._episode_body(
             policy, task_id, remaining=json.loads(remaining),
@@ -407,11 +410,15 @@ def run_episode(policy: BoundPolicy, task_id: str, *, remaining: dict | None = N
     from settlement.launcher_local import PROFILE, LocalLauncher
 
     budget = dict(remaining or {"queries": 16, "model_calls": 2})
-    if dsn is not None and (not allocation_id or not operation_id):
-        raise ValueError("governed use needs its caller allocation and operation")
-    if dsn is None and (allocation_id or operation_id):
-        raise ValueError("governed use identity needs its caller store")
-    mode = "disconnected" if dispatcher is None else "connected"
+    if dispatcher is None:
+        raise GovernanceRefused(
+            REFUSAL_NO_DISPATCHER,
+            "use was attempted with no policy dispatcher")
+    if not all(isinstance(value, str) and value.strip()
+               for value in (dsn, allocation_id, operation_id)):
+        raise GovernanceRefused(
+            REFUSAL_NO_STEP,
+            "governed use needs explicit caller store, allocation, and operation")
     with tempfile.TemporaryDirectory(prefix="s09-governance-") as raw:
         work = Path(raw)
         staged = work / "policy.py"
@@ -419,13 +426,18 @@ def run_episode(policy: BoundPolicy, task_id: str, *, remaining: dict | None = N
         (work / "policy.digest").write_text(policy.digest, encoding="utf-8")
         child = work / "episode.py"
         child.write_text(_EPISODE_CHILD, encoding="utf-8")
+        authority_path = work / "authority.json"
+        authority_path.write_text(json.dumps({
+            "dsn": dsn, "allocation_id": allocation_id,
+            "operation_id": operation_id}, sort_keys=True),
+            encoding="utf-8")
         launcher = LocalLauncher(work / "launcher")
         payload = {
             "profile": PROFILE,
             "argv": [sys.executable, str(child), str(work), str(ROOT),
                      str(staged), policy.arm, task_id, _canonical(budget),
-                     str(max_steps), str(os.getpid()), mode, dsn or "",
-                     allocation_id or "", operation_id or ""],
+                     str(max_steps), str(os.getpid()),
+                     str(authority_path)],
             "timeout_ms": EPISODE_TIMEOUT_MS,
             "max_output_bytes": EPISODE_MAX_OUTPUT_BYTES,
             "cpu_seconds": EPISODE_CPU_SECONDS,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -81,6 +82,8 @@ def test_complete_study_on_recordings_with_recompute(tmp_path, execution_store):
     empty_repertoire = json.loads(
         (out / "repertoires" / "empty.json").read_text())
     [incumbent] = empty_repertoire["members"]
+    assert incumbent["source_digest"] == hashlib.sha256(
+        incumbent["method_source"].encode("utf-8")).hexdigest()
     for record in empty_records:
         assert record["selected"] == record["executed"] == "incumbent"
         assert record["executed_source"] == incumbent["method_source"]
@@ -93,12 +96,40 @@ def test_complete_study_on_recordings_with_recompute(tmp_path, execution_store):
     assert accounting_baseline["records"] == len(empty_records)
     assert len(accounting_baseline["operation_ids"]) == 2 * len(empty_records)
     assert accounting_baseline["costs"]["sandbox_ops"] == 2 * len(empty_records)
+    freeze = json.loads((out / "freeze.json").read_text())[
+        "incumbent_baseline"]
+    empty_repertoire_path = out / "repertoires" / "empty.json"
+    empty_policy_path = out / "repertoires" / "empty-use-policy.py"
+    assert freeze["repertoire"] == hashlib.sha256(
+        empty_repertoire_path.read_bytes()).hexdigest()
+    assert freeze["selector"] == hashlib.sha256(
+        empty_policy_path.read_bytes()).hexdigest()
+    assert all(record["policy_source_digest"] == freeze["selector"]
+               for record in empty_records)
+    baseline_export = json.loads(
+        (out / "incumbent_baseline.json").read_text())
+    assert sorted({op for record in baseline_export["records"]
+                   for op in record["operation_ids"]}) == \
+        accounting_baseline["operation_ids"]
     recomputed = tmp_path / "recomputed.json"
     rc = S.main(["--dsn", dsn, "--out", str(out), "--recompute",
                  "--recomputed-out", str(recomputed)])
     assert rc == 0
     fresh = json.loads(recomputed.read_text())
     assert fresh["total"] == accounting["total"]
+    accounting_path = out / "accounting.json"
+    original_accounting = accounting_path.read_text()
+    tampered = json.loads(original_accounting)
+    tampered["incumbent_baseline"]["operation_ids"][0] += "-tampered"
+    accounting_path.write_text(json.dumps(tampered))
+    assert S.main(["--dsn", dsn, "--out", str(out), "--recompute",
+                   "--recomputed-out", str(recomputed)]) == 2
+    tampered = json.loads(original_accounting)
+    tampered["incumbent_baseline"]["costs"]["sandbox_ops"] += 1
+    accounting_path.write_text(json.dumps(tampered))
+    assert S.main(["--dsn", dsn, "--out", str(out), "--recompute",
+                   "--recomputed-out", str(recomputed)]) == 2
+    accounting_path.write_text(original_accounting)
     req = json.loads((out / "external_requirements.json").read_text())
     assert "endpoint_present" in req
     assert "key_present" in req

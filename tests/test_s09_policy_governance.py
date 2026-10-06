@@ -175,6 +175,7 @@ def test_a_fresh_interpreter_executes_the_bound_bytes_not_the_digest(
     assert any(part.endswith("driver.py")
                for part in episode.admitted[0].argv)
     assert episode.admitted[0].action == _expected_action("seed-sw-greedy")
+    assert execution_store["dsn"] not in json.dumps(episode.as_dict())
 
 
 def test_substituting_the_policy_with_the_repertoire_fixed_moves_the_outcome(
@@ -251,14 +252,37 @@ def test_the_task_method_column_names_the_reducer_that_actually_ran(
     assert not hasattr(method, "governed_by_policy")
 
 
+def test_connected_episode_requires_authority_before_outer_dispatch(
+        monkeypatch):
+    from settlement.launcher_local import LocalLauncher
+
+    def fail_if_dispatched(*args, **kwargs):
+        raise AssertionError("uncredentialed episode reached outer dispatch")
+
+    monkeypatch.setattr(LocalLauncher, "dispatch", fail_if_dispatched)
+    policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
+    for authority in ({},
+                      {"dsn": "test-store"},
+                      {"dsn": "test-store", "allocation_id": "test-allocation"}):
+        with pytest.raises(gov.GovernanceRefused) as refused:
+            gov.run_episode(policy, TASK_ID, **authority)
+        assert refused.value.stage == gov.REFUSAL_NO_STEP
+        assert "explicit caller store, allocation, and operation" in (
+            refused.value.reason)
+
+
 def test_the_episode_refuses_when_the_policy_dispatcher_is_absent(
-        execution_store):
+        monkeypatch):
+    from settlement.launcher_local import LocalLauncher
+
+    def fail_if_dispatched(*args, **kwargs):
+        raise AssertionError("disconnected episode reached outer dispatch")
+
+    monkeypatch.setattr(LocalLauncher, "dispatch", fail_if_dispatched)
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
     with pytest.raises(gov.GovernanceRefused) as refused:
-        gov.run_episode(
-            policy, TASK_ID, dispatcher=None,
-            **_execution(execution_store, "no-dispatcher"))
+        gov.run_episode(policy, TASK_ID, dispatcher=None)
 
     assert refused.value.stage == gov.REFUSAL_NO_DISPATCHER
     assert "no policy dispatcher" in refused.value.reason
