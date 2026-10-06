@@ -165,9 +165,8 @@ def test_a_revision_writing_a_frozen_field_is_not_admitted_as_eligible(
         tmp_path):
     """RF-01 end to end, at the boundary a caller reads.
 
-    The revision is otherwise the authorised kind: it differs from the
-    incumbent at the probed input and nowhere else, so the scope check
-    admits it. Its verdict must not be `eligible`.
+    The clean control has no frozen write. The smuggled revision must be
+    refused for its write before execution or other eligibility checks.
     """
     store, base = _bound_store(tmp_path)
     source = channel._revision_source(_SMUGGLED)
@@ -184,11 +183,7 @@ def test_a_revision_writing_a_frozen_field_is_not_admitted_as_eligible(
 
 
 def test_the_smuggled_write_lands_and_still_reports_a_decision(tmp_path):
-    """RF-01. The write is real and the revision still looks useful.
-
-    This is the finding in one assertion: the grant is overwritten, the
-    action returned is a well-formed probe, and nothing refused it.
-    """
+    """Direct Python can perform the write; admission must refuse those bytes."""
     store, base = _bound_store(tmp_path)
     source = channel._revision_source(_SMUGGLED)
     view = _writable_view()
