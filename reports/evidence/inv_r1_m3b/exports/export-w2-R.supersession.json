@@ -1,0 +1,49 @@
+{
+  "artifact": "reports/evidence/inv_r1_m3b/exports/export-w2-R.json",
+  "artifact_sha256": "d50f4664750e9895f3e5345835da06291947bde7b63a7cc9ffab2911fdb3a053",
+  "shape": "SCOPE",
+  "verdict": "PARTIALLY_VOID",
+  "finding": "A20 panel regeneration / AD01 freeze digest",
+  "annotation": "reports/STAGE-09-SUPERSESSION.md",
+  "void_scope": [
+    {
+      "pointer": "$.identities.effective.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09. This field is the reference to the panel the run was executed against, not a measurement of it.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$.identities.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09. This field is the reference to the panel the run was executed against, not a measurement of it.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$.identities.versions.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09. This field is the reference to the panel the run was executed against, not a measurement of it.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$.transitions[0].proposal.inputs.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09. This field is the reference to the panel the run was executed against, not a measurement of it.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$.transitions[1].proposal.inputs.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09. This field is the reference to the panel the run was executed against, not a measurement of it.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$.transitions[2].proposal.inputs.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09. This field is the reference to the panel the run was executed against, not a measurement of it.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    },
+    {
+      "pointer": "$.transitions[3].proposal.inputs.freeze_digest",
+      "reason": "Pins the pre-regeneration AD01 panel 15e588a86c12. A20 regenerated the nine within-graph cells to close a dev/within isomorphism leak, which is a new freeze ee1362df3f09. This field is the reference to the panel the run was executed against, not a measurement of it.",
+      "finding": "A20 panel regeneration / AD01 freeze digest"
+    }
+  ],
+  "surviving_claim": "The file is not retracted and no measurement in it fails. Its 7 digest occurrence(s) name the panel the run executed against, which is a true historical fact and the reason this arm is comparable to the others. What is void is reading them as the current panel: ee1362df3f09 is a new freeze, so these fields no longer identify the panel in the tree. No quality verdict in this file recomputes against a rewritten cell, so the void is the same one every other marker in this finding carries and stops at the digest.",
+  "superseded_by": "ee1362df3f092761e1bede3df245d4948c55b7139b0d5c1529875f4cf281b79b",
+  "container_mislabelled": false,
+  "note": "artifact_sha256 is the git blob digest, so the marker binds to the committed bytes rather than to one host line-ending policy; on a core.autocrlf checkout sha256_file sees CRLF and reports this marker stale, which is the checkout rather than the artifact. This is a run export, not a use-record file: it carries no per-cell verdict on a rewritten within-graph cell, which is why its void_scope stops at the digest pointers."
+}
