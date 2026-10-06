@@ -1,5 +1,80 @@
 # Project ledger
 
+## Routeless skips are measured, not asserted — and the platform boundary is now a number, 2026-10-06
+
+Run `37438947445` at `09a4985b` measures the socket-fallback deletion end
+to end. Against the prior run `37418119879`, whose port jobs carried the
+route classes:
+
+| Job | `37418119879` | `37438947445` | Fixed | New |
+|---|---:|---:|---:|---:|
+| portable, windows | 835 lines | 180 | 655 | **0** |
+| portable, ubuntu | 717 lines | 62 | 655 | **0** |
+| portable, macos | 725 lines | 70 | 655 | **0** |
+
+The fixed set is exactly **655 lines per platform, identical across all
+three**, which is itself the finding: the deleted route classes
+(584 `MissingRouteError` + 28 socket-connect + the export name-guard and
+pre-wrapper residue) were platform-independent. **Zero route-class lines
+remain on any platform** — grep of each port `failures.txt` for
+`MissingRouteError`/`OperationalError`/socket text returns empty. The db
+shards are **byte-identical failure sets to baseline `37385370187`**
+(53+34 ids, 0 new, 0 fixed): a routed session's behavior is untouched,
+which is what "routeless means skip, not guess" must not disturb. The
+`authority-guards` job still prints `OK: every call carries authority`,
+and the line-endings job passed.
+
+**One new heavy id, recorded as new and unexplained.**
+`tests/_heavy_archived/test_r02_exec.py::test_stop_uses_kill_fallback_and_clears_tracking`
+fails on the runsc shim's stop path (`launcher.stop` returned `False`
+with `fail=["stop"]` injected). It is absent from every prior heavy
+artifact including `37385370187` — and this ledger recorded it **fixed**
+at run `37236035655`, so it broke again. No commit between the two runs
+touched `launcher_runsc.py` or that test, so it is not the DSN repair's
+product; it is a re-break with no located cause, and it stays open.
+
+### The platform boundary, measured (task #43)
+
+The port jobs make the boundary a diff rather than a claim: the
+**windows-only** residual is 132 of the 180 lines, the **macos-only** 13
+of 70, and the common set of 62 is what fails on Linux too. Classified
+from the CI `suite.log` bodies:
+
+- **81 windows-only lines are the bounded child, directly or one hop
+  down.** 55 raise the refusal itself — CPython rejects `preexec_fn` on
+  Windows, so every launcher limit (`cpu_seconds`, the POSIX `resource`
+  module, `KeyError: 'specs'`) refuses — and 26 are its downstream shape:
+  the world answered `stop`/`refused` where a spawned child was to act
+  (`assert 'stop' == 'probe'`, `'refused' == 'admitted'`,
+  `assert [] == [3]`, no receipt). macOS contributes 3 more
+  (`preexec_fn` fails there too, differently). These tests claim real
+  POSIX child processes by design; on a host that cannot build one, the
+  refusal is the correct observation, and 32 further windows-only
+  assertion lines are the same downstream class in other phrasings.
+- **3 lines each: POSIX-only syscalls** (`os.fork`, `dlopen`, signal
+  family — `module 'os' has no attribute`) **and the runsc/gvisor
+  sandbox**; **7 posix-path** assumptions; **2 CRLF byte-freeze** lines
+  (the local Windows checkout rewrites line endings where CI's does not —
+  the local run carries 21 of these, so this class is
+  developer-machine-only).
+- **git-subprocess/checkout-path**: 4 windows-only + 4 macos-only, the
+  `git` invocations and `D:\a`-shaped assumptions already censused at
+  task #40.
+- **The 62-line common set is not a platform claim.** It is the known
+  cross-platform residue the prior entry named: strict-XPASS unit
+  guards (×5), model-list drift (×6), untracked supersession evidence,
+  citation pins, the `KeyError: 'qualified_on'` family, git-path
+  census tests. Failing identically on ubuntu/windows/macos is what
+  distinguishes a defect from a boundary.
+
+So the Linux-only test claims are bounded by the child-spawning,
+syscall, sandbox, and path classes above — **~90 windows-only and ~10
+macos-only lines** — and everything else in the port jobs is either
+cross-platform defect or already-fixed route residue. A green portable
+job on a POSIX host is the standard the port lane can actually reach;
+the Windows port job's honest target is a failure set inside these
+classes, not zero.
+
 ## One route to name a database, and a directory-fsync that never held on Windows, 2026-10-06
 
 Run `37385370187`'s Windows port job measured the noise floor at **902
