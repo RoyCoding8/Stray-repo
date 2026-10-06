@@ -634,3 +634,70 @@ def test_an_unreaped_child_is_never_reported_as_a_zero():
 
 def _alive(pid: int) -> bool:
     return _pid_alive(pid)
+
+
+def test_windows_pid_check_treats_access_denied_as_live(monkeypatch):
+    import ctypes
+    from scripts import run_bounded
+
+    class Function:
+        def __init__(self, callback):
+            self.callback = callback
+            self.argtypes = None
+            self.restype = None
+
+        def __call__(self, *args):
+            return self.callback(*args)
+
+    kernel = type("Kernel", (), {})()
+    kernel.OpenProcess = Function(lambda *_: None)
+    kernel.GetExitCodeProcess = Function(lambda *_: 0)
+    kernel.CloseHandle = Function(lambda *_: 1)
+    monkeypatch.setattr(ctypes, "WinDLL", lambda *a, **k: kernel)
+    monkeypatch.setattr(ctypes, "get_last_error", lambda: 5)
+
+    assert run_bounded._windows_pid_alive(4321) is True
+
+
+def test_windows_pid_check_rejects_invalid_pid_and_probes_exit_status(monkeypatch):
+    import ctypes
+    from scripts import run_bounded
+
+    class Function:
+        def __init__(self, callback):
+            self.callback = callback
+            self.argtypes = None
+            self.restype = None
+
+        def __call__(self, *args):
+            return self.callback(*args)
+
+    errors = {4321: 87, 4322: 1234}
+    kernel = type("Kernel", (), {})()
+    kernel.OpenProcess = Function(lambda _access, _inherit, pid: (
+        errors.__setitem__("last", errors[pid]) or None))
+    kernel.GetExitCodeProcess = Function(
+        lambda _handle, code: setattr(code._obj, "value", 259) or 1)
+    kernel.CloseHandle = Function(lambda *_: 1)
+    monkeypatch.setattr(ctypes, "WinDLL", lambda *a, **k: kernel)
+    monkeypatch.setattr(ctypes, "get_last_error", lambda: errors["last"])
+
+    assert run_bounded._windows_pid_alive(0) is False
+    assert run_bounded._windows_pid_alive(-1) is False
+    assert run_bounded._windows_pid_alive(2**32) is False
+    assert run_bounded._windows_pid_alive(4321) is False
+    assert run_bounded._windows_pid_alive(4322) is True
+
+    def open_live(*_):
+        return 100
+
+    kernel.OpenProcess.callback = open_live
+    assert run_bounded._windows_pid_alive(4323) is True
+    def open_exited(*_):
+        return 100
+    def exited(_handle, code):
+        code._obj.value = 0
+        return 1
+    kernel.OpenProcess.callback = open_exited
+    kernel.GetExitCodeProcess.callback = exited
+    assert run_bounded._windows_pid_alive(4323) is False
