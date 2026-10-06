@@ -348,6 +348,33 @@ def _v1_write_use_policy(repertoire_path: Path, task: dict) -> str:
     return str(out)
 
 
+def _empty_incumbent_repertoire(path: Path, campaign_id: str) -> dict:
+    """Write the explicit identity method used for the empty baseline arm.
+
+    The member is authored baseline code, not an acquired capability. The
+    ordinary use selector must admit it and the ordinary child executor must
+    run it under the campaign allocation; an empty repertoire without a
+    selector remains a refusal.
+    """
+    import hashlib
+    source = ("def incumbent(task, oracle, max_queries=0):\n"
+              "    return {'candidate': task, 'queries': 0}\n")
+    member = {
+        "capability_id": "incumbent",
+        "method_source": source,
+        "entry": "incumbent",
+        "params": {"max_queries": 0},
+        "scope": {},
+        "authored": True,
+        "source_digest": hashlib.sha256(source.encode("utf-8")).hexdigest(),
+    }
+    repertoire = {"campaign_id": campaign_id, "members": [member],
+                  "queries": 0}
+    path.write_text(json.dumps(repertoire, sort_keys=True, indent=2) + "\n",
+                    encoding="utf-8")
+    return repertoire
+
+
 def _v1_control_arm(repertoires_dir: Path) -> dict:
     """Write the authored control arm's repertoire and its selector.
 
@@ -516,11 +543,9 @@ def run_study(dsn: str, out: Path, agenda_authorized: int,
     (out / "use_records.json").write_text(json.dumps(
         use_records, sort_keys=True, indent=1, default=str) + "\n")
     empty_path = repertoires_dir / "empty.json"
-    empty_path.write_text(json.dumps(
-        {"campaign_id": "inv01-study-empty", "members": [],
-         "queries": 0}) + "\n")
     empty_tasks = _use_tasks(COMPARISON_WORLDS[0])
     empty_cid = trajectory.campaign_id(COMPARISON_WORLDS[0], "I", 0)
+    _empty_incumbent_repertoire(empty_path, empty_cid)
     empty_records = _fresh_use(
         empty_path, COMPARISON_WORLDS[0], "I", empty_tasks, dsn,
         trajectory._alloc_id(empty_cid))
@@ -542,6 +567,11 @@ def run_study(dsn: str, out: Path, agenda_authorized: int,
         "witness_queries", 0) or 0) for r in use_records)
     totals["witness_queries"] += use_queries
     totals["use_records"] = len(use_records)
+    incumbent_costs = trajectory.cost_union(
+        {"campaign_id": empty_cid, "episodes": []}, empty_records,
+        dsn=dsn)["use"]
+    totals["witness_queries"] += int(
+        incumbent_costs.get("witness_queries", 0) or 0)
     if totals["model_calls"] > 360 or totals[
             "construction_calls"] > 24:
         print("study exceeded aggregate caps: %s" % totals,
@@ -549,7 +579,14 @@ def run_study(dsn: str, out: Path, agenda_authorized: int,
         return 2
     accounting = {"total": totals, "trajectories": trajectories,
                   "measured_from": "durable operation identities"
-                  " plus receipt usage; doubles billed false"}
+                  " plus receipt usage; doubles billed false",
+                  "incumbent_baseline": {
+                      "records": len(empty_records),
+                      "operation_ids": sorted({operation_id
+                          for record in empty_records
+                          for operation_id in record.get(
+                              "operation_ids", [])}),
+                      "costs": incumbent_costs}}
     (out / "accounting.json").write_text(json.dumps(
         accounting, sort_keys=True, indent=1) + "\n")
     manifest = {"pilot": {"calibration_trajectories": 2,

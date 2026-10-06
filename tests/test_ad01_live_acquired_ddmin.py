@@ -29,9 +29,9 @@ the half that differed; calling it distinct would hide the half that did
 not. The gate reports both, and the number a reader wants is how many tasks
 each cause covers.
 
-Nothing here dispatches. The members run out of process in the child
-namespace, which is the same path `control_use` takes, and no store is
-touched.
+Nothing here dispatches a provider. The recorded member bytes run out of
+process under one disposable caller-authorized store, the same executor
+boundary `control_use` takes.
 
 Run: PYTHONPATH=. .venv/bin/pytest tests/test_ad01_live_acquired_ddmin.py -q
 """
@@ -99,14 +99,26 @@ def _control_pick(task_id: str) -> dict:
                 if m["capability_id"] == method_id)
 
 
-def _run(task_id: str, source: str, capability_id: str) -> dict:
+@pytest.fixture(scope="module")
+def execution_store():
+    from execution_authority import execution_store as make_store
+
+    with make_store("ci-ddmin") as store:
+        yield store
+
+
+def _run(task_id: str, source: str, capability_id: str,
+         execution_store: dict, operation_id: str) -> dict:
     from experiments.ad01 import control_arm, method_exec, worlds
 
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
     member = {"capability_id": capability_id, "entry": "ENTRY",
               "method_source": source}
     result = method_exec.run_member_out_of_process(
-        member, task, max_queries=control_arm.BUDGET)
+        member, task, max_queries=control_arm.BUDGET,
+        dsn=execution_store["dsn"],
+        allocation_id=execution_store["allocation_id"],
+        operation_id=operation_id)
     return {"task_id": task_id, "executed": capability_id,
             "executed_source": source, "output": result["candidate"],
             "costs": {"witness_queries": result["queries"]}}
@@ -141,7 +153,7 @@ def test_the_control_picks_a_different_member_per_family():
     assert graph["capability_id"] == "ctl-graph-greedy"
 
 
-def test_the_two_arms_tie_on_software_and_differ_on_graph():
+def test_the_two_arms_tie_on_software_and_differ_on_graph(execution_store):
     """One cause on each task, and they are different causes.
 
     Software ties because the two arms ran one strategy. Graph differs
@@ -154,11 +166,15 @@ def test_the_two_arms_tie_on_software_and_differ_on_graph():
     software_control = _control_pick(SOFTWARE_TASK)
     graph_control = _control_pick(GRAPH_TASK)
     sw = _run(SOFTWARE_TASK, software_control["method_source"],
-              software_control["capability_id"])
+              software_control["capability_id"], execution_store,
+              "comparison-sw-control")
     gr = _run(GRAPH_TASK, graph_control["method_source"],
-              graph_control["capability_id"])
-    sw_acq = _run(SOFTWARE_TASK, ACQUIRED[SOFTWARE_TASK], "acquired-sw")
-    gr_acq = _run(GRAPH_TASK, ACQUIRED[GRAPH_TASK], "acquired-gr")
+              graph_control["capability_id"], execution_store,
+              "comparison-gr-control")
+    sw_acq = _run(SOFTWARE_TASK, ACQUIRED[SOFTWARE_TASK], "acquired-sw",
+                  execution_store, "comparison-sw-acquired")
+    gr_acq = _run(GRAPH_TASK, ACQUIRED[GRAPH_TASK], "acquired-gr",
+                  execution_store, "comparison-gr-acquired")
 
     def size(row):
         out = row["output"]
@@ -173,7 +189,8 @@ def test_the_two_arms_tie_on_software_and_differ_on_graph():
     assert control_arm.BUDGET == 4
 
 
-def test_the_gate_refuses_and_names_every_cause_rather_than_one():
+def test_the_gate_refuses_and_names_every_cause_rather_than_one(
+        execution_store):
     """A refusal that collapses three causes into one sentence is the defect.
 
     `control_distinct` returns one boolean and up to nine named lists. The
@@ -187,8 +204,10 @@ def test_the_gate_refuses_and_names_every_cause_rather_than_one():
     for task_id, source in ACQUIRED.items():
         picked = _control_pick(task_id)
         control.append(_run(task_id, picked["method_source"],
-                            picked["capability_id"]))
-        acquired.append(_run(task_id, source, "acquired"))
+                            picked["capability_id"], execution_store,
+                            "gate-control-%s" % task_id))
+        acquired.append(_run(task_id, source, "acquired", execution_store,
+                             "gate-acquired-%s" % task_id))
 
     verdict = control_distinctness.control_distinct(control, acquired)
 
