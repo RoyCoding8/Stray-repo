@@ -4,6 +4,11 @@ This is the mental model, not another task diary. The [project ledger](../../rep
 
 General autonomous discovery remains the goal. Memory, background development, teams and executable skills are candidate mechanisms. Their value is what they enable the system to learn and do; more machinery alone is not progress.
 
+The 2026-10-01 consolidation batch and subsequent repairs supplied useful
+mechanisms. The 2026-10-06 review keeps their utility, transfer and acquired
+learner-benefit claims unmeasured. Current CI repair is foundation verification;
+it does not close production ownership or either stage 9/10.
+
 | Stage | Question or deliverable | Status |
 |---|---|---|
 | 1. Philosophy | Purpose, generality, growth and relationship to the human | Baseline selected; revisable |

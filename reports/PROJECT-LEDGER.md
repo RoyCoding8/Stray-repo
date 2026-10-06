@@ -1,5 +1,31 @@
 # Project ledger
 
+## CI repair and archive checkpoint, 2026-10-06 — active
+
+The consolidation batch's CI is genuinely red. The current repair separates
+production defects from stale test contracts and unsupported platform cases;
+it does not advance stages 9/10 or establish learning. GPT-6 Luna lanes own
+durable execution, portable contracts, and platform/harness repairs.
+
+Verified root gates: 61 passed in the evidence/forensics/database-name group;
+57 passed and 48 explicit database skips in the portable census/store group.
+These are separate runs, not a full-suite result. PostgreSQL's existing local
+cluster is recovering; no service restart or historical-store mutation was made.
+CI run 37514432586 at 82a8fd10 remains the pre-repair baseline, with the first
+database shard failing. Integrated database and full CI qualification are pending.
+
+The existing 45 untracked supersession records were verified against their
+committed artifact bytes and included unchanged. JSON checkout attributes now
+preserve those bytes across platforms; no historical artifact was rewritten.
+Unavailable historical Git references remain unknown, not an intactness proof.
+
+Diagnostics and snapshots were archived outside Git at
+`D:/AI/Agent-Society-archives/2026-10-06/diagnostics-and-snapshots.zip`:
+44 source roots, 5,707 files, 157,137,456 source bytes. The manifest records
+each file's size/SHA256 and the archive checksum. Source-to-archive verification
+passed. Automatic approval review blocked removal; the sources remain.
+VKit is a separate project and was not accessed.
+
 ## Researcher review: ownership and evidence boundaries, 2026-10-06
 
 Reviewed local codex/agent-society at e8e7911e, including the six-part
