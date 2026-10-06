@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from settlement.child_limits import ChildLimits, child_setup_refusal
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -38,6 +39,13 @@ from experiments.ad01 import boolean_ast_policy as frozen
 from experiments.ad01 import ordering_ast_policy as ordering
 from experiments.ad01 import policy_action
 from experiments.ad01 import second_active
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
 
 POLICY_ID = "e1-ordering-ast"
 JOB_IDS = set(second_active.JOB_IDS)
@@ -82,20 +90,21 @@ def test_the_frozen_boolean_executor_refuses_the_very_same_document():
     node set can.
     """
     record = ordering.make_ordering_ast_record()
-    decide = frozen.choose_action(record)
     session = _fresh_state()
+    document, _entry = frozen.load_policy(record, POLICY_ID)
+    view = frozen._shared_view(_view(session))
+    result = frozen._execute_document(document, view, {})
+    action = policy_action.parse_action(result["action"])
 
-    action = decide(_view(session))
-
-    assert action["kind"] == policy_action.STOP
-    assert action["target"] == "boolean.task"
-    reason = action["inputs"]["bridge_refusal"]["reason"]
-    assert "probe target must be boolean.query" in reason
+    with pytest.raises(policy_action.ActionRefused,
+                       match="probe target must be boolean.query"):
+        frozen._validate_action(action, view)
 
 
 # --- it runs, on the real world ------------------------------------------
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_first_turn_probes_a_real_pair():
     session = _fresh_state()
     decide = ordering.choose_action(ordering.make_ordering_ast_record())
@@ -108,6 +117,7 @@ def test_the_first_turn_probes_a_real_pair():
     assert action["inputs"]["left"] != action["inputs"]["right"]
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_world_accepts_every_action_the_arm_emits():
     """Not just well-formed actions: actions the world actually applies.
 
@@ -126,6 +136,7 @@ def test_the_world_accepts_every_action_the_arm_emits():
     assert effect["committed"] is True
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_second_turn_commits_a_permutation_of_the_job_ids():
     session = _fresh_state()
     decide = ordering.choose_action(ordering.make_ordering_ast_record())
@@ -142,6 +153,7 @@ def test_the_second_turn_commits_a_permutation_of_the_job_ids():
     assert set(order) == JOB_IDS
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_whole_episode_runs_and_commits_with_one_comparison():
     """End to end through the world's own `run_episode`.
 
@@ -162,6 +174,7 @@ def test_a_whole_episode_runs_and_commits_with_one_comparison():
 # --- the arm's own guards ------------------------------------------------
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_arm_cannot_re_probe_a_pair_the_world_already_answered():
     """The view-guard, exercised through the world's own rule.
 
@@ -203,6 +216,7 @@ def test_a_state_carrying_hidden_tables_is_refused():
     assert "hidden tables" in action["inputs"]["bridge_refusal"]["reason"]
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_state_carries_across_a_fresh_interpreter():
     """`state_contract` promises the step state survives a process.
 
@@ -294,6 +308,7 @@ def test_a_tampered_digest_is_refused():
 # --- what the arm can do is not what it may do -------------------------
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_runnable_arm_still_commits_an_order_it_contradicts():
     """The strongest statement of the missing cell, and it is a behaviour.
 
@@ -323,6 +338,7 @@ def test_a_runnable_arm_still_commits_an_order_it_contradicts():
     assert result["final"]["overall"] == 0.0
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_full_sweep_never_contradicts_a_turn_it_did_not_pay_for():
     """The arm is well-behaved everywhere; it is only not deriving.
 

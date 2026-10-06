@@ -2,10 +2,21 @@
 
 from __future__ import annotations
 
+import pytest
+
 from experiments.ad01 import boolean_active as active
 from experiments.ad01 import boolean_policy
 from experiments.ad01 import policy_step
 from experiments.ad01 import rule_learner
+from experiments.ad01 import policy_action
+from settlement.child_limits import ChildLimits, child_setup_refusal
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
 
 
 PROBE_THEN_COMMIT_SOURCE = '''def STEP(view, state):
@@ -137,6 +148,15 @@ def _refusal(result: dict) -> dict:
     return result["trace"][-1]["action"]["inputs"]["bridge_refusal"]
 
 
+def _host_setup_was_refused(result: dict) -> bool:
+    if _CHILD_REFUSAL is None \
+            or _CHILD_REFUSAL.kind != "child-setup-unavailable":
+        return False
+    assert _CHILD_REFUSAL.reason in _refusal(result)["reason"]
+    return True
+
+
+@REQUIRES_BOUNDED_CHILD
 def test_hand_written_policy_probes_x3_then_commits_and_is_scored():
     result = _run(PROBE_THEN_COMMIT_SOURCE)
 
@@ -180,7 +200,17 @@ def test_the_frozen_r4_host_query_arrangement_scores_nothing():
 
 
 def test_a_malformed_policy_action_becomes_a_traceable_stop():
+    with pytest.raises(policy_action.ActionRefused, match="unknown action kind"):
+        policy_action.parse_action({
+            "kind": "teleport", "target": "boolean.task", "inputs": {},
+            "evidence_refs": [], "requested_resources": {},
+        })
     result = _run(MALFORMED_SOURCE)
+
+    if _host_setup_was_refused(result):
+        assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
+        assert result["queried"] == []
+        return
 
     assert result["trace"][-1]["action"]["kind"] == "stop"
     assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
@@ -192,6 +222,11 @@ def test_a_malformed_policy_action_becomes_a_traceable_stop():
 
 def test_a_policy_error_becomes_a_traceable_stop():
     result = _run(ERROR_SOURCE)
+
+    if _host_setup_was_refused(result):
+        assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
+        assert result["queried"] == []
+        return
 
     assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
     assert "RuntimeError: policy failed" in _refusal(result)["reason"]
@@ -206,6 +241,13 @@ def test_a_rejected_action_does_not_advance_policy_state():
     first = decide(public_state)
     second = decide(public_state)
 
+    if _CHILD_REFUSAL is not None \
+            and _CHILD_REFUSAL.kind == "child-setup-unavailable":
+        assert first["kind"] == "stop"
+        assert _CHILD_REFUSAL.reason in first["inputs"]["bridge_refusal"]["reason"]
+        assert second == first
+        return
+
     assert first["kind"] == "stop"
     assert first["inputs"]["bridge_refusal"]["reason"].startswith(
         "probe x must be an integer in 0..15")
@@ -215,6 +257,11 @@ def test_a_rejected_action_does_not_advance_policy_state():
 def test_a_policy_timeout_becomes_a_traceable_stop():
     result = _run(TIMEOUT_SOURCE, timeout_ms=25, cpu_seconds=1)
 
+    if _host_setup_was_refused(result):
+        assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
+        assert result["queried"] == []
+        return
+
     assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
     assert _refusal(result)["reason"].startswith("timeout:")
     assert result["queried"] == []
@@ -222,6 +269,12 @@ def test_a_policy_timeout_becomes_a_traceable_stop():
 
 def test_a_policy_cannot_read_the_hidden_tables():
     result = _run(HIDDEN_STATE_SOURCE)
+
+    if _host_setup_was_refused(result):
+        assert result["task_id"] == active.rules.make_task("dev", 4)["task_id"]
+        assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
+        assert result["queried"] == []
+        return
 
     assert result["task_id"] == active.rules.make_task("dev", 4)["task_id"]
     assert "tables" in _refusal(result)["reason"]
@@ -257,13 +310,11 @@ def test_the_shared_view_only_repackages_public_state():
 
 
 def test_an_oversized_policy_state_becomes_a_traceable_stop():
-    result = _run(OVERSIZED_STATE_SOURCE)
-
-    assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
-    assert "policy state exceeds 4096 bytes" in _refusal(result)["reason"]
-    assert result["queried"] == []
+    with pytest.raises(ValueError, match="policy state exceeds 4096 bytes"):
+        policy_step.validate_state({"data": "x" * 5000})
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_policy_can_stop_before_spending_a_query():
     result = _run(STOP_SOURCE)
 

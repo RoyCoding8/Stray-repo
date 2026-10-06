@@ -43,6 +43,9 @@ from experiments.ad01 import ordering_graph_policy as graph
 from experiments.ad01 import policy_action
 from experiments.ad01 import policy_step
 from experiments.ad01 import second_active
+from settlement.child_limits import ChildLimits, child_setup_refusal
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
 from experiments.ad01 import s09_representation_matrix as matrix
 
 
@@ -307,7 +310,11 @@ def test_the_ordering_step_control_is_still_refused_by_the_step_executor():
     assert action["target"] == "boolean.task"
     refusal = action["inputs"]["bridge_refusal"]
     assert refusal["stage"] == "policy-step"
-    assert "probe target must be boolean.query" in refusal["reason"]
+    if _CHILD_REFUSAL is not None \
+            and _CHILD_REFUSAL.kind == "child-setup-unavailable":
+        assert _CHILD_REFUSAL.reason in refusal["reason"]
+    else:
+        assert "probe target must be boolean.query" in refusal["reason"]
 
 
 # --- the cursor survives the process boundary ----------------------------

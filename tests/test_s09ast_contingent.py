@@ -19,11 +19,19 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 import pytest
+from settlement.child_limits import ChildLimits, child_setup_refusal
 
 from experiments.ad01 import boolean_active as active
 from experiments.ad01 import boolean_ast_policy as ast_policy
 from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import policy_action
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
 
 SEEDS = tuple(range(8))
 
@@ -145,6 +153,7 @@ def _contingent_document():
     }}
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_suite_separates_a_fixed_schedule_from_a_reader():
     fixed = _episode(_fixed_schedule_document())
     contingent = _episode(_contingent_document())
@@ -154,6 +163,7 @@ def test_the_suite_separates_a_fixed_schedule_from_a_reader():
     assert _is_contingent(contingent)
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_fixed_schedule_produces_the_same_action_for_every_world():
     fixed = _episode(_fixed_schedule_document())
 
@@ -165,6 +175,7 @@ def test_a_fixed_schedule_produces_the_same_action_for_every_world():
                for episode in fixed.values())
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_reader_commits_a_different_predictor_for_a_different_observation():
     episodes = _episode(_contingent_document())
 
@@ -176,6 +187,7 @@ def test_a_reader_commits_a_different_predictor_for_a_different_observation():
         assert committed[seed] == tuple(observed), seed
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_substituting_the_observation_changes_the_actual_effect():
     """A different effect, not just a different recorded action.
 
@@ -202,6 +214,7 @@ def test_substituting_the_observation_changes_the_actual_effect():
         assert _truth(episode) != _truth(episodes[others[0]]), seed
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_reader_needs_no_memory_across_steps_to_stay_contingent():
     """The view alone carries what the policy branches on.
 
@@ -237,6 +250,7 @@ def test_a_reader_needs_no_memory_across_steps_to_stay_contingent():
 
 
 @pytest.mark.parametrize("seed", SEEDS)
+@REQUIRES_BOUNDED_CHILD
 def test_every_admitted_action_came_from_the_typed_program(seed):
     """No hidden path from the document to the world.
 

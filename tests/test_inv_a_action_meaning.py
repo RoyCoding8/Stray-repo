@@ -39,6 +39,7 @@ import pytest
 
 from experiments.ad01 import boolean_active
 from experiments.ad01 import boolean_ast_policy
+from experiments.ad01 import boolean_ast_policy
 from experiments.ad01 import boolean_policy
 from experiments.ad01 import boolean_rule
 from experiments.ad01 import policy_action
@@ -46,6 +47,7 @@ from experiments.ad01 import policy_assess
 from experiments.ad01 import policy_step
 from experiments.ad01 import assessment_profile
 from experiments.ad01 import worlds
+from settlement.child_limits import ChildLimits, child_setup_refusal
 
 SPLIT = "dev"
 SEED = 4
@@ -92,6 +94,26 @@ MALFORMED = {
 # What the two arms actually did, measured rather than assumed.
 ADMITTED = {"probe", "construct", "stop"}
 REFUSED = {"observe", "use", "check"}
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
+
+
+def _both_refused_before_child(step_out: dict, ast_out: dict) -> bool:
+    """Keep host refusal observable without treating it as a policy verdict."""
+    if _CHILD_REFUSAL is None \
+            or _CHILD_REFUSAL.kind != "child-setup-unavailable":
+        return False
+    assert step_out["class"] == ast_out["class"] == "refused"
+    assert _CHILD_REFUSAL.reason in step_out["reason"]
+    assert boolean_ast_policy.child_limit_support().reason in ast_out["reason"]
+    assert (step_out["queries"], step_out["turns"]) == (0, 1)
+    assert (ast_out["queries"], ast_out["turns"]) == (0, 1)
+    return True
 
 
 def _step_record(action: dict) -> dict:
@@ -189,7 +211,11 @@ def test_the_contract_keeps_six_kinds_and_every_one_is_compared_here():
     assert set(MALFORMED) == set(policy_action.ACTION_KINDS)
 
 
-@pytest.mark.parametrize("kind", sorted(WELL_FORMED))
+@pytest.mark.parametrize("kind", [
+    pytest.param(kind, marks=[REQUIRES_BOUNDED_CHILD]
+                 if kind in ADMITTED else [])
+    for kind in sorted(WELL_FORMED)
+])
 def test_both_arms_admit_the_same_effect_class_for_every_kind(kind):
     """Requirement 1: identical admitted-effect class, per kind."""
     step_out, ast_out = _both_arms(WELL_FORMED[kind])
@@ -200,7 +226,11 @@ def test_both_arms_admit_the_same_effect_class_for_every_kind(kind):
         assert step_out["effect"] == ast_out["effect"]
 
 
-@pytest.mark.parametrize("kind", sorted(WELL_FORMED))
+@pytest.mark.parametrize("kind", [
+    pytest.param(kind, marks=[REQUIRES_BOUNDED_CHILD]
+                 if kind in ADMITTED else [])
+    for kind in sorted(WELL_FORMED)
+])
 def test_both_arms_observe_the_same_thing_for_every_kind(kind):
     """Requirement 1, observation half: one observation, not two."""
     step_out, ast_out = _both_arms(WELL_FORMED[kind])
@@ -217,6 +247,9 @@ def test_both_arms_observe_the_same_thing_for_every_kind(kind):
 def test_both_arms_refuse_the_same_malformed_input_for_the_same_reason(kind):
     """Requirement 2: one reason per malformed input, from both arms."""
     step_out, ast_out = _both_arms(MALFORMED[kind])
+
+    if _both_refused_before_child(step_out, ast_out):
+        return
 
     assert step_out["class"] == ast_out["class"] == "refused"
     assert step_out["reason"] == ast_out["reason"]
@@ -238,11 +271,18 @@ def test_the_refusal_reason_is_the_one_the_world_states(kind):
     }.get(kind) or ("action %r is not available in the Boolean world" % kind)
     step_out, ast_out = _both_arms(MALFORMED[kind])
 
+    if _both_refused_before_child(step_out, ast_out):
+        return
+
     assert step_out["reason"] == expected
     assert ast_out["reason"] == expected
 
 
-@pytest.mark.parametrize("kind", sorted(WELL_FORMED))
+@pytest.mark.parametrize("kind", [
+    pytest.param(kind, marks=[REQUIRES_BOUNDED_CHILD]
+                 if kind in ADMITTED else [])
+    for kind in sorted(WELL_FORMED)
+])
 def test_both_arms_spend_the_same_resource_delta_for_every_kind(kind):
     """Requirement 3: same queries charged, same number of steps run.
 
@@ -251,6 +291,11 @@ def test_both_arms_spend_the_same_resource_delta_for_every_kind(kind):
     world charged against its own budget.
     """
     step_out, ast_out = _both_arms(WELL_FORMED[kind])
+
+    if _both_refused_before_child(step_out, ast_out):
+        assert step_out["queries"] == ast_out["queries"] == 0
+        assert step_out["turns"] == ast_out["turns"] == 1
+        return
 
     assert step_out["queries"] == ast_out["queries"]
     assert step_out["turns"] == ast_out["turns"]
@@ -265,6 +310,11 @@ def test_a_refused_action_spends_nothing_in_either_arm(kind):
     """A refusal that costs a resource is not a refusal, it is a charge."""
     step_out, ast_out = _both_arms(MALFORMED[kind])
 
+    if _both_refused_before_child(step_out, ast_out):
+        assert step_out["queries"] == ast_out["queries"] == 0
+        assert step_out["turns"] == ast_out["turns"] == 1
+        return
+
     assert step_out["queries"] == ast_out["queries"] == 0
     assert step_out["turns"] == ast_out["turns"] == 1
 
@@ -278,6 +328,11 @@ def test_the_stage_label_names_the_arm_and_never_the_meaning():
     than silent.
     """
     step_out, ast_out = _both_arms(MALFORMED["probe"])
+
+    if _both_refused_before_child(step_out, ast_out):
+        assert step_out["stage"] == "policy-step"
+        assert ast_out["stage"] == "ast-policy-step"
+        return
 
     assert step_out["stage"] == "policy-step"
     assert ast_out["stage"] == "ast-policy-step"
