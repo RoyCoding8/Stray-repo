@@ -27,3 +27,6 @@ experiments/representation/acquire/** text eol=lf
 **/manifest.json text eol=lf
 **/manifest.sha256 text eol=lf
 experiments/team01/** text eol=lf
+
+# JSON evidence is hashed as bytes. Preserve each committed blob on every OS.
+*.json -text

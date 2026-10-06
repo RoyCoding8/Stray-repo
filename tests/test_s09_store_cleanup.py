@@ -448,12 +448,12 @@ def test_c_the_study_admission_path_callers_are_known(root_name):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         except SyntaxError:
-            offenders.append(str(path.relative_to(ROOT)))
+            offenders.append(path.relative_to(ROOT).as_posix())
             continue
         called = {node.attr for node in ast.walk(tree)
                   if isinstance(node, ast.Attribute)}
         if "admit_study_call" in called or "admit_study_operation" in called:
-            offenders.append(str(path.relative_to(ROOT)))
+            offenders.append(path.relative_to(ROOT).as_posix())
     assert set(offenders) == STUDY_PATH_CALLERS[root_name], (
         f"the set of production callers of the study-call path under {root_name}/ "
         f"changed. The LIKE fallback is a live second source of truth for each "
@@ -782,7 +782,7 @@ def test_c_admit_study_operation_still_exists_because_tests_cannot_be_edited():
         "removed, but tests/test_store_authority_invariants.py:487 calls it "
         "directly and 4 more tests monkeypatch it; those 12 failures have to "
         "be fixed by the owning lane first")
-    invariants = (ROOT / "tests" / "test_store_authority_invariants.py") \
+    invariants = (ROOT / "tests" / "_heavy_archived" / "test_store_authority_invariants.py") \
         .read_text(encoding="utf-8")
     assert "store.admit_study_operation(" in invariants, (
         "the direct call went away, so the function can be deleted after all; "

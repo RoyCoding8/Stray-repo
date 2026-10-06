@@ -1915,7 +1915,7 @@ def write_evidence(result: MatrixResult, out_dir: str) -> dict:
     """Write the machine-readable evidence and return what was written."""
     os.makedirs(out_dir, exist_ok=True)
     json_path = os.path.join(out_dir, "matrix.json")
-    with open(json_path, "w", encoding="utf-8") as handle:
+    with open(json_path, "w", encoding="utf-8", newline="\n") as handle:
         json.dump(result_payload(result), handle, indent=2, sort_keys=True)
         handle.write("\n")
     return {"json": json_path, "dir": out_dir}

@@ -234,8 +234,11 @@ def test_ledger_exposure_carries_both_reservations():
     assert all(e["in_ledger"] for e in exposure["entries"])
 
 
-def test_db_survey_reports_what_is_actually_there():
-    survey = forensics.db_survey()
+def test_db_survey_reports_only_the_supplied_probe_rows():
+    probe = {"database": "fixture", "has_operations": True,
+             "earliest": "2100-01-01T00:00:00+00:00", "prefix_count": 2,
+             "prefix_models": [DOUBLE_MODEL], "construction": ""}
+    survey = forensics.db_survey([probe])
 
     assert survey["databases_with_operations_table"] > 0
     assert survey["read_only"] is True
@@ -247,7 +250,8 @@ def test_db_survey_reports_what_is_actually_there():
                                        survey["bundle_written_at"])
 
 
-def test_no_store_predating_the_bundle_admitted_this_campaign_live():
+def test_no_store_predating_the_bundle_admitted_this_campaign_live(monkeypatch):
+    monkeypatch.setattr(forensics, "_probe_all", lambda: [])
     admission = forensics.model_admission_evidence()
     survey = forensics.db_survey()
 
@@ -257,10 +261,19 @@ def test_no_store_predating_the_bundle_admitted_this_campaign_live():
         assert row["operation_id"] != INIT_OPERATION
 
 
-def test_verdict_is_join_defect_confirmed_with_the_store_absent():
+def test_verdict_is_join_defect_confirmed_with_the_store_absent(monkeypatch):
+    monkeypatch.setattr(forensics, "_probe_all", lambda: [])
     result = forensics.verdict()
 
     assert result["outcome"] == forensics.JOIN_DEFECT_CONFIRMED
     assert len(result["reasons"]) == 6
     assert "dsn" in result["unprovable_from_surviving_artifacts"]
     assert "inferred" in result["double_then_live_collision"]
+
+
+def test_an_empty_survey_reports_no_operations_not_a_live_pass():
+    survey = forensics.db_survey([])
+    assert survey["databases_total"] == 0
+    assert survey["databases_with_operations_table"] == 0
+    assert survey["prefix_hits"] == []
+    assert survey["bundle_init_operation_found_in_any_database"] is False

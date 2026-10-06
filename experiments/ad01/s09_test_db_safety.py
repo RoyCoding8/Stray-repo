@@ -46,8 +46,11 @@ def _literal_names(tree: ast.AST) -> set[str]:
     literal never appears on the destructive line. Reading the literals from
     the whole tree rather than the line is what finds that.
     """
+    fragments = {id(part) for node in ast.walk(tree)
+                 if isinstance(node, ast.JoinedStr) for part in node.values}
     return {node.value for node in ast.walk(tree)
             if isinstance(node, ast.Constant) and isinstance(node.value, str)
+            and id(node) not in fragments
             and DB_NAME_PATTERN.fullmatch(node.value)}
 
 

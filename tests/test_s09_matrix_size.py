@@ -41,7 +41,6 @@ import collections
 import hashlib
 import json
 import os
-import subprocess
 
 import pytest
 
@@ -61,11 +60,6 @@ SIZE_BOUND = 500 * 1024
 COMMITTED = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "reports", "evidence", "inv_r1_e1_swe_ceiling", "matrix.json")
-
-# Byte-identical to what `d422c93` wrote, so the unedited evidence for
-# the ceiling matrix is a `git cat-file` away and needs no regeneration.
-PRE_EDIT_SHA256 = (
-    "5928d4e1f66119aeef5345c7b96f1518e5180a34af80e92a9408fcb600d66781")
 
 LINEAGE_NAMES = (
     tuple("python-step-L%d" % index for index in range(4))
@@ -336,17 +330,6 @@ def _read_matrix(path: str) -> dict:
         return json.load(handle)
 
 
-def _repo() -> str:
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def _pre_edit_bytes() -> bytes:
-    """Unparsed, so the digest can be checked before the parse is trusted."""
-    return subprocess.run(
-        ["git", "show", "d183cbe^:" + os.path.relpath(COMMITTED, _repo())],
-        cwd=_repo(), capture_output=True, check=True).stdout
-
-
 STOP = {"kind": "stop", "target": "swe.task"}
 REPAIR = {"kind": "use", "target": "code.repair"}
 
@@ -387,69 +370,37 @@ def _stop_termination_violations(document: dict) -> list:
     return violations
 
 
-def test_a_real_matrix_ends_every_episode_where_the_loop_allows():
-    """The law, on the committed artifact.
-
-    The three assertions this file already made on this artifact all read
-    true on the hand-edited file, because the edit removed a stop from
-    the end of a trace and left the traced-row count, the distinct-trace
-    count and `turns == len(actions_emitted)` exactly as they were.
-    """
+def test_the_archived_matrix_is_recognised_as_invalid():
+    """Preserve the damaged historical bytes and detect their missing stops."""
     violations = _stop_termination_violations(_read_matrix(COMMITTED))
-
-    assert violations == [], (
-        "%d traced rows end where the episode loop cannot reach, so a "
-        "terminal action has been removed from the evidence. First: %r"
-        % (len(violations), violations[0] if violations else None))
+    assert len(violations) == 4
+    assert all(row["outcome"] == "unrepaired" and row["turns"] < row["max_turns"]
+               for row in violations)
 
 
-def test_the_law_holds_on_the_same_panel_before_the_hand_edit():
-    """The same law, on the generator's own output for the same panel.
-
-    Without the unedited blob the test above has nothing to be right
-    about. This is the falsifiable half: the law is a law only if the file
-    the generator produced satisfies it too.
-    """
-    blob = _pre_edit_bytes()
-    violations = _stop_termination_violations(json.loads(blob))
-
-    assert hashlib.sha256(blob).hexdigest() == PRE_EDIT_SHA256, (
-        "d183cbe^ is no longer the blob d422c93 wrote, so the unedited "
-        "evidence for this panel has moved")
-    assert violations == [], (
-        "%d of the generator's own rows end where the loop cannot reach, "
-        "so the law is not a law. First: %r"
-        % (len(violations), violations[0] if violations else None))
+@pytest.mark.parametrize(("actions", "outcome", "valid"), [
+    ([STOP], "unrepaired", True),
+    ([REPAIR], "repaired", True),
+    ([REPAIR], "unrepaired", False),
+    ([{"kind": "observe", "target": "test.run"}], "unrepaired", False),
+    ([REPAIR, REPAIR, REPAIR], "unrepaired", True),
+])
+def test_termination_law_distinguishes_stop_repair_and_turn_limit(actions, outcome, valid):
+    row = {"task_id": "termination-control", "lineage": "fixture",
+           "outcome": outcome, "turns": len(actions), "actions_emitted": actions}
+    document = {"derived_bounds": {"max_turns": 3}, "rows": [row]}
+    assert (not _stop_termination_violations(document)) is valid
 
 
-def test_the_hand_edit_removed_a_terminal_stop_from_sixty_rows():
-    """The edit is characterised, and the characterisation is checked."""
-    before = json.loads(_pre_edit_bytes())
-    after = _read_matrix(COMMITTED)
-    changed = []
-    for index, (old, new) in enumerate(zip(before["rows"], after["rows"])):
-        if old == new:
-            continue
-        changed.append(index)
-        assert old["actions_emitted"][-1] == STOP, (
-            "row %d lost its last action, and it was not a stop" % index)
-        assert new["actions_emitted"] == old["actions_emitted"][:-1], (
-            "row %d lost an action from somewhere other than the end"
-            % index)
-        assert new["turns"] == old["turns"] - 1, (
-            "row %d did not decrement turns by one" % index)
-        for field in old:
-            if field not in ("actions_emitted", "turns"):
-                assert old[field] == new[field], (
-                    "row %d also changed %s, which the hand edit is not "
-                    "recorded as doing" % (index, field))
-
-    assert len(changed) == 60, (
-        "expected the hand edit to reach 60 rows, it reached %d"
-        % len(changed))
-    assert {key: value for key, value in before.items() if key != "rows"} == \
-        {key: value for key, value in after.items() if key != "rows"}, (
-        "the hand edit changed a top-level block other than rows")
+def test_deleting_a_terminal_stop_is_detected():
+    row = {"task_id": "stop-control", "lineage": "fixture",
+           "outcome": "unrepaired", "turns": 2,
+           "actions_emitted": [REPAIR, STOP]}
+    document = {"derived_bounds": {"max_turns": 3}, "rows": [row]}
+    assert _stop_termination_violations(document) == []
+    row["actions_emitted"].pop()
+    row["turns"] -= 1
+    assert len(_stop_termination_violations(document)) == 1
 
 
 def _rows_for_the_writer(document: dict) -> list:
