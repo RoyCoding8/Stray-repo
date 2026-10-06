@@ -201,10 +201,12 @@ def test_the_reader_census_is_not_vacuous_inside_a_lane_worktree():
 
     hits = _reader_census(canonical, ROOT)
 
-    assert hits == ["%s:1101" % KNOWN_READER], (
+    assert [hit.rsplit(":", 1)[0] for hit in hits] == [KNOWN_READER], (
         "the reader census returned %r from inside a checkout. An empty list "
         "here is the defect Z2-01 named, and a longer one means a second "
         "reader exists that nothing has recorded." % (hits,))
+    number = int(hits[0].rsplit(":", 1)[1])
+    assert DEAD in (canonical / KNOWN_READER).read_text(encoding="utf-8").splitlines()[number - 1]
 
 
 def test_the_census_scans_the_repository_rather_than_the_directory_it_lives_in():

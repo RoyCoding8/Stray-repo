@@ -4,6 +4,14 @@ Scope: Agent-Society-related folders under D:/AI, not a whole-disk audit.
 Sizes are rounded MiB of file contents. Reparse points were not traversed.
 The canonical source inspected was codex/agent-society at e8e7911e.
 
+Archive update: 44 diagnostic/snapshot source roots are preserved in
+`D:/AI/Agent-Society-archives/2026-10-06/diagnostics-and-snapshots.zip`, with a
+verified per-file manifest beside it (5,707 files, 157,137,456 source bytes).
+Automatic approval review blocked deletion, so the source folders listed
+below still exist. VKit is separate and is outside this task's scope.
+Three temporary `ci-*` worktrees are active for the CI repair; remove them
+through Git after their work is integrated or safely retained.
+
 ## Keep
 
 | Absolute path | Size | Why |
