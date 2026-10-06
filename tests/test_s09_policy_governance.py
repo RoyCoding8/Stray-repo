@@ -283,7 +283,9 @@ def test_an_episode_refuses_when_the_host_cannot_install_child_setup():
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
     with pytest.raises(gov.GovernanceRefused) as refused:
-        gov.run_episode(policy, TASK_ID)
+        gov.run_episode(policy, TASK_ID, dsn="test-store",
+                        allocation_id="test-allocation",
+                        operation_id="host-refusal")
 
     assert refused.value.stage == gov.REFUSAL_NO_STEP
     assert "child-setup-unavailable" in refused.value.reason
