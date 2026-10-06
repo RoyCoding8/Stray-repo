@@ -39,10 +39,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from scripts.run_bounded import SLOW_FILES, SummaryScanner
+from scripts.run_bounded import SLOW_FILES, SummaryScanner, _pid_alive
 
 TOOL = ROOT / "scripts" / "run_bounded.py"
-PY = str(ROOT / ".venv" / "bin" / "python")
+PY = sys.executable
+TOOL_PY = getattr(sys, "_base_executable", PY)
 
 # The real header of a real pytest run on this repo, taken from an actual run
 # rather than written from memory. The word `passed` is not in it. The plugin
@@ -75,7 +76,7 @@ REAL_PYTEST_SUMMARY = \
 
 def _run(*args, timeout: float = 120.0) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [PY, str(TOOL), *args], capture_output=True, text=True,
+        [TOOL_PY, str(TOOL), *args], capture_output=True, text=True,
         timeout=timeout, cwd=str(ROOT))
 
 
@@ -140,6 +141,8 @@ def test_a_bound_that_is_reached_reports_a_timeout_and_not_a_pass(tmp_path):
     assert not _alive(pid), "the child outlived the bound"
 
 
+@pytest.mark.skipif(os.name == "nt",
+                    reason="whole-process-group termination requires POSIX killpg")
 def test_the_timeout_kills_the_whole_process_group_not_just_the_child(tmp_path):
     """A grandchild the child spawned must die too.
 
@@ -176,7 +179,7 @@ def test_the_timeout_kills_the_whole_process_group_not_just_the_child(tmp_path):
     # the difference observable: a group kill has to stop it, and nothing
     # else here will.
     holder = subprocess.Popen(
-        [PY, str(TOOL), "--timeout", "8", "--kill-grace", "1", "--",
+        [TOOL_PY, str(TOOL), "--timeout", "8", "--kill-grace", "1", "--",
          PY, "-c", child],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         cwd=str(ROOT))
@@ -452,7 +455,7 @@ def test_the_claim_about_the_swe_file_is_pinned_to_its_own_bytes():
 
 def test_a_second_runner_on_a_held_slot_is_refused(tmp_path):
     holder = subprocess.Popen(
-        [PY, str(TOOL), "--timeout", "60", "--slot", "demo", "--slot-dir",
+        [TOOL_PY, str(TOOL), "--timeout", "60", "--slot", "demo", "--slot-dir",
          str(tmp_path), "--", PY, "-c", "import time; time.sleep(30)"],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         cwd=str(ROOT))
@@ -630,10 +633,4 @@ def test_an_unreaped_child_is_never_reported_as_a_zero():
 
 
 def _alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except (ProcessLookupError, ValueError):
-        return False
-    except PermissionError:
-        return True
-    return True
+    return _pid_alive(pid)

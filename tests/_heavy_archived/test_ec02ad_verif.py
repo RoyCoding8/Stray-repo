@@ -1162,7 +1162,7 @@ def test_verif_fresh_clone_import_and_collect(tmp_path):
     assert "coord02-entry" in imported.stdout
     assert "ad01" in imported.stdout
     collected = subprocess.run(
-        ["/home/ubuntu/AI/Agent-Society-v2/.venv/bin/pytest",
+        [sys.executable, "-m", "pytest",
          "tests/test_ec02ad_verif.py", "--collect-only", "-q"],
         capture_output=True, text=True, env=env, cwd=dest, timeout=180)
     assert collected.returncode == 0, collected.stderr[-2000:]
