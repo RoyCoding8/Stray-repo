@@ -22,8 +22,14 @@ from experiments.ad01 import policy_action
 from experiments.ad01 import policy_step
 from experiments.ad01 import s09_policy_governance as gov
 from execution_authority import execution_store as make_execution_store
+from settlement import child_limits
 
 TASK_ID = "ad01-w1-within-sw-00"
+CHILD_SETUP_AVAILABLE = child_limits.current_execution_host().child_setup
+REQUIRES_CHILD_SETUP = pytest.mark.skipif(
+    not CHILD_SETUP_AVAILABLE,
+    reason="policy episodes require the host's pre-exec child setup capability",
+)
 
 P1_BOUND_DIGEST = (
     "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706")
@@ -91,6 +97,7 @@ def test_the_operational_action_vocabulary_is_disjoint_from_the_shared_one():
     assert gov.OPERATIONAL_POLICY != gov.TASK_METHOD
 
 
+@REQUIRES_CHILD_SETUP
 def test_a_conforming_shared_action_is_refused_by_the_operational_dispatcher(
         execution_store):
     source = (
@@ -159,6 +166,7 @@ def test_a_policy_with_an_unrecognized_origin_is_refused():
     assert "unknown policy origin 'copied-off-a-record'" in refused.value.reason
 
 
+@REQUIRES_CHILD_SETUP
 def test_a_fresh_interpreter_executes_the_bound_bytes_not_the_digest(
         execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
@@ -178,6 +186,7 @@ def test_a_fresh_interpreter_executes_the_bound_bytes_not_the_digest(
     assert execution_store["dsn"] not in json.dumps(episode.as_dict())
 
 
+@REQUIRES_CHILD_SETUP
 def test_substituting_the_policy_with_the_repertoire_fixed_moves_the_outcome(
         execution_store):
     greedy = _bound(_use_policy("seed-sw-greedy"), "greedy")
@@ -204,6 +213,7 @@ def test_substituting_the_policy_with_the_repertoire_fixed_moves_the_outcome(
     assert verdict["policy_governs"] is True
 
 
+@REQUIRES_CHILD_SETUP
 def test_the_same_policy_replays_the_same_admitted_sequence(execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
@@ -232,6 +242,7 @@ def test_the_two_artifact_columns_name_different_digests_in_the_bundle():
     assert verdict["record_digests_match_recomputed"] is True
 
 
+@REQUIRES_CHILD_SETUP
 def test_the_task_method_column_names_the_reducer_that_actually_ran(
         execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
@@ -288,6 +299,7 @@ def test_the_episode_refuses_when_the_policy_dispatcher_is_absent(
     assert "no policy dispatcher" in refused.value.reason
 
 
+@REQUIRES_CHILD_SETUP
 def test_the_disconnect_countercheck_reports_its_own_refusal_loudly(
         execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
@@ -305,6 +317,7 @@ def test_the_disconnect_countercheck_reports_its_own_refusal_loudly(
         "kind": "use_method", "inputs": {}}
 
 
+@REQUIRES_CHILD_SETUP
 def test_the_disconnect_countercheck_reports_the_pipeline_silent_fallback():
     # RED until `assessment_profile._resolve_method` refuses a `use_method`
     # action that names no method instead of defaulting to seed-<family>-greedy.
@@ -316,6 +329,23 @@ def test_the_disconnect_countercheck_reports_the_pipeline_silent_fallback():
     assert verdict["unnamed_method_effect"]["accepted"] is False
     assert verdict["unnamed_method_effect"]["selected_identity"] is None
     assert verdict["reached_repertoire_without_policy"] is False
+
+
+def test_an_episode_refuses_when_the_host_cannot_install_child_setup():
+    if CHILD_SETUP_AVAILABLE:
+        pytest.skip("this host can install the policy episode child setup")
+
+    policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
+
+    with pytest.raises(gov.GovernanceRefused) as refused:
+        gov.run_episode(policy, TASK_ID, dsn="test-store",
+                        allocation_id="test-allocation",
+                        operation_id="host-refusal")
+
+    assert refused.value.stage == gov.REFUSAL_NO_STEP
+    assert "child-setup-unavailable" in refused.value.reason
+    assert "cpu_seconds" in refused.value.reason
+    assert "preexec_fn" in refused.value.reason
 
 
 def test_a_bundle_without_a_construction_response_refuses_rather_than_defaulting():

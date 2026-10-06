@@ -1,8 +1,19 @@
 from __future__ import annotations
 
+import os
+import sys
+
 import pytest
 
 from settlement.common import IncompatibleVersion, ResultCode, SettlementError
+from settlement import child_limits
+
+
+CHILD_SETUP_AVAILABLE = child_limits.current_execution_host().child_setup
+REQUIRES_CHILD_SETUP = pytest.mark.skipif(
+    not CHILD_SETUP_AVAILABLE,
+    reason="local-process requires the host's pre-exec child setup capability",
+)
 
 
 def test_gvisor_probe_reports_explicit_incompatible_on_this_host():
@@ -37,11 +48,13 @@ def test_unknown_profile_is_invalid_input():
     assert excinfo.value.code == ResultCode.INVALID_INPUT
 
 
+@REQUIRES_CHILD_SETUP
 def test_local_process_runs_bounded_command():
     from settlement import exec_profile
 
     result = exec_profile.dispatch(
-        "local-process", ["/bin/echo", "hello"], timeout_ms=5_000, max_output_bytes=1024
+        "local-process", [sys.executable, "-c", "print('hello')"],
+        timeout_ms=5_000, max_output_bytes=1024
     )
     assert result.returncode == 0
     assert result.stdout == "hello\n"
@@ -50,22 +63,27 @@ def test_local_process_runs_bounded_command():
     assert result.timed_out is False
 
 
+@REQUIRES_CHILD_SETUP
 def test_local_process_timeout_kills_command():
     from settlement import exec_profile
 
     result = exec_profile.dispatch(
-        "local-process", ["/bin/sleep", "30"], timeout_ms=500, max_output_bytes=1024
+        "local-process", [sys.executable, "-c", "import time; time.sleep(30)"],
+        timeout_ms=500, max_output_bytes=1024
     )
     assert result.timed_out is True
     assert result.containment is False
 
 
+@REQUIRES_CHILD_SETUP
 def test_local_process_carries_no_credentials():
     from settlement import exec_profile
 
     result = exec_profile.dispatch(
         "local-process",
-        ["/usr/bin/env"],
+        [sys.executable, "-c",
+         "import os; print('\\n'.join(f'{key}={value}' "
+         "for key, value in os.environ.items()))"],
         timeout_ms=5_000,
         max_output_bytes=65536,
         extra_env={
@@ -80,12 +98,13 @@ def test_local_process_carries_no_credentials():
     assert "KEEP_ME=visible" in result.stdout
 
 
+@REQUIRES_CHILD_SETUP
 def test_local_process_caps_output():
     from settlement import exec_profile
 
     result = exec_profile.dispatch(
         "local-process",
-        ["/bin/sh", "-c", "yes | head -c 100000"],
+        [sys.executable, "-c", "import sys; sys.stdout.write('x' * 100000)"],
         timeout_ms=5_000,
         max_output_bytes=100,
     )
@@ -94,18 +113,36 @@ def test_local_process_caps_output():
     assert result.containment is False
 
 
+@REQUIRES_CHILD_SETUP
 def test_local_process_cpu_limit_kills_spinner():
     from settlement import exec_profile
 
     result = exec_profile.dispatch(
         "local-process",
-        ["/bin/sh", "-c", "while true; do :; done"],
+        [sys.executable, "-c", "while True: pass"],
         timeout_ms=10_000,
         max_output_bytes=1024,
         cpu_seconds=1,
     )
     assert result.returncode != 0
     assert result.timed_out is False
+
+
+def test_local_process_refuses_when_child_setup_is_unavailable():
+    if CHILD_SETUP_AVAILABLE:
+        pytest.skip("this host can install the local-process child setup")
+
+    from settlement import exec_profile
+
+    result = exec_profile.dispatch(
+        "local-process", [sys.executable, "-c", "print('must not run')"],
+        timeout_ms=5_000, max_output_bytes=1024)
+
+    assert result.returncode is None
+    assert result.stdout == ""
+    assert result.detail["error"] == "child-setup-unavailable"
+    assert "preexec_fn" in result.stderr
+    assert os.name == "nt"
 
 
 def test_simulated_profile_returns_labeled_canned_result():

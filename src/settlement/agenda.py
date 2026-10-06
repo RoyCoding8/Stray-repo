@@ -541,6 +541,23 @@ def _agenda_resolve_receipt(cur, link: dict, receipt: str) -> tuple[dict, dict]:
         raise SettlementError(f"conflicting receipt {receipt} is preserved"
                               " for reconciliation; it justifies no outcome")
     content = dict(row.get("content") or {})
+    terminal = content.get("terminal_receipt")
+    if terminal:
+        cur.execute("SELECT operation_id, outcome, content FROM receipts"
+                    " WHERE receipt_identity = %s", (terminal,))
+        final = cur.fetchone()
+        if final is None or final["operation_id"] != link["operation_id"] \
+                or final["outcome"] != "success":
+            raise SettlementError(f"receipt {receipt} has no successful probe completion")
+        completed = dict(final["content"] or {})
+        cur.execute("SELECT 1 FROM receipt_conflicts WHERE receipt_identity = %s",
+                    (terminal,))
+        if cur.fetchone() is not None \
+                or completed.get("kind") != "agenda-probe-completed" \
+                or completed.get("source_attempt") != link["attempt_id"] \
+                or completed.get("operation_id") != link["operation_id"] \
+                or (completed.get("results") or {}).get(receipt) != content:
+            raise SettlementError(f"receipt {receipt} disagrees with its probe completion")
     if content.get("source_attempt") != link["attempt_id"]:
         raise SettlementError(f"wrong attempt: receipt {receipt} reports"
                               f" {content.get('source_attempt')}, not {link['attempt_id']}")

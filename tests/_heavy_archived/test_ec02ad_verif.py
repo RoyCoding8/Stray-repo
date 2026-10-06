@@ -1138,7 +1138,7 @@ def test_verif_fresh_clone_import_and_collect(tmp_path):
     import sys
     dest = str(tmp_path / "fresh-checkout")
     clone = subprocess.run(
-        ["git", "clone", "-q", VERIF_ROOT, dest],
+        ["git", "-c", "core.longpaths=true", "clone", "-q", VERIF_ROOT, dest],
         capture_output=True, text=True, timeout=300)
     assert clone.returncode == 0, clone.stderr[-2000:]
     checkout = subprocess.run(
@@ -1162,8 +1162,8 @@ def test_verif_fresh_clone_import_and_collect(tmp_path):
     assert "coord02-entry" in imported.stdout
     assert "ad01" in imported.stdout
     collected = subprocess.run(
-        ["/home/ubuntu/AI/Agent-Society-v2/.venv/bin/pytest",
-         "tests/test_ec02ad_verif.py", "--collect-only", "-q"],
+        [sys.executable, "-m", "pytest",
+         "tests/_heavy_archived/test_ec02ad_verif.py", "--collect-only", "-q"],
         capture_output=True, text=True, env=env, cwd=dest, timeout=180)
     assert collected.returncode == 0, collected.stderr[-2000:]
     assert "test_verif_c1_positive_admitted_work_graded" in collected.stdout

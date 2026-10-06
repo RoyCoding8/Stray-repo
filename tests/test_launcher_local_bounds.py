@@ -30,6 +30,7 @@ from settlement.child_limits import ChildLimits
 from settlement.launcher_local import PROFILE, LocalLauncher, _child_setup
 
 POSIX = os.name != "nt"
+LINUX = sys.platform == "linux"
 
 PROBE_RLIMITS = (
     "import json,resource\n"
@@ -132,7 +133,7 @@ def test_cpu_ceiling_stops_a_spinning_child_well_before_the_wall_budget(tmp_path
         % data["wall_ms"])
 
 
-@pytest.mark.skipif(not POSIX, reason="RLIMIT_AS is a POSIX enforcement mechanism")
+@pytest.mark.skipif(not LINUX, reason="the measured RLIMIT_AS child behavior is Linux-specific")
 def test_memory_ceiling_actually_bounds_the_child(tmp_path):
     """RLIMIT_AS installed and observed by the child itself.
 
@@ -150,7 +151,7 @@ def test_memory_ceiling_actually_bounds_the_child(tmp_path):
     assert json.loads(_child_stdout(outcome))["as"] == [512 * 1024 * 1024] * 2
 
 
-@pytest.mark.skipif(not POSIX, reason="RLIMIT_AS is a POSIX enforcement mechanism")
+@pytest.mark.skipif(not LINUX, reason="the measured CPython address-space floor is Linux-specific")
 def test_a_memory_bound_below_the_interpreters_own_floor_fails_the_child(tmp_path):
     """A ceiling too small for CPython to start under really is a ceiling.
 
@@ -214,8 +215,8 @@ def test_the_pre_spawn_refusal_does_not_install_a_limit_on_the_launcher(
     a launcher that checked a 512MB bound would report that limit for its own
     next child. The assertion is on the launcher's own `RLIMIT_AS` afterwards.
     """
-    if os.name == "nt":
-        pytest.skip("RLIMIT_AS observation needs a POSIX host")
+    if not LINUX:
+        pytest.skip("RLIMIT_AS observation is qualified on Linux")
     import resource
 
     before = resource.getrlimit(resource.RLIMIT_AS)
@@ -236,8 +237,8 @@ def test_a_bound_reaches_the_child_and_leaves_the_next_child_unbounded(tmp_path)
     dispatch's ceiling were installed on the launcher, the second child would
     report it despite never asking for it.
     """
-    if os.name == "nt":
-        pytest.skip("RLIMIT_AS observation needs a POSIX host")
+    if not LINUX:
+        pytest.skip("RLIMIT_AS observation is qualified on Linux")
     code = ("import json,resource\n"
             "print(json.dumps(resource.getrlimit(resource.RLIMIT_AS)))\n")
     launcher = LocalLauncher(tmp_path / "run")
@@ -397,8 +398,8 @@ def test_the_read_back_confirms_the_flag_whose_setter_ran():
     """
     import ctypes
 
-    if os.name == "nt":
-        pytest.skip("prctl is a Linux mechanism")
+    if not LINUX:
+        pytest.skip("prctl read-back uses Linux libc and syscall numbers")
     libc = ctypes.CDLL("libc.so.6", use_errno=True)
 
     def _nnp() -> int:
@@ -496,8 +497,8 @@ def test_a_wrong_prctl_constant_is_caught_by_the_behavioural_read_back(monkeypat
     the mechanism. This one puts the old value back and observes the flag stay
     clear, which is what the kernel actually did.
     """
-    if os.name == "nt":
-        pytest.skip("prctl is a Linux mechanism")
+    if not LINUX:
+        pytest.skip("prctl read-back uses Linux libc and syscall numbers")
     import ctypes
 
     monkeypatch.setattr(launcher_local, "_PR_SET_NO_NEW_PRIVS", 1)

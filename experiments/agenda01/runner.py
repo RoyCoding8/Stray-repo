@@ -361,13 +361,14 @@ class AgendaBackend:
                                 "authorized": int(r["authorized"]),
                                 "consumed": int(r["consumed"]),
                                 "reserved": int(r["reserved"])} for r in cur.fetchall()]
-                cur.execute("SELECT receipt_identity, operation_id, content_digest, outcome"
-                            " FROM receipts WHERE receipt_identity LIKE %s ORDER BY 1",
-                            (f"{self.traj}:rc:%",))
+                cur.execute("SELECT receipt_identity, operation_id, content_digest, outcome, content"
+                            " FROM receipts WHERE operation_id LIKE %s ORDER BY 1",
+                            (f"ag01:{self.traj}:%",))
                 receipts = [{"receipt": r["receipt_identity"],
                              "operation_id": r["operation_id"],
                              "content_digest": r["content_digest"],
-                             "outcome": r["outcome"]} for r in cur.fetchall()]
+                             "outcome": r["outcome"],
+                             "content": dict(r["content"] or {})} for r in cur.fetchall()]
                 cur.execute("SELECT attempt_id, trajectory, option_id, probe,"
                             " intended_decision, replication_slot, effect_identity,"
                             " operation_id, reservation_id, state"
@@ -390,7 +391,7 @@ class AgendaBackend:
                              "epoch": int(r["epoch"]), "scored": bool(r["scored"])}
                             for r in cur.fetchall()]
                 cur.execute("SELECT COUNT(*) AS n FROM receipt_conflicts"
-                            " WHERE receipt_identity LIKE %s", (f"{self.traj}:rc:%",))
+                            " WHERE operation_id LIKE %s", (f"ag01:{self.traj}:%",))
                 conflicts = int(cur.fetchone()["n"])
                 cursor = self.cursor()
                 conn.commit()
@@ -520,6 +521,7 @@ def _ingest_due(backend: AgendaBackend, world: dict, st: dict, tick: int,
 
 def _dispatch_launch(backend: AgendaBackend, operation_id: str,
                      expected: list) -> None:
+    expected = [*expected, f"agenda-final:{operation_id}"]
     have = {r["receipt"] for r in backend.receipts_for(operation_id)}
     if all(rc in have for rc in expected):
         return
