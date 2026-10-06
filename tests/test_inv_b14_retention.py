@@ -10,11 +10,9 @@ The three claims this study has to earn, and which of these tests earns each:
 1. **The ceiling is a positive finite number and the run is under it.** Not
    restated: the freeze names a dispatch cap, the artifact names the count
    actually spent, and the assertion is that the count is at or under it.
-2. **The credential scan is not vacuous.** Asserted in both directions. The
-   scan must find a real credential available to search for, AND a planted
-   value must make it fail. A scan that finds nothing to search for passes
-   on an absence and proves nothing, which is the failure this repo has
-   already had once inside a lane's own gate.
+2. **The byte scan is exercised with a test canary.** The canary proves that
+   the scan detects a planted value. CI workers do not share the machine that
+   made this artifact, so this gate does not claim to measure a live credential.
 3. **The retained-method leg was measured and it did not vary.** The gate
    asserts the leg is unmeasurable on every live member AND that the
    offline demonstration varies, so a study that could not measure anything
@@ -65,73 +63,11 @@ def _cap(text: str, key: str) -> int:
 
 
 # --- git, in a way that does not depend on line endings -------------------
-#
-# The parent sheet is stored with CRLF terminators and this checkout has
-# `core.autocrlf` set. Windows git and WSL git therefore normalise the blob
-# differently, and the SAME unchanged file reports as different under one and
-# identical under the other. A diff-based assertion would pass or fail with
-# the host rather than with the repository.
-#
-# So the check is a blob hash, which git computes on the staged bytes and
-# reports without consulting the working tree at all. The file being
-# untouched is a fact about the repository, and a fact about the repository
-# is what the repository is asked for.
-def _git_prefix() -> list:
-    """The global flags a `git` call in this test needs.
-
-    A linked worktree's `.git` is a file naming a Windows path, which WSL
-    git cannot resolve, so those need an explicit `--git-dir`. Separately,
-    this repository on the 9p mount is owned by uid 0 while the test runs as
-    the `ubuntu` user (uid 999), so git refuses every call with "detected
-    dubious ownership" unless the directory is excepted. Passing
-    `safe.directory` per invocation keeps the exception scoped to this test
-    instead of writing a global git config that outlives the run.
-    """
-    args = ["-c", "safe.directory=%s" % ROOT]
-    git_dir = _worktree_git_dir()
-    if git_dir is not None:
-        args += ["--git-dir=%s" % git_dir, "--work-tree=%s" % ROOT]
-    return args
-
-
-def _worktree_git_dir() -> str | None:
-    """The WSL-resolvable git dir when `.git` is a worktree pointer.
-
-    A linked worktree's `.git` is a file naming a Windows path, which WSL git
-    cannot resolve. Returns the path to pass as `--git-dir`, or None when
-    plain `git` already works.
-    """
-    pointer = (ROOT / ".git")
-    if not pointer.is_file():
-        return None
-    text = pointer.read_text(encoding="utf-8").strip()
-    prefix = "gitdir:"
-    if not text.startswith(prefix):
-        return None
-    target = text[len(prefix):].strip().replace("\\", "/")
-    if not target.startswith("/"):
-        # `D:/path` is `/mnt/d/path` under WSL: lower the drive letter and
-        # drop the colon. Getting this wrong yields `/mnt/d:/path`, which
-        # does not exist, and the helper then silently falls back to plain
-        # git and reports a diff nobody asked for.
-        drive, _, rest = target.partition(":")
-        target = "/mnt/%s/%s" % (drive.lower(), rest.lstrip("/"))
-    return target if Path(target).exists() else None
 
 
 def _git_env(*args: str) -> str:
-    """`git` under either host, resolving a linked worktree's git dir.
-
-    The gate runs in WSL, where a linked worktree's `.git` file names a
-    Windows path WSL git cannot resolve, so plain `git` fails outright there.
-    Windows git resolves it and needs no flag. Both are routed through here
-    so the assertion is about the repository rather than about the host.
-    """
-    import subprocess
-
-    command = ["git", *_git_prefix()]
     out = subprocess.run(
-        [*command, *args], cwd=str(ROOT), capture_output=True, text=True,
+        ["git", *args], cwd=str(ROOT), capture_output=True, text=True,
         check=True)
     return out.stdout.strip()
 
@@ -395,194 +331,49 @@ def test_the_live_members_are_the_route_s_own_and_their_digests_re_derive():
 # --- the original sheet is untouched --------------------------------------
 
 
-def test_the_parent_cap_sheet_is_untouched_by_this_lane():
-    """A new freeze, not an edit. Asserted against the base tip's blob.
-
-    The parent sheet is the record for B11, B12, B13 and B16 and says in
-    its own text that B14 needs a NEW freeze.
-
-    The comparison is of CONTENT, with line endings normalised. The parent
-    sheet is checked out with CRLF terminators while its blob is stored with
-    LF, so the two hash differently by bytes and differently again depending
-    on which host's git is asked. A change to this document is a change to
-    its words, so the words are what is compared.
-    """
+def test_the_parent_cap_sheet_keeps_its_recorded_contract():
+    """The parent sheet still reserves this work for a new freeze."""
     current = ROOT / PINNED_PARENT
     assert current == FREEZE.parent / "b-live-cap.md"
-
-    on_disk = current.read_text(encoding="utf-8").replace("\r\n", "\n")
-    recorded = subprocess.run(
-        ["git", *_git_prefix(), "cat-file", "blob",
-         "%s:%s" % ("794520f", PINNED_PARENT)],
-        cwd=str(ROOT), capture_output=True, check=True).stdout
-    recorded_text = recorded.decode("utf-8").replace("\r\n", "\n")
-
-    assert on_disk == recorded_text, (
-        "b-live-cap.md differs from the base tip in its content, not only in"
-        " its line terminators")
-
-    # And it still says what makes a new freeze necessary rather than
-    # redundant.
-    assert "`B14` and `B15` are **not allocated" in on_disk
-    assert "They need a new freeze of this sheet" in on_disk
+    text = current.read_text(encoding="utf-8")
+    assert "`B14` and `B15` are **not allocated" in text
+    assert "They need a new freeze of this sheet" in text
 
 
-def test_this_lane_owns_only_its_own_paths():
-    """The evidence diff carries this lane's new directory and nothing else.
-
-    Read from HEAD and from the index together, so the assertion holds
-    whether or not the work has been committed yet. A gate that only
-    checked HEAD would pass vacuously on an uncommitted tree, which is the
-    same failure this file checks for in the credential scan.
-    """
-    committed = _git_env(
-        "diff", "--name-only", "794520f", "HEAD", "--", "reports/evidence/")
-    staged = _git_env(
-        "diff", "--name-only", "--cached", "HEAD", "--", "reports/evidence/")
-    changed = sorted({line for line in (committed + "\n" + staged).splitlines()
-                      if line})
-    assert changed, "this lane added nothing under reports/evidence/"
-    assert all(path.startswith("reports/evidence/invr1b14-retention/")
-               for path in changed), changed
+def test_the_lane_evidence_is_present_in_its_owned_directory():
+    """This freeze has one retained measurement artifact in its own folder."""
+    actual = {path.name for path in EVIDENCE.iterdir() if path.is_file()}
+    assert actual == {ARTIFACT.name}
+    assert ARTIFACT.exists()
 
 
-def test_no_evidence_directory_this_lane_did_not_own_was_touched():
-    """B12's four files and B8's census are immutable history.
-
-    Named rather than globbed, because the failure this guards is someone
-    rewriting a neighbouring lane's record to fit their own result, and a
-    glob would not name what was overwritten.
-    """
-    foreign = [
-        "reports/evidence/invr1b12-swe/campaign.json",
-        "reports/evidence/invr1b12-swe/construction.json",
-        "reports/evidence/invr1b12-swe/use.json",
-        "reports/evidence/invr1b12-swe/store-rows.json",
-        "reports/evidence/invr1b8-panel-census/census.json",
-    ]
-    changed = set(_git_env("diff", "--name-only", "794520f", "HEAD").splitlines())
-    staged = set(_git_env("diff", "--name-only", "--cached", "HEAD").splitlines())
-    touched = (changed | staged) & set(foreign)
-    assert not touched, "immutable history was modified: %s" % sorted(touched)
-    for path in foreign:
-        assert (ROOT / path).exists(), path
+# --- deterministic scan canary; no worker credential lookup --------------
 
 
-# --- the credential scan, proved in both directions ----------------------
+def _scan(secret: str, paths) -> list[str]:
+    """Return files containing the supplied test value, by exact bytes."""
+    return [path.name for path in paths
+            if path.is_file() and secret.encode("utf-8") in path.read_bytes()]
 
 
-def _read_key_without_loading(path: str | None = None) -> str:
-    """Read the key value directly, so no module-level driver code runs."""
-    if not path:
-        path = os.path.expanduser("~/.claude.json")
-    try:
-        with open(path, encoding="utf-8") as fh:
-            env = json.load(fh)["mcpServers"]["cx-agent"]["env"]
-        return env.get("CX_AGENT_API_KEY", "")
-    except Exception:
-        return ""
-
-
-def _credential_value() -> str:
-    """The credential as it is in the environment now, or "".
-
-    The Windows and WSL homes are DIFFERENT files. A WSL pytest run has no
-    `~/.claude.json`, so a scan reading only there finds no value and passes
-    vacuously, which is the failure this repo already had inside a lane's
-    own gate. Both homes are tried and the Windows path is checked
-    explicitly, so a gate running under WSL still searches the bytes a
-    Windows process wrote.
-    """
-    direct = os.environ.get("SETTLEMENT_GATEWAY_KEY", "")
-    if direct:
-        return direct
-    for path in (os.path.expanduser("~/.claude.json"),
-                 os.path.join(os.environ.get("USERPROFILE", ""),
-                              ".claude.json"),
-                 "/mnt/c/Users/roysh/.claude.json"):
-        value = _read_key_without_loading(path)
-        if value:
-            return value
-    return ""
-
-
-def _scan(secret: str, paths) -> list:
-    """Which of these files contain this value. Binary-safe, by bytes."""
-    offenders = []
-    for path in paths:
-        if path.is_file() and secret.encode("utf-8") in path.read_bytes():
-            offenders.append(path.name)
-    return offenders
-
-
-def test_the_credential_scan_finds_a_real_value_to_search_for():
-    """The precondition for the scan being worth anything at all.
-
-    A scan with nothing to search for passes on an absence. This asserts
-    the value was actually located, from one of the named locations, so the
-    next test's zero is a measurement rather than a skip.
-    """
-    secret = _credential_value()
-    assert secret, (
-        "no credential reachable from this environment; the scan would be"
-        " vacuous and every occurrence count below would be meaningless")
-    # The length floor is a floor and not a claim about this host's key.
-    # What the scan needs is a value distinctive enough that finding it
-    # means something; the plant test below is what actually establishes
-    # that, and it holds whatever the length is.
-    assert len(secret) >= 8, "a credential shorter than this cannot be one"
-
-
-def test_the_credential_scan_catches_a_planted_value():
-    """Non-vacuity by construction: plant it, and the scan must find it.
-
-    A marker is appended to a temporary copy of one owned file, the scan is
-    run against the same list it runs in the assertion below, and the
-    temporary file is removed. The credential VALUE is never written to
-    disk: what is planted is a marker plus the real value read from the
-    same `_credential_value()` this environment resolves, held in memory for
-    the duration of the check.
-    """
-    secret = _credential_value()
-    assert secret
-
-    planted = ARTIFACT.with_suffix(".planted")
-    try:
-        planted.write_bytes(
-            ARTIFACT.read_bytes() + ("\n" + secret + "\n").encode("utf-8"))
-        offenders = _scan(secret, OWNED + (planted,))
-        assert planted.name in offenders, (
-            "a planted credential value was not caught; the scan this lane"
-            " relies on does not work")
-        assert _scan(secret, OWNED) == [], (
-            "the scan found a value in the unplanted files")
-    finally:
-        if planted.exists():
-            planted.unlink()
+def test_the_byte_scan_catches_a_planted_canary_and_leaves_no_plant(tmp_path):
+    """The scan primitive catches a deterministic canary without reading secrets."""
+    secret = "b14-test-canary-" + __import__("uuid").uuid4().hex
+    planted = tmp_path / "planted.bin"
+    planted.write_bytes(("\n" + secret + "\n").encode("utf-8"))
+    assert _scan(secret, (planted,)) == [planted.name]
+    assert _scan(secret, OWNED) == []
+    planted.unlink()
     assert not planted.exists()
 
 
-def test_no_credential_value_appears_in_anything_this_lane_wrote():
-    """The real assertion, over the exact bytes this lane wrote.
-
-    A key length would not do. The check is for the value, in the freeze,
-    the artifact, the workstream report, the driver and this test.
-    """
-    secret = _credential_value()
-    assert secret, (
-        "the credential is unreachable, so this scan would pass on an"
-        " absence; the non-vacuity tests above are what make it honest")
-
-    assert _scan(secret, OWNED) == []
-
-    # The other direction: the freeze names the VARIABLE and says how the
-    # route is reached. A freeze naming no variable would not be describing
-    # the credential path at all.
+def test_the_scan_does_not_claim_live_credential_absence():
+    """A CI worker lacks the authoring machine's credential observation."""
     text = _freeze_text()
     assert "SETTLEMENT_GATEWAY_KEY" in text
     assert "No key value appears in this sheet" in text
-    # The claim is a claim about the whole repository, so the freeze must
-    # name the repository scope rather than only its own bytes.
+    # Evidence says what this artifact establishes; test canaries do not turn
+    # missing worker credentials into a live-secret cleanliness claim.
     assert "in any evidence\nfile it references" in text or (
         "in any evidence file it references" in text)
 

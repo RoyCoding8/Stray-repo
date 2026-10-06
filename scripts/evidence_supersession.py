@@ -43,7 +43,7 @@ import json
 from pathlib import Path
 
 MARKER_SUFFIX = ".supersession.json"
-EVIDENCE_ROOT = "reports/evidence"
+EVIDENCE_ROOTS = ("reports/evidence", "evidence-ad01")
 
 SHAPES = ("VESSEL", "DATA", "SCOPE", "EDITS", "NAME")
 VERDICTS = ("VOID", "PARTIALLY_VOID", "CONTAINER_MISLABELLED", "NAME_MISLABELLED")
@@ -234,17 +234,18 @@ def check_marker(repo_root: Path | str, marker_path: Path | str) -> list[str]:
                     problems.append("%s: %s" % (where, exc))
 
     if marker["shape"] in BACKWARD_EDGES and _ref_missing(repo_root, marker["intact_at_ref"]):
-        problems.append("%s: intact_at_ref %r is not a commit in this repository"
+        problems.append("%s: UNKNOWN intact_at_ref %r is not available in this repository"
                         % (where, marker["intact_at_ref"]))
 
     return problems
 
 
 def _ref_missing(repo_root: Path, ref: str) -> bool:
-    """True when `ref` does not name a commit this repository can read.
+    """True when `ref` does not name a commit object available to this clone.
 
-    Reachability is not the question -- `d422c93` is an ancestor of HEAD but
-    names no branch -- so this asks git for the commit directly.
+    This checks object availability directly. A commit can be available from
+    local history without being named by a branch, or unavailable after a
+    history rewrite even when the marker still correctly records its ref.
     """
     import subprocess
 
@@ -258,9 +259,13 @@ def _ref_missing(repo_root: Path, ref: str) -> bool:
 
 
 def iter_markers(repo_root: Path | str = ".") -> list[Path]:
-    root = Path(repo_root) / EVIDENCE_ROOT
-    return sorted(p for p in root.rglob("*" + MARKER_SUFFIX)
-                  if _INDEX_SKIP.isdisjoint(p.parts))
+    roots = [Path(repo_root) / relative for relative in EVIDENCE_ROOTS]
+    markers = (
+        path for root in roots if root.is_dir()
+        for path in root.rglob("*" + MARKER_SUFFIX)
+        if _INDEX_SKIP.isdisjoint(path.parts)
+    )
+    return sorted(markers)
 
 
 def check_evidence_tree(repo_root: Path | str = ".") -> list[str]:

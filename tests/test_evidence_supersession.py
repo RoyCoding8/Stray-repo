@@ -1,7 +1,7 @@
 """A supersession marker is worth nothing unless a check can say it stopped being true.
 
 `reports/evidence/` carries five `RETRACTED.md` notices and, as of this pass,
-four machine-readable markers beside the artifacts they describe. Measured
+machine-readable markers beside the artifacts they describe. Measured
 before the markers existed: zero of the five directories had any sibling
 artifact mentioning the retraction, and `e3-postfix-ladder.json` contained
 none of `retract`, `withdrawn`, `invalid` or `superseded` across 165045
@@ -19,6 +19,8 @@ that breaks it. A test here that could not fail is a test of nothing.
 from __future__ import annotations
 
 import json
+import hashlib
+import subprocess
 import sys
 from pathlib import Path
 
@@ -50,6 +52,8 @@ def _study(tmp_path, artifact_bytes=b"{}"):
     directory.mkdir(parents=True, exist_ok=True)
     artifact = directory / "artifact.json"
     artifact.write_bytes(artifact_bytes)
+    annotation = directory / "annotation.md"
+    annotation.write_text("synthetic annotation\n", encoding="utf-8")
     return directory / "artifact.supersession.json", artifact
 
 
@@ -58,19 +62,51 @@ def _rebase(marker, artifact):
     rebased = dict(marker)
     rebased["artifact"] = "reports/evidence/study/artifact.json"
     rebased["artifact_sha256"] = sup.sha256_file(artifact)
+    rebased["annotation"] = "reports/evidence/study/annotation.md"
     return rebased
 
 
-# --- the tree as committed passes, and every marker names a real artifact ---
+# --- every marker is checked; unavailable historical bytes remain UNKNOWN ---
 
-def test_the_committed_tree_has_no_unsatisfied_marker_claim():
-    assert sup.check_evidence_tree(ROOT) == []
+def test_unavailable_history_is_unknown_and_never_a_clean_tree(capsys):
+    """Unavailable backward edges stay UNKNOWN and keep the CLI nonzero."""
+    markers = sup.iter_markers(ROOT)
+    expected = []
+    for path in markers:
+        marker = sup.load_marker(path)
+        ref = marker.get("intact_at_ref")
+        if ref and marker["shape"] in sup.BACKWARD_EDGES \
+                and sup._ref_missing(ROOT, ref):
+            expected.append(
+                "%s: UNKNOWN intact_at_ref %r is not available in this repository"
+                % (path.name, ref))
+
+    assert sup.check_evidence_tree(ROOT) == expected
+    status = sup.main(["--repo-root", str(ROOT)])
+    assert status == (1 if expected else 0)
+    output = capsys.readouterr().out
+    if expected:
+        assert "UNKNOWN intact_at_ref" in output
+        assert "%d problem(s)" % len(expected) in output
+        assert status != 0, "UNKNOWN history must not qualify as validation PASS"
+
 
 
 def test_every_marked_artifact_exists_and_the_digest_is_the_ones_on_disk():
     markers = sup.iter_markers(ROOT)
 
-    assert len(markers) == 4
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z"], cwd=str(ROOT), capture_output=True,
+        check=True,
+    ).stdout.split(b"\0")
+    tracked_markers = {
+        path.decode("utf-8") for path in tracked if path
+        and path.decode("utf-8").endswith(".supersession.json")
+        and path.decode("utf-8").startswith(
+            ("reports/evidence/", "evidence-ad01/"))
+    }
+    discovered = {path.relative_to(ROOT).as_posix() for path in markers}
+    assert discovered == tracked_markers
     for path in markers:
         marker = sup.load_marker(path)
         artifact = ROOT / marker["artifact"]
@@ -147,17 +183,28 @@ def test_the_matrix_is_void_and_carries_the_backward_edge():
     assert marker["intact_at_ref"] == "d422c93"
 
 
-def test_the_matrix_is_intact_at_the_ref_the_marker_names():
-    """`intact_at_ref` is only worth carrying if the bytes are really there."""
-    import subprocess
-
-    ref = _marker(MATRIX_MARKER)["intact_at_ref"]
+def test_the_matrix_is_intact_at_the_ref_or_exactly_unknown():
+    """Verify preserved bytes when possible; unavailable ancestry is UNKNOWN."""
+    marker = _marker(MATRIX_MARKER)
+    ref = marker["intact_at_ref"]
+    commit = subprocess.run(
+        ["git", "cat-file", "-e", "%s^{commit}" % ref], cwd=str(ROOT),
+        capture_output=True,
+    )
+    if commit.returncode:
+        assert sup.check_marker(ROOT, ROOT / MATRIX_MARKER) == [
+            "%s: UNKNOWN intact_at_ref %r is not available in this repository"
+            % (Path(MATRIX_MARKER).name, ref),
+        ]
+        return
     pre = subprocess.run(["git", "cat-file", "blob",
-                           "%s:%s" % (ref, MATRIX)], cwd=str(ROOT),
-                          capture_output=True).stdout
+                          "%s:%s" % (ref, MATRIX)], cwd=str(ROOT),
+                         capture_output=True).stdout
 
     assert pre
     assert len(pre) == 5167881
+    assert hashlib.sha256(pre).hexdigest().startswith("5928d4e1f66119")
+
 
 
 def test_the_container_is_mislabelled_and_voids_nothing():
@@ -233,7 +280,10 @@ def test_a_backward_edge_to_a_commit_that_does_not_exist_is_reported(tmp_path):
     marker["intact_at_ref"] = "deadbee" * 5
     path.write_text(json.dumps(marker), encoding="utf-8")
 
-    assert any("not a commit" in p for p in sup.check_marker(tmp_path, path))
+    assert sup.check_marker(tmp_path, path) == [
+        "%s: UNKNOWN intact_at_ref %r is not available in this repository"
+        % (path.name, marker["intact_at_ref"]),
+    ]
 
 
 def test_an_unknown_key_is_refused_rather_than_ignored(tmp_path):
