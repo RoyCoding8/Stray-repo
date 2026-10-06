@@ -17,6 +17,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
@@ -38,7 +40,16 @@ def test_the_study_builds_a_use_phase_prompt():
         "the use phase runs a selector, not a method implementation")
 
 
-def test_an_acquired_use_policy_selects_from_the_eligible_methods():
+@pytest.fixture(scope="module")
+def execution_store():
+    from execution_authority import execution_store as make_store
+
+    with make_store("ci-invr1policy") as store:
+        yield store
+
+
+def test_an_acquired_use_policy_selects_from_the_eligible_methods(
+        execution_store):
     """A compiled policy must admit a use_method naming a real member."""
     from experiments.ad01 import policy_step
     from scripts import inv01_study as S
@@ -47,12 +58,14 @@ def test_an_acquired_use_policy_selects_from_the_eligible_methods():
     policy = policy_step.compile_step(source, origin="<test>")
 
     assert callable(policy), "the fallback must compile to a STEP callable"
-    decision = policy({
+    decision = policy.run({
         "task_content": {"task_id": "ad01-w0-within-sw-00"},
         "observations": [], "open_questions": [], "last_result": None,
         "eligible_methods": ["acquired-sw-2074657c"],
         "remaining": {},
-    }, {})
+    }, {}, dsn=execution_store["dsn"],
+        allocation_id=execution_store["allocation_id"],
+        operation_id="invr1-use-policy")
 
     assert decision["action"]["kind"] == "use_method"
     assert decision["action"]["inputs"]["method_id"] == "acquired-sw-2074657c"

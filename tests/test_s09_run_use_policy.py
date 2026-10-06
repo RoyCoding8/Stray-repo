@@ -247,6 +247,17 @@ def test_a_policy_returning_an_untyped_action_refuses():
     assert record["executed"] == "refused"
 
 
+def test_empty_repertoire_without_selector_refuses():
+    """An authorized baseline is explicit; an empty list grants no selector."""
+    [record] = trajectory.run_use(
+        {"campaign_id": "empty-without-selector", "members": []},
+        0, "I", [TASK_ID], {})
+
+    assert record["status"] == "refused"
+    assert record["selected"] == record["executed"] == "refused"
+    assert "use ran with no policy" in record["fallback_reason"]
+
+
 def test_use_refuses_a_task_no_policy_would_recognise():
     """Task admission is unchanged, and still raises."""
     with pytest.raises(ValueError, match="unknown task"):
@@ -278,7 +289,8 @@ def test_a_real_decision_consumer_is_refused_not_guessed_at():
 
     assert record["status"] == "refused"
     assert record["executed"] == "refused"
-    assert "no valid action" in record["fallback_reason"]
+    assert "execution needs explicit authority and identity" in record[
+        "fallback_reason"]
 
 
 def test_a_disconnected_decision_consumer_refuses_with_its_own_reason():

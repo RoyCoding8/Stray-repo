@@ -4,14 +4,13 @@ A recording provider supplies a behavior-changing program outside the
 seed menu through the broker; the trajectory checks it out of process,
 retains exact bytes with lineage, and later executes those bytes
 without seed substitution. A second provider response that only
-renames the entry is a provenance change, not a behavioral one. DB
-ec02test_ad01c only, never ec02test_live.
+renames the entry is a provenance change, not a behavioral one. Each test
+uses its own disposable, caller-authorized s09 store.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -19,7 +18,7 @@ import pytest
 
 from experiments.ad01 import trajectory
 from experiments.ad01 import worlds
-from settlement import broker, db
+from settlement import broker
 from settlement.common import ResultCode
 from settlement.gateway import (
     FakeGatewayAdapter,
@@ -32,10 +31,7 @@ from settlement.gateway import (
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from conftest_isolation import admin_dsn  # noqa: E402
-
-DSN = os.environ.get("EC02_AD01C_DSN", "dbname=ec02test_ad01c")
-MIGRATIONS = ROOT / "migrations"
+from execution_authority import execution_store as make_execution_store  # noqa: E402
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -84,21 +80,6 @@ def _use_policy(capability_id: str):
     return policy
 
 
-def _fresh_db():
-    # Routeless the authority refuses and the test skips (conftest_isolation)
-    # instead of connecting on a guessed socket.
-    admin_dsn()
-    assert "live" not in DSN
-    db.apply_migrations(DSN, MIGRATIONS)
-    with db.connect(DSN) as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT tablename FROM pg_tables WHERE schemaname ="
-                        " 'public' AND tablename != 'schema_migrations'")
-            for row in cur.fetchall():
-                cur.execute('TRUNCATE TABLE "%s" CASCADE' % row[0])
-        conn.commit()
-
-
 class RecordingConstructorAdapter(GatewayAdapter):
     """Construction-seam double: scripted method sources per attempt."""
 
@@ -128,21 +109,26 @@ class RecordingConstructorAdapter(GatewayAdapter):
         return False
 
 
-def _campaign(dsn=DSN, cid="ad01-w0-I-90"):
+@pytest.fixture
+def store():
+    with make_execution_store("ci-aleb") as authority:
+        yield authority["dsn"]
+
+
+def _campaign(dsn, cid="ad01-w0-I-90"):
     trajectory.authorize_campaign(dsn, cid, authorized=100000)
     return trajectory.ensure_campaign(
         dsn, cid, 0, "I", CHARTER,
         {"agenda_authorized": 100000, "max_boundaries": 6, "diagnostic_queries": 16})
 
 
-def test_constructed_program_reaches_later_execution(tmp_path):
-    _fresh_db()
-    _campaign()
+def test_constructed_program_reaches_later_execution(store):
+    _campaign(store)
     from experiments.ad01 import construct as C
     task = worlds.load_task(worlds.FROZEN_DIR, DEV_TASK)
     gw = RecordingConstructorAdapter([ACQUIRED_SOURCE])
     member = C.construct_method(
-        DSN, campaign_id="ad01-w0-I-90", task=task,
+        store, campaign_id="ad01-w0-I-90", task=task,
         experience={"observations": []}, budget={"max_output_tokens": 512},
         gateway=gw, model="ad01-construct-double")
     assert member["capability_id"].startswith("acquired-sw-")
@@ -155,7 +141,8 @@ def test_constructed_program_reaches_later_execution(tmp_path):
     repertoire = {"campaign_id": "ad01-w0-I-90", "members": [member]}
     [record] = trajectory.run_use(
         repertoire, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        policy=_use_policy(member["capability_id"]))
+        policy=_use_policy(member["capability_id"]), dsn=store,
+        allocation_id=trajectory._alloc_id("ad01-w0-I-90"))
     assert record["selected"] == member["capability_id"]
     assert record["executed"] == member["capability_id"]
     assert record["executed_source"] == ACQUIRED_SOURCE
@@ -167,14 +154,13 @@ def test_constructed_program_reaches_later_execution(tmp_path):
     assert record["output"] == expected["candidate"]
 
 
-def test_repair_path_rejects_garbage_and_keeps_lineage(tmp_path):
-    _fresh_db()
-    _campaign(cid="ad01-w0-I-91")
+def test_repair_path_rejects_garbage_and_keeps_lineage(store):
+    _campaign(store, cid="ad01-w0-I-91")
     from experiments.ad01 import construct as C
     task = worlds.load_task(worlds.FROZEN_DIR, DEV_TASK)
     gw = RecordingConstructorAdapter(["not python {{{", ACQUIRED_SOURCE])
     member = C.construct_method(
-        DSN, campaign_id="ad01-w0-I-91", task=task,
+        store, campaign_id="ad01-w0-I-91", task=task,
         experience={"observations": []}, budget={"max_output_tokens": 512},
         gateway=gw, model="ad01-construct-double")
     assert member["method_source"] == ACQUIRED_SOURCE
@@ -185,34 +171,32 @@ def test_repair_path_rejects_garbage_and_keeps_lineage(tmp_path):
     assert member["lineage"]["init_failure"]["reason"]
 
 
-def test_exhausted_construction_refuses_without_row(tmp_path):
-    _fresh_db()
-    _campaign(cid="ad01-w0-I-92")
+def test_exhausted_construction_refuses_without_row(store):
+    _campaign(store, cid="ad01-w0-I-92")
     from experiments.ad01 import construct as C
     task = worlds.load_task(worlds.FROZEN_DIR, DEV_TASK)
     gw = RecordingConstructorAdapter(["not python {{{"])
     with pytest.raises(C.ConstructionFailed):
         C.construct_method(
-            DSN, campaign_id="ad01-w0-I-92", task=task,
+            store, campaign_id="ad01-w0-I-92", task=task,
             experience={"observations": []},
             budget={"max_output_tokens": 512},
             gateway=gw, model="ad01-construct-double")
     assert len(gw.calls) == 4, [c.operation_id for c in gw.calls]
 
 
-def test_resume_reuses_settled_construction_call(tmp_path):
-    _fresh_db()
-    _campaign(cid="ad01-w0-I-93")
+def test_resume_reuses_settled_construction_call(store):
+    _campaign(store, cid="ad01-w0-I-93")
     from experiments.ad01 import construct as C
     task = worlds.load_task(worlds.FROZEN_DIR, DEV_TASK)
     first = RecordingConstructorAdapter([ACQUIRED_SOURCE])
     member = C.construct_method(
-        DSN, campaign_id="ad01-w0-I-93", task=task,
+        store, campaign_id="ad01-w0-I-93", task=task,
         experience={"observations": []}, budget={"max_output_tokens": 512},
         gateway=first, model="ad01-construct-double")
     again = RecordingConstructorAdapter(["not python {{{"])
     same = C.construct_method(
-        DSN, campaign_id="ad01-w0-I-93", task=task,
+        store, campaign_id="ad01-w0-I-93", task=task,
         experience={"observations": []}, budget={"max_output_tokens": 512},
         gateway=again, model="ad01-construct-double")
     assert again.calls == [], "resumed construction made a duplicate call"
