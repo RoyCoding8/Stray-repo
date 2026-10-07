@@ -1153,7 +1153,10 @@ def test_verif_fresh_clone_import_and_collect(tmp_path):
         capture_output=True, text=True)
     assert checkout.stdout.strip() == head.stdout.strip(), \
         "fresh clone is not at the verified tip"
-    env = dict(os.environ)
+    env = dict(clone_env)
+    # Import and collection have no authority to create or reuse the parent's stores.
+    for key in ("S09ISO_TOKEN", "S09ISO_ADMIN_DSN", "SETTLEMENT_TEST_DSN"):
+        env.pop(key, None)
     env["PYTHONPATH"] = os.pathsep.join((dest, str(Path(dest) / "src")))
     imported = subprocess.run(
         [sys.executable, "-c",
