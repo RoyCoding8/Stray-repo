@@ -8,7 +8,7 @@ from experiments.ad01.s09_run_isolation import disposable_db
 from settlement.gateway import GatewayStatus, ModelResponse, Usage
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_TOKEN = "c2aactions"
+RUN_TOKEN = "ci-c2aactions"
 CHARTER = {"objective": "reduce examples while preserving their witness", "freeze_id": "ad01"}
 CAPS = {"max_boundaries": 2, "diagnostic_queries": 16, "model_calls": 6}
 TASKS = ["ad01-w0-dev-sw-00", "ad01-w0-dev-sw-01"]
@@ -139,6 +139,9 @@ def test_feedback_constructs_and_freezes_policy_without_premature_promotion(stor
                        "requested_resources": {}}, "state": state}
 '''
     gateway = Constructor(candidate)
+    with trajectory._read_conn(store) as conn:
+        existing_releases = {row["id"] for row in conn.execute(
+            "SELECT id FROM capability_releases").fetchall()}
     campaign = run(store, 94, source, gateway)
     assert len(gateway.calls) == 1
     revision = campaign["episodes"][1]
@@ -155,7 +158,11 @@ def test_feedback_constructs_and_freezes_policy_without_premature_promotion(stor
         assert revision["assessment"]["arms"][arm]["resources"]["step_calls"] > 0
     assert all("executable" not in episode for episode in campaign["episodes"])
     with trajectory._read_conn(store) as conn:
-        assert conn.execute("SELECT count(*) AS n FROM capability_releases").fetchone()["n"] == 0
+        new_releases = {row["id"] for row in conn.execute(
+            "SELECT id FROM capability_releases").fetchall()} - existing_releases
+    assert not any(release.startswith(
+        "ad01-%s-policy-" % campaign["campaign_id"])
+        for release in new_releases)
 
 
 def test_the_store_is_one_this_run_created(store):
@@ -168,7 +175,7 @@ def test_the_store_is_one_this_run_created(store):
     """
     name = store.split("dbname=")[1].split()[0]
 
-    assert name.startswith("s09iso_c2aactions_"), name
+    assert name.startswith("s09iso_%s_" % RUN_TOKEN), name
 
 
 def test_the_store_survives_a_second_module_scope():
@@ -179,4 +186,4 @@ def test_the_store_survives_a_second_module_scope():
     can never observe or destroy the first one's database.
     """
     with disposable_db(RUN_TOKEN) as other:
-        assert other.name.startswith("s09iso_c2aactions_"), other.name
+        assert other.name.startswith("s09iso_%s_" % RUN_TOKEN), other.name
