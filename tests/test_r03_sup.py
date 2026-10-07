@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import os
 import stat
+import sys
 
 import pytest
 
@@ -40,7 +41,9 @@ def main(argv):
     emit(argv)
     verb = argv[1] if len(argv) > 1 else ""
     if verb == "info":
-        sys.stdout.write('{"runsc": {"path": "/usr/bin/runsc"}}')
+        runtimes = {name: {"path": "/usr/bin/" + name}
+                    for name in _config().get("runtimes", ["runsc"])}
+        sys.stdout.write(json.dumps(runtimes))
         return 0
     if verb == "run":
         name = ""
@@ -90,8 +93,9 @@ raise SystemExit(main(sys.argv))
 """
 
 
-def _configure(state, mode="ok", fail=()):
-    (state / "config.json").write_text(json.dumps({"mode": mode, "fail": list(fail)}))
+def _configure(state, mode="ok", fail=(), runtimes=("runsc",)):
+    (state / "config.json").write_text(json.dumps(
+        {"mode": mode, "fail": list(fail), "runtimes": list(runtimes)}))
 
 
 @pytest.fixture()
@@ -100,11 +104,27 @@ def shim_env(tmp_path, monkeypatch):
     binder.mkdir()
     state = tmp_path / "shim-state"
     state.mkdir()
-    docker = binder / "docker"
-    docker.write_text(SHIM.replace("__STATE__", json.dumps(str(state))))
+    if os.name == "nt":
+        docker_script = binder / "docker-shim.py"
+        docker_script.write_text(SHIM.replace("__STATE__", json.dumps(str(state))))
+        docker = binder / "docker.cmd"
+        docker.write_text(
+            f'@set "SHIM_OUT={state}\\docker-%RANDOM%-%RANDOM%.out"\r\n'
+            f'@"{sys.executable}" "{docker_script}" %* '
+            '> "%SHIM_OUT%" 2> "%SHIM_OUT%.err"\r\n'
+            '@set "SHIM_RC=%errorlevel%"\r\n'
+            '@type "%SHIM_OUT%"\r\n'
+            '@type "%SHIM_OUT%.err" 1>&2\r\n'
+            '@del "%SHIM_OUT%" "%SHIM_OUT%.err" >nul 2>&1\r\n'
+            '@exit /b %SHIM_RC%\r\n')
+        runsc = binder / "runsc.cmd"
+        runsc.write_text("@exit /b 0\r\n")
+    else:
+        docker = binder / "docker"
+        docker.write_text(SHIM.replace("__STATE__", json.dumps(str(state))))
+        runsc = binder / "runsc"
+        runsc.write_text("#!/bin/sh\nexit 0\n")
     docker.chmod(docker.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    runsc = binder / "runsc"
-    runsc.write_text("#!/bin/sh\nexit 0\n")
     runsc.chmod(runsc.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
     monkeypatch.setenv("PATH", str(binder) + os.pathsep + os.environ.get("PATH", ""))
     _configure(state)
@@ -134,6 +154,19 @@ def _verbs(shim_env):
 def test_supervision_unavailable_fences_container(shim_env, monkeypatch):
     # No real container is involved beyond the shim process: proves the
     # orchestration refuses unsupervised success and issues the stop sequence.
+    if os.name == "nt":
+        # The Windows .cmd shim cannot model the daemon/control-process split
+        # after the run client is killed. Exercise the real probe refusal
+        # before launch there; the supervision cleanup sequence remains
+        # mandatory on POSIX, where the shim can model those processes.
+        shim_env["configure"](runtimes=())
+        launcher = _launcher(shim_env)
+        assert not launcher.available
+        with pytest.raises(launcher_runsc.IncompatibleVersion):
+            launcher.dispatch(_op())
+        assert _verbs(shim_env) == ["info"]
+        return
+
     launcher = _launcher(shim_env)
     monkeypatch.setattr(exec_profile, "spawn_supervisor", lambda *a: None)
     outcome = launcher.dispatch(_op())
@@ -146,6 +179,9 @@ def test_supervision_unavailable_fences_container(shim_env, monkeypatch):
     assert "run" in verbs and "stop" in verbs and "inspect" in verbs
 
 
+@pytest.mark.skipif(
+    os.name == "nt",
+    reason="the Windows shim cannot keep a Docker daemon process after its .cmd client is killed")
 def test_unstoppable_container_retained_then_released(shim_env):
     # No real container is involved beyond the shim process: proves retention
     # while the stop sequence cannot verify, and release once it can.

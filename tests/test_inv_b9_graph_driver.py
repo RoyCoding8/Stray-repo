@@ -35,6 +35,8 @@ import re
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
@@ -46,6 +48,12 @@ from experiments.ad01 import s09_swe_binding as swe_binding
 from experiments.ad01 import s09_swe_experiment as swe_experiment
 from experiments.ad01 import s09_swe_tasks as swe_tasks
 from experiments.ad01 import s09_swe_world as swe_world
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 
 def _observed_swe_view():
@@ -118,6 +126,7 @@ def test_the_driver_names_one_executor_per_bound_world_and_nothing_else():
 # --- 2. a SWE graph reaches a real SWE world turn -----------------------
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_swe_graph_reaches_a_swe_world_turn_in_the_bounded_child():
     """The child's `swe` branch returns a turn the SWE world itself admits.
 
@@ -140,6 +149,7 @@ def test_a_swe_graph_reaches_a_swe_world_turn_in_the_bounded_child():
     swe_world.admits(None, _observed_swe_view(), action)
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_swe_world_admits_the_turn_the_swe_branch_returned():
     """The world's own admission, not a re-typed expectation of our own.
 
@@ -157,6 +167,7 @@ def test_the_swe_world_admits_the_turn_the_swe_branch_returned():
     assert action["target"] != swe_binding.SWE_WORLD.stop_target
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_swe_record_is_refused_when_the_child_runs_the_ordering_executor():
     """The cross-world pair, driven through the real child both ways.
 

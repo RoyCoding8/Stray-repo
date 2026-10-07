@@ -17,14 +17,18 @@ only act on a literal. B1 proved it by disagreement on the Boolean world.
 These tests prove the repair the same way: two views differing only in an
 observed field must now produce different actions.
 
-Offline lane. No live model call, no network, no fixture gateway. The child
-under test is a real `LocalLauncher` dispatch on this host.
+Offline lane. No live model call, no network, no fixture gateway. The graph
+success case uses a real `LocalLauncher` dispatch where the host can enforce
+its declared child limit. Receipt interpretation is tested without launching
+a child, so the failure states stay covered on every platform.
 """
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -36,13 +40,22 @@ from experiments.ad01 import s09_graph_budget
 from experiments.ad01 import s09_representation_matrix as matrix
 from experiments.ad01 import second_active
 from settlement import broker
+from settlement import child_limits
 from settlement import exec_profile
-from settlement.launcher_local import LocalLauncher, PROFILE
+from settlement.child_limits import ChildLimits
+from settlement.launcher_local import LocalLauncher, PROFILE, _interpret
+
+BOUNDED_CHILD_SUPPORTED = child_limits.child_setup_refusal(
+    ChildLimits(cpu_seconds=10)) is None
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    not BOUNDED_CHILD_SUPPORTED,
+    reason="requires a host that can install the declared child CPU limit")
 
 
 # --- 1. a graph arm reaches a world turn ---------------------------------
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_graph_arm_reaches_a_world_turn_through_the_bounded_child():
     """The child imports the package and the graph's arm reaches the world.
 
@@ -95,6 +108,7 @@ def test_the_launcher_publishes_the_package_directory_and_not_the_root():
         "change this repair exists not to make")
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_scrub_still_drops_a_secret_the_import_path_change_carries():
     """Widening the import path must not widen the environment.
 
@@ -129,23 +143,27 @@ def _dispatch(tmp_path, operation_id, source):
     return outcome.receipt.content
 
 
-def test_a_child_that_died_to_import_is_not_reported_as_a_child_that_ran_nothing(tmp_path):
-    """The two receipts are different facts and are named differently.
+def _interpreted(returncode, stdout="", stderr=""):
+    return _interpret(returncode, stdout, stderr, False, False, 1,
+                      [sys.executable, "-c", ""])
+
+
+def test_interpretation_distinguishes_child_failure_from_empty_output():
+    """The interpreter gives these two child outcomes different receipts.
 
     A child that never got past its imports and a child that ran to
     completion and printed nothing both produce a receipt with no typed
-    worker payload in it. Before this repair the only thing separating them
-    was a `returncode` buried in `data`, and every caller in the tree read
-    `data["worker"]`, found nothing, and reported `no receipt` for both.
+    worker payload in it. These representative subprocess results exercise
+    the shared interpreter without requiring a host child capability.
     """
-    died = _dispatch(tmp_path, "b2-died", "import settlement_no_such_package")
-    ran_empty = _dispatch(tmp_path, "b2-empty", "pass")
+    died = _interpreted(1, stderr="ModuleNotFoundError: settlement_no_such_package")
+    ran_empty = _interpreted(0)
 
     assert died["parse"] == "child-failed", died
     assert ran_empty["parse"] == "empty", ran_empty
     assert died["_verdict"] == "failure", died
     assert ran_empty["_verdict"] == "success", ran_empty
-    # The child that died says so in its own words, and names the module.
+    # A nonzero child result keeps stderr and its import failure.
     assert "settlement_no_such_package" in died["data"]["stderr"], died
     # No synthesized worker envelope. A receipt whose child never produced
     # a typed payload must not carry one, because that would be a claim no
@@ -154,15 +172,13 @@ def test_a_child_that_died_to_import_is_not_reported_as_a_child_that_ran_nothing
     assert "worker" not in ran_empty["data"], ran_empty
 
 
-def test_a_child_that_ran_and_printed_a_non_envelope_is_a_third_fact(tmp_path):
-    """Ran, exited zero, printed something that is not the contract.
+def test_interpretation_rejects_a_non_envelope_from_a_zero_exit():
+    """A zero exit with output that is not the contract is rejected.
 
-    The third state, and the one most easily collapsed into the other two.
-    A child that exits zero having printed garbage produced no receipt, and
-    it is not the same as a child that produced no receipt because it never
-    ran.
+    The third state is distinct from an empty successful exit and a failed
+    exit, and the shared interpreter preserves it.
     """
-    garbage = _dispatch(tmp_path, "b2-garbage", "print('not an envelope')")
+    garbage = _interpreted(0, stdout="not an envelope\n")
 
     assert garbage["parse"] == "rejected", garbage
     assert garbage["_verdict"] == "failure", garbage
@@ -170,24 +186,18 @@ def test_a_child_that_ran_and_printed_a_non_envelope_is_a_third_fact(tmp_path):
 
 
 def test_the_graph_harness_names_which_of_the_two_it_saw():
-    """The two states reach the harness as two different refusal reasons.
+    """The two interpreted receipt states reach the harness distinctly.
 
     Asserted on the refusal text, because the receipt vocabulary is the
     launcher's and this is the harness reading it. A harness that reported
     both as `no receipt` left a reader unable to tell a graph that could not
     start from one that ran and declined to answer.
 
-    Driven rather than restated: the harness's own refusal branch is called
-    with the two real receipts a host produces for the two real children,
-    so the strings asserted here are the ones the code builds.
+    The real harness refusal branch consumes receipts produced by the same
+    interpreter used after a child dispatch.
     """
-    import pytest
-    import tempfile
-
-    scratch = Path(tempfile.mkdtemp(prefix="b2-map-"))
-    died = _dispatch(scratch, "b2-map-died",
-                     "import settlement_no_such_package")
-    ran_empty = _dispatch(scratch, "b2-map-empty", "pass")
+    died = _interpreted(1, stderr="ModuleNotFoundError: settlement_no_such_package")
+    ran_empty = _interpreted(0)
     assert died["parse"] == "child-failed", died
     assert ran_empty["parse"] == "empty", ran_empty
 

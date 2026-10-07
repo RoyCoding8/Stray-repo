@@ -33,6 +33,12 @@ from experiments.ad01 import s09_swe_ast as swe_ast
 from experiments.ad01 import s09_swe_binding as binding
 from experiments.ad01 import s09_swe_experiment as experiment
 from experiments.ad01 import s09_swe_tasks as tasks
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 from experiments.ad01 import s09_swe_world as swe
 
 HELD_OUT = [(template, mechanism)
@@ -239,6 +245,7 @@ def test_the_ast_and_graph_lineages_build_and_the_step_lineages_still_do():
             [lineage.build_error for lineage in cell if not lineage.built_ok]
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_ast_cell_carries_a_test_name_it_read_out_of_the_view():
     """The typed AST is contingent: its action input comes from the view.
 

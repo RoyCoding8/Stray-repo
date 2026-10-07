@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 import sys
 import time
 from pathlib import Path
@@ -112,8 +113,25 @@ def _contained(root: Path, rel: str) -> Path:
 def _safe_write(root: Path, rel: str, raw: bytes) -> Path:
     target = _contained(root, rel)
     target.parent.mkdir(parents=True, exist_ok=True)
+    binary = getattr(os, "O_BINARY", 0)
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
     try:
-        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+        fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL |
+                     binary | nofollow, 0o644)
+    except FileExistsError:
+        try:
+            if not stat.S_ISREG(target.lstat().st_mode):
+                raise SettlementError(
+                    f"rejected path {rel!r}: existing staging path is not a regular file")
+            fd = os.open(target, os.O_RDONLY | binary | nofollow)
+            with os.fdopen(fd, "rb") as handle:
+                existing = handle.read()
+        except OSError as exc:
+            raise SettlementError(f"rejected path {rel!r}: {exc.strerror or exc}")
+        if existing != raw:
+            raise SettlementError(
+                f"rejected path {rel!r}: existing staged bytes differ")
+        return target
     except OSError as exc:
         raise SettlementError(f"rejected path {rel!r}: {exc.strerror or exc}")
     try:

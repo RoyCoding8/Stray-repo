@@ -43,6 +43,12 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from experiments.ad01 import s09_causal_proof as causal
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 STUDY_ROOT = "s09cs02-root"
 ACCOUNT_ID = "s09cs02-alloc"
@@ -348,6 +354,7 @@ def test_a_post_effect_record_set_does_not_pass_the_pre_launch_check():
         == ("no-policy-decision",)
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_digest_copied_onto_a_record_never_qualifies_launch_either():
     """A copied string is inert. The launch check has no digest path."""
     run = causal.PolicyRun(policy_source=POLICY_SOURCE, view=dict(VIEW),
