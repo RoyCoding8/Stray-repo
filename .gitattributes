@@ -16,6 +16,9 @@
 # manifest, and a global rule would rewrite 3,200 unrelated files to buy
 # nothing.
 
+# Preserve raw JSON by default; frozen trees below have explicit LF rules.
+*.json -text
+
 experiments/ad01/worlds/** text eol=lf
 experiments/ad01/worlds_exp/** text eol=lf
 experiments/ad01/worlds_panel/** text eol=lf
@@ -30,5 +33,3 @@ experiments/representation/acquire/** text eol=lf
 **/manifest.sha256 text eol=lf
 experiments/team01/** text eol=lf
 
-# JSON evidence is hashed as bytes. Preserve each committed blob on every OS.
-*.json -text

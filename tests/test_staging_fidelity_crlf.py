@@ -29,6 +29,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from experiments.ad01 import method_exec, policy_step, worlds  # noqa: E402
 from settlement import launcher_local  # noqa: E402
+from worktree_checkouts import _local_path
 
 # The venv's editable install puts the main checkout on `sys.path`, so an
 # import can silently resolve there and every assertion below would measure
@@ -75,17 +76,9 @@ def _check_attr_command(paths: list[str]) -> list[str]:
     git_file = ROOT / ".git"
     if git_file.is_file():
         declared = git_file.read_text(encoding="utf-8").split(":", 1)[1].strip()
-        command += ["--git-dir", _local_path(declared),
+        command += ["--git-dir", str(_local_path(declared)),
                     "--work-tree", str(ROOT)]
     return command + ["check-attr", "--all", "--"] + paths
-
-
-def _local_path(declared: str) -> str:
-    """`D:/rest` under a POSIX host is `/mnt/d/rest`; anything else is itself."""
-    drive, separator, rest = declared.replace("\\", "/").partition("/")
-    if separator and len(drive.rstrip(":")) == 1 and drive[0].isalpha():
-        return "/mnt/%s/%s" % (drive[0].lower(), rest)
-    return declared
 
 
 @pytest.fixture(scope="module")

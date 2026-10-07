@@ -61,8 +61,9 @@ def test_failed_migration_does_not_leave_a_disposable_database(tmp_path):
             for (name,) in conn.execute(
                     "SELECT datname FROM pg_database WHERE starts_with(datname, %s)",
                     (prefix,)).fetchall():
-                conn.execute(psycopg.sql.SQL("DROP DATABASE {} WITH (FORCE)").format(
-                    psycopg.sql.Identifier(name)))
+                iso.drop_disposable_db(iso.DisposableDatabase(
+                    name=name, dsn=iso._dsn_for(route, name), token=run_token),
+                    admin_dsn=route)
 
 
 def expected_migrations() -> int:

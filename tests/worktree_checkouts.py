@@ -139,6 +139,8 @@ def untracked_paths(canonical: Path, checkout: Path,
 
 
 def _local_path(raw: str) -> Path:
+    if os.name != "nt":
+        raw = raw.replace("\\", "/")
     if os.name != "nt" and len(raw) > 2 and raw[1:3] == ":/":
         return Path("/mnt") / raw[0].lower() / raw[3:]
     return Path(raw)
