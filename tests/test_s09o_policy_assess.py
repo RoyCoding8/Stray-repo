@@ -7,8 +7,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-TOKEN = "o-assess"
-MIGRATIONS = ROOT / "migrations"
+TOKEN = "ci-s09o-assess"
 
 
 def _source(kind="construct_method", queries=16):
@@ -30,15 +29,9 @@ def _source(kind="construct_method", queries=16):
 
 @pytest.fixture(scope="module")
 def store():
-    from experiments.ad01 import s09_run_isolation as iso
-
-    admin_dsn = os.environ.get("SETTLEMENT_TEST_DSN") or None
-    database = iso.create_disposable_db(TOKEN, admin_dsn=admin_dsn,
-                                        migrations_dir=MIGRATIONS)
-    try:
-        yield database.dsn
-    finally:
-        iso.drop_disposable_db(database, admin_dsn=admin_dsn)
+    from execution_authority import execution_store
+    with execution_store(TOKEN) as authority:
+        yield authority
 
 
 def _artifact(source):
@@ -52,12 +45,12 @@ def _setup(store, tag, candidate, incumbent, rule=None):
                                    seed="worker-a-%s" % tag, size=2)
     rule = rule or policy_assess.rule_for()
     proposal_id = "s09o-proposal-%s" % tag
-    policy_assess.freeze_protocol(store, proposal_id=proposal_id,
+    policy_assess.freeze_protocol(store["dsn"], proposal_id=proposal_id,
                                   panel=panel, rule=rule)
     candidate_artifact = _artifact(candidate)
     incumbent_artifact = _artifact(incumbent)
     return policy_assess.assess_policy(
-        store, proposal_id=proposal_id,
+        store["dsn"], proposal_id=proposal_id,
         candidate_source=candidate,
         candidate_digest=hashlib.sha256(candidate.encode()).hexdigest(),
         candidate_artifact=candidate_artifact,
@@ -65,7 +58,8 @@ def _setup(store, tag, candidate, incumbent, rule=None):
         incumbent_digest=hashlib.sha256(incumbent.encode()).hexdigest(),
         incumbent_artifact=incumbent_artifact,
         panel=panel, rule=rule, scope={"family": "software"},
-        protocol_id=policy_assess.PANEL_PROTOCOL)
+        protocol_id=policy_assess.PANEL_PROTOCOL,
+        allocation_id=store["allocation_id"])
 
 
 def test_better_candidate_binds_with_arm_evidence(store):
@@ -121,12 +115,13 @@ def test_exposure_requires_frozen_protocol(store):
     source = _source()
     with pytest.raises(ValueError, match="protocol"):
         policy_assess.assess_policy(
-            store, proposal_id="s09o-never-frozen", candidate_source=source,
+            store["dsn"], proposal_id="s09o-never-frozen", candidate_source=source,
             candidate_digest=hashlib.sha256(source.encode()).hexdigest(),
             candidate_artifact=_artifact(source), incumbent_source=source,
             incumbent_digest=hashlib.sha256(source.encode()).hexdigest(),
             incumbent_artifact=_artifact(source), panel=panel, rule=rule,
-            scope={"family": "software"}, protocol_id=policy_assess.PANEL_PROTOCOL)
+            scope={"family": "software"}, protocol_id=policy_assess.PANEL_PROTOCOL,
+            allocation_id=store["allocation_id"])
 
 
 def test_refreezing_different_panel_or_rule_fails(store):
@@ -137,13 +132,13 @@ def test_refreezing_different_panel_or_rule_fails(store):
                                     seed="worker-a-refreeze-b", size=2)
     rule = policy_assess.rule_for()
     proposal_id = "s09o-refreeze"
-    policy_assess.freeze_protocol(store, proposal_id=proposal_id,
+    policy_assess.freeze_protocol(store["dsn"], proposal_id=proposal_id,
                                   panel=first, rule=rule)
     with pytest.raises(ValueError):
-        policy_assess.freeze_protocol(store, proposal_id=proposal_id,
+        policy_assess.freeze_protocol(store["dsn"], proposal_id=proposal_id,
                                       panel=second, rule=rule)
     with pytest.raises(ValueError):
-        policy_assess.freeze_protocol(store, proposal_id=proposal_id,
+        policy_assess.freeze_protocol(store["dsn"], proposal_id=proposal_id,
                                       panel=first,
                                       rule=policy_assess.rule_for(margin=2))
 
@@ -166,7 +161,7 @@ def test_identical_assessment_is_idempotent(store):
                                    seed="worker-a-idempotent", size=2)
     rule = policy_assess.rule_for()
     proposal_id = "s09o-idempotent"
-    policy_assess.freeze_protocol(store, proposal_id=proposal_id,
+    policy_assess.freeze_protocol(store["dsn"], proposal_id=proposal_id,
                                   panel=panel, rule=rule)
     kwargs = dict(
         proposal_id=proposal_id, candidate_source=candidate,
@@ -174,9 +169,10 @@ def test_identical_assessment_is_idempotent(store):
         candidate_artifact=_artifact(candidate), incumbent_source=incumbent,
         incumbent_digest=hashlib.sha256(incumbent.encode()).hexdigest(),
         incumbent_artifact=_artifact(incumbent), panel=panel, rule=rule,
-        scope={"family": "software"}, protocol_id=policy_assess.PANEL_PROTOCOL)
-    first = policy_assess.assess_policy(store, **kwargs)
-    second = policy_assess.assess_policy(store, **kwargs)
+        scope={"family": "software"}, protocol_id=policy_assess.PANEL_PROTOCOL,
+        allocation_id=store["allocation_id"])
+    first = policy_assess.assess_policy(store["dsn"], **kwargs)
+    second = policy_assess.assess_policy(store["dsn"], **kwargs)
     assert second == first
     assert second["attempt_id"] == first["attempt_id"]
 

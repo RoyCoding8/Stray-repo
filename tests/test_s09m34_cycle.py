@@ -24,7 +24,7 @@ MIGRATIONS = ROOT / "migrations"
 LOCAL_HOST = "/var/run/postgresql"
 LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
 
-RUN_TOKEN = "m34cyc%s" % uuid.uuid4().hex[:10]
+RUN_TOKEN = "ci-m34cyc%s" % uuid.uuid4().hex[:10]
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}

@@ -380,10 +380,18 @@ def test_r1_driver_routes_through_frontier(tmp_path, dsn, live_allocation):
     # The rewrite is anchored to an observation the run really made, so this
     # is a relation over the record rather than a restated id.
     assert record["refuted_from"] is not None
-    # Two probes on one rule: the first earns `unknown` for having no prior,
-    # the second earns its verdict against it. This is the count that says
-    # the amendment bought a prior rather than a second opinion.
-    assert record["observations"] == 2
+    # The four total observations include the later improvement rounds. Check
+    # the two diagnostic probes directly in the durable store so this gate
+    # proves the intended evidence was written, not just a total count.
+    persisted = json.loads(Path(record["store_path"]).read_text())
+    observations = persisted["observations"]
+    first_id = record["effect"]["observation_id"]
+    second_id = record["second_probe_effect"]["observation_id"]
+    assert sum(item["observation_id"] == first_id for item in observations) == 1
+    assert sum(item["observation_id"] == second_id for item in observations) == 1
+    by_id = {item["observation_id"]: item for item in observations}
+    assert by_id[first_id]["x"] == 3
+    assert by_id[second_id]["x"] == driver.SECOND_PROBE_X
     assert record["effect"]["verdict"] == "unknown"
     assert record["second_probe_effect"]["verdict"] == "not_preserved"
     assert record["second_probe_effect"]["x"] == driver.SECOND_PROBE_X
