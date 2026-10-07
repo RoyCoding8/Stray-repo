@@ -154,6 +154,23 @@ def _experiment(dsn: str, double, tag: str, roots: dict, phases=None):
         evidence_root=roots["evidence"], **kw)
 
 
+def test_no_candidate_refusal_does_not_claim_unmeasured_quality():
+    manifest, manifest_sha, _ = checker.load_manifest()
+    task, _ = panel_run.load_task(DIAGNOSTIC_TASK)
+    record, outcome = panel_run._refused_record(
+        manifest_sha, "B", task, DIAGNOSTIC_TASK,
+        panel_run.family_of(task), "evaluation",
+        {"manifest": manifest, "retention_digest": "a" * 64},
+        "no-useful-form")
+
+    assert outcome == "failure"
+    assert record["result"]["verified"] is False
+    assert "best_measure" not in record["result"]
+    problems = []
+    checker._scores_derived(record, "B-gr-eva-00", problems)
+    assert problems == []
+
+
 def assert_retained_acceptance(eval_root, retention_path) -> bool:
     raw = Path(retention_path).read_bytes()
     frozen = json.loads(raw.decode("utf-8"))

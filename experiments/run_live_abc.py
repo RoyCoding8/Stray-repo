@@ -37,8 +37,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve()
 WORKTREE = HERE.parent.parent
 
-sys.path.insert(0, "src")
-sys.path.insert(0, "experiments")
+sys.path.insert(0, str(WORKTREE / "src"))
+sys.path.insert(0, str(WORKTREE))
+sys.path.insert(0, str(HERE.parent))
 
 from settlement import experiment, store
 from settlement.common import Command, SettlementError

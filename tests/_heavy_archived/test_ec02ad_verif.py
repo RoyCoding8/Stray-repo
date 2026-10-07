@@ -925,7 +925,8 @@ AD01_ROOT = str(Path(__file__).resolve().parents[2])
 
 def _ad01_env():
     env = dict(os.environ)
-    env["PYTHONPATH"] = AD01_ROOT
+    env["PYTHONPATH"] = os.pathsep.join((AD01_ROOT,
+                                         str(Path(AD01_ROOT) / "src")))
     return env
 
 
@@ -1137,20 +1138,23 @@ def test_verif_fresh_clone_import_and_collect(tmp_path):
     import subprocess
     import sys
     dest = str(tmp_path / "fresh-checkout")
+    clone_source = os.environ.get("GIT_DIR", VERIF_ROOT)
+    clone_env = {key: value for key, value in os.environ.items()
+                 if key not in ("GIT_DIR", "GIT_WORK_TREE")}
     clone = subprocess.run(
-        ["git", "clone", "-q", VERIF_ROOT, dest],
-        capture_output=True, text=True, timeout=300)
+        ["git", "clone", "-q", clone_source, dest],
+        capture_output=True, text=True, timeout=300, env=clone_env)
     assert clone.returncode == 0, clone.stderr[-2000:]
     checkout = subprocess.run(
         ["git", "-C", dest, "rev-parse", "HEAD"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, env=clone_env)
     head = subprocess.run(
         ["git", "-C", VERIF_ROOT, "rev-parse", "HEAD"],
         capture_output=True, text=True)
     assert checkout.stdout.strip() == head.stdout.strip(), \
         "fresh clone is not at the verified tip"
     env = dict(os.environ)
-    env["PYTHONPATH"] = dest
+    env["PYTHONPATH"] = os.pathsep.join((dest, str(Path(dest) / "src")))
     imported = subprocess.run(
         [sys.executable, "-c",
          "import experiments.coord02.entry as e, "
@@ -1162,8 +1166,8 @@ def test_verif_fresh_clone_import_and_collect(tmp_path):
     assert "coord02-entry" in imported.stdout
     assert "ad01" in imported.stdout
     collected = subprocess.run(
-        ["/home/ubuntu/AI/Agent-Society-v2/.venv/bin/pytest",
-         "tests/test_ec02ad_verif.py", "--collect-only", "-q"],
+        [sys.executable, "-m", "pytest",
+         "tests/_heavy_archived/test_ec02ad_verif.py", "--collect-only", "-q"],
         capture_output=True, text=True, env=env, cwd=dest, timeout=180)
     assert collected.returncode == 0, collected.stderr[-2000:]
     assert "test_verif_c1_positive_admitted_work_graded" in collected.stdout
