@@ -266,9 +266,16 @@ def test_campaign_constructs_and_retains_acquired(tmp_path):
     frozen = tmp_path / "repertoire.json"
     trajectory.freeze_repertoire(campaign, frozen)
     repertoire = trajectory.load_repertoire(frozen)
+    from settlement import store
+    from settlement.common import Command
+    store.seed_allocation(DSN, Command(request_id="campaign-use-budget",
+                                       payload={
+        "allocation_id": "campaign-use-budget", "domain": "cpu",
+        "authorized": 100000}))
     [record] = trajectory.run_use(
         repertoire, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        policy=first_eligible)
+        policy=first_eligible, dsn=DSN,
+        allocation_id="campaign-use-budget")
     assert record["executed_source"] == ACQUIRED_SOURCE
     assert record["fallback_reason"] == ""
     union = trajectory.cost_union(campaign, [record], dsn=DSN)

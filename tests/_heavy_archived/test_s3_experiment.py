@@ -233,7 +233,7 @@ def test_budget_quarantine_cancel_while_dispatched(migrated_db, tmp_path):
 
     refused = store.reserve(dsn, Command(request_id="s3d-over", payload={
         "allocation_id": env["allocation_id"], "reservation_id": "s3d-r-over",
-        "amount": 10_000, "operation_id": "s3d-other"}))
+        "amount": 10_000, "operation_id": ""}))
     assert refused.code == ResultCode.INSUFFICIENT_RESOURCES
     broker.request_cancel(dsn, op, {"local-process": launcher})
     broker.note_worker_stopped(dsn, op)
