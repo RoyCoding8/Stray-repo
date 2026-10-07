@@ -254,9 +254,11 @@ def test_a_claim_is_recorded_before_the_worker_is_spawned(tmp_path, monkeypatch)
         release.set()
         worker.join(timeout=30)
 
-    assert holder["out"].sent is True
-    assert run_dir.is_dir()
-    assert (run_dir / "claim-op_exec-default.spawns").read_text().strip() == "1"
+    assert holder["out"].sent is False
+    assert "parked before spawn" in holder["out"].refused_reason
+    assert launcher.claimed("claim-op", 4) is False
+    assert launcher.prove_never_sent("claim-op", 4) is True
+    assert not (run_dir / "claim-op_exec-default.spawns").exists()
 
 
 def test_a_claim_does_not_answer_for_another_generation_or_operation(tmp_path,

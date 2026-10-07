@@ -256,19 +256,26 @@ def _view_for(task_id: str, *, remaining: dict) -> dict:
 
 
 def _context(policy: BoundPolicy, task_id: str, step_index: int,
-             remaining: dict) -> dict:
+             remaining: dict, *, operation_id: str,
+             dsn: str | None, allocation_id: str | None) -> dict:
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
-    return assessment_profile.make_ctx(
+    context = assessment_profile.make_ctx(
         candidate_digest=policy.digest,
         scope={"family": task["family"], "task_ids": [task_id]},
-        session="s09-governance/%s" % policy.arm, step_index=step_index,
+        session=operation_id, step_index=step_index,
         remaining=dict(remaining))
+    context.update(dsn=dsn, allocation_id=allocation_id)
+    return context
 
 
-def _step(policy: BoundPolicy, view: dict, state: dict, seq: int) -> Decision:
+def _step(policy: BoundPolicy, view: dict, state: dict, seq: int, *,
+          dsn: str | None, allocation_id: str | None,
+          operation_id: str | None) -> Decision:
     record = policy_step.make_policy_artifact(
         policy.source, origin=policy.origin)
-    stepped = policy_step.run_policy_step(record, view, state)
+    stepped = policy_step.run_policy_step(
+        record, view, state, dsn=dsn, allocation_id=allocation_id,
+        operation_id=operation_id)
     launcher_receipt = stepped["receipt"]["details"]["raw_payload"][
         "launcher_receipt"]
     return Decision(
@@ -281,7 +288,9 @@ def _step(policy: BoundPolicy, view: dict, state: dict, seq: int) -> Decision:
 
 def _episode_body(policy: BoundPolicy, task_id: str, *, remaining: dict,
                   dispatcher: Callable | None,
-                  max_steps: int, driver_pid: int) -> Episode:
+                  max_steps: int, driver_pid: int, dsn: str | None,
+                  allocation_id: str | None,
+                  operation_id: str | None) -> Episode:
     if dispatcher is None:
         raise GovernanceRefused(REFUSAL_NO_DISPATCHER,
                                 "use was attempted with no policy dispatcher")
@@ -291,9 +300,14 @@ def _episode_body(policy: BoundPolicy, task_id: str, *, remaining: dict,
     decisions: list[Decision] = []
     methods: list[MethodColumn] = []
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)
-    for step_index in range(max_steps):
+    for _ in range(max_steps):
         try:
-            decision = _step(policy, view, state, len(decisions))
+            step_index = len(decisions)
+            decision = _step(
+                policy, view, state, step_index, dsn=dsn,
+                allocation_id=allocation_id,
+                operation_id=("%s-step-%d" % (operation_id, step_index)
+                              if operation_id else None))
         except Exception as exc:
             raise GovernanceRefused(REFUSAL_NO_STEP, str(exc)) from exc
         if decision.executed_digest != policy.digest:
@@ -304,7 +318,10 @@ def _episode_body(policy: BoundPolicy, task_id: str, *, remaining: dict,
         decisions.append(decision)
         state = decision.state
         effect = dispatcher(policy, task, decision.action,
-                            _context(policy, task_id, step_index, remaining))
+                            _context(
+                                policy, task_id, step_index, remaining,
+                                operation_id=operation_id,
+                                dsn=dsn, allocation_id=allocation_id))
         if not isinstance(effect, dict) or not effect.get("accepted"):
             raise GovernanceRefused(
                 REFUSAL_EFFECT_REFUSED,
@@ -330,17 +347,23 @@ def _default_dispatcher(policy: BoundPolicy, task: dict, action: dict,
         profile_name=assessment_profile.ASSESSMENT,
         record=policy_step.make_policy_artifact(policy.source,
                                                origin=policy.origin),
-        task=task, action=action, ctx=context)
+        task=task, action=action, ctx=context,
+        dsn=context.get("dsn"),
+        allocation_id=context.get("allocation_id"))
 
 
 _EPISODE_CHILD = '''
 import json, os, sys
-work, root, policy_path, arm, task_id, remaining, max_steps, driver_pid, mode = sys.argv[1:]
+work, root, policy_path, arm, task_id, remaining, max_steps, driver_pid, authority_path = sys.argv[1:]
 sys.path.insert(0, root)
 sys.path.insert(0, root + "/src")
 from experiments.ad01 import s09_policy_governance as gov
 from experiments.ad01 import policy_step
 from pathlib import Path
+authority = json.loads(Path(authority_path).read_text())
+dsn = authority["dsn"]
+allocation_id = authority["allocation_id"]
+operation_id = authority["operation_id"]
 
 def emit(status, data, error=""):
     # WorkerOutput sets extra="forbid", so a structured refusal stage cannot be
@@ -357,12 +380,14 @@ else:
     policy = gov.bind(staged.decode("utf-8"), arm=arm, recorded_digest=recorded,
                       entry=policy_step.STEP_ENTRY, origin="authored-control",
                       source_path=policy_path, disposition="staged")
-    dispatcher = None if mode == "disconnected" else gov._default_dispatcher
+    dispatcher = gov._default_dispatcher
     try:
         episode = gov._episode_body(
             policy, task_id, remaining=json.loads(remaining),
             dispatcher=dispatcher, max_steps=int(max_steps),
-            driver_pid=int(driver_pid))
+            driver_pid=int(driver_pid), dsn=dsn or None,
+            allocation_id=allocation_id or None,
+            operation_id=operation_id or None)
         emit("ok", episode.as_dict())
     except gov.GovernanceRefused as exc:
         emit("error", {}, exc.stage + ": " + exc.reason)
@@ -371,7 +396,9 @@ else:
 
 def run_episode(policy: BoundPolicy, task_id: str, *, remaining: dict | None = None,
                 dispatcher: Callable | None = _default_dispatcher,
-                max_steps: int = policy_step.POLICY_MAX_STEPS) -> Episode:
+                max_steps: int = policy_step.POLICY_MAX_STEPS,
+                dsn: str | None = None, allocation_id: str | None = None,
+                operation_id: str | None = None) -> Episode:
     """Run one bound policy over one task inside a fresh interpreter.
 
     The bytes are staged to disk, read back, and re-hashed by the child before
@@ -383,7 +410,15 @@ def run_episode(policy: BoundPolicy, task_id: str, *, remaining: dict | None = N
     from settlement.launcher_local import PROFILE, LocalLauncher
 
     budget = dict(remaining or {"queries": 16, "model_calls": 2})
-    mode = "disconnected" if dispatcher is None else "connected"
+    if dispatcher is None:
+        raise GovernanceRefused(
+            REFUSAL_NO_DISPATCHER,
+            "use was attempted with no policy dispatcher")
+    if not all(isinstance(value, str) and value.strip()
+               for value in (dsn, allocation_id, operation_id)):
+        raise GovernanceRefused(
+            REFUSAL_NO_STEP,
+            "governed use needs explicit caller store, allocation, and operation")
     with tempfile.TemporaryDirectory(prefix="s09-governance-") as raw:
         work = Path(raw)
         staged = work / "policy.py"
@@ -391,27 +426,33 @@ def run_episode(policy: BoundPolicy, task_id: str, *, remaining: dict | None = N
         (work / "policy.digest").write_text(policy.digest, encoding="utf-8")
         child = work / "episode.py"
         child.write_text(_EPISODE_CHILD, encoding="utf-8")
+        authority_path = work / "authority.json"
+        authority_path.write_text(json.dumps({
+            "dsn": dsn, "allocation_id": allocation_id,
+            "operation_id": operation_id}, sort_keys=True),
+            encoding="utf-8")
         launcher = LocalLauncher(work / "launcher")
         payload = {
             "profile": PROFILE,
             "argv": [sys.executable, str(child), str(work), str(ROOT),
                      str(staged), policy.arm, task_id, _canonical(budget),
-                     str(max_steps), str(os.getpid()), mode],
+                     str(max_steps), str(os.getpid()),
+                     str(authority_path)],
             "timeout_ms": EPISODE_TIMEOUT_MS,
             "max_output_bytes": EPISODE_MAX_OUTPUT_BYTES,
             "cpu_seconds": EPISODE_CPU_SECONDS,
         }
         # one id per invocation: the launcher refuses a second send under a
         # recorded id and would hand back the first run's receipt
-        operation_id = "s09-governance-%s" % os.urandom(6).hex()
+        launch_id = "s09-governance-%s" % os.urandom(6).hex()
         launched = launcher.dispatch(broker.BrokerOp(
-            operation_id=operation_id, effect=broker.SANDBOX_EXEC,
+            operation_id=launch_id, effect=broker.SANDBOX_EXEC,
             payload=payload))
         if not launched.sent:
             raise GovernanceRefused(
                 REFUSAL_NO_STEP,
                 "episode was not launched: %s" % launched.refused_reason)
-        receipt = launcher.read_result(operation_id)
+        receipt = launcher.read_result(launch_id)
     worker = (receipt.get("data") or {}).get("worker") or {}
     if worker.get("status") != "ok":
         stage, _, reason = str(worker.get("error", "")).partition(": ")
@@ -447,10 +488,19 @@ def _receipt_detail(receipt: dict) -> str:
 
 
 def substitution_verdict(first: BoundPolicy, second: BoundPolicy,
-                         task_id: str, *, remaining: dict | None = None) -> dict:
+                         task_id: str, *, remaining: dict | None = None,
+                         dsn: str | None = None,
+                         allocation_id: str | None = None,
+                         operation_id: str | None = None) -> dict:
     """Swap the policy with the method repertoire held fixed."""
-    left = run_episode(first, task_id, remaining=remaining)
-    right = run_episode(second, task_id, remaining=remaining)
+    left = run_episode(
+        first, task_id, remaining=remaining, dsn=dsn,
+        allocation_id=allocation_id,
+        operation_id=("%s-left" % operation_id if operation_id else None))
+    right = run_episode(
+        second, task_id, remaining=remaining, dsn=dsn,
+        allocation_id=allocation_id,
+        operation_id=("%s-right" % operation_id if operation_id else None))
     identities = ([m.identity for m in left.methods],
                   [m.identity for m in right.methods])
     owners = ([m.owner for m in left.methods], [m.owner for m in right.methods])
@@ -473,7 +523,10 @@ def substitution_verdict(first: BoundPolicy, second: BoundPolicy,
 
 
 def disconnect_verdict(policy: BoundPolicy, task_id: str, *,
-                       remaining: dict | None = None) -> dict:
+                       remaining: dict | None = None,
+                       dsn: str | None = None,
+                       allocation_id: str | None = None,
+                       operation_id: str | None = None) -> dict:
     """Cut the policy's reach to the method repertoire and demand a refusal.
 
     Two disconnects are measured. The first withholds this module's policy
@@ -484,7 +537,10 @@ def disconnect_verdict(policy: BoundPolicy, task_id: str, *,
     """
     without_dispatcher = _refusal_of(
         lambda: run_episode(policy, task_id, remaining=remaining,
-                            dispatcher=None))
+                            dispatcher=None, dsn=dsn,
+                            allocation_id=allocation_id,
+                            operation_id=("%s-disconnected" % operation_id
+                                          if operation_id else None)))
     record = policy_step.make_policy_artifact(policy.source,
                                               origin=policy.origin)
     task = worlds.load_task(worlds.FROZEN_DIR, task_id)

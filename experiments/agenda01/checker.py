@@ -16,6 +16,7 @@ total. Unattributed outstanding exposure is a violation.
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 from pathlib import Path
 
@@ -103,6 +104,27 @@ def check_trace(trace: dict, manifest_doc: dict, manifest_hash: str,
     for receipt in ledger.get("receipts", []):
         if receipt["operation_id"] not in set(op_ids):
             reasons.append(f"receipt-without-effect {receipt['receipt']}")
+    by_receipt = {r["receipt"]: r for r in ledger.get("receipts", [])}
+    for receipt in ledger.get("receipts", []):
+        content = receipt.get("content") or {}
+        terminal = content.get("terminal_receipt")
+        if not terminal:
+            continue
+        final = by_receipt.get(terminal, {})
+        completed = final.get("content") or {}
+        if final.get("outcome") != "success" \
+                or final.get("operation_id") != receipt["operation_id"] \
+                or completed.get("operation_id") != receipt["operation_id"] \
+                or completed.get("source_attempt") != content.get("source_attempt") \
+                or completed.get("kind") != "agenda-probe-completed" \
+                or completed.get("resolves_unknowns") != sorted(completed.get("results") or {}) \
+                or (completed.get("results") or {}).get(receipt["receipt"]) != content:
+            reasons.append(f"observation-without-completion {receipt['receipt']}")
+        for row in (receipt, final):
+            raw = json.dumps(row.get("content"), sort_keys=True,
+                             separators=(",", ":")).encode()
+            if hashlib.sha256(raw).hexdigest() != row.get("content_digest"):
+                reasons.append(f"receipt-content-altered {row.get('receipt')}")
     if int(ledger.get("conflicts", 0)) > 0:
         reasons.append("conflicting-evidence")
     liabilities = list(trace["totals"]["liabilities"])

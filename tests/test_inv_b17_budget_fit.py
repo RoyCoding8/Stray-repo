@@ -13,8 +13,8 @@ The claims being asserted:
 * no response at or over the served budget was recorded as a complete
   artifact — the load-bearing negative of this lane;
 * unknown usage stayed unknown rather than becoming a zero;
-* no credential VALUE appears in anything this lane wrote, and the scan
-  that says so FAILS on a planted value, so it is not vacuous.
+* the scan detects a planted canary. CI does not claim the author's live
+  credential was present or inspected.
 
 The tamper tests at the end exist because a green gate proves nothing on
 its own. Each one breaks one artifact field and asserts the gate that
@@ -221,19 +221,18 @@ def test_no_sealed_value_reached_a_prompt():
 
 # --- the credential scan, and proof that it can fail -----------------------
 
-def test_no_credential_value_appears_in_anything_this_lane_wrote():
+def test_the_credential_scan_reports_only_the_seeded_test_canary(monkeypatch):
+    """CI uses a known test value; a worker secret is not required."""
     sys.path.insert(0, str(REPO_ROOT / "src"))
     from experiments.ad01 import invr1b17_credential_scan as scan
 
+    monkeypatch.setenv("SETTLEMENT_GATEWAY_KEY", scan.CANARY)
     value, source = scan.candidate_value()
-    assert value, "the scan found no credential to search for; it is " \
-                  "vacuous (looked in: %s)" % source
-    assert len(value) >= 8, "a %d-character credential is not plausible" \
-                            % len(value)
+    assert value == scan.CANARY
+    assert source == "environment:SETTLEMENT_GATEWAY_KEY"
     written = scan.files_written()
-    assert written, "the scan has no files to search"
-    assert scan.scan(value, written) == [], (
-        "the credential value appears in a file this lane wrote")
+    assert written
+    assert scan.scan(value, written) == []
 
 
 def test_the_credential_scan_is_non_vacuous():

@@ -39,10 +39,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from scripts.run_bounded import SLOW_FILES, SummaryScanner
+from scripts.run_bounded import SLOW_FILES, SummaryScanner, _pid_alive
 
 TOOL = ROOT / "scripts" / "run_bounded.py"
-PY = str(ROOT / ".venv" / "bin" / "python")
+PY = sys.executable
+TOOL_PY = getattr(sys, "_base_executable", PY)
 
 # The real header of a real pytest run on this repo, taken from an actual run
 # rather than written from memory. The word `passed` is not in it. The plugin
@@ -75,7 +76,7 @@ REAL_PYTEST_SUMMARY = \
 
 def _run(*args, timeout: float = 120.0) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [PY, str(TOOL), *args], capture_output=True, text=True,
+        [TOOL_PY, str(TOOL), *args], capture_output=True, text=True,
         timeout=timeout, cwd=str(ROOT))
 
 
@@ -140,6 +141,8 @@ def test_a_bound_that_is_reached_reports_a_timeout_and_not_a_pass(tmp_path):
     assert not _alive(pid), "the child outlived the bound"
 
 
+@pytest.mark.skipif(os.name == "nt",
+                    reason="whole-process-group termination requires POSIX killpg")
 def test_the_timeout_kills_the_whole_process_group_not_just_the_child(tmp_path):
     """A grandchild the child spawned must die too.
 
@@ -176,7 +179,7 @@ def test_the_timeout_kills_the_whole_process_group_not_just_the_child(tmp_path):
     # the difference observable: a group kill has to stop it, and nothing
     # else here will.
     holder = subprocess.Popen(
-        [PY, str(TOOL), "--timeout", "8", "--kill-grace", "1", "--",
+        [TOOL_PY, str(TOOL), "--timeout", "8", "--kill-grace", "1", "--",
          PY, "-c", child],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         cwd=str(ROOT))
@@ -452,7 +455,7 @@ def test_the_claim_about_the_swe_file_is_pinned_to_its_own_bytes():
 
 def test_a_second_runner_on_a_held_slot_is_refused(tmp_path):
     holder = subprocess.Popen(
-        [PY, str(TOOL), "--timeout", "60", "--slot", "demo", "--slot-dir",
+        [TOOL_PY, str(TOOL), "--timeout", "60", "--slot", "demo", "--slot-dir",
          str(tmp_path), "--", PY, "-c", "import time; time.sleep(30)"],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         cwd=str(ROOT))
@@ -630,10 +633,71 @@ def test_an_unreaped_child_is_never_reported_as_a_zero():
 
 
 def _alive(pid: int) -> bool:
-    try:
-        os.kill(pid, 0)
-    except (ProcessLookupError, ValueError):
-        return False
-    except PermissionError:
-        return True
-    return True
+    return _pid_alive(pid)
+
+
+def test_windows_pid_check_treats_access_denied_as_live(monkeypatch):
+    import ctypes
+    from scripts import run_bounded
+
+    class Function:
+        def __init__(self, callback):
+            self.callback = callback
+            self.argtypes = None
+            self.restype = None
+
+        def __call__(self, *args):
+            return self.callback(*args)
+
+    kernel = type("Kernel", (), {})()
+    kernel.OpenProcess = Function(lambda *_: None)
+    kernel.GetExitCodeProcess = Function(lambda *_: 0)
+    kernel.CloseHandle = Function(lambda *_: 1)
+    monkeypatch.setattr(ctypes, "WinDLL", lambda *a, **k: kernel)
+    monkeypatch.setattr(ctypes, "get_last_error", lambda: 5)
+
+    assert run_bounded._windows_pid_alive(4321) is True
+
+
+def test_windows_pid_check_rejects_invalid_pid_and_probes_exit_status(monkeypatch):
+    import ctypes
+    from scripts import run_bounded
+
+    class Function:
+        def __init__(self, callback):
+            self.callback = callback
+            self.argtypes = None
+            self.restype = None
+
+        def __call__(self, *args):
+            return self.callback(*args)
+
+    errors = {4321: 87, 4322: 1234}
+    kernel = type("Kernel", (), {})()
+    kernel.OpenProcess = Function(lambda _access, _inherit, pid: (
+        errors.__setitem__("last", errors[pid]) or None))
+    kernel.GetExitCodeProcess = Function(
+        lambda _handle, code: setattr(code._obj, "value", 259) or 1)
+    kernel.CloseHandle = Function(lambda *_: 1)
+    monkeypatch.setattr(ctypes, "WinDLL", lambda *a, **k: kernel)
+    monkeypatch.setattr(ctypes, "get_last_error", lambda: errors["last"])
+
+    assert run_bounded._windows_pid_alive(0) is False
+    assert run_bounded._windows_pid_alive(-1) is False
+    assert run_bounded._windows_pid_alive(2**32) is False
+    assert run_bounded._windows_pid_alive(4321) is False
+    assert run_bounded._windows_pid_alive(4322) is True
+
+    def open_live(*_):
+        return 100
+
+    kernel.OpenProcess.callback = open_live
+    assert run_bounded._windows_pid_alive(4323) is True
+    def open_exited(*_):
+        return 100
+    def exited(_handle, code):
+        code._obj.value = 0
+        return 1
+    kernel.OpenProcess.callback = open_exited
+    kernel.GetExitCodeProcess.callback = exited
+    assert run_bounded._windows_pid_alive(4323) is False

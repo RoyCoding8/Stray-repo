@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -13,16 +14,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from conftest_isolation import admin_dsn, dbname_of
-
-DSN = os.environ.get("INV_C3_DSN", "dbname=inv_c3_export")
-MIGRATIONS = ROOT / "migrations"
-
-# The three stores this battery shares with a sibling study, read off the
-# cluster rather than guessed. `_fresh_db` truncates, so refusing them is the
-# property that matters.
-_SHARED_STORES = frozenset({"inv_c3_export", "inv_c3_study", "inv_c3_cli",
-                            "postgres"})
+from execution_authority import execution_store as make_execution_store
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -35,26 +27,10 @@ SW1 = "ad01-w0-dev-sw-01"
 GR0 = "ad01-w0-dev-gr-00"
 
 
-def _fresh_db(dsn: str):
-    # Routeless the authority refuses and the test skips (conftest_isolation)
-    # instead of running the name guard on a guessed socket default.
-    admin_dsn()
-    assert "live" not in dsn
-    # This file destroys and rebuilds its store, so the guard that matters is
-    # the one refusing a store a sibling battery also uses. It used to demand a
-    # leading ``inv_c3_`` instead, which is a naming convention rather than a
-    # safety property, and no per-run name can hold it --
-    # ``conftest_isolation.derived_name`` leads with its own token, so
-    # ``s09iso_<token>_inv_c3_export`` never starts with ``inv_c3_``. The
-    # assertion refused a name the run itself owns, which is the wrong
-    # direction for a truncating file. Same fix as test_invr3_export.py:32.
-    assert dbname_of(dsn) not in _SHARED_STORES, dbname_of(dsn)
-    from settlement import db
-    from experiments.coord02 import experience as E
-    db.apply_migrations(dsn, MIGRATIONS)
-    E.designate_db(dsn, kind="disposable",
-                   purpose="INV-C3 export gate")
-    E.prepare_disposable_db(dsn, MIGRATIONS)
+@pytest.fixture
+def execution_store():
+    with make_execution_store("ci-invc3export") as store:
+        yield store
 
 
 def _run(dsn, seq=0):
@@ -79,13 +55,13 @@ def _run(dsn, seq=0):
     return cid, gateway, campaign
 
 
-def test_export_emits_doubles_transitions():
+def test_export_emits_doubles_transitions(execution_store):
     from experiments.ad01 import records
     from experiments import doubles as D
-    _fresh_db(DSN)
-    cid, gateway, campaign = _run(DSN, seq=11)
+    dsn = execution_store["dsn"]
+    cid, gateway, campaign = _run(dsn, seq=11)
     export = records.export_campaign(
-        DSN, campaign, model=MODEL, charter=dict(CHARTER),
+        dsn, campaign, model=MODEL, charter=dict(CHARTER),
         caps=dict(CAPS))
     assert export["campaign_id"] == cid
     assert len(export["transitions"]) == len(campaign["boundaries"])
@@ -121,13 +97,13 @@ def test_export_emits_doubles_transitions():
         assert verdict["results"] == rec["results"]
 
 
-def test_replay_refuses_mismatches_from_export():
+def test_replay_refuses_mismatches_from_export(execution_store):
     from experiments.ad01 import records
     from experiments import doubles as D
-    _fresh_db(DSN)
-    _cid, _gateway, campaign = _run(DSN, seq=12)
+    dsn = execution_store["dsn"]
+    _cid, _gateway, campaign = _run(dsn, seq=12)
     export = records.export_campaign(
-        DSN, campaign, model=MODEL, charter=dict(CHARTER),
+        dsn, campaign, model=MODEL, charter=dict(CHARTER),
         caps=dict(CAPS))
     recorded = D.recorded_from_export(export)
     assert len(recorded) >= 1
@@ -179,12 +155,12 @@ def test_replay_refuses_mismatches_from_export():
     assert malformed["results"] == []
 
 
-def test_byte_identity_at_receipt_validation_retention_and_use(tmp_path):
+def test_byte_identity_at_receipt_validation_retention_and_use(tmp_path, execution_store):
     from experiments.ad01 import records, trajectory
-    _fresh_db(DSN)
-    cid, gateway, campaign = _run(DSN, seq=13)
+    dsn = execution_store["dsn"]
+    cid, gateway, campaign = _run(dsn, seq=13)
     export = records.export_campaign(
-        DSN, campaign, model=MODEL, charter=dict(CHARTER),
+        dsn, campaign, model=MODEL, charter=dict(CHARTER),
         caps=dict(CAPS))
     chain = records.verify_byte_chain(export)
     assert chain["problems"] == [], chain
@@ -193,11 +169,23 @@ def test_byte_identity_at_receipt_validation_retention_and_use(tmp_path):
     repertoire = trajectory.freeze_repertoire(campaign, frozen)
     assert repertoire["members"]
     use_tasks = [SW0]
+    selected_member = repertoire["members"][0]
+    policy_path = tmp_path / "use-policy.py"
+    policy_source = (
+        "def STEP(view, state):\n"
+        "    return {'action': {'kind': 'use_method',\n"
+        "                      'target': view['task_content']['task_id'],\n"
+        "                      'inputs': {'method_id': %r, 'max_queries': 16},\n"
+        "                      'evidence_refs': [],\n"
+        "                      'requested_resources': {'queries': 16}},\n"
+        "            'state': {}}\n" % selected_member["capability_id"])
+    policy_path.write_text(policy_source, encoding="utf-8")
     proc = subprocess.run(
         [sys.executable, "-m", "experiments.ad01.cli", "use",
          "--repertoire", str(frozen), "--world", "0", "--arm", "I",
-         "--tasks", ",".join(use_tasks), "--dsn", DSN,
-         "--allocation-id", trajectory._alloc_id(cid)],
+         "--tasks", ",".join(use_tasks), "--dsn", dsn,
+         "--allocation-id", trajectory._alloc_id(cid),
+         "--policy-source", str(policy_path)],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300)
     assert proc.returncode == 0, proc.stderr
     use_records = json.loads(proc.stdout)
@@ -211,16 +199,28 @@ def test_byte_identity_at_receipt_validation_retention_and_use(tmp_path):
         assert hashlib.sha256(
             record["executed_source"].encode()).hexdigest() == retained[
             "source_digest"]
+        assert record["selected"] == retained["capability_id"]
+        assert record["policy_source_digest"] == hashlib.sha256(
+            policy_source.encode("utf-8")).hexdigest()
+        policy_authority = hashlib.sha256(
+            trajectory._alloc_id(cid).encode("utf-8")).hexdigest()[:12]
+        expected_operations = [
+            trajectory._versioned_use_op_id(
+                cid, SW0, "policy-%s-%s" % (
+                    record["policy_source_digest"][:16], policy_authority)),
+            trajectory._versioned_use_op_id(
+                cid, SW0, retained["capability_id"])]
+        assert record["operation_ids"] == expected_operations
 
 
-def test_cli_export_and_offline_replay(tmp_path):
+def test_cli_export_and_offline_replay(tmp_path, execution_store):
     from experiments.ad01 import records
-    _fresh_db(DSN)
-    cid, _gateway, campaign = _run(DSN, seq=14)
+    dsn = execution_store["dsn"]
+    cid, _gateway, campaign = _run(dsn, seq=14)
     out_path = tmp_path / "export.json"
     proc = subprocess.run(
         [sys.executable, "-m", "experiments.ad01.cli", "export",
-         "--dsn", DSN, "--campaign", cid, "--out", str(out_path),
+         "--dsn", dsn, "--campaign", cid, "--out", str(out_path),
          "--model", MODEL],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300)
     assert proc.returncode == 0, proc.stderr

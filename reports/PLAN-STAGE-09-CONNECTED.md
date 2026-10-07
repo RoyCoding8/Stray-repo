@@ -52,7 +52,7 @@ by `max_dispatches` to mint an `authorized_ceiling_units` of 0, and the
 preflight's `Budget` subtracted 5563 carried *reservation units* from that 0 to
 describe the result as `-5563 dispatches`. Repaired at `f3af21a`:
 `route_capacity_from_freeze` now returns a `DispatchAllowance` from
-`limits["max_dispatches"]` at `experiments/ad01/s09_exposure_ledger.py:503-508`
+`limits["max_dispatches"]` at `experiments/ad01/s09_exposure_ledger.py:544-508`
 and multiplies nothing.
 
 Three quantities are being called one thing. A provider's reported charge is null, which is
@@ -73,8 +73,8 @@ future output.
 **CS-03, representation components, as reproduced at `85181b7`.**
 `REAL_REPRESENTATION_KINDS` was `frozenset({PYTHON_STEP})` with one registration
 helper. It is now `frozenset({PYTHON_STEP, TYPED_AST, ACTION_GRAPH})` at
-`experiments/ad01/s09_arm_parity.py:29`, with `register_typed_ast` at `:571` and
-`register_action_graph` at `:645`, built at `0fa7971` and `136e792`. Arms now
+`experiments/ad01/s09_arm_parity.py:29`, with `register_typed_ast` at `:737` and
+`register_action_graph` at `:811`, built at `0fa7971` and `136e792`. Arms now
 branch per kind through the registered `driver_factory` at `:688` rather than
 calling `boolean_active.run_episode` for every kind.
 
@@ -85,18 +85,18 @@ implementation, so the repair reuses what is there.
 
 | Edge | Existing implementation | State |
 |---|---|---|
-| construction response to acquired artifact | `experiments/ad01/live_construct.py:605`, `construct.py:398` | **HOLDS** — verified at `2b7050a` |
+| construction response to acquired artifact | `experiments/ad01/live_construct.py:874`, `construct.py:427` | **HOLDS** — source checked at `82a8fd10` |
 | acquired artifact to selected policy | `learner.py.visible_prompt`, `policy_assess.py` | **FALSE** — the named path does not carry an acquired artifact to a selected policy |
-| selected policy to child/interpreter | `policy_step.py:424` driver → `method_exec.run_step_out_of_process` | **FALSE, worst row** — the plan names `exec_profile` as bound; it is imported by `src/settlement/artifacts.py:21` and `boot.py:102` and by nothing under `experiments/ad01/`. `git log --all -S 'exec_profile'` on both files is empty, so it was never bound on any branch |
-| proposed action to admission | `policy_action.parse_action:68`, `ACTION_KINDS:32`, called by `admit_action` (`s09_arm_parity.py:466`) | **FALSE citation, right idea** — `policy_action.admit` does not exist; `grep admit` in that file returns nothing. The row's "one schema" qualifier survives |
-| oracle effect to scored result | `boolean_active.run_episode:114`, `checker.py:142` | **HOLDS, and undercounts** — `_WORLDS` (`s09_arm_parity.py:47`) names three worlds, not two. `checker.py:142` grades the `("initial","final")` pair and refuses `unknown` rather than zeroing it |
+| selected policy to child/interpreter | `policy_step.py:457` driver → `method_exec.run_step_out_of_process:1633` | **FALSE, worst row** — the plan names `exec_profile` as bound; it is imported by `src/settlement/artifacts.py:21` and `boot.py:102` and by nothing under `experiments/ad01/`. `git log --all -S 'exec_profile'` on both files is empty, so it was never bound on any branch |
+| proposed action to admission | `policy_action.parse_action:80`, `ACTION_KINDS:32`, called by `admit_action` (`s09_arm_parity.py:615`) | **FALSE citation, right idea** — `policy_action.admit` does not exist; `grep admit` in that file returns nothing. The row's "one schema" qualifier survives |
+| oracle effect to scored result | `boolean_active.run_episode:114`, `checker.py:138` | **HOLDS, and undercounts** — `_WORLDS` (`s09_arm_parity.py:47`) names three worlds, not two. `checker.py:138` grades the `("initial","final")` pair and refuses `unknown` rather than zeroing it |
 | receipt to evidence boundary | `s09_receipt_diagnosability`, `offline_recompute` | **FALSE, two files presented as one edge** — `s09_receipt_diagnosability` is 574 lines with no production importer (two test files only), and `offline_recompute` re-derives ids from a freeze rather than receiving a receipt |
-| durable resume to remaining count | `agenda_policy.py:712`/`:773`, count at `_step_remaining:493` | **FALSE citation, right idea** — the plan names `s09_durable_state.resume_or_step:251`, which has only test callers. The live path is `agenda_policy`, and `DurableStep:75` carries no count field at all |
-| budget units to dispatch count | `study_ceiling` (`s09_study_preflight.py:1230`) returns only a dispatch count | **STALE — BUILT** (`85181b7`) |
-| representation kind to real executor | all three registered at `s09_arm_parity.py:542`/`:571`/`:645` | **STALE — BUILT** (`0fa7971`, `136e792`) |
-| causal policy decision to admitted effect | `s09_causal_proof.qualify_pre_launch:561` replaced the circular check; `launch_governance` docstring at `:1150` names CS-02 | **STALE — BUILT** (`f3af21a`, `14f5733`) |
+| durable resume to remaining count | `agenda_policy._step_remaining:784` | **FALSE citation, right idea** — the plan names `s09_durable_state.resume_or_step:251`, which has only test callers. The live path is `agenda_policy`, and `DurableStep:75` carries no count field at all |
+| budget units to dispatch count | `study_ceiling` (`s09_study_preflight.py:1294`) returns only a dispatch count | **STALE — BUILT** (`85181b7`) |
+| representation kind to real executor | all three registered at `s09_arm_parity.py:708`/`:737`/`:811` | **STALE — BUILT** (`0fa7971`, `136e792`) |
+| causal policy decision to admitted effect | `s09_causal_proof.qualify_pre_launch:574` replaced the circular check; `launch_governance` docstring at `:1193` names CS-02 | **STALE — BUILT** (`f3af21a`, `14f5733`) |
 
-> **REVIEWED at `2b7050a`. 6 of these 10 rows were false when read.**
+> **Historical review at `2b7050a`. The current source citations were re-read at `82a8fd10`.**
 > Row-by-row evidence, every `file:line` opened and checked:
 > `reviews/STAGE-09-M0-TASKGRAPH.md`.
 >

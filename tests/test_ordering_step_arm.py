@@ -20,6 +20,16 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+from settlement.child_limits import ChildLimits, child_setup_refusal
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
@@ -43,6 +53,7 @@ def test_the_ordering_registry_carries_all_three_representations():
     assert not any(registry._arms[n].is_test_double for n in registry.names)
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_ordering_step_arm_runs_against_the_orders_own_rules():
     """A step arm that loads is not one that runs.
 
@@ -63,6 +74,7 @@ def test_the_ordering_step_arm_runs_against_the_orders_own_rules():
             assert record.score is not None, (pair, name)
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_all_three_agree_on_the_ordering_world():
     """Parity on a second world, which is the point of the whole exercise."""
     registry = matrix.build_ordering_registry()

@@ -95,7 +95,10 @@ effect = store.admit_and_spend(
     opportunity_id, store.active_digest, {"queries": 1, "steps": 1},
     effect_identity={"operation_id": "op-crash"})
 print("admitted effect=%s" % effect["effect_id"], flush=True)
-os.kill(os.getpid(), signal.SIGKILL)
+hard_kill = getattr(signal, "SIGKILL", None)
+if hard_kill is None:
+    os._exit(137)
+os.kill(os.getpid(), hard_kill)
 '''
 
 
@@ -212,12 +215,15 @@ def test_crash_after_charge_leaves_a_recoverable_pending_record(tmp_path):
 
     This is the property that already holds and must not regress while the
     lost update is fixed: the admission and its charge land in one atomic
-    replace, so a SIGKILL after `admit_and_spend` returns cannot separate them.
+    replace, so abrupt process death after `admit_and_spend` returns cannot
+    separate them. POSIX uses SIGKILL; Windows uses `_exit` without cleanup.
     """
     store = _store(tmp_path)
     result = _child(_CRASHER, store.path, "opp-a")
 
-    assert result.returncode == -signal.SIGKILL, result.stderr
+    expected_returncode = (
+        -signal.SIGKILL if hasattr(signal, "SIGKILL") else 137)
+    assert result.returncode == expected_returncode, result.stderr
     assert "admitted" in result.stdout
 
     reloaded = frontier.FrontierStore(str(store.path))

@@ -12,6 +12,8 @@ import hashlib
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -57,7 +59,15 @@ def _member() -> dict:
                         "calls_made": 1}}
 
 
-def test_run_use_executes_outside_menu_member_bytes(tmp_path):
+@pytest.fixture(scope="module")
+def execution_store():
+    from execution_authority import execution_store as make_store
+
+    with make_store("ci-bacq") as store:
+        yield store
+
+
+def test_run_use_executes_outside_menu_member_bytes(tmp_path, execution_store):
     from experiments.ad01 import seeds, trajectory, worlds
     member = _member()
     campaign = {"campaign_id": "bacq-slice1",
@@ -69,7 +79,8 @@ def test_run_use_executes_outside_menu_member_bytes(tmp_path):
     assert repertoire["members"][0] == member
     [record] = trajectory.run_use(
         repertoire, 0, "I", [USE_TASK], {"tokens": 0, "sandbox_ops": 0},
-        policy=_policy())
+        policy=_policy(), dsn=execution_store["dsn"],
+        allocation_id=execution_store["allocation_id"])
     assert record["requested"] == MEMBER_ID
     assert record["selected"] == MEMBER_ID
     assert record["executed"] == MEMBER_ID

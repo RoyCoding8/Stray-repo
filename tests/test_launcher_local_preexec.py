@@ -265,6 +265,10 @@ def test_a_platform_that_refuses_preexec_still_enforces_its_declared_bounds(tmp_
         outcome = launcher.dispatch(op)
         if outcome.sent:
             assert outcome.receipt.outcome in ("success", "failure")
+        elif sys.platform == "darwin" and name == "memory_bytes":
+            assert outcome.refused_reason.startswith("child-setup-failed:"), (
+                "Darwin's RLIMIT_AS setup refusal must remain a refusal: "
+                f"{outcome.refused_reason!r}")
         else:
             assert name in outcome.refused_reason, (
                 f"refusing {name} must name it, not something else: "

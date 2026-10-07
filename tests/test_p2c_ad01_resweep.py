@@ -73,6 +73,10 @@ def test_dev_success_spend_counts_diagnostic_queries(monkeypatch):
 
     monkeypatch.setattr(trajectory, "run_diagnostic", fake_diagnostic)
     monkeypatch.setattr(_construct, "construct_method", fake_construct)
+    monkeypatch.setattr(
+        trajectory, "bind_method_release",
+        lambda *args, **kwargs: {"bound": False,
+                                 "reason": "release persistence is outside this test"})
     caps = {"diagnostic_queries": 16, "model_calls": 60}
     seed_obs = {"observation_id": "obs-seed", "task_id": GRAPH_TASK,
                 "capability_id": "seed-gr-greedy", "verdict": "unmeasured"}
@@ -143,12 +147,14 @@ def test_publish_boundary_store_mismatch_refuses(monkeypatch):
             episode={}, spend=1)
 
 
-def test_resume_campaign_id_mismatch_refuses(monkeypatch):
+def test_resume_campaign_id_mismatch_refuses_without_database_access(monkeypatch):
     _no_settled_read(monkeypatch)
+    from experiments.ad01 import mission
+    monkeypatch.setattr(mission, "resume_operation", lambda dsn, cid: [])
     monkeypatch.setattr(trajectory, "run_campaign",
                         lambda *a, **k: {"campaign_id": "ad01-w0-I-99"})
     with pytest.raises(ValueError, match="unexpected campaign"):
-        trajectory.resume_campaign(_unused_dsn(), "ad01-w0-I-00",
+        trajectory.resume_campaign("unused-test-dsn", "ad01-w0-I-00",
                                    {"objective": "x"}, {})
 
 

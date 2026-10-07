@@ -21,6 +21,7 @@ import time
 from pathlib import Path
 
 import pytest
+from settlement.child_limits import ChildLimits, child_setup_refusal
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -35,6 +36,13 @@ from experiments.ad01 import method_exec
 from experiments.ad01 import policy_action
 from experiments.ad01 import policy_step
 from execution_authority import execution_authority
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
 
 
 def _artifact(source: str) -> dict:
@@ -121,6 +129,7 @@ def test_the_step_table_is_total_and_sound_in_both_directions():
                for step_kind, contract_kind in forward.items())
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_step_arm_emits_contract_names_and_the_abi_table_is_bypassed():
     """Finding: the six-kind translation is never applied on the STEP arm.
 
@@ -219,6 +228,7 @@ VALUE_READER = '''def STEP(view, state):
      (VALUE_READER, [0, 4, 7, 8, 10, 13],
       [(1, 1, 1, 1), (1, 1, 1, 0), (1, 0, 0, 0),
        (1, 1, 0, 0), (1, 0, 1, 1), (1, 0, 1, 1)])])
+@REQUIRES_BOUNDED_CHILD
 def test_a_step_policy_governs_admitted_probes_in_a_real_episode(
         source, queried, observations):
     """The policy's own decision is what the world executes and grades.
@@ -243,6 +253,7 @@ def test_a_step_policy_governs_admitted_probes_in_a_real_episode(
     assert result["final"] is None
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_two_policies_differing_only_in_how_they_read_the_probe_differently():
     """Different reading of one identical world, different admitted probes.
 
@@ -296,6 +307,7 @@ def _state_with_observation(y: list) -> dict:
     return public_state
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_substituting_only_the_observation_changes_the_effect_it_causes():
     """One policy, one world, one changed input, a different committed world.
 
@@ -317,6 +329,7 @@ def test_substituting_only_the_observation_changes_the_effect_it_causes():
     assert effects["truth"]["overall"] != effects["complement"]["overall"]
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_a_policy_that_replays_a_schedule_fails_that_same_substitution():
     """The control for the test above, so it cannot pass vacuously.
 

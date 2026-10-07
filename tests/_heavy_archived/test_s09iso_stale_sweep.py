@@ -48,7 +48,7 @@ from tests.conftest_isolation import (  # noqa: E402
 )
 
 REPO = Path(__file__).resolve().parents[2]
-VENV_PYTHON = REPO / ".venv" / "bin" / "python"
+VENV_PYTHON = Path(sys.executable)
 HOLDER_SCRIPT = REPO / ".s09iso_sweep_holder.py"
 
 pytestmark = pytest.mark.skipif(

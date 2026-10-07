@@ -21,13 +21,32 @@ import pytest
 from experiments.ad01 import policy_action
 from experiments.ad01 import policy_step
 from experiments.ad01 import s09_policy_governance as gov
+from execution_authority import execution_store as make_execution_store
+from settlement import child_limits
 
 TASK_ID = "ad01-w1-within-sw-00"
+CHILD_SETUP_AVAILABLE = child_limits.current_execution_host().child_setup
+REQUIRES_CHILD_SETUP = pytest.mark.skipif(
+    not CHILD_SETUP_AVAILABLE,
+    reason="policy episodes require the host's pre-exec child setup capability",
+)
 
 P1_BOUND_DIGEST = (
     "b71a7f8f39ad1655555f0ac47ab2ab81321a78d98ac90f1079944fc626194706")
 AUTHORED_METHOD_DIGEST = (
     "3834317f66d4fb086d9e4cc93c36c0b08e4a108478dd26b776de66ea04c58685")
+
+
+@pytest.fixture(scope="module")
+def execution_store():
+    with make_execution_store("ci-s09gov") as store:
+        yield store
+
+
+def _execution(store: dict, operation_id: str) -> dict:
+    return {"dsn": store["dsn"],
+            "allocation_id": store["allocation_id"],
+            "operation_id": operation_id}
 
 
 def _use_policy(method_id: str) -> str:
@@ -78,7 +97,9 @@ def test_the_operational_action_vocabulary_is_disjoint_from_the_shared_one():
     assert gov.OPERATIONAL_POLICY != gov.TASK_METHOD
 
 
-def test_a_conforming_shared_action_is_refused_by_the_operational_dispatcher():
+@REQUIRES_CHILD_SETUP
+def test_a_conforming_shared_action_is_refused_by_the_operational_dispatcher(
+        execution_store):
     source = (
         "def STEP(view, state):\n"
         "    action = {'kind': 'use', 'target': view['task_content']['task_id'],\n"
@@ -88,7 +109,8 @@ def test_a_conforming_shared_action_is_refused_by_the_operational_dispatcher():
     policy = _bound(source, "shared-shape")
 
     with pytest.raises(gov.GovernanceRefused) as refused:
-        gov.run_episode(policy, TASK_ID)
+        gov.run_episode(policy, TASK_ID,
+                        **_execution(execution_store, "shared-action"))
 
     assert refused.value.stage == gov.REFUSAL_NO_STEP
     assert "unknown policy action kind: 'use'" in refused.value.reason
@@ -144,10 +166,13 @@ def test_a_policy_with_an_unrecognized_origin_is_refused():
     assert "unknown policy origin 'copied-off-a-record'" in refused.value.reason
 
 
-def test_a_fresh_interpreter_executes_the_bound_bytes_not_the_digest():
+@REQUIRES_CHILD_SETUP
+def test_a_fresh_interpreter_executes_the_bound_bytes_not_the_digest(
+        execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
-    episode = gov.run_episode(policy, TASK_ID)
+    episode = gov.run_episode(
+        policy, TASK_ID, **_execution(execution_store, "fresh-bytes"))
 
     assert episode.fresh_process is True
     assert episode.episode_pid != os.getpid()
@@ -158,13 +183,19 @@ def test_a_fresh_interpreter_executes_the_bound_bytes_not_the_digest():
     assert any(part.endswith("driver.py")
                for part in episode.admitted[0].argv)
     assert episode.admitted[0].action == _expected_action("seed-sw-greedy")
+    assert execution_store["dsn"] not in json.dumps(episode.as_dict())
 
 
-def test_substituting_the_policy_with_the_repertoire_fixed_moves_the_outcome():
+@REQUIRES_CHILD_SETUP
+def test_substituting_the_policy_with_the_repertoire_fixed_moves_the_outcome(
+        execution_store):
     greedy = _bound(_use_policy("seed-sw-greedy"), "greedy")
     ddmin = _bound(_use_policy("seed-sw-ddmin"), "ddmin")
 
-    verdict = gov.substitution_verdict(greedy, ddmin, TASK_ID)
+    verdict = gov.substitution_verdict(
+        greedy, ddmin, TASK_ID, dsn=execution_store["dsn"],
+        allocation_id=execution_store["allocation_id"],
+        operation_id="substitution")
 
     assert verdict["repertoire_held_fixed"] == [
         "seed-sw-ddmin", "seed-sw-greedy", "seed-gr-ddmin", "seed-gr-greedy"]
@@ -182,11 +213,14 @@ def test_substituting_the_policy_with_the_repertoire_fixed_moves_the_outcome():
     assert verdict["policy_governs"] is True
 
 
-def test_the_same_policy_replays_the_same_admitted_sequence():
+@REQUIRES_CHILD_SETUP
+def test_the_same_policy_replays_the_same_admitted_sequence(execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
-    first = gov.run_episode(policy, TASK_ID)
-    second = gov.run_episode(policy, TASK_ID)
+    first = gov.run_episode(
+        policy, TASK_ID, **_execution(execution_store, "replay-first"))
+    second = gov.run_episode(
+        policy, TASK_ID, **_execution(execution_store, "replay-second"))
 
     assert first.admitted_sequence == second.admitted_sequence
     assert [m.identity for m in first.methods] == [
@@ -208,10 +242,13 @@ def test_the_two_artifact_columns_name_different_digests_in_the_bundle():
     assert verdict["record_digests_match_recomputed"] is True
 
 
-def test_the_task_method_column_names_the_reducer_that_actually_ran():
+@REQUIRES_CHILD_SETUP
+def test_the_task_method_column_names_the_reducer_that_actually_ran(
+        execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
-    episode = gov.run_episode(policy, TASK_ID)
+    episode = gov.run_episode(
+        policy, TASK_ID, **_execution(execution_store, "method-column"))
     method = episode.methods[0]
 
     assert method.column == gov.TASK_METHOD
@@ -226,7 +263,33 @@ def test_the_task_method_column_names_the_reducer_that_actually_ran():
     assert not hasattr(method, "governed_by_policy")
 
 
-def test_the_episode_refuses_when_the_policy_dispatcher_is_absent():
+def test_connected_episode_requires_authority_before_outer_dispatch(
+        monkeypatch):
+    from settlement.launcher_local import LocalLauncher
+
+    def fail_if_dispatched(*args, **kwargs):
+        raise AssertionError("uncredentialed episode reached outer dispatch")
+
+    monkeypatch.setattr(LocalLauncher, "dispatch", fail_if_dispatched)
+    policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
+    for authority in ({},
+                      {"dsn": "test-store"},
+                      {"dsn": "test-store", "allocation_id": "test-allocation"}):
+        with pytest.raises(gov.GovernanceRefused) as refused:
+            gov.run_episode(policy, TASK_ID, **authority)
+        assert refused.value.stage == gov.REFUSAL_NO_STEP
+        assert "explicit caller store, allocation, and operation" in (
+            refused.value.reason)
+
+
+def test_the_episode_refuses_when_the_policy_dispatcher_is_absent(
+        monkeypatch):
+    from settlement.launcher_local import LocalLauncher
+
+    def fail_if_dispatched(*args, **kwargs):
+        raise AssertionError("disconnected episode reached outer dispatch")
+
+    monkeypatch.setattr(LocalLauncher, "dispatch", fail_if_dispatched)
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
     with pytest.raises(gov.GovernanceRefused) as refused:
@@ -236,10 +299,15 @@ def test_the_episode_refuses_when_the_policy_dispatcher_is_absent():
     assert "no policy dispatcher" in refused.value.reason
 
 
-def test_the_disconnect_countercheck_reports_its_own_refusal_loudly():
+@REQUIRES_CHILD_SETUP
+def test_the_disconnect_countercheck_reports_its_own_refusal_loudly(
+        execution_store):
     policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
 
-    verdict = gov.disconnect_verdict(policy, TASK_ID)
+    verdict = gov.disconnect_verdict(
+        policy, TASK_ID, dsn=execution_store["dsn"],
+        allocation_id=execution_store["allocation_id"],
+        operation_id="disconnect")
 
     assert verdict["no_dispatcher"] == {
         "stage": gov.REFUSAL_NO_DISPATCHER,
@@ -249,6 +317,7 @@ def test_the_disconnect_countercheck_reports_its_own_refusal_loudly():
         "kind": "use_method", "inputs": {}}
 
 
+@REQUIRES_CHILD_SETUP
 def test_the_disconnect_countercheck_reports_the_pipeline_silent_fallback():
     # RED until `assessment_profile._resolve_method` refuses a `use_method`
     # action that names no method instead of defaulting to seed-<family>-greedy.
@@ -260,6 +329,23 @@ def test_the_disconnect_countercheck_reports_the_pipeline_silent_fallback():
     assert verdict["unnamed_method_effect"]["accepted"] is False
     assert verdict["unnamed_method_effect"]["selected_identity"] is None
     assert verdict["reached_repertoire_without_policy"] is False
+
+
+def test_an_episode_refuses_when_the_host_cannot_install_child_setup():
+    if CHILD_SETUP_AVAILABLE:
+        pytest.skip("this host can install the policy episode child setup")
+
+    policy = _bound(_use_policy("seed-sw-greedy"), "greedy")
+
+    with pytest.raises(gov.GovernanceRefused) as refused:
+        gov.run_episode(policy, TASK_ID, dsn="test-store",
+                        allocation_id="test-allocation",
+                        operation_id="host-refusal")
+
+    assert refused.value.stage == gov.REFUSAL_NO_STEP
+    assert "child-setup-unavailable" in refused.value.reason
+    assert "cpu_seconds" in refused.value.reason
+    assert "preexec_fn" in refused.value.reason
 
 
 def test_a_bundle_without_a_construction_response_refuses_rather_than_defaulting():
