@@ -1,0 +1,60 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from rsi import genome as g
+
+SEED = {
+    "AGENTS.md": b"# Rules\n- Edit files with apply_patch.\n",
+    "skills/run-tests/SKILL.md": b"---\nname: run-tests\ndescription: run pytest\n---\nRun `python -m pytest -q`.\n",
+    "harness.toml": b'model_reasoning_effort = "high"\n',
+    "meta/IMPROVE.md": b"Read the failures, change one thing.\n",
+}
+
+
+def test_digest_is_content_identity():
+    a = g.Genome(SEED)
+    b = g.Genome(dict(reversed(list(SEED.items()))))
+    c = g.Genome({**SEED, "AGENTS.md": b"# Rules\n"})
+    assert a.digest == b.digest
+    assert a.digest != c.digest
+    assert len(a.digest) == 64
+
+
+@pytest.mark.parametrize("rel", ["README.md", "skills", "src/x.py", "../AGENTS.md", "meta"])
+def test_files_outside_layout_are_refused(rel):
+    with pytest.raises(g.GenomeError):
+        g.Genome({rel: b"x"})
+
+
+def test_harness_toml_cannot_set_kernel_keys():
+    with pytest.raises(g.GenomeError, match="kernel-owned"):
+        g.Genome({"harness.toml": b'model = "gpt-6"\n'})
+    with pytest.raises(g.GenomeError, match="parse"):
+        g.Genome({"harness.toml": b"not = [toml"})
+    assert g.settings(g.Genome(SEED)) == {"model_reasoning_effort": "high"}
+
+
+def test_materialize_places_task_agent_view_only(tmp_path: Path):
+    placed = g.materialize(g.Genome(SEED), tmp_path)
+    assert sorted(placed) == [".agents/skills/run-tests/SKILL.md", "AGENTS.md"]
+    assert (tmp_path / "AGENTS.md").read_bytes() == SEED["AGENTS.md"]
+    assert not (tmp_path / "meta").exists()
+    assert not (tmp_path / "harness.toml").exists()
+
+
+def test_publish_load_round_trip_and_lineage(migrated_db, tmp_path: Path):
+    dsn = migrated_db
+    roots = {"staging_root": tmp_path / "stage", "artifacts_root": tmp_path / "art"}
+    seed = g.Genome(SEED)
+    assert g.publish(dsn, seed, parent=None, origin="seed", **roots) == seed.digest
+    assert g.publish(dsn, seed, parent=None, origin="seed", **roots) == seed.digest
+    child = g.Genome({**SEED, "AGENTS.md": b"# Rules v2\n"})
+    g.publish(dsn, child, parent=seed.digest, origin="meta-agent", **roots)
+    loaded = g.load(dsn, roots["artifacts_root"], child.digest)
+    assert loaded.files == child.files and loaded.digest == child.digest
+    with pytest.raises(g.GenomeError, match="unknown parent"):
+        g.publish(dsn, g.Genome({"AGENTS.md": b"orphan\n"}), parent="0" * 64,
+                  origin="x", **roots)
