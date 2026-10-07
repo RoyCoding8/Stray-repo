@@ -47,6 +47,12 @@ from experiments.ad01 import s09_swe_binding as swe_binding
 from experiments.ad01 import s09_swe_experiment as swe_experiment
 from experiments.ad01 import s09_swe_tasks as swe_tasks
 from experiments.ad01 import s09_swe_world as swe_world
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 
 # The field `swe_graph_record`'s first guard reads, and the literal the world
@@ -131,6 +137,7 @@ def test_the_projection_no_longer_empties_a_field_the_contract_published():
 # --- 2. the guard no longer takes its always arm ------------------------
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_two_contract_views_differing_only_in_the_guarded_field_disagree():
     """Disagreement, on the real record, through the real harness seam.
 

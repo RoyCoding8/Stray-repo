@@ -27,6 +27,12 @@ from experiments.ad01 import boolean_ast_policy
 from experiments.ad01 import boolean_graph_policy
 from experiments.ad01 import s09_arm_parity as parity
 from experiments.ad01 import s09_representation_matrix as matrix
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 
 def _conditions() -> parity.ComparisonConditions:
@@ -64,6 +70,7 @@ def test_the_graph_record_is_the_shape_its_own_loader_accepts():
             expected_policy_id="x")
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_each_representation_runs_the_same_decision_under_one_budget():
     result = matrix.run_matrix(conditions=_conditions())
 
@@ -77,6 +84,7 @@ def test_each_representation_runs_the_same_decision_under_one_budget():
         assert cell.score["n_queried"] == 1, cell.as_dict()
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_three_representations_reach_the_same_score_on_the_same_task():
     """The point of the module: one decision, three notations, one outcome.
 

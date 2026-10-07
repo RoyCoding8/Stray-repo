@@ -134,3 +134,30 @@ def test_invoke_method_stages_the_named_entry_not_the_first_python(tmp_path):
     assert executed_source == ENTRY_B.decode()
     assert executed_source != ENTRY_A.decode()
 
+
+def test_safe_write_rejects_an_existing_symlink(tmp_path):
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    target = tmp_path / "outside.py"
+    target.write_bytes(ENTRY_A)
+    link = staging / "entry.py"
+    try:
+        link.symlink_to(target)
+    except OSError as exc:
+        pytest.skip(f"host cannot create a file symlink: {exc}")
+
+    with pytest.raises(SettlementError, match="rejected path"):
+        artifacts._safe_write(staging, "entry.py", ENTRY_B)
+    assert target.read_bytes() == ENTRY_A
+
+
+def test_safe_write_creates_a_regular_file(tmp_path):
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    written = artifacts._safe_write(staging, "regular.py", ENTRY_B)
+    assert written.read_bytes() == ENTRY_B
+    assert artifacts._safe_write(staging, "regular.py", ENTRY_B) == written
+    with pytest.raises(SettlementError, match="existing staged bytes differ"):
+        artifacts._safe_write(staging, "regular.py", ENTRY_A)
+    assert written.read_bytes() == ENTRY_B
+

@@ -21,6 +21,12 @@ from pathlib import Path
 import pytest
 
 from experiments.ad01 import s09_verdict as verdict
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 REPO = Path(__file__).resolve().parents[1]
 CONTAMINATED = REPO / "evidence_s09_m3_live"
@@ -523,6 +529,7 @@ def test_mechanism_is_computed_from_suites_and_never_from_a_bundle(tmp_path):
         assert leg.evidence
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_mechanism_verdict_can_be_computed_from_a_real_suite_run(
         contaminated):
     suites = {name: verdict.run_representation_suite(REPO, test_file)
