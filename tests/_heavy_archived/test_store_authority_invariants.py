@@ -308,7 +308,16 @@ def test_receipt_validation_rejects_invalid_outcome_and_pre_dispatch_receipt():
         })
 
 
-def test_unknown_receipt_can_be_resolved_by_a_later_decided_receipt(monkeypatch):
+@pytest.mark.parametrize("identities,resolution,accepted", [
+    (["unknown"], None, True),
+    (["u1", "u2"], ["u1", "u2"], True),
+    (["u1", "u2"], None, False),
+    (["u1", "u2"], ["u1"], False),
+    (["u1", "u2"], ["u1", "foreign"], False),
+    (["u1", "u2"], ["u1", "u1", "u2"], False),
+])
+def test_unknown_receipt_can_be_resolved_by_a_later_decided_receipt(
+        monkeypatch, identities, resolution, accepted):
     op = {
         "id": "op",
         "attempt_id": None,
@@ -319,7 +328,8 @@ def test_unknown_receipt_can_be_resolved_by_a_later_decided_receipt(monkeypatch)
         "reconcile_state": "unresolved",
         "settled": False,
     }
-    prior = [{"receipt_identity": "unknown", "outcome": "unknown"}]
+    prior = [{"receipt_identity": identity, "outcome": "unknown"}
+             for identity in identities]
     reservation = {"id": "res", "allocation_id": "alloc", "amount": 10, "state": "uncertain"}
 
     def resolve(sql, params):
@@ -338,13 +348,21 @@ def test_unknown_receipt_can_be_resolved_by_a_later_decided_receipt(monkeypatch)
     result = store.admit_receipt("fake", _cmd("receipt-resolution", {
         "operation_id": "op",
         "receipt_identity": "decided",
-        "content": {"value": 2},
+        "content": {"value": 2, **({"resolves_unknowns": resolution}
+                                    if resolution is not None else {})},
         "outcome": "success",
         "provenance": "provider",
     }))
 
-    assert result.data == {"operation_id": "op", "settled": True}
-    assert not any("INSERT INTO receipt_conflicts" in sql for sql, _ in cursor.executed)
+    conflict = any("INSERT INTO receipt_conflicts" in sql
+                   for sql, _ in cursor.executed)
+    if accepted:
+        assert result.data == {"operation_id": "op", "settled": True}
+        assert not conflict
+    else:
+        assert result.data == {"operation_id": "op", "settled": False,
+                               "conflict": True}
+        assert conflict
 
 
 def test_measured_costs_use_later_decided_receipt_when_identity_order_differs(

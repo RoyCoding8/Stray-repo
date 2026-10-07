@@ -26,7 +26,14 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from experiments.ad01 import policy_step
+from experiments.ad01 import policy_action
 from experiments.ad01 import s09_arm_parity as parity
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 
 # Probes x=0, then commits the truth table it read at that input. The query
@@ -88,6 +95,7 @@ def test_registering_a_step_arm_returns_the_registration_lane_i_needs():
     assert registry.real_arm_names() == ("step-real",)
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_registered_step_arm_runs_the_world_and_is_graded_for_real():
     """End to end through the harness, against a registered double.
 
@@ -170,6 +178,7 @@ def test_registration_does_not_validate_the_record_it_is_given():
         "policy record needs artifact plus source bytes"
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_driver_factory_takes_the_record_and_the_step_budget_as_keywords():
     """The harness's call site, so the seam is pinned from both ends.
 
@@ -203,7 +212,7 @@ def test_a_step_action_naming_the_step_abi_vocabulary_is_refused_by_the_arm():
     """The one thing lane I must not do when authoring a STEP arm.
 
     A policy written against `policy_step.ACTION_KINDS` is refused at the
-    world boundary with `unknown action kind`, on every kind except `stop`,
+    action boundary with `unknown action kind`, on every kind except `stop`,
     which the two vocabularies happen to share. The arm's usable vocabulary
     is the Boolean schema's: `probe`, `construct`, `stop`.
     """
@@ -213,19 +222,15 @@ def test_a_step_action_naming_the_step_abi_vocabulary_is_refused_by_the_arm():
     public_state = active.public_state(
         active.rules.RuleSession(active.rules.make_task("dev", 4)))
     for step_kind in policy_step.ACTION_KINDS:
-        source = (
-            'def STEP(view, state):\n'
-            '    action = {"kind": "%s", "target": "boolean.query",\n'
-            '              "inputs": {}, "evidence_refs": [],\n'
-            '              "requested_resources": {}}\n'
-            '    return {"action": action, "state": {}}\n' % step_kind)
-        decision = boolean_policy.choose_action(
-            _record(source))(public_state)
-
-        assert decision["kind"] == "stop"
+        payload = {"kind": step_kind, "target": "boolean.query",
+                   "inputs": {}, "evidence_refs": [],
+                   "requested_resources": {}}
         if step_kind == "stop":
-            assert decision["inputs"]["bridge_refusal"]["reason"] == \
-                "stop target must be boolean.task"
+            action = policy_action.parse_action(payload)
+            with pytest.raises(policy_action.ActionRefused,
+                               match="stop target must be boolean.task"):
+                boolean_policy._validate_boolean_action(action, public_state)
         else:
-            assert decision["inputs"]["bridge_refusal"]["reason"] == \
-                "unknown action kind %r" % (step_kind,)
+            with pytest.raises(policy_action.ActionRefused,
+                               match="unknown action kind"):
+                policy_action.parse_action(payload)

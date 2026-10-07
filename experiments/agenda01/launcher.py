@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from settlement import broker
+from settlement.common import ResultCode, SettlementError
 
 LAUNCHER_ID = "agenda-sim-launcher"
 ADAPTER_KEY = "adapter:agenda-probe"
@@ -56,11 +57,6 @@ class AgendaProbeLauncher:
                 "receipt": f"{spec['receipt_base']}:{prop}",
                 "epoch": int(spec["epoch"]), "simulated": True,
             }
-            outcome = "unknown" if value is None else "success"
-            broker.admit_launcher_receipt(
-                self._dsn, op.operation_id, broker.ReceiptProposal(
-                    receipt_identity=content["receipt"], content=content,
-                    outcome=outcome, provenance=PROVENANCE))
             results[prop] = content
         if spec.get("dud"):
             content = {"kind": "dud", "adapter": ADAPTER_NAME,
@@ -68,11 +64,6 @@ class AgendaProbeLauncher:
                        "source_attempt": attempt,
                        "receipt": f"{spec['receipt_base']}:dud",
                        "epoch": int(spec["epoch"]), "simulated": True}
-            broker.admit_launcher_receipt(
-                self._dsn, op.operation_id, broker.ReceiptProposal(
-                    receipt_identity=content["receipt"],
-                    content=content, outcome="unknown",
-                    provenance=PROVENANCE))
             results["dud"] = content
         if spec.get("product"):
             claims = {prop: bool(self._claim(prop))
@@ -82,15 +73,26 @@ class AgendaProbeLauncher:
                        "source_attempt": attempt,
                        "receipt": f"{spec['receipt_base']}:product",
                        "epoch": int(spec["epoch"]), "simulated": True}
-            broker.admit_launcher_receipt(
-                self._dsn, op.operation_id, broker.ReceiptProposal(
-                    receipt_identity=content["receipt"],
-                    content=content, outcome="success",
-                    provenance=PROVENANCE))
             results["product"] = content
+        terminal = f"agenda-final:{op.operation_id}"
+        for content in results.values():
+            content["terminal_receipt"] = terminal
+            admitted = broker.admit_launcher_receipt(
+                self._dsn, op.operation_id, broker.ReceiptProposal(
+                    receipt_identity=content["receipt"], content=content,
+                    outcome="unknown", provenance=PROVENANCE))
+            if (admitted.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+                    or admitted.data.get("conflict")):
+                raise SettlementError(admitted.detail)
         self._sent.add(op.operation_id)
         self._results[op.operation_id] = results
-        return broker.LaunchOutcome(sent=True)
+        return broker.LaunchOutcome(sent=True, receipt=broker.ReceiptProposal(
+            receipt_identity=terminal, outcome="success", provenance=PROVENANCE,
+            content={"kind": "agenda-probe-completed", "adapter": ADAPTER_NAME,
+                     "source_attempt": attempt,
+                     "operation_id": op.operation_id,
+                     "resolves_unknowns": sorted(item["receipt"] for item in results.values()),
+                     "results": {item["receipt"]: item for item in results.values()}}))
 
     def stop(self, operation_id: str) -> bool:
         return False

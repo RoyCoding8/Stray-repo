@@ -40,6 +40,12 @@ SEED_GREEDY_METHOD_DIGEST = (
     "370aed697dc503aecee7d8faad5de775f4f7019c86e672e8d93f3df590527058")
 
 
+@pytest.fixture
+def proof_store():
+    with proof.proof_authority() as authority:
+        yield authority
+
+
 def test_the_bound_policy_source_hashes_to_its_recorded_digest():
     """The bytes that ran must be the bytes that were bound."""
     binding = proof.load_bound_policy()
@@ -90,9 +96,12 @@ def test_a_policy_absent_from_durable_state_is_refused():
         persisted_elsewhere.verified()
 
 
-def test_the_bound_policy_executes_in_a_fresh_interpreter():
+def test_the_bound_policy_executes_in_a_fresh_interpreter(proof_store):
     binding = proof.load_bound_policy()
-    result = proof.execute_bound_policy(binding, proof.use_view(), {})
+    view = proof.use_view()
+    result = proof.execute_bound_policy(
+        binding, view, {}, authority=proof_store,
+        operation_id=proof._operation_id(binding, view))
     fresh = proof.fresh_process_evidence(result)
 
     assert fresh.launcher_profile == "local-process"
@@ -104,7 +113,8 @@ def test_the_bound_policy_executes_in_a_fresh_interpreter():
     assert fresh.policy_digest == BOUND_POLICY_DIGEST
 
 
-def test_the_fresh_process_runs_the_real_scrubbed_launcher(monkeypatch):
+def test_the_fresh_process_runs_the_real_scrubbed_launcher(
+        monkeypatch, proof_store):
     """The child is launched by the shipped scrubbed local launcher."""
     import settlement.launcher_local as launcher_local
     from settlement.exec_profile import scrub_env
@@ -121,7 +131,10 @@ def test_the_fresh_process_runs_the_real_scrubbed_launcher(monkeypatch):
         return real_popen(argv, **kwargs)
 
     monkeypatch.setattr(launcher_local.subprocess, "Popen", spy)
-    result = proof.execute_bound_policy(binding, proof.use_view(), {})
+    view = proof.use_view()
+    result = proof.execute_bound_policy(
+        binding, view, {}, authority=proof_store,
+        operation_id=proof._operation_id(binding, view))
 
     assert len(seen) == 1
     assert set(seen[0]) == set(scrub_env()) | {"SETTLEMENT_OPERATION"}
@@ -130,10 +143,11 @@ def test_the_fresh_process_runs_the_real_scrubbed_launcher(monkeypatch):
         "launcher_receipt"]["containment"] is False
 
 
-def test_the_bound_policy_admits_no_use_action_at_all():
+def test_the_bound_policy_admits_no_use_action_at_all(proof_store):
     """The bound P1 policy never admits a use."""
     binding = proof.load_bound_policy()
-    admitted = proof.admitted_actions(binding, proof.use_view())
+    admitted = proof.admitted_actions(
+        binding, proof.use_view(), authority=proof_store)
 
     assert [action["kind"] for action in admitted] \
         == ["construct_method", "stop"]
@@ -171,7 +185,7 @@ def test_the_two_columns_never_overlap_except_at_stop():
         "check", "construct", "observe", "probe", "use")
 
 
-def test_the_two_vocabularies_refuse_each_others_use_action():
+def test_the_two_vocabularies_refuse_each_others_use_action(proof_store):
     """A fixture that only satisfies one parser proves nothing."""
     view = proof.use_view()
     shared_use = proof.seed_policy_source(proof.BASELINE_METHOD).replace(
@@ -184,12 +198,18 @@ def test_the_two_vocabularies_refuse_each_others_use_action():
              "requested_resources": {}})
     assert "unknown action kind 'use_method'" in str(refusal.value)
 
+    step_binding = proof.PolicyBinding_(
+        source=shared_use, recorded_digest=proof.sha256_of(shared_use),
+        origin="fixture-stand-in", durable=False)
     with pytest.raises(method_exec.MethodExecutionError) as step_refusal:
-        method_exec.run_step_out_of_process(shared_use, view, {})
+        method_exec.run_step_out_of_process(
+            shared_use, view, {}, dsn=proof_store["dsn"],
+            allocation_id=proof_store["allocation_id"],
+            operation_id=proof._operation_id(step_binding, view))
     assert "unknown policy action kind: 'use'" in str(step_refusal.value)
 
 
-def test_the_step_fixture_satisfies_the_real_step_abi():
+def test_the_step_fixture_satisfies_the_real_step_abi(proof_store):
     """The fixture must pass the shipped validator, not a private one."""
     source = proof.seed_policy_source(proof.BASELINE_METHOD)
     record = proof.make_record(source)
@@ -198,7 +218,12 @@ def test_the_step_fixture_satisfies_the_real_step_abi():
         proof.PolicyBinding_(source=source,
                              recorded_digest=proof.sha256_of(source),
                              origin="fixture-stand-in", durable=False),
-        proof.use_view(), {})
+        proof.use_view(), {}, authority=proof_store,
+        operation_id=proof._operation_id(
+            proof.PolicyBinding_(source=source,
+                                 recorded_digest=proof.sha256_of(source),
+                                 origin="fixture-stand-in", durable=False),
+            proof.use_view()))
 
     assert artifact["entry"] == "STEP"
     assert artifact["abi"] == "ad01-policy-step-v1"
@@ -208,7 +233,7 @@ def test_the_step_fixture_satisfies_the_real_step_abi():
     assert result["action"]["kind"] == "use_method"
 
 
-def test_the_report_names_the_operational_policy_as_governing():
+def test_the_report_names_the_operational_policy_as_governing(proof_store):
     """The policy governs, because the use phase takes its method from it.
 
     An intermediate version of this test said `task-method` and explained it
@@ -217,7 +242,7 @@ def test_the_report_names_the_operational_policy_as_governing():
     the pilot now hands the use phase a policy built for that step, so the
     admitted action reaches use and the verdict follows the evidence.
     """
-    report = proof.column_report()
+    report = proof.column_report(authority=proof_store)
 
     assert report["governing_column"] == proof.PROVING
     assert report["operational_policy"]["verdict"] == proof.PROVING
@@ -275,10 +300,11 @@ def test_the_pilot_authored_method_hashes_to_the_executed_column():
     assert proof.SEED_METHOD_SOURCE == s09_pilot.METHOD_SOURCE
 
 
-def test_substitution_changes_the_admitted_action_with_the_repertoire_fixed():
+def test_substitution_changes_the_admitted_action_with_the_repertoire_fixed(
+        proof_store):
     baseline = proof.seed_policy_source(proof.BASELINE_METHOD)
     substitute = proof.seed_policy_source(proof.SUBSTITUTE_METHOD)
-    result = proof.substitute(baseline, substitute)
+    result = proof.substitute(baseline, substitute, authority=proof_store)
 
     assert result.repertoire_digest == AUTHORED_METHOD_DIGEST
     assert result.method_digests[0] == result.method_digests[1] \
@@ -298,20 +324,21 @@ def test_substitution_changes_the_admitted_action_with_the_repertoire_fixed():
         '{"max_queries": 4, "method_id": "seed-sw-ddmin"}')
 
 
-def test_substitution_changes_the_candidate_the_episode_produces():
+def test_substitution_changes_the_candidate_the_episode_produces(proof_store):
     result = proof.substitute(
         proof.seed_policy_source(proof.BASELINE_METHOD),
-        proof.seed_policy_source(proof.SUBSTITUTE_METHOD))
+        proof.seed_policy_source(proof.SUBSTITUTE_METHOD),
+        authority=proof_store)
 
     assert result.outcomes[0][0] == (
-        "24a80af4df1c1a22a1ec0e38b97315718c410f6ef5643160f89838c223209101")
+        "69261adb2d554896bc5255930f7de441166b84259cf80abbfe4124f49a9e2f25")
     assert result.outcomes[1][0] == (
-        "dda17fd9bdbecd2c79430c02cc4efea8f28cdbadbc4f4881224e4715b60a68e6")
+        "8982a65da5f192a736333e1768031657dbd27f3b2bb58c8d4c0e40ed3e832aa3")
     assert result.outcomes[0][0] != result.outcomes[1][0]
     assert result.outcomes[0][1] == result.outcomes[1][1]
 
 
-def test_substitution_is_backed_by_the_policy_that_governs_use():
+def test_substitution_is_backed_by_the_policy_that_governs_use(proof_store):
     """Substitution changes the episode, and a policy is what runs it.
 
     While no policy reached the use phase these two were independent, and
@@ -319,8 +346,9 @@ def test_substitution_is_backed_by_the_policy_that_governs_use():
     """
     result = proof.substitute(
         proof.seed_policy_source(proof.BASELINE_METHOD),
-        proof.seed_policy_source(proof.SUBSTITUTE_METHOD))
-    report = proof.column_report()
+        proof.seed_policy_source(proof.SUBSTITUTE_METHOD),
+        authority=proof_store)
+    report = proof.column_report(authority=proof_store)
 
     assert result.differs is True
     assert report["governing_column"] == proof.PROVING

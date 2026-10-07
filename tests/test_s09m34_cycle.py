@@ -24,7 +24,7 @@ MIGRATIONS = ROOT / "migrations"
 LOCAL_HOST = "/var/run/postgresql"
 LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
 
-RUN_TOKEN = "m34cyc%s" % uuid.uuid4().hex[:10]
+RUN_TOKEN = "ci-m34cyc%s" % uuid.uuid4().hex[:10]
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -192,8 +192,8 @@ def test_full_deterministic_cycle_with_provider_double_only(store, tmp_path):
     probe_path = tmp_path / "s09_m34_fresh.py"
     probe_path.write_text(
         "import sys\n"
-        "dsn, release, version = sys.argv[1:4]\n"
-        "from experiments.ad01 import method_exec, selection, worlds\n"
+        "dsn, release, version, cid = sys.argv[1:5]\n"
+        "from experiments.ad01 import method_exec, selection, trajectory, worlds\n"
         "repertoire = {'members': ["
         "{'capability_id': 'seed-sw-greedy',"
         " 'scope': {'family': 'software'}}, "
@@ -203,12 +203,16 @@ def test_full_deterministic_cycle_with_provider_double_only(store, tmp_path):
         " {'family': 'software'}, dsn=dsn, release_id=release)\n"
         "task = worlds.load_task(worlds.FROZEN_DIR, %r)\n"
         "out = method_exec.run_member_out_of_process("
-        "chosen, task, max_queries=4)\n"
+        "chosen, task, max_queries=4, dsn=dsn, "
+        "allocation_id=trajectory._alloc_id(cid), "
+        "operation_id=selection.versioned_use_op_id("
+        "cid, task['task_id'], chosen['capability_id']))\n"
         "print(__import__('json').dumps({'selected':"
         " chosen['capability_id'], 'queries': out['queries']}))\n"
         % (member["method_source"], member["entry"], member["source_digest"], DEV_TASK))
     proc = subprocess.run(
-        [sys.executable, probe_path, store, "s09-cycle-bind", version_id],
+        [sys.executable, probe_path, store, "s09-cycle-bind", version_id,
+         cid],
         cwd=str(ROOT), capture_output=True, text=True, timeout=300,
         env=_env())
     assert proc.returncode == 0, proc.stderr

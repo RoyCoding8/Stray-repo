@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-from conftest_isolation import dsn_with_dbname
 from settlement import representation as R
 from settlement.common import Command, ResultCode
 from settlement import store
@@ -286,7 +285,8 @@ def test_fresh_process_resume(migrated_db, tmp_roots, tmp_path):
 
 
 def test_fresh_database_is_not_resume(migrated_db, tmp_roots, tmp_path):
-    import psycopg
+    from experiments.ad01.s09_run_isolation import (
+        create_disposable_db, drop_disposable_db)
     dsn = migrated_db
     alloc, att = _setup(dsn, "resume3")
     comp = _compose(dsn, tmp_roots, "comp-resume3")
@@ -295,15 +295,9 @@ def test_fresh_database_is_not_resume(migrated_db, tmp_roots, tmp_path):
                        **_params("run-resume3", comp, alloc, att,
                                 max_advances=1))
     assert first["disposition"] == "paused"
-    fresh_name = "settlement_cb01exec_fresh"
-    with psycopg.connect(dsn, autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute(f'DROP DATABASE IF EXISTS "{fresh_name}"')
-            cur.execute(f'CREATE DATABASE "{fresh_name}" OWNER ubuntu')
-    fresh_dsn = dsn_with_dbname(dsn, fresh_name)
+    database = create_disposable_db("ci-rpr07-fresh", migrations_dir=REPO / "migrations")
+    fresh_dsn = database.dsn
     try:
-        from settlement import db
-        db.apply_migrations(fresh_dsn, REPO / "migrations")
         fresh_roots = {"artifacts": tmp_path / "fart",
                        "staging": tmp_path / "fstaging"}
         fresh_roots["artifacts"].mkdir()
@@ -326,9 +320,7 @@ def test_fresh_database_is_not_resume(migrated_db, tmp_roots, tmp_path):
         assert "rpr:run-resume3:t1:encode:0000" in counting.sends
         assert R.task_usage(dsn, "run-resume3", "t1")["invocations"] == 5
     finally:
-        with psycopg.connect(dsn, autocommit=True) as conn:
-            with conn.cursor() as cur:
-                cur.execute(f'DROP DATABASE IF EXISTS "{fresh_name}"')
+        drop_disposable_db(database)
 
 
 def test_operator_view_pending_then_complete(migrated_db, tmp_roots,

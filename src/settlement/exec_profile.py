@@ -178,6 +178,22 @@ def run_local_process(
     grace_ms: int = 2000,
 ) -> ExecResult:
     started = time.monotonic()
+    refusal = child_limits.child_setup_refusal(
+        child_limits.ChildLimits(cpu_seconds=cpu_seconds,
+                                 memory_bytes=memory_bytes))
+    if refusal is not None:
+        return ExecResult(
+            profile=LOCAL_PROCESS,
+            containment=False,
+            simulated=False,
+            returncode=None,
+            stdout="",
+            stderr="%s: %s" % (refusal.kind, refusal.reason),
+            timed_out=False,
+            truncated=False,
+            wall_ms=int((time.monotonic() - started) * 1000),
+            detail={"error": refusal.kind},
+        )
     try:
         proc = subprocess.Popen(
             argv,
@@ -333,14 +349,24 @@ def terminate_verified(docker: str, name: str, grace_s: int) -> bool | None:
     if not name:
         return None
     docker_stop(docker, name, grace_s)
-    if docker_container_running(docker, name):
+    running = docker_container_running(docker, name)
+    if running is True:
         try:
             subprocess.run([docker, "kill", name],
                            capture_output=True, text=True,
                            timeout=DOCKER_KILL_TIMEOUT_S)
         except (subprocess.SubprocessError, OSError):
             pass
-    return docker_container_running(docker, name)
+        # A successful kill can leave the container visible as running until
+        # the runtime reaps its process. Verify termination over the requested
+        # grace window instead of treating that brief state as uncertainty.
+        deadline = time.monotonic() + max(int(grace_s), 1)
+        while True:
+            running = docker_container_running(docker, name)
+            if running is not True or time.monotonic() >= deadline:
+                break
+            time.sleep(min(0.05, deadline - time.monotonic()))
+    return running
 
 
 def docker_container_running(docker: str, name: str) -> bool | None:

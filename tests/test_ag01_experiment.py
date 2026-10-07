@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import json
 import os
 import subprocess
@@ -370,16 +371,26 @@ def test_duplicate_outoforder_wakeup_single_effect():
         admitted = backend.admit_initial(
             0, "s-w", "m0", "execute-m0", {"d0": 2}, 2, 1,
             "AG01-TEST-1", "digest-test",
-            {"observed": [{"prop": "p0", "scope": "s0", "dep": "d0"}],
+            {"observed": [{"prop": "p0", "scope": "s0", "dep": "d0"},
+                          {"prop": "p1", "scope": "s0", "dep": "d0"}],
              "product": [], "dud": False}, 1)
         assert admitted.code == ResultCode.APPLIED
         op = admitted.data["operation_id"]
+        backend.sim._observe = lambda probe, sample, prop: True if prop == "p0" else None
         assert backend.dispatch_probe(op).sent_this_call
+        receipts = backend.receipts_for(op)
+        assert len(receipts) == 3
+        assert [r["receipt"] for r in receipts if r["outcome"] == "success"] == [
+            f"agenda-final:{op}"]
         receipt = backend.sim.read_result(op)["p0"]["receipt"]
         seen = backend.record("s-w", admitted.data["attempt_id"], receipt)
         assert seen.code == ResultCode.APPLIED
         again = backend.record("s-w", admitted.data["attempt_id"], receipt)
         assert again.code == ResultCode.ALREADY_APPLIED
+        unknown = backend.record("s-w", admitted.data["attempt_id"],
+                                 backend.sim.read_result(op)["p1"]["receipt"])
+        assert unknown.code == ResultCode.APPLIED
+        assert unknown.data["observation"]["value"] == "unknown"
     finally:
         drop_scratch(name)
 
@@ -786,6 +797,15 @@ def test_duplicate_effect_decisions_charged(tmp_path):
         assert len(dec_charges) == 24, len(dec_charges)
         bad = checker.check_trace(trace, MANIFEST, MHASH, world, manifest.BUDGETS)
         assert bad == [], bad
+        incomplete = copy.deepcopy(trace)
+        measurement = next(row for row in incomplete["ledger"]["receipts"]
+                           if row.get("content", {}).get("terminal_receipt"))
+        measurement["content"].pop("terminal_receipt")
+        measurement["content_digest"] = hashlib.sha256(json.dumps(
+            measurement["content"], sort_keys=True,
+            separators=(",", ":")).encode()).hexdigest()
+        assert f"observation-without-completion {measurement['receipt']}" in checker.check_trace(
+            incomplete, MANIFEST, MHASH, world, manifest.BUDGETS)
     finally:
         runner.drop_db(BASE_DSN, trace["db"])
 

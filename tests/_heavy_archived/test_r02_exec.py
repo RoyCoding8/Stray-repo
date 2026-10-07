@@ -129,6 +129,8 @@ def _configure(state: Path, mode: str = "ok", fail: list[str] | None = None,
 
 @pytest.fixture()
 def shim_env(tmp_path, monkeypatch):
+    if os.name == "nt":
+        pytest.skip("the runsc shim is a POSIX executable script")
     binder = tmp_path / "bin"
     binder.mkdir()
     state = tmp_path / "shim-state"

@@ -44,6 +44,8 @@ from experiments.ad01 import s09_swe_ast as swe_ast
 from experiments.ad01 import s09_swe_experiment as matrix
 from experiments.ad01 import s09_swe_tasks as tasks
 from experiments.ad01 import s09_swe_world as swe
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
 
 
 def _session():
@@ -407,20 +409,23 @@ def test_a_step_refusal_on_this_host_survives_the_round_trip_to_the_row():
     episode = matrix.run_episode(matrix.lineage_driver(lineage),
                                  "held_out", 0)
 
-    # This host runs the child, so the first turn is a real action rather
-    # than a refusal. Asserted against the world, not against a count.
     first = episode["trace"][0]["action"]
-    assert first["kind"] == policy_action.OBSERVE, (
-        "a host that can spawn the bounded child should produce a real "
-        "first action; a bare stop here means the executor refused and the "
-        "refusal test below is measuring the wrong thing")
-    assert not first["inputs"].get("bridge_refusal"), first
+    refusal = child_limits.child_setup_refusal(ChildLimits(
+        cpu_seconds=policy_step.STEP_CPU_SECONDS))
+    if refusal is None:
+        assert first["kind"] == policy_action.OBSERVE, first
+        assert not first["inputs"].get("bridge_refusal"), first
 
-    # And the refusing half, through the same driver and the same world.
-    refusing = matrix.supported_lineages()[0]
-    refused_episode = matrix.run_episode(
-        matrix.lineage_driver(_step_lineage_with_drifted_source()),
-        "held_out", 0)
+        refusing = matrix.supported_lineages()[0]
+        refused_episode = matrix.run_episode(
+            matrix.lineage_driver(_step_lineage_with_drifted_source()),
+            "held_out", 0)
+    else:
+        assert first["kind"] == policy_action.STOP, first
+        assert _refusal(first)["reason"], first
+        refusing = lineage
+        refused_episode = episode
+
     action = refused_episode["trace"][0]["action"]
     assert action["kind"] == policy_action.STOP
     assert _refusal(action)["reason"], (

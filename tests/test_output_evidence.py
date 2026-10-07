@@ -390,19 +390,22 @@ def test_output_run_real_gateway_route_mismatch_is_terminal(tmp_path):
     from settlement.gateway_http import HttpGatewayAdapter
 
     freeze = driver.freeze_output(tmp_path)
-    requests = []
+    inference_requests = []
 
     def handler(request):
-        requests.append(request)
+        if request.method == "GET":
+            return httpx.Response(200, json={"data": [{
+                "id": freeze["route"]["requested_model"],
+                "provider": freeze["route"]["provider"],
+                "tier": freeze["route"]["tier"],
+            }]})
+        inference_requests.append(request)
         body = {
-            "status": "completed",
-            "output": [{"type": "message", "content": [
-                {"type": "output_text", "text": _legal_text("qual", 11)}]}],
+            "choices": [{"message": {"content": _legal_text("qual", 11)}}],
             "model": "other/resolved:free",
             "provider": freeze["route"]["provider"],
             "tier": freeze["route"]["tier"],
-            "input_tokens": 3,
-            "output_tokens": 5,
+            "usage": {"prompt_tokens": 3, "completion_tokens": 5},
         }
         raw = json.dumps(body).encode("utf-8")
         return httpx.Response(200, stream=httpx.ByteStream(raw))
@@ -410,12 +413,12 @@ def test_output_run_real_gateway_route_mismatch_is_terminal(tmp_path):
     client = httpx.Client(transport=httpx.MockTransport(handler))
     gateway = HttpGatewayAdapter(
         endpoint=freeze["route"]["endpoint"], api_key="test-key",
-        client=client, api="responses", expected_route=freeze["route"])
+        client=client, api="chat", expected_route=freeze["route"])
     result = driver.run_output(
         tmp_path, gateway=gateway,
         model=freeze["route"]["requested_model"])
     assert result["status"] == "incomplete"
-    assert len(requests) == 1
+    assert len(inference_requests) == 1
     assert [entry["attempt"] for entry in
             result["candidate_view"]["dispatches"]] == [1]
     assert result["candidate_view"]["dispatches"][0]["parse_outcome"] == (
@@ -1414,22 +1417,30 @@ def test_settled_broker_replay_is_not_counted_as_new_dispatch(monkeypatch):
 
 def test_output_route_uses_authorized_exact_ids():
     assert live.OUTPUT_ROUTE["requested_model"] == (
-        "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free")
+        "nvidia/nemotron-3-ultra-550b-a55b:free")
     assert live.OUTPUT_ROUTE["resolved_model"] == (
         "nvidia/nemotron-3-ultra-550b-a55b:free")
+
+
+def _catalog_alias_route():
+    return {
+        **live.OUTPUT_ROUTE,
+        "requested_model": "openrouter/" + live.OUTPUT_ROUTE["resolved_model"],
+    }
 
 
 def test_model_list_preflight_accepts_observed_openrouter_catalog_shape():
     from settlement import gateway_http
 
+    expected = _catalog_alias_route()
     body = {"data": [
-        {"id": "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
+        {"id": expected["requested_model"],
          "owned_by": "Openrouter"},
-        {"id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+        {"id": expected["resolved_model"],
          "owned_by": "Openrouter"},
     ]}
-    result = gateway_http.validate_model_route(body, live.OUTPUT_ROUTE)
-    assert result == live.OUTPUT_ROUTE
+    result = gateway_http.validate_model_route(body, expected)
+    assert result == expected
     assert "data" not in result
 
 
@@ -1441,18 +1452,19 @@ def test_model_list_preflight_accepts_observed_openrouter_catalog_shape():
 def test_model_list_preflight_refuses_untrustworthy_free_signal(entry_overrides):
     from settlement import gateway_http
 
+    expected = _catalog_alias_route()
     entry = {
-        "id": live.OUTPUT_ROUTE["resolved_model"],
+        "id": expected["resolved_model"],
         "owned_by": "Openrouter",
     }
     entry.update(entry_overrides)
     body = {"data": [
-        {"id": live.OUTPUT_ROUTE["requested_model"],
+        {"id": expected["requested_model"],
          "owned_by": "Openrouter"},
         entry,
     ]}
     with pytest.raises(ValueError, match="free|pricing|tier"):
-        gateway_http.validate_model_route(body, live.OUTPUT_ROUTE)
+        gateway_http.validate_model_route(body, expected)
 
 
 @pytest.mark.parametrize("pricing", [
@@ -1463,38 +1475,38 @@ def test_model_list_preflight_refuses_untrustworthy_free_signal(entry_overrides)
 def test_model_list_preflight_refuses_incomplete_pricing(pricing):
     from settlement import gateway_http
 
+    expected = _catalog_alias_route()
     body = {"data": [
-        {"id": live.OUTPUT_ROUTE["requested_model"],
+        {"id": expected["requested_model"],
          "owned_by": "Openrouter"},
-        {"id": live.OUTPUT_ROUTE["resolved_model"],
+        {"id": expected["resolved_model"],
          "owned_by": "Openrouter", "pricing": pricing},
     ]}
     with pytest.raises(ValueError, match="pricing"):
-        gateway_http.validate_model_route(body, live.OUTPUT_ROUTE)
+        gateway_http.validate_model_route(body, expected)
 
 
 def test_model_list_preflight_does_not_use_free_suffix_with_explicit_tier():
     from settlement import gateway_http
 
+    expected = _catalog_alias_route()
     body = {"data": [
-        {"id": live.OUTPUT_ROUTE["requested_model"],
+        {"id": expected["requested_model"],
          "owned_by": "Openrouter"},
-        {"id": live.OUTPUT_ROUTE["resolved_model"],
+        {"id": expected["resolved_model"],
          "owned_by": "Openrouter", "tier": "free"},
     ]}
-    with pytest.raises(ValueError, match="free|tier"):
-        gateway_http.validate_model_route(body, live.OUTPUT_ROUTE)
+    assert gateway_http.validate_model_route(body, expected) == expected
 
 
 def test_model_list_preflight_accepts_explicit_zero_pricing_without_free_suffix():
     from settlement import gateway_http
 
+    route = _catalog_alias_route()
     expected = {
-        **live.OUTPUT_ROUTE,
-        "requested_model": live.OUTPUT_ROUTE["requested_model"].removesuffix(
-            ":free"),
-        "resolved_model": live.OUTPUT_ROUTE["resolved_model"].removesuffix(
-            ":free"),
+        **route,
+        "requested_model": route["requested_model"].removesuffix(":free"),
+        "resolved_model": route["resolved_model"].removesuffix(":free"),
     }
     body = {"data": [
         {"id": expected["requested_model"],
@@ -1508,12 +1520,11 @@ def test_model_list_preflight_accepts_explicit_zero_pricing_without_free_suffix(
 def test_model_list_preflight_refuses_missing_free_marker():
     from settlement import gateway_http
 
+    route = _catalog_alias_route()
     expected = {
-        **live.OUTPUT_ROUTE,
-        "requested_model": live.OUTPUT_ROUTE["requested_model"].removesuffix(
-            ":free"),
-        "resolved_model": live.OUTPUT_ROUTE["resolved_model"].removesuffix(
-            ":free"),
+        **route,
+        "requested_model": route["requested_model"].removesuffix(":free"),
+        "resolved_model": route["resolved_model"].removesuffix(":free"),
     }
     body = {"data": [
         {"id": expected["requested_model"], "owned_by": "Openrouter"},
@@ -1539,12 +1550,13 @@ def test_model_list_preflight_refuses_provider_namespace_mismatch():
 def test_model_list_preflight_refuses_missing_exact_ids():
     from settlement import gateway_http
 
+    expected = _catalog_alias_route()
     body = {"data": [
-        {"id": live.OUTPUT_ROUTE["requested_model"],
+        {"id": expected["requested_model"],
          "owned_by": "Openrouter"},
     ]}
     with pytest.raises(ValueError, match="exact"):
-        gateway_http.validate_model_route(body, live.OUTPUT_ROUTE)
+        gateway_http.validate_model_route(body, expected)
 
 
 def test_preflight_performs_authenticated_get_only(tmp_path):

@@ -264,18 +264,7 @@ class Slot:
 
     @staticmethod
     def _alive(pid: int) -> bool:
-        try:
-            os.kill(pid, 0)
-        except ProcessLookupError:
-            return False
-        except PermissionError:
-            return True
-        except (OverflowError, ValueError):
-            # A pid that cannot be an address is not a running process. A
-            # corrupt holder file must read as reclaimable rather than crash
-            # the code that is trying to clean up after a crash.
-            return False
-        return True
+        return _pid_alive(pid)
 
     def _reclaim(self) -> str | None:
         """Clear a slot whose holder cannot be running. Returns why, or None."""
@@ -355,13 +344,26 @@ def slow_files_named(argv: list[str]) -> list[str]:
     return hits
 
 
-def _signal_group(pid: int, signum: int) -> bool:
+def _signal_group(pid: int, signum: int, proc=None, *, force: bool = False) -> bool:
     """Signal the child's whole process group, falling back to the child.
 
     The child was started with `start_new_session=True`, so it leads a group
     holding nothing but its own descendants. That is what makes this safe
-    under concurrency: a signal here cannot reach another lane's work.
+    under concurrency on POSIX. Windows has no `killpg` and uses process
+    termination for the child; its process-group qualification stays POSIX-only.
     """
+    if os.name == "nt":
+        try:
+            if proc is None:
+                os.kill(pid, signal.SIGTERM)
+            elif force:
+                proc.kill()
+            else:
+                proc.terminate()
+            return True
+        except (ProcessLookupError, PermissionError, OSError):
+            return False
+
     for target in (lambda: os.killpg(os.getpgid(pid), signum),
                    lambda: os.kill(pid, signum)):
         try:
@@ -372,6 +374,51 @@ def _signal_group(pid: int, signum: int) -> bool:
     return False
 
 
+def _pid_alive(pid: int) -> bool:
+    """Check a pid without sending it a signal, on either supported host."""
+    if os.name == "nt":
+        return _windows_pid_alive(pid)
+    try:
+        os.kill(pid, 0)
+    except (ProcessLookupError, OverflowError, ValueError):
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _windows_pid_alive(pid: int) -> bool:
+    """Conservatively check a Windows pid, including access-denied holders."""
+    if isinstance(pid, bool) or not isinstance(pid, int) or not 0 < pid <= 0xFFFFFFFF:
+        return False
+
+    import ctypes
+    from ctypes import wintypes
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.argtypes = (
+        wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+    kernel32.OpenProcess.restype = wintypes.HANDLE
+    kernel32.GetExitCodeProcess.argtypes = (
+        wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+    kernel32.GetExitCodeProcess.restype = wintypes.BOOL
+    kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+
+    handle = kernel32.OpenProcess(0x1000, False, pid)
+    if not handle:
+        # ERROR_INVALID_PARAMETER means the PID cannot identify a process.
+        # Access denied and other errors do not establish that it is dead.
+        return ctypes.get_last_error() != 87
+
+    try:
+        exit_code = wintypes.DWORD()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
+            return True
+        return exit_code.value == 259  # STILL_ACTIVE
+    finally:
+        kernel32.CloseHandle(handle)
+
+
 def _terminate(proc, grace_s: float) -> int:
     """Stop a process group and reap it, within a time this function bounds.
 
@@ -380,15 +427,16 @@ def _terminate(proc, grace_s: float) -> int:
     Returns the last signal that was delivered.
     """
     sent = 0
-    if _signal_group(proc.pid, signal.SIGTERM):
+    if _signal_group(proc.pid, signal.SIGTERM, proc):
         sent = signal.SIGTERM
     try:
         proc.wait(timeout=max(grace_s, 0.1))
         return sent
     except subprocess.TimeoutExpired:
         pass
-    if _signal_group(proc.pid, signal.SIGKILL):
-        sent = signal.SIGKILL
+    kill_signal = getattr(signal, "SIGKILL", signal.SIGTERM)
+    if _signal_group(proc.pid, kill_signal, proc, force=True):
+        sent = kill_signal
     try:
         proc.wait(timeout=max(grace_s, 0.1))
     except subprocess.TimeoutExpired:
@@ -543,9 +591,10 @@ def _run_child(argv, *, timeout_s, log_path, expect, kill_grace_s, cwd,
             signum_sent = _terminate(proc, kill_grace_s)
             status = proc.returncode
             reader.join(timeout=kill_grace_s + 1.0)
+            target = "child process" if os.name == "nt" else "child's process group"
             return Outcome(
-                "refused", "interrupted by signal %d; the child's process "
-                "group was killed so nothing is left running" % killed.signum,
+                "refused", "interrupted by signal %d; the %s was terminated"
+                % (killed.signum, target),
                 status=status, limit_s=timeout_s, summary=scanner.summary,
                 elapsed_s=time.monotonic() - started, log=log_path,
                 slot=slot.name if slot else None, signal_sent=(signum_sent, 0))
@@ -564,11 +613,11 @@ def _run_child(argv, *, timeout_s, log_path, expect, kill_grace_s, cwd,
               "slot": slot.name if slot else None}
 
     if reached_bound:
+        target = "child process" if os.name == "nt" else "child's process group"
         return Outcome(
-            "timeout",
-            "the bound was reached and the child's process group was killed "
+            "timeout", "the bound was reached and the %s was terminated "
             "with %s; this is not a pass"
-            % (signal.Signals(signum_sent).name if signum_sent else "no signal"),
+            % (target, signal.Signals(signum_sent).name if signum_sent else "no signal"),
             status=status, limit_s=timeout_s, summary=scanner.summary,
             signal_sent=(signum_sent, 0), **shared)
 

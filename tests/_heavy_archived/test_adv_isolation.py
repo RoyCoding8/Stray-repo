@@ -83,7 +83,7 @@ def test_worker_credential_reachability(migrated_db, tmp_path, monkeypatch):
             content = cur.fetchone()[0]
             conn.commit()
     keys = content["data"]["worker"]["data"]["keys"]
-    assert keys == ["LANG", "PATH", "SETTLEMENT_OPERATION"]
+    assert keys == ["LANG", "PATH", "PYTHONPATH", "SETTLEMENT_OPERATION"]
     assert "super-secret-key" not in str(content)
 
 

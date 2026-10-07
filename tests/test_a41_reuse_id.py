@@ -162,11 +162,10 @@ def test_the_parser_still_names_every_campaign_id_shape(store):
 
     trajectory.set_namespace_token("")
     campaign_cid = trajectory.campaign_id(0, "I", 52)
-    trajectory.authorize_campaign(store, campaign_cid, authorized=100000,
-                                  study_root=STUDY_ROOT)
+    trajectory.authorize_campaign(store, campaign_cid, authorized=100000)
     made = trajectory.ensure_campaign(
         store, campaign_cid, 0, "I", dict(CHARTER), dict(CAPS),
-        tasks=[DEV_TASK], study_root=STUDY_ROOT)
+        tasks=[DEV_TASK])
     assert made["admitted"] is True, (
         "a campaign-shaped id stopped being admitted, so the reuse panel is "
         "the only shape this can admit and the boundary owns no id")
@@ -188,6 +187,16 @@ def test_a_held_operation_under_a_reuse_id_releases_like_a_campaigns(store):
     reuse_attempt = trajectory._attempt_id(REUSE_CID, 0)
     campaign_cid = trajectory.campaign_id(0, "I", 53)
     campaign_attempt = trajectory._attempt_id(campaign_cid, 0)
+
+    trajectory.authorize_campaign(store, REUSE_CID, authorized=100000,
+                                  study_root=STUDY_ROOT)
+    trajectory.ensure_campaign(
+        store, REUSE_CID, 0, "I", dict(CHARTER), dict(CAPS),
+        tasks=[DEV_TASK], study_root=STUDY_ROOT)
+    trajectory.authorize_campaign(store, campaign_cid, authorized=100000)
+    trajectory.ensure_campaign(
+        store, campaign_cid, 0, "I", dict(CHARTER), dict(CAPS),
+        tasks=[DEV_TASK])
 
     assert reuse_attempt == "att-%s-0" % REUSE_CID
     assert reuse_attempt != campaign_attempt, (

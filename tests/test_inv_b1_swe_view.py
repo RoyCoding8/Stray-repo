@@ -58,6 +58,12 @@ from experiments.ad01 import s09_swe_binding as swe_binding
 from experiments.ad01 import s09_swe_experiment as swe_experiment
 from experiments.ad01 import s09_swe_tasks as swe_tasks
 from experiments.ad01 import s09_swe_world as swe
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 
 def _task():
@@ -109,6 +115,7 @@ def test_the_swe_view_contract_is_declared_and_the_world_is_admitted_whole():
         "their absence from the executor a refusal rather than a gap")
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_typed_ast_cell_builds_replacement_source_text_and_the_world_runs_it():
     """The recorded missing cell is false, so the cell is driven instead.
 
@@ -395,6 +402,7 @@ def test_the_swe_world_admits_a_localize_that_reads_the_failing_test_it_observed
     assert swe.admits(None, swe_binding.SWE_WORLD.static_view, localize) is False
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_compare_arms_on_the_swe_world_reports_each_arms_own_named_refusal():
     """The end-to-end reachability check, with the three reasons recorded.
 

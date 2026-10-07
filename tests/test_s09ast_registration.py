@@ -32,6 +32,12 @@ from experiments.ad01 import boolean_ast_policy as ast_policy
 from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import policy_action
 from experiments.ad01 import s09_arm_parity as parity
+from settlement import child_limits
+from settlement.child_limits import ChildLimits
+
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    child_limits.child_setup_refusal(ChildLimits(cpu_seconds=10)) is not None,
+    reason="requires a host that can install the declared child CPU limit")
 
 
 def _const(value):
@@ -130,6 +136,7 @@ def test_the_ast_record_satisfies_the_registry_record_requirements():
         parity.canonical_json_bytes(record)).hexdigest()
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_factory_accepts_the_exact_kwargs_compare_arms_sends():
     record = _record()
     budget = parity.StepBudget()
@@ -156,6 +163,7 @@ def test_the_factory_never_mutates_the_view_it_is_handed():
     assert parity.view_digest(view) == before
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_run_arm_carries_an_ast_arm_to_a_complete_arm_record():
     """The whole of `_run_arm`, on the live harness.
 
@@ -227,6 +235,7 @@ def test_two_arms_of_one_kind_are_refused_so_a_panel_cannot_double_count():
         "duplicate-representation-kind"]
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_an_ast_arm_and_a_step_arm_can_be_compared_once_both_are_real():
     """The panel lane I is building, run end to end.
 

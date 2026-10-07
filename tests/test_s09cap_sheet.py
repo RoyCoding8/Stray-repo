@@ -108,7 +108,7 @@ def test_a_send_count_cannot_be_read_as_units_or_as_a_price():
     assert "no provider price is derivable" in json.dumps(payload)
 
 
-def test_it_round_trips_and_is_content_addressed():
+def test_it_round_trips_and_is_content_addressed(tmp_path):
     """A second sheet over the same inputs has the same address, and so does
     the sheet that came back from disk."""
     again = sheet.new_campaign_sheet()
@@ -118,7 +118,7 @@ def test_it_round_trips_and_is_content_addressed():
     assert reloaded.sheet_digest == SHEET.sheet_digest
     assert reloaded.to_dict() == SHEET.to_dict()
 
-    written = SHEET.write(ROOT / "reports" / "cap-sheets")
+    written = SHEET.write(tmp_path)
     assert written.name == "invl02-s09-cap.json"
     payload = json.loads(written.read_text(encoding="utf-8"))
     assert payload["sheet_digest"] == SHEET.sheet_digest

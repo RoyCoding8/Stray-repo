@@ -37,12 +37,12 @@ MIGRATIONS = ROOT / "migrations"
 LOCAL_HOST = "/var/run/postgresql"
 LOCAL_DSN = "dbname=postgres host=%s user=ubuntu" % LOCAL_HOST
 
-RUN_TOKEN = "s89a3%s" % uuid.uuid4().hex[:10]
+RUN_TOKEN = "ci-s89a3%s" % uuid.uuid4().hex[:10]
 
 # The diagnostic rerun needs a store of its own: the campaign store above is
 # scoped to the ad01 study this module runs, and a rerun of archived bytes
 # under a study's allocation would charge that study for a diagnosis.
-RERUN_TOKEN = "s89a3rerun"
+RERUN_TOKEN = "ci-s89a3rerun"
 
 CHARTER = {"objective": "smaller valid explanatory examples",
            "freeze_id": "ad01"}
@@ -584,5 +584,6 @@ def test_invalid_candidate_refused_and_use_refuses_it(store):
         allocation_id="ad01-campaign-%s" % REJ_CID, release_id=release)
     assert fallback["requested"] == "acquired-sw-s89a3good"
     assert fallback["selected"] == "acquired-sw-s89a3good"
-    assert fallback["executed"] == "incumbent"
+    assert fallback["executed"] == "refused"
+    assert fallback["incumbent_baseline"]["executed"] == "incumbent"
     assert "member execution failed" in fallback["fallback_reason"]

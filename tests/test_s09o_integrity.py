@@ -10,12 +10,21 @@ free, because the comparison rule priced only queries and model calls.
 """
 
 from experiments.ad01 import packet, policy_assess, policy_step, worlds
+from execution_authority import execution_store as make_execution_store
+
+import pytest
 
 PANEL_TASK = "ad01-w0-within-sw-00"
 
 
 def _policy(body: str) -> dict:
     return policy_step.make_policy_artifact(body, origin="authored-control")
+
+
+@pytest.fixture(scope="module")
+def execution_store():
+    with make_execution_store("ci-s09o") as store:
+        yield store
 
 
 def test_runtime_view_hides_sealed_task_fields():
@@ -31,7 +40,7 @@ def test_runtime_view_hides_sealed_task_fields():
     assert content["family"] == task["family"]
 
 
-def test_direct_candidate_in_action_inputs_is_not_credited():
+def test_direct_candidate_in_action_inputs_is_not_credited(execution_store):
     task = worlds.load_task(worlds.FROZEN_DIR, PANEL_TASK)
     source = (
         "def STEP(view, state):\n"
@@ -42,7 +51,9 @@ def test_direct_candidate_in_action_inputs_is_not_credited():
         "              'evidence_refs': [], 'requested_resources': {}}\n"
         "    return {'action': action, 'state': {'done': True}}\n")
     arm = policy_assess._run_arm(
-        _policy(source), [PANEL_TASK], policy_assess.rule_for())
+        _policy(source), [PANEL_TASK], policy_assess.rule_for(),
+        dsn=execution_store["dsn"],
+        allocation_id=execution_store["allocation_id"])
     accepted = [e for e in arm["effects"] if e.get("accepted")]
     assert accepted == [], (
         "a policy-supplied candidate was credited as a task outcome: %r"

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
-import os
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -12,9 +14,13 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "experiments"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from conftest_isolation import admin_dsn  # noqa: E402
+from execution_authority import execution_store as make_execution_store  # noqa: E402
 
-DSN = os.environ.get("INV_C3_STUDY_DSN", "dbname=inv_c3_study")
+
+@pytest.fixture
+def execution_store():
+    with make_execution_store("ci-invc3study") as store:
+        yield store
 
 
 def test_cap_sheet_derived_from_runner_settings():
@@ -48,13 +54,11 @@ def test_study_budget_refuses_before_effects():
     assert budget.counts["model_calls"] == 360
 
 
-def test_complete_study_on_recordings_with_recompute(tmp_path):
-    # Routeless the authority refuses and the test skips (conftest_isolation)
-    # instead of running the study against a guessed socket.
-    admin_dsn()
+def test_complete_study_on_recordings_with_recompute(tmp_path, execution_store):
     import scripts.inv01_study as S
     out = tmp_path / "study"
-    rc = S.main(["--dsn", DSN, "--out", str(out),
+    dsn = execution_store["dsn"]
+    rc = S.main(["--dsn", dsn, "--out", str(out),
                  "--agenda-authorized", "100000"])
     assert rc == 0
     manifest = json.loads((out / "manifest.json").read_text())
@@ -75,13 +79,57 @@ def test_complete_study_on_recordings_with_recompute(tmp_path):
     assert empty_path.is_file()
     empty_records = json.loads(empty_path.read_text())
     assert empty_records
-    assert all(r["executed"] == "incumbent" for r in empty_records)
+    empty_repertoire = json.loads(
+        (out / "repertoires" / "empty.json").read_text())
+    [incumbent] = empty_repertoire["members"]
+    assert incumbent["source_digest"] == hashlib.sha256(
+        incumbent["method_source"].encode("utf-8")).hexdigest()
+    for record in empty_records:
+        assert record["selected"] == record["executed"] == "incumbent"
+        assert record["executed_source"] == incumbent["method_source"]
+        assert record["policy_source_digest"]
+        assert len(record["operation_ids"]) == 2
+        assert record["costs"]["sandbox_ops"] == 2
+        assert record["costs"]["witness_queries"] == 0
+    accounting_baseline = json.loads(
+        (out / "accounting.json").read_text())["incumbent_baseline"]
+    assert accounting_baseline["records"] == len(empty_records)
+    assert len(accounting_baseline["operation_ids"]) == 2 * len(empty_records)
+    assert accounting_baseline["costs"]["sandbox_ops"] == 2 * len(empty_records)
+    freeze = json.loads((out / "freeze.json").read_text())[
+        "incumbent_baseline"]
+    empty_repertoire_path = out / "repertoires" / "empty.json"
+    empty_policy_path = out / "repertoires" / "empty-use-policy.py"
+    assert freeze["repertoire"] == hashlib.sha256(
+        empty_repertoire_path.read_bytes()).hexdigest()
+    assert freeze["selector"] == hashlib.sha256(
+        empty_policy_path.read_bytes()).hexdigest()
+    assert all(record["policy_source_digest"] == freeze["selector"]
+               for record in empty_records)
+    baseline_export = json.loads(
+        (out / "incumbent_baseline.json").read_text())
+    assert sorted({op for record in baseline_export["records"]
+                   for op in record["operation_ids"]}) == \
+        accounting_baseline["operation_ids"]
     recomputed = tmp_path / "recomputed.json"
-    rc = S.main(["--dsn", DSN, "--out", str(out), "--recompute",
+    rc = S.main(["--dsn", dsn, "--out", str(out), "--recompute",
                  "--recomputed-out", str(recomputed)])
     assert rc == 0
     fresh = json.loads(recomputed.read_text())
     assert fresh["total"] == accounting["total"]
+    accounting_path = out / "accounting.json"
+    original_accounting = accounting_path.read_text()
+    tampered = json.loads(original_accounting)
+    tampered["incumbent_baseline"]["operation_ids"][0] += "-tampered"
+    accounting_path.write_text(json.dumps(tampered))
+    assert S.main(["--dsn", dsn, "--out", str(out), "--recompute",
+                   "--recomputed-out", str(recomputed)]) == 2
+    tampered = json.loads(original_accounting)
+    tampered["incumbent_baseline"]["costs"]["sandbox_ops"] += 1
+    accounting_path.write_text(json.dumps(tampered))
+    assert S.main(["--dsn", dsn, "--out", str(out), "--recompute",
+                   "--recomputed-out", str(recomputed)]) == 2
+    accounting_path.write_text(original_accounting)
     req = json.loads((out / "external_requirements.json").read_text())
     assert "endpoint_present" in req
     assert "key_present" in req

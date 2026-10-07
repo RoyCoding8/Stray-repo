@@ -1,16 +1,18 @@
-# Agent-Society workspace inventory, 2026-10-06
+# Agent-Society folder dispositions, updated 2026-10-07
 
 Scope: Agent-Society-related folders under D:/AI, not a whole-disk audit.
 Sizes are rounded MiB of file contents. Reparse points were not traversed.
-The canonical source inspected was codex/agent-society at e8e7911e.
+The original size census inspected codex/agent-society at e8e7911e;
+the current repair/handoff supersedes its worktree-status observations.
 
 Archive update: 44 diagnostic/snapshot source roots are preserved in
 `D:/AI/Agent-Society-archives/2026-10-06/diagnostics-and-snapshots.zip`, with a
 verified per-file manifest beside it (5,707 files, 157,137,456 source bytes).
 Automatic approval review blocked deletion, so the source folders listed
-below still exist. VKit is separate and is outside this task's scope.
-Three temporary `ci-*` worktrees are active for the CI repair; remove them
-through Git after their work is integrated or safely retained.
+below remain, except D:/AI/s09o, now absent. VKit is separate and is outside
+this task's scope. Completed CI work is consolidated into the canonical branch;
+the interrupted construction-budget patch has a recovery tag, not an active
+worker checkout. This handoff removes the task's temporary `ci-*` worktrees.
 
 ## Keep
 
@@ -30,13 +32,11 @@ entries protect history or local material, rather than being active workers.
 
 | Absolute path | Size | Disposition |
 |---|---:|---|
-| D:/AI/s09o | 77.0 MiB total | Old pilot work area, including live evidence, logs, a tar, snapshots and abandoned-pilot-partial.patch. Preserve those unique artifacts before retiring the directory. |
-| D:/AI/s09o/u6-baseline | About 24 MiB | Broken checkout. Its .git file points at the absent Agent-Society-v2-investigation-review registration; Git cannot resolve HEAD. No current registration. This does not prove its contents are redundant. |
-| D:/AI/s09o/snapshot-c3e8566 | About 25 MiB | Plain snapshot, not a registered Git worktree. Keep until contents/patches are covered by an archive. |
-| D:/AI/Agent-Society-v2-privacy-20260910 | 0.7 MiB | Historical plain snapshot, not a registered worktree. No content-equivalence proof was performed. |
-| D:/AI/Agent-Society-v2/.a53* | 71.1 MiB combined | Roughly 40 worker CI artifact groups/files. These are scratch evidence rather than source checkouts. Some are cited by historical reports; preserve or archive before removing. |
-| D:/AI/Agent-Society-v2/.ci-read | 0.6 MiB | Worker diagnostic output, not a worktree. Preserved. |
-| D:/AI/Agent-Society-v2/.scratch | 0.5 MiB | Worker scratch files, not a worktree. Preserved. |
+| D:/AI/s09o | Formerly 77.0 MiB | Absent as of this handoff; its pilot material and snapshots are in the verified diagnostics-and-snapshots archive. |
+| D:/AI/Agent-Society-v2-privacy-20260910 | 0.7 MiB | Verified archive copy exists; source removal was blocked by automatic approval review. May be removed manually while retaining the archive. |
+| D:/AI/Agent-Society-v2/.a53* | 71.1 MiB combined | Verified archive copies exist; remaining sources may be removed manually. Exact roots are in the archive manifest. |
+| D:/AI/Agent-Society-v2/.ci-read | 0.6 MiB | Verified archive copy exists; source removal was blocked. |
+| D:/AI/Agent-Society-v2/.scratch | 0.5 MiB | Verified archive copy exists; source removal was blocked. |
 
 Do not delete untracked supersession sidecars or evidence directories simply
 because Git reports them untracked. This review did not establish their
@@ -47,12 +47,26 @@ redundancy. No historical evidence was altered or discarded.
 D:/AI/Agent-Society-v2/.worktrees/e3, hang, m2decide, roots and w0-relay
 are empty, have no .git pointer and are absent from Git's worktree list.
 They contain no measured file payload, so removing them would free almost
-no disk space. They were left alone.
+no disk space. Their removal was rejected by automatic approval review;
+they may be removed manually.
 
 The two oct06-owner and oct06-evidence review worktrees were created by
 this review, around 99.5 MiB combined. Both were removed after their reviewers finished, together with their
-temporary branches. The final registered worktree list contains only
-D:/AI/Agent-Society-v2.
+temporary branches. The CI contract, durable and platform worktrees are also
+retired after integration or recovery preservation; the integration worktree
+was removed last. Git now lists only D:/AI/Agent-Society-v2 and the sole local
+branch codex/agent-society. Old local backup branches were replaced by verified
+archive tags; historical remote snapshots remain.
+
+## Recovery material for this handoff
+
+Keep D:/AI/Agent-Society-archives/2026-10-07/pre-cleanup-all-refs.bundle.
+It was verified and preserves the pre-cleanup refs, including the interrupted
+construction-budget patch. The old WORKER-PROMPT.md is archived beside it;
+the canonical file is now the concise Claude entry point. The recovery tag
+recovery/ci-child-construction-2026-10-07 names unqualified work, not a release.
+No historical evidence, unrelated project or live database is retired merely
+because it is absent from the task's current worktree list.
 
 This inventory does not establish that unrelated D:/AI projects or other
 computer folders are stale. Process path matching was inconclusive because
