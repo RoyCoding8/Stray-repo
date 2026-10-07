@@ -37,6 +37,7 @@ repository is, which checkouts belong to it, and what git knows about each.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -80,7 +81,9 @@ def checkout_index(canonical: Path, checkout: Path) -> Path:
 
 def _run(args: list[str], cwd: Path) -> str:
     done = subprocess.run(list(_GIT) + args, cwd=str(cwd),
-                          capture_output=True, text=True, check=True)
+                          capture_output=True, text=True, check=True,
+                          env={key: value for key, value in os.environ.items()
+                               if key not in ("GIT_DIR", "GIT_WORK_TREE")})
     return done.stdout
 
 
@@ -135,21 +138,17 @@ def untracked_paths(canonical: Path, checkout: Path,
     return [name for name in out.split("\0") if name]
 
 
+def _local_path(raw: str) -> Path:
+    if os.name != "nt" and len(raw) > 2 and raw[1:3] == ":/":
+        return Path("/mnt") / raw[0].lower() / raw[3:]
+    return Path(raw)
+
+
 def sibling_checkouts(canonical: Path, own: Path) -> list[Path]:
-    """Every checkout this repository knows about, except the one running us.
+    """Registered siblings whose Git marker belongs to this repository.
 
-    On this host git cannot resolve a linked worktree, so the paths
-    `worktree list` prints have the common directory glued to the front of the
-    one it meant. The lane is recovered from the shape git reports rather than
-    the shape it meant: after the `/.git/worktrees/` marker comes the admin
-    directory's name, then a drive letter, then the lane's own path.
-
-    A registry entry counts as a lane of *this* repository only when its `.git`
-    file names this repository's admin directory. That is what excludes a
-    separate clone, whose sources are that repository's business rather than a
-    copy of a file in this one. An entry naming a checkout that is not on this
-    mount is dropped rather than read as a missing directory, and `worktree
-    list` marks those `prunable`.
+    WSL can prepend the common directory to a Windows registry path; recover
+    that path only when Git's ordinary path does not exist.
     """
     out = _run(["-C", str(canonical), "worktree", "list", "--porcelain"],
                cwd=canonical)
@@ -159,18 +158,22 @@ def sibling_checkouts(canonical: Path, own: Path) -> list[Path]:
         if not line.startswith("worktree "):
             continue
         raw = line[len("worktree "):]
-        if raw == str(canonical):
-            continue
-        parts = raw.partition("/.git/worktrees/")[2].split("/")
-        if len(parts) < 3:
-            continue
-        drive = parts[1].rstrip(":").lower()
-        lane = Path("/mnt") / drive / Path(*parts[2:])
-        if lane == own or not lane.is_dir():
+        lane = _local_path(raw)
+        if not lane.is_dir():
+            parts = raw.partition("/.git/worktrees/")[2].split("/", 1)
+            if len(parts) != 2:
+                continue
+            lane = _local_path(parts[1])
+        if lane.resolve() in (own.resolve(), canonical.resolve()) or not lane.is_dir():
             continue
         marker = lane / ".git"
-        if marker.is_file() and canonical.name in marker.read_text(
-                encoding="utf-8", errors="ignore"):
+        if not marker.is_file():
+            continue
+        named = marker.read_text(encoding="utf-8").removeprefix("gitdir: ").strip()
+        target = _local_path(named)
+        if not target.is_absolute():
+            target = lane / target
+        if target.resolve().parent == (canonical / ".git" / "worktrees").resolve():
             found.append(lane)
     return sorted(found)
 

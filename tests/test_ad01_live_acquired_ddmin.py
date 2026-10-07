@@ -71,7 +71,7 @@ ACQUIRED = {
 }
 
 
-def _control_pick(task_id: str) -> dict:
+def _control_pick(task_id: str, execution_store: dict, operation_id: str) -> dict:
     """The member the control's own measured selector admits, for a task.
 
     `control_arm.selector_source` is built from `measured_tables`, which runs
@@ -93,7 +93,10 @@ def _control_pick(task_id: str) -> dict:
         task=task, observations=[], open_questions=[], last_result=None,
         eligible_methods=[m["capability_id"]
                           for m in repertoire["members"]], remaining={})
-    action = trajectory._use_policy_action(policy, view, {})
+    action = trajectory._use_policy_action(policy, view, {}, execution={
+        "dsn": execution_store["dsn"],
+        "allocation_id": execution_store["allocation_id"],
+        "operation_id": operation_id})
     method_id = trajectory._use_admitted_method(action)
     return next(m for m in repertoire["members"]
                 if m["capability_id"] == method_id)
@@ -139,15 +142,15 @@ def test_the_model_chose_ddmin_on_both_families_and_nobody_asked_it():
             {"executed_source": source}) == "ddmin"
 
 
-def test_the_control_picks_a_different_member_per_family():
+def test_the_control_picks_a_different_member_per_family(execution_store):
     """The control is not a second ddmin; its selector splits by task shape.
 
     On software the selector independently lands on ddmin, and on graph it
     lands on greedy. That split is what makes the run a comparison at all:
     a control pinned to one strategy would be one method on two names.
     """
-    software = _control_pick(SOFTWARE_TASK)
-    graph = _control_pick(GRAPH_TASK)
+    software = _control_pick(SOFTWARE_TASK, execution_store, "selector-sw")
+    graph = _control_pick(GRAPH_TASK, execution_store, "selector-gr")
 
     assert software["capability_id"] == "ctl-software-ddmin"
     assert graph["capability_id"] == "ctl-graph-greedy"
@@ -163,8 +166,8 @@ def test_the_two_arms_tie_on_software_and_differ_on_graph(execution_store):
     """
     from experiments.ad01 import control_arm
 
-    software_control = _control_pick(SOFTWARE_TASK)
-    graph_control = _control_pick(GRAPH_TASK)
+    software_control = _control_pick(SOFTWARE_TASK, execution_store, "comparison-selector-sw")
+    graph_control = _control_pick(GRAPH_TASK, execution_store, "comparison-selector-gr")
     sw = _run(SOFTWARE_TASK, software_control["method_source"],
               software_control["capability_id"], execution_store,
               "comparison-sw-control")
@@ -202,7 +205,7 @@ def test_the_gate_refuses_and_names_every_cause_rather_than_one(
 
     control, acquired = [], []
     for task_id, source in ACQUIRED.items():
-        picked = _control_pick(task_id)
+        picked = _control_pick(task_id, execution_store, "distinct-selector-" + task_id)
         control.append(_run(task_id, picked["method_source"],
                             picked["capability_id"], execution_store,
                             "gate-control-%s" % task_id))
