@@ -7,12 +7,24 @@ production defects from stale test contracts and unsupported platform cases;
 it does not advance stages 9/10 or establish learning. GPT-6 Luna lanes own
 durable execution, portable contracts, and platform/harness repairs.
 
-Verified root gates: 61 passed in the evidence/forensics/database-name group;
-57 passed and 48 explicit database skips in the portable census/store group.
-These are separate runs, not a full-suite result. PostgreSQL's existing local
-cluster is recovering; no service restart or historical-store mutation was made.
-CI run 37514432586 at 82a8fd10 remains the pre-repair baseline, with the first
-database shard failing. Integrated database and full CI qualification are pending.
+Verified gates are separate runs, not a full-suite result: the merged Windows
+contract gate passed 320 with 52 explicit host/database skips; its platform
+follow-up passed 127 with 20 host skips. The root's PostgreSQL 18.6 restore,
+resume and isolation gate passed 77, and Luna's authority-fixture gate passed
+65; the coordinator's merged authority/artifact/resume gate then passed 81.
+Real Linux read-deny checks passed 13 with one capability skip. No service
+restart or historical-store mutation was made. The root's full Windows sweep
+and remaining integrated database checks are still running. CI run 37514432586
+at 82a8fd10 is the pre-repair baseline: both database shards, all three portable
+jobs and the archived job failed; consistency passed. The root's complete
+agenda/completion gate subsequently passed all 50 on real PostgreSQL.
+Repaired CI is pending.
+
+Production repairs include receipt-batch completion under the store lock,
+byte-bound agenda observations, executable child authority, failure-safe
+disposable-store cleanup, and staged writes that preserve immutable members.
+Broader qualification caught a resume projection that mistook an operation's
+completion receipt for a measurement; the 50-test gate qualified its correction.
 
 The existing 45 untracked supersession records were verified against their
 committed artifact bytes and included unchanged. JSON checkout attributes now
