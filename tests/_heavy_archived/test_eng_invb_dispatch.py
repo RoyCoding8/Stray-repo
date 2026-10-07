@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import json
 import os
 import signal
 import subprocess
 import sys
-import threading
 import time
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
@@ -125,33 +122,6 @@ def test_proc_starttime_tracks_live_process_only():
     assert proc_starttime(2**30) is None
 
 
-class _ResponsesHandler(BaseHTTPRequestHandler):
-    def log_message(self, *args):
-        pass
-
-    def do_GET(self):
-        raw = json.dumps({"data": []}).encode()
-        self.send_response(200)
-        self.send_header("Content-Length", str(len(raw)))
-        self.end_headers()
-        self.wfile.write(raw)
-
-    def do_POST(self):
-        length = int(self.headers.get("Content-Length", 0))
-        if length:
-            self.rfile.read(length)
-        raw = json.dumps(
-            {"status": "completed",
-             "output": [{"type": "message",
-                         "content": [{"type": "output_text", "text": "resp-ok"}]}],
-             "model": "stub", "provider": "stub-provider", "tier": "free",
-             "usage": {"input_tokens": 3, "output_tokens": 2}}).encode()
-        self.send_response(200)
-        self.send_header("Content-Length", str(len(raw)))
-        self.end_headers()
-        self.wfile.write(raw)
-
-
 def _settings(endpoint):
     from settlement.config import GatewayConfig, Settings
 
@@ -175,26 +145,26 @@ def test_from_settings_defaults_to_chat_shape(monkeypatch):
     assert adapter.api == "chat"
 
 
-def test_from_settings_honors_responses_shape(monkeypatch):
+def test_from_settings_refuses_unattestable_responses_route(monkeypatch):
     from settlement import gateway_http
-    from settlement.gateway import ModelRequest
+    from settlement.gateway import (GatewayError, GatewayErrorKind,
+                                    GatewayRouteError, ModelRequest)
 
     monkeypatch.setenv("SETTLEMENT_GATEWAY_API", "responses")
-    server = ThreadingHTTPServer(("127.0.0.1", 0), _ResponsesHandler)
-    worker = threading.Thread(target=server.serve_forever, daemon=True)
-    worker.start()
-    try:
-        endpoint = f"http://127.0.0.1:{server.server_port}"
-        adapter = gateway_http.HttpGatewayAdapter.from_settings(
-            _settings(endpoint), expected_route=_stub_route(endpoint))
-        assert adapter.api == "responses"
-        result = adapter.infer(ModelRequest(
-            model="stub", messages=({"role": "user", "content": "hi"},),
-            max_output_tokens=8, deadline_ms=10_000))
-        assert result.text == "resp-ok"
-    finally:
-        server.shutdown()
-        worker.join()
+    endpoint = "http://127.0.0.1:9"
+    adapter = gateway_http.HttpGatewayAdapter.from_settings(
+        _settings(endpoint), expected_route=_stub_route(endpoint))
+
+    assert adapter.api == "responses"
+    result = adapter.infer(ModelRequest(
+        model="stub", messages=({"role": "user", "content": "hi"},),
+        max_output_tokens=8, deadline_ms=10_000))
+
+    assert isinstance(result, GatewayError)
+    assert result.kind == GatewayErrorKind.PROTOCOL
+    assert result.route_error == GatewayRouteError.RESPONSE_METADATA
+    assert result.response_received is False
+    assert "publishes no provider" in result.message
 
 
 def test_from_settings_refuses_unknown_shape(monkeypatch):
