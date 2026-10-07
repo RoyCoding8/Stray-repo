@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import json
 import os
 import subprocess
@@ -796,6 +797,15 @@ def test_duplicate_effect_decisions_charged(tmp_path):
         assert len(dec_charges) == 24, len(dec_charges)
         bad = checker.check_trace(trace, MANIFEST, MHASH, world, manifest.BUDGETS)
         assert bad == [], bad
+        incomplete = copy.deepcopy(trace)
+        measurement = next(row for row in incomplete["ledger"]["receipts"]
+                           if row.get("content", {}).get("terminal_receipt"))
+        measurement["content"].pop("terminal_receipt")
+        measurement["content_digest"] = hashlib.sha256(json.dumps(
+            measurement["content"], sort_keys=True,
+            separators=(",", ":")).encode()).hexdigest()
+        assert f"observation-without-completion {measurement['receipt']}" in checker.check_trace(
+            incomplete, MANIFEST, MHASH, world, manifest.BUDGETS)
     finally:
         runner.drop_db(BASE_DSN, trace["db"])
 

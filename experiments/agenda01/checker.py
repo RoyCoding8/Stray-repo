@@ -108,7 +108,9 @@ def check_trace(trace: dict, manifest_doc: dict, manifest_hash: str,
     for receipt in ledger.get("receipts", []):
         content = receipt.get("content") or {}
         terminal = content.get("terminal_receipt")
-        if not terminal:
+        if not isinstance(terminal, str) or not terminal:
+            if content.get("kind") in ("observation", "dud", "product-claims"):
+                reasons.append(f"observation-without-completion {receipt['receipt']}")
             continue
         final = by_receipt.get(terminal, {})
         completed = final.get("content") or {}
@@ -117,6 +119,8 @@ def check_trace(trace: dict, manifest_doc: dict, manifest_hash: str,
                 or completed.get("operation_id") != receipt["operation_id"] \
                 or completed.get("source_attempt") != content.get("source_attempt") \
                 or completed.get("kind") != "agenda-probe-completed" \
+                or completed.get("adapter") != "agenda-probe" \
+                or content.get("adapter") != "agenda-probe" \
                 or completed.get("resolves_unknowns") != sorted(completed.get("results") or {}) \
                 or (completed.get("results") or {}).get(receipt["receipt"]) != content:
             reasons.append(f"observation-without-completion {receipt['receipt']}")

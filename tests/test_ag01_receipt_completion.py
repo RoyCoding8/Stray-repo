@@ -52,13 +52,17 @@ def test_rejected_measurement_never_reports_completion(monkeypatch, code, confli
 
 
 @pytest.mark.parametrize("tamper", [None, "missing", "operation", "content",
-                                    "conflict", "resolution"])
+                                    "conflict", "resolution", "pointer", "adapter"])
 def test_measurement_requires_its_own_intact_completion(monkeypatch, tamper):
     launcher, operation, admitted = _launch(monkeypatch)
     result = launcher.dispatch(operation)
     row = {"operation_id": "op", "content": admitted[0].content}
     final = {"operation_id": "op", "outcome": "success",
              "content": copy.deepcopy(result.receipt.content)}
+    if tamper == "pointer":
+        row["content"].pop("terminal_receipt")
+    if tamper == "adapter":
+        final["content"]["adapter"] = "other"
     if tamper == "operation":
         final["operation_id"] = "other"
     if tamper == "content":
