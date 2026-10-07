@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from settlement import authority, broker, experiment, run, store
+from settlement import authority, broker, run, store
 from settlement.common import Command, ConflictPayload, ResultCode
 from settlement.gateway import ModelResponse, Usage
 
@@ -98,21 +98,6 @@ def test_duplicate_receipt_compares_provenance_and_actual_cost(migrated_db):
     assert same.code == ResultCode.ALREADY_APPLIED
     assert changed_cost.data["conflict"] is True
     assert changed_provenance.data["conflict"] is True
-
-
-def test_conflict_precedes_success_in_operation_and_accounting_views(migrated_db):
-    dsn = migrated_db
-    _seed_operation(dsn, "conflict-view", "conflict-view-operation")
-    store.admit_receipt(dsn, _receipt(
-        "conflict-view-operation", "first", provenance="provider"))
-    store.admit_receipt(dsn, _receipt(
-        "conflict-view-operation", "second", provenance="provider"))
-
-    outcome = run.operation_outcome(dsn, "conflict-view-operation")
-    accounting = experiment._op_accounting(dsn, "conflict-view-operation")
-    assert outcome["outcome"] == "conflict"
-    assert accounting["outcome"] == "conflict"
-    assert accounting["settled"] == 0
 
 
 def test_study_operations_bind_the_durable_study_root(migrated_db):

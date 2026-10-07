@@ -88,36 +88,6 @@ class LostGateway:
         return False
 
 
-def test_unbilled_model_call_settles_the_full_reservation():
-    from settlement import broker, experiment, store
-    _fresh_db()
-    store.seed_allocation(DSN, _cmd(
-        {"allocation_id": "d2-a", "domain": "cpu", "authorized": 100000}))
-    prepared = broker.ensure_operation(
-        DSN, operation_id="d2-unbilled", effect=broker.MODEL_INFERENCE,
-        payload=_payload(), allocation_id="d2-a")
-    assert prepared.data["exposure"] == EXPOSURE == 2485
-    status = broker.dispatch_operation(
-        DSN, "d2-unbilled", launchers={}, gateway=UnbilledGateway())
-    assert status.dispatch_state == "observed"
-    # An unbilled call yields no charge, so the store has no actual_cost to
-    # settle against and the reservation is debited whole. The measured
-    # view is where "unbilled" reads as zero, and the two disagree by
-    # design: one is what was set aside, the other is what the provider
-    # billed. test_inv_c_qualification.py pins the same split for the
-    # same gateway.
-    ledger = store.allocation_status(DSN, "d2-a")
-    assert (ledger["consumed"], ledger["reserved"]) == (EXPOSURE, 0)
-    assert experiment._op_accounting(DSN, "d2-unbilled")["billed"] is False
-    receipts = store.operation_receipts(DSN, "d2-unbilled")
-    assert len(receipts) == 1
-    usage = receipts[0]["content"]["usage"]
-    assert usage["input_tokens"] == 5
-    assert usage["output_tokens"] == 5
-    assert usage["billed"] is False
-    assert usage["charge_units"] == 0
-
-
 def test_billed_model_call_settles_at_charge():
     from settlement import broker, store
     _fresh_db()

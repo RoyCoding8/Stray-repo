@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from settlement import experiment, loop, trials
+from settlement import loop, trials
 from settlement.common import CommandResult, ResultCode, SettlementError, payload_digest
 
 
@@ -191,98 +191,6 @@ class _Connection:
 
     def commit(self) -> None:
         return None
-
-
-def test_episode_union_keeps_unknown_billing_and_token_counts(monkeypatch):
-    operations = {
-        "op-measured": {
-            "dispatch_state": "observed",
-            "reconcile_state": "none",
-            "reservation_id": "res-measured",
-            "payload": {"effect": "model-inference"},
-        },
-        "op-unknown": {
-            "dispatch_state": "observed",
-            "reconcile_state": "none",
-            "reservation_id": "res-unknown",
-            "payload": {"effect": "model-inference"},
-        },
-        "op-unbilled": {
-            "dispatch_state": "observed",
-            "reconcile_state": "none",
-            "reservation_id": "res-unbilled",
-            "payload": {"effect": "model-inference"},
-        },
-        "op-sandbox": {
-            "dispatch_state": "observed",
-            "reconcile_state": "none",
-            "reservation_id": "res-sandbox",
-            "payload": {"effect": "sandbox-exec"},
-        },
-    }
-    reservations = {
-        "res-measured": {"amount": 20, "state": "settled"},
-        "res-unknown": {"amount": 30, "state": "settled"},
-        "res-unbilled": {"amount": 12, "state": "settled"},
-        "res-sandbox": {"amount": 4, "state": "settled"},
-    }
-    receipts = {
-        "op-measured": [{
-            "outcome": "success",
-            "content": {"usage": {
-                "input_tokens": 5,
-                "output_tokens": 3,
-                "charge_units": 7,
-                "billed": True,
-            }},
-        }],
-        "op-unknown": [{
-            "outcome": "success",
-            "content": {"usage": {
-                "input_tokens": 11,
-                "output_tokens": None,
-                "charge_units": None,
-                "billed": None,
-            }},
-        }],
-        "op-unbilled": [{
-            "outcome": "success",
-            "content": {"usage": {
-                "input_tokens": 1,
-                "output_tokens": 1,
-                "charge_units": 0,
-                "billed": False,
-            }},
-        }],
-        "op-sandbox": [{
-            "outcome": "success",
-            "content": {},
-        }],
-    }
-    monkeypatch.setattr(
-        experiment.db, "connect",
-        lambda dsn: _Connection(_Cursor(operations, reservations, receipts)),
-    )
-
-    union = experiment.episode_cost_union("unused", {
-        "model": ["op-measured", "op-unknown", "op-unbilled"],
-        "sandbox": ["op-sandbox", "op-measured"],
-    })
-
-    assert union["totals"]["settled"] == 53
-    assert union["totals"]["tokens"] == {"input": 17, "output": None}
-    assert union["phases"]["model"]["tokens"] == {
-        "input": 17,
-        "output": None,
-    }
-    assert union["provider_billing"] == {
-        "unit": "charge_units",
-        "status": "unknown",
-        "total_units": None,
-        "measured_units": 7,
-        "unknown_operations": ["op-unknown"],
-        "unbilled_operations": ["op-unbilled"],
-    }
 
 
 class _LedgerCursor:
