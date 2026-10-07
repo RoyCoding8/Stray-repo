@@ -228,15 +228,18 @@ def test_probing_reports_the_kernel_rather_than_guessing():
         assert "landlock" in probe.reason.lower()
 
 
-def test_an_allowed_parent_cannot_reopen_a_denied_descendant(tmp_path):
+@pytest.mark.parametrize("allow_filesystem_root", [False, True])
+def test_an_allowed_parent_cannot_reopen_a_denied_descendant(tmp_path, allow_filesystem_root):
     if not landlock_available():
         pytest.skip("landlock unavailable on this kernel")
     denied = tmp_path / "private"
     denied.mkdir()
+    allowed = ([str(tmp_path.anchor)] if allow_filesystem_root else
+               _child_read_allowlist({"cwd": str(tmp_path)}))
     outcome = LocalLauncher(tmp_path / "runs").dispatch(broker.BrokerOp(
         operation_id="n36-overlap", effect=broker.SANDBOX_EXEC,
         payload={"profile": PROFILE, "argv": [sys.executable, "-c", "print(1)"],
-                 "read_allow": _child_read_allowlist({"cwd": str(tmp_path)}),
+                 "read_allow": allowed,
                  "read_deny": [str(denied)],
                  "timeout_ms": 10_000, "max_output_bytes": 1024}))
     assert not outcome.sent

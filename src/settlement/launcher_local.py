@@ -263,9 +263,9 @@ def _landlock_restrict(allow_read: list[str], deny_read: list[str]) -> None:
         if not raw:
             continue
         real = os.path.realpath(raw)
-        if any(d.startswith(real + os.sep) for d in denied):
+        if any(d.startswith(real.rstrip(os.sep) + os.sep) for d in denied):
             raise OSError(_errno.EINVAL, "allowed root contains a denied path: %s" % real)
-        if any(real == d or real.startswith(d + os.sep) for d in denied):
+        if any(real == d or real.startswith(d.rstrip(os.sep) + os.sep) for d in denied):
             continue
         kept.append(real)
     # Landlock rejects a rule nested inside another rule that was already
