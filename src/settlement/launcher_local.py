@@ -120,7 +120,7 @@ CLAIM_LEDGER_ENV = "SETTLEMENT_CLAIM_LEDGER"
 # boundary that silently degrades on an older kernel is the defect N-36 names.
 _LANDLOCK_CREATE_RULESET = 444
 _LANDLOCK_ADD_RULE = 445
-_LANDLOCK_RESTRICT_SELF = 444
+_LANDLOCK_RESTRICT_SELF = 446
 _LANDLOCK_RULE_PATH_BENEATH = 1
 _LANDLOCK_CREATE_RULESET_VERSION = 1 << 0
 # prctl(1) is PR_SET_PDEATHSIG and prctl(38) is PR_SET_NO_NEW_PRIVS. Setting the
@@ -244,11 +244,8 @@ def _landlock_restrict(allow_read: list[str], deny_read: list[str]) -> None:
     and this builds the ruleset that separates them. Denied roots win: they are
     never added to the allowlist in the first place.
 
-    Landlock cannot express "deny this one path while allowing its parent", so
-    a denied root is subtracted from every allow root that contains it. If that
-    subtraction would empty an allow root, the allow is dropped and the caller
-    is left to notice that the child cannot read what it needs -- which is the
-    honest outcome, and the test that names it is the census test.
+    Landlock cannot deny a descendant of an allowed root. Refuse overlapping
+    declarations instead of installing a rule that exposes the denied path.
     """
     import ctypes
     import errno as _errno
@@ -266,6 +263,8 @@ def _landlock_restrict(allow_read: list[str], deny_read: list[str]) -> None:
         if not raw:
             continue
         real = os.path.realpath(raw)
+        if any(d.startswith(real + os.sep) for d in denied):
+            raise OSError(_errno.EINVAL, "allowed root contains a denied path: %s" % real)
         if any(real == d or real.startswith(d + os.sep) for d in denied):
             continue
         kept.append(real)
@@ -315,11 +314,7 @@ def _landlock_restrict(allow_read: list[str], deny_read: list[str]) -> None:
                               "landlock_add_rule failed for %s" % root)
         finally:
             os.close(fd)
-    # landlock_restrict_self(ruleset_fd, flags). Same syscall number as
-    # create_ruleset, which is why it gets its own name here: calling
-    # _LANDLOCK_CREATE_RULESET as the syscall number for the *restrict* call
-    # happens to be the same value, but passing the create_ruleset flag set
-    # here is what returns EINVAL.
+    # landlock_restrict_self(ruleset_fd, flags), distinct from create_ruleset.
     if _syscall(_LANDLOCK_RESTRICT_SELF, ruleset, 0) < 0:
         raise OSError(ctypes.get_errno(), "landlock_restrict_self failed")
     os.close(ruleset)
@@ -1020,6 +1015,9 @@ def _child_read_allowlist(payload: dict[str, Any]) -> list[str]:
         roots = [sys.prefix, sys.base_prefix, str(payload.get("cwd") or "")]
         roots.extend([os.path.dirname(os.__file__ or ""),
                       os.path.dirname(json.__file__ or "")])
+        # A relocatable Python installation still loads the system linker and
+        # shared libraries. Grant their directories, not all of /usr.
+        roots.extend(["/usr/lib", "/lib", "/lib64"])
     existing = [r for r in roots if r and os.path.isdir(r)]
     seen: list[str] = []
     for root in existing:

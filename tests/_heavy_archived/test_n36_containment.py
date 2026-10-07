@@ -37,6 +37,7 @@ from settlement.launcher_local import (
     PROFILE,
     landlock_available,
     probe_landlock,
+    _child_read_allowlist,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -58,6 +59,7 @@ def _run_child(script: str, work: Path, operation_id: str,
     payload = {
         "profile": PROFILE,
         "argv": [sys.executable, str(work / "child.py")] + list(extra_argv or []),
+        "cwd": str(work),
         "timeout_ms": 60_000,
         "max_output_bytes": 1_048_576,
         "cpu_seconds": 30,
@@ -186,7 +188,7 @@ def test_the_deny_does_not_break_a_child_that_needs_only_its_work_tree():
             "    out['denied'] = pathlib.Path(sys.argv[2]).read_text()[:10]\n"
             "except OSError as exc:\n"
             "    out['denied'] = 'blocked:' + str(exc.errno)\n"
-            "print(json.dumps(out))\n")
+            "print(json.dumps({'status': 'ok', 'data': out}))\n")
         content = _run_child(script, work, "n36-workdir",
                              deny=[str(REPO_ROOT / "experiments")],
                              extra_argv=[str(work / "staged.txt"),
@@ -224,3 +226,18 @@ def test_probing_reports_the_kernel_rather_than_guessing():
         # An unavailable kernel must say why, and must not read as available.
         assert probe.reason
         assert "landlock" in probe.reason.lower()
+
+
+def test_an_allowed_parent_cannot_reopen_a_denied_descendant(tmp_path):
+    if not landlock_available():
+        pytest.skip("landlock unavailable on this kernel")
+    denied = tmp_path / "private"
+    denied.mkdir()
+    outcome = LocalLauncher(tmp_path / "runs").dispatch(broker.BrokerOp(
+        operation_id="n36-overlap", effect=broker.SANDBOX_EXEC,
+        payload={"profile": PROFILE, "argv": [sys.executable, "-c", "print(1)"],
+                 "read_allow": _child_read_allowlist({"cwd": str(tmp_path)}),
+                 "read_deny": [str(denied)],
+                 "timeout_ms": 10_000, "max_output_bytes": 1024}))
+    assert not outcome.sent
+    assert "child-setup-failed" in outcome.refused_reason
