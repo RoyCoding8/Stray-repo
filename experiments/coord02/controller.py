@@ -60,6 +60,7 @@ class EpisodeConfig:
     source_interfaces: dict = field(default_factory=dict)
     package: dict = field(default_factory=dict)
     snapshot_digest: str = ""
+    construction_units: int = 0
     max_steps: int = MAX_POLICY_STEPS
     step_timeout_ms: int = 2000
     probe_timeout_ms: int = 5000
@@ -419,6 +420,7 @@ def _admit_plan(dsn: str, cfg: EpisodeConfig, proposal: dict,
         join_rules=_join_rules_for_shape(cfg, proposal["shape"],
                                          proposal["children"]),
         allocation_id=cfg.allocation_id,
+        construction_units=cfg.construction_units,
         policy_response={"shape": proposal["shape"],
                          "decision_id": decision_id,
                          "package_digest": cfg.package["package_digest"]})

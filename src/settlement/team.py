@@ -497,15 +497,23 @@ def propose_team_plan(dsn: str, cmd: Command, *, parent_obligation: str,
                       snapshot_digest: str, shape: str, children: list[dict],
                       interface_contract: dict, join_rules: dict,
                       allocation_id: str,
-                      policy_response: dict | None = None) -> CommandResult:
+                      policy_response: dict | None = None,
+                      construction_units: int = 0) -> CommandResult:
     inv_id, _ = _parse_parent(parent_obligation)
     canonical = {"parent_obligation": parent_obligation, "snapshot_digest": snapshot_digest,
-                 "shape": shape, "children": children,
-                 "interface_contract": interface_contract, "join_rules": join_rules,
-                 "allocation_id": allocation_id, "policy_response": policy_response or {}}
+                  "shape": shape, "children": children,
+                  "interface_contract": interface_contract, "join_rules": join_rules,
+                  "allocation_id": allocation_id,
+                  "policy_response": policy_response or {},
+                  "construction_units": construction_units}
     inner = Command(request_id=f"{cmd.request_id}:propose", payload=canonical)
 
     def _fn(cur, control):
+        construction = canonical["construction_units"]
+        if isinstance(construction, bool) or not isinstance(construction, int) \
+                or construction < 0:
+            raise SettlementError(
+                "construction_units must be a non-negative integer")
         cur.execute("SELECT * FROM investigations WHERE id = %s", (inv_id,))
         inv = cur.fetchone()
         if inv is None:
@@ -531,11 +539,12 @@ def propose_team_plan(dsn: str, cmd: Command, *, parent_obligation: str,
         subdivided = int(cur.fetchone()["total"])
         free = store.free_of(dict(root), subdivided)
         kid_exp, check_exp = _planned_exposures(len(cleaned))
-        required = sum(kid_exp) + check_exp + CLEANUP_RESERVE
+        child_authority = [units + construction for units in kid_exp]
+        required = sum(child_authority) + check_exp + CLEANUP_RESERVE
         if free < required:
             raise InsufficientResources(
                 f"root allocation {allocation_id} free {free} does not cover"
-                f" children {sum(kid_exp)} + checker {check_exp}"
+                f" children {sum(child_authority)} + checker {check_exp}"
                 f" + cleanup reserve {CLEANUP_RESERVE}")
         plan_id = f"plan_{cmd.request_id}"
         cur.execute("SELECT 1 FROM team_plans WHERE plan_id = %s", (plan_id,))
@@ -546,7 +555,8 @@ def propose_team_plan(dsn: str, cmd: Command, *, parent_obligation: str,
         base = int(cur.fetchone()["g"])
         authority = int(control["authority_version"])
         budget = {"units": required, "reserve": CLEANUP_RESERVE,
-                  "children": kid_exp, "checker": check_exp}
+                  "children": kid_exp, "construction_units": construction,
+                  "checker": check_exp}
         comp = compile_composition(shape, cleaned, rules,
                                    allocation_id=allocation_id,
                                    authority_version=authority, budget=budget)
@@ -559,7 +569,7 @@ def propose_team_plan(dsn: str, cmd: Command, *, parent_obligation: str,
                 " amount_scale, max_occupancy, owner_scope) VALUES (%s, %s, %s, %s,"
                 " %s, 1, 8, %s)",
                 (child_alloc, allocation_id, root["domain"], int(root["epoch"]),
-                 kid_exp[pos], f"team:{child['node_id']}"))
+                 child_authority[pos], f"team:{child['node_id']}"))
             _insert_attempt(cur, inv_id, int(inv["revision"]), ids["attempt_id"],
                             child_alloc, base + pos + 1, child["node_id"])
             _insert_operation(cur, authority, ids["operation_id"], ids["attempt_id"],
@@ -1088,6 +1098,9 @@ def revise_team_plan(dsn: str, cmd: Command, *, plan_id: str,
         cur.execute("SELECT * FROM allocations WHERE id = %s", (plan["allocation_id"],))
         root = cur.fetchone()
         kid_exp, check_exp = _planned_exposures(len(cleaned))
+        construction = int(dict(plan["budget"] or {}).get(
+            "construction_units", 0))
+        child_authority = [units + construction for units in kid_exp]
         iface_same = payload_digest(new_iface) == payload_digest(old_iface)
         cur.execute("SELECT plan_revision, node_id, attempt_id, input_digests,"
                     " ownership_generation, output_digest, receipt_refs"
@@ -1120,7 +1133,7 @@ def revise_team_plan(dsn: str, cmd: Command, *, plan_id: str,
                     (plan["allocation_id"],))
         root_funds = cur.fetchone()
         free = store.free_of(dict(root_funds), subdivided)
-        need = sum(exp for pos, exp in enumerate(kid_exp)
+        need = sum(exp for pos, exp in enumerate(child_authority)
                    if cleaned[pos]["node_id"] not in carried) + check_exp
         if free < need:
             raise InsufficientResources(
@@ -1147,12 +1160,14 @@ def revise_team_plan(dsn: str, cmd: Command, *, plan_id: str,
                     " amount_scale, max_occupancy, owner_scope) VALUES (%s, %s, %s, %s,"
                     " %s, 1, 8, %s)",
                     (ids["allocation_id"], plan["allocation_id"], root["domain"],
-                     int(root["epoch"]), kid_exp[pos], f"team:{child['node_id']}"))
+                     int(root["epoch"]), child_authority[pos],
+                     f"team:{child['node_id']}"))
                 _insert_attempt(cur, plan["investigation_id"], inv_revision,
                                 ids["attempt_id"], ids["allocation_id"], base + pos + 1,
                                 child["node_id"])
                 _insert_operation(cur, authority, ids["operation_id"],
-                                  ids["attempt_id"], ids["allocation_id"], kid_exp[pos])
+                                  ids["attempt_id"], ids["allocation_id"],
+                                  kid_exp[pos])
                 alloc_id = ids["allocation_id"]
             stored_children.append({**child, **ids, "allocation_id": alloc_id,
                                     "input_digests": _input_digests(

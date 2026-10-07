@@ -190,25 +190,49 @@ def test_validation_stages_skip_missing_repair():
          "repair_kept": {"usable": False, "reason": "empty"}}) == ["init"]
 
 
-def test_validation_child_work_comes_from_the_model(tmp_path):
+def test_validation_child_work_comes_from_the_model(tmp_path, monkeypatch):
     _fresh_db()
     gw = ModelChildAdapter(TASK)
-    child_seed = E.seed_episode(
-        DSN, "acq-children-%s" % uuid.uuid4().hex[:8], {"m": "1"})
+    from settlement import store
+    from settlement.common import Command
+    store.seed_grant(DSN, Command(
+        request_id="acq-child-grant-%s" % uuid.uuid4().hex[:8],
+        payload={"version": 1, "charter_text": "acq child test",
+                 "authority_grant": {}, "envelopes": {}}))
     from experiments.coord02.entry import (
         arm_policy_entry,
         run_child_factory,
     )
-    inner = run_child_factory(
-        DSN, task_id=TASK, gateway=gw, model="acq-model-child",
-        allocation_id=child_seed["allocation_id"])
+    from settlement import broker
+    prepared = []
+    real_ensure = broker.ensure_operation
+
+    def capture_ensure(*args, **kwargs):
+        result = real_ensure(*args, **kwargs)
+        prepared.append((result.code.value, result.detail))
+        return result
+
+    monkeypatch.setattr(broker, "ensure_operation", capture_ensure)
 
     def factory(task_id: str):
-        def _build(node, child, rendered, operation_id=None,
-                   attempt_id=None):
-            return inner(node, child, rendered,
-                         operation_id=operation_id,
-                         attempt_id=attempt_id)
+        def _build(node, child, rendered, *, operation_id, attempt_id,
+                   ownership_generation, grant_version):
+            with db.connect(DSN) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT allocation_id FROM attempts"
+                                " WHERE id = %s", (attempt_id,))
+                    row = cur.fetchone()
+                conn.commit()
+            assert row is not None and row[0], \
+                "model child attempt has no bound allocation"
+            inner = run_child_factory(
+                DSN, task_id=task_id, gateway=gw, model="acq-model-child",
+                allocation_id=row[0])
+            return inner(
+                node, child, rendered, operation_id=operation_id,
+                attempt_id=attempt_id,
+                ownership_generation=ownership_generation,
+                grant_version=grant_version)
         return _build
 
     snap = snapshot_files(TASK)
@@ -219,7 +243,20 @@ def test_validation_child_work_comes_from_the_model(tmp_path):
         launcher_factory=_factory(tmp_path),
         constructor_factory=factory)
     assert validation["execution_admitted"], validation
-    assert gw.calls, "validation child work never reached the model"
+    with db.connect(DSN) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT o.id, o.dispatch_state, o.settled, o.attempt_id,"
+                " o.allocation_id, r.amount FROM operations o"
+                " LEFT JOIN reservations r ON r.id = o.reservation_id"
+                " WHERE o.payload->'payload'->>'model' = 'acq-model-child'")
+            model_operations = cur.fetchall()
+        conn.commit()
+    assert gw.calls, ("validation child work never reached the model: %r;"
+                      " operations=%r prepared=%r" % (
+                          validation["failures"], model_operations,
+                          prepared))
+    assert validation["solved_count"] == 1, validation
     with db.connect(DSN) as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT COUNT(*) FROM team_outputs WHERE"

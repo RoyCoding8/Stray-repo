@@ -46,6 +46,7 @@ ENTRY_VERSION = "coord02-entry/2"
 DOUBLED_LABEL = "DOUBLED"
 FIXTURE_LABEL = "FIXTURE"
 ARMS = ("S", "A", "F", "L")
+MODEL_CHILD_CONSTRUCTION_UNITS = 16_384
 
 
 def _sha(raw: bytes) -> str:
@@ -642,16 +643,25 @@ def run_cell(dsn: str, *, freeze: dict, task_id: str, panel: str,
         join_rules=_dev_join_rules(task_id),
         bindings=_dev_bindings(requires, snapshot),
         source_interfaces=_dev_source_interfaces(task_id),
-        package=package, snapshot_digest=seed["snapshot_digest"])
+        package=package, snapshot_digest=seed["snapshot_digest"],
+        construction_units=MODEL_CHILD_CONSTRUCTION_UNITS)
     problems = check_ceilings(_admit_floor())
     if problems:
         raise ValueError("pre-admit ceiling breach: %s" % problems)
     if constructor_label != FIXTURE_LABEL:
         raise ValueError("unknown constructor label %r" % (
             constructor_label,))
-    factory = run_child_factory(
-        dsn, task_id=task_id, gateway=gateway, model=model,
-        allocation_id=seed["allocation_id"])
+    def factory(node, child, rendered, *, operation_id, attempt_id,
+                ownership_generation, grant_version):
+        child_factory = run_child_factory(
+            dsn, task_id=task_id, gateway=gateway, model=model,
+            allocation_id=child["allocation_id"])
+        return child_factory(
+            node, child, rendered, operation_id=operation_id,
+            attempt_id=attempt_id,
+            ownership_generation=ownership_generation,
+            grant_version=grant_version)
+
     outcome = run_episode(dsn, cfg, launcher_factory(tag), factory)
     solved = outcome.get("status") == "success"
     protected = _protected_of(outcome)

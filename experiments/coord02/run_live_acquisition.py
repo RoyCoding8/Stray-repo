@@ -57,22 +57,20 @@ def main(argv: list | None = None) -> int:
     budget = E.construction_budget(max_output_tokens=16384,
                                    reasoning_effort=E.live_reasoning_effort(),
                                    live_calls_authorized=granted_calls)
-    child_seed = E.seed_episode(
-        args.dsn, "L-episode-children-%s" % args.campaign, {"m": "1"})
-    from .entry import run_child_factory
+    from .entry import MODEL_CHILD_CONSTRUCTION_UNITS, run_child_factory
 
     def constructor_factory(task_id: str):
-        inner = run_child_factory(
-            args.dsn, task_id=task_id, gateway=gw,
-            model=E.live_model(),
-            allocation_id=child_seed["allocation_id"])
-
-        def _build(node, child, rendered, operation_id=None,
-                   attempt_id=None):
-            return inner(node, child, rendered,
-                         operation_id=operation_id,
-                         attempt_id=attempt_id)
-
+        def _build(node, child, rendered, *, operation_id, attempt_id,
+                   ownership_generation, grant_version):
+            inner = run_child_factory(
+                args.dsn, task_id=task_id, gateway=gw,
+                model=E.live_model(),
+                allocation_id=child["allocation_id"])
+            return inner(
+                node, child, rendered, operation_id=operation_id,
+                attempt_id=attempt_id,
+                ownership_generation=ownership_generation,
+                grant_version=grant_version)
         return _build
 
     acquired = E.acquire(
@@ -92,6 +90,7 @@ def main(argv: list | None = None) -> int:
                 requires={}, task_ids=list(E.DEV_SELECTION_TASKS),
                 launcher_factory=launcher_factory,
                 constructor_factory=constructor_factory,
+                construction_units=MODEL_CHILD_CONSTRUCTION_UNITS,
                 validation_root=rec[stage]["operation_id"])
             results.append({"lineage": rec["lineage"], "stage": stage,
                             "validation": validation,
