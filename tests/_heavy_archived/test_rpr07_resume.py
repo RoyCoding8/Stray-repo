@@ -299,7 +299,7 @@ def test_fresh_database_is_not_resume(migrated_db, tmp_roots, tmp_path):
     with psycopg.connect(dsn, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute(f'DROP DATABASE IF EXISTS "{fresh_name}"')
-            cur.execute(f'CREATE DATABASE "{fresh_name}" OWNER ubuntu')
+            cur.execute(f'CREATE DATABASE "{fresh_name}"')
     fresh_dsn = dsn_with_dbname(dsn, fresh_name)
     try:
         from settlement import db

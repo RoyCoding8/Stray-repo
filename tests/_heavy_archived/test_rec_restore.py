@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import sys
 from pathlib import Path
@@ -17,23 +16,18 @@ from settlement import broker, db, store
 from settlement.launcher_local import LocalLauncher
 from test_rec_checkpoint import seed_state
 
-FENCE_DSN = os.environ.get(
-    "SETTLEMENT_RESTORE_DSN",
-    "postgresql://ubuntu@/settlement_restore_probe?host=/var/run/postgresql")
-
-
 @pytest.fixture()
 def fence():
-    db.apply_migrations(FENCE_DSN, Path(__file__).parents[2] / "migrations")
-    with db.connect(FENCE_DSN) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
-                " AND tablename != 'schema_migrations'")
-            for (table,) in cur.fetchall():
-                cur.execute(f'TRUNCATE TABLE "{table}" CASCADE')
-        conn.commit()
-    yield FENCE_DSN
+    from experiments.ad01.s09_run_isolation import (
+        create_disposable_db, drop_disposable_db)
+    database = create_disposable_db(
+        "ci-restore-fence", migrations_dir=Path(__file__).parents[2] / "migrations")
+    try:
+        with db.connect(database.dsn) as conn:
+            conn.execute("TRUNCATE control, store_identity CASCADE")
+        yield database.dsn
+    finally:
+        drop_disposable_db(database)
 
 
 def _take_checkpoint(dsn, art: Path, tag: str, out: Path) -> Path:
