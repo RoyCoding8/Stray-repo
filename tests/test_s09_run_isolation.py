@@ -45,8 +45,8 @@ def token() -> str:
 
 def test_failed_migration_does_not_leave_a_disposable_database(tmp_path):
     route = admin_dsn()
-    prefix = "s09iso_%s_" % token()
-    run_token = prefix[len("s09iso_"):-1]
+    run_token = token()
+    prefix = "s09iso_%s_" % run_token
     try:
         with pytest.raises(db.MigrationSetEmpty):
             iso.create_disposable_db(
