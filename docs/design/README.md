@@ -2,13 +2,11 @@
 
 The central proposal is a persistent investigation loop: observe a difficulty, choose an informative action, acquire an executable method, assess it, retain it when justified, and use it later. A revisable learner operates inside an execution and evidence boundary that it cannot rewrite.
 
-Start with the [roadmap](REFINEMENT-ROADMAP.md), [project ledger](../../reports/PROJECT-LEDGER.md) and [current assignment](../../WORKER-PROMPT.md).
+Start with the [project ledger](../../reports/PROJECT-LEDGER.md) and the [roadmap](REFINEMENT-ROADMAP.md). Implementation documents for retired studies are at tag `archive/pre-subtraction-2026-10`.
 
 | Document | Purpose |
 |---|---|
 | [Architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) | Research direction and the operational/improvement distinction |
-| [Stage 9 architecture](STAGE-09-ARCHITECTURE.md) | Selected consolidation approach |
-| [Stage 9 contract](STAGE-09-IMPLEMENTATION-CONTRACT.md) | Ownership, executable policy and assessment contracts |
 | [Conceptual architecture](REFINED-ARCHITECTURE.md) | Purpose, entities and responsibilities |
 | [Glossary](GLOSSARY.md) | Precise meanings |
 | [Representation design](REPRESENTATION-DESIGN.md) | State and executable packages |

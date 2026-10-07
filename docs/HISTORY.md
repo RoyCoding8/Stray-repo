@@ -1,6 +1,6 @@
 # Retired instructions and history
 
-The current assignment is [WORKER-PROMPT.md](../WORKER-PROMPT.md); reusable rules are in [IMPLEMENTATION-WORKFLOW.md](../IMPLEMENTATION-WORKFLOW.md). Historical instructions are not current authorization.
+Current state is in the [project ledger](../reports/PROJECT-LEDGER.md). Historical instructions are not current authorization. Code, studies and documents removed in October 2026 are at tag `archive/pre-subtraction-2026-10`.
 
 ## Consolidated history, 2026-10-02
 

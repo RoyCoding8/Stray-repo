@@ -1,26 +1,35 @@
 # Agent Society
 
-An experimental infrastructure for autonomous investigation, executable capability acquisition and transfer. The system should learn how to investigate and improve its methods; it should not stop at storing advice in prompts.
+Infrastructure for an autonomous agent that finds problems, builds and runs
+executable capabilities, and keeps what works. Today the repository holds the
+durable execution substrate (`src/settlement`). The agent loop is the next
+phase.
 
-| Read this | For |
+| Read | For |
 |---|---|
-| [Current inventory](reports/PROJECT-INVENTORY.md) | What exists, current evidence, stages and the Git/workspace map |
-| [Worker prompt](WORKER-PROMPT.md) | The current complete assignment and acceptance conditions |
-| [Project ledger](reports/PROJECT-LEDGER.md) | Verified state, open work and next decisions |
-| [Roadmap](docs/design/REFINEMENT-ROADMAP.md) | Philosophy through final implementation |
-| [Implementation workflow](IMPLEMENTATION-WORKFLOW.md) | Parallel ownership, integration, verification and cleanup |
-| [Design index](docs/design/README.md) | Architecture and mechanism specifications |
-| [Latest transfer assessment](reviews/STAGE-09-TRANSFER-ASSESSMENT.md) | Material findings behind the current assignment |
-| [History index](docs/HISTORY.md) | Retired prompts and diaries, recoverable from Git |
+| [Project ledger](reports/PROJECT-LEDGER.md) | Current state, next work, known gaps |
+| [Roadmap](docs/design/REFINEMENT-ROADMAP.md) | Philosophy |
+| [Design index](docs/design/README.md) | Concepts and mechanisms |
+| [CI](docs/CI.md) | Remotes and what CI checks |
 
-Stage 9 remains active. Fifteen capability areas have code, with seven foundation and eight cognitive areas. The latest narrow studies do not establish useful general learning or complete the expanded comparison. See the inventory and ledger for their evidence boundaries.
-
-The current implementation snapshot is on `codex/implementation-development-01`, despite its older name. The remote default still points at `codex/architecture-handoff`; explicitly select the implementation branch when starting from a fresh clone.
+Studies, scripts and experiments from earlier stages were removed from the
+main line. They are preserved at tag `archive/pre-subtraction-2026-10`.
+Recover a path with `git checkout archive/pre-subtraction-2026-10 -- <path>`.
 
 ## Development
 
-Use Python 3.12 or newer and the repository environment (`uv sync --extra test`). Database-backed checks require explicit disposable PostgreSQL configuration; use the relevant test's documented DSN variables.
+Use Python 3.12 or newer and `uv sync --extra test`.
 
-Some candidate-execution checks depend on the Linux resource/execution profile. A Windows import failure is not evidence against Linux qualification, and disabling execution limits is not a valid portability fix.
+- Tests that need no database: `python -m pytest`.
+- Database tests need a disposable PostgreSQL server. Set:
+  - `SETTLEMENT_TEST_DSN` (an admin route, for example
+    `dbname=postgres host=127.0.0.1 port=5432 user=postgres`)
+  - `S09ISO_ADMIN_DSN` (the same route)
+  - `S09ISO_TOKEN` (8 lowercase hex digits)
+  - `SETTLEMENT_REQUIRE_TEST_DB=1`
 
-Keep gateway configuration and credentials outside Git. Discover and verify the current route rather than copying endpoints or model assumptions from old reports.
+  Each session creates its databases and drops them afterwards.
+- `tests/_heavy_archived/` spawns many real children. Run it one file at a
+  time.
+
+Keep gateway configuration and credentials outside Git.

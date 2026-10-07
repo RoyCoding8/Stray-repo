@@ -29,14 +29,6 @@ testpaths = ["tests"]
 # Running them together saturates the host, so a default collection skips
 # them. Run them deliberately, one file at a time; see the README there.
 norecursedirs = ["tests/_heavy_archived", ".worktrees", ".*", "build", "dist", "node_modules", "venv"]
-# `swe_matrix` marks the tests that drive a full 4-lineage SWE matrix.
-# They are collected by default so a rename cannot make them vanish, and
-# `-m swe_matrix` selects them. Registering the marker here stops the
-# unknown-mark warning that was left visible on purpose until the config
-# it belongs in was updated; the marker itself is not being removed.
-markers = [
-    "swe_matrix: drives a full SWE acquisition matrix; minutes, not seconds",
-]
 
 [tool.ruff]
 line-length = 100
