@@ -281,7 +281,11 @@ def create_disposable_db(token: str, *, admin_dsn: str | None = None,
         conn.execute("CREATE DATABASE %s" % _quoted(name))
     database = DisposableDatabase(name=name, dsn=_dsn_for(admin, name),
                                   token=_checked_token(token))
-    db.apply_migrations(database.dsn, migrations_dir or MIGRATIONS)
+    try:
+        db.apply_migrations(database.dsn, migrations_dir or MIGRATIONS)
+    except Exception:
+        drop_disposable_db(database, admin_dsn=admin)
+        raise
     return database
 
 

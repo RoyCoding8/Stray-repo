@@ -43,6 +43,28 @@ def token() -> str:
     return "t%s" % uuid.uuid4().hex[:10]
 
 
+def test_failed_migration_does_not_leave_a_disposable_database(tmp_path):
+    route = admin_dsn()
+    prefix = "s09iso_%s_" % token()
+    run_token = prefix[len("s09iso_"):-1]
+    try:
+        with pytest.raises(db.MigrationSetEmpty):
+            iso.create_disposable_db(
+                run_token, admin_dsn=route, migrations_dir=tmp_path)
+        with psycopg.connect(route) as conn:
+            left = conn.execute(
+                "SELECT datname FROM pg_database WHERE starts_with(datname, %s)",
+                (prefix,)).fetchall()
+        assert left == [], "failed migration leaked its newly created database"
+    finally:
+        with psycopg.connect(route, autocommit=True) as conn:
+            for (name,) in conn.execute(
+                    "SELECT datname FROM pg_database WHERE starts_with(datname, %s)",
+                    (prefix,)).fetchall():
+                conn.execute(psycopg.sql.SQL("DROP DATABASE {} WITH (FORCE)").format(
+                    psycopg.sql.Identifier(name)))
+
+
 def expected_migrations() -> int:
     """How many migrations the store was built from, asked rather than pinned.
 
