@@ -769,9 +769,10 @@ def _rebuild_state(backend: AgendaBackend, world: dict) -> dict:
             st["scored"].append(public)
     _sort_public(st)
     for link in backend.links():
-        receipts = [r["receipt"] for r in backend.receipts_for(link["operation_id"])]
-        if not receipts:
+        if not backend.receipts_for(link["operation_id"]):
             continue
+        receipts = _expected_receipts(f"{backend.traj}:rc:{link['attempt_id']}",
+                                      _plan_for(world, link["probe"]))
         op = backend.operation(link["operation_id"]) or {}
         payload = dict(op.get("payload") or {})
         epoch = int(((payload.get("payload") or {}).get("input") or {}).get("epoch", 0))

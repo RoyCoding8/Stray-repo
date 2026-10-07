@@ -19,7 +19,7 @@ _DENY = {"settlement.agenda_policy", "agenda_policy",
 
 
 def _policy_path_loaded() -> str | None:
-    for name, mod in sys.modules.items():
+    for name, mod in tuple(sys.modules.items()):
         if getattr(mod, POLICY_PATH_MARK, False):
             return name
     return None
