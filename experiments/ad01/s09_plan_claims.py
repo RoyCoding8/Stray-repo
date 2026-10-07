@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import ast
 import subprocess
+from functools import lru_cache
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -30,13 +31,9 @@ PRODUCTION_ROOTS = ("src", "experiments", "scripts")
 
 # The commit whose tree the table was last read against.
 #
-# `a1f514c` is the last commit to touch the plan, and it is the wrong pin.
-# `9a1884d` moved `study_ceiling` from 1230 to 1250 and is an ancestor of
-# `a1f514c`, so the table shipped citing 1230 against a source sitting at 1250.
-# The table's own citations are therefore the authority, and they are what
-# `CITATIONS` records here. `LAST_VERIFIED` is this module's pin, and a commit
-# that moves one of these lines is what turns the trigger on.
-LAST_VERIFIED = "a1f514c"
+# The table and citations were re-read against this commit. A later commit that
+# changes a cited source path requires another review before the plan is current.
+LAST_VERIFIED = "82a8fd10"
 
 # The review `STAGE-09-M0-TASKGRAPH` recorded, which this module is checked
 # against. Its own words: rows 2, 4, 6 and 7 were false about code that already
@@ -56,70 +53,66 @@ class Citation:
     why: str = ""
 
 
-# One entry per `file:line` currently in the table. Every `line` was measured
-# against the tree at `LAST_VERIFIED`, not copied from the review, which cited
-# lines that had already moved.
+# One entry per `file:line` currently in the table. Lines are measured from the
+# source tree at LAST_VERIFIED.
 CITATIONS: tuple[Citation, ...] = (
-    Citation("experiments/ad01/live_construct.py", 615, "construct_live_policy", 1,
+    Citation("experiments/ad01/live_construct.py", 874, "construct_live_policy", 1,
              "construction response to acquired artifact"),
-    Citation("experiments/ad01/construct.py", 398, "construct_policy", 1,
+    Citation("experiments/ad01/construct.py", 427, "construct_policy", 1,
              "construction response to acquired artifact"),
     Citation("experiments/ad01/learner.py", 114, "visible_prompt", 2,
              "acquired artifact to selected policy",
              "The table named this as carrying an acquired artifact. It takes "
              "charter, visible, experience, retained, remaining, curriculum, so "
              "it never receives one."),
-    Citation("experiments/ad01/policy_assess.py", 412, "assess_policy", 2,
+    Citation("experiments/ad01/policy_assess.py", 468, "assess_policy", 2,
              "acquired artifact to selected policy"),
-    Citation("experiments/ad01/policy_step.py", 424, "run_policy_step", 3,
+    Citation("experiments/ad01/policy_step.py", 457, "run_policy_step", 3,
              "selected policy to child/interpreter"),
-    Citation("experiments/ad01/method_exec.py", 1114, "run_step_out_of_process", 3,
+    Citation("experiments/ad01/method_exec.py", 1633, "run_step_out_of_process", 3,
              "selected policy to child/interpreter",
              "The table cited `exec_profile` here. It is imported by "
              "src/settlement/artifacts.py and boot.py and by nothing under "
-             "experiments/. This line has moved four times under the table's "
-             "watch: 732 at a1f514c, 1108 at 8c535e3, 1114 at a49a9c5, and "
-             "1203 at 8c954a6."),
-    Citation("experiments/ad01/policy_action.py", 68, "parse_action", 4,
+             "experiments/. The study calls `method_exec` directly."),
+    Citation("experiments/ad01/policy_action.py", 80, "parse_action", 4,
              "proposed action to admission",
              "The table cited `policy_action.admit`, which does not exist. "
              "`parse_action` is what `admit_action` actually calls."),
-    Citation("experiments/ad01/s09_arm_parity.py", 449, "admit_action", 4,
+    Citation("experiments/ad01/s09_arm_parity.py", 615, "admit_action", 4,
              "proposed action to admission"),
     Citation("experiments/ad01/boolean_active.py", 114, "run_episode", 5,
              "oracle effect to scored result"),
-    Citation("experiments/ad01/checker.py", 129, "_verify_quality", 5,
+    Citation("experiments/ad01/checker.py", 138, "_verify_quality", 5,
              "oracle effect to scored result"),
-    Citation("experiments/ad01/s09_durable_state.py", 251, "resume_or_step", 7,
+    Citation("experiments/ad01/s09_durable_state.py", 276, "resume_or_step", 7,
              "durable resume to remaining count",
-             "Defined at 251, re-exported in `__all__` at 285, and called by "
+             "Defined here and exported in `__all__`, but called by "
              "nothing under src/, experiments/ or scripts/. The table cited it "
              "as the live path. `agenda_policy` is the live path."),
-    Citation("experiments/ad01/agenda_policy.py", 493, "_step_remaining", 7,
+    Citation("experiments/ad01/agenda_policy.py", 784, "_step_remaining", 7,
              "durable resume to remaining count"),
     Citation("experiments/ad01/offline_recompute.py", 1468, "recomputed_accounting", 6,
              "receipt to evidence boundary",
              "The live half of row 6. It re-derives counts from a freeze and "
              "receives no receipt from the diagnosability side."),
-    Citation("experiments/ad01/s09_study_preflight.py", 1250, "study_ceiling", 8,
+    Citation("experiments/ad01/s09_study_preflight.py", 1294, "study_ceiling", 8,
              "budget units to dispatch count",
-             "Stale row. The repair landed at f3af21a. The table cited 1230, "
-             "which 9a1884d had already moved."),
-    Citation("experiments/ad01/s09_exposure_ledger.py", 513,
+             "Current dispatch ceiling implementation."),
+    Citation("experiments/ad01/s09_exposure_ledger.py", 544,
              "route_capacity_from_freeze", 8,
              "budget units to dispatch count",
-             "Stale row. The table cited 503."),
-    Citation("experiments/ad01/s09_arm_parity.py", 542, "register_python_step", 9,
+             "Current route-capacity implementation."),
+    Citation("experiments/ad01/s09_arm_parity.py", 708, "register_python_step", 9,
              "representation kind to real executor"),
-    Citation("experiments/ad01/s09_arm_parity.py", 571, "register_typed_ast", 9,
+    Citation("experiments/ad01/s09_arm_parity.py", 737, "register_typed_ast", 9,
              "representation kind to real executor"),
-    Citation("experiments/ad01/s09_arm_parity.py", 645, "register_action_graph", 9,
+    Citation("experiments/ad01/s09_arm_parity.py", 811, "register_action_graph", 9,
              "representation kind to real executor"),
-    Citation("experiments/ad01/s09_causal_proof.py", 561, "qualify_pre_launch", 10,
+    Citation("experiments/ad01/s09_causal_proof.py", 574, "qualify_pre_launch", 10,
              "causal policy decision to admitted effect"),
-    Citation("experiments/ad01/s09_study_preflight.py", 1149, "launch_governance", 10,
+    Citation("experiments/ad01/s09_study_preflight.py", 1193, "launch_governance", 10,
              "causal policy decision to admitted effect",
-             "Stale row. The table cited 1150."),
+             "Current launch-governance implementation."),
 )
 
 # Symbols the table, or a review of it, asserted existed and never did. A check
@@ -218,14 +211,19 @@ def definition_line(path: Path, symbol: str) -> int | None:
     return None
 
 
+@lru_cache(maxsize=256)
+def _parse_source(text: str) -> ast.Module | None:
+    try:
+        return ast.parse(text)
+    except SyntaxError:
+        return None
+
+
 def _parsed(path: Path) -> ast.Module | None:
     text = _source_text(path)
     if text is None:
         return None
-    try:
-        return ast.parse(text, filename=str(path))
-    except SyntaxError:
-        return None
+    return _parse_source(text)
 
 
 def attribute_exists(path: Path, class_name: str, attribute: str) -> bool:
@@ -305,7 +303,7 @@ def production_callers(symbol: Citation) -> list[str]:
 # nothing outside their own module calls. Distinct from `ABSENT_SYMBOLS`: these
 # exist and are even called, but only by themselves.
 UNCALLABLE_SYMBOLS: tuple[Citation, ...] = (
-    Citation("experiments/ad01/s09_durable_state.py", 251, "resume_or_step", 7,
+    Citation("experiments/ad01/s09_durable_state.py", 276, "resume_or_step", 7,
              "durable resume to remaining count",
              "Defined at 251 and re-exported in `__all__` at 285. Called by "
              "nothing under src/, experiments/ or scripts/, its own module "
@@ -441,16 +439,7 @@ def check_unimported() -> list[str]:
 
 
 def re_read_needed(tip: str = "HEAD") -> list[str]:
-    """Commits after LAST_VERIFIED that edited a path a citation depends on.
-
-    The plan's own trigger reads: "Any commit that touches an owned path below
-    and is not a descendant of `2b7050a` needs this table re-read." That
-    ancestry direction is backwards, and running it against this tree shows why.
-    `9a1884d` is a descendant of `2b7050a`, so the trigger as written exempts it,
-    and `9a1884d` is the commit that moved `study_ceiling` from 1230 to 1250 and
-    so falsified row 8's citation. The correct test asks whether the commit came
-    after the verification, which is `LAST_VERIFIED` being its ancestor.
-    """
+    """Commits after LAST_VERIFIED that edited a path a citation depends on."""
     paths = sorted(
         {c.path for c in CITATIONS}
         | {c.path for c in ABSENT_SYMBOLS}

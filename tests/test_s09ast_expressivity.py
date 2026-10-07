@@ -21,6 +21,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+from settlement.child_limits import ChildLimits, child_setup_refusal
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -31,6 +32,13 @@ from experiments.ad01 import boolean_ast_policy as ast_policy
 from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import policy_action
 from experiments.ad01 import second_active as second
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
 
 
 def _const(value):
@@ -228,6 +236,7 @@ def test_the_smallest_recoverable_mask_fits_and_the_next_one_does_not():
     assert "policy exceeds 256 nodes" in _refusal(_learner(4, (1, 2)))
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_two_probe_learner_runs_and_commits_for_every_seed():
     """A program at the frontier that does not merely load, but works.
 
@@ -281,13 +290,12 @@ def test_a_conditional_value_is_expressible_by_branch_assignment():
         {"op": "if", "cond": _eq(_field("view", "remaining"), _const(8)),
          "then": _assign("v", _const(1)), "else": _assign("v", _const(0))},
         _action("stop", "boolean.task", {"flag": _field("state", "v")})]}}
-    _load(document)
-    assert ast_policy.ast_step(
-        _record(document), _world_view(remaining=8), {})[
-            "action"]["inputs"] == {"flag": 1}
-    assert ast_policy.ast_step(
-        _record(document), _world_view(remaining=3), {})[
-            "action"]["inputs"] == {"flag": 0}
+    loaded, _entry = _load(document)
+    outputs = [ast_policy._execute_document(
+        loaded, ast_policy._shared_view(_world_view(remaining=remaining)), {})
+        for remaining in (8, 3)]
+    assert [result["action"]["inputs"] for result in outputs] == [
+        {"flag": 1}, {"flag": 0}]
 
 
 def test_an_observation_value_is_not_numeric_either():
@@ -333,7 +341,8 @@ def test_the_ordering_world_has_no_ast_arm(payload, reason):
     assert limits["worlds"]["ordering-constraints"]["cannot"]
 
 
-def test_the_ordering_world_is_refused_even_with_the_schema_rename_patched():
+def test_the_ordering_world_is_refused_even_with_the_schema_rename_patched(
+        monkeypatch):
     """The refusal survives removing the first gate, so there are two.
 
     `monkeypatch` is deliberate: the point is that the second gate is
@@ -342,24 +351,24 @@ def test_the_ordering_world_is_refused_even_with_the_schema_rename_patched():
     """
     import experiments.ad01.boolean_ast_policy as module
 
-    original = module._shared_schema
-    module._shared_schema = lambda schema: {
+    monkeypatch.setattr(module, "_shared_schema", lambda schema: {
         **deepcopy(schema),
         "actions": {("commit" if name == "construct" else name): spec
-                    for name, spec in schema["actions"].items()}}
-    try:
-        record = _record({"policy_id": "second-world", "entry": _action(
-            "probe", "schedule.compare",
-            {"left": _const("analysis"), "right": _const("build")},
-            {"queries": 1})})
-        episode = second.run_episode(
-            ast_policy.choose_action(record), split="dev", seed=1)
-    finally:
-        module._shared_schema = original
+                    for name, spec in schema["actions"].items()}})
+    record = _record({"policy_id": "second-world", "entry": _action(
+        "probe", "schedule.compare",
+        {"left": _const("analysis"), "right": _const("build")},
+        {"queries": 1})})
+    loaded, _entry = module._load(record)
+    session = second.ScheduleSession(second.make_task("dev", 1))
+    view = module._shared_view(second.public_state(session))
+    action = policy_action.parse_action(
+        module._execute_document(loaded, view, {})["action"])
 
-    refusal = episode["trace"][0]["action"]["inputs"]["bridge_refusal"]
-    assert refusal["reason"] == "probe target must be boolean.query"
-    assert episode["comparisons"] == []
+    with pytest.raises(policy_action.ActionRefused,
+                       match="probe target must be boolean.query"):
+        module._validate_action(action, view)
+    assert session.comparisons == {}
 
 
 def test_the_reported_can_and_cannot_are_either_measured_or_absent():

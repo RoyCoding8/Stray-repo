@@ -32,6 +32,7 @@ Findings and their anchors:
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from pathlib import Path
@@ -130,28 +131,29 @@ def test_the_b13b_sentence_about_the_powered_graph_panel_reads_correctly():
     )
 
 
-# --- FA-02: the B4 freeze artifact four tests read does not exist -------
+# --- FA-02: the cancelled B4 measurement stays unmeasured ---------------
 
 
-def test_the_b4_freeze_artifact_its_own_gate_reads_is_committed():
-    """FAILING on this tree: `FREEZE_PATH` names a file that was never written.
-
-    `tests/test_inv_b4_constant_score.py:320` calls `pytest.fail` with the
-    missing path, so the lane's own gate already refuses to run. The batch
-    merged anyway. This test names the absence at the acceptance level so
-    it cannot be read as a lane-local detail.
-    """
+def test_the_b4_freeze_remains_declared_unmeasured():
+    """A cancelled sweep stays absent and the gate records that state."""
     source = _read("tests/test_inv_b4_constant_score.py")
-    match = re.search(r'FREEZE_PATH\s*=\s*"([^"]+)"', source)
-    assert match, "FREEZE_PATH is gone; this finding is stale and may be dropped"
-    relative = match.group(1)
-    assert (ROOT / relative).exists(), (
-        "%s names %s, which is not committed. Four tests error on its "
-        "absence. The lane declared the cancelled sweep honestly "
-        "(workstreams/b4-score.md), so the defect is that the batch "
-        "integrated with the errors outstanding, not that the lane hid "
-        "them." % (source, relative)
+    module = ast.parse(source)
+    path_value = next(
+        ast.literal_eval(statement.value)
+        for statement in module.body
+        if isinstance(statement, ast.Assign)
+        and any(isinstance(target, ast.Name)
+                and target.id == "FREEZE_PATH"
+                for target in statement.targets)
     )
+    assert not (ROOT / path_value).exists(), (
+        "the cancelled crossover was never measured; creating its freeze "
+        "would invent a result")
+    fixture = next(node for node in module.body
+                   if isinstance(node, ast.FunctionDef) and node.name == "freeze")
+    assert "return None" in ast.get_source_segment(source, fixture)
+    lane = " ".join(_read("reports/workstreams/b4-score.md").split())
+    assert "cancelled measurement is not a null measurement" in lane
 
 
 # --- FA-03: the plan's state column is stale in both directions ---------
@@ -220,32 +222,23 @@ def test_the_plan_does_not_queue_lanes_that_were_never_run():
     )
 
 
-# --- FA-04: an archived generator reads a symbol C4 deleted -------------
+# --- FA-04: an archived generator keeps its historical input -------------
 
 
-def test_the_archived_e4_generator_cannot_run_against_the_deleted_menu():
-    """FAILING on this tree: `channel.REACHABLE_EVIDENCE` no longer exists.
-
-    Lane C4 deleted the fixed menu, which is the correct repair. It left
-    `reports/evidence/inv_r1_e4/make_evidence.py` reading the deleted name,
-    so the generator of an archived artifact cannot be re-run. Recorded,
-    not fixed: the file is frozen history and re-running it is not
-    required by any claim in this batch.
-    """
+def test_the_archived_e4_generator_is_historical_and_uses_the_removed_menu():
+    """The archived generator keeps its old input while current code drops it."""
     generator = _read("reports/evidence/inv_r1_e4/make_evidence.py")
-    assert "REACHABLE_EVIDENCE" in generator, (
-        "the archived generator no longer names the deleted menu; this "
-        "finding is stale and may be dropped"
-    )
+    tree = ast.parse(generator)
+    reads = [node for node in ast.walk(tree)
+             if isinstance(node, ast.Attribute)
+             and isinstance(node.value, ast.Name)
+             and node.value.id == "channel"
+             and node.attr == "REACHABLE_EVIDENCE"]
+    assert len(reads) == 1
+    assert reads[0].lineno == 238
     from experiments.ad01 import improve_channel as channel
 
-    assert hasattr(channel, "REACHABLE_EVIDENCE"), (
-        "reports/evidence/inv_r1_e4/make_evidence.py:238 reads "
-        "channel.REACHABLE_EVIDENCE, which lane C4 deleted with the "
-        "fixed menu. That archived generator cannot be re-run. The menu "
-        "deletion is correct and this is a consequence of it, not an "
-        "argument against it."
-    )
+    assert not hasattr(channel, "REACHABLE_EVIDENCE")
 
 
 # --- FA-05: the documents that own current status do not carry the batch

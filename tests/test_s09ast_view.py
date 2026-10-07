@@ -220,7 +220,9 @@ def test_every_published_field_is_reachable_from_the_program():
                               _const("actions"))}},
         "evidence_refs": [], "requested_resources": {},
         "state": _const({})}}
-    result = ast_policy.ast_step(_record(document), _public(), {})
+    loaded, _entry = ast_policy._load(_record(document))
+    result = ast_policy._execute_document(
+        loaded, ast_policy._shared_view(_public()), {})
     inputs = result["action"]["inputs"]
 
     assert set(inputs) == {"instrument", "task_id", "observed", "remaining",

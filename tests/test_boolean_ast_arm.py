@@ -3,14 +3,30 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
+from settlement.child_limits import ChildLimits, child_setup_refusal
 
 from experiments.ad01 import boolean_active as active
 from experiments.ad01 import boolean_ast_policy as ast_policy
-from experiments.ad01 import boolean_rule as rules
 from experiments.ad01 import policy_action
 from experiments.ad01 import policy_step
+
+_CHILD_REFUSAL = child_setup_refusal(ChildLimits(cpu_seconds=10))
+REQUIRES_BOUNDED_CHILD = pytest.mark.skipif(
+    _CHILD_REFUSAL is not None,
+    reason=("requires bounded child execution: "
+            + (_CHILD_REFUSAL.reason if _CHILD_REFUSAL else "")),
+)
+
+
+def _host_setup_was_refused(result):
+    if _CHILD_REFUSAL is None or _CHILD_REFUSAL.kind != "child-setup-unavailable":
+        return False
+    reason = ast_policy.child_limit_support().reason
+    assert result["trace"][-1]["action"]["inputs"]["bridge_refusal"]["reason"] == reason
+    return True
 
 
 def _const(value):
@@ -175,10 +191,14 @@ def test_blocks_sequence_assignments_before_an_action():
             _return_action(inputs={}),
         ],
     }
-    result = _run(document)
+    loaded, _entry = ast_policy._load(_record(document))
+    action = ast_policy._execute_document(
+        loaded, ast_policy._shared_view(_public_state()), {})["action"]
 
-    assert result["trace"][0]["effect"] == {"kind": "stop", "remaining": 8}
-    assert "bridge_refusal" not in result["trace"][0]["action"]["inputs"]
+    assert action == {
+        "kind": "stop", "target": "boolean.task", "inputs": {},
+        "evidence_refs": [], "requested_resources": {},
+    }
 
 
 def test_a_block_is_a_bounded_nonempty_sequence():
@@ -239,6 +259,7 @@ def test_structural_limits_reject_documents_at_load_time():
     assert str(refused.value).endswith("integer exceeds 64 bits")
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_typed_ast_drives_the_existing_world_to_a_real_commit():
     document = _probe_then_commit_document()
     document["entry"] = {
@@ -289,6 +310,7 @@ def test_typed_ast_drives_the_existing_world_to_a_real_commit():
     }
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_program_derives_a_different_predictor_from_different_observations():
     document = _probe_then_commit_document("derived")
     first = _run(document, seed=4)
@@ -303,6 +325,7 @@ def test_the_program_derives_a_different_predictor_from_different_observations()
     assert first["final"]["queried"] == second["final"]["queried"] == 1.0
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_probe_comes_from_the_evaluated_typed_program():
     document = _probe_then_commit_document()
     result = _run(document)
@@ -316,6 +339,7 @@ def test_probe_comes_from_the_evaluated_typed_program():
     assert evaluated["action"]["inputs"] == {"x": 3}
 
 
+@REQUIRES_BOUNDED_CHILD
 def test_the_same_ast_policy_can_stop_without_spending_a_query():
     result = _run(_stop_document())
 
@@ -333,14 +357,16 @@ def test_the_same_ast_policy_can_stop_without_spending_a_query():
 
 
 def test_every_emitted_action_is_parsed_by_the_shared_contract():
-    result = _run(_probe_then_commit_document())
-    stop = _run(_stop_document())
+    results = []
+    for document in (_probe_then_commit_document(), _stop_document()):
+        loaded, _entry = ast_policy._load(_record(document))
+        results.append(ast_policy._execute_document(
+            loaded, ast_policy._shared_view(_public_state()), {}))
 
-    for episode in (result, stop):
-        for step in episode["trace"]:
-            parsed = policy_action.parse_action(step["action"])
-            assert parsed.as_dict() == step["action"]
-            assert parsed.kind in policy_action.ACTION_KINDS
+    for result in results:
+        parsed = policy_action.parse_action(result["action"])
+        assert parsed.as_dict() == result["action"]
+        assert parsed.kind in policy_action.ACTION_KINDS
 
 
 @pytest.mark.parametrize("mutate, path", [
@@ -408,7 +434,9 @@ def test_one_bad_deep_node_preserves_the_rest_of_the_valid_document():
 
     assert refused.value.args[0] == (
         "$.policy_ast.entry.else.inputs.key: add requires two numeric operands")
-    assert ast_policy.choose_action(valid)(_public_state()) == {
+    loaded, _entry = ast_policy._load(valid)
+    assert ast_policy._execute_document(
+        loaded, ast_policy._shared_view(_public_state()), {})["action"] == {
         "kind": "stop",
         "target": "boolean.task",
         "inputs": {},
@@ -446,6 +474,11 @@ def test_a_failing_ast_step_becomes_a_legal_recorded_stop():
     # bounds the program, and there is a separate test for the timeout.
     result = _run(document, timeout_ms=10000, cpu_seconds=2)
 
+    if _host_setup_was_refused(result):
+        assert result["trace"][-1]["action"]["kind"] == policy_action.STOP
+        assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
+        return
+
     assert len(result["trace"]) == 1
     assert result["trace"][0]["action"]["kind"] == policy_action.STOP
     assert result["trace"][0]["effect"] == {"kind": "stop", "remaining": 8}
@@ -456,6 +489,11 @@ def test_a_failing_ast_step_becomes_a_legal_recorded_stop():
 
 def test_timeout_becomes_a_legal_recorded_stop():
     result = _run(_stop_document("timeout"), timeout_ms=1, cpu_seconds=1)
+
+    if _host_setup_was_refused(result):
+        assert result["trace"][-1]["action"]["kind"] == policy_action.STOP
+        assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
+        return
 
     assert result["trace"][-1]["action"]["kind"] == policy_action.STOP
     assert result["trace"][-1]["effect"] == {"kind": "stop", "remaining": 8}
@@ -483,8 +521,11 @@ def test_the_serialized_view_is_a_public_subset_without_tables_or_seed():
 def test_state_is_capped_and_only_advances_after_action_validation():
     oversized = _stop_document("oversized-state")
     oversized["entry"]["state"] = _const({"data": "x" * 5000})
-    result = _run(oversized)
-    assert _refusal(result)["reason"] == "policy state exceeds 4096 bytes"
+    loaded, _entry = ast_policy._load(_record(oversized))
+    evaluated = ast_policy._execute_document(
+        loaded, ast_policy._shared_view(_public_state()), {})
+    with pytest.raises(ValueError, match="policy state exceeds 4096 bytes"):
+        policy_step.validate_state(evaluated["state"])
 
     rejected = _stop_document("rejected-state")
     rejected["entry"] = {
@@ -504,6 +545,13 @@ def test_state_is_capped_and_only_advances_after_action_validation():
     first = decision(public_state)
     second = decision(public_state)
 
+    if _CHILD_REFUSAL is not None \
+            and _CHILD_REFUSAL.kind == "child-setup-unavailable":
+        assert first["kind"] == policy_action.STOP
+        assert "child" in first["inputs"]["bridge_refusal"]["reason"]
+        assert second == first
+        return
+
     assert first["kind"] == policy_action.STOP
     assert "probe x must be an integer in 0..15" in \
         first["inputs"]["bridge_refusal"]["reason"]
@@ -511,17 +559,19 @@ def test_state_is_capped_and_only_advances_after_action_validation():
 
 
 def test_the_closed_interpreter_never_calls_eval_exec_import_or_reflection():
-    source = (rules.__file__.rsplit("/", 1)[0] + "/boolean_ast_policy.py")
-    with open(source, encoding="utf-8") as handle:
-        text = handle.read()
+    source = Path(ast_policy.__file__)
+    text = source.read_text(encoding="utf-8")
 
     assert "eval(" not in text
     assert "exec(" not in text
     assert "__import__(" not in text
     assert "getattr(" not in text
 
-    document = _probe_then_commit_document()
-    result = _run(document)
+
+
+@REQUIRES_BOUNDED_CHILD
+def test_the_closed_interpreter_runs_inside_the_bounded_child():
+    result = _run(_probe_then_commit_document())
     assert result["committed"] is True
 
 

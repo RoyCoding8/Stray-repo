@@ -508,6 +508,7 @@ def test_the_default_config_path_resolves_to_a_real_file(
     """
     monkeypatch.delenv(preflight.STUDY_CONFIG_ENV, raising=False)
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
     target = tmp_path / ".config" / "agent-society-live.env"
     target.parent.mkdir(parents=True)
     target.write_text("%s=http://127.0.0.1:4000/v1\n%s=%s\n"

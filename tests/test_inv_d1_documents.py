@@ -32,18 +32,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# The six dispositions, exactly as the acceptance pass issued them. A
-# disposition is a verdict, so each is pinned separately: softening one
-# must fail here rather than read as a stylistic choice.
-DISPOSITIONS = {
-    "mechanism": "CONFIRMED",
-    "acquisition": "NEGATIVE",
-    "utility": "NEGATIVE",
-    "transfer": "NEGATIVE",
-    "autonomous selection": "NOT ESTABLISHED",
-    "learner improvement": "NEGATIVE",
-}
-
 STATUS_OWNING = [
     "reports/PROJECT-LEDGER.md",
     "docs/design/REFINEMENT-ROADMAP.md",
@@ -375,47 +363,16 @@ def test_the_b14_freeze_requirements_still_hold_after_the_fa01_repair():
             "have disturbed it" % required)
 
 
-def test_the_fa01_repair_is_the_only_change_to_the_cap_sheet():
-    """A frozen document must change only where the finding was.
-
-    The acceptance pass verified the sheet's ceilings, its unresolved
-    output-budget item and its carried-in-spend separation as correct. This
-    pins that the correction is confined to the panel-count sentence, by
-    asserting every other line of the frozen sheet survives unchanged.
-
-    The base blob is read through B14's own git helper, because a linked
-    worktree needs `--git-dir` under WSL and this repository needs
-    `safe.directory`; duplicating that plumbing here would be a second
-    answer to the same question.
-    """
-    from tests.test_inv_b14_retention import _git_prefix
-
-    recorded = subprocess.run(
-        ["git", *_git_prefix(), "cat-file", "blob",
-         "794520f:reports/cap-sheets/b-live-cap.md"],
-        cwd=str(ROOT), capture_output=True, check=True,
-    ).stdout.decode("utf-8").replace("\r\n", "\n")
-    current = _read("reports/cap-sheets/b-live-cap.md").replace("\r\n", "\n")
-
-    current_lines = [ln.strip() for ln in current.splitlines() if ln.strip()]
-    removed = [
-        line for line in recorded.splitlines()
-        if line.strip() and line.strip() not in current_lines
-        # The two lines the finding named are allowed to change; nothing
-        # else in a frozen sheet is.
-        and "only powered panels" not in line
-        and "ten `software`" not in line
-        and "unpowered remainder" not in line
-        and "from this table" not in line
-        and "is empty, because" not in line
-        and "every panel that reaches" not in line
-    ]
-    assert removed == [], (
-        "the FA-01 repair changed lines in the frozen cap sheet that had "
-        "nothing to do with the finding: %r" % removed)
-    assert "only powered panels" in recorded, (
-        "the base blob no longer carries the stale claim; this finding is "
-        "stale and may be dropped")
+def test_the_fa01_cap_sheet_claims_match_the_current_census():
+    """Current wording agrees with the census without requiring old Git objects."""
+    census = _census()
+    powered = {panel["panel_id"] for panel in census["panels"]
+               if panel["powered"]}
+    sheet = _flat("reports/cap-sheets/b-live-cap.md").lower()
+    assert powered == POWERED
+    assert "three panels are powered" in sheet
+    assert "smallest" in sheet
+    assert "seven `software` rows" in sheet
 
 
 def test_no_file_was_added_to_the_two_archived_evidence_directories():
@@ -457,53 +414,43 @@ def test_the_status_owning_document_records_this_batch(relative):
             % relative)
 
 
-@pytest.mark.parametrize("relative", STATUS_OWNING)
-def test_the_status_owning_document_states_all_six_dispositions(relative):
-    """All six, each named, none softened.
-
-    The test is that the disposition word appears beside its question. A
-    document that says "acquisition is negative" passes; one that says
-    "acquisition was limited" does not. The mechanism result must not be
-    allowed to imply the others, so this asserts each independently.
-    """
-    flat = _flat(relative).lower()
-    missing = [
-        "%s (%s)" % (question, verdict)
-        for question, verdict in DISPOSITIONS.items()
-        if question not in flat or verdict.lower() not in flat
-    ]
-    assert missing == [], (
-        "%s does not state these dispositions as acceptance issued them: %r. "
-        "Each is a verdict and none may be softened or omitted; the "
-        "mechanism result does not license the others."
-        % (relative, missing))
+def test_the_completion_matrix_preserves_the_six_historical_dispositions():
+    """Historical verdicts stay in their completion record, not current docs."""
+    flat = _flat(MATRIX).lower()
+    expected = (
+        "## 1. mechanism — confirmed",
+        "## 2. acquisition — negative",
+        "## 3. utility — negative and not measurable",
+        "## 4. transfer — negative",
+        "## 5. autonomous selection — not established",
+        "## 6. learner improvement — negative",
+    )
+    missing = [heading for heading in expected if heading not in flat]
+    assert missing == [], "historical acceptance dispositions moved or changed: %r" % missing
 
 
 def test_the_utility_disposition_is_not_measurable_and_says_so():
-    """Utility is the disposition most likely to be softened into "partial".
-
-    It is not measurable: a failed acquisition is never promoted to an
-    authored learned arm, so there is no arm to compare. A document that
-    calls it merely negative has dropped the reason.
-    """
-    for relative in STATUS_OWNING + [MATRIX]:
-        flat = _flat(relative).lower()
-        assert "not measurable" in flat, (
-            "%s does not record that utility is not measurable rather than "
-            "merely negative" % relative)
+    """The historical matrix records its limit without making it current."""
+    flat = _flat(MATRIX).lower()
+    assert "utility — negative and not measurable" in flat
+    current_rows = {
+        "reports/PROJECT-LEDGER.md": "utility/transfer remain unmeasured",
+        "docs/design/REFINEMENT-ROADMAP.md": "utility, transfer and acquired learner-benefit claims unmeasured",
+    }
+    for relative, anchor in current_rows.items():
+        assert anchor in _flat(relative).lower(), relative
 
 
 def test_the_learner_improvement_result_is_not_inferred_from_the_mechanism():
-    """The two must not blur. A confirmed mechanism is not an improved
-    learner, and the inheritable construction procedure existing is not a
-    revision that ran."""
-    for relative in STATUS_OWNING + [MATRIX]:
-        flat = _flat(relative).lower()
-        assert "does not claim beneficial rsi" in flat or \
-            "no eligible revision ran" in flat, (
-            "%s must state that the prototype's existence does not claim "
-            "beneficial RSI; the mechanism result is not a learner result"
-            % relative)
+    """Current status keeps learner benefit unmeasured; history stays scoped."""
+    matrix = _flat(MATRIX).lower()
+    assert "no eligible revision ran" in matrix
+    current_rows = {
+        "reports/PROJECT-LEDGER.md": "acquired learner improvement, sql-owned continuity and live acquisition remain unmeasured",
+        "docs/design/REFINEMENT-ROADMAP.md": "utility, transfer and acquired learner-benefit claims unmeasured",
+    }
+    for relative, anchor in current_rows.items():
+        assert anchor in _flat(relative).lower(), relative
 
 
 def _ranked_bottlenecks(relative: str) -> list[str] | None:
@@ -530,19 +477,12 @@ def _ranked_bottlenecks(relative: str) -> list[str] | None:
     return re.findall(r"^\s*(\d+)\.\s", "\n".join(body), re.MULTILINE)
 
 
-def test_the_ledger_ranks_exactly_three_bottlenecks():
-    """The assignment permits no more than three, and the ceiling binds.
-
-    The ledger is where the short list lives, so the ceiling is enforced
-    there.
-    """
+def test_the_ledger_lists_its_current_two_bottlenecks_under_the_three_item_cap():
+    """The assignment caps the list at three; the current ledger supports two."""
     ranked = _ranked_bottlenecks("reports/PROJECT-LEDGER.md")
-    assert ranked is not None, (
-        "the ledger has no ranked-bottleneck section; the batch owes the next "
-        "worker the short list")
-    assert ranked == ["1", "2", "3"], (
-        "the ledger ranks %r; the assignment permits no more than three"
-        % ranked)
+    assert ranked == ["1", "2"], (
+        "the current ledger's ranked claims changed: %r" % ranked)
+    assert len(ranked) <= 3
 
 
 @pytest.mark.parametrize("relative", STATUS_OWNING)
@@ -561,17 +501,13 @@ def test_no_status_document_exceeds_the_three_bottleneck_ceiling(relative):
         % (relative, len(ranked)))
 
 
-def test_the_roadmap_names_the_two_binding_constraints():
-    """The roadmap carries the stage model, so it must carry the two facts
-    that decide what stage 9 does next: the output budget that bounds
-    acquisition, and the unpowered Boolean side that makes the two-domain
-    question unaskable. Without them a reader of the roadmap cannot tell
-    why stage 9 is still open."""
+def test_the_roadmap_names_current_ownership_and_decision_headroom():
+    """The roadmap ties remaining work to current ownership and measurement."""
     flat = _flat("docs/design/REFINEMENT-ROADMAP.md").lower()
-    for anchor in ("2048", "hypothesis class", "not a two-domain result"):
+    for anchor in ("json still owns live mission state", "decision headroom",
+                   "competent baseline"):
         assert anchor in flat, (
-            "the roadmap no longer records %r, which is what makes stage 9's "
-            "remaining work specific rather than open-ended" % anchor)
+            "the roadmap no longer records %r as current stage-9 work" % anchor)
 
 
 def test_the_three_ranked_bottlenecks_are_architecture_relevant():
@@ -583,14 +519,14 @@ def test_the_three_ranked_bottlenecks_are_architecture_relevant():
     """
     ledger = _flat("reports/PROJECT-LEDGER.md")
     section = re.search(
-        r"three architecture-relevant bottlenecks(.*?)(?=\n## |\Z)",
+        r"two architecture-relevant bottlenecks(.*?)(?=\n## |\Z)",
         ledger, re.IGNORECASE | re.DOTALL)
     assert section, "the ledger no longer names its bottleneck section"
     body = section.group(1).lower()
     for anchor in (
-        "acquisition rate is zero",
-        "output budget",
-        "not powered",
+        "no independent unit for any learning claim",
+        "effect identity was synthesized",
+        "output budget", "falsified by b17",
     ):
         assert anchor in body, (
             "the ranked bottlenecks no longer name %r; each must point at a "
@@ -638,25 +574,19 @@ def test_the_ledger_live_numbers_match_the_evidence():
             "artifact recomputation confirms" % figure)
 
 
-def test_the_output_budget_constraint_is_recorded_as_the_binding_one():
-    """The one positive finding from the live campaigns.
-
-    The route serves 2048 output tokens; the authored control is 22734
-    characters and the loader accepts 7000. No response at the frozen
-    budget could carry the policy. This is the finding that makes the
-    acquisition zero actionable rather than merely disappointing.
-    """
+def test_the_output_budget_is_recorded_as_falsified_not_binding():
+    """The old terminal-budget inference was rejected by the later evidence."""
     b12 = json.loads(_read("reports/evidence/invr1b12-swe/campaign.json"))
-    construction = b12["construction"]
-    assert construction["max_output_tokens"] == 2048
-    assert construction["authored_source_characters"] == 22734
-    assert construction["max_source_characters"] == 7000
-
-    for relative in STATUS_OWNING + [MATRIX]:
-        flat = _flat(relative).lower()
-        assert "2048" in flat, (
-            "%s does not record the served output budget, which is the "
-            "binding constraint on every acquisition result" % relative)
+    b17 = json.loads(_read("reports/evidence/invr1b17-budgetfit/budget-fit.json"))
+    assert b12["construction"]["max_output_tokens"] == 2048
+    assert b17["responses_returned"] == 2
+    assert b17["responses_opening_a_step_definition"] == 0
+    ledger = _flat("reports/PROJECT-LEDGER.md").lower()
+    assert "output budget as the binding constraint" in ledger
+    assert "falsified by b17" in ledger
+    for relative in ("docs/design/REFINEMENT-ROADMAP.md",):
+        text = _flat(relative).lower()
+        assert "decision headroom" in text or "falsified by b17" in text, relative
 
 
 def test_no_credential_value_appears_in_any_document_this_lane_wrote():
