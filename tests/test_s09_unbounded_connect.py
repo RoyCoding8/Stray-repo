@@ -42,7 +42,6 @@ sys.path.insert(0, str(ROOT / "src"))
 from settlement import db
 
 
-COORD02 = ROOT / "experiments" / "coord02"
 DB = ROOT / "src" / "settlement" / "db.py"
 
 
@@ -105,34 +104,3 @@ def test_the_read_door_is_still_the_tighter_of_the_two():
     assert calls[0]["connect_timeout"] == db.READ_CONNECT_TIMEOUT_S
     assert "statement_timeout" in calls[0].get("options", "")
 
-
-def test_no_call_site_in_coord02_has_to_know_about_the_timeout():
-    """The guard is the default, so walking the tree finds nothing to fix.
-
-    Before the repair this walk listed seventeen call sites. It is kept
-    as a test because a future change that adds a raw `psycopg.connect`
-    to coord02 would reintroduce an unbounded session with no default
-    to catch it.
-    """
-    offenders = []
-    for path in sorted(COORD02.rglob("*.py")):
-        try:
-            tree = ast.parse(path.read_text())
-        except (SyntaxError, ValueError):
-            continue
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Call):
-                continue
-            func = node.func
-            name = getattr(func, "attr", None) or getattr(func, "id", None)
-            if name != "connect":
-                continue
-            owner = getattr(func, "value", None)
-            module = getattr(owner, "id", None) or getattr(owner, "attr", None)
-            if module != "psycopg":
-                continue
-            offenders.append("%s:%d" % (path.relative_to(ROOT), node.lineno))
-
-    assert not offenders, (
-        "raw psycopg.connect() in coord02 bypasses the bounded default: %s"
-        % ", ".join(offenders))

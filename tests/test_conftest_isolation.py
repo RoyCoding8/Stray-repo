@@ -23,7 +23,6 @@ REPO = Path(__file__).resolve().parent.parent
 TESTS = REPO / "tests"
 
 sys.path.insert(0, str(REPO / "src"))
-sys.path.insert(0, str(REPO / "experiments"))
 sys.path.insert(0, str(TESTS))
 
 import pytest
@@ -86,7 +85,7 @@ def _run_probe(scan_dir: Path, *, disable: bool,
     else:
         env.pop("S09ISO_TOKEN", None)
     env["PYTHONPATH"] = os.pathsep.join(
-        [str(REPO / "src"), str(REPO / "experiments"), str(REPO),
+        [str(REPO / "src"), str(REPO),
          env.get("PYTHONPATH", "")]).strip(os.pathsep)
     if disable:
         env["S09ISO_DISABLE"] = "1"

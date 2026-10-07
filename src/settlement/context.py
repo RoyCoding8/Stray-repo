@@ -196,15 +196,9 @@ def resume_package(dsn: str, investigation_id: str, caller_scope: str = "evaluat
                or any(op["id"] == held["attempt_id"] for held in in_flight)]
     support = {row["id"]: evidence.current_support(dsn, row["id"]) for row in
                evidence.scoped_claims(dsn, caller_scope)}
-    try:
-        from . import team as _team
-
-        team_state = _team.team_state(dsn, investigation_id)
-    except _pg_errors.UndefinedTable:
-        team_state = {"plans": [], "submissions": [], "joins": []}
     return {"continuation": doc, "live_attempts": live, "pending_operations": pending,
             "in_flight": in_flight,
-            "observations": observations, "support": support, "team": team_state,
+            "observations": observations, "support": support,
             "reconciliation": {"execution_versions": reconciliation["execution_versions"]}}
 
 
@@ -243,7 +237,7 @@ def mission_in_flight(dsn: str, investigation_id: str) -> list[dict]:
 POLICY_VERSION = "d02-seed-v1"
 _RENDER_VERSION = "render-seed-v1"
 
-_PACKET_KINDS = ("diagnose", "construct", "resume", "team")
+_PACKET_KINDS = ("diagnose", "construct", "resume")
 _PACKET_SCOPES = ("public", "candidate", "evaluator", "operator")
 
 _REQUIRED = {
@@ -254,7 +248,6 @@ _REQUIRED = {
                   "revision_budget", "candidate_lineage"),
     "resume": ("objective", "selected_versions", "completed_outcomes",
                "pending_operations", "obligations", "next_decision", "allocation"),
-    "team": ("team_plan", "team_inputs", "team_output_contract"),
 }
 _KNOWN_SLOTS = frozenset(s for slots in _REQUIRED.values() for s in slots)
 
@@ -281,13 +274,6 @@ _OUTPUT_CONTRACTS = {
                            "replayed_effects": "none"},
         "rules": ["never replay completed external effects",
                   "reconcile pending operations first",
-                  "abstain when required inputs are missing"]},
-    "team": {
-        "entry": "team-child-work",
-        "response_shape": {"outputs": {"path": "content"},
-                           "notes": "str|null"},
-        "rules": ["stay inside owned paths",
-                  "bind every input to the snapshot digest",
                   "abstain when required inputs are missing"]},
 }
 
@@ -665,43 +651,6 @@ def _s_allocation(state: dict, spec: dict) -> dict:
                             for a in state["allocs"]]}
 
 
-def _team_summary(dsn: str, spec: dict) -> dict:
-    from . import team as _team
-
-    plan_id = str((spec.get("versions") or {}).get("plan_id") or "")
-    if not plan_id:
-        raise _Need("no team plan pinned", "propose a team plan first")
-    try:
-        return _team.plan_summary(dsn, plan_id)
-    except LookupError:
-        raise _Need(f"unknown team plan {plan_id}", "propose a team plan first")
-
-
-def _s_team_plan(state: dict, spec: dict) -> dict:
-    summary = _team_summary(state["dsn"], spec)
-    return {"plan_id": summary["plan_id"], "shape": summary["shape"],
-            "revision": summary["revision"],
-            "children": [{"node_id": c["node_id"], "obligation": c["obligation"],
-                          "owned_paths": c["owned_paths"]} for c in summary["children"]]}
-
-
-def _s_team_inputs(state: dict, spec: dict) -> dict:
-    summary = _team_summary(state["dsn"], spec)
-    if not summary["snapshot_digest"] or not summary["children"]:
-        raise _Need("team plan has no bound inputs", "propose a team plan first")
-    return {"snapshot_digest": summary["snapshot_digest"],
-            "inputs": {c["node_id"]: c["input_digests"] for c in summary["children"]}}
-
-
-def _s_team_output_contract(state: dict, spec: dict) -> dict:
-    summary = _team_summary(state["dsn"], spec)
-    if not summary["interface_contract"]:
-        raise _Need("team plan has no interface contract", "propose a team plan first")
-    return {"interface_contract": _jsonable(summary["interface_contract"]),
-            "contracts": {c["node_id"]: _jsonable(c["output_contract"])
-                          for c in summary["children"]}}
-
-
 _RESOLVERS = {
     "development_inputs": _s_development_inputs,
     "attempted_behaviors": _s_attempted_behaviors,
@@ -724,9 +673,6 @@ _RESOLVERS = {
     "obligations": _s_obligations,
     "next_decision": _s_next_decision,
     "allocation": _s_allocation,
-    "team_plan": _s_team_plan,
-    "team_inputs": _s_team_inputs,
-    "team_output_contract": _s_team_output_contract,
 }
 
 
@@ -1091,12 +1037,7 @@ def bind_packet_invocation(dsn: str, cmd: Command, packet_id: str, operation_id:
         if op is None:
             raise SettlementError(f"unknown operation {operation_id}: binding refused")
         body = op["payload"] or {}
-        if row["decision_kind"] == "team":
-            admitted = {broker.MODEL_INFERENCE, broker.SANDBOX_EXEC}
-            if not isinstance(body, dict) or body.get("effect") not in admitted:
-                raise SettlementError(f"operation {operation_id} is not an admitted"
-                                      " team effect: binding refused")
-        elif not isinstance(body, dict) or body.get("effect") != broker.MODEL_INFERENCE:
+        if not isinstance(body, dict) or body.get("effect") != broker.MODEL_INFERENCE:
             raise SettlementError(f"operation {operation_id} is not model inference:"
                                   " binding refused")
         wire_in = json.dumps(body, sort_keys=True, separators=(",", ":"))
