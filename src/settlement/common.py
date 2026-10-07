@@ -75,6 +75,22 @@ def payload_digest(payload: dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def open_nofollow(path, flags: int, mode: int = 0o644) -> int:
+    """`os.open` that refuses a symlink at `path` on every platform.
+
+    POSIX refuses atomically through O_NOFOLLOW. Windows has no such flag, so
+    the link is checked immediately before opening (a narrow check-then-open
+    window, which Windows' symlink privilege requirement keeps small in practice).
+    """
+    import errno
+    import os
+
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    if not nofollow and os.path.islink(path):
+        raise OSError(errno.ELOOP, "refusing to follow a symlink", str(path))
+    return os.open(path, flags | nofollow | getattr(os, "O_BINARY", 0), mode)
+
+
 class Command(BaseModel):
     request_id: str = Field(default_factory=lambda: new_id("req"))
     expected_revision: int | None = None

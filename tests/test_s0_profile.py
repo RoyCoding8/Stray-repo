@@ -57,7 +57,7 @@ def test_local_process_runs_bounded_command():
         timeout_ms=5_000, max_output_bytes=1024
     )
     assert result.returncode == 0
-    assert result.stdout == "hello\n"
+    assert result.stdout.replace("\r\n", "\n") == "hello\n"  # Windows text mode prints CRLF
     assert result.containment is False
     assert result.simulated is False
     assert result.timed_out is False

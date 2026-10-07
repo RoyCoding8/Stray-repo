@@ -187,24 +187,22 @@ def test_the_two_refusals_are_distinguishable_by_kind_not_by_wording(monkeypatch
     monkeypatch.setitem(sys.modules, "resource",
                         _RecordingResource(hard_cpu=3, hard_as=_RecordingResource.RLIM_INFINITY))
 
-    no_setup = _refusal_as_if("nt", ChildLimits())
+    no_setup = child_limits.ExecutionHost(
+        kind="no-mechanism", child_setup=False,
+        reason="this host has no way to bound a child").refuse(ChildLimits())
     assert no_setup is not None, (
-        "a host that refuses preexec_fn can run no bounded child at all, so"
-        " even a dispatch that declared no bound has to be refused; that is"
-        " the case the old bounds-only check short-circuited to \"\"")
+        "a host that cannot bound any child must refuse even a dispatch that"
+        " declared no bound; that is the case the old bounds-only check"
+        " short-circuited to \"\"")
     assert no_setup.kind == "child-setup-unavailable"
 
     beyond_reach = _refusal_as_if("posix", ChildLimits(cpu_seconds=500))
     assert beyond_reach is not None
     assert beyond_reach.kind == "child-limit-unavailable"
 
-    # The same declared number against both hosts, differing only in kind.
-    same_number = _refusal_as_if("nt", ChildLimits(cpu_seconds=500))
-    assert same_number is not None
-    assert same_number.kind == "child-setup-unavailable", (
-        "a host that cannot run a child setup at all is refused for that, not"
-        " for the number, so the reason does not send the caller chasing a"
-        " smaller ceiling that was never the problem")
+    # Windows bounds through a Job Object, which has no inherited hard ceiling,
+    # so the number a POSIX host cannot reach is not refused there.
+    assert _refusal_as_if("nt", ChildLimits(cpu_seconds=500)) is None
 
 
 def test_nothing_requested_is_nothing_to_refuse(monkeypatch):

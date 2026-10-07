@@ -44,7 +44,7 @@ MAX_REVISIONS = 1
 CLEANUP_RESERVE = 16
 CHECK_TIMEOUT_MS = 30_000
 CHILD_TIMEOUT_MS = 30_000
-CHILD_ARGV = ["/bin/true"]
+CHILD_ARGV = [sys.executable, "-c", "pass"]  # portable no-op child
 PACKET_BUDGET = {"input_chars": 20_000, "output_reserve": 2_000}
 
 

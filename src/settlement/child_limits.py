@@ -20,11 +20,13 @@ Measured on this repository's hosts:
   the host's *hard* limits allow. Those limits are inherited by every child and
   an unprivileged process cannot raise them, so a declared bound above the hard
   limit is one this host cannot install.
-- Windows enforces neither. `preexec_fn` is refused outright by CPython, so a
-  child cannot limit itself before it execs. `JOB_OBJECT_LIMIT_JOB_TIME` is
-  accepted by `SetInformationJobObject` and then ignored, so a Job Object buys
-  no CPU time bound, and `JOB_OBJECT_LIMIT_JOB_MEMORY` only attaches after
-  spawn, leaving the child an unbounded window to allocate.
+- Windows enforces both through a Job Object (`winjob`). `preexec_fn` is
+  refused by CPython there, so the child is instead created suspended,
+  assigned to a job carrying its bounds and only then resumed: it never runs
+  outside the job. Memory is the job's committed-memory limit. CPU is the
+  job's user-time limit, which the kernel checks only coarsely, so the parent
+  also polls the job's accounted time and terminates it on breach. The job is
+  kill-on-close, which also ends the whole tree if the launcher dies.
 
 A bound that cannot be enforced raises `UnsupportedChildLimit`. It never
 degrades into an unbounded child and it is never a silent no-op. Wall-clock
@@ -97,12 +99,9 @@ class ExecutionHost:
 
     `kind` is the attribution a receipt carries, so a result names the process
     that produced it rather than only naming a profile. `child_setup` is the
-    capability: installing any boundary needs `preexec_fn`, to run code in the
-    child between fork and exec, and CPython refuses that call on Windows. So a
-    host without it cannot run a bounded child at all, which is a stronger
-    statement than a request-specific one and is the whole D2 fix: a dispatch
-    that declares no bound still cannot run here, because the launcher would
-    have to hand `preexec_fn` to `Popen` and `Popen` refuses it.
+    capability to install bounds before the child runs: `preexec_fn` between
+    fork and exec on POSIX, a suspended spawn into a Job Object on Windows.
+    A host without either cannot run a bounded child at all.
 
     `reason` says why the capability is absent, so the refusal can carry the
     host's own reason rather than a caller's guess at it.
@@ -111,6 +110,9 @@ class ExecutionHost:
     kind: str
     child_setup: bool
     reason: str = ""
+    # How bounds are installed: "preexec" (rlimits between fork and exec) or
+    # "job-object" (suspended spawn into a Windows Job Object, see winjob).
+    mechanism: str = "preexec"
 
     def refuse(self, limits: ChildLimits) -> ChildSetupRefusal | None:
         """Why `limits` cannot be installed here, or None when they can.
@@ -135,11 +137,9 @@ def current_execution_host() -> ExecutionHost:
     up as an unbounded child.
     """
     if os.name == "nt":
-        return ExecutionHost(
-            kind="windows", child_setup=False,
-            reason=("CPython refuses preexec_fn on Windows, so the child cannot"
-                    " limit itself before exec, and this launcher installs every"
-                    " boundary it has through it"))
+        return ExecutionHost(kind="windows", child_setup=True,
+                             reason="bounds are installed through a Job Object",
+                             mechanism="job-object")
     return ExecutionHost(kind="posix", child_setup=True)
 
 
@@ -198,6 +198,8 @@ def _beyond_hard_limits(limits: ChildLimits) -> ChildSetupRefusal | None:
     Only the hard limit is a promise the host cannot keep, and a bound at or
     above it would fail to install in the child.
     """
+    if current_execution_host().mechanism == "job-object":
+        return None  # a Job Object has no inherited hard ceiling to exceed
     unreachable: list[str] = []
     for name, which in (("cpu_seconds", "RLIMIT_CPU"),
                         ("memory_bytes", "RLIMIT_AS")):
@@ -235,6 +237,13 @@ def apply_child_limits(limits: ChildLimits) -> None:
         raise UnsupportedChildLimit(
             "%s: %s" % (", ".join(limits.names()) or "no bound requested",
                         refusal.reason))
+    host = current_execution_host()
+    if host.mechanism != "preexec":
+        # rlimits exist only between fork and exec; this host bounds children
+        # through its own mechanism, and a call here would silently bound nothing.
+        raise UnsupportedChildLimit(
+            "%s: this host installs bounds through %s, not preexec rlimits"
+            % (", ".join(limits.names()) or "no bound requested", host.mechanism))
     import resource
 
     if limits.cpu_seconds is not None:

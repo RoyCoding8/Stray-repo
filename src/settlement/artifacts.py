@@ -22,7 +22,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from . import db, exec_profile, store
-from .common import Command, CommandResult, ResultCode, SettlementError
+from .common import Command, CommandResult, ResultCode, SettlementError, open_nofollow
 
 STAGE_MAX_BYTES = 64 * 1024 * 1024
 STAGE_MAX_FILES = 1024
@@ -279,7 +279,7 @@ def _write_final_bytes(artifacts_root: Path, receipt: dict, stage_dir: Path) -> 
     if _digest_bytes(payload) != receipt["digest"]:
         raise SettlementError("staging bytes do not match receipt digest")
     tmp = final.parent / (receipt["digest"] + ".tmp")
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+    fd = open_nofollow(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
     with os.fdopen(fd, "wb") as handle:
         handle.write(payload)
         handle.flush()
@@ -531,7 +531,7 @@ def bytes_match(artifacts_root: str | Path, digest: str) -> bool:
     try:
         if target.is_symlink() or not target.is_file():
             return False
-        fd = os.open(target, os.O_RDONLY | os.O_NOFOLLOW)
+        fd = open_nofollow(target, os.O_RDONLY)
         with os.fdopen(fd, "rb") as handle:
             return _digest_bytes(handle.read()) == digest
     except OSError:

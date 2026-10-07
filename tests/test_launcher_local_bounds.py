@@ -87,29 +87,17 @@ def test_absent_bound_is_absent_rather_than_zero(tmp_path):
     assert _requested_limits({"cpu_seconds": None}) == ChildLimits(memory_bytes=None)
 
 
-@pytest.mark.skipif(POSIX, reason="the declared bound has to reach a real child")
-def test_dispatch_never_builds_a_child_setup_for_unbounded_windows(tmp_path):
-    """On this host a bounded child cannot exist, so every dispatch is refused.
-
-    Before the fix the dispatch walked straight past the payload into `Popen`
-    and raised `preexec_fn is not supported on Windows platforms` out of the
-    caller's hands. The kind is `child-setup-unavailable` and not
-    `child-limit-unavailable` even though `cpu_seconds=5` was declared: this
-    host has no `preexec_fn` to install it with, so there is no bound question
-    here, and sending the caller after a smaller ceiling would be advice for a
-    problem it does not have.
-    """
+@pytest.mark.skipif(POSIX, reason="the Job Object CPU bound needs Windows")
+def test_windows_cpu_ceiling_stops_a_spinning_child_well_before_the_wall_budget(tmp_path):
+    """Enforcement, not configuration: the Job Object ends the child at its CPU bound."""
     launcher = LocalLauncher(tmp_path / "run")
-    for operation_id, extra in (("op-win-bound", {"cpu_seconds": 5}),
-                                ("op-win-unbound", {})):
-        outcome = launcher.dispatch(_op(operation_id, [sys.executable, "-c", "print(1)"],
-                                        extra))
-        assert outcome.sent is False, "%s ran a child this host cannot bound" % operation_id
-        assert outcome.receipt is None
-        assert outcome.refused_reason.startswith("child-setup-unavailable:"), (
-            f"{operation_id}: {outcome.refused_reason!r}")
-    assert launcher.prove_never_sent("op-win-unbound", 1) is True, (
-        "a refused dispatch made no send, so nothing may be left claiming one")
+    outcome = launcher.dispatch(_op("op-win-cpu", [sys.executable, "-c", SPIN],
+                                    {"cpu_seconds": 2, "timeout_ms": 30_000}))
+    assert outcome.sent is True, outcome.refused_reason
+    data = outcome.receipt.content["data"]
+    assert data["timed_out"] is False, "the wall deadline stopped it, not the CPU bound"
+    assert data["returncode"] == 0xC0000044, data["returncode"]
+    assert data["wall_ms"] < 15_000, data["wall_ms"]
 
 
 # -- (b) a limit that actually FIRES -----------------------------------------
@@ -174,13 +162,17 @@ def test_a_memory_bound_below_the_interpreters_own_floor_fails_the_child(tmp_pat
 # -- (c) a missing capability refuses, and strands nothing --------------------
 
 
-@pytest.mark.skipif(POSIX, reason="the unsupported-capability branch needs Windows")
-def test_a_requested_bound_this_host_cannot_install_is_refused(tmp_path):
+@pytest.mark.skipif(POSIX, reason="the Job Object memory bound needs Windows")
+def test_windows_memory_ceiling_fails_an_allocation_past_it(tmp_path):
     launcher = LocalLauncher(tmp_path / "run")
-    outcome = launcher.dispatch(_op("op-refuse", [sys.executable, "-c", "print(1)"],
-                                    {"memory_bytes": 4096}))
-    assert outcome.sent is False
-    assert "memory_bytes" in outcome.refused_reason
+    outcome = launcher.dispatch(_op(
+        "op-win-mem",
+        [sys.executable, "-c", "x = bytearray(512 * 1024 * 1024); print('allocated')"],
+        {"memory_bytes": 64 * 1024 * 1024}))
+    assert outcome.sent is True, outcome.refused_reason
+    data = outcome.receipt.content["data"]
+    assert data["returncode"] != 0
+    assert "allocated" not in data.get("stdout", "")
 
 
 def test_a_refused_bound_leaves_no_durable_claim_and_no_markers(tmp_path):
@@ -189,20 +181,22 @@ def test_a_refused_bound_leaves_no_durable_claim_and_no_markers(tmp_path):
     A dispatch that returns before `Popen` made no send. If it left the pid
     claim behind, the next dispatch of the same operation would read its own
     refusal back as `prior-send-recorded` and the operation could never run.
+    On Windows the refusal is driven by a read boundary (Landlock is Linux-only).
     """
-    launcher = LocalLauncher(tmp_path / "run")
-    op = _op("op-unwound", [sys.executable, "-c", "print(1)"],
-             {"cpu_seconds": 3} if not POSIX else None)
     if POSIX:
         pytest.skip("this host can install the bound; the refusal path is covered above")
+    launcher = LocalLauncher(tmp_path / "run")
+    op = _op("op-unwound", [sys.executable, "-c", "print(1)"],
+             {"read_deny": [str(tmp_path)]})
 
     outcome = launcher.dispatch(op)
     assert outcome.sent is False
+    assert outcome.refused_reason.startswith("read-boundary-unavailable:")
     assert launcher.claimed("op-unwound", 1) is False
     assert launcher.prove_never_sent("op-unwound", 1) is True
 
     retry = launcher.dispatch(op)
-    assert retry.refused_reason.startswith("child-setup-unavailable:"), (
+    assert retry.refused_reason.startswith("read-boundary-unavailable:"), (
         "a retry must be refused for the same reason, not reported as a prior send")
 
 

@@ -25,7 +25,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from . import artifacts, broker, db, evidence, store
-from .common import Command, CommandResult, ResultCode, SettlementError
+from .common import Command, CommandResult, ResultCode, SettlementError, open_nofollow
 
 _LATEST_VERSION = 1
 
@@ -89,7 +89,7 @@ def save_continuation(dsn: str, cmd: Command, artifacts_root: str | Path, invest
     created = False
     if not target.is_file():
         tmp = roots / (digest + ".tmp")
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644)
+        fd = open_nofollow(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC)
         with os.fdopen(fd, "wb") as handle:
             handle.write(raw)
             handle.flush()

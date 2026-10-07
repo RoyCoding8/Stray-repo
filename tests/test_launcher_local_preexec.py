@@ -79,19 +79,21 @@ def test_an_unlimited_dispatch_on_this_platform_never_raises(tmp_path):
 
 
 @pytest.mark.skipif(not WINDOWS, reason="this host accepts preexec_fn")
-def test_a_windows_dispatch_declares_no_bounds_is_refused_not_raised(tmp_path):
-    """The unlimited case is the one Windows gets wrong, and it is the one fixed.
+def test_a_windows_dispatch_declares_no_bounds_and_runs_inside_a_job(tmp_path):
+    """Windows bounds children through a Job Object, so a plain dispatch runs.
 
-    Refusing pre-spawn is the honest outcome: a dispatch this platform cannot
-    carry has no worker, so it must be re-admissible rather than stranding the
-    operation behind markers of a spawn that never happened.
+    It used to be refused outright because the launcher could only install
+    bounds through `preexec_fn`. The child must actually run, report its
+    output, and leave nothing claiming a live worker.
     """
     launcher = LocalLauncher(tmp_path / "run")
     outcome = launcher.dispatch(_op("op-win-plain", [sys.executable, "-c", "print(1)"]))
-    assert outcome.sent is False
-    assert outcome.refused_reason, "a refusal must say why"
-    _assert_stranded_free(launcher, tmp_path / "run", "op-win-plain",
-                          "a refused pre-spawn")
+    assert outcome.sent is True, outcome.refused_reason
+    data = outcome.receipt.content["data"]
+    assert data["returncode"] == 0
+    assert data["stdout"].strip() == "1"
+    assert data["supervised"] is True
+    assert launcher.live_ids() == []
 
 
 # -- (b) a preexec_fn that fails, on the host where that is reachable ----------

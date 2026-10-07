@@ -109,6 +109,11 @@ from .broker import BrokerOp, LaunchOutcome, ReceiptProposal
 from .child_limits import ChildLimits
 from .exec_profile import proc_starttime, reap_supervisor, scrub_env, spawn_deadline_supervisor
 
+
+def _JOB_OBJECT() -> bool:
+    """Whether this host bounds children through a Job Object (Windows)."""
+    return child_limits.current_execution_host().mechanism == "job-object"
+
 PROFILE = "local-process"
 
 ATTEST_KEY_BYTES = 32
@@ -638,6 +643,9 @@ class LocalLauncher:
         return None
 
     def _pgid_dead(self, pgid: int) -> bool:
+        if _JOB_OBJECT():
+            from . import winjob
+            return not winjob.pid_alive(pgid)
         try:
             os.killpg(pgid, 0)
             return False
@@ -653,6 +661,12 @@ class LocalLauncher:
                 continue
         if not targets:
             return self.read_result(operation_id) is not None
+        if _JOB_OBJECT():
+            from . import winjob
+            for pid in targets:
+                if winjob.pid_alive(pid):
+                    winjob.kill_tree(pid)
+            return all(self._pgid_dead(pid) for pid in targets)
         for pgid in targets:
             try:
                 os.killpg(pgid, signal.SIGTERM)
@@ -722,6 +736,26 @@ class LocalLauncher:
         return spawn_deadline_supervisor(
             pid, pid, proc_starttime(pid), str(paths["result"]),
             timeout_ms / 1000 + grace_s + 1, grace_s)
+
+    def _communicate_posix(self, proc: Any, timeout_ms: int) -> tuple[bytes, bytes, bool]:
+        try:
+            raw_out, raw_err = proc.communicate(timeout=timeout_ms / 1000)
+            return raw_out, raw_err, False
+        except subprocess.TimeoutExpired:
+            pass
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
+        try:
+            raw_out, raw_err = proc.communicate(timeout=self.grace_ms / 1000)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError, OSError):
+                pass
+            raw_out, raw_err = proc.communicate()
+        return raw_out, raw_err, True
 
     def dispatch(self, op: BrokerOp, *, require_host: str | None = None) -> LaunchOutcome:
         """Send `op` to a child on the host this launcher runs on.
@@ -873,14 +907,29 @@ class LocalLauncher:
             self._unwind_claim(paths, seen, prior_generation)
             return LaunchOutcome(sent=False, refused_reason="claim-not-durable")
         started = time.monotonic()
+        job = None
         try:
-            proc = subprocess.Popen(
-                argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                env=scrub_env({"SETTLEMENT_OPERATION": op.operation_id}),
-                cwd=child_cwd,
-                preexec_fn=_child_setup(confinement),
-            )
+            if _JOB_OBJECT():
+                # No preexec_fn on Windows: the child starts suspended inside a
+                # Job Object that carries its bounds (see winjob).
+                from . import winjob
+                limits = confinement["limits"]
+                job = winjob.Job(cpu_seconds=limits.cpu_seconds,
+                                 memory_bytes=limits.memory_bytes)
+                proc = job.spawn(
+                    argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    env=scrub_env({"SETTLEMENT_OPERATION": op.operation_id}),
+                    cwd=child_cwd)
+            else:
+                proc = subprocess.Popen(
+                    argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                    env=scrub_env({"SETTLEMENT_OPERATION": op.operation_id}),
+                    cwd=child_cwd,
+                    preexec_fn=_child_setup(confinement),
+                )
         except Exception as exc:
+            if job is not None:
+                job.close()
             # A child that never became a worker. CPython reports every one of
             # these as a bare `SubprocessError: Exception occurred in
             # preexec_fn.` -- the child's real type, message and errno are
@@ -927,24 +976,17 @@ class LocalLauncher:
                 refused_reason="child-setup-failed: %s: %s"
                                % (type(exc).__name__, exc))
         paths["pid"].write_text(str(proc.pid))
-        supervisor = self._supervise(paths, proc.pid, timeout_ms)
-        try:
-            raw_out, raw_err = proc.communicate(timeout=timeout_ms / 1000)
-            timed_out = False
-        except subprocess.TimeoutExpired:
+        if job is not None:
+            # The job is kill-on-close, so a launcher that dies mid-run takes
+            # the child tree with it; no separate deadline supervisor is needed.
+            supervisor = None
             try:
-                os.killpg(proc.pid, signal.SIGTERM)
-            except (ProcessLookupError, PermissionError, OSError):
-                pass
-            try:
-                raw_out, raw_err = proc.communicate(timeout=self.grace_ms / 1000)
-            except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(proc.pid, signal.SIGKILL)
-                except (ProcessLookupError, PermissionError, OSError):
-                    pass
-                raw_out, raw_err = proc.communicate()
-            timed_out = True
+                raw_out, raw_err, timed_out = job.communicate(proc, timeout_ms / 1000)
+            finally:
+                job.close()
+        else:
+            supervisor = self._supervise(paths, proc.pid, timeout_ms)
+            raw_out, raw_err, timed_out = self._communicate_posix(proc, timeout_ms)
         wall_ms = int((time.monotonic() - started) * 1000)
         out, out_cut = _cap(raw_out or b"", max_bytes)
         err, err_cut = _cap(raw_err or b"", max_bytes)
@@ -952,7 +994,7 @@ class LocalLauncher:
                              err.decode("utf-8", "replace"), out_cut or err_cut,
                              timed_out, wall_ms, argv)
         paths["result"].write_text(json.dumps({"outcome": content["_verdict"], **content}))
-        content["data"]["supervised"] = supervisor is not None
+        content["data"]["supervised"] = supervisor is not None or job is not None
         try:
             paths["pid"].unlink()
         except OSError:

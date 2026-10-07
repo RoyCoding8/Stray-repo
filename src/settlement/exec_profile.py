@@ -194,6 +194,11 @@ def run_local_process(
             wall_ms=int((time.monotonic() - started) * 1000),
             detail={"error": refusal.kind},
         )
+    if child_limits.current_execution_host().mechanism == "job-object":
+        return _run_local_process_windows(
+            argv, timeout_ms=timeout_ms, cpu_seconds=cpu_seconds,
+            memory_bytes=memory_bytes, max_output_bytes=max_output_bytes,
+            extra_env=extra_env, cwd=cwd, started=started)
     try:
         proc = subprocess.Popen(
             argv,
@@ -254,6 +259,49 @@ def run_local_process(
         truncated=out_truncated or err_truncated,
         wall_ms=int((time.monotonic() - started) * 1000),
         detail={"timeout_ms": timeout_ms, "max_output_bytes": max_output_bytes},
+    )
+
+
+def _run_local_process_windows(argv: list[str], *, timeout_ms: int,
+                               cpu_seconds: int | None, memory_bytes: int | None,
+                               max_output_bytes: int, extra_env: dict[str, str] | None,
+                               cwd: str | None, started: float) -> ExecResult:
+    """`run_local_process` on Windows: the child runs inside a bounded Job Object."""
+    from . import winjob
+
+    def _refused(error: str, message: str) -> ExecResult:
+        return ExecResult(
+            profile=LOCAL_PROCESS, containment=False, simulated=False,
+            returncode=None, stdout="", stderr=message, timed_out=False,
+            truncated=False, wall_ms=int((time.monotonic() - started) * 1000),
+            detail={"error": error})
+
+    try:
+        job = winjob.Job(cpu_seconds=cpu_seconds, memory_bytes=memory_bytes)
+    except OSError as exc:
+        return _refused("child-setup-unavailable", str(exc))
+    with job:
+        try:
+            proc = job.spawn(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             env=scrub_env(extra_env), cwd=cwd)
+        except OSError as exc:
+            return _refused("spawn-failed", str(exc))
+        threads, slots = _start_pumps(proc, max_output_bytes)
+        timed_out = job.wait(proc, timeout_ms / 1000)
+        out, out_truncated, err, err_truncated = _finish_pumps(threads, slots, 35.0)
+        _close_pipes(proc)
+    return ExecResult(
+        profile=LOCAL_PROCESS,
+        containment=False,
+        simulated=False,
+        returncode=proc.returncode,
+        stdout=out.decode("utf-8", "replace"),
+        stderr=err.decode("utf-8", "replace"),
+        timed_out=timed_out,
+        truncated=out_truncated or err_truncated,
+        wall_ms=int((time.monotonic() - started) * 1000),
+        detail={"timeout_ms": timeout_ms, "max_output_bytes": max_output_bytes,
+                "cpu_limit_exceeded": job.cpu_exceeded},
     )
 
 

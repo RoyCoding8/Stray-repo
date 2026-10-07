@@ -666,7 +666,9 @@ class RunClaim:
         conn = _admin_connection(self._admin_dsn)
         conn.execute("select pg_advisory_lock(%s)", (lock_key(self.token),))
         self._conn = conn
-        for signum in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        # SIGHUP does not exist on Windows; release on the signals the host has.
+        for signum in (getattr(signal, name) for name in ("SIGTERM", "SIGINT", "SIGHUP")
+                       if hasattr(signal, name)):
             try:
                 self._previous[signum] = signal.signal(signum, self._on_signal)
             except (ValueError, OSError):
