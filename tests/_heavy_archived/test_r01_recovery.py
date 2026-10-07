@@ -14,10 +14,9 @@ from pathlib import Path
 import pytest
 from psycopg import errors as _pgerrors
 
-sys.path.insert(0, str(Path(__file__).parents[2] / "scripts"))
 
-from checkpoint import run_checkpoint
-from restore import run_restore
+from settlement.checkpoint import run_checkpoint
+from settlement.restore import run_restore
 
 from settlement import broker, db, run, store
 from settlement.common import Command, ResultCode, SettlementError

@@ -397,7 +397,7 @@ def test_workflow_ensure_conflict_never_dispatches_stale_bytes(migrated_db, tmp_
     assert list(run_dir.glob("*")) == []
     stored = broker.read_operation(dsn, "k10-att:n1")
     assert stored["dispatch_state"] == "prepared"
-    assert stored["payload"]["payload"]["argv"] == ["/bin/true"]
+    assert stored["payload"]["payload"]["argv"] == [sys.executable, "-c", "pass"]
 
 
 def test_prove_never_sent_sees_result_and_supervise_files(tmp_path):

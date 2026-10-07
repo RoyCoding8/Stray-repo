@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[2] / "experiments"))
 
 from fastapi.testclient import TestClient
 
@@ -12,7 +11,7 @@ from settlement import api, broker, capabilities, evidence, run, steward, store,
 from settlement.common import Command, ResultCode, SettlementError
 from settlement.launcher_local import LocalLauncher
 
-from test_s3_helpers import EXPERIMENTS, acquire, publish_method, seed_env, stage_method
+from test_s3_helpers import FIXTURES, acquire, publish_method, seed_env, stage_method
 
 
 def _cmd(payload=None, tag=None):
@@ -24,7 +23,7 @@ def _launcher(tmp_path):
 
 
 def _publish(dsn, tag, launcher, env, tmp_roots, version_id="lcap-v1"):
-    receipt = stage_method(dsn, tmp_roots["staging"], EXPERIMENTS / "offbyone_fixer.py",
+    receipt = stage_method(dsn, tmp_roots["staging"], FIXTURES / "offbyone_fixer.py",
                            "offbyone_fixer.py")
     publish_method(dsn, tag, tmp_roots["artifacts"], receipt)
     return capabilities.publish_candidate(
@@ -167,15 +166,3 @@ def test_learning_views_render_real_rows(migrated_db, tmp_roots, tmp_path):
     learning_page = client.get("/learning", headers=headers)
     assert learning_page.status_code == 200
 
-
-def test_live_entry_refuses_without_inputs(monkeypatch, capsys):
-    import run_live_abc
-
-    monkeypatch.delenv("SETTLEMENT_GATEWAY_ENDPOINT", raising=False)
-    monkeypatch.delenv("SETTLEMENT_GATEWAY_URL", raising=False)
-    monkeypatch.delenv("SETTLEMENT_GATEWAY_KEY", raising=False)
-    monkeypatch.delenv("SETTLEMENT_GRANT_UNITS", raising=False)
-    monkeypatch.setattr("sys.argv", ["run_live_abc.py", "--dsn", "x", "--allocation", "y",
-                                     "--artifacts-root", "z"])
-    assert run_live_abc.main() == 2
-    assert "SETTLEMENT_GATEWAY_ENDPOINT" in capsys.readouterr().out

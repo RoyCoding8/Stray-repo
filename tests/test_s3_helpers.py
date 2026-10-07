@@ -7,12 +7,11 @@ import hashlib
 import sys
 from pathlib import Path
 
-sys.path.insert(0, "experiments")
 
 from settlement import artifacts, store
 from settlement.common import Command
 
-EXPERIMENTS = Path(__file__).parent.parent / "experiments"
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def seed_env(dsn, tag, authorized=100_000):

@@ -8,7 +8,7 @@ from settlement import broker, capabilities, evidence, run, store, trials
 from settlement.common import Command, SettlementError
 from settlement.launcher_local import LocalLauncher
 
-from test_s3_helpers import EXPERIMENTS, acquire, bind_assignment, publish_method, seed_env, stage_method
+from test_s3_helpers import FIXTURES, acquire, bind_assignment, publish_method, seed_env, stage_method
 
 
 @pytest.fixture()
@@ -59,7 +59,7 @@ def _supported_claim(dsn, tag):
 
 def _publish_fixer(dsn, launcher, env, tmp_roots, tag, version_id="cap-v1"):
     receipt = stage_method(dsn, tmp_roots["staging"],
-                           EXPERIMENTS / "offbyone_fixer.py", "offbyone_fixer.py")
+                           FIXTURES / "offbyone_fixer.py", "offbyone_fixer.py")
     publish_method(dsn, tag, tmp_roots["artifacts"], receipt)
     return capabilities.publish_candidate(
         dsn, Command(request_id=f"{tag}-pubcap"), tmp_roots["artifacts"], launcher,

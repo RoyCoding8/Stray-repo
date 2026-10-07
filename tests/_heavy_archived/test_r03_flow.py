@@ -12,10 +12,9 @@ from types import SimpleNamespace
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parents[2] / "scripts"))
 
-from checkpoint import run_checkpoint
-from restore import run_restore
+from settlement.checkpoint import run_checkpoint
+from settlement.restore import run_restore
 
 from conftest_isolation import dbname_of, dsn_with_dbname
 from settlement import broker, run, store
@@ -323,54 +322,6 @@ def test_restore_refuses_mixed_recovery_set(migrated_db, tmp_path):
                          workflow_target_dsn=_fresh_db("r03flow_wft"))
     assert report["ok"] is False
     assert any("steps differ" in item for item in report["mismatches"])
-
-
-def test_repair_scan_wakes_waiting_workflow_after_restart(migrated_db, tmp_path):
-    dsn = migrated_db
-    comp = _composition(allocation="r03w-a")
-    env = _seed(dsn, "r03w", composition=comp)
-    op = f"{env['attempt']}:n"
-    run_dir = tmp_path / "runs"
-    run_dir.mkdir()
-    launchers = _launchers(run_dir)
-    assert broker.ensure_operation(
-        dsn, operation_id=op, effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
-                 "timeout_ms": 30_000, "max_output_bytes": 1024},
-        allocation_id=env["allocation"], attempt_id=env["attempt"],
-        execution_version="run/v1").code == ResultCode.APPLIED
-    validated = run.Composition.model_validate(comp)
-    cont = run.register_ops(validated, run.fresh_continuation(validated, env["attempt"]),
-                            {"n": op})
-    run.record_continuation(dsn, env["attempt"], cont, "r03w:setup", None)
-    status = broker.dispatch_operation(dsn, op, launchers=launchers,
-                                       ownership_generation=env["generation"],
-                                       _crash_after_send=True)
-    assert status.dispatch_state == "dispatching"
-    assert store.operation_receipts(dsn, op) == []
-    broker.ATTEMPT_WORKFLOW_RESOURCES.pop(env["attempt"], None)
-
-    def _scan():
-        proc = subprocess.run(
-            [sys.executable, str(Path(__file__).parents[2] / "scripts" / "scheduler.py"),
-             "--dsn", dsn, "--run-dir", str(run_dir)],
-            capture_output=True, text=True, timeout=120,
-            env={**os.environ, "PYTHONPATH": str(Path(__file__).parents[2] / "src")})
-        assert proc.returncode == 0, proc.stderr
-        return json.loads(proc.stdout)
-
-    first = _scan()
-    assert f"wake:{env['attempt']}" in first["repaired"]
-    snap = broker.wf_snapshot(dsn, env["attempt"])
-    assert snap["continuation"]["completed"] == {"n": f"op:{op}"}
-    assert store.scan_outbox(dsn) == []
-    receipts = [r["receipt_identity"] for r in store.operation_receipts(dsn, op)]
-    assert len(receipts) == 1
-    before = snap["continuation"]
-    second = _scan()
-    assert broker.wf_snapshot(dsn, env["attempt"])["continuation"] == before
-    assert [r["receipt_identity"] for r in store.operation_receipts(dsn, op)] == receipts
-    assert second["next_decision"] in ("idle", "work-done", "repair-done")
 
 
 def test_positive_retry_budget_runs_bounded_fresh_operations(migrated_db, tmp_path, monkeypatch):

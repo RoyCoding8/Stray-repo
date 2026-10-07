@@ -13,7 +13,7 @@ from settlement.common import Command, ResultCode, SettlementError
 from settlement.launcher_local import LocalLauncher
 
 ROOT = Path(__file__).resolve().parents[2]
-GRADER = str(ROOT / "experiments" / "run_tests.py")
+GRADER = str(ROOT / "tests" / "fixtures" / "run_tests.py")
 GROUPS = [{"name": "development", "kind": "development"},
           {"name": "panel", "kind": "protected-eval"}]
 CASES = [{"fn": "add", "args": [1, 2], "expected": 3},

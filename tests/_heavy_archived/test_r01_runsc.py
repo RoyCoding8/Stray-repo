@@ -133,7 +133,7 @@ def test_dispatch_spawns_contained_command_with_resource_deadline_plumbing(
     assert "--memory=536870912" in argv
     assert "cpu=4:4" in " ".join(argv)
     assert f"--name={launcher.native_id('op-res', 'exec-v1')}" in argv
-    assert argv[-1:] == ["/bin/true"]
+    assert argv[-3:] == [sys.executable, "-c", "pass"]
     assert "gw-secret" not in " ".join(argv)
     assert kw.get("env", {}).get("SETTLEMENT_GATEWAY_KEY") is None
     assert spawns.timeouts == [pytest.approx(9.0)]
