@@ -1,11 +1,12 @@
 # Project ledger
 
-## CI repair and archive checkpoint, 2026-10-06 — active
+## CI repair and Claude handoff, 2026-10-07 — checkpoint
 
 The consolidation batch's CI is genuinely red. The current repair separates
 production defects from stale test contracts and unsupported platform cases;
-it does not advance stages 9/10 or establish learning. GPT-6 Luna lanes own
-durable execution, portable contracts, and platform/harness repairs.
+it does not advance stages 9/10 or establish learning. The completed repairs
+are consolidated for handoff; there are no continuing delegate assignments.
+WORKER-PROMPT.md is the single current entry point for Claude.
 
 Verified gates are separate runs, not a full-suite result: the merged Windows
 contract gate passed 320 with 52 explicit host/database skips; its platform
@@ -13,18 +14,42 @@ follow-up passed 127 with 20 host skips. The root's PostgreSQL 18.6 restore,
 resume and isolation gate passed 77, and Luna's authority-fixture gate passed
 65; the coordinator's merged authority/artifact/resume gate then passed 81.
 Real Linux read-deny checks passed 13 with one capability skip. No service
-restart or historical-store mutation was made. The root's full Windows sweep
-and remaining integrated database checks are still running. CI run 37514432586
+restart or historical-store mutation was made. The full Windows diagnostic
+finished with 9 failed, 3,533 passed and 1,292 skipped; its source changed during
+the run, so it is not exact-tip qualification. All nine failure nodes were
+subsequently addressed: the relevant merged Windows gate passed 46 with three
+explicit DB skips, and its selector executions passed on PostgreSQL in the
+separate 59-test merged contract gate. The strengthened agenda completion gate
+passed 32 on PostgreSQL. These numbers are separate runs, never a sum claiming
+one complete suite. The final merged archived-fixture/package/migration-cleanup
+gate passed 59 on PostgreSQL; its 36 run databases were dropped. Four empty
+stores left by the coordinator's earlier failed restore setup were independently
+verified empty/inactive and retired. CI run 37514432586
 at 82a8fd10 is the pre-repair baseline: both database shards, all three portable
 jobs and the archived job failed; consistency passed. The root's complete
 agenda/completion gate subsequently passed all 50 on real PostgreSQL.
-Repaired CI is pending.
+Repaired full CI is still pending; this checkpoint is not a green-suite claim.
 
 Production repairs include receipt-batch completion under the store lock,
 byte-bound agenda observations, executable child authority, failure-safe
 disposable-store cleanup, and staged writes that preserve immutable members.
 Broader qualification caught a resume projection that mistook an operation's
 completion receipt for a measurement; the 50-test gate qualified its correction.
+Independent review then found that omitting the completion pointer bypassed
+validation; the production resolver and offline checker now require it. Package
+metadata restaging and case-insensitive receipt-path collisions were repaired.
+The checkout's 1,830 tracked JSON files were compared with their committed blobs:
+all bytes matched after the attribute-precedence repair. Cap-sheet tests now
+write to temporary paths rather than mutate tracked artifacts.
+
+One material defect remains outside the accepted code: model-backed EC02 child
+construction is underfunded by sandbox-only team allocations. A Luna delegate
+hit its usage limit while repairing it. The incomplete five-file patch is
+preserved at recovery/ci-child-construction-2026-10-07 (a51dea14), not merged.
+Its development-validation plumbing and success/underfunding/rework gates still
+need completion. The next worker may finish it or explicitly retire that
+consumer after its architecture audit. Do not mistake the recovery tag for a
+qualified implementation.
 
 The existing 45 untracked supersession records were verified against their
 committed artifact bytes and included unchanged. JSON checkout attributes now
@@ -35,7 +60,10 @@ Diagnostics and snapshots were archived outside Git at
 `D:/AI/Agent-Society-archives/2026-10-06/diagnostics-and-snapshots.zip`:
 44 source roots, 5,707 files, 157,137,456 source bytes. The manifest records
 each file's size/SHA256 and the archive checksum. Source-to-archive verification
-passed. Automatic approval review blocked removal; the sources remain.
+passed. Automatic approval review blocked removal of the remaining source
+folders; their exact dispositions are in the workspace inventory. A verified
+all-ref Git recovery bundle and the superseded worker prompt are archived under
+D:/AI/Agent-Society-archives/2026-10-07.
 VKit is a separate project and was not accessed.
 
 ## Researcher review: ownership and evidence boundaries, 2026-10-06
