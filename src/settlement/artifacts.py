@@ -194,7 +194,7 @@ def stage_package(dsn: str | None, staging_root: str | Path, *, manifest: dict,
     by_path = {entry["path"]: entry for entry in entries}
     if {p for p, e in by_path.items() if e.get("kind", "file") != "dir"} != set(files):
         raise SettlementError("staged files do not match manifest paths")
-    if any(entry["path"] == "_receipt.json" for entry in entries):
+    if any(entry["path"].casefold() == "_receipt.json" for entry in entries):
         raise SettlementError("rejected path '_receipt.json': reserved staging path")
     size = 0
     for rel, raw in files.items():

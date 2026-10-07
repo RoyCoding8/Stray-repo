@@ -217,13 +217,14 @@ def test_stage_package_replaces_receipt_symlink_without_writing_through(tmp_path
 
 
 @pytest.mark.parametrize("kind", ["file", "dir"])
-def test_stage_package_reserves_generated_receipt_path(tmp_path, kind):
+@pytest.mark.parametrize("path", ["_receipt.json", "_RECEIPT.JSON"])
+def test_stage_package_reserves_generated_receipt_path(tmp_path, kind, path):
     raw = b"package data"
-    entry = {"path": "_receipt.json", "kind": kind}
+    entry = {"path": path, "kind": kind}
     files = {}
     if kind == "file":
         entry.update({"digest": hashlib.sha256(raw).hexdigest(), "size": len(raw)})
-        files["_receipt.json"] = raw
+        files[path] = raw
     manifest = {"files": [entry]}
     with pytest.raises(SettlementError, match="reserved staging path"):
         artifacts.stage_package(
