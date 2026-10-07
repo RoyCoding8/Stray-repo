@@ -82,10 +82,14 @@ def child_limit_support() -> ChildLimitSupport:
     would claim a boundary that was never installed. A step whose caps
     cannot be installed is refused, not run with the caps dropped.
 
-    This is a platform capability, not a policy. It has no override: a
-    caller that needs the typed-AST executor on such a host is asking for
-    a supported Linux execution environment.
+    This is a platform capability, not a policy. It has no override. On a
+    host that bounds children through a Windows Job Object the parent
+    installs both caps before the child runs, so the child installs none.
     """
+    from settlement import child_limits
+    if child_limits.current_execution_host().mechanism == "job-object":
+        return ChildLimitSupport(
+            "job-object", True, "the parent's Job Object carries both caps")
     try:
         import resource
     except ImportError:
@@ -542,10 +546,11 @@ def _child_main() -> int:
     support = child_limit_support()
     if not support.available:
         raise _ExecutionRefused(support.reason)
-    import resource
-    resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
-    if memory_bytes is not None:
-        resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
+    if support.name == "rlimit":
+        import resource
+        resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
+        if memory_bytes is not None:
+            resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
     try:
         data = _execute_document(request["ast"], request["view"], request["state"])
         outcome = {"status": "ok", "data": data}
@@ -586,23 +591,30 @@ def _run_step(document: dict, view: dict, state: dict, *,
         request_path = work / "request.json"
         request_path.write_bytes(request_bytes)
         root = str(Path(__file__).resolve().parents[2])
-        process = subprocess.Popen(
-            [sys.executable, "-m", "experiments.ad01.boolean_ast_policy",
-             "child", str(request_path)],
+        argv = [sys.executable, "-m", "experiments.ad01.boolean_ast_policy",
+                "child", str(request_path)]
+        popen_kwargs = dict(
             cwd=work,
             env={"PATH": "/usr/bin:/bin", "PYTHONHASHSEED": "0",
                  "PYTHONPATH": root},
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            start_new_session=True,
-        )
-        try:
-            stdout, stderr = process.communicate(timeout=timeout_ms / 1000)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.communicate()
-            raise _ExecutionRefused("wall timeout after %d ms" % timeout_ms) from None
+            stderr=subprocess.PIPE)
+        if support.name == "job-object":
+            from settlement import winjob
+            with winjob.Job(cpu_seconds=cpu_seconds, memory_bytes=memory_bytes) as job:
+                process = job.spawn(argv, **popen_kwargs)
+                stdout, stderr, timed_out = job.communicate(process, timeout_ms / 1000)
+            if timed_out:
+                raise _ExecutionRefused("wall timeout after %d ms" % timeout_ms)
+        else:
+            process = subprocess.Popen(argv, start_new_session=True, **popen_kwargs)
+            try:
+                stdout, stderr = process.communicate(timeout=timeout_ms / 1000)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.communicate()
+                raise _ExecutionRefused("wall timeout after %d ms" % timeout_ms) from None
     if len(stdout) > max_output_bytes or len(stderr) > max_output_bytes:
         raise _ExecutionRefused("AST step exceeded the output byte cap")
     if process.returncode != 0:

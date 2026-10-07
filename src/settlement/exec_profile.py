@@ -135,6 +135,10 @@ def scrub_env(extra: dict[str, str] | None = None) -> dict[str, str]:
         "LANG": os.environ.get("LANG", "C.UTF-8"),
         "PYTHONPATH": package_search_path(),
     }
+    # Windows cannot initialise Winsock (asyncio's _overlapped, WinError 10106)
+    # without SYSTEMROOT. It names the OS directory, not a secret.
+    if "SYSTEMROOT" in os.environ:
+        base["SYSTEMROOT"] = os.environ["SYSTEMROOT"]
     if extra:
         for key, value in extra.items():
             if not _SECRET_PATTERN.search(key):
