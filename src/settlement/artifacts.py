@@ -13,6 +13,7 @@ import json
 import os
 import stat
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -193,6 +194,8 @@ def stage_package(dsn: str | None, staging_root: str | Path, *, manifest: dict,
     by_path = {entry["path"]: entry for entry in entries}
     if {p for p, e in by_path.items() if e.get("kind", "file") != "dir"} != set(files):
         raise SettlementError("staged files do not match manifest paths")
+    if any(entry["path"] == "_receipt.json" for entry in entries):
+        raise SettlementError("rejected path '_receipt.json': reserved staging path")
     size = 0
     for rel, raw in files.items():
         entry = by_path[rel]
@@ -219,7 +222,17 @@ def stage_package(dsn: str | None, staging_root: str | Path, *, manifest: dict,
     receipt = {"digest": package_digest, "size": size, "manifest": manifest,
                "scope": scope, "access_label": access_label, "format": format,
                "version": version, "dependencies": list(dependencies or [])}
-    _safe_write(stage_dir, "_receipt.json", json.dumps(receipt).encode())
+    receipt_path = stage_dir / "_receipt.json"
+    fd, temp_path = tempfile.mkstemp(prefix=".receipt-", dir=stage_dir)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(json.dumps(receipt).encode())
+        os.replace(temp_path, receipt_path)
+    finally:
+        try:
+            os.unlink(temp_path)
+        except FileNotFoundError:
+            pass
     return dict(receipt, staging_dir=str(stage_dir))
 
 
