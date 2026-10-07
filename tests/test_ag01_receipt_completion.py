@@ -51,7 +51,8 @@ def test_rejected_measurement_never_reports_completion(monkeypatch, code, confli
     assert not launcher.prior_send("op")
 
 
-@pytest.mark.parametrize("tamper", [None, "missing", "operation", "content", "conflict"])
+@pytest.mark.parametrize("tamper", [None, "missing", "operation", "content",
+                                    "conflict", "resolution"])
 def test_measurement_requires_its_own_intact_completion(monkeypatch, tamper):
     launcher, operation, admitted = _launch(monkeypatch)
     result = launcher.dispatch(operation)
@@ -62,6 +63,8 @@ def test_measurement_requires_its_own_intact_completion(monkeypatch, tamper):
         final["operation_id"] = "other"
     if tamper == "content":
         final["content"]["results"]["base:p0"]["value"] = "false"
+    if tamper == "resolution":
+        final["content"]["resolves_unknowns"] = ["base:p0"]
     replies = iter([row, None, None if tamper == "missing" else final,
                     {"conflict": True} if tamper == "conflict" else None])
 

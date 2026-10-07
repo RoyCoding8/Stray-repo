@@ -556,6 +556,7 @@ def _agenda_resolve_receipt(cur, link: dict, receipt: str) -> tuple[dict, dict]:
                 or completed.get("kind") != "agenda-probe-completed" \
                 or completed.get("source_attempt") != link["attempt_id"] \
                 or completed.get("operation_id") != link["operation_id"] \
+                or completed.get("resolves_unknowns") != sorted(completed.get("results") or {}) \
                 or (completed.get("results") or {}).get(receipt) != content:
             raise SettlementError(f"receipt {receipt} disagrees with its probe completion")
     if content.get("source_attempt") != link["attempt_id"]:
