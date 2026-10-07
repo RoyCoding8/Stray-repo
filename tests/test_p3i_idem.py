@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import threading
 import uuid
 
@@ -23,7 +25,7 @@ def _setup(dsn, authorized=1000):
 def _sandbox(dsn, op_id="op1"):
     return broker.ensure_operation(
         dsn, operation_id=op_id, effect="sandbox-exec",
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 5_000, "max_output_bytes": 65_536},
         allocation_id="a1", attempt_id="att1")
 

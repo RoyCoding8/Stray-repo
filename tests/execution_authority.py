@@ -50,7 +50,7 @@ def execution_store(token: str, *, sandbox_calls: int = 10_000):
     so ordinary steps stay well inside it and a runaway is refused by the
     broker instead of by the test's own patience.
     """
-    from experiments.ad01 import s09_run_isolation as isolation
+    import isolation_db as isolation
     from settlement import authority
 
     database = isolation.create_disposable_db(

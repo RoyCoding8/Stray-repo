@@ -1,4 +1,5 @@
 import os
+import sys
 import threading
 import uuid
 
@@ -52,7 +53,7 @@ def test_concurrent_dispatch_spawns_exactly_once(migrated_db, tmp_path):
     store.acquire_work(dsn, _cmd({"investigation_id": "i1", "attempt_id": "att1"}))
     prepared = broker.ensure_operation(
         dsn, operation_id="op_race", effect="sandbox-exec",
-        payload={"profile": "local-process", "argv": ["/bin/true"], "timeout_ms": 10_000,
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"], "timeout_ms": 10_000,
                  "max_output_bytes": 1024},
         allocation_id="a1", attempt_id="att1")
     assert prepared.code == ResultCode.APPLIED

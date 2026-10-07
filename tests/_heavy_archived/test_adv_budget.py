@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import threading
 import uuid
 
@@ -249,7 +251,7 @@ def test_heartbeat_enforces_held_grant(migrated_db, tmp_path):
                                   "investigation_id": inv}, "hbq"))
     broker.ensure_operation(
         dsn, operation_id="hb-op", effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 5000, "max_output_bytes": 1024},
         allocation_id=alloc, attempt_id="hb-att")
     launcher = LocalLauncher(tmp_path / "runs")

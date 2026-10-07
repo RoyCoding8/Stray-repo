@@ -21,6 +21,8 @@ receipt, a fenced ``unknown``, or a second decided receipt on one operation.
 
 from __future__ import annotations
 
+import sys
+
 import uuid
 
 from settlement import broker, store
@@ -74,7 +76,7 @@ def _env(dsn: str, tag: str, authorized: int = 10_000) -> tuple[str, int]:
 def _sandbox(dsn: str, operation_id: str, alloc: str, *, attempt: str) -> None:
     assert broker.ensure_operation(
         dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 30_000, "max_output_bytes": 4096},
         allocation_id=alloc, attempt_id=attempt).code == ResultCode.APPLIED
 

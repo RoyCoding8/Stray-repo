@@ -67,7 +67,7 @@ def _diag_payload():
 
 
 def _sandbox_payload():
-    return {"profile": "local-process", "argv": ["/bin/true"],
+    return {"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
             "timeout_ms": 10_000, "max_output_bytes": 1024}
 
 

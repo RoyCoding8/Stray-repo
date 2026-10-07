@@ -335,7 +335,7 @@ def test_repair_scan_wakes_waiting_workflow_after_restart(migrated_db, tmp_path)
     launchers = _launchers(run_dir)
     assert broker.ensure_operation(
         dsn, operation_id=op, effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 30_000, "max_output_bytes": 1024},
         allocation_id=env["allocation"], attempt_id=env["attempt"],
         execution_version="run/v1").code == ResultCode.APPLIED

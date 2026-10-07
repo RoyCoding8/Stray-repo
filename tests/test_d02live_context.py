@@ -18,6 +18,8 @@ Correspondence (reviewer probes are characterization only, never contracts):
 
 from __future__ import annotations
 
+import sys
+
 import hashlib
 import json
 import uuid
@@ -100,7 +102,7 @@ def _model_op(dsn, op_id, seed, prompt="decide"):
 def _sandbox_op(dsn, op_id, seed):
     return broker.ensure_operation(
         dsn, operation_id=op_id, effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 10_000, "max_output_bytes": 1024},
         allocation_id=seed["allocation_id"], attempt_id=seed["attempt_id"])
 

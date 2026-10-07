@@ -91,6 +91,20 @@ def open_nofollow(path, flags: int, mode: int = 0o644) -> int:
     return os.open(path, flags | nofollow | getattr(os, "O_BINARY", 0), mode)
 
 
+def fsync_dir(path) -> None:
+    """Make a rename into `path` durable. Windows has no directory fsync."""
+    import os
+    import sys
+
+    if sys.platform == "win32":
+        return
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
 class Command(BaseModel):
     request_id: str = Field(default_factory=lambda: new_id("req"))
     expected_revision: int | None = None

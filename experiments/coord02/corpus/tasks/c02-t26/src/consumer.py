@@ -1,2 +1,0 @@
-def summarize(values):
-    return sum(values, 0)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import uuid
 from copy import deepcopy
 from typing import Any
@@ -36,7 +38,7 @@ def _changed_request(changed_field: str) -> dict[str, Any]:
         op_args["effect"] = broker.SANDBOX_EXEC
         op_args["payload"] = {
             "profile": "local-process",
-            "argv": ["/bin/true"],
+            "argv": [sys.executable, "-c", "pass"],
             "timeout_ms": 5_000,
             "max_output_bytes": 1_024,
         }

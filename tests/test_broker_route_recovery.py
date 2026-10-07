@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from typing import Any
 
 import pytest
@@ -717,7 +719,7 @@ def test_workflow_does_not_advance_from_observed_status_without_receipt(
             "effect": "sandbox-exec",
             "payload": {
                 "profile": "local-process",
-                "argv": ["/bin/true"],
+                "argv": [sys.executable, "-c", "pass"],
                 "timeout_ms": 5_000,
                 "max_output_bytes": 1_024,
             },

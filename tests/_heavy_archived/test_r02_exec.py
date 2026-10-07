@@ -161,7 +161,7 @@ def _runs(state: Path) -> list[list[str]]:
 
 def _op(op_id: str = "op1", version: str = "exec-v1", generation: int = 0,
          **payload_kw) -> BrokerOp:
-    payload: dict = {"profile": "gvisor", "argv": ["/bin/true"],
+    payload: dict = {"profile": "gvisor", "argv": [sys.executable, "-c", "pass"],
                      "timeout_ms": 5_000, "max_output_bytes": 65_536}
     payload.update(payload_kw)
     return BrokerOp(operation_id=op_id, effect="sandbox-exec",

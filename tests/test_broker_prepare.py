@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import uuid
 
 from settlement import broker, store
@@ -88,7 +90,7 @@ def test_sandbox_prepare_reserves_hard_ceiling(migrated_db):
     """
     dsn = migrated_db
     _setup(dsn)
-    payload = {"profile": "local-process", "argv": ["/bin/true"], "timeout_ms": 8_000,
+    payload = {"profile": "local-process", "argv": [sys.executable, "-c", "pass"], "timeout_ms": 8_000,
                "max_output_bytes": 1024}
     result = broker.ensure_operation(dsn, operation_id="op1", effect="sandbox-exec",
                                      payload=payload, allocation_id="a1", attempt_id="att1")

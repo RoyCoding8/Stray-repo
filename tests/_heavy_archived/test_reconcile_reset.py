@@ -1,4 +1,5 @@
 import shutil
+import sys
 import uuid
 
 from settlement import broker, store
@@ -18,7 +19,7 @@ def _seed(dsn, tag="rr"):
                                   "allocation_id": f"{tag}-a"}))
     broker.ensure_operation(
         dsn, operation_id=f"{tag}-op", effect="sandbox-exec",
-        payload={"profile": "local-process", "argv": ["/bin/true"], "timeout_ms": 10_000,
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"], "timeout_ms": 10_000,
                  "max_output_bytes": 1024},
         allocation_id=f"{tag}-a", attempt_id=f"{tag}-att")
     return f"{tag}-op"

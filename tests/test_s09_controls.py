@@ -11,6 +11,8 @@ change is marked ``REPAIR 2 CHANGES THIS`` and ``REPAIR 3 CHANGES THIS``.
 
 from __future__ import annotations
 
+import sys
+
 import threading
 import uuid
 from pathlib import Path
@@ -44,7 +46,7 @@ def _sandbox(dsn: str, operation_id: str, alloc: str, *,
              attempt: str, execution_version: str = "") -> CommandResult:
     return broker.ensure_operation(
         dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 30_000, "max_output_bytes": 4096},
         allocation_id=alloc, attempt_id=attempt,
         execution_version=execution_version)

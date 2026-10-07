@@ -383,7 +383,7 @@ def test_workflow_resources_need_durable_restore(migrated_db):
     with pytest.raises(SettlementError, match="restore_workflow_resources"):
         broker.wf_ensure_dispatch(dsn, {"operation_id": "r13d-att:n1", "effect": "sandbox-exec",
                                         "payload": {"profile": "local-process",
-                                                    "argv": ["/bin/true"],
+                                                    "argv": [sys.executable, "-c", "pass"],
                                                     "timeout_ms": 30_000,
                                                     "max_output_bytes": 1024},
                                         "allocation_id": env["allocation"],

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import threading
 import uuid
 
@@ -21,7 +23,7 @@ def _seed(dsn, tag):
                                   "attempt_id": f"{tag}-att"}))
     broker.ensure_operation(
         dsn, operation_id=f"{tag}-op", effect="sandbox-exec",
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 10_000, "max_output_bytes": 1024},
         allocation_id=f"{tag}-a", attempt_id=f"{tag}-att")
     return f"{tag}-op"
@@ -29,7 +31,7 @@ def _seed(dsn, tag):
 
 def _op(operation_id, generation):
     return BrokerOp(operation_id=operation_id, effect="sandbox-exec",
-                    payload={"profile": "local-process", "argv": ["/bin/true"],
+                    payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                              "timeout_ms": 10_000, "max_output_bytes": 1024},
                     execution_version="exec-default", dispatch_generation=generation)
 

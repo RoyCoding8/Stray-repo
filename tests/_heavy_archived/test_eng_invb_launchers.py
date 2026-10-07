@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import time
 
 import pytest
@@ -13,7 +14,7 @@ from settlement.launcher_local import LocalLauncher
 def _op(op_id="op1", gen=0, version="v1"):
     return BrokerOp(
         operation_id=op_id, effect="sandbox-exec",
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 5_000, "max_output_bytes": 64},
         execution_version=version, dispatch_generation=gen)
 

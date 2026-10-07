@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import json
 import uuid
 
@@ -62,7 +64,7 @@ def _setup(dsn):
 def _composition():
     def _invoke(node_id):
         return {"kind": "invoke", "node_id": node_id, "effect": "sandbox-exec",
-                "payload": {"profile": "local-process", "argv": ["/bin/true"],
+                "payload": {"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                             "timeout_ms": 5_000, "max_output_bytes": 1024}}
 
     return {"version": "run/v1", "revision": 1, "allocation_id": "a1", "authority_version": 1,

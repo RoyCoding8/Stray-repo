@@ -96,7 +96,7 @@ def _sandbox(dsn: str, operation_id: str, alloc: str, *, attempt: str,
 
 def _op(operation_id: str, generation: int) -> BrokerOp:
     return BrokerOp(operation_id=operation_id, effect=broker.SANDBOX_EXEC,
-                    payload={"profile": "local-process", "argv": ["/bin/true"],
+                    payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                              "timeout_ms": 10_000, "max_output_bytes": 1024},
                     execution_version="exec-default",
                     dispatch_generation=generation)

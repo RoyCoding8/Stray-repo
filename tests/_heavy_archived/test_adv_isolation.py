@@ -48,7 +48,7 @@ def test_unsupported_runtime_never_falls_back(migrated_db, tmp_path):
     store.acquire_work(dsn, _cmd({"attempt_id": "u2-att",
                                   "investigation_id": inv}, "u2q"))
     _op(dsn, "u2", alloc,
-        {"profile": "gvisor", "argv": ["/bin/true"], "timeout_ms": 5000,
+        {"profile": "gvisor", "argv": [sys.executable, "-c", "pass"], "timeout_ms": 5000,
          "max_output_bytes": 1024}, attempt="u2-att")
     launcher = RunscLauncher(image_digest="sha256:" + "0" * 64)
     status = broker.dispatch_operation(dsn, "u2-op", launchers={"gvisor": launcher})

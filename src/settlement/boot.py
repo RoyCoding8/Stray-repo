@@ -122,7 +122,7 @@ def check_sandbox(profile: str) -> DependencyStatus:
             f"[{profile}] {probe.reason}",
         )
     try:
-        result = exec_profile.run_local_process(["/bin/true"], timeout_ms=5_000)
+        result = exec_profile.run_local_process([sys.executable, "-c", "pass"], timeout_ms=5_000)
         alive = result.returncode == 0
     except Exception as exc:
         return _status("sandbox", True, False, False, False, f"local spawn failed: {exc}")

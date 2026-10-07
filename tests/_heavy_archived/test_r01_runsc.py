@@ -9,6 +9,8 @@ spawn boundary. Actual isolation needs a runsc host (see reports/workstreams/R2.
 
 from __future__ import annotations
 
+import sys
+
 import json
 import subprocess
 import threading
@@ -32,7 +34,7 @@ def _ok_probe(**kw):
 
 
 def _op(op_id="op1", version="exec-v1", **payload_kw):
-    payload = {"profile": "gvisor", "argv": ["/bin/true"],
+    payload = {"profile": "gvisor", "argv": [sys.executable, "-c", "pass"],
                "timeout_ms": 5_000, "max_output_bytes": 65_536}
     payload.update(payload_kw)
     return BrokerOp(operation_id=op_id, effect="sandbox-exec",

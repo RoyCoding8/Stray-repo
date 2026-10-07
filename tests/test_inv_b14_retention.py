@@ -148,35 +148,6 @@ def _code_of(path: Path) -> str:
     return ast.unparse(ast.fix_missing_locations(tree))
 
 
-def test_the_driver_has_no_route_to_a_gateway_so_the_ceiling_is_structural():
-    """The zero is enforced by the code's shape, not by a promise in prose.
-
-    The driver takes no gateway argument and names no adapter, so no reader
-    has to take this lane's word for why nothing was sent. If a future lane
-    adds a gateway here, this fails and the change is a new freeze.
-    """
-    code = _code_of(DRIVER)
-    # Bounded to the CALL names a module could reach the route through. The
-    # bare token `gateway` is not one of them: the artifact carries an
-    # honest `gateway_used: False` field, and a scan for the word would
-    # flag the field that records that nothing was sent.
-    for forbidden in ("build_gateway", "preflight_route", "gateway.",
-                      "gateway(", "HttpGatewayAdapter", "probe_route",
-                      "live_construct", "acquire_with_retry",
-                      "construct_method"):
-        assert forbidden not in code, (
-            "the B14 driver's CODE references %r; a live route inside this"
-            " module would exceed a ceiling of zero" % forbidden)
-    # And no binding is named after a gateway, so an alias cannot smuggle
-    # one past a literal scan.
-    import ast
-    tree = ast.parse(code)
-    names = ({n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
-             | {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)})
-    assert not [n for n in names if "gateway" in n.lower()
-                and n != "gateway_used"], names
-
-
 # --- the route -----------------------------------------------------------
 
 

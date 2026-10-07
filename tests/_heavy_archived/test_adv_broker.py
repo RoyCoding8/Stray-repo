@@ -376,7 +376,7 @@ def test_workflow_ensure_conflict_never_dispatches_stale_bytes(migrated_db, tmp_
     alloc, gen = _env(dsn, "k10")
     assert broker.ensure_operation(
         dsn, operation_id="k10-att:n1", effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 5000, "max_output_bytes": 1024},
         allocation_id=alloc, attempt_id="k10-att").code == ResultCode.APPLIED
     run_dir = tmp_path / "runs"

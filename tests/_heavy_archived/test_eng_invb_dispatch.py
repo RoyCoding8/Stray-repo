@@ -14,7 +14,7 @@ from settlement.launcher_local import LocalLauncher
 
 
 def _op(op_id="op1", **kw):
-    payload = {"profile": "local-process", "argv": ["/bin/true"], "timeout_ms": 5_000,
+    payload = {"profile": "local-process", "argv": [sys.executable, "-c", "pass"], "timeout_ms": 5_000,
                "max_output_bytes": 65_536}
     payload.update(kw.get("payload", {}))
     return BrokerOp(operation_id=op_id, effect="sandbox-exec", payload=payload,

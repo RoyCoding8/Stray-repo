@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import uuid
 
 import pytest
@@ -230,7 +232,7 @@ def test_stale_ownership_dispatch_refused_without_send(migrated_db):
 def test_unsupported_profile_returns_incompatible(migrated_db):
     dsn = migrated_db
     _setup(dsn)
-    _ensure(dsn, payload={"profile": "gvisor", "argv": ["/bin/true"],
+    _ensure(dsn, payload={"profile": "gvisor", "argv": [sys.executable, "-c", "pass"],
                           "timeout_ms": 1_000, "max_output_bytes": 64})
     fake = ScriptLauncher()
     status = broker.dispatch_operation(dsn, "op1", launchers=_launchers(fake))

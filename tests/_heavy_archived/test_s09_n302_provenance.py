@@ -28,6 +28,8 @@ judgement this file deliberately does not pretend to settle.
 
 from __future__ import annotations
 
+import sys
+
 import uuid
 
 import pytest
@@ -59,7 +61,7 @@ def _dispatched(dsn: str, operation_id: str, alloc: str, gen: str,
                 attempt: str, tag: str, tmp_path) -> None:
     broker.ensure_operation(
         dsn, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 30_000, "max_output_bytes": 4096},
         allocation_id=alloc, attempt_id=attempt)
     broker.dispatch_operation(dsn, operation_id,

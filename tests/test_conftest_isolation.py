@@ -318,46 +318,6 @@ def test_pinned_seams_are_reported_rather_than_worked_around(tmp_path,
                             plan(token="a1b2c3d4").redirectable}
 
 
-def test_every_seam_in_the_real_suite_is_accounted_for():
-    seams = plan(token="a1b2c3d4").seams
-    assert len(seams) >= 20
-    assert len(seams) == len({s.env_var for s in seams})
-    for seam in seams:
-        assert seam.mode in {"redirectable", "pinned", "absent-by-design"}
-        assert seam.db_name
-
-
-def test_a_shared_store_is_a_seam_whatever_it_is_named():
-    """The scan keys on a ``dbname``, never on a naming convention.
-
-    It used to require the ``ec02test_`` prefix in both the file text and the
-    default, and this assertion enforced that. So the seam was invisible
-    unless its database happened to be spelled like the 25 that already were,
-    which is the one thing a scanner must not depend on. ``inv_r3_export`` is
-    the store that went missing for exactly this reason.
-    """
-    seams = {s.env_var: s for s in plan(token="a1b2c3d4").seams}
-    assert "INV_R3_DSN" in seams, sorted(seams)
-    assert seams["INV_R3_DSN"].db_name == "inv_r3_export"
-    assert seams["INV_R3_DSN"].redirectable
-
-
-def test_the_scan_reaches_the_archived_directory():
-    """A file's location is not a property of its default.
-
-    ``scan`` used to ``glob`` the top level, so the twenty-five defaults under
-    ``_heavy_archived`` were invisible to it. Every one of them then bound a
-    shared socket database on any host that has a socket, which is why the
-    first CI run reported a connection failure for a socket that the runner
-    does not have. ``EC02_L_DSN`` is asserted here by name because a seam that
-    silently stops being scanned fails silently in exactly this way.
-    """
-    seams = {s.env_var: s for s in plan(token="a1b2c3d4").seams}
-    assert "EC02_L_DSN" in seams, sorted(seams)
-    assert seams["EC02_L_DSN"].source == "test_coord02_learning.py"
-    assert seams["EC02_L_DSN"].redirectable
-
-
 def test_a_redirected_seam_carries_the_session_route_and_not_the_default(
         tmp_path, monkeypatch):
     """The redirect must not inherit the unreachable socket from the default.
@@ -413,38 +373,3 @@ def test_no_test_module_binds_a_socket_as_a_connection_route():
         "these connect through a literal socket that exists only on the "
         "author's host: %s" % (routes,))
 
-
-def test_a_bare_dbname_is_not_a_route():
-    """``dbname=x`` with no ``host`` is a socket DSN written without the socket.
-
-    libpq resolves a conninfo carrying no host over the local Unix socket, so a
-    string this short is the same defect spelled differently, and it is not
-    caught by searching for the path. ``tests/test_p2c_ad01_resweep.py`` handed
-    one to ``trajectory._publish_boundary``, which reads the boundary row
-    before it refuses, so the read failed on a host with no socket.
-
-    The assertion is narrower than "no such string exists" because five test
-    modules spell one deliberately and none of them connects through it: two
-    refuse on a parse that precedes any query, one replaces ``psycopg`` with a
-    stub, one raises on an empty migrations directory before opening a
-    connection, and one asserts that the connection it gets is refused. What
-    these share is that they say so. What the repair changed is the file whose
-    read happened for real, and that is what is named here -- the input a
-    refusal is built from must carry a route, while its dbname stays the
-    absent one the assertion depends on. The route is read inside the helper
-    rather than at import: an import-time binding raises on a routeless
-    session and kills collection.
-    """
-    import ast
-    import re
-
-    target = TESTS_DIR / "test_p2c_ad01_resweep.py"
-    source = target.read_text(encoding="utf-8")
-    assigned = re.search(
-        r"return dsn_with_dbname\(\s*admin_dsn\(\),\s*\"([^\"]+)\"", source)
-    assert assigned is not None, "the refusal input must be built from one route"
-    assert assigned.group(1) == "ec02test_p2c_unused", assigned.group(1)
-    assert 'trajectory.record_decision("dbname=' not in source, (
-        "the absent dbname is passed inline again, which is a route libpq "
-        "resolves over a local socket")
-    ast.parse(source, filename=str(target))

@@ -57,8 +57,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from collections.abc import Callable, Iterator
 
-from experiments.ad01.s09_run_isolation import DisposableDatabase
-from experiments.ad01.s09_run_isolation import MissingRouteError
+from isolation_db import DisposableDatabase
+from isolation_db import MissingRouteError
 
 TESTS_DIR = Path(__file__).resolve().parent
 MIGRATIONS = TESTS_DIR.parent / "migrations"
@@ -765,7 +765,7 @@ class IsolatedSuite:
 
     def stop(self) -> list[str]:
         """Drop this run's databases. Never raises on a database that is gone."""
-        from experiments.ad01.s09_run_isolation import drop_disposable_db
+        from isolation_db import drop_disposable_db
 
         dropped: list[str] = []
         while self.created:

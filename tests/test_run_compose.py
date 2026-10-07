@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import uuid
 
 import pytest
@@ -20,7 +22,7 @@ def _setup(dsn):
 
 
 def _invoke(node_id, effect="sandbox-exec", payload=None):
-    payload = payload or {"profile": "local-process", "argv": ["/bin/true"],
+    payload = payload or {"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                           "timeout_ms": 1_000, "max_output_bytes": 64}
     return {"kind": "invoke", "node_id": node_id, "effect": effect, "payload": payload}
 

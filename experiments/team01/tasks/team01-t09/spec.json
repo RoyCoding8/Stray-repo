@@ -1,1 +1,0 @@
-{"list_keys": {"a": "xs", "b": "ys"}, "ops": {"a": "sum", "b": "prod"}, "rule": {"key": "flag", "kind": "key"}}

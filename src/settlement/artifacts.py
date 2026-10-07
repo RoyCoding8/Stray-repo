@@ -12,7 +12,6 @@ import hashlib
 import json
 import os
 import stat
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -22,7 +21,7 @@ from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from . import db, exec_profile, store
-from .common import Command, CommandResult, ResultCode, SettlementError, open_nofollow
+from .common import Command, CommandResult, ResultCode, SettlementError, fsync_dir, open_nofollow
 
 STAGE_MAX_BYTES = 64 * 1024 * 1024
 STAGE_MAX_FILES = 1024
@@ -173,6 +172,17 @@ def _unpack_archive_isolated(archive: Path, dest: Path) -> None:
         raise SettlementError(f"archive list failed: {listed.stderr[:200]}")
     for line in listed.stdout.splitlines():
         _check_relpath(_strip_dot_prefix(line.strip()) or ".")
+    # Refuse links and special members before anything is materialized; the
+    # verbose listing's first column is the member type on GNU tar and bsdtar.
+    verbose = exec_profile.run_local_process(
+        ["tar", "-tvzf", str(archive)], timeout_ms=30_000, max_output_bytes=4_194_304)
+    if verbose.returncode != 0:
+        raise SettlementError(f"archive list failed: {verbose.stderr[:200]}")
+    for line in verbose.stdout.splitlines():
+        if line and line[0] not in "-d":
+            raise SettlementError(
+                f"rejected archive member {line.split()[-1]!r}: links and"
+                " special files are never materialized")
     result = exec_profile.run_local_process(
         ["tar", "-xzf", str(archive), "-C", str(dest),
          "--no-same-owner", "--no-same-permissions"], timeout_ms=60_000,
@@ -240,23 +250,6 @@ def _final_path(artifacts_root: Path, digest: str) -> Path:
     return artifacts_root / digest
 
 
-def _fsync_tree(path: Path) -> None:
-    with open(path, "rb") as handle:
-        os.fsync(handle.fileno())
-    if sys.platform == "win32":
-        # Windows has no directory fsync: opening a directory at all is
-        # the error (a directory handle cannot be opened with O_RDONLY
-        # there, so this raised PermissionError on windows-latest). The
-        # file's own fsync above is the whole durability claim on that
-        # platform, same as every other Windows program.
-        return
-    fd = os.open(path.parent, os.O_RDONLY)
-    try:
-        os.fsync(fd)
-    finally:
-        os.close(fd)
-
-
 def _write_final_bytes(artifacts_root: Path, receipt: dict, stage_dir: Path) -> Path:
     artifacts_root.mkdir(parents=True, exist_ok=True)
     final = _final_path(artifacts_root, receipt["digest"])
@@ -285,7 +278,7 @@ def _write_final_bytes(artifacts_root: Path, receipt: dict, stage_dir: Path) -> 
         handle.flush()
         os.fsync(handle.fileno())
     os.rename(tmp, final)
-    _fsync_tree(final)
+    fsync_dir(final.parent)
     return final
 
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import uuid
 
 from settlement import broker, store
@@ -22,7 +24,7 @@ def _setup(dsn, authorized=1000):
 def _sandbox(dsn, op_id="op1"):
     return broker.ensure_operation(
         dsn, operation_id=op_id, effect="sandbox-exec",
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 5_000, "max_output_bytes": 64},
         allocation_id="a1", attempt_id="att1")
 
@@ -125,6 +127,6 @@ def test_ensure_operation_rejects_non_int_retries(migrated_db):
     _setup(dsn)
     result = broker.ensure_operation(
         dsn, operation_id="op-bad", effect="sandbox-exec",
-        payload={"profile": "local-process", "argv": ["/bin/true"]},
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"]},
         allocation_id="a1", attempt_id="att1", retries=None)
     assert result.code == ResultCode.INVALID_INPUT

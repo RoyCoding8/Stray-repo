@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import concurrent.futures
 import hashlib
 import shutil
@@ -57,7 +59,7 @@ def _revoke(dsn):
 def _sandbox(dsn, op, alloc, attempt):
     assert broker.ensure_operation(
         dsn, operation_id=op, effect=broker.SANDBOX_EXEC,
-        payload={"profile": "local-process", "argv": ["/bin/true"],
+        payload={"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                  "timeout_ms": 10000, "max_output_bytes": 1024},
         allocation_id=alloc, attempt_id=attempt).code == ResultCode.APPLIED
 

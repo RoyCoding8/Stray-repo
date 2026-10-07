@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 
 import pytest
@@ -13,7 +14,7 @@ from settlement.launcher_runsc import RunscLauncher
 
 
 def _op(op_id="op1", **kw):
-    payload = {"profile": "local-process", "argv": ["/bin/true"], "timeout_ms": 5_000,
+    payload = {"profile": "local-process", "argv": [sys.executable, "-c", "pass"], "timeout_ms": 5_000,
                "max_output_bytes": 65_536}
     payload.update(kw.get("payload", {}))
     return BrokerOp(operation_id=op_id, effect="sandbox-exec", payload=payload,
@@ -121,7 +122,7 @@ def test_runsc_dispatch_raises_incompatible_never_local(tmp_path):
     assert launcher.prior_send("anything") is False
     assert launcher.live_ids() == []
     with pytest.raises(IncompatibleVersion) as exc:
-        launcher.dispatch(_op("op-r", payload={"profile": "gvisor", "argv": ["/bin/true"],
+        launcher.dispatch(_op("op-r", payload={"profile": "gvisor", "argv": [sys.executable, "-c", "pass"],
                                                "timeout_ms": 1000, "max_output_bytes": 64}))
     assert "runsc" in str(exc.value).lower() or "gvisor" in str(exc.value).lower()
     assert (tmp_path / "runs").exists() or True

@@ -1,1 +1,0 @@
-{"verdict": "keep", "notes": "Checked strip_lower preserves order, handles empty list, strip-then-lower; sum with start 0 handles empty->0 and int/float typing; app.py ABI keys lowercase match visible checks and reads ops from spec.json; no edge-case failures found."}

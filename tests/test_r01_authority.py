@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier, Lock
@@ -34,7 +36,7 @@ def _model(op, alloc, attempt):
 
 def _sandbox(op, alloc, attempt):
     return {"operation_id": op, "effect": broker.SANDBOX_EXEC,
-            "payload": {"profile": "local-process", "argv": ["/bin/true"],
+            "payload": {"profile": "local-process", "argv": [sys.executable, "-c", "pass"],
                         "timeout_ms": 10000, "max_output_bytes": 1024},
             "allocation_id": alloc, "attempt_id": attempt}
 
