@@ -198,7 +198,12 @@ jobs:
       - name: Suite
         run: |
           rc=0
-          python -m pytest -q -p no:cacheprovider > suite.log 2>&1 || rc=$?
+          # Windows deselects swe_matrix: an episode spawns ~300 real policy
+          # children at ~0.17 s each there, so the matrix exceeds the job
+          # timeout. Linux and macOS still run it.
+          sel=()
+          if [ "$RUNNER_OS" = Windows ]; then sel=(-m "not swe_matrix"); fi
+          python -m pytest -q -p no:cacheprovider "${sel[@]}" > suite.log 2>&1 || rc=$?
           grep -E '^(FAILED|ERROR)' suite.log | sort -u > failures.txt || true
           echo "distinct failure lines: $(wc -l < failures.txt)"
           head -100 failures.txt
