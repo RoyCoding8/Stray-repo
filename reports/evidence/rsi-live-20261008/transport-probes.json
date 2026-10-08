@@ -1,0 +1,138 @@
+[
+  {
+    "model": "kilo/cohere/north-mini-code:free",
+    "request_digest": "c48832607ee07a24328ce9c442a9122aa191ec1cd57e1dfbc3afae8ff5d0e3ef",
+    "dispatched": true,
+    "outcome": "response_received",
+    "usage": {
+      "input_tokens": 5,
+      "input_tokens_details": {
+        "cached_tokens": 0
+      },
+      "output_tokens": 70,
+      "total_tokens": 75,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      }
+    },
+    "http_status": 200,
+    "response": {
+      "id": "gen-1791446624-muEdxAcPemnhA3w0Znti",
+      "object": "response",
+      "created_at": 1791446624,
+      "status": "completed",
+      "background": false,
+      "error": null,
+      "incomplete_details": null,
+      "max_output_tokens": 2048,
+      "model": "cohere/north-mini-code:free",
+      "output": [
+        {
+          "id": "rs_gen-1791446624-muEdxAcPemnhA3w0Znti",
+          "type": "reasoning",
+          "encrypted_content": "",
+          "summary": [
+            {
+              "type": "summary_text",
+              "text": "The user asks: \"Reply with exactly READY.\" So we must respond with exactly \"READY\" (including that word). No extra punctuation or whitespace? It says exactly READY, likely uppercase, no extra characters. So the response should be \"READY\". Ensure not extra newline? Typically a response can be just the word. So output: READY."
+            }
+          ]
+        },
+        {
+          "id": "msg_gen-1791446624-muEdxAcPemnhA3w0Znti_0",
+          "type": "message",
+          "status": "completed",
+          "content": [
+            {
+              "type": "output_text",
+              "annotations": [],
+              "logprobs": [],
+              "text": "READY"
+            }
+          ],
+          "role": "assistant"
+        }
+      ],
+      "usage": {
+        "input_tokens": 5,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 70,
+        "total_tokens": 75,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      }
+    },
+    "seconds": 4.0
+  },
+  {
+    "model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "request_digest": "d26f63581b83c2866ebeecbdf9eb6fea32cf2e366f9e16bb38e3bffcb912066d",
+    "dispatched": true,
+    "outcome": "response_received",
+    "usage": {
+      "input_tokens": 22,
+      "input_tokens_details": {
+        "cached_tokens": 0
+      },
+      "output_tokens": 212,
+      "total_tokens": 234,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      }
+    },
+    "http_status": 200,
+    "response": {
+      "id": "gen-1791446628-VEJALQlurEVmR2zGkAYH",
+      "object": "response",
+      "created_at": 1791446628,
+      "status": "completed",
+      "background": false,
+      "error": null,
+      "incomplete_details": null,
+      "max_output_tokens": 2048,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "output": [
+        {
+          "id": "rs_gen-1791446628-VEJALQlurEVmR2zGkAYH",
+          "type": "reasoning",
+          "encrypted_content": "",
+          "summary": [
+            {
+              "type": "summary_text",
+              "text": "Okay, the user is asking me to reply with exactly \"READY\". Let me check the instructions again.\n\nThe user says: \"Reply with exactly READY.\" So I need to make sure my response is just the word READY, nothing else. No extra spaces, no punctuation, just READY.\n\nI should verify that there's no trick here. Sometimes these tests check if I follow instructions precisely. The user might be testing if I can output a specific string without any additions.\n\nLet me think: the response must be exactly \"READY\". So I'll output that and nothing more. No \"Hello\" or any other text. Just READY.\n\nI'll make sure not to add a newline or anything unless specified, but since it's a simple reply, probably just the word.\n\nDouble-checking: the user said \"exactly READY\", so case-sensitive? It's all caps as written. So READY in uppercase.\n\nYes, that's what they want. So my response should be READY."
+            }
+          ]
+        },
+        {
+          "id": "msg_gen-1791446628-VEJALQlurEVmR2zGkAYH_0",
+          "type": "message",
+          "status": "completed",
+          "content": [
+            {
+              "type": "output_text",
+              "annotations": [],
+              "logprobs": [],
+              "text": "READY"
+            }
+          ],
+          "role": "assistant"
+        }
+      ],
+      "usage": {
+        "input_tokens": 22,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 212,
+        "total_tokens": 234,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      }
+    },
+    "seconds": 2.7
+  }
+]

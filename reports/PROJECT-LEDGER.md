@@ -12,7 +12,7 @@ skills, allowed harness settings and the improver's own instructions.
 
 | Checkpoint | State |
 |---|---|
-| T1 route | User-approved local free-model route through Codex CLI. |
+| T1 route | User-approved free routes through Codex CLI. Direct OpenRouter is `openrouter/openrouter/free`; the bare `openrouter/free` alias goes through Kilo. |
 | T3 genome | Content identity, lineage and restricted settings; meta instructions remain editable. |
 | T4 episodes | Broker admission, process limits, skill-isolation preflight, token accounting and trajectory records. |
 | T5 bank | Published tasks, fixed splits, frozen evaluators, pristine verification and solution snapshots. |
@@ -20,7 +20,7 @@ skills, allowed harness settings and the improver's own instructions.
 | T6 archive | Every genome remains selectable; fixed sigmoid/children selection records scores, coverage, weights and draw. The latest unknown outcome cannot retain an older passing score. |
 | T7 proposals | AI proposes a child using editable meta instructions and pinned dev-only evidence. Invalid outputs and execution failures remain recorded. |
 | T8 gate | Frozen scope, model and budgets; validation, solved-task regression and fresh paired anchor comparison. Benchmark gains are experimental; trusted mode requires containment. |
-| T9 loop | Bounded, replayable archive exploration and an operator CLI. Live task executions complete on a second free route; the improver encountered a provider protocol rejection. No child or acceptance claim. |
+| T9 loop | Bounded, replayable archive exploration and an operator CLI. A live child was acquired and used through the public proposal/episode/verifier functions. The authored smoke task passed; task-bank competence, automatic full-loop acceptance and retained gains remain unproved. |
 | T11 synthesis | AI proposes tasks from observed dev failures. The fixed qualifier requires a passing reference and failing stub before dev publication. Pinned outputs survive interrupted verification. |
 | T12 delivery | Checkpoint commits and operator docs; local gates below. [CI status](https://github.com/RoyCoding8/Stray-repo/actions/workflows/ci.yml) is tracked per pushed commit. |
 
@@ -30,7 +30,7 @@ Reviewer checkpoint, 2026-10-08: all seven CI jobs passed on the delivered
 a3094099 revision, run 37730286147. Read-only inspection of live store rsi_t5
 found two completed episodes with failed test verdicts, three timed-out episodes,
 one failed and one timed-out proposal, one root genome and zero anchor exposures.
-There is still no live child or improvement result.
+There was no live child or improvement result at that review checkpoint.
 
 Two review defects were reproduced and repaired. Archive exploration compared
 a child only with its selected parent, so a gain over a weak node could replace
@@ -44,6 +44,28 @@ children; both databases were dropped. No new model calls ran. Follow-up CI pass
 on repair commit c06e16d5, run 37745626153, separately from the delivered revision's
 green CI. Ruff was unavailable locally;
 changed Python files parsed and git diff --check passed.
+
+Free-route checkpoint, 2026-10-08: [live evidence](evidence/rsi-live-20261008/README.md)
+records 13 broker-routed agent operations and 3 verifiers, all with terminal
+receipts, plus two separate HTTP text probes. Direct OpenRouter acquired child
+`8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde` from pinned
+development evidence. Its changed instructions were reloaded unchanged in a
+fresh process and passed pristine verification on an authored addition smoke
+task. The seed also passed that task. The child's Grade School attempt timed
+out; other task-bank attempts failed, timed out or exceeded their budgets.
+This proves a live acquire/retain/use/check path on the smoke task, not a gain,
+transfer, executable-skill acquisition or improved improver. No comparison ran,
+no anchors were exposed and nothing was promoted.
+
+The router budget compatibility repair passed 10 targeted tests without skips
+on disposable PostgreSQL 18 databases. Source commit `5c2f1f32` passed CI, run
+37751042389. Router attempts used one request/stream retry. Published router
+prices were zero; provider invoices and chosen underlying models were not
+measured. Unknown usage remains unknown and is ceiling-charged. Known Super
+usage exceeded its reservation, so the recorded usage and book charge differ;
+that operation stayed unscored. All 24 study allocations have zero reserved
+units. Preserve the owned `rsi_live_20261008` database and external run root
+`D:/AI/tools/rsi-live-20261008` as evidence. The older `rsi_t5` store was unchanged.
 
 The local workspace now has one branch and one registered checkout. Nine stale
 remote branch snapshots were tagged on both remotes before deletion, and a
@@ -118,13 +140,13 @@ task verdict. Unknown dispatches retain their exposure.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-Next evidence target: qualify an actual tool interaction on the configured free
-route, demonstrate a pristine-verified dev task success, and acquire a changed
-child from development evidence. Compare the executed child against the current
-incumbent on fresh content under frozen budgets. Use an unchanged-copy control
-to distinguish retained-change effects from model variability. Stop with either
-an attributable completed comparison or a diagnosed blocking failure. Historical
-runs include failed tasks, timeouts and a provider protocol rejection; none
-demonstrates learning. Explore stronger native
+Next evidence target: establish completed task-bank competence with a clear
+public task interface, then fairly assess the retained revision against the
+incumbent on fresh content. The free routers are stochastic services, not pinned
+backbones; prospective comparisons must account for that variation and use an
+unchanged-copy control. Do not re-dispatch the closed study's operations or
+refund its allocations. Stop with either an attributable completed comparison
+or a diagnosed blocking failure. Acquisition is now demonstrated; utility and
+learning advantage remain unproved. Explore stronger native
 or container isolation as a separate future checkpoint. No WSL is required
 for the current benchmark.

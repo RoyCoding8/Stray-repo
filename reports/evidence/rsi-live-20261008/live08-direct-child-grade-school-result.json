@@ -1,0 +1,11 @@
+{
+  "status": "timeout",
+  "exit_code": 1,
+  "seconds": 180.2,
+  "tokens": null,
+  "infra_reason": "",
+  "commands": 2,
+  "final_message": "\n\n",
+  "trajectory_digest": "b886bf9b716ee3b7fd056283f1d54d2a62aec6ab18aa66bd6144ff766b8b2623",
+  "trajectory_bytes": 2318
+}

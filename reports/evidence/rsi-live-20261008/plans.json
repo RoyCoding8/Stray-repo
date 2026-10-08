@@ -1,0 +1,310 @@
+{
+  "plans": {
+    "acquisition-plan": {
+      "operation": "live08-kilo-acquire-01",
+      "model": "kilo-auto/free",
+      "proposals_maximum": 1,
+      "token_ceiling": 1000000,
+      "timeout_ms": 300000,
+      "request_retries": 1,
+      "stream_retries": 1,
+      "source": "Only pinned development episodes of the existing seed in this study",
+      "purpose": "Acquire an attributable changed genome; no learning advantage presumed",
+      "routing_limit": "The free router can change its underlying model between calls"
+    },
+    "child-smoke-use-plan": {
+      "operation": "live08-direct-child-smoke",
+      "model": "openrouter/openrouter/free",
+      "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "constructor": "live08-direct-acquire-01",
+      "episodes_maximum": 1,
+      "task": "live-tool-smoke-add",
+      "token_ceiling": 1000000,
+      "timeout_ms": 180000,
+      "request_retries": 1,
+      "stream_retries": 1,
+      "interpretation": "Development use, not independent transfer or gain"
+    },
+    "child-use-plan": {
+      "operation": "live08-direct-child-grade-school",
+      "model": "openrouter/openrouter/free",
+      "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "constructor": "live08-direct-acquire-01",
+      "episodes_maximum": 1,
+      "task": "grade-school",
+      "token_ceiling": 1000000,
+      "timeout_ms": 180000,
+      "request_retries": 1,
+      "stream_retries": 1,
+      "interpretation": "Development use, not independent transfer or gain"
+    },
+    "direct-acquisition-plan": {
+      "operation": "live08-direct-acquire-01",
+      "model": "openrouter/openrouter/free",
+      "proposals_maximum": 1,
+      "token_ceiling": 1000000,
+      "timeout_ms": 300000,
+      "request_retries": 1,
+      "stream_retries": 1,
+      "source": "Only pinned development episodes of the existing seed in this study",
+      "purpose": "Acquire an attributable changed genome; no learning advantage presumed",
+      "routing_limit": "The free router can change its underlying model between calls"
+    },
+    "direct-openrouter-plan": {
+      "purpose": "Direct OpenRouter provider qualification, separate from Kilo alias attempts",
+      "model_candidates": [
+        "openrouter/openrouter/free"
+      ],
+      "probe_task": "grade-school",
+      "route_probes_maximum": 1,
+      "tokens_per_probe": 1000000,
+      "timeout_ms": 180000,
+      "request_retries": 1,
+      "stream_retries": 1,
+      "authorization": "Human requested openrouter/free, gateway provider prefix disambiguates direct OpenRouter",
+      "price_evidence": "direct-openrouter-pricing.json"
+    },
+    "plan": {
+      "source_revision": "b85d1cce3e42be6944f3d67c2dfa903c80d969c1",
+      "purpose": "Qualify free tool routes, task competence and retained revision; no presumed learning gain",
+      "model_candidates": [
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "stepfun/step-3.7-flash:free",
+        "deepseek/deepseek-v4-pro-free"
+      ],
+      "probe_task": "proverb",
+      "route_probes_maximum": 3,
+      "tokens_per_probe": 300000,
+      "timeout_ms": 480000,
+      "dev": [
+        "proverb",
+        "grade-school",
+        "phone-number"
+      ],
+      "validation": [
+        "transpose"
+      ],
+      "anchor": [
+        "affine-cipher",
+        "bottle-song",
+        "bowling",
+        "list-ops",
+        "poker",
+        "tree-building"
+      ],
+      "generations_maximum": 1,
+      "trusted_promotion": false,
+      "authorization": "Human authorized only free gateway routes in this chat",
+      "price_evidence": "Exact gateway catalogue IDs explicitly label these routes free; no paid fallback",
+      "containment": "Cooperative benchmark with native process bounds; filesystem/network confinement unqualified"
+    },
+    "route-round2-plan": {
+      "purpose": "Second independent route qualification after two 429 results; preserve round 1",
+      "model_candidates": [
+        "kilo/cohere/north-mini-code:free",
+        "nvidia/nemotron-3-super-120b-a12b:free"
+      ],
+      "probe_task": "proverb",
+      "route_probes_maximum": 2,
+      "tokens_per_probe": 300000,
+      "timeout_ms": 300000,
+      "authorization": "Human authorized only explicitly free routes; no paid fallback"
+    },
+    "route-round3-plan": {
+      "purpose": "User-steered free router task qualification; no fixed underlying model claim",
+      "model_candidates": [
+        "openrouter/free",
+        "kilo-auto/free"
+      ],
+      "probe_task": "grade-school",
+      "route_probes_maximum": 2,
+      "tokens_per_probe": 1000000,
+      "timeout_ms": 180000,
+      "request_retries": 1,
+      "stream_retries": 1,
+      "authorization": "Human explicitly requested openrouter/free and suggested Kilo free router",
+      "pricing_source": "free-router-pricing.json",
+      "fallback_condition": "Try Kilo free router only if OpenRouter fails to complete; never paid"
+    },
+    "tool-smoke-plan": {
+      "operation": "live08-direct-tool-smoke",
+      "model": "openrouter/openrouter/free",
+      "episodes_maximum": 1,
+      "token_ceiling": 1000000,
+      "timeout_ms": 180000,
+      "request_retries": 1,
+      "stream_retries": 1,
+      "interpretation": "Authored tiny smoke task, never a held-out learning or Exercism result"
+    },
+    "transport-plan": {
+      "models": [
+        "kilo/cohere/north-mini-code:free",
+        "nvidia/nemotron-3-super-120b-a12b:free"
+      ],
+      "calls_maximum": 2,
+      "max_output_tokens": 2048,
+      "timeout_seconds": 45,
+      "purpose": "Inspect free-route HTTP failures and response pricing, not task or learning evidence"
+    }
+  },
+  "pricing": {
+    "direct-openrouter-pricing": {
+      "source": "https://openrouter.ai/api/v1/models",
+      "id": "openrouter/free",
+      "pricing": {
+        "prompt": "0",
+        "completion": "0"
+      },
+      "supported_parameters": [
+        "frequency_penalty",
+        "include_reasoning",
+        "logprobs",
+        "max_completion_tokens",
+        "max_tokens",
+        "min_p",
+        "presence_penalty",
+        "reasoning",
+        "reasoning_effort",
+        "repetition_penalty",
+        "response_format",
+        "seed",
+        "stop",
+        "structured_outputs",
+        "temperature",
+        "tool_choice",
+        "tools",
+        "top_k",
+        "top_logprobs",
+        "top_p"
+      ],
+      "context_length": 200000,
+      "gateway_route": "openrouter/openrouter/free"
+    },
+    "free-pricing": {
+      "source": "https://api.kilo.ai/api/gateway/models",
+      "models": [
+        {
+          "id": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "pricing": {
+            "prompt": "0",
+            "completion": "0",
+            "discount": 0
+          },
+          "isFree": true,
+          "context_length": 1000000,
+          "supported_parameters": [
+            "include_reasoning",
+            "max_tokens",
+            "reasoning",
+            "reasoning_effort",
+            "seed",
+            "temperature",
+            "tool_choice",
+            "tools",
+            "top_p"
+          ]
+        },
+        {
+          "id": "cohere/north-mini-code:free",
+          "pricing": {
+            "prompt": "0",
+            "completion": "0",
+            "discount": 0
+          },
+          "isFree": true,
+          "context_length": 256000,
+          "supported_parameters": [
+            "frequency_penalty",
+            "include_reasoning",
+            "max_tokens",
+            "presence_penalty",
+            "reasoning",
+            "seed",
+            "stop",
+            "temperature",
+            "tool_choice",
+            "tools",
+            "top_k",
+            "top_p"
+          ]
+        },
+        {
+          "id": "nvidia/nemotron-3-super-120b-a12b:free",
+          "pricing": {
+            "prompt": "0",
+            "completion": "0",
+            "discount": 0
+          },
+          "isFree": true,
+          "context_length": 262144,
+          "supported_parameters": [
+            "include_reasoning",
+            "max_tokens",
+            "reasoning",
+            "reasoning_effort",
+            "response_format",
+            "seed",
+            "structured_outputs",
+            "temperature",
+            "tool_choice",
+            "tools",
+            "top_p"
+          ]
+        },
+        {
+          "id": "stepfun/step-3.7-flash:free",
+          "pricing": {
+            "prompt": "0.000000000000",
+            "completion": "0.000000000000",
+            "request": "0",
+            "image": "0",
+            "web_search": "0",
+            "internal_reasoning": "0",
+            "input_cache_read": "0.000000000000"
+          },
+          "isFree": true,
+          "context_length": 262144,
+          "supported_parameters": [
+            "max_tokens",
+            "temperature",
+            "tools",
+            "reasoning",
+            "include_reasoning"
+          ]
+        }
+      ],
+      "billing_limit": "Published pricing, not a provider invoice; route aliases inspected locally"
+    },
+    "free-router-pricing": {
+      "source": "https://api.kilo.ai/api/gateway/models",
+      "models": [
+        {
+          "id": "kilo-auto/free",
+          "pricing": {
+            "prompt": "0",
+            "completion": "0",
+            "input_cache_read": "0",
+            "input_cache_write": "0",
+            "request": "0",
+            "image": "0",
+            "web_search": "0",
+            "internal_reasoning": "0"
+          },
+          "isFree": true
+        },
+        {
+          "id": "openrouter/free",
+          "pricing": {
+            "prompt": "0",
+            "completion": "0"
+          },
+          "isFree": true
+        }
+      ],
+      "requested_route": "openrouter/free",
+      "note": "Unprefixed openrouter/free is configured through Kilo; direct OpenRouter is openrouter/openrouter/free. Both free routers may vary their selected model."
+    }
+  }
+}

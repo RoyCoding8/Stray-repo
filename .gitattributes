@@ -21,3 +21,6 @@
 
 **/manifest.json text eol=lf
 **/manifest.sha256 text eol=lf
+
+reports/evidence/rsi-live-20261008/** -text
+reports/evidence/rsi-live-20261008/gate-tests.log whitespace=cr-at-eol

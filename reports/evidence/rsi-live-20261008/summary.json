@@ -1,0 +1,11 @@
+{
+  "episodes": 11,
+  "proposals": 2,
+  "genomes": 2,
+  "operations": 16,
+  "anchor_exposures": 0,
+  "receiptless": [],
+  "operation_states": {
+    "observed": 16
+  }
+}

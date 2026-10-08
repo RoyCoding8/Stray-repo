@@ -1,0 +1,1262 @@
+{
+  "rsi_episodes": [
+    {
+      "operation_id": "live08-stepfun-proverb",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+      "status": "infra_failed",
+      "tokens": null,
+      "seconds": 8.8,
+      "trajectory": "52f887409d6ad93aedc1b6b5fb267971a448e21574408d33edf22a2ab74ab9fd",
+      "created_at": "2026-10-08 04:01:49.680611-04:00"
+    },
+    {
+      "operation_id": "live08-deepseek-proverb",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+      "status": "infra_failed",
+      "tokens": null,
+      "seconds": 1.9,
+      "trajectory": "a7a4b2dc5a26abf0da413f957ac8df36e105fbbeed3bb4f9e3b0f13e4d0b7e38",
+      "created_at": "2026-10-08 04:02:23.098424-04:00"
+    },
+    {
+      "operation_id": "live08-super-proverb",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+      "status": "over_budget",
+      "tokens": {
+        "input_tokens": 319911,
+        "output_tokens": 11181,
+        "cached_input_tokens": 286000,
+        "reasoning_output_tokens": 9094
+      },
+      "seconds": 166.4,
+      "trajectory": "4dfad7c3b17977e7b97c0dc1a91f4e9052a6f1d7e08b7796a56609837a4e8e2d",
+      "created_at": "2026-10-08 04:07:23.233881-04:00"
+    },
+    {
+      "operation_id": "live08-nemotron-proverb",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+      "status": "timeout",
+      "tokens": null,
+      "seconds": 480.3,
+      "trajectory": "9f40ff84487f4601f0ef37a2e2c60000ab51d7e918dd4a2332d3834b585f6232",
+      "created_at": "2026-10-08 04:08:06.071267-04:00"
+    },
+    {
+      "operation_id": "live08-cohere-proverb",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+      "status": "completed",
+      "tokens": {
+        "input_tokens": 189502,
+        "output_tokens": 5307,
+        "cached_input_tokens": 0,
+        "reasoning_output_tokens": 2582
+      },
+      "seconds": 250.1,
+      "trajectory": "07caf40f5a914c534c6d159c97f78a3db9ab786ecb8908b48f6cb4155f53cde0",
+      "created_at": "2026-10-08 04:09:36.763411-04:00"
+    },
+    {
+      "operation_id": "live08-openrouter-grade-school",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+      "status": "timeout",
+      "tokens": null,
+      "seconds": 180.2,
+      "trajectory": "bf6f4289fbab550cca99476421aaeb4f5bc75fc123da9f3e73f0a19cf200a3c6",
+      "created_at": "2026-10-08 04:25:00.005650-04:00"
+    },
+    {
+      "operation_id": "live08-kilo-auto-grade-school",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+      "status": "timeout",
+      "tokens": null,
+      "seconds": 180.1,
+      "trajectory": "b8d4ea75c8ba9929a5fe70f30f33e5b078ed196178bf3150efb76cbbc6353597",
+      "created_at": "2026-10-08 04:28:18.604724-04:00"
+    },
+    {
+      "operation_id": "live08-direct-openrouter-grade-school",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+      "status": "timeout",
+      "tokens": null,
+      "seconds": 180.3,
+      "trajectory": "a458ad70ca0f1697fac6f63986867896543695895125b204994c31bdaa7a91ef",
+      "created_at": "2026-10-08 04:35:13.637719-04:00"
+    },
+    {
+      "operation_id": "live08-direct-tool-smoke",
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "d57db8f9bbd5f946de40e4d27bebed39454ff9ba29c036ed95fb1b67885b25d6",
+      "status": "completed",
+      "tokens": {
+        "input_tokens": 28058,
+        "output_tokens": 545,
+        "cached_input_tokens": 0,
+        "reasoning_output_tokens": 280
+      },
+      "seconds": 26.1,
+      "trajectory": "7b0f367d23b61fd4ebd17a582fcb92e36b841098e9515d273648e79b7b6cb430",
+      "created_at": "2026-10-08 04:38:57.984317-04:00"
+    },
+    {
+      "operation_id": "live08-direct-child-grade-school",
+      "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+      "status": "timeout",
+      "tokens": null,
+      "seconds": 180.2,
+      "trajectory": "4851e017ed4182b6eb3f07da58029c6260bfbe6dc151d2e2dc44784782fbea08",
+      "created_at": "2026-10-08 04:45:31.882467-04:00"
+    },
+    {
+      "operation_id": "live08-direct-child-smoke",
+      "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "task": "d57db8f9bbd5f946de40e4d27bebed39454ff9ba29c036ed95fb1b67885b25d6",
+      "status": "completed",
+      "tokens": {
+        "input_tokens": 140628,
+        "output_tokens": 3709,
+        "cached_input_tokens": 52064,
+        "reasoning_output_tokens": 2359
+      },
+      "seconds": 86.2,
+      "trajectory": "d9774244675ce55edd49b5c580d5f19dae08c742cd4f8731aded4e24210c5a06",
+      "created_at": "2026-10-08 04:54:49.075156-04:00"
+    }
+  ],
+  "rsi_verdicts": [
+    {
+      "episode": "live08-cohere-proverb",
+      "evaluator_version": "d48a1db345b05b5718139dd75eb8829c357c1d0eb9aa3151933c66a1639af13c",
+      "operation_id": "rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c",
+      "solution": "b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a",
+      "status": "failed",
+      "passed": false,
+      "detail": {
+        "argv": [
+          "D:\\AI\\Agent-Society-v2\\.venv\\Scripts\\python.exe",
+          "-I",
+          "-S",
+          "-B",
+          "D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\_rsi_verify.py",
+          "proverb_test.py"
+        ],
+        "data": {
+          "worker": {
+            "data": {
+              "log": "FEEEFEEE\n======================================================================\nERROR: test_an_optional_qualifier_in_the_final_consequences (proverb_test.ProverbTest.test_an_optional_qualifier_in_the_final_consequences)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 87, in test_an_optional_qualifier_in_the_final_consequences\n    proverb(*input_data, qualifier=\"horseshoe\"),\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: proverb() got multiple values for argument 'qualifier'\n\n======================================================================\nERROR: test_four_pieces_modernized (proverb_test.ProverbTest.test_four_pieces_modernized)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 66, in test_four_pieces_modernized\n    proverb(*input_data, qualifier=None),\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: proverb() got multiple values for argument 'qualifier'\n\n======================================================================\nERROR: test_full_proverb (proverb_test.ProverbTest.test_full_proverb)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 51, in test_full_proverb\n    proverb(*input_data, qualifier=None),\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: proverb() got multiple values for argument 'qualifier'\n\n======================================================================\nERROR: test_three_pieces (proverb_test.ProverbTest.test_three_pieces)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 40, in test_three_pieces\n    proverb(*input_data, qualifier=None),\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: proverb() got multiple values for argument 'qualifier'\n\n======================================================================\nERROR: test_two_pieces (proverb_test.ProverbTest.test_two_pieces)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 30, in test_two_pieces\n    proverb(*input_data, qualifier=None),\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: proverb() got multiple values for argument 'qualifier'\n\n======================================================================\nERROR: test_zero_pieces (proverb_test.ProverbTest.test_zero_pieces)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 19, in test_zero_pieces\n    self.assertEqual(proverb(*input_data, qualifier=None), [])\n                     ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: proverb() missing 1 required positional argument: 'input_list'\n\n======================================================================\nFAIL: test_an_optional_qualifier_can_be_added (proverb_test.ProverbTest.test_an_optional_qualifier_can_be_added)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 79, in test_an_optional_qualifier_can_be_added\n    self.assertEqual(\n    ~~~~~~~~~~~~~~~~^\n        proverb(*input_data, qualifier=\"horseshoe\"),\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        [\"And all for the want of a horseshoe nail.\"],\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\nAssertionError: 'For want of a n the a was lost.\\nFor wan[91 chars]hoe.' != ['And all for the want of a horseshoe nail.']\n\n======================================================================\nFAIL: test_one_piece (proverb_test.ProverbTest.test_one_piece)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\proverb_test.py\", line 23, in test_one_piece\n    self.assertEqual(\n    ~~~~~~~~~~~~~~~~^\n        proverb(*input_data, qualifier=None), [\"And all for the want of a nail.\"]\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\nAssertionError: 'For want of a n the a was lost.\\nFor wan[83 chars]a n.' != ['And all for the want of a nail.']\n\n----------------------------------------------------------------------\nRan 8 tests in 0.066s\n\nFAILED (failures=2, errors=6)\n",
+              "tests": 8,
+              "errors": 6,
+              "skipped": 0,
+              "failures": 2
+            },
+            "error": "",
+            "status": "error"
+          },
+          "wall_ms": 994,
+          "timed_out": false,
+          "supervised": true
+        },
+        "host": "windows",
+        "parse": "typed-json",
+        "profile": "local-process",
+        "_verdict": "failure",
+        "truncated": false,
+        "containment": false
+      },
+      "created_at": "2026-10-08 04:09:39.883475-04:00"
+    },
+    {
+      "episode": "live08-direct-tool-smoke",
+      "evaluator_version": "27c127fb9bcfe564a56ccf62ea08083584f99874e16c0f4543848b31785371eb",
+      "operation_id": "rsi-verify-359f8fc3e02dcd5ea1b10714e774913e0804e3805a3964b138d6d909946a6336",
+      "solution": "f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734",
+      "status": "passed",
+      "passed": true,
+      "detail": {
+        "argv": [
+          "D:\\AI\\Agent-Society-v2\\.venv\\Scripts\\python.exe",
+          "-I",
+          "-S",
+          "-B",
+          "D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-359f8fc3e02dcd5ea1b10714e774913e0804e3805a3964b138d6d909946a6336_f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734.work\\inputs\\_rsi_verify.py",
+          "calc_test.py"
+        ],
+        "data": {
+          "worker": {
+            "data": {
+              "log": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+              "tests": 1,
+              "errors": 0,
+              "skipped": 0,
+              "failures": 0
+            },
+            "error": "",
+            "status": "ok"
+          },
+          "wall_ms": 132,
+          "timed_out": false,
+          "supervised": true
+        },
+        "host": "windows",
+        "parse": "typed-json",
+        "profile": "local-process",
+        "_verdict": "success",
+        "truncated": false,
+        "containment": false
+      },
+      "created_at": "2026-10-08 04:38:58.750977-04:00"
+    },
+    {
+      "episode": "live08-direct-child-smoke",
+      "evaluator_version": "27c127fb9bcfe564a56ccf62ea08083584f99874e16c0f4543848b31785371eb",
+      "operation_id": "rsi-verify-fc7e4786e6fd84d3150ff993be75deb1b5f3876ca3d7a6033e84cb72edd90e6e",
+      "solution": "f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734",
+      "status": "passed",
+      "passed": true,
+      "detail": {
+        "argv": [
+          "D:\\AI\\Agent-Society-v2\\.venv\\Scripts\\python.exe",
+          "-I",
+          "-S",
+          "-B",
+          "D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-fc7e4786e6fd84d3150ff993be75deb1b5f3876ca3d7a6033e84cb72edd90e6e_f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734.work\\inputs\\_rsi_verify.py",
+          "calc_test.py"
+        ],
+        "data": {
+          "worker": {
+            "data": {
+              "log": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+              "tests": 1,
+              "errors": 0,
+              "skipped": 0,
+              "failures": 0
+            },
+            "error": "",
+            "status": "ok"
+          },
+          "wall_ms": 114,
+          "timed_out": false,
+          "supervised": true
+        },
+        "host": "windows",
+        "parse": "typed-json",
+        "profile": "local-process",
+        "_verdict": "success",
+        "truncated": false,
+        "containment": false
+      },
+      "created_at": "2026-10-08 04:54:49.921895-04:00"
+    }
+  ],
+  "rsi_proposals": [
+    {
+      "operation_id": "live08-kilo-acquire-01",
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "evidence": "ce08fb4e8b1b2b7ae514d0fb9b3e835fc300035d9aff6528741977d716785d4e",
+      "status": "timeout",
+      "child": null,
+      "trajectory": "8c45051d06d6d0258cee7b46e1dfeaaf50664b2738b075132647777bf02ef207",
+      "detail": "The evidence.json output was truncated. Let me read it fully.",
+      "created_at": "2026-10-08 04:33:07.759789-04:00"
+    },
+    {
+      "operation_id": "live08-direct-acquire-01",
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "evidence": "8bb41690b7e987b83559857780e47363cd599d3e9b968797567bcb3a24cab706",
+      "status": "completed",
+      "child": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "trajectory": "531515eefbd67ee14bcb2fb0e92cdceb7f8c09508ad5b8e44fc3bc22a6ab25e8",
+      "detail": "\n\nBoth files are updated. Here's the summary of changes:\n\n## Changes Made\n\n### `genome/AGENTS.md`\nAdded 5 specific guidelines derived from observed failures in `evidence.json`:\n\n1. **PowerShell-native commands only** \u2014 Evidence shows agents repeatedly used `ls -la`, `Find-Item`, and `cat << 'EOF'` in Windows PowerShell, all failing with \"command not recognized\" or syntax errors. The fix was to use `Get-ChildItem -Recurse`, `type`, `Set-Content`.\n\n2. **Read file before patching** \u2014 Evidence shows agents attempting `apply_patch` with incorrect context multiple times before reading the file with `Get-Content` to get exact line numbers.\n\n3. **Check existing code before implementing** \u2014 Agents sometimes started from scratch when a class skeleton already existed, wasting effort.\n\n4. **School class cross-grade duplicate bug** \u2014 Evidence shows `add_student` allowed the same student in multiple grades, violating the requirement that each student appears at most once across the entire roster. The fix: check ALL grades, not just the target grade.\n\n5. **Don't repeat failing command patterns** \u2014 When a command fails, try the PowerShell equivalent instead of repeating the same failing pattern.\n\n### `genome/meta/IMPROVE.md`\nAdded a dated record of the changes with the evidence that supports each one.\n\nAll rules are specific to the observed failure mechanisms and applicable across tasks in this Windows PowerShell environment.",
+      "created_at": "2026-10-08 04:41:11.615091-04:00"
+    }
+  ],
+  "rsi_genomes": [
+    {
+      "digest": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "parent": null,
+      "harness": "codex",
+      "origin": {
+        "origin": "live-20261008-seed"
+      },
+      "created_at": "2026-10-08 04:00:01.758265-04:00"
+    },
+    {
+      "digest": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "harness": "codex",
+      "origin": {
+        "origin": "proposal:live08-direct-acquire-01"
+      },
+      "created_at": "2026-10-08 04:41:11.587826-04:00"
+    }
+  ],
+  "rsi_decisions": [
+    {
+      "id": "proposal:live08-kilo-acquire-01",
+      "kind": "proposal",
+      "actor": "ai",
+      "subject": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "data": {
+        "status": "timeout",
+        "rationale": "The evidence.json output was truncated. Let me read it fully.",
+        "operation_id": "live08-kilo-acquire-01"
+      },
+      "created_at": "2026-10-08 04:33:07.847518-04:00"
+    },
+    {
+      "id": "proposal:live08-direct-acquire-01",
+      "kind": "proposal",
+      "actor": "ai",
+      "subject": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "data": {
+        "status": "completed",
+        "rationale": "\n\nBoth files are updated. Here's the summary of changes:\n\n## Changes Made\n\n### `genome/AGENTS.md`\nAdded 5 specific guidelines derived from observed failures in `evidence.json`:\n\n1. **PowerShell-native commands only** \u2014 Evidence shows agents repeatedly used `ls -la`, `Find-Item`, and `cat << 'EOF'` in Windows PowerShell, all failing with \"command not recognized\" or syntax errors. The fix was to use `Get-ChildItem -Recurse`, `type`, `Set-Content`.\n\n2. **Read file before patching** \u2014 Evidence shows agents attempting `apply_patch` with incorrect context multiple times before reading the file with `Get-Content` to get exact line numbers.\n\n3. **Check existing code before implementing** \u2014 Agents sometimes started from scratch when a class skeleton already existed, wasting effort.\n\n4. **School class cross-grade duplicate bug** \u2014 Evidence shows `add_student` allowed the same student in multiple grades, violating the requirement that each student appears at most once across the entire roster. The fix: check ALL grades, not just the target grade.\n\n5. **Don't repeat failing command patterns** \u2014 When a command fails, try the PowerShell equivalent instead of repeating the same failing pattern.\n\n### `genome/meta/IMPROVE.md`\nAdded a dated record of the changes with the evidence that supports each one.\n\nAll rules are specific to the observed failure mechanisms and applicable across tasks in this Windows PowerShell environment.",
+        "operation_id": "live08-direct-acquire-01"
+      },
+      "created_at": "2026-10-08 04:41:11.672601-04:00"
+    }
+  ],
+  "operations": [
+    {
+      "id": "live08-stepfun-proverb",
+      "attempt_id": null,
+      "allocation_id": "live08-stepfun-proverb:tokens",
+      "reservation_id": "res-live08-stepfun-proverb",
+      "payload_digest": "5c65718ab64f796b3c1cf6c5d736613043a80e4f039f04fb11fdfa2fdfafbd8c",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 480000,
+          "instruction": "# Instructions\n\nFor want of a horseshoe nail, a kingdom was lost, or so the saying goes.\n\nGiven a list of inputs, generate the relevant proverb.\nFor example, given the list `[\"nail\", \"shoe\", \"horse\", \"rider\", \"message\", \"battle\", \"kingdom\"]`, you will output the full text of this proverbial rhyme:\n\n```text\nFor want of a nail the shoe was lost.\nFor want of a shoe the horse was lost.\nFor want of a horse the rider was lost.\nFor want of a rider the message was lost.\nFor want of a message the battle was lost.\nFor want of a battle the kingdom was lost.\nAnd all for the want of a nail.\n```\n\nNote that the list of inputs may vary; your solution should be able to handle lists of arbitrary length and content.\nNo line of the output text should be a static, unchanging string; all should vary according to the input given.\n\n# Instructions append\n\nIn [concept:python/unpacking-and-multiple-assignment](https://github.com/exercism/python/tree/main/concepts/unpacking-and-multiple-assignment), you learned multiple techniques for working with `lists`/`tuples` of arbitrary length as well as function arguments of arbitrary length.\nThis exercise would be a great place to practice those techniques.\n\n## How this exercise is implemented for Python\n\nThe test cases for this track add an additional keyword argument called `qualifier`.\nYou should use this keyword arguments value to modify the final verse of your Proverb.\n",
+          "token_ceiling": 300000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:01:38.982545-04:00",
+      "updated_at": "2026-10-08 04:01:48.920843-04:00"
+    },
+    {
+      "id": "live08-deepseek-proverb",
+      "attempt_id": null,
+      "allocation_id": "live08-deepseek-proverb:tokens",
+      "reservation_id": "res-live08-deepseek-proverb",
+      "payload_digest": "5c65718ab64f796b3c1cf6c5d736613043a80e4f039f04fb11fdfa2fdfafbd8c",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 480000,
+          "instruction": "# Instructions\n\nFor want of a horseshoe nail, a kingdom was lost, or so the saying goes.\n\nGiven a list of inputs, generate the relevant proverb.\nFor example, given the list `[\"nail\", \"shoe\", \"horse\", \"rider\", \"message\", \"battle\", \"kingdom\"]`, you will output the full text of this proverbial rhyme:\n\n```text\nFor want of a nail the shoe was lost.\nFor want of a shoe the horse was lost.\nFor want of a horse the rider was lost.\nFor want of a rider the message was lost.\nFor want of a message the battle was lost.\nFor want of a battle the kingdom was lost.\nAnd all for the want of a nail.\n```\n\nNote that the list of inputs may vary; your solution should be able to handle lists of arbitrary length and content.\nNo line of the output text should be a static, unchanging string; all should vary according to the input given.\n\n# Instructions append\n\nIn [concept:python/unpacking-and-multiple-assignment](https://github.com/exercism/python/tree/main/concepts/unpacking-and-multiple-assignment), you learned multiple techniques for working with `lists`/`tuples` of arbitrary length as well as function arguments of arbitrary length.\nThis exercise would be a great place to practice those techniques.\n\n## How this exercise is implemented for Python\n\nThe test cases for this track add an additional keyword argument called `qualifier`.\nYou should use this keyword arguments value to modify the final verse of your Proverb.\n",
+          "token_ceiling": 300000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:02:19.084693-04:00",
+      "updated_at": "2026-10-08 04:02:22.469636-04:00"
+    },
+    {
+      "id": "live08-super-proverb",
+      "attempt_id": null,
+      "allocation_id": "live08-super-proverb:tokens",
+      "reservation_id": "res-live08-super-proverb",
+      "payload_digest": "2b219852311af51e2c910d3d9047d93e8b8efb76f3c3855f7a98d5dafbcdb840",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 300000,
+          "instruction": "# Instructions\n\nFor want of a horseshoe nail, a kingdom was lost, or so the saying goes.\n\nGiven a list of inputs, generate the relevant proverb.\nFor example, given the list `[\"nail\", \"shoe\", \"horse\", \"rider\", \"message\", \"battle\", \"kingdom\"]`, you will output the full text of this proverbial rhyme:\n\n```text\nFor want of a nail the shoe was lost.\nFor want of a shoe the horse was lost.\nFor want of a horse the rider was lost.\nFor want of a rider the message was lost.\nFor want of a message the battle was lost.\nFor want of a battle the kingdom was lost.\nAnd all for the want of a nail.\n```\n\nNote that the list of inputs may vary; your solution should be able to handle lists of arbitrary length and content.\nNo line of the output text should be a static, unchanging string; all should vary according to the input given.\n\n# Instructions append\n\nIn [concept:python/unpacking-and-multiple-assignment](https://github.com/exercism/python/tree/main/concepts/unpacking-and-multiple-assignment), you learned multiple techniques for working with `lists`/`tuples` of arbitrary length as well as function arguments of arbitrary length.\nThis exercise would be a great place to practice those techniques.\n\n## How this exercise is implemented for Python\n\nThe test cases for this track add an additional keyword argument called `qualifier`.\nYou should use this keyword arguments value to modify the final verse of your Proverb.\n",
+          "token_ceiling": 300000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:04:34.605045-04:00",
+      "updated_at": "2026-10-08 04:07:22.348694-04:00"
+    },
+    {
+      "id": "live08-nemotron-proverb",
+      "attempt_id": null,
+      "allocation_id": "live08-nemotron-proverb:tokens",
+      "reservation_id": "res-live08-nemotron-proverb",
+      "payload_digest": "5c65718ab64f796b3c1cf6c5d736613043a80e4f039f04fb11fdfa2fdfafbd8c",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 480000,
+          "instruction": "# Instructions\n\nFor want of a horseshoe nail, a kingdom was lost, or so the saying goes.\n\nGiven a list of inputs, generate the relevant proverb.\nFor example, given the list `[\"nail\", \"shoe\", \"horse\", \"rider\", \"message\", \"battle\", \"kingdom\"]`, you will output the full text of this proverbial rhyme:\n\n```text\nFor want of a nail the shoe was lost.\nFor want of a shoe the horse was lost.\nFor want of a horse the rider was lost.\nFor want of a rider the message was lost.\nFor want of a message the battle was lost.\nFor want of a battle the kingdom was lost.\nAnd all for the want of a nail.\n```\n\nNote that the list of inputs may vary; your solution should be able to handle lists of arbitrary length and content.\nNo line of the output text should be a static, unchanging string; all should vary according to the input given.\n\n# Instructions append\n\nIn [concept:python/unpacking-and-multiple-assignment](https://github.com/exercism/python/tree/main/concepts/unpacking-and-multiple-assignment), you learned multiple techniques for working with `lists`/`tuples` of arbitrary length as well as function arguments of arbitrary length.\nThis exercise would be a great place to practice those techniques.\n\n## How this exercise is implemented for Python\n\nThe test cases for this track add an additional keyword argument called `qualifier`.\nYou should use this keyword arguments value to modify the final verse of your Proverb.\n",
+          "token_ceiling": 300000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:00:02.454555-04:00",
+      "updated_at": "2026-10-08 04:08:05.551392-04:00"
+    },
+    {
+      "id": "live08-cohere-proverb",
+      "attempt_id": null,
+      "allocation_id": "live08-cohere-proverb:tokens",
+      "reservation_id": "res-live08-cohere-proverb",
+      "payload_digest": "2b219852311af51e2c910d3d9047d93e8b8efb76f3c3855f7a98d5dafbcdb840",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 300000,
+          "instruction": "# Instructions\n\nFor want of a horseshoe nail, a kingdom was lost, or so the saying goes.\n\nGiven a list of inputs, generate the relevant proverb.\nFor example, given the list `[\"nail\", \"shoe\", \"horse\", \"rider\", \"message\", \"battle\", \"kingdom\"]`, you will output the full text of this proverbial rhyme:\n\n```text\nFor want of a nail the shoe was lost.\nFor want of a shoe the horse was lost.\nFor want of a horse the rider was lost.\nFor want of a rider the message was lost.\nFor want of a message the battle was lost.\nFor want of a battle the kingdom was lost.\nAnd all for the want of a nail.\n```\n\nNote that the list of inputs may vary; your solution should be able to handle lists of arbitrary length and content.\nNo line of the output text should be a static, unchanging string; all should vary according to the input given.\n\n# Instructions append\n\nIn [concept:python/unpacking-and-multiple-assignment](https://github.com/exercism/python/tree/main/concepts/unpacking-and-multiple-assignment), you learned multiple techniques for working with `lists`/`tuples` of arbitrary length as well as function arguments of arbitrary length.\nThis exercise would be a great place to practice those techniques.\n\n## How this exercise is implemented for Python\n\nThe test cases for this track add an additional keyword argument called `qualifier`.\nYou should use this keyword arguments value to modify the final verse of your Proverb.\n",
+          "token_ceiling": 300000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": 194809
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:05:24.153420-04:00",
+      "updated_at": "2026-10-08 04:09:35.597647-04:00"
+    },
+    {
+      "id": "rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c",
+      "attempt_id": null,
+      "allocation_id": "live08-cohere-proverb:cpu",
+      "reservation_id": "res-rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c",
+      "payload_digest": "62c21839a5e22d7f755880e760015da1a967d3246e1ca680271202ae91af20bb",
+      "payload": {
+        "effect": "sandbox-exec",
+        "payload": {
+          "argv": [
+            "D:\\AI\\Agent-Society-v2\\.venv\\Scripts\\python.exe",
+            "-I",
+            "-S",
+            "-B",
+            "D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c_b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a.work\\inputs\\_rsi_verify.py",
+            "proverb_test.py"
+          ],
+          "profile": "local-process",
+          "timeout_ms": 30000,
+          "cpu_seconds": null,
+          "memory_bytes": null,
+          "max_output_bytes": 65536
+        },
+        "retries": 0,
+        "budget_kind": "hard-ceiling",
+        "_admitted_launcher": "local-1",
+        "_authority_version": 1,
+        "_receipt_provenance": "local-1",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "local-1",
+      "provider_id": "",
+      "receipt_provenance": "local-1",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "b26c1eb197b03dfcf3d5a2dc63c771686e11fd278c398917b3053f16d203c44a",
+      "settled": true,
+      "created_at": "2026-10-08 04:09:37.524425-04:00",
+      "updated_at": "2026-10-08 04:09:39.375849-04:00"
+    },
+    {
+      "id": "live08-openrouter-grade-school",
+      "attempt_id": null,
+      "allocation_id": "live08-openrouter-grade-school:tokens",
+      "reservation_id": "res-live08-openrouter-grade-school",
+      "payload_digest": "0b2cb55cbeb4a6b857f1b2cbac4f74f93409e6412169462dbc72909c5cfbbe09",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 180000,
+          "instruction": "# Instructions\n\nGiven students' names along with the grade that they are in, create a roster for the school.\n\nIn the end, you should be able to:\n\n- Add a student's name to the roster for a grade\n  - \"Add Jim to grade 2.\"\n  - \"OK.\"\n- Get a list of all students enrolled in a grade\n  - \"Which students are in grade 2?\"\n  - \"We've only got Jim just now.\"\n- Get a sorted list of all students in all grades.\n  Grades should sort as 1, 2, 3, etc., and students within a grade should be sorted alphabetically by name.\n  - \"Who all is enrolled in school right now?\"\n  - \"Let me think.\n    We have Anna, Barb, and Charlie in grade 1, Alex, Peter, and Zoe in grade 2 and Jim in grade 5.\n    So the answer is: Anna, Barb, Charlie, Alex, Peter, Zoe and Jim\"\n\nNote that all our students only have one name (It's a small town, what do you want?) and each student cannot be added more than once to a grade or the roster.\nIn fact, when a test attempts to add the same student more than once, your implementation should indicate that this is incorrect.\n\n# Instructions append\n\nThe tests for this exercise expect your school roster will be implemented via a School `class` in Python.\nIf you are unfamiliar with classes in Python, [classes][classes in python] from the Python docs is a good place to start.\n\n[classes in python]: https://docs.python.org/3/tutorial/classes.html\n",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:21:58.541477-04:00",
+      "updated_at": "2026-10-08 04:24:59.406743-04:00"
+    },
+    {
+      "id": "live08-kilo-auto-grade-school",
+      "attempt_id": null,
+      "allocation_id": "live08-kilo-auto-grade-school:tokens",
+      "reservation_id": "res-live08-kilo-auto-grade-school",
+      "payload_digest": "0b2cb55cbeb4a6b857f1b2cbac4f74f93409e6412169462dbc72909c5cfbbe09",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 180000,
+          "instruction": "# Instructions\n\nGiven students' names along with the grade that they are in, create a roster for the school.\n\nIn the end, you should be able to:\n\n- Add a student's name to the roster for a grade\n  - \"Add Jim to grade 2.\"\n  - \"OK.\"\n- Get a list of all students enrolled in a grade\n  - \"Which students are in grade 2?\"\n  - \"We've only got Jim just now.\"\n- Get a sorted list of all students in all grades.\n  Grades should sort as 1, 2, 3, etc., and students within a grade should be sorted alphabetically by name.\n  - \"Who all is enrolled in school right now?\"\n  - \"Let me think.\n    We have Anna, Barb, and Charlie in grade 1, Alex, Peter, and Zoe in grade 2 and Jim in grade 5.\n    So the answer is: Anna, Barb, Charlie, Alex, Peter, Zoe and Jim\"\n\nNote that all our students only have one name (It's a small town, what do you want?) and each student cannot be added more than once to a grade or the roster.\nIn fact, when a test attempts to add the same student more than once, your implementation should indicate that this is incorrect.\n\n# Instructions append\n\nThe tests for this exercise expect your school roster will be implemented via a School `class` in Python.\nIf you are unfamiliar with classes in Python, [classes][classes in python] from the Python docs is a good place to start.\n\n[classes in python]: https://docs.python.org/3/tutorial/classes.html\n",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:25:17.580755-04:00",
+      "updated_at": "2026-10-08 04:28:18.273171-04:00"
+    },
+    {
+      "id": "live08-kilo-acquire-01",
+      "attempt_id": null,
+      "allocation_id": "live08-kilo-acquire-01:tokens",
+      "reservation_id": "res-live08-kilo-acquire-01",
+      "payload_digest": "186f741f00a2d38ad547f36d58109ba5bdf58c17b8bc432fce7e8f442d8c58e6",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "ce08fb4e8b1b2b7ae514d0fb9b3e835fc300035d9aff6528741977d716785d4e",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 300000,
+          "instruction": "Improve the agent in genome/ using evidence.json and your AGENTS.md. Edit only genome/. Preserve its file layout. Improve meta/IMPROVE.md when useful. Do not claim evaluation results. Explain your change in the final message.",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:28:06.456890-04:00",
+      "updated_at": "2026-10-08 04:33:07.267455-04:00"
+    },
+    {
+      "id": "live08-direct-tool-smoke",
+      "attempt_id": null,
+      "allocation_id": "live08-direct-tool-smoke:tokens",
+      "reservation_id": "res-live08-direct-tool-smoke",
+      "payload_digest": "539fbb9c2546d11f578ae666106ee78850b8acf7cf211d6730594c0795bccd82",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "d57db8f9bbd5f946de40e4d27bebed39454ff9ba29c036ed95fb1b67885b25d6",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 180000,
+          "instruction": "This is a tiny tool-route check. The workspace already contains calc.py. Read it, replace its stub with def add(a, b) returning the integer sum a + b, then finish immediately. You may write it with PowerShell Set-Content; do not search for tests, Git, skills or files outside this workspace. The kernel separately verifies the result. Do not add tests or other files.",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": 28603
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:38:30.941313-04:00",
+      "updated_at": "2026-10-08 04:38:57.783865-04:00"
+    },
+    {
+      "id": "live08-direct-openrouter-grade-school",
+      "attempt_id": null,
+      "allocation_id": "live08-direct-openrouter-grade-school:tokens",
+      "reservation_id": "res-live08-direct-openrouter-grade-school",
+      "payload_digest": "0b2cb55cbeb4a6b857f1b2cbac4f74f93409e6412169462dbc72909c5cfbbe09",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 180000,
+          "instruction": "# Instructions\n\nGiven students' names along with the grade that they are in, create a roster for the school.\n\nIn the end, you should be able to:\n\n- Add a student's name to the roster for a grade\n  - \"Add Jim to grade 2.\"\n  - \"OK.\"\n- Get a list of all students enrolled in a grade\n  - \"Which students are in grade 2?\"\n  - \"We've only got Jim just now.\"\n- Get a sorted list of all students in all grades.\n  Grades should sort as 1, 2, 3, etc., and students within a grade should be sorted alphabetically by name.\n  - \"Who all is enrolled in school right now?\"\n  - \"Let me think.\n    We have Anna, Barb, and Charlie in grade 1, Alex, Peter, and Zoe in grade 2 and Jim in grade 5.\n    So the answer is: Anna, Barb, Charlie, Alex, Peter, Zoe and Jim\"\n\nNote that all our students only have one name (It's a small town, what do you want?) and each student cannot be added more than once to a grade or the roster.\nIn fact, when a test attempts to add the same student more than once, your implementation should indicate that this is incorrect.\n\n# Instructions append\n\nThe tests for this exercise expect your school roster will be implemented via a School `class` in Python.\nIf you are unfamiliar with classes in Python, [classes][classes in python] from the Python docs is a good place to start.\n\n[classes in python]: https://docs.python.org/3/tutorial/classes.html\n",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:32:12.300784-04:00",
+      "updated_at": "2026-10-08 04:35:13.216329-04:00"
+    },
+    {
+      "id": "rsi-verify-359f8fc3e02dcd5ea1b10714e774913e0804e3805a3964b138d6d909946a6336",
+      "attempt_id": null,
+      "allocation_id": "live08-direct-tool-smoke:cpu",
+      "reservation_id": "res-rsi-verify-359f8fc3e02dcd5ea1b10714e774913e0804e3805a3964b138d6d909946a6336",
+      "payload_digest": "111f039b861cae3a135251897bbea181ee238ac098d3b547f1c9ab5cc2eba0e3",
+      "payload": {
+        "effect": "sandbox-exec",
+        "payload": {
+          "argv": [
+            "D:\\AI\\Agent-Society-v2\\.venv\\Scripts\\python.exe",
+            "-I",
+            "-S",
+            "-B",
+            "D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-359f8fc3e02dcd5ea1b10714e774913e0804e3805a3964b138d6d909946a6336_f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734.work\\inputs\\_rsi_verify.py",
+            "calc_test.py"
+          ],
+          "profile": "local-process",
+          "timeout_ms": 30000,
+          "cpu_seconds": null,
+          "memory_bytes": null,
+          "max_output_bytes": 65536
+        },
+        "retries": 0,
+        "budget_kind": "hard-ceiling",
+        "_admitted_launcher": "local-1",
+        "_authority_version": 1,
+        "_receipt_provenance": "local-1",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "local-1",
+      "provider_id": "",
+      "receipt_provenance": "local-1",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734",
+      "settled": true,
+      "created_at": "2026-10-08 04:38:58.225870-04:00",
+      "updated_at": "2026-10-08 04:38:58.621758-04:00"
+    },
+    {
+      "id": "live08-direct-acquire-01",
+      "attempt_id": null,
+      "allocation_id": "live08-direct-acquire-01:tokens",
+      "reservation_id": "res-live08-direct-acquire-01",
+      "payload_digest": "0fb528ae2d6747f9b151ca16856f852baff34fe388b441f07cc0254b80aee927",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "8bb41690b7e987b83559857780e47363cd599d3e9b968797567bcb3a24cab706",
+          "config": {},
+          "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+          "harness": "codex",
+          "timeout_ms": 300000,
+          "instruction": "Improve the agent in genome/ using evidence.json and your AGENTS.md. Edit only genome/. Preserve its file layout. Improve meta/IMPROVE.md when useful. Do not claim evaluation results. Explain your change in the final message.",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": 470672
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:37:13.459084-04:00",
+      "updated_at": "2026-10-08 04:41:10.975109-04:00"
+    },
+    {
+      "id": "live08-direct-child-grade-school",
+      "attempt_id": null,
+      "allocation_id": "live08-direct-child-grade-school:tokens",
+      "reservation_id": "res-live08-direct-child-grade-school",
+      "payload_digest": "ac4ede425c3346ab975bcda3d95190f57e441ecb6ac0d5f8b0f9773e348f1db8",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+          "config": {},
+          "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+          "harness": "codex",
+          "timeout_ms": 180000,
+          "instruction": "# Instructions\n\nGiven students' names along with the grade that they are in, create a roster for the school.\n\nIn the end, you should be able to:\n\n- Add a student's name to the roster for a grade\n  - \"Add Jim to grade 2.\"\n  - \"OK.\"\n- Get a list of all students enrolled in a grade\n  - \"Which students are in grade 2?\"\n  - \"We've only got Jim just now.\"\n- Get a sorted list of all students in all grades.\n  Grades should sort as 1, 2, 3, etc., and students within a grade should be sorted alphabetically by name.\n  - \"Who all is enrolled in school right now?\"\n  - \"Let me think.\n    We have Anna, Barb, and Charlie in grade 1, Alex, Peter, and Zoe in grade 2 and Jim in grade 5.\n    So the answer is: Anna, Barb, Charlie, Alex, Peter, Zoe and Jim\"\n\nNote that all our students only have one name (It's a small town, what do you want?) and each student cannot be added more than once to a grade or the roster.\nIn fact, when a test attempts to add the same student more than once, your implementation should indicate that this is incorrect.\n\n# Instructions append\n\nThe tests for this exercise expect your school roster will be implemented via a School `class` in Python.\nIf you are unfamiliar with classes in Python, [classes][classes in python] from the Python docs is a good place to start.\n\n[classes in python]: https://docs.python.org/3/tutorial/classes.html\n",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:42:31.032630-04:00",
+      "updated_at": "2026-10-08 04:45:31.689852-04:00"
+    },
+    {
+      "id": "live08-direct-child-smoke",
+      "attempt_id": null,
+      "allocation_id": "live08-direct-child-smoke:tokens",
+      "reservation_id": "res-live08-direct-child-smoke",
+      "payload_digest": "cc0ac4aed769f48d0bb8b84c32f3a5a9c1448c8f7e5d19c83bc8335459d8cfcf",
+      "payload": {
+        "effect": "agent-run",
+        "payload": {
+          "task": "d57db8f9bbd5f946de40e4d27bebed39454ff9ba29c036ed95fb1b67885b25d6",
+          "config": {},
+          "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+          "harness": "codex",
+          "timeout_ms": 180000,
+          "instruction": "This is a tiny tool-route check. The workspace already contains calc.py. Read it, replace its stub with def add(a, b) returning the integer sum a + b, then finish immediately. You may write it with PowerShell Set-Content; do not search for tests, Git, skills or files outside this workspace. The kernel separately verifies the result. Do not add tests or other files.",
+          "token_ceiling": 1000000
+        },
+        "retries": 0,
+        "budget_kind": "estimated-budget",
+        "_admitted_launcher": "codex",
+        "_authority_version": 1,
+        "_receipt_provenance": "codex",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": 144337
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "codex",
+      "provider_id": "",
+      "receipt_provenance": "codex",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "",
+      "settled": true,
+      "created_at": "2026-10-08 04:53:22.046181-04:00",
+      "updated_at": "2026-10-08 04:54:48.692343-04:00"
+    },
+    {
+      "id": "rsi-verify-fc7e4786e6fd84d3150ff993be75deb1b5f3876ca3d7a6033e84cb72edd90e6e",
+      "attempt_id": null,
+      "allocation_id": "live08-direct-child-smoke:cpu",
+      "reservation_id": "res-rsi-verify-fc7e4786e6fd84d3150ff993be75deb1b5f3876ca3d7a6033e84cb72edd90e6e",
+      "payload_digest": "91443351efc73d5193dcd0b663a79e3d27a577e4b9d185ea54100b834fd29c62",
+      "payload": {
+        "effect": "sandbox-exec",
+        "payload": {
+          "argv": [
+            "D:\\AI\\Agent-Society-v2\\.venv\\Scripts\\python.exe",
+            "-I",
+            "-S",
+            "-B",
+            "D:\\AI\\tools\\rsi-live-20261008\\verifiers\\rsi-verify-fc7e4786e6fd84d3150ff993be75deb1b5f3876ca3d7a6033e84cb72edd90e6e_f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734.work\\inputs\\_rsi_verify.py",
+            "calc_test.py"
+          ],
+          "profile": "local-process",
+          "timeout_ms": 30000,
+          "cpu_seconds": null,
+          "memory_bytes": null,
+          "max_output_bytes": 65536
+        },
+        "retries": 0,
+        "budget_kind": "hard-ceiling",
+        "_admitted_launcher": "local-1",
+        "_authority_version": 1,
+        "_receipt_provenance": "local-1",
+        "_dispatch_generation": 1,
+        "_receipt_actual_cost": null
+      },
+      "dispatch_state": "observed",
+      "launcher_id": "local-1",
+      "provider_id": "",
+      "receipt_provenance": "local-1",
+      "reconcile_state": "none",
+      "cancel_state": "none",
+      "execution_version": "f5cdc3b9ea344b2700e66717daecc7a10e399fb7315577636a6bd3e1eeb03734",
+      "settled": true,
+      "created_at": "2026-10-08 04:54:49.383496-04:00",
+      "updated_at": "2026-10-08 04:54:49.681860-04:00"
+    }
+  ],
+  "allocations": [
+    {
+      "id": "live08-nemotron-proverb:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:00:02.015269-04:00"
+    },
+    {
+      "id": "live08-direct-child-smoke:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 144337,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:53:21.930495-04:00"
+    },
+    {
+      "id": "live08-stepfun-proverb:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:01:38.738044-04:00"
+    },
+    {
+      "id": "live08-stepfun-proverb:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 300000,
+      "amount_scale": 1,
+      "consumed": 300000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:01:38.608638-04:00"
+    },
+    {
+      "id": "live08-deepseek-proverb:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:02:18.766888-04:00"
+    },
+    {
+      "id": "live08-direct-child-smoke:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 111,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:53:21.956131-04:00"
+    },
+    {
+      "id": "live08-deepseek-proverb:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 300000,
+      "amount_scale": 1,
+      "consumed": 300000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:02:18.659506-04:00"
+    },
+    {
+      "id": "live08-super-proverb:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:04:34.285543-04:00"
+    },
+    {
+      "id": "live08-super-proverb:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 300000,
+      "amount_scale": 1,
+      "consumed": 300000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:04:34.062967-04:00"
+    },
+    {
+      "id": "live08-nemotron-proverb:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 300000,
+      "amount_scale": 1,
+      "consumed": 300000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:00:01.906559-04:00"
+    },
+    {
+      "id": "live08-cohere-proverb:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 300000,
+      "amount_scale": 1,
+      "consumed": 194809,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:05:23.719782-04:00"
+    },
+    {
+      "id": "live08-cohere-proverb:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 111,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:05:23.865605-04:00"
+    },
+    {
+      "id": "live08-openrouter-grade-school:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:21:58.316220-04:00"
+    },
+    {
+      "id": "live08-openrouter-grade-school:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 1000000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:21:58.253541-04:00"
+    },
+    {
+      "id": "live08-kilo-auto-grade-school:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:25:17.437889-04:00"
+    },
+    {
+      "id": "live08-kilo-auto-grade-school:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 1000000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:25:17.373447-04:00"
+    },
+    {
+      "id": "live08-direct-openrouter-grade-school:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:32:12.139113-04:00"
+    },
+    {
+      "id": "live08-kilo-acquire-01:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 1000000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:28:05.859243-04:00"
+    },
+    {
+      "id": "live08-direct-openrouter-grade-school:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 1000000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:32:12.039608-04:00"
+    },
+    {
+      "id": "live08-direct-tool-smoke:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 28603,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:38:30.747434-04:00"
+    },
+    {
+      "id": "live08-direct-tool-smoke:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 111,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:38:30.780104-04:00"
+    },
+    {
+      "id": "live08-direct-acquire-01:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 470672,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:37:13.127691-04:00"
+    },
+    {
+      "id": "live08-direct-child-grade-school:cpu",
+      "parent_id": null,
+      "domain": "cpu",
+      "epoch": 0,
+      "authorized": 120,
+      "amount_scale": 1,
+      "consumed": 0,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:42:30.921740-04:00"
+    },
+    {
+      "id": "live08-direct-child-grade-school:tokens",
+      "parent_id": null,
+      "domain": "tokens",
+      "epoch": 0,
+      "authorized": 1000000,
+      "amount_scale": 1,
+      "consumed": 1000000,
+      "reserved": 0,
+      "occupancy": 0,
+      "max_occupancy": 8,
+      "owner_scope": "",
+      "created_at": "2026-10-08 04:42:30.889294-04:00"
+    }
+  ],
+  "rsi_anchor_uses": []
+}

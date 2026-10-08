@@ -1,0 +1,288 @@
+{
+  "acquisition-report": {
+    "proposal": {
+      "operation_id": "live08-kilo-acquire-01",
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "evidence": "ce08fb4e8b1b2b7ae514d0fb9b3e835fc300035d9aff6528741977d716785d4e",
+      "status": "timeout",
+      "child": null,
+      "trajectory": "8c45051d06d6d0258cee7b46e1dfeaaf50664b2738b075132647777bf02ef207",
+      "detail": "The evidence.json output was truncated. Let me read it fully."
+    },
+    "accounting": {
+      "authorized": 1000000,
+      "reserved": 0,
+      "consumed": 1000000
+    }
+  },
+  "child-smoke-use-report": {
+    "operation": "live08-direct-child-smoke",
+    "model": "openrouter/openrouter/free",
+    "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+    "task": "d57db8f9bbd5f946de40e4d27bebed39454ff9ba29c036ed95fb1b67885b25d6",
+    "status": "completed",
+    "tokens": {
+      "input_tokens": 140628,
+      "output_tokens": 3709,
+      "cached_input_tokens": 52064,
+      "reasoning_output_tokens": 2359
+    },
+    "seconds": 86.2,
+    "trajectory": "d9774244675ce55edd49b5c580d5f19dae08c742cd4f8731aded4e24210c5a06",
+    "staged_genome_verified": true,
+    "constructor": "live08-direct-acquire-01",
+    "interpretation": "Development use, not independent transfer or gain",
+    "verifier": {
+      "operation": "rsi-verify-fc7e4786e6fd84d3150ff993be75deb1b5f3876ca3d7a6033e84cb72edd90e6e",
+      "passed": true,
+      "status": "passed"
+    }
+  },
+  "child-use-report": {
+    "operation": "live08-direct-child-grade-school",
+    "model": "openrouter/openrouter/free",
+    "genome": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+    "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+    "status": "timeout",
+    "tokens": null,
+    "seconds": 180.2,
+    "trajectory": "4851e017ed4182b6eb3f07da58029c6260bfbe6dc151d2e2dc44784782fbea08",
+    "staged_genome_verified": true,
+    "constructor": "live08-direct-acquire-01",
+    "interpretation": "Development use, not independent transfer or gain"
+  },
+  "direct-acquisition-report": {
+    "proposal": {
+      "operation_id": "live08-direct-acquire-01",
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "evidence": "8bb41690b7e987b83559857780e47363cd599d3e9b968797567bcb3a24cab706",
+      "status": "completed",
+      "child": "8c1a73e414e7fb304dfcded548cce6b4c005bca60ec6cbac47c8a0181afcccde",
+      "trajectory": "531515eefbd67ee14bcb2fb0e92cdceb7f8c09508ad5b8e44fc3bc22a6ab25e8",
+      "detail": "\n\nBoth files are updated. Here's the summary of changes:\n\n## Changes Made\n\n### `genome/AGENTS.md`\nAdded 5 specific guidelines derived from observed failures in `evidence.json`:\n\n1. **PowerShell-native commands only** \u2014 Evidence shows agents repeatedly used `ls -la`, `Find-Item`, and `cat << 'EOF'` in Windows PowerShell, all failing with \"command not recognized\" or syntax errors. The fix was to use `Get-ChildItem -Recurse`, `type`, `Set-Content`.\n\n2. **Read file before patching** \u2014 Evidence shows agents attempting `apply_patch` with incorrect context multiple times before reading the file with `Get-Content` to get exact line numbers.\n\n3. **Check existing code before implementing** \u2014 Agents sometimes started from scratch when a class skeleton already existed, wasting effort.\n\n4. **School class cross-grade duplicate bug** \u2014 Evidence shows `add_student` allowed the same student in multiple grades, violating the requirement that each student appears at most once across the entire roster. The fix: check ALL grades, not just the target grade.\n\n5. **Don't repeat failing command patterns** \u2014 When a command fails, try the PowerShell equivalent instead of repeating the same failing pattern.\n\n### `genome/meta/IMPROVE.md`\nAdded a dated record of the changes with the evidence that supports each one.\n\nAll rules are specific to the observed failure mechanisms and applicable across tasks in this Windows PowerShell environment."
+    },
+    "accounting": {
+      "authorized": 1000000,
+      "reserved": 0,
+      "consumed": 470672
+    }
+  },
+  "live08-cohere-proverb-report": {
+    "operation_id": "live08-cohere-proverb",
+    "model": "kilo/cohere/north-mini-code:free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+    "status": "completed",
+    "tokens": {
+      "input_tokens": 189502,
+      "output_tokens": 5307,
+      "cached_input_tokens": 0,
+      "reasoning_output_tokens": 2582
+    },
+    "seconds": 250.1,
+    "trajectory": "07caf40f5a914c534c6d159c97f78a3db9ab786ecb8908b48f6cb4155f53cde0",
+    "infra_reason": "",
+    "verifier": {
+      "operation_id": "rsi-verify-5ed2d554536c67ece681fcf326dfbdb807879f16f5978bcd462f1ada1529c57c",
+      "status": "failed",
+      "passed": false
+    },
+    "accounting": {
+      "tokens": {
+        "authorized": 300000,
+        "reserved": 0,
+        "consumed": 194809
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 111
+      }
+    }
+  },
+  "live08-deepseek-proverb-report": {
+    "operation_id": "live08-deepseek-proverb",
+    "model": "deepseek/deepseek-v4-pro-free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+    "status": "infra_failed",
+    "tokens": null,
+    "seconds": 1.9,
+    "trajectory": "a7a4b2dc5a26abf0da413f957ac8df36e105fbbeed3bb4f9e3b0f13e4d0b7e38",
+    "infra_reason": "exceeded retry limit, last status: 429 Too Many Requests",
+    "accounting": {
+      "tokens": {
+        "authorized": 300000,
+        "reserved": 0,
+        "consumed": 300000
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 0
+      }
+    }
+  },
+  "live08-direct-openrouter-grade-school-report": {
+    "operation_id": "live08-direct-openrouter-grade-school",
+    "model": "openrouter/openrouter/free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+    "status": "timeout",
+    "tokens": null,
+    "seconds": 180.3,
+    "trajectory": "a458ad70ca0f1697fac6f63986867896543695895125b204994c31bdaa7a91ef",
+    "infra_reason": "",
+    "accounting": {
+      "tokens": {
+        "authorized": 1000000,
+        "reserved": 0,
+        "consumed": 1000000
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 0
+      }
+    }
+  },
+  "live08-kilo-auto-grade-school-report": {
+    "operation_id": "live08-kilo-auto-grade-school",
+    "model": "kilo-auto/free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+    "status": "timeout",
+    "tokens": null,
+    "seconds": 180.1,
+    "trajectory": "b8d4ea75c8ba9929a5fe70f30f33e5b078ed196178bf3150efb76cbbc6353597",
+    "infra_reason": "",
+    "accounting": {
+      "tokens": {
+        "authorized": 1000000,
+        "reserved": 0,
+        "consumed": 1000000
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 0
+      }
+    }
+  },
+  "live08-nemotron-proverb-report": {
+    "operation_id": "live08-nemotron-proverb",
+    "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+    "status": "timeout",
+    "tokens": null,
+    "seconds": 480.3,
+    "trajectory": "9f40ff84487f4601f0ef37a2e2c60000ab51d7e918dd4a2332d3834b585f6232",
+    "infra_reason": "Reconnecting... 1/10 (unexpected status 502 Bad Gateway: Upstream error from Nvidia: Service temporarily overloaded, url: http://127.0.0.1:4000/v1/responses)",
+    "accounting": {
+      "tokens": {
+        "authorized": 300000,
+        "reserved": 0,
+        "consumed": 300000
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 0
+      }
+    }
+  },
+  "live08-openrouter-grade-school-report": {
+    "operation_id": "live08-openrouter-grade-school",
+    "model": "openrouter/free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+    "status": "timeout",
+    "tokens": null,
+    "seconds": 180.2,
+    "trajectory": "bf6f4289fbab550cca99476421aaeb4f5bc75fc123da9f3e73f0a19cf200a3c6",
+    "infra_reason": "",
+    "accounting": {
+      "tokens": {
+        "authorized": 1000000,
+        "reserved": 0,
+        "consumed": 1000000
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 0
+      }
+    }
+  },
+  "live08-stepfun-proverb-report": {
+    "operation_id": "live08-stepfun-proverb",
+    "model": "stepfun/step-3.7-flash:free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+    "status": "infra_failed",
+    "tokens": null,
+    "seconds": 8.8,
+    "trajectory": "52f887409d6ad93aedc1b6b5fb267971a448e21574408d33edf22a2ab74ab9fd",
+    "infra_reason": "exceeded retry limit, last status: 429 Too Many Requests",
+    "accounting": {
+      "tokens": {
+        "authorized": 300000,
+        "reserved": 0,
+        "consumed": 300000
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 0
+      }
+    }
+  },
+  "live08-super-proverb-report": {
+    "operation_id": "live08-super-proverb",
+    "model": "nvidia/nemotron-3-super-120b-a12b:free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+    "status": "over_budget",
+    "tokens": {
+      "input_tokens": 319911,
+      "output_tokens": 11181,
+      "cached_input_tokens": 286000,
+      "reasoning_output_tokens": 9094
+    },
+    "seconds": 166.4,
+    "trajectory": "4dfad7c3b17977e7b97c0dc1a91f4e9052a6f1d7e08b7796a56609837a4e8e2d",
+    "infra_reason": "",
+    "accounting": {
+      "tokens": {
+        "authorized": 300000,
+        "reserved": 0,
+        "consumed": 300000
+      },
+      "cpu": {
+        "authorized": 120,
+        "reserved": 0,
+        "consumed": 0
+      }
+    }
+  },
+  "tool-smoke-report": {
+    "operation": "live08-direct-tool-smoke",
+    "task": "d57db8f9bbd5f946de40e4d27bebed39454ff9ba29c036ed95fb1b67885b25d6",
+    "status": "completed",
+    "tokens": {
+      "input_tokens": 28058,
+      "output_tokens": 545,
+      "cached_input_tokens": 0,
+      "reasoning_output_tokens": 280
+    },
+    "seconds": 26.1,
+    "trajectory": "7b0f367d23b61fd4ebd17a582fcb92e36b841098e9515d273648e79b7b6cb430",
+    "interpretation": "Authored tiny smoke task, never a held-out learning or Exercism result",
+    "verifier": {
+      "operation": "rsi-verify-359f8fc3e02dcd5ea1b10714e774913e0804e3805a3964b138d6d909946a6336",
+      "passed": true,
+      "status": "passed"
+    }
+  }
+}

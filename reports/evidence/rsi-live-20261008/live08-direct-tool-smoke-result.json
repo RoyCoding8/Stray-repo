@@ -1,0 +1,16 @@
+{
+  "status": "completed",
+  "exit_code": 0,
+  "seconds": 26.1,
+  "tokens": {
+    "input_tokens": 28058,
+    "cached_input_tokens": 0,
+    "output_tokens": 545,
+    "reasoning_output_tokens": 280
+  },
+  "infra_reason": "",
+  "commands": 3,
+  "final_message": "\n\nDone. Replaced the stub in `calc.py` with:\n\n```python\ndef add(a, b):\n    return a + b\n```",
+  "trajectory_digest": "562929df6e1cdf03f1cdc1e56af92d18e0f2c99f52cd455919674b1b49c053fc",
+  "trajectory_bytes": 4740
+}
