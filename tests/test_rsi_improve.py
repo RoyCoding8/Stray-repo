@@ -30,6 +30,8 @@ def test_proposal_records_output_and_replays_without_another_send(migrated_db, t
         assert child.files['meta/IMPROVE.md'] == b'Compare errors before changing instructions.\n'
     else:
         assert first.child is None
+    if status == 'infra_failed':
+        assert first.detail == 'unexpected status 503 Service Unavailable'
     assert improve.propose(migrated_db,launcher,seed.digest,**kw) == first
     assert (tmp_path/'runs/proposal/fake-calls.txt').read_text().count('\n') == 1
     assert archive.decision(migrated_db,'proposal:proposal')['actor'] == 'ai'

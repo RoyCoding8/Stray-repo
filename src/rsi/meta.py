@@ -95,5 +95,11 @@ def execute(
     trajectory = episode._publish_trajectory(dsn, raw, staging_root, artifacts_root, "candidate")
     workspace, _ = launcher.exec_dirs(operation_id, "")
     return Output(
-        digest, result["status"], trajectory, result.get("final_message", ""), Path(workspace)
+        digest,
+        result["status"],
+        trajectory,
+        result["infra_reason"]
+        if result["status"] == "infra_failed"
+        else result.get("final_message", ""),
+        Path(workspace),
     )

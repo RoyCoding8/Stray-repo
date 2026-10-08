@@ -1,0 +1,39 @@
+{
+  "endpoint": "http://localhost:4000/v1",
+  "models_status": 200,
+  "original_model_listed": true,
+  "original_model_ready_seconds": 7.884,
+  "coding_model_ready_seconds": 1.258,
+  "freeform_patch_probe": "valid custom_tool_call received",
+  "diagnosis": "Original task traces show Unix commands in PowerShell and malformed apply_patch inputs before their deadlines. Gateway responds; changing the fixed model route produced a completed task execution.",
+  "episode": {
+    "operation_id": "t9-route-cohere-01",
+    "model": "cohere/north-mini-code:free",
+    "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+    "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+    "status": "completed",
+    "tokens": {
+      "input_tokens": 73858,
+      "output_tokens": 2677,
+      "cached_input_tokens": 0,
+      "reasoning_output_tokens": 742
+    },
+    "seconds": 79.2,
+    "trajectory": "d812c49f7e59d68dbd11ebc08f1e844569318d3450fb081ab6cbcd18a194b6d0",
+    "verifier": {
+      "status": "failed",
+      "passed": false
+    }
+  },
+  "loop": {
+    "report": "cohere-loop.json",
+    "dev_execution_seconds": 200.0,
+    "proposal_execution_seconds": 133.2,
+    "recorded_proposal_status": "failed",
+    "reviewed_proposal_status": "infra_failed",
+    "provider_error": "HTTP 400: invalid tool call provided in messages[59].tool_calls[1]: tool arguments must be a stringified JSON object",
+    "historical_receipts_preserved": true,
+    "child": null,
+    "gate": null
+  }
+}

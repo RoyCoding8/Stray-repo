@@ -20,7 +20,7 @@ skills, allowed harness settings and the improver's own instructions.
 | T6 archive | Every genome remains selectable; fixed sigmoid/children selection records scores, coverage, weights and draw. The latest unknown outcome cannot retain an older passing score. |
 | T7 proposals | AI proposes a child using editable meta instructions and pinned dev-only evidence. Invalid outputs and execution failures remain recorded. |
 | T8 gate | Frozen scope, model and budgets; validation, solved-task regression and fresh paired anchor comparison. Benchmark gains are experimental; trusted mode requires containment. |
-| T9 loop | Bounded, replayable archive exploration and an operator CLI. Three real runs recorded timeouts; no child or acceptance claim. |
+| T9 loop | Bounded, replayable archive exploration and an operator CLI. Live task executions complete on a second free route; the improver encountered a provider protocol rejection. No child or acceptance claim. |
 | T11 synthesis | AI proposes tasks from observed dev failures. The fixed qualifier requires a passing reference and failing stub before dev publication. Pinned outputs survive interrupted verification. |
 | T12 delivery | Checkpoint commits and operator docs; local gates below. [CI status](https://github.com/RoyCoding8/Stray-repo/actions/workflows/ci.yml) is tracked per pushed commit. |
 
@@ -39,6 +39,20 @@ anchor exposures. No model-led improvement or curriculum growth is proved.
 Consumed tokens on these failures are ceiling charges, not measured model
 usage. See [live evidence](evidence/rsi-t9/report.json). Recovery artifacts
 remain in DB `rsi_t5` on port 55432 and `D:/AI/tools/rsi-t5`.
+
+The follow-up authenticated `localhost:4000/v1/models` check returned HTTP 200.
+Two Proverb executions using `cohere/north-mini-code:free` completed in 79.2
+and 200 seconds. Both failed pristine tests. The bounded loop's improver then
+received HTTP 400 because the provider rejected malformed tool arguments in
+conversation history. No child, gate or anchor exposure followed. The original
+receipt remains `failed`; the corrected parser classifies its actual trajectory
+as `infra_failed` and meta results now retain the provider reason. See the
+[route diagnosis](evidence/rsi-t9/route-check.json) and
+[loop report](evidence/rsi-t9/cohere-loop.json). Gateway availability and completed
+execution are proved; task competence and model-led improvement remain unproved.
+The provider-classification and meta-reason changes passed 19 focused
+PostgreSQL tests across episodes, proposals, loop and synthesis. Replaying the
+live loop retained its report values and the recorded send/exposure counts.
 
 The kept Windows/PostgreSQL suite passed **513 tests, with 20 skips** before
 final attribution and timeout-test edits. Archived heavy tests were excluded.

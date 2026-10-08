@@ -116,3 +116,23 @@ def test_kernel_owned_config_is_refused_by_launcher(env):
 def test_summarize_classifies_non_infra_failure():
     raw = b'{"type":"turn.failed","error":{"message":"tool exploded"}}\n'
     assert summarize_events(raw)["status"] == "failed"
+
+
+def test_provider_rejection_is_infrastructure_failure():
+    message = json.dumps(
+        {
+            "error": {
+                "code": 400,
+                "message": "Provider returned error",
+                "metadata": {
+                    "provider_name": "Cohere",
+                    "raw": "invalid tool call provided: tool arguments must be a stringified JSON object",
+                },
+            }
+        }
+    )
+    raw = (json.dumps({"type": "turn.failed", "error": {"message": message}}) + "\n").encode()
+    result = summarize_events(raw)
+    assert result["status"] == "infra_failed"
+    assert result["infra_reason"] == message
+    assert result["tokens"] is None

@@ -1,0 +1,51 @@
+{
+  "run_id": "t9-cohere-01",
+  "scope": "benchmark",
+  "epoch": "635a38cfa2705eb7acca601a8a39ddd192d9f68f40729c1a05dae77985a1b040",
+  "incumbent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+  "rounds": [
+    {
+      "index": 0,
+      "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "proposal": {
+        "operation_id": "rsi-proposal-t9-cohere-01-0",
+        "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+        "evidence": "7010ad839cf690005207f6a3bcce70f5daa853cd47b237ee779a95b79bb03377",
+        "status": "failed",
+        "child": null,
+        "trajectory": "70d694e12df9bbeaf8a3bf158ee9c0ccdb9fb0700d26074b72710cb11cf66f71",
+        "detail": ""
+      },
+      "gate": null
+    }
+  ],
+  "dev": [
+    {
+      "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+      "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+      "episode": "rsi-dev-cb63389c412557f57a6578e1e16dff94cf84db5abefc29d3a79ae2fdf91baa5d",
+      "status": "failed",
+      "passed": false,
+      "tokens": {
+        "input_tokens": 92214,
+        "output_tokens": 8620,
+        "cached_input_tokens": 0,
+        "reasoning_output_tokens": 915
+      },
+      "verdict": "rsi-verify-14352b8bcefe5364decf0ead841be05e32f43515c0b1f6577071c8de5c601bc4"
+    }
+  ],
+  "stop": "generation limit reached",
+  "allocations": {
+    "tokens": {
+      "authorized": 6000000,
+      "reserved": 0,
+      "consumed": 400834
+    },
+    "cpu": {
+      "authorized": 2400,
+      "reserved": 0,
+      "consumed": 111
+    }
+  }
+}

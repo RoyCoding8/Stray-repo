@@ -31,7 +31,7 @@ from .common import SettlementError, fsync_dir
 
 _INFRA_MARKERS = ("503", "502", "504", "429", "service unavailable", "overloaded",
                   "rate limit", "connection refused", "error sending request",
-                  "stream disconnected", "auth_unavailable")
+                  "stream disconnected", "auth_unavailable", "provider returned error")
 _FEATURES_OFF = ("memories", "apps", "plugins", "remote_plugin", "image_generation",
                  "multi_agent", "goals")
 
