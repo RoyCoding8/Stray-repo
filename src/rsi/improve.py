@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import hashlib
 import json
 from pathlib import Path
 
 from psycopg.rows import dict_row
 
-from settlement import artifacts, broker, db, store
+from settlement import artifacts, db, store
 from settlement.common import Command, ResultCode, SettlementError
 
-from . import archive, episode, genome
+from . import archive, genome, meta
 
 
 @dataclass(frozen=True)
@@ -73,47 +72,16 @@ def propose(dsn: str, launcher, parent_digest: str, *, operation_id: str,
     instructions = parent.files.get('meta/IMPROVE.md')
     if instructions is None:
         raise SettlementError("parent genome needs meta/IMPROVE.md")
-    existing = broker.read_operation(dsn, operation_id)
-    if existing is None:
-        raw = evidence_bundle(dsn, artifacts_root, parent_digest)
-        manifest = {'kind': 'rsi-dev-evidence', 'files': [{'path': 'evidence.json', 'kind': 'file',
-                    'size': len(raw), 'digest': hashlib.sha256(raw).hexdigest()}]}
-        staged = artifacts.stage_package(dsn, staging_root, manifest=manifest,
-                                         files={'evidence.json': raw}, scope='rsi-dev-evidence',
-                                         access_label='candidate', format='json')
-        published = artifacts.publish_package(dsn, Command(request_id='rsi-evidence:'+staged['digest'],
-                                               payload={'digest':staged['digest']}), artifacts_root, staged)
-        if published.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-            raise SettlementError(published.detail)
-        evidence = staged['digest']
-        for rel, data in parent.files.items():
-            launcher.stage_input(operation_id, '', 'genome/'+rel, data)
-        launcher.stage_input(operation_id, '', 'evidence.json', raw)
-        launcher.stage_input(operation_id, '', 'AGENTS.md', instructions)
-    else:
-        if existing['payload'].get('genome') != parent_digest:
-            raise SettlementError("proposal operation belongs to another parent")
-        evidence = existing['payload']['task']
-    ensured = broker.ensure_operation(
-        dsn, operation_id=operation_id, effect=broker.AGENT_RUN, allocation_id=allocation_id,
-        payload={'harness':parent.harness, 'genome':parent_digest, 'task':evidence,
-                 'instruction': 'Improve the agent in genome/ using evidence.json and your AGENTS.md. '
-                                'Edit only genome/. Preserve its file layout. Improve meta/IMPROVE.md when useful. '
-                                'Do not claim evaluation results. Explain your change in the final message.',
-                 'config':genome.settings(parent), 'timeout_ms':timeout_ms, 'token_ceiling':token_ceiling})
-    if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-        raise SettlementError(ensured.detail)
-    settled = broker.dispatch_operation(dsn, operation_id, launchers={launcher.profile:launcher})
-    if settled.dispatch_state not in episode.TERMINAL:
-        raise SettlementError('proposal needs dispatch recovery: '+settled.next_decision)
-    result = launcher.read_result(operation_id)
-    if result is None:
-        raise SettlementError('settled proposal has no result')
-    raw = launcher.read_output(operation_id, '', 'events.jsonl')
-    if hashlib.sha256(raw).hexdigest() != result['trajectory_digest']:
-        raise SettlementError('proposal trajectory changed')
-    trajectory = episode._publish_trajectory(dsn, raw, staging_root, artifacts_root, 'candidate')
-    status, child, detail = result['status'], None, result.get('final_message','')
+    output = meta.execute(dsn, launcher, parent, operation_id=operation_id,
+        evidence=lambda: evidence_bundle(dsn, artifacts_root, parent_digest),
+        files={**{'genome/'+rel:data for rel,data in parent.files.items()}, 'AGENTS.md':instructions},
+        instruction='Improve the agent in genome/ using evidence.json and your AGENTS.md. '
+                    'Edit only genome/. Preserve its file layout. Improve meta/IMPROVE.md when useful. '
+                    'Do not claim evaluation results. Explain your change in the final message.',
+        allocation_id=allocation_id, token_ceiling=token_ceiling, timeout_ms=timeout_ms,
+        staging_root=staging_root, artifacts_root=artifacts_root)
+    evidence, trajectory = output.evidence, output.trajectory
+    status, child, detail = output.status, None, output.detail
     if status == 'completed':
         with db.connect(dsn) as conn:
             prior = conn.execute("SELECT digest FROM rsi_genomes WHERE origin->>'origin'=%s",
@@ -121,9 +89,8 @@ def propose(dsn: str, launcher, parent_digest: str, *, operation_id: str,
         if prior:
             child = prior[0]
         else:
-            workspace, _ = launcher.exec_dirs(operation_id, '')
             try:
-                output = genome.from_dir(Path(workspace)/'genome', parent.harness)
+                output = genome.from_dir(output.workspace/'genome', parent.harness)
                 if output.digest == parent_digest:
                     raise genome.GenomeError('proposal made no genome change')
                 if not output.files.get('meta/IMPROVE.md'):

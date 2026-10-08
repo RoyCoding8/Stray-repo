@@ -103,8 +103,7 @@ def check(dsn: str, launcher, task: Task, files: Mapping[str, bytes], *,
           operation_id: str, allocation_id: str, attempt_id: str | None,
           staging_root: str | Path, artifacts_root: str | Path,
           timeout_ms: int = 30_000, ownership_generation: int | None = None) -> Verification:
-    """Run a pinned verifier on solution bytes. Reference/stub checks use this too."""
-    task = load(dsn, artifacts_root, task.digest)
+    """Run immutable Task bytes, including unpublished synthesis candidates."""
     if task.runtime != sys.version:
         raise VerifierError("evaluator Python runtime differs from its pinned version")
     if set(files) - set(task.workspace):
