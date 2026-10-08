@@ -123,6 +123,24 @@ task verdict. Unknown dispatches retain their exposure.
 
 ## Boundaries and next experiment
 
+Human direction, 2026-10-08: the live route has enough qualification for research
+use. Stop treating route proof as a separate campaign. Check availability once
+at the start of a live experiment, then use actual task and learning runs to
+observe failures. Reopen transport diagnosis only when a concrete failure makes
+the result uninterpretable. Preserve attribution without expanding it into
+another infrastructure project.
+
+The next work is Stage 9 task competence and useful revision, feeding Stage 10.
+Start with clear public interfaces and a small development set that completes
+within its budget. Use its failures to acquire and test a revision, then assess
+it on fresh content against the incumbent. Instruction revisions are valid
+experiments, but the broader destination includes executable skills and reusable
+experience. Do not require statistically established improvement before every
+design iteration; distinguish exploratory evidence from a promotion claim.
+Stop an exploratory batch with completed behavior and an informative result,
+or a diagnosed blocker that determines the next design change. A fair negative
+can complete an experiment; it does not complete the learning objective.
+
 - Stronger sandboxing is deferred at the user's request. Native process-tree
   and resource limits remain; filesystem/network containment is unproved.
   A native probe denied a protected file read but still reached localhost

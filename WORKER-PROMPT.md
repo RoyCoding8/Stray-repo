@@ -12,6 +12,12 @@ their JSON mission controllers or unfinished EC02 construction patch.
 
 ## Next evidence target
 
+Do not spend another batch proving the live route. It has enough qualification
+for research use. Check availability briefly, then run informative live task and
+revision experiments. Investigate transport only when an observed failure makes
+their results uninterpretable. Exploratory design iterations need honest
+behavioral evidence; reserve the formal promotion rule for a promotion claim.
+
 1. Read reports/evidence/rsi-live-20261008/README.md. Direct OpenRouter is
    openrouter/openrouter/free; the bare openrouter/free alias goes through Kilo.
    Live tools, instruction acquisition and fresh-process use work on an authored

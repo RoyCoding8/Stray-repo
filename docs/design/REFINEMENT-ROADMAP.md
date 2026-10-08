@@ -31,6 +31,11 @@ Stages are not a waterfall: an experiment may force a revision to the formal mod
 
 ## The current decision
 
+The live route is sufficiently qualified for research use. Repeated route-only
+studies are no longer a milestone. Use a brief availability check and move into
+live development and evaluation; diagnose transport again only when it prevents
+interpreting a concrete experiment.
+
 Qualify this simpler loop before adding another framework. Live tool use and
 instruction acquisition now work on a small authored task. Establish actual
 task-bank competence, then compare the candidate with the current incumbent
