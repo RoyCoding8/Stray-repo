@@ -40,8 +40,9 @@ completed-turn usage became zero tokens. It now stays unknown and charges the
 reservation ceiling, with replay proving no second send or charge.
 The six initial regressions failed before repair. The final affected gate passed
 32 tests with no skips on disposable PostgreSQL 18.0 databases and real fixture
-children; both databases were dropped. No new model calls ran. Follow-up full CI
-is separate from the delivered revision's green CI. Ruff was unavailable locally;
+children; both databases were dropped. No new model calls ran. Follow-up CI passed
+on repair commit c06e16d5, run 37745626153, separately from the delivered revision's
+green CI. Ruff was unavailable locally;
 changed Python files parsed and git diff --check passed.
 
 The local workspace now has one branch and one registered checkout. Nine stale
@@ -117,8 +118,13 @@ task verdict. Unknown dispatches retain their exposure.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-Next evidence target: a free-model run that completes dev episodes and
-produces a changed child, then a matched-budget gate comparison. The current
-recorded stopping condition is timeout, not success. Explore stronger native
+Next evidence target: qualify an actual tool interaction on the configured free
+route, demonstrate a pristine-verified dev task success, and acquire a changed
+child from development evidence. Compare the executed child against the current
+incumbent on fresh content under frozen budgets. Use an unchanged-copy control
+to distinguish retained-change effects from model variability. Stop with either
+an attributable completed comparison or a diagnosed blocking failure. Historical
+runs include failed tasks, timeouts and a provider protocol rejection; none
+demonstrates learning. Explore stronger native
 or container isolation as a separate future checkpoint. No WSL is required
 for the current benchmark.
