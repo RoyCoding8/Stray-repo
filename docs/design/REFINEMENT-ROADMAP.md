@@ -4,10 +4,11 @@ This is the mental model, not another task diary. The [project ledger](../../rep
 
 General autonomous discovery remains the goal. Memory, background development, teams and executable skills are candidate mechanisms. Their value is what they enable the system to learn and do; more machinery alone is not progress.
 
-The 2026-10-01 consolidation batch and subsequent repairs supplied useful
-mechanisms. The 2026-10-06 review keeps their utility, transfer and acquired
-learner-benefit claims unmeasured. Current CI repair is foundation verification;
-it does not close production ownership or either stage 9/10.
+The 2026-10-08 implementation replaces the fragmented study controllers with
+one bounded task/proposal/comparison loop over SQL records and artifact-backed
+genomes. The previous experiments remain recoverable in the archive tag.
+All seven CI jobs passed at a3094099. Live task runs completed but failed their
+tests; the improver met a provider protocol error. Learning remains unproved.
 
 | Stage | Question or deliverable | Status |
 |---|---|---|
@@ -18,9 +19,9 @@ it does not close production ownership or either stage 9/10.
 | 5. Representation and technology | Executable packages, state and supporting stack | Provisional choices; revise from evidence |
 | 6. Practical specification | Builder protocols and acceptance conditions | Foundation specified |
 | 7. Foundation prototype | Durable bounded execution, evidence, trials and continuity | Built; deployment validation remains partial |
-| 8. Cognitive-policy refinement | Acquired competence, memory, agenda, representations and teams | Closed at bounded mechanism scope; broader learning questions remain open |
-| 9. Architecture consolidation | Converge production ownership and compare executable operational/improvement behavior | Active, incomplete. SQL allocation/identity repairs landed; JSON still owns live mission state. Offline causal choice is supported; utility and learner benefit remain unmeasured. |
-| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | Incomplete. One SQL-owned public mission, connected restart/bound use, transfer and learner improvement remain outstanding. |
+| 8. Cognitive-policy refinement | Acquired competence, memory, agenda, representations and teams | Historical bounded mechanisms studied; their implementations are archived. General learning remains open. |
+| 9. Architecture consolidation | Converge production ownership and compare executable operational/improvement behavior | Task-driven architecture implemented. Shared kernel, genome archive, proposals, evaluation and bounded loop are connected; live revision/comparison qualification is incomplete. |
+| 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | Partial. Task execution exists; successful model-generated revisions, retained gains, transfer and sustained general autonomy are unproved. |
 | 11. Operational qualification | Supported deployment, containment, recovery and controls | Partial groundwork; not qualified. Unchanged by the 2026-10-01 batch. |
 | 12. Final implementation/release | Supported infrastructure product with migrations, installation, lifecycle UI and evidence | Not started as a release milestone |
 
@@ -28,34 +29,21 @@ Stages are not a waterfall: an experiment may force a revision to the formal mod
 
 ## The current decision
 
-The [2026-10-06 researcher review](../../reports/PROJECT-LEDGER.md#researcher-review-ownership-and-evidence-boundaries-2026-10-06)
-assessed local source e8e7911e and the six-part assignment report. SQL AD01
-remains the selected production owner. Threading the study allocation and
-removing unused SQL projections were useful repairs, but the live path still
-reads and writes private state, active packages, frontier effects and round
-continuation through JSON FrontierStore. Row routing alone will not close this.
+Qualify this simpler loop before adding another framework. First demonstrate
+a successful live task and an actual changed model-generated genome through a
+working tool route. Then compare the candidate with the current incumbent on
+fresh held-out content under the frozen budget. Improvement over a weaker
+archive parent alone does not establish an improved incumbent.
 
-Finish that ownership migration and its public restart/use demonstration
-before expanding the system. Reuse the existing effect, observation, revision,
-artifact and binding records. Historical JSON remains replay/export material.
+The genome may contain executable skill resources as well as instructions,
+harness settings and the improver's instructions. Editing these instructions
+does not by itself establish that the improver has become better. That requires
+measuring the revisions it produces and their subsequent use.
 
-The worker's zero supported-cell result is a qualification result under its
-chosen criteria, not zero task utility. Those criteria also need correction:
-a unique correct answer does not rule out better investigation procedures.
-Use the current function-identification and repair instruments to measure
-decision headroom against a competent baseline on development data. Do not
-add worlds merely to increase a count or use a weak blind comparator.
-
-The authored M4 control changes an acquisition decision after a JSON restart.
-Its sixteen-input screen found no arm passing its cutoff. Neither observation
-is live acquisition, an equivalence test, or evidence that learner improvement
-is impossible. Keep these claim categories separate in the completion matrix.
-
-The external worker and Jev are unavailable. The coordinator and GPT-6 Luna
-can complete a bounded implementation checkpoint locally. The free promotion
-ended; any future live study requires an actually verified free route within
-existing finite authorization. No paid fallback is authorized. Stages 9 and
-10 stay open; deployment qualification and final release remain later work.
+The long-term goal still includes self-selected investigations, accumulated
+experience and competence across domains. The Exercism bank is a starting
+experiment, not a replacement definition of general autonomy. Containment and
+production deployment remain separate later qualification work.
 
 ## Design references
 

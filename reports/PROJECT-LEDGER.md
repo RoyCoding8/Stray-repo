@@ -26,6 +26,30 @@ skills, allowed harness settings and the improver's own instructions.
 
 ## Evidence
 
+Reviewer checkpoint, 2026-10-08: all seven CI jobs passed on the delivered
+a3094099 revision, run 37730286147. Read-only inspection of live store rsi_t5
+found two completed episodes with failed test verdicts, three timed-out episodes,
+one failed and one timed-out proposal, one root genome and zero anchor exposures.
+There is still no live child or improvement result.
+
+Two review defects were reproduced and repaired. Archive exploration compared
+a child only with its selected parent, so a gain over a weak node could replace
+an equally good incumbent. The loop now compares against its current incumbent;
+archive parent selection still controls proposal generation. Missing or invalid
+completed-turn usage became zero tokens. It now stays unknown and charges the
+reservation ceiling, with replay proving no second send or charge.
+The six initial regressions failed before repair. The final affected gate passed
+32 tests with no skips on disposable PostgreSQL 18.0 databases and real fixture
+children; both databases were dropped. No new model calls ran. Follow-up full CI
+is separate from the delivered revision's green CI. Ruff was unavailable locally;
+changed Python files parsed and git diff --check passed.
+
+The local workspace now has one branch and one registered checkout. Nine stale
+remote branch snapshots were tagged on both remotes before deletion, and a
+verified all-ref bundle is under D:/AI/Agent-Society-archives/2026-10-08.
+Origin's legacy default branch remains for clone compatibility. The current
+worker prompt and refinement roadmap supersede the old JSON/EC02 assignments.
+
 The frozen Exercism bank has 34 tasks: 18 dev, 5 val and 11 anchor. All 34
 references passed and all 34 stubs failed in actual verifier processes,
 without model calls. Bank digest:

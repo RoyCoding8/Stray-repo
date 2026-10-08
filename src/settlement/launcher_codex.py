@@ -318,9 +318,14 @@ def summarize_events(raw: bytes) -> dict[str, Any]:
         if kind == "turn.completed":
             status = "completed"
             usage = event.get("usage") or {}
-            tokens = {k: int(usage.get(k) or 0) for k in
-                      ("input_tokens", "cached_input_tokens", "output_tokens",
-                       "reasoning_output_tokens")}
+            keys = ("input_tokens", "cached_input_tokens", "output_tokens",
+                    "reasoning_output_tokens")
+            tokens = None
+            if isinstance(usage, dict) and all(
+                type(usage.get(k)) is int and usage[k] >= 0
+                for k in ("input_tokens", "output_tokens")
+            ) and all(type(usage.get(k, 0)) is int and usage.get(k, 0) >= 0 for k in keys):
+                tokens = {k: usage.get(k, 0) for k in keys}
         elif kind == "turn.failed":
             status = "failed"
             errors.append(str((event.get("error") or {}).get("message", "")))

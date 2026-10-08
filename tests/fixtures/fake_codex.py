@@ -35,5 +35,6 @@ if mode == "infra":
 (ws / "done.txt").write_text("agents=%s\n" % (ws / "AGENTS.md").exists())
 emit({"type": "item.completed", "item": {"type": "command_execution", "command": "x", "exit_code": 0}})
 emit({"type": "item.completed", "item": {"type": "agent_message", "text": "done"}})
-emit({"type": "turn.completed", "usage": {"input_tokens": 1000, "cached_input_tokens": 200,
-                                          "output_tokens": 50, "reasoning_output_tokens": 10}})
+usage = None if mode == "no-usage" else {"input_tokens": 1000, "cached_input_tokens": 200,
+                                        "output_tokens": 50, "reasoning_output_tokens": 10}
+emit({"type": "turn.completed", "usage": usage})

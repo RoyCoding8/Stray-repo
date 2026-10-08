@@ -1,6 +1,7 @@
 import sys
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 from rsi import archive, episode, gate, genome, loop, task
 from settlement import db, store
@@ -125,3 +126,34 @@ def test_loop_can_propose_from_a_dev_timeout_without_assigning_a_score(migrated_
     assert report["rounds"][0]["proposal"]["status"] == "timeout"
     assert report["rounds"][0]["gate"] is None
     assert report["stop"] == "proposal execution stopped: timeout"
+
+
+def test_archive_parent_gain_cannot_replace_an_equally_good_incumbent(
+    migrated_db, tmp_path, monkeypatch
+):
+    roots, seed, tasks, agent, checker, _ = setup(migrated_db, tmp_path)
+    weak = genome.Genome({"AGENTS.md": b"Leave stub.", "meta/IMPROVE.md": b"Improve."})
+    child = genome.Genome({**seed.files, "meta/IMPROVE.md": b"Revised improver."})
+    genome.publish(migrated_db, weak, parent=seed.digest, origin="fixture", **roots)
+    genome.publish(migrated_db, child, parent=weak.digest, origin="fixture", **roots)
+    # These repeated arithmetic fixtures test controller selection, not independent gain.
+    anchors = tuple(replace(tasks[2], name=f"anchor-{i}", instruction=f"Add. Case {i}")
+                    for i in range(6))
+    for item in anchors:
+        task.publish(migrated_db, item, **roots)
+    epoch = gate.freeze(migrated_db, (*tasks[:2], *anchors),
+                        gate.Budget("fixture:free", 5000, 30000), execution="benchmark")
+    agent.codex_cmd = [sys.executable,
+                      str(Path(__file__).parent / "fixtures/fake_gate.py")]
+    monkeypatch.setattr(archive, "select_parent", lambda *args: weak.digest)
+    monkeypatch.setattr(loop.improve, "propose", lambda *args, **kwargs:
+                        SimpleNamespace(status="completed", child=child.digest))
+    report = loop.run(migrated_db, agent, checker, run_id="incumbent", epoch=epoch,
+                      seed=seed.digest, generations=1, token_allocation="tokens",
+                      cpu_allocation="cpu", **roots)
+    comparison = report["rounds"][0]["gate"]
+    assert report["rounds"][0]["parent"] == weak.digest
+    assert comparison["parent"] == seed.digest
+    assert comparison["anchor_comparison"]["wins"] == 0
+    assert comparison["disposition"] == "quarantine"
+    assert report["incumbent"] == seed.digest

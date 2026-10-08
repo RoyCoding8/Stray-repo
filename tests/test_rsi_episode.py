@@ -77,6 +77,17 @@ def test_completed_run_settles_real_tokens_once(env):
     assert b"turn.completed" in bytes.fromhex(package["files"]["events.jsonl"])
 
 
+def test_completed_run_without_usage_charges_ceiling_once(env):
+    dsn, run, _, tmp = env
+    result = run("no-usage")
+    assert result.status == "completed" and result.tokens is None
+    assert store.allocation_status(dsn, "a1")["consumed"] == CEILING
+    assert store.allocation_status(dsn, "a1")["reserved"] == 0
+    assert run("no-usage") == result
+    assert store.allocation_status(dsn, "a1")["consumed"] == CEILING
+    assert len(_calls(tmp, "ep1")) == 1
+
+
 def test_leaked_skill_catalog_refuses_before_any_send(env):
     dsn, run, launcher, tmp = env
     with pytest.raises(ep.EpisodeError, match="settled without a launcher result"):
@@ -135,4 +146,14 @@ def test_provider_rejection_is_infrastructure_failure():
     result = summarize_events(raw)
     assert result["status"] == "infra_failed"
     assert result["infra_reason"] == message
+    assert result["tokens"] is None
+
+
+@pytest.mark.parametrize("usage", [None, {}, {"input_tokens": 100},
+                                 {"input_tokens": -1, "output_tokens": 5},
+                                 {"input_tokens": True, "output_tokens": 5}])
+def test_completed_without_valid_usage_keeps_tokens_unknown(usage):
+    raw = (json.dumps({"type": "turn.completed", "usage": usage}) + "\n").encode()
+    result = summarize_events(raw)
+    assert result["status"] == "completed"
     assert result["tokens"] is None

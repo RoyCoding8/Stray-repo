@@ -128,7 +128,7 @@ def run(
                 checker,
                 gate_id="rsi-compare-" + label,
                 epoch=epoch,
-                parent=parent,
+                parent=report["incumbent"],
                 candidate=proposal.child,
                 token_allocation=token_allocation,
                 cpu_allocation=cpu_allocation,

@@ -1,5 +1,9 @@
 # Stage 9 roadmap: completion matrix, decision table, and the next conceptual decisions
 
+Historical study assessment, superseded as an active plan on 2026-10-08.
+Use [the refinement roadmap](../docs/design/REFINEMENT-ROADMAP.md) and
+[the project ledger](PROJECT-LEDGER.md) for current architecture and work.
+
 Against `693575e` on `codex/implementation-investigation-learning-02`. The requirement is
 `WORKER-STAGE-09-PARALLEL-EXPANSION.md` line 115 (completion matrix, decision table, six-way
 separation, ranked decisions) and line 117 ("The researcher then uses the combined results to
