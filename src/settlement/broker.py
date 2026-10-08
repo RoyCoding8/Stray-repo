@@ -309,12 +309,6 @@ def ensure_operation(
     exposure, budget_kind = exposure_schedule(effect, clean, retries)
     body = {"effect": effect, "payload": clean, "retries": max(int(retries), 0),
             "budget_kind": budget_kind}
-    # Which resource this operation draws on, for the study ceilings that
-    # bound a resource rather than an effect. It rides on the envelope beside
-    # `budget_kind` rather than inside `payload`, because the effect schemas
-    # are closed by `_no_extra` and a caller naming its own resource cannot be
-    # allowed to widen them. It is not `kind`: that already names the study
-    # phase, and the two vocabularies are different axes.
     if resource is not None:
         body["resource"] = str(resource)
     cmd = Command(

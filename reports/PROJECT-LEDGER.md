@@ -1,79 +1,82 @@
 # Project ledger
 
-Current state, next work and known gaps. History lives in Git; removed studies
-are recoverable at `archive/pre-subtraction-2026-10`.
+Current state and evidence. Removed studies are recoverable at
+`archive/pre-subtraction-2026-10`; implementation history lives in Git.
 
-## State (2026-10-07)
+## State (2026-10-08)
 
-The system aims to improve agents and their own improver with trustworthy
-evidence. Codex CLI is the task-agent component. The editable genome contains
-instructions, skills, harness settings and meta-agent instructions. Settlement
-owns execution, budgets, receipts and artifacts outside agent modification.
+The aim is general autonomous discovery and agent improvement. This Python
+bank is the first bounded experiment. Settlement owns execution, budgets,
+receipts and artifacts. The editable genome contains Codex instructions,
+skills, allowed harness settings and the improver's own instructions.
 
 | Checkpoint | State |
 |---|---|
-| T1 route | Codex CLI runs on the user-approved local free-model route. |
-| T3 genome | Content-addressed packages, lineage, restricted settings and workspace materialization. |
-| T4 episodes | Broker-admitted agent runs, bounded execution, skill isolation preflight, token accounting and trajectory artifacts. |
-| T5 bank and verifier | Published tasks, deterministic splits, frozen evaluator versions, solution snapshots and separately admitted pristine verifiers. Completed episodes produce persisted verdicts; infrastructure failures do not receive a task score. |
-| T10 subtraction | Retired nine study modules, migrated operator views, and added a forward drop for 49 study tables. RSI artifacts receive durable holds in their recording transactions. |
-| T6 archive | All published genomes remain selectable. Fixed sigmoid/children selection records its dev task set, node weights and draw; replays retain their original parent. |
-| T7 proposals | Codex edits a child genome using the parent’s editable meta instructions and a pinned dev-only evidence package. Outputs, invalid proposals and execution failures are recorded and replayable. |
-| T8 gate | Frozen model/budget/evaluators and execution scope; validation, solved-task regression and paired anchor checks. Each anchor content identity can be exposed to only one comparison, with alpha spending recorded. |
-| T9 loop | Bounded real-model generations remain to run. |
+| T1 route | User-approved local free-model route through Codex CLI. |
+| T3 genome | Content identity, lineage and restricted settings; meta instructions remain editable. |
+| T4 episodes | Broker admission, process limits, skill-isolation preflight, token accounting and trajectory records. |
+| T5 bank | Published tasks, fixed splits, frozen evaluators, pristine verification and solution snapshots. |
+| T10 subtraction | Nine study modules and their callers/tests retired; 49 dead tables dropped by a forward migration. Operator pages inspect genomes, episodes and verdicts. |
+| T6 archive | Every genome remains selectable; fixed sigmoid/children selection records scores, coverage, weights and draw. The latest unknown outcome cannot retain an older passing score. |
+| T7 proposals | AI proposes a child using editable meta instructions and pinned dev-only evidence. Invalid outputs and execution failures remain recorded. |
+| T8 gate | Frozen scope, model and budgets; validation, solved-task regression and fresh paired anchor comparison. Benchmark gains are experimental; trusted mode requires containment. |
+| T9 loop | Bounded, replayable archive exploration and an operator CLI. Three real runs recorded timeouts; no child or acceptance claim. |
+| T11 synthesis | AI proposes tasks from observed dev failures. The fixed qualifier requires a passing reference and failing stub before dev publication. Pinned outputs survive interrupted verification. |
+| T12 delivery | Checkpoint commits and operator docs; local gates below. [CI status](https://github.com/RoyCoding8/Stray-repo/actions/workflows/ci.yml) is tracked per pushed commit. |
 
-T5 evidence: the local 34-exercise Exercism bank has 18 dev, 5 validation and
-11 anchor tasks. All 34 references passed and all 34 stubs failed through real
-bounded verifier subprocesses, without model calls. The frozen bank is
+## Evidence
+
+The frozen Exercism bank has 34 tasks: 18 dev, 5 val and 11 anchor. All 34
+references passed and all 34 stubs failed in actual verifier processes,
+without model calls. Bank digest:
 `fe81ef1f56941acf910ca7f1ee9a53ac168bfc05e985938d1e70fffe972f5f43`.
-This qualifies the bank plumbing, not learning or general capability.
 See [bank evidence](evidence/rsi-t5/bank-report.json).
 
-Verification on Windows with PostgreSQL 18: the kept suite passed 598 tests
-and skipped 19 before the final path/replay checks, excluding archived heavy
-tests. The final RSI gate passed 32 and skipped 1 because symlink creation was
-unavailable. No new CI result is claimed. Fake-Codex tests check plumbing only;
-T4's real model run is recorded separately in `tmp/HANDOFF.md`.
+The real native runs used `nvidia/nemotron-3-ultra-550b-a55b:free` on the
+approved local gateway. Three task episodes timed out; one improver attempt
+also timed out. There were no scored task outcomes, child genomes, gates or
+anchor exposures. No model-led improvement or curriculum growth is proved.
+Consumed tokens on these failures are ceiling charges, not measured model
+usage. See [live evidence](evidence/rsi-t9/report.json). Recovery artifacts
+remain in DB `rsi_t5` on port 55432 and `D:/AI/tools/rsi-t5`.
 
-T10 verification: the kept run had 493 passes, 20 skips and one error-message
-assertion failure. The corrected rejection and all later cleanup edits passed
-a focused 62-test Windows/PostgreSQL check. Archived heavy tests remain outside
-that verification scope. No cleanup CI result is claimed.
+The kept Windows/PostgreSQL suite passed **513 tests, with 20 skips** before
+final attribution and timeout-test edits. Archived heavy tests were excluded.
+The final loop/synthesis check passed **6 tests**, covering the new timeout
+case, separate AI/fixed attribution, and qualification recovery. These are
+separate verification scopes. The changed new modules and fixtures passed
+Ruff checks. Final delivery requires matching remotes and green CI on the
+pushed commit; see the CI link above and the current continuation handoff.
+Executable fixtures test proposal, gate, synthesis and replay behavior;
+they do not establish AI learning. A fixture solver ran the full benchmark
+gate through actual pristine verifiers and received `experimental_gain`.
+Strict mode blocked before model execution.
 
-T6 verification: three focused Windows/PostgreSQL tests passed. This proves
-selection and decision replay plumbing, not model-led improvement.
+Proven unsent refusals release their reservations through the existing
+never-sent reconciliation transition. They receive no fabricated receipt or
+task verdict. Unknown dispatches retain their exposure.
 
-T7 verification: 20 focused Windows/PostgreSQL tests passed, including changed,
-invalid, unchanged and infrastructure-failed proposals, replay, genome identity,
-and exclusion of validation/anchor episodes from the evidence bundle. These
-use an executable fixture; no model-led improvement is claimed.
+## Boundaries and next experiment
 
-Preflight accounting: proven unsent launcher refusals now use the existing
-never-sent reconciliation transition immediately, releasing their reservation.
-69 focused broker/episode/verifier tests passed and one symlink test skipped.
-No receipt or task verdict is fabricated for a preflight refusal.
+- Stronger sandboxing is deferred at the user's request. Native process-tree
+  and resource limits remain; filesystem/network containment is unproved.
+  A native probe denied a protected file read but still reached localhost
+  PostgreSQL. Trusted promotion therefore remains disabled on these launchers.
+- Each anchor content identity can be exposed to only one comparison,
+  including interrupted runs. Renaming a task or resetting an epoch cannot
+  refund exposure. The paired sign rule and alpha spending are recorded.
+  This is conservative fresh-content accounting, not REUSE's reusable
+  holdout algorithm or proof of general improvement.
+- Timeouts stay unscored. Dev workflow failures can inform an improver;
+  infrastructure failures stop the run. Acceptance requires completed agent
+  executions and known verifier outcomes at every stage.
+- Synthesized tasks receive fixed qualification independently of AI proposal
+  attribution. Qualification does not prove that AI-written specifications
+  and tests are correct. Held-out content duplicates are rejected; accepted
+  tasks can enter a future dev task set without changing a frozen epoch.
 
-## Next
-
-T8 verification: three Windows/PostgreSQL tests passed. A fixture solver ran
-the full benchmark gate with actual verifier processes and produced an
-`experimental_gain`, never trusted promotion. Strict mode blocked before model
-execution. Anchor exposure survives epoch, name and runtime changes. This is
-conservative fresh-content accounting, not REUSE's reusable holdout algorithm.
-
-4. T9 real closed loop. Compare the candidate genome and parent on the anchor
-   at matched budget. A mock run does not demonstrate self-improvement.
-5. T11 verified task synthesis. Update docs and run CI with each checkpoint.
-
-## Known gaps
-
-- The local verifier bounds processes but has no filesystem/network
-  containment. These cooperative benchmark verdicts cannot certify hostile
-  code for promotion. At the user's request, stronger sandboxing is deferred.
-  Native benchmark runs continue with process-tree and resource limits.
-- Infrastructure failures without usage events charge the token ceiling.
-  Metering may be needed before T9.
-- Native Windows probing denied a protected sentinel read, but localhost TCP
-  remained accessible. That does not establish a trusted gate boundary.
-- A 34-task Python exercise bank is a bounded experiment. It does not define
-  the intended scope of general autonomous discovery and improvement.
+Next evidence target: a free-model run that completes dev episodes and
+produces a changed child, then a matched-budget gate comparison. The current
+recorded stopping condition is timeout, not success. Explore stronger native
+or container isolation as a separate future checkpoint. No WSL is required
+for the current benchmark.

@@ -67,3 +67,43 @@ snapshot in `rsi_verdicts`. Repeating verification returns the recorded result.
 Timeouts and infrastructure errors have no passing/failing score. The local
 verifier launcher bounds processes but does not confine filesystem/network
 access; these benchmark checks do not certify hostile code.
+
+## Bounded improvement experiments
+
+Create a genome directory with `AGENTS.md` and `meta/IMPROVE.md`. Use a
+qualified bank report whose task packages already exist in the same database
+and artifact root. Keep the route file and credentials outside Git.
+
+```powershell
+$env:PYTHONPATH = 'src'
+& .venv/Scripts/python.exe -m rsi.experiment `
+  --dsn 'dbname=rsi_t5 host=127.0.0.1 port=55432 user=postgres' `
+  --root D:/AI/tools/rsi-t5 --seed D:/AI/tools/rsi-t9-seed `
+  --bank-report D:/AI/tools/rsi-t5/bank-report.json `
+  --route-file D:/AI/tools/model-route.env `
+  --codex C:/Users/roysh/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe `
+  --run-id experiment-01 --generations 2 --tokens 150000 --timeout-ms 300000 `
+  --dev proverb --val transpose `
+  --anchor affine-cipher bottle-song bowling list-ops poker tree-building `
+  --migrations migrations
+```
+
+The loop records fixed parent selection, AI proposals and fixed gate decisions.
+Its JSON report includes failed attempts, unknown outcomes and a stopping reason.
+A repeated run ID returns the recorded result; changed parameters require a
+new ID. A run stops after spending its anchor exposure. New comparisons require
+fresh anchor content; a new epoch alone cannot authorize reuse.
+
+These native runs are cooperative benchmarks. Stronger sandboxing is deferred;
+process and resource limits remain active. Benchmark acceptance records
+`experimental_gain`. Trusted mode requires proved execution containment and
+blocks these launchers. The [live report](reports/evidence/rsi-t9/report.json)
+records three dev timeouts and one improver timeout, with no child or gain.
+
+`rsi.synthesis.run` proposes a new task from completed dev failures, pins its
+output, and runs its reference and stub in fresh verifier processes. Only a
+passing reference and failing stub permit publication to the dev registry.
+Held-out content duplicates are rejected. AI proposal and fixed qualification
+have separate decision records. Qualification checks executable behavior;
+it does not prove the AI-written specification or tests are correct. A future
+epoch can select qualified tasks without modifying a frozen evaluator.

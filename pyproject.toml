@@ -1,7 +1,7 @@
 [project]
 name = "settlement"
 version = "0.1.0"
-description = "Agent-Society v2: durable investigation system, S0-S3"
+description = "Agent-Society v2: durable execution and agent improvement"
 requires-python = ">=3.12"
 dependencies = [
   "pydantic>=2.7",
@@ -25,7 +25,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# tests/_heavy_archived holds 85 files that spawn real child processes.
+# tests/_heavy_archived holds the remaining costly child-process checks.
 # Running them together saturates the host, so a default collection skips
 # them. Run them deliberately, one file at a time; see the README there.
 norecursedirs = ["tests/_heavy_archived", ".worktrees", ".*", "build", "dist", "node_modules", "venv"]

@@ -1,8 +1,7 @@
 """Launcher for the ``agent-run`` effect: one Codex CLI run over a staged workspace.
 
-Codex is a component, not part of the kernel's trust base: it runs inside its
-own OS sandbox (``workspace-write``) with a per-operation ``CODEX_HOME``, and
-the kernel owns everything that decides budget and comparability: model,
+Codex uses ``workspace-write`` with a per-operation ``CODEX_HOME``. This does
+not establish filesystem or network containment. The kernel owns model,
 provider, sandbox mode, approvals, context limits and which skills exist.
 
 Isolation is checked, not assumed. Before anything is sent, ``codex debug
