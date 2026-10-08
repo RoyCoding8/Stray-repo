@@ -5,7 +5,8 @@ only when evidence supports them. `src/settlement` owns budgets, execution,
 receipts and artifacts. `src/rsi` versions the genome that Codex CLI reads,
 runs recorded episodes, and verifies solutions against a frozen task bank.
 The genome archive records fixed parent selection and attributed decisions.
-Genome proposals and the acceptance gate are still to build.
+A meta-agent proposes child genomes from development evidence using editable
+meta instructions. The acceptance gate is still to build.
 
 | Read | For |
 |---|---|

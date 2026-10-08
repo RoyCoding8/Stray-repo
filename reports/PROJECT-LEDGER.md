@@ -18,7 +18,8 @@ owns execution, budgets, receipts and artifacts outside agent modification.
 | T5 bank and verifier | Published tasks, deterministic splits, frozen evaluator versions, solution snapshots and separately admitted pristine verifiers. Completed episodes produce persisted verdicts; infrastructure failures do not receive a task score. |
 | T10 subtraction | Retired nine study modules, migrated operator views, and added a forward drop for 49 study tables. RSI artifacts receive durable holds in their recording transactions. |
 | T6 archive | All published genomes remain selectable. Fixed sigmoid/children selection records its dev task set, node weights and draw; replays retain their original parent. |
-| T7–T9 improvement loop | Meta-agent proposals, acceptance gate and matched-budget anchor comparison remain to build. |
+| T7 proposals | Codex edits a child genome using the parent’s editable meta instructions and a pinned dev-only evidence package. Outputs, invalid proposals and execution failures are recorded and replayable. |
+| T8–T9 improvement loop | Acceptance gate and matched-budget anchor comparison remain to build. |
 
 T5 evidence: the local 34-exercise Exercism bank has 18 dev, 5 validation and
 11 anchor tasks. All 34 references passed and all 34 stubs failed through real
@@ -41,10 +42,13 @@ that verification scope. No cleanup CI result is claimed.
 T6 verification: three focused Windows/PostgreSQL tests passed. This proves
 selection and decision replay plumbing, not model-led improvement.
 
+T7 verification: 20 focused Windows/PostgreSQL tests passed, including changed,
+invalid, unchanged and infrastructure-failed proposals, replay, genome identity,
+and exclusion of validation/anchor episodes from the evidence bundle. These
+use an executable fixture; no model-led improvement is claimed.
+
 ## Next
 
-2. T7 meta-agent. Propose a child genome from dev evidence and editable
-   `meta/IMPROVE.md`. Exclude anchor content and trajectories from its inputs.
 3. T8 frozen acceptance gate. Validation, solved-task regression, anchor and
    adaptive-reuse accounting; promote or quarantine.
 4. T9 real closed loop. Compare the promoted genome and parent on the anchor

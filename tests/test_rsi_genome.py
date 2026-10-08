@@ -66,6 +66,8 @@ def test_publish_load_round_trip_and_lineage(migrated_db, tmp_path: Path):
     g.publish(dsn, child, parent=seed.digest, origin="meta-agent", **roots)
     loaded = g.load(dsn, roots["artifacts_root"], child.digest)
     assert loaded.files == child.files and loaded.digest == child.digest
+    # Rediscovery from another parent keeps one content identity and its first edge.
+    assert g.publish(dsn, child, parent=None, origin="rediscovered", **roots) == child.digest
     with pytest.raises(g.GenomeError, match="unknown parent"):
         g.publish(dsn, g.Genome({"AGENTS.md": b"orphan\n"}), parent="0" * 64,
                   origin="x", **roots)

@@ -20,6 +20,7 @@ import json
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import Mapping
 
 from psycopg.types.json import Json
@@ -47,12 +48,17 @@ class Genome:
     digest: str = field(init=False)
 
     def __post_init__(self) -> None:
+        paths = {rel.casefold() for rel in self.files}
+        if len(paths) != len(self.files) or any(
+                '/'.join(rel.split('/')[:i]) in paths
+                for rel in paths for i in range(1, len(rel.split('/')))):
+            raise GenomeError("genome file paths collide")
         for rel in self.files:
             _check_layout(rel)
         if self.harness not in HARNESSES:
             raise GenomeError(f"unknown harness {self.harness!r}")
         settings(self)  # parse now so a bad harness.toml never gets a digest
-        object.__setattr__(self, "files", dict(sorted(self.files.items())))
+        object.__setattr__(self, "files", MappingProxyType(dict(sorted(self.files.items()))))
         skill_catalog(self)  # every skill must advertise a name and description
         object.__setattr__(self, "digest", hashlib.sha256(
             artifacts.package_bytes(self._manifest(), self.files, SCOPE)).hexdigest())
@@ -196,7 +202,7 @@ def publish(dsn: str, genome: Genome, *, staging_root: str | Path,
                     (genome.digest, parent, genome.harness, Json({"origin": origin})))
         return (ResultCode.APPLIED, "genome published", {"digest": genome.digest},
                 [("rsi.genome.published", {"digest": genome.digest, "parent": parent})], [])
-    result = store.transact(dsn, Command(request_id=f"rsi-genome-{genome.digest}",
+    result = store.transact(dsn, Command(request_id=f"rsi-genome-{genome.digest}-{parent or 'root'}",
                                          payload={"digest": genome.digest, "parent": parent}), _fn)
     if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
         raise GenomeError(f"genome not recorded: {result.detail}")
@@ -221,6 +227,18 @@ def load(dsn: str, artifacts_root: str | Path, digest: str) -> Genome:
 
 
 def from_dir(root: Path, harness: str = "codex") -> Genome:
-    files = {p.relative_to(root).as_posix(): p.read_bytes()
-             for p in sorted(root.rglob("*")) if p.is_file()}
+    root = root.resolve()
+    files = {}
+    total = 0
+    for p in sorted(root.rglob("*")):
+        if p.is_symlink() or p.is_junction() or root not in p.resolve().parents:
+            raise GenomeError("genome output contains a link or path escape")
+        if p.is_dir():
+            continue
+        if not p.is_file():
+            raise GenomeError("genome output contains a nonregular file")
+        total += p.stat().st_size
+        if total > artifacts.STAGE_MAX_BYTES or len(files) >= artifacts.STAGE_MAX_FILES:
+            raise GenomeError("genome output exceeds artifact bounds")
+        files[p.relative_to(root).as_posix()] = p.read_bytes()
     return Genome(files, harness=harness)
