@@ -1,9 +1,10 @@
 # Agent Society
 
-Infrastructure for an autonomous agent that finds problems, builds and runs
-executable capabilities, and keeps what works. Today the repository holds the
-durable execution substrate (`src/settlement`). The agent loop is the next
-phase.
+An autonomous system that improves agents and their improver, keeping changes
+only when evidence supports them. `src/settlement` owns budgets, execution,
+receipts and artifacts. `src/rsi` versions the genome that Codex CLI reads,
+runs recorded episodes, and verifies solutions against a frozen task bank.
+Archive selection, genome proposals and the acceptance gate are still to build.
 
 | Read | For |
 |---|---|
@@ -33,3 +34,30 @@ Use Python 3.12 or newer and `uv sync --extra test`.
   time.
 
 Keep gateway configuration and credentials outside Git.
+
+Import an Exercism Python practice bank and check its references and stubs
+without model calls:
+
+```powershell
+$env:PYTHONPATH = 'src'
+& .venv/Scripts/python.exe -m rsi.task_bank `
+  --source D:/AI/tools/polyglot-benchmark/python/exercises/practice `
+  --root D:/AI/tools/rsi-t5 `
+  --dsn 'dbname=rsi_t5 host=127.0.0.1 port=55432 user=postgres' `
+  --migrations migrations
+```
+
+Use an existing database for that command. The root must be outside agent
+workspaces. `bank-report.json` records the frozen bank digest, deterministic
+dev/val/anchor splits and sanity results. Task agents receive only the
+instruction and solution slots; pristine tests and references stay with the
+kernel. Anchor tasks, trajectories and solution snapshots carry the hidden
+access label. A successful reference and a failing stub qualify each task.
+
+Publish a `rsi.task.Task` before passing it to `rsi.episode.run_episode`.
+After a completed episode, `rsi.verifier.verify_episode` runs a separately
+admitted verifier operation and records its evaluator version and solution
+snapshot in `rsi_verdicts`. Repeating verification returns the recorded result.
+Timeouts and infrastructure errors have no passing/failing score. The local
+verifier launcher bounds processes but does not confine filesystem/network
+access; these benchmark checks do not certify hostile code.

@@ -1,0 +1,591 @@
+{
+  "bank": "fe81ef1f56941acf910ca7f1ee9a53ac168bfc05e985938d1e70fffe972f5f43",
+  "tasks": 34,
+  "splits": {
+    "anchor": 11,
+    "val": 5,
+    "dev": 18
+  },
+  "sanity": [
+    {
+      "name": "affine-cipher",
+      "task": "28e5a72e8e048a396d9599b4bdc1a49128ac45876349d11fce48c37167fd6a8b",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-8817f155d1098f5398e122c3663b51777a807949f61bf3f486e22bbc47709c0e",
+        "solution": "5cc3ccc371bece7d92cc285358d7a38c904359b9ce2ba65c2be7e51ced921902"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-43714b9474a9b9207754b4702ae8d6292047aff8abf7df70ccbe3118064e3756",
+        "solution": "4a42a71257c52aaab414c3e850ac8c1cff2ece53ecf3390b98eec2a87a79485d"
+      }
+    },
+    {
+      "name": "beer-song",
+      "task": "23c877693ae5b79f8ca3322b2ec5da331358f042523a37243d262155585c3679",
+      "split": "val",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-1da2367a31e4b37ab500215cfe08608e112c6dc5c74447db4ed91ae3bd28a1cc",
+        "solution": "a24b5bf43999e51c011af6654e464e67f154fdf912b3c232fb37fc556ef1f5e5"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-c328b7db72ee75c3166448aa5a3a63d3360b2998b17efe44e53db87540c9f5bb",
+        "solution": "b1a2dc8e334c718e324de7840be6404a07dbd0273d191069cd3ea5fe5b8388a4"
+      }
+    },
+    {
+      "name": "book-store",
+      "task": "3df90f65f7e00a5d9d79d4fa2d4679c8058d802a1b5c58a91dc6af80c543bcad",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-3ef021a86baa58514eb5c45be4b9edd722ac056ebb73c097ff8c7ae2d2292a31",
+        "solution": "1ea8f12a1778019cd89ab3dc4b5d4cf3a6336ee4ce2f1b7f43c2b00a04b891b8"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-0554c781319f5ae4dece17d8cb6ce25099d67ad2ac9164ae370798f30539704c",
+        "solution": "317426ffcd36c63efdcbb78d71d6f47a9de08ba2e3e184e754a17c42f513c6cb"
+      }
+    },
+    {
+      "name": "bottle-song",
+      "task": "48ddfb0ea2e513742ccb3552f5a265ab05f420213302b695714ff9a8b66ab284",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-f1f27a5272eccff286841c0ba70c11620d5af9981608cf24676dcec8d04bebd9",
+        "solution": "5b33efffb1d886896ab3b1a40aa323b7bf81e8f8ca9e0964eea2364292e9dd44"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-aca1b398de1eaab5489aeccdd75c8d6f2a0eca3040b7e6c287d132cc5852032c",
+        "solution": "bd732031c2630abed1d59c0df598f5ea25d27f6cbe98946600188fab3d66602b"
+      }
+    },
+    {
+      "name": "bowling",
+      "task": "b8fd97ce5e3be177fa846003f82391cf3bedcf66dcd0fd5faa5304a9683f469a",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-167faf2b68f4ae12153bea51495e3a53b59458e148c02c179459c6bbf248eb13",
+        "solution": "d55b237efd8e3f9ec27ccb8ae5432e89d29a84e441709888baf33cc5d3126ff3"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-7e08103d873ae94d9d61aa3f853a655e8ee6d5cdc6b4e9ab833530251e98e238",
+        "solution": "72659959ad2975b4e0274adc16ca581e4226d02583003857da12c48d751abc29"
+      }
+    },
+    {
+      "name": "connect",
+      "task": "01db6d922b4545d10490c91030280acece484ed268cb86bef86e9d4b4befe673",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-0ad3b8a2bacf5f73ad31a0e6deff04a3348865ddd272ab11e52934720fcda5db",
+        "solution": "f1baf7862ea17735a39d6302a85ead23f66a37c3aacb91d2ae3785f96807e212"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-fb3072177b30b962dd0393931fc77316ab058946b248d16eb0682c2d5031f292",
+        "solution": "969bfaf0d63b689bc0a4024ea5e332e79a6e66f5cdadf3f24dd481c7d7daeb4f"
+      }
+    },
+    {
+      "name": "dominoes",
+      "task": "4128e962cf3401f2f88371abdea906a4aa66c40995e80b5afe268db358ed6dd0",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-108c17efb8847c2fd40bcd14bd26be1745133ff357b09dbca3e514acf4a21492",
+        "solution": "2a4ee7f0bcf893a9be82f0107b578d7854f75d3b3a9f0b5a770b851e3902d7b7"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-353395e62a082de1d55bf01452aa481138bba342bbb9e617992493ab7011f665",
+        "solution": "c8cb7b7f9450e285281045348aeb241457670b7d9c438d9bfbe7d99f11a1edab"
+      }
+    },
+    {
+      "name": "dot-dsl",
+      "task": "372c8678ab56bc3200e4962b4b5f97084525f33bdb320fe3446b9701622fb74f",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-27a432da3548b2ff8f598da68b7fe99530441aa777da688529918e7904fdf417",
+        "solution": "80adfc962209054b03231f555d32a97a7e24b1c99d5725d81df23d349100a7d2"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-0971b7ac851a2d2f77ae54becd5dcd0d0f67fc96e5cce3e55cf5d0fa14bd4c10",
+        "solution": "1cc3119791c039d0a2f771075fa57aed42a85a11fd8757579839c8059847541b"
+      }
+    },
+    {
+      "name": "food-chain",
+      "task": "2f121998f05a43fad9c169824d5757271a3393128ec8d1d7c306a3883e6a2636",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-81598600a6648b541e5eb34bbedc24a3c9e0d7dcfc19322fb30dd9c9f0cb31ec",
+        "solution": "146cb893f7408b4dbb7e40f661bfc4326a92de63a0a62331834e9ac4bb524396"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-80a24735981bd462727a92448ee3b3eeb385d9069089db6cee2159d43dc3de6d",
+        "solution": "5f95d060e25664dcbaf04b4ce36f46435cd43c50d0e73d319de64de0b0d2239d"
+      }
+    },
+    {
+      "name": "forth",
+      "task": "2044dcb494e5baa5d9351e3939f5537f3f1cd74374d09c4ceea8c65a5ae68061",
+      "split": "val",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-2c870525a945f715d10938156fb62fd73d215023b91ac763bc9f7f24d87dd662",
+        "solution": "57923d258691e290e0b4288af7918af33bd99378e56c48c37d55bf0ddc1ce852"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-1cb65afe4c60677a3008fe00b00b6fc7680926e2e1b7f2824e27ec6d1b2c6018",
+        "solution": "f57c2572a56e82c6ca9c054089e8c4010ad615c84419b1331b150512240952e0"
+      }
+    },
+    {
+      "name": "go-counting",
+      "task": "6511f2faeedbfa811a577a46381c8c436ebcac64c618f2c3b208636e0e787bc4",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-69ca30cd22f0bdcfca0b5e1ee71c39b6682cdb2c691c1a78ebf07883d91051e9",
+        "solution": "9b3e4bf6bcb7e0debb34ce53fb838e9c864e1f43b3b0e2ba3f5f37c789489c78"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-ee07affc2d28873b66545396ea0edaac87d4019e4c9651e0cb85fa01442f9234",
+        "solution": "8591502c426c127fe68811f68cb52bef8d8dff3d5429e4ea5b3d0c3218786869"
+      }
+    },
+    {
+      "name": "grade-school",
+      "task": "e51f9e9c0f690b227bcd774d750dbdeb674ea86d322c2e5fb006b7b71bfbf9d1",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-749660b632f35990d638997be8502fcf71565dd2a2e47bcdc220f179eb91cbbc",
+        "solution": "e5be4a1913e65845a2e390a3e035e2bfccb94bd12ad5bb280bbac6c54db403e6"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-9e154543a1c39c4f9236dc5637d65c5d8eaf13e51ff4e4311bd1d3b8c720da4f",
+        "solution": "688a8d5f6ccaa28fb39f1feec0cd336580aca428ad6bc00a317f7fa58664f828"
+      }
+    },
+    {
+      "name": "grep",
+      "task": "56532629f69cae5de6c541e7098574a995f632865e1caf7b82ba2544e80b0baa",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-0a450f680e5dd00bd6de7aa166680f65f9051bf5f45ac0f5b89615ec62e8dfbd",
+        "solution": "c1741b2737def2c066cf5ae6c43b7660a9f8557304a70bf7a27ba33f2db98b44"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-05e4029c8b792b2b297fa6f857f42f4b24f1132b3ed42bada931c449cfaaaad3",
+        "solution": "bacd67e131326913bff599dec74dddea7743f39268c7325dd15471e017aeae3d"
+      }
+    },
+    {
+      "name": "hangman",
+      "task": "de5e07c6a226d22d3f9d8f25c30803f0a1ca2ee2a91ceef363c218b342c96d7c",
+      "split": "val",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-73475bedba004b4d751df2f1b6869787d31feb3398c1fd6703d59e010b48b35c",
+        "solution": "f5e69356cf8d334b21af7f87a34619c280de3bd2b96f2acdce4183be2e43f531"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-967ca9b6cfd39228e14389fac680b6248196e5d3424fbd21f9c433634b2edf5f",
+        "solution": "0a20b312d2b6c6bd0b0115b926159648896449fbc7af781b7e50f89e04ba2d14"
+      }
+    },
+    {
+      "name": "list-ops",
+      "task": "46a65a67a456acb6dde476fccee005a98475cc6c74635d381b643e28947fc5cb",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-fabca15e360e5de7c43e7eda9647803c803196511f5e524e187a111a2f2bc374",
+        "solution": "50f199565e7fd8e598556fb490753a81af0a6d0c9e98a146c6478668507d1ddb"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-0dc1bfe9121322f4e157d96ab162edf4e1639730a833c069fc8a7ebf29a04433",
+        "solution": "03aa2585153da9f795fe2a17c0e22a288cf98e5567e1310f094bac04ed04977e"
+      }
+    },
+    {
+      "name": "paasio",
+      "task": "883b3f1212220f24696f2110182dec4a29be3dbbd63bb90eba571d4ac8f36585",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-3b26fba821e2b661a4739efd640ddd10fe1f966487fbe6a23e42cc97912205e6",
+        "solution": "4656bd5d7f1d33a35a906ee6bc9d1ef98410a589e6078727d93339c3861b32ba"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-9f4abc233979a0fc5f9812601d5512e075984b959d2ea8e265170bb3d22027b9",
+        "solution": "7d5cc7dc46c052238d5de960614da963ba35dafea4e93e581e25490a64adaf0b"
+      }
+    },
+    {
+      "name": "phone-number",
+      "task": "a195413d707078efa066f1ed0bc8a22cc754b756bb916ade84dfe332891a716a",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-0a55a20b5f5ecfcf8206beaeb90d849f5fe2037dff6506dc40c8317bfbcae4f3",
+        "solution": "9c4204cefcd4284307b3a0b99173054e993384ebacb7b96e57bad9f5ff79faed"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-eaa76f4ca689c126e77b15baeb89d0a9abe3c9febf59d76ae1a28f221e012e35",
+        "solution": "bfb796105c8ea1c42e78514d44d3a8bae0c88cc4790a4fd92e8695a4118135c8"
+      }
+    },
+    {
+      "name": "pig-latin",
+      "task": "19d8c9cf10e331812e86c9133d5d30e9bd832273f312837726251cfac4c455bd",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-12ba43946c8811d40c2d3726d5f2a24946ba3fcdd7791ee927cc7749791ad532",
+        "solution": "9f99ff70b846daf49355571f0b5dc21f1b63024e2adf80db0834e3e72b9bea8f"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-957c62cfbd66c79fe731759f3d3124088ef8617906f7edd1c9efa7a569ac2f53",
+        "solution": "fa965d99d21b02c8b52a7d0272d098a2dc03afff33b5cad8a0bce44035d9b3ab"
+      }
+    },
+    {
+      "name": "poker",
+      "task": "b611dcf760829a6a9b1ab2d4ada1182e2ddd329922f781f75b6fc0dc873c3af0",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-b89864fc4b0f0860dc89ea85214d071a95823dd0484485ca04488542d44d800e",
+        "solution": "c6e9566d7efa554b269363191b264cf038e4c979c25fb35173ec6d08b316b7c5"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-3036898e89c367cf055f7273a2ac8ff5506318ae23fcec0a83d4d6c5b22ea55b",
+        "solution": "43248101e1b2530c6963afb9d77ee8784ac906e9fbbfede6a1c7b57dd5681fa0"
+      }
+    },
+    {
+      "name": "pov",
+      "task": "a32d320d2b8c5904257e70de8cc48c8614a25845e93734b56849165a5a187f65",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-8187640fce5b980b8ca40b9d70f5bd185d04a7814c6bffd6da4a679b97e2f631",
+        "solution": "ce6ca1e40ef99321e85475bc6119c977af95be81082061472422900f6ad3e9c5"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-b45483da731bf0d725e9bd5ef1ffc7e48492c4c3ad1f1bf602df8c33809d9a06",
+        "solution": "1027ba4b4bddf1c92a5820883736ac2551f69faf99fa8b5e5abb433de56abd0b"
+      }
+    },
+    {
+      "name": "proverb",
+      "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-3b0e229fa30f000d0aee14db15314ddd9a6c1af09dd7802280f5a4ff382756b9",
+        "solution": "c12a92e13ea355869a9835adbcf22471e845d64dadb13a45a3625710cff12e86"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-0846c995dff4ac945ac24eb3483a118ac97f936ebcc947a81236d78054ea7d87",
+        "solution": "5c37e412595094bd14e1f412cbd9211cc57fae92e50121e1affe5989b0f7e264"
+      }
+    },
+    {
+      "name": "react",
+      "task": "01fb8bd9405718aad9836c2fc88d3c4190dfebaf2b3142b83af666025120b273",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-7dd35be19bcdadeccb3cfba6e421ed72ef0dbaa7f1962f4a91c866e70afc157b",
+        "solution": "97f37d15cf099188761f047fa887073bb0f5df49e907cee68c3c103690df28ae"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-150c2599e9ffcd0f277c3c09cd15c48f41e6dfb7effdcebd906b60e642a9a857",
+        "solution": "348f9027fd575ec943ab78472407ecd1bd8c3f796d9920487dff70c3e2529d6e"
+      }
+    },
+    {
+      "name": "rest-api",
+      "task": "d81fc7287a78204b4b0aabb4447592d4da2eb3e06d3bcec3dd436f92479ef6eb",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-5f05fa0014fc82de03b7b3e3035a48134cb7b487a9f0b5b512afe1c8e56e223e",
+        "solution": "4cf11b46757b6802c017b3b6d853b22a50f499e40fea0419085230742d265663"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-77fa0647ed78cf3f56516bc71aa17d892ddd575133519e8eadbca2fe596d7b82",
+        "solution": "de664a5922dd34471a4d484ab548461b6ff61cb2495bffe5110330b80f52bd0d"
+      }
+    },
+    {
+      "name": "robot-name",
+      "task": "b5d0ad97999c65d5276a21be0831ac3fbe4abce82e485fca6844fd50bc608e5d",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-4a11a7571a557566b20d01e22c5164fa03a34e13bc17b022243ab9ac78b4e3b6",
+        "solution": "9a404349c01573c0974aeb3fbff7344a25933dbc077b184fd5e22a98e554b85c"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-6347d45fd2ef2ea5c5e0584fe0c130fc02d9f9fdc0a534c9284b70013eb38ac0",
+        "solution": "de9036dafd83a1eeaa4c72681643fff73fbb8979297eb78efc21f8a94768813a"
+      }
+    },
+    {
+      "name": "scale-generator",
+      "task": "afffa089da32d639548365d14f9ba773aff3f49286fbf08abd90de651e10f8e7",
+      "split": "val",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-17b712c020854aa8d0d60e806af7f1467b04ae4304a38a8be11ce3a9618c55a0",
+        "solution": "2470d18ff4ba28d782484d5d0cc4a9862c448fe1cdbc6fabee3d0ca64a66e7b4"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-4b060fee4e99b3657d30fc91cd91dbe267c7a9867b7f0d5deb07be135e2be8ec",
+        "solution": "20b9ca72a55734b421703c057a1e51eb952f99d9ada73b8229c16660f3cf7ea5"
+      }
+    },
+    {
+      "name": "sgf-parsing",
+      "task": "f3170eddbe9256727a548369c3629c90e1cfca5560674139b99161b0dd68c471",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-8a6a7647e2aa4c22747cb4c9fc56f0debb87979784d96b2f7a911703cccfb39f",
+        "solution": "5f1619ea1ae8b42202ad259a2ce80c6ebf6c34cf8c73b9350e33e9a0f812ff86"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-2f58c16606f6642d180fb218bd2640d04ce3cffd8de9373bcebbceb2ec3cc029",
+        "solution": "98b6e8021b5470c8609226fc0bfc44e1d40fdc7afa0ac795825d2d1804cd4d11"
+      }
+    },
+    {
+      "name": "simple-linked-list",
+      "task": "71cc0c4ca4b97fa898d2a774c9d5cf0e47248c35fc681705ef1b598a3996d2f0",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-e1f3130acbce39da8485be9365c2f7dae8aad5e41604bb2df7bbec2fa4a7b2dd",
+        "solution": "b24b4dcaa0a7688d30152567bcc7caa687edd10fafdc5a45b0087375f6c68614"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-b4c6bce4c572fa8ec4a2208fce17a130ff5930c063069c2c408233fc9eb3a5b0",
+        "solution": "62a3a908e8c98888e514af45f935c9985192f1f93316e66a725dab20281bc129"
+      }
+    },
+    {
+      "name": "transpose",
+      "task": "d989e3527845fe6ff7d67c042676c3d66184597df67512b0ff7ca4f249c36d08",
+      "split": "val",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-ba13595815dd64e52a4de997fcf4f005cd0d01d3e4bf33bfa91d24760452d97c",
+        "solution": "29cc3bfdf69856dd824cca3bcd97f09eebeffe45534e7a51397cd91f4d1b2b24"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-08bb4c24c9983fce7475016ba7e5752c86b9a662a9e050311f962171ce1e48e7",
+        "solution": "55baac1b68f45854b3a77a7b26bacef51fd4c7a8a2a33d036b5c8f41a6e7f270"
+      }
+    },
+    {
+      "name": "tree-building",
+      "task": "96b96bb670939287dc46fd6fa0cf4f79448a296135b6a9a088cbdaa70781d7db",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-cc2d184efc1aec65b7bbb1b1791931679e8405236a469db9332d040ef1657c1f",
+        "solution": "3d29e0918dedd66ecb8245eccf5261e61258697a3117f5cbdc03e34cb3012642"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-bf2ded717c9552d7af959ad942d444389479c1db95fd3448ba66208e182ed67d",
+        "solution": "8d739df9a8214f0366bceee322595ac523387ae60fe77e2d3bf7020587bd5690"
+      }
+    },
+    {
+      "name": "two-bucket",
+      "task": "c19812242dc2572c3b54a7ff60670aea5f3de61933aa01fa5cdfc521ef2017d9",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-6542c30e6848da77c4f63b740347c2e87649e3d56ce53f2dc2d2b4402c5090e4",
+        "solution": "aedafaeb827682327264c381295bc9a7b31c60b1fc4bc16f3f006faa1f2836cb"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-58be064921d6c91293d322a737350c4120030b3afd3a8644264dbc7ef36b461b",
+        "solution": "ac1c2e8e360e6c30c0ff9ba805f2c4525675a90d2853c45198aebeeb9002c828"
+      }
+    },
+    {
+      "name": "variable-length-quantity",
+      "task": "531845a865181603c4de75a96ff68bd519d2e9bfa0d2506ff9be61bd2924fc68",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-101042f7c7856503ee59c1178c71b1866bfe47f609aaca08745c65beabc56c12",
+        "solution": "78d1c9372463da2c8324bd476a6028e39efbf36bb71092c50d33e47a8f1819ec"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-1fe5744b6bde462c045f0956f11a23836ab1f0e280de0f88648941482b9fac83",
+        "solution": "bef45050c7465fb9b7a6e244587a6393cf189ad7c7d9071a5e4aeee814bae996"
+      }
+    },
+    {
+      "name": "wordy",
+      "task": "21f8fb8312364e760eefea795df672a301bdb67c39334ce076f1831c2bd59bcf",
+      "split": "dev",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-d7e6beecf01e50f72d74ad5b1af57ab73704e3d1ccd433a7da6bfef6a02cc366",
+        "solution": "2a0c2599009ed1320898aad61b06d84fb4bd8f827dc80ba64a3a14f10291b7d8"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-bfeb71f891eaac457629bdfceb4caf077e95904421bdba189579d58c0a02c0e8",
+        "solution": "39e0b5c411e34bf77ac4e3cd0c7508ad2c60f068a9f57b09bc83a05b2116ef18"
+      }
+    },
+    {
+      "name": "zebra-puzzle",
+      "task": "c92a797d5b5b4811fb4cd3bbc3345490ad160d04fa9c6d7658d1f2dc1cdc8a10",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-d7e887c25107d2aac2067c6a72e3b13dd592e73a2580c1bed732c537995f0c8f",
+        "solution": "6e6d3b9768024a21e48d0203e53f003523b9e0bce3b57384eafbbc7d2b7783e3"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-309de87080dbb5bc6a2c8def66392dd7ee088208e9ae7a38889d0f6c1960ea87",
+        "solution": "c4f8ac1dbabab70f5148d93df06484f901839f41c3772ffe66900fbf83c2b8c5"
+      }
+    },
+    {
+      "name": "zipper",
+      "task": "50b08f6129771a7db352b76eeb8c006a6ef6f6a8ac3bcef9e85842690b06592b",
+      "split": "anchor",
+      "reference": {
+        "status": "passed",
+        "passed": true,
+        "operation_id": "rsi-sanity-30670f079bed40b721e9848e92871ff12d6b1d51107119096d79dd570ece4f68",
+        "solution": "1ab2bcb46fa4ef6d43ab253b51e7779fb96c4f52f9829ba73446ede9c8e68b75"
+      },
+      "stub": {
+        "status": "failed",
+        "passed": false,
+        "operation_id": "rsi-sanity-453926cc8588fc9f351ef2a941c52525c17a0a20d922415cdd4fce6e4f623aa2",
+        "solution": "6524f611014b8c8d626962d8329e9c95449ed7d9c42f9412b65913d5e5cc770a"
+      }
+    }
+  ],
+  "model_calls": 0,
+  "sanity_passed": true
+}

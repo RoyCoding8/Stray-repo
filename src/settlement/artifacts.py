@@ -194,6 +194,13 @@ def _unpack_archive_isolated(archive: Path, dest: Path) -> None:
         raise SettlementError("unpacked archive exceeds staging byte bound")
 
 
+def package_bytes(manifest: dict, files: dict[str, bytes], scope: str) -> bytes:
+    """Canonical package encoding, shared by identity and publication."""
+    return json.dumps({"manifest": manifest, "scope": scope,
+                       "files": {rel: raw.hex() for rel, raw in files.items()}},
+                      sort_keys=True, separators=(",", ":")).encode()
+
+
 def stage_package(dsn: str | None, staging_root: str | Path, *, manifest: dict,
                   files: dict[str, bytes], scope: str = "", access_label: str = "public",
                   format: str = "", version: str = "",
@@ -215,10 +222,7 @@ def stage_package(dsn: str | None, staging_root: str | Path, *, manifest: dict,
             raise SettlementError(f"content mismatch for {rel!r}")
         size += len(raw)
     _check_budget(dsn, scope, size)
-    payload = json.dumps(
-        {"manifest": manifest, "scope": scope,
-         "files": {rel: raw.hex() for rel, raw in files.items()}},
-        sort_keys=True, separators=(",", ":")).encode()
+    payload = package_bytes(manifest, files, scope)
     package_digest = _digest_bytes(payload)
     stage_dir = Path(staging_root) / package_digest
     stage_dir.mkdir(parents=True, exist_ok=True)
@@ -266,9 +270,9 @@ def _write_final_bytes(artifacts_root: Path, receipt: dict, stage_dir: Path) -> 
             continue
         with open(stage_dir / entry["path"], "rb") as handle:
             stage_files[entry["path"]] = handle.read().hex()
-    payload = json.dumps({"manifest": receipt["manifest"], "scope": receipt["scope"],
-                          "files": stage_files},
-                         sort_keys=True, separators=(",", ":")).encode()
+    payload = package_bytes(receipt["manifest"],
+                            {rel: bytes.fromhex(raw) for rel, raw in stage_files.items()},
+                            receipt["scope"])
     if _digest_bytes(payload) != receipt["digest"]:
         raise SettlementError("staging bytes do not match receipt digest")
     tmp = final.parent / (receipt["digest"] + ".tmp")

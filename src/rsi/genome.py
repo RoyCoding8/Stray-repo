@@ -54,7 +54,8 @@ class Genome:
         settings(self)  # parse now so a bad harness.toml never gets a digest
         object.__setattr__(self, "files", dict(sorted(self.files.items())))
         skill_catalog(self)  # every skill must advertise a name and description
-        object.__setattr__(self, "digest", _package_digest(self._manifest(), self.files))
+        object.__setattr__(self, "digest", hashlib.sha256(
+            artifacts.package_bytes(self._manifest(), self.files, SCOPE)).hexdigest())
 
     def _manifest(self) -> dict:
         return {"kind": "rsi-genome", "harness": self.harness,
@@ -78,14 +79,6 @@ def _check_layout(rel: str) -> None:
         return
     raise GenomeError(f"{rel!r} is outside the genome layout"
                       " (AGENTS.md, harness.toml, skills/**, meta/**)")
-
-
-def _package_digest(manifest: dict, files: Mapping[str, bytes]) -> str:
-    # Must match artifacts.stage_package byte for byte.
-    payload = json.dumps({"manifest": manifest, "scope": SCOPE,
-                          "files": {rel: raw.hex() for rel, raw in files.items()}},
-                         sort_keys=True, separators=(",", ":")).encode()
-    return hashlib.sha256(payload).hexdigest()
 
 
 def settings(genome: Genome) -> dict:

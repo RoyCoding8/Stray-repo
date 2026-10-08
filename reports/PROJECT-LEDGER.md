@@ -1,52 +1,58 @@
 # Project ledger
 
-One page: current state, next work and known gaps. Keep it one page. History
-lives in Git: the diary this replaced and every study, script and experiment
-are at tag `archive/pre-subtraction-2026-10`.
+Current state, next work and known gaps. History lives in Git; removed studies
+are recoverable at `archive/pre-subtraction-2026-10`.
 
 ## State (2026-10-07)
 
-The repository is the `settlement` package: a durable execution substrate
-for an autonomous agent. It has no agent loop yet.
+The system aims to improve agents and their own improver with trustworthy
+evidence. Codex CLI is the task-agent component. The editable genome contains
+instructions, skills, harness settings and meta-agent instructions. Settlement
+owns execution, budgets, receipts and artifacts outside agent modification.
 
-| Area | Modules |
+| Checkpoint | State |
 |---|---|
-| Durable store | `db`, `store` (SERIALIZABLE transitions, command journal, outbox), `checkpoint`, `restore` |
-| Effects | `broker` (prepare → dispatch → observe → reconcile; a crash never re-sends a settled effect), `run` (composition interpreter) |
-| Bounded execution | `launcher_local`, `launcher_runsc`, `exec_profile`, `child_limits`, `winjob` (Windows Job Objects), `attestation` |
-| Models | `gateway` (adapter interface plus a fake), `gateway_http` (OpenAI-style chat completions), `config` |
-| Knowledge | `artifacts` (content-addressed packages), `capabilities` (versioned methods, releases, quarantine), `evidence`, `context` |
-| Budgets and studies | `steward`, `trials`, `evaluation`, `authority`, `loop`, `agenda`, `agenda_policy` |
-| Operator | `api` (FastAPI inspection UI), `boot` (dependency checks) |
+| T1 route | Codex CLI runs on the user-approved local free-model route. |
+| T3 genome | Content-addressed packages, lineage, restricted settings and workspace materialization. |
+| T4 episodes | Broker-admitted agent runs, bounded execution, skill isolation preflight, token accounting and trajectory artifacts. |
+| T5 bank and verifier | Published tasks, deterministic splits, frozen evaluator versions, solution snapshots and separately admitted pristine verifiers. Completed episodes produce persisted verdicts; infrastructure failures do not receive a task score. |
+| T6–T9 improvement loop | Archive selection, meta-agent proposals, acceptance gate and matched-budget anchor comparison remain to build. |
 
-The last row of study-shaped modules is entangled with `api`. P2 replaces
-them and then deletes them.
+T5 evidence: the local 34-exercise Exercism bank has 18 dev, 5 validation and
+11 anchor tasks. All 34 references passed and all 34 stubs failed through real
+bounded verifier subprocesses, without model calls. The frozen bank is
+`fe81ef1f56941acf910ca7f1ee9a53ac168bfc05e985938d1e70fffe972f5f43`.
+This qualifies the bank plumbing, not learning or general capability.
+See [bank evidence](evidence/rsi-t5/bank-report.json).
 
-Verification:
-- Kept suite on Windows with PostgreSQL 18: 569 passed, 19 skipped
-  (POSIX-only mechanisms and the symlink privilege), 0 failed.
-- CI run 37669366485: every job green on Ubuntu, macOS, Windows, both DB
-  shards and heavy archived; about 4 minutes.
+Verification on Windows with PostgreSQL 18: the kept suite passed 598 tests
+and skipped 19 before the final path/replay checks, excluding archived heavy
+tests. The final RSI gate passed 32 and skipped 1 because symlink creation was
+unavailable. No new CI result is claimed. Fake-Codex tests check plumbing only;
+T4's real model run is recorded separately in `tmp/HANDOFF.md`.
 
 ## Next
 
-Follow `tmp/PLANS.md` locally, or the summary here:
-
-1. **P2 kernel.** One SQL-owned mission runtime: goal → model decision →
-   admitted bounded action → receipt → next step. Commands `run`, `resume`
-   and `show`. Done when a scripted-model mission survives a process kill
-   without repeating a settled effect.
-2. **P3 real model.** Needs a model route chosen by the user.
-3. **P4 skill reuse.** Measured against a no-memory baseline on held-out
-   tasks.
-4. **P5 product.** UI, installation and docs.
+1. T6 archive and parent selection. Keep every node selectable and record the
+   fixed selection rule separately from AI decisions.
+2. T7 meta-agent. Propose a child genome from dev evidence and editable
+   `meta/IMPROVE.md`. Exclude anchor content and trajectories from its inputs.
+3. T8 frozen acceptance gate. Validation, solved-task regression, anchor and
+   adaptive-reuse accounting; promote or quarantine.
+4. T9 real closed loop. Compare the promoted genome and parent on the anchor
+   at matched budget. A mock run does not demonstrate self-improvement.
+5. T10 retire study controllers/tables after migrating `api` callers; T11
+   verified task synthesis. Update docs and run CI with each checkpoint.
 
 ## Known gaps
 
-- There is no agent loop and no user-facing entry point (P2).
-- Windows children get memory, CPU and kill-tree bounds through Job Objects,
-  but no filesystem or network containment.
-- 21 migrations still create tables for retired studies (`s09_*`, `team_*`,
-  `agenda_*`, `inv_r1_study_runs`). Drop them in the P2 schema work.
-- `reports/` and the `evidence*` directories hold frozen evidence from
-  retired studies. They are not used by code or tests.
+- The local verifier bounds processes but has no filesystem/network
+  containment. These cooperative benchmark verdicts cannot certify hostile
+  code for promotion. That boundary must be addressed before a trusted gate.
+- Infrastructure failures without usage events charge the token ceiling.
+  Metering may be needed before T9.
+- Codex preflight refusal leaves a reservation held until kernel recovery.
+- Legacy `agenda`, `authority`, `loop`, `trials` and `evaluation` remain
+  entangled with `api`; retired study tables remain in historical migrations.
+- A 34-task Python exercise bank is a bounded experiment. It does not define
+  the intended scope of general autonomous discovery and improvement.

@@ -9,6 +9,7 @@ import pytest
 
 from rsi import episode as ep
 from rsi import genome as g
+from rsi import task as t
 from settlement import broker, store
 from settlement.common import Command
 from settlement.launcher_codex import CodexLauncher, Provider, summarize_events
@@ -19,7 +20,9 @@ GENOME = g.Genome({
     "skills/fix/SKILL.md": b"---\nname: fix\ndescription: fix bugs\n---\nbody\n",
     "harness.toml": b'model_reasoning_effort = "low"\n',
 })
-TASK = "b" * 64
+TASK = t.Task("calc", "dev", "fix it", {"calc.py": b"x = 1\n"},
+              {"calc_test.py": b"import unittest\n"}, {"calc.py": b"x = 2\n"},
+              ("calc_test.py",))
 CEILING = 5_000
 
 
@@ -36,6 +39,7 @@ def env(migrated_db, tmp_path):
     store.acquire_work(dsn, _cmd({"attempt_id": "att1", "investigation_id": "i1"}))
     roots = {"staging_root": tmp_path / "stage", "artifacts_root": tmp_path / "art"}
     g.publish(dsn, GENOME, parent=None, origin="seed", **roots)
+    t.publish(dsn, TASK, **roots)
 
     def launcher(mode):
         return CodexLauncher(tmp_path / "runs", codex_cmd=[sys.executable, FAKE, mode],
@@ -44,7 +48,6 @@ def env(migrated_db, tmp_path):
 
     def run(mode, op="ep1", timeout_ms=30_000):
         return ep.run_episode(dsn, launcher(mode), GENOME, operation_id=op, task=TASK,
-                              instruction="fix it", files={"calc.py": b"x = 1\n"},
                               allocation_id="a1", attempt_id="att1", timeout_ms=timeout_ms,
                               token_ceiling=CEILING, **roots)
     return dsn, run, launcher, tmp_path
@@ -101,7 +104,7 @@ def test_timeout_kills_the_run(env):
 def test_kernel_owned_config_is_refused_by_launcher(env):
     dsn, _, launcher, tmp = env
     broker.ensure_operation(dsn, operation_id="ep2", effect=broker.AGENT_RUN, payload={
-        "harness": "codex", "genome": GENOME.digest, "task": TASK, "instruction": "x",
+        "harness": "codex", "genome": GENOME.digest, "task": TASK.digest, "instruction": "x",
         "config": {"model": "other"}, "timeout_ms": 1000, "token_ceiling": 10},
         allocation_id="a1", attempt_id="att1")
     status = broker.dispatch_operation(dsn, "ep2", launchers={"codex": launcher("ok")})

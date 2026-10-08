@@ -1,0 +1,19 @@
+Host: local Windows, Python 3.13, PostgreSQL 18 on port 55432.
+
+Bank sanity:
+python -m rsi.task_bank --source D:/AI/tools/polyglot-benchmark/python/exercises/practice --root D:/AI/tools/rsi-t5 --dsn "dbname=rsi_t5 host=127.0.0.1 port=55432 user=postgres" --migrations migrations
+34 reference solutions passed; 34 stubs failed; 0 model calls.
+All 68 separately admitted sandbox operations settled. See bank-report.json.
+
+Kept regression suite, before final path/replay boundary checks:
+powershell -NoProfile -File D:/AI/tools/dbtest.ps1
+598 passed, 19 skipped, 2 dependency deprecation warnings in 449.84s.
+Default collection excludes tests/_heavy_archived. Full log: tmp/t5-kept-suite.log.
+
+Final focused gate, after boundary changes:
+powershell -NoProfile -File D:/AI/tools/dbtest.ps1 tests/test_rsi_task.py tests/test_rsi_episode.py tests/test_rsi_genome.py
+32 passed, 1 skipped in 29.41s.
+The skipped test attempts symlink creation; this host did not permit it.
+Database isolation dropped all four disposable test databases after each run.
+
+No new CI result or model-backed learning result is claimed.

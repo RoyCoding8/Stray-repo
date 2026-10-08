@@ -19,6 +19,7 @@ from settlement import artifacts, broker, db, store
 from settlement.common import Command, ResultCode, SettlementError
 
 from . import genome as g
+from . import task as t
 
 TRAJECTORY_SCOPE = "rsi-trajectory"
 TERMINAL = ("observed", "reconciled")
@@ -42,26 +43,32 @@ class EpisodeError(SettlementError):
 
 
 def run_episode(dsn: str, launcher: Any, genome: g.Genome, *, operation_id: str,
-                task: str, instruction: str, files: Mapping[str, bytes],
+                task: t.Task,
                 allocation_id: str, attempt_id: str | None, timeout_ms: int,
                 token_ceiling: int, staging_root: str | Path, artifacts_root: str | Path,
-                trajectory_label: str = "candidate",
                 ownership_generation: int | None = None) -> Episode:
     """Run `genome` on a task once. Calling again with the same id returns the record."""
+    task = t.load(dsn, artifacts_root, task.digest)
     known = read_episode(dsn, operation_id, launcher)
     if known is not None:
+        if (known.genome, known.task) != (genome.digest, task.digest):
+            raise EpisodeError("operation id already belongs to another genome or task")
         return known
+    files = task.workspace
     view = g.workspace_view(genome)
-    clash = set(view) & set(files)
-    if clash:
-        raise EpisodeError(f"task files collide with genome files: {sorted(clash)}")
+    paths = [rel.casefold() for rel in (*view, *files)]
+    unique = set(paths)
+    if len(paths) != len(unique) or any(
+            "/".join(rel.split("/")[:i]) in unique
+            for rel in unique for i in range(1, len(rel.split("/")))):
+        raise EpisodeError("task files collide with genome files")
     if broker.read_operation(dsn, operation_id) is None:
         for rel, raw in {**files, **view}.items():
             launcher.stage_input(operation_id, "", rel, raw)
     ensured = broker.ensure_operation(
         dsn, operation_id=operation_id, effect=broker.AGENT_RUN,
-        payload={"harness": genome.harness, "genome": genome.digest, "task": task,
-                 "instruction": instruction, "config": g.settings(genome),
+        payload={"harness": genome.harness, "genome": genome.digest, "task": task.digest,
+                 "instruction": task.instruction, "config": g.settings(genome),
                  "timeout_ms": timeout_ms, "token_ceiling": token_ceiling},
         allocation_id=allocation_id, attempt_id=attempt_id)
     if ensured.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
@@ -78,13 +85,14 @@ def run_episode(dsn: str, launcher: Any, genome: g.Genome, *, operation_id: str,
     raw = launcher.read_output(operation_id, "", "events.jsonl")
     if hashlib.sha256(raw).hexdigest() != result["trajectory_digest"]:
         raise EpisodeError(f"trajectory of {operation_id} changed after the run")
-    trajectory = _publish_trajectory(dsn, raw, staging_root, artifacts_root, trajectory_label)
+    trajectory = _publish_trajectory(dsn, raw, staging_root, artifacts_root,
+                                     "hidden" if task.split == "anchor" else "candidate")
 
     def _fn(cur, control):
         cur.execute("INSERT INTO rsi_episodes (operation_id, genome, task, status, tokens,"
                     " seconds, trajectory) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     " ON CONFLICT (operation_id) DO NOTHING",
-                    (operation_id, genome.digest, task, result["status"],
+                    (operation_id, genome.digest, task.digest, result["status"],
                      Json(result["tokens"]) if result["tokens"] is not None else None,
                      float(result["seconds"]), trajectory))
         return (ResultCode.APPLIED, "episode recorded", {"operation_id": operation_id},
