@@ -1,0 +1,304 @@
+{
+  "scope": "cooperative Windows benchmark; containment deferred",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "recovery": {
+    "database": "rsi_t5",
+    "port": 55432,
+    "root": "D:/AI/tools/rsi-t5"
+  },
+  "counts": {
+    "agent_episodes": 3,
+    "completed_episodes": 0,
+    "proposals": 1,
+    "children": 0,
+    "gates": 0,
+    "anchor_exposures": 0
+  },
+  "runs": [
+    {
+      "report": {
+        "dev": [
+          {
+            "task": "01db6d922b4545d10490c91030280acece484ed268cb86bef86e9d4b4befe673",
+            "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+            "passed": null,
+            "status": "timeout",
+            "tokens": null,
+            "episode": "rsi-dev-2ca17b059ee1e887b3b35ed5ae8c3a610098b929c98492bb726bc26828191f9f"
+          }
+        ],
+        "stop": "dev agent has no outcome: timeout",
+        "epoch": "50378616802116d4fbc4eccf750c20558b7db625985715413d7e5941b9ce019a",
+        "scope": "benchmark",
+        "rounds": [],
+        "run_id": "t9-native-01",
+        "incumbent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389"
+      },
+      "epoch": {
+        "tasks": {
+          "01db6d922b4545d10490c91030280acece484ed268cb86bef86e9d4b4befe673": {
+            "split": "dev",
+            "evaluator": "d7418db89e7ef87b3ae5e6e9af0bb23d087623ca72efe910ecf7153916f6ffb7"
+          },
+          "2044dcb494e5baa5d9351e3939f5537f3f1cd74374d09c4ceea8c65a5ae68061": {
+            "split": "val",
+            "evaluator": "b2d984ed7e69a6f22da9bc793df5bb5662f80704a48dc0393c9cd0bbda84d7cd"
+          },
+          "28e5a72e8e048a396d9599b4bdc1a49128ac45876349d11fce48c37167fd6a8b": {
+            "split": "anchor",
+            "evaluator": "a12965d8d5a2c83aa14cd60cacde4cd0c4bc07f8ace88f955eb7f519e407d71f"
+          },
+          "372c8678ab56bc3200e4962b4b5f97084525f33bdb320fe3446b9701622fb74f": {
+            "split": "anchor",
+            "evaluator": "a4edbaada120f361b2c1e63f54070fc29a818d9e2e5b1be8d1ae345a4d82c90b"
+          },
+          "3df90f65f7e00a5d9d79d4fa2d4679c8058d802a1b5c58a91dc6af80c543bcad": {
+            "split": "anchor",
+            "evaluator": "e5167278ae99e99d0b1a0644d7fae6d5c73c84e289ac5bcd5c239bd46fb491a9"
+          },
+          "46a65a67a456acb6dde476fccee005a98475cc6c74635d381b643e28947fc5cb": {
+            "split": "anchor",
+            "evaluator": "1ce61c0406e3b10771bed85937f8994282b6bd90ee609ce9ec9675da824e8b18"
+          },
+          "48ddfb0ea2e513742ccb3552f5a265ab05f420213302b695714ff9a8b66ab284": {
+            "split": "anchor",
+            "evaluator": "c94a554d33c4425bd46893b368a1b0f3e3f48697ab64be0bd037cd59cbd82d6a"
+          },
+          "50b08f6129771a7db352b76eeb8c006a6ef6f6a8ac3bcef9e85842690b06592b": {
+            "split": "anchor",
+            "evaluator": "450192ba9d1a0cf2fbf3e3e8d736106f1a7a645f6f9b1dac2d7e0695a2e4d1c1"
+          },
+          "883b3f1212220f24696f2110182dec4a29be3dbbd63bb90eba571d4ac8f36585": {
+            "split": "anchor",
+            "evaluator": "4fe0f8a9fb8bbe35de6bda3a7f421bab9fa3c413cb6cabc5e56f6eac2be41d74"
+          },
+          "96b96bb670939287dc46fd6fa0cf4f79448a296135b6a9a088cbdaa70781d7db": {
+            "split": "anchor",
+            "evaluator": "5850465511ed7a66bd95c34d4bc6af98af6f95d4be38f4d356ed5548acca6b75"
+          },
+          "b611dcf760829a6a9b1ab2d4ada1182e2ddd329922f781f75b6fc0dc873c3af0": {
+            "split": "anchor",
+            "evaluator": "efa3cd904cf280ef5e7689974e3aac7de43ae7a0d4201efe345116220061201d"
+          },
+          "b8fd97ce5e3be177fa846003f82391cf3bedcf66dcd0fd5faa5304a9683f469a": {
+            "split": "anchor",
+            "evaluator": "7f91b0ff6a21586e3c1ae1a5493a2ac3bcea4a5219ccf884256dcbb804537fca"
+          },
+          "c92a797d5b5b4811fb4cd3bbc3345490ad160d04fa9c6d7658d1f2dc1cdc8a10": {
+            "split": "anchor",
+            "evaluator": "0b24241d3a1e5b73447054d1d19e44270acfc28a46df18e338efac253521a7b5"
+          },
+          "f3170eddbe9256727a548369c3629c90e1cfca5560674139b99161b0dd68c471": {
+            "split": "dev",
+            "evaluator": "8bd822cf0632e129291f38e88de61e2483d4080a96d807cb49b8fb2a2a8e69dc"
+          }
+        },
+        "budget": {
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "timeout_ms": 180000,
+          "token_ceiling": 150000
+        },
+        "policy": "val-regression-fresh-anchor-sign-v1",
+        "execution": "benchmark"
+      },
+      "allocations": {
+        "tokens": {
+          "authorized": 9900000,
+          "reserved": 0,
+          "consumed": 150000
+        },
+        "cpu": {
+          "authorized": 7920,
+          "reserved": 0,
+          "consumed": 0
+        }
+      }
+    },
+    {
+      "report": {
+        "dev": [
+          {
+            "task": "f3170eddbe9256727a548369c3629c90e1cfca5560674139b99161b0dd68c471",
+            "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+            "passed": null,
+            "status": "timeout",
+            "tokens": null,
+            "episode": "rsi-dev-b9574b2335faaf4314fc3607194b435a323f0e523712377eb87c27dfd52b648c"
+          }
+        ],
+        "stop": "dev agent has no outcome: timeout",
+        "epoch": "3b5c37e5b486befe000d7e844549218a3e88c0d97329c3ef8b33bfb7d7ba8568",
+        "scope": "benchmark",
+        "rounds": [],
+        "run_id": "t9-native-02",
+        "incumbent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389"
+      },
+      "epoch": {
+        "tasks": {
+          "28e5a72e8e048a396d9599b4bdc1a49128ac45876349d11fce48c37167fd6a8b": {
+            "split": "anchor",
+            "evaluator": "a12965d8d5a2c83aa14cd60cacde4cd0c4bc07f8ace88f955eb7f519e407d71f"
+          },
+          "372c8678ab56bc3200e4962b4b5f97084525f33bdb320fe3446b9701622fb74f": {
+            "split": "anchor",
+            "evaluator": "a4edbaada120f361b2c1e63f54070fc29a818d9e2e5b1be8d1ae345a4d82c90b"
+          },
+          "3df90f65f7e00a5d9d79d4fa2d4679c8058d802a1b5c58a91dc6af80c543bcad": {
+            "split": "anchor",
+            "evaluator": "e5167278ae99e99d0b1a0644d7fae6d5c73c84e289ac5bcd5c239bd46fb491a9"
+          },
+          "46a65a67a456acb6dde476fccee005a98475cc6c74635d381b643e28947fc5cb": {
+            "split": "anchor",
+            "evaluator": "1ce61c0406e3b10771bed85937f8994282b6bd90ee609ce9ec9675da824e8b18"
+          },
+          "48ddfb0ea2e513742ccb3552f5a265ab05f420213302b695714ff9a8b66ab284": {
+            "split": "anchor",
+            "evaluator": "c94a554d33c4425bd46893b368a1b0f3e3f48697ab64be0bd037cd59cbd82d6a"
+          },
+          "50b08f6129771a7db352b76eeb8c006a6ef6f6a8ac3bcef9e85842690b06592b": {
+            "split": "anchor",
+            "evaluator": "450192ba9d1a0cf2fbf3e3e8d736106f1a7a645f6f9b1dac2d7e0695a2e4d1c1"
+          },
+          "883b3f1212220f24696f2110182dec4a29be3dbbd63bb90eba571d4ac8f36585": {
+            "split": "anchor",
+            "evaluator": "4fe0f8a9fb8bbe35de6bda3a7f421bab9fa3c413cb6cabc5e56f6eac2be41d74"
+          },
+          "96b96bb670939287dc46fd6fa0cf4f79448a296135b6a9a088cbdaa70781d7db": {
+            "split": "anchor",
+            "evaluator": "5850465511ed7a66bd95c34d4bc6af98af6f95d4be38f4d356ed5548acca6b75"
+          },
+          "b611dcf760829a6a9b1ab2d4ada1182e2ddd329922f781f75b6fc0dc873c3af0": {
+            "split": "anchor",
+            "evaluator": "efa3cd904cf280ef5e7689974e3aac7de43ae7a0d4201efe345116220061201d"
+          },
+          "b8fd97ce5e3be177fa846003f82391cf3bedcf66dcd0fd5faa5304a9683f469a": {
+            "split": "anchor",
+            "evaluator": "7f91b0ff6a21586e3c1ae1a5493a2ac3bcea4a5219ccf884256dcbb804537fca"
+          },
+          "c92a797d5b5b4811fb4cd3bbc3345490ad160d04fa9c6d7658d1f2dc1cdc8a10": {
+            "split": "anchor",
+            "evaluator": "0b24241d3a1e5b73447054d1d19e44270acfc28a46df18e338efac253521a7b5"
+          },
+          "d989e3527845fe6ff7d67c042676c3d66184597df67512b0ff7ca4f249c36d08": {
+            "split": "val",
+            "evaluator": "6513e3a94098ab2e4e1ef05667f0ed62ad5dd31024d35d967cb289a17a8b26e3"
+          },
+          "f3170eddbe9256727a548369c3629c90e1cfca5560674139b99161b0dd68c471": {
+            "split": "dev",
+            "evaluator": "8bd822cf0632e129291f38e88de61e2483d4080a96d807cb49b8fb2a2a8e69dc"
+          }
+        },
+        "budget": {
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "timeout_ms": 300000,
+          "token_ceiling": 150000
+        },
+        "policy": "val-regression-fresh-anchor-sign-v1",
+        "execution": "benchmark"
+      },
+      "allocations": {
+        "tokens": {
+          "authorized": 8850000,
+          "reserved": 0,
+          "consumed": 150000
+        },
+        "cpu": {
+          "authorized": 7080,
+          "reserved": 0,
+          "consumed": 0
+        }
+      }
+    },
+    {
+      "report": {
+        "dev": [
+          {
+            "task": "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e",
+            "genome": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+            "passed": null,
+            "status": "timeout",
+            "tokens": null,
+            "episode": "rsi-dev-3af3118133dd04d9c2c97056f1559e128f5645cf6ce790c0d4b73624ef542e5e"
+          }
+        ],
+        "stop": "proposal execution stopped: timeout",
+        "epoch": "c5848b7b4388b938ebf5b763bbf5c43d4a1bee3002a7783fbe2585b0d5fe3f12",
+        "scope": "benchmark",
+        "rounds": [
+          {
+            "gate": null,
+            "index": 0,
+            "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+            "proposal": {
+              "child": null,
+              "detail": "Based on the evidence, I can see clear failure patterns:\n1. **PowerShell incompatibility**: Agent uses Unix commands (`ls -la`, `find`, `head`, `cat << EOF`) that fail on Windows PowerShell\n2. **File writing via shell fails**: Multiple failed attempts to write files due to PowerShell string escaping (f-strings, quotes)\n3. **Ignoring apply_patch**: AGENTS.md says \"Edit files with apply_patch\" but agent uses shell commands instead\n4. **Excessive reasoning without execution**: Many reasoning turns, few successful actions\n\nLet me improve the genome files to address these specific failure mechanisms.\n",
+              "parent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389",
+              "status": "timeout",
+              "evidence": "572ea35046b368a9f6557d23d409244a2eb2e395fb058a6f84ae5d7b269f0b08",
+              "trajectory": "7bc7bb7574e85cfd46b18faa94b1f6c9f2ff69073fc560be013d032e56ca78d2",
+              "operation_id": "rsi-proposal-t9-native-03-0"
+            }
+          }
+        ],
+        "run_id": "t9-native-03",
+        "incumbent": "1e61f1f24bb0f8ce0a9e32aec7dafc1366b296cb44aec9b0dc657f8c89b56389"
+      },
+      "epoch": {
+        "tasks": {
+          "28e5a72e8e048a396d9599b4bdc1a49128ac45876349d11fce48c37167fd6a8b": {
+            "split": "anchor",
+            "evaluator": "a12965d8d5a2c83aa14cd60cacde4cd0c4bc07f8ace88f955eb7f519e407d71f"
+          },
+          "4015f097888b581c7735e2fb3f4e5b0333681bb1f1c010375b0999c98ed9ff6e": {
+            "split": "dev",
+            "evaluator": "d48a1db345b05b5718139dd75eb8829c357c1d0eb9aa3151933c66a1639af13c"
+          },
+          "46a65a67a456acb6dde476fccee005a98475cc6c74635d381b643e28947fc5cb": {
+            "split": "anchor",
+            "evaluator": "1ce61c0406e3b10771bed85937f8994282b6bd90ee609ce9ec9675da824e8b18"
+          },
+          "48ddfb0ea2e513742ccb3552f5a265ab05f420213302b695714ff9a8b66ab284": {
+            "split": "anchor",
+            "evaluator": "c94a554d33c4425bd46893b368a1b0f3e3f48697ab64be0bd037cd59cbd82d6a"
+          },
+          "96b96bb670939287dc46fd6fa0cf4f79448a296135b6a9a088cbdaa70781d7db": {
+            "split": "anchor",
+            "evaluator": "5850465511ed7a66bd95c34d4bc6af98af6f95d4be38f4d356ed5548acca6b75"
+          },
+          "b611dcf760829a6a9b1ab2d4ada1182e2ddd329922f781f75b6fc0dc873c3af0": {
+            "split": "anchor",
+            "evaluator": "efa3cd904cf280ef5e7689974e3aac7de43ae7a0d4201efe345116220061201d"
+          },
+          "b8fd97ce5e3be177fa846003f82391cf3bedcf66dcd0fd5faa5304a9683f469a": {
+            "split": "anchor",
+            "evaluator": "7f91b0ff6a21586e3c1ae1a5493a2ac3bcea4a5219ccf884256dcbb804537fca"
+          },
+          "d989e3527845fe6ff7d67c042676c3d66184597df67512b0ff7ca4f249c36d08": {
+            "split": "val",
+            "evaluator": "6513e3a94098ab2e4e1ef05667f0ed62ad5dd31024d35d967cb289a17a8b26e3"
+          }
+        },
+        "budget": {
+          "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+          "timeout_ms": 300000,
+          "token_ceiling": 150000
+        },
+        "policy": "val-regression-fresh-anchor-sign-v1",
+        "execution": "benchmark"
+      },
+      "allocations": {
+        "tokens": {
+          "authorized": 5850000,
+          "reserved": 0,
+          "consumed": 300000
+        },
+        "cpu": {
+          "authorized": 4680,
+          "reserved": 0,
+          "consumed": 0
+        }
+      }
+    }
+  ],
+  "conclusion": "No scored task outcome, candidate, acceptance or model-led improvement. Timeouts have unknown model usage; consumed tokens are ceiling charges."
+}

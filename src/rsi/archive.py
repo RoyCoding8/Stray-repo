@@ -63,7 +63,7 @@ def _nodes(cur, dev_tasks: tuple[str, ...]) -> list[Node]:
     cur.execute("SELECT g.digest, g.parent, (SELECT count(*) FROM rsi_genomes c WHERE c.parent=g.digest) AS children,"
                 " count(v.passed) AS measured, count(*) FILTER (WHERE v.passed IS TRUE) AS solved"
                 " FROM rsi_genomes g CROSS JOIN rsi_tasks t"
-                " LEFT JOIN LATERAL (SELECT v.passed FROM rsi_episodes e JOIN rsi_verdicts v"
+                " LEFT JOIN LATERAL (SELECT v.passed FROM rsi_episodes e LEFT JOIN rsi_verdicts v"
                 " ON v.episode=e.operation_id AND v.evaluator_version=t.evaluator_version"
                 " WHERE e.genome=g.digest AND e.task=t.digest"
                 " ORDER BY e.created_at DESC, e.operation_id DESC LIMIT 1) v ON true"
