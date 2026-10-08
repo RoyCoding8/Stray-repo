@@ -47,6 +47,11 @@ invalid, unchanged and infrastructure-failed proposals, replay, genome identity,
 and exclusion of validation/anchor episodes from the evidence bundle. These
 use an executable fixture; no model-led improvement is claimed.
 
+Preflight accounting: proven unsent launcher refusals now use the existing
+never-sent reconciliation transition immediately, releasing their reservation.
+69 focused broker/episode/verifier tests passed and one symlink test skipped.
+No receipt or task verdict is fabricated for a preflight refusal.
+
 ## Next
 
 3. T8 frozen acceptance gate. Validation, solved-task regression, anchor and
@@ -62,6 +67,7 @@ use an executable fixture; no model-led improvement is claimed.
   code for promotion. That boundary must be addressed before a trusted gate.
 - Infrastructure failures without usage events charge the token ceiling.
   Metering may be needed before T9.
-- Codex preflight refusal leaves a reservation held until kernel recovery.
+- Native Windows probing denied a protected sentinel read, but localhost TCP
+  remained accessible. That does not establish a trusted gate boundary.
 - A 34-task Python exercise bank is a bounded experiment. It does not define
   the intended scope of general autonomous discovery and improvement.

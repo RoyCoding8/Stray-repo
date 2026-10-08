@@ -81,7 +81,7 @@ def run_episode(dsn: str, launcher: Any, genome: g.Genome, *, operation_id: str,
                            f" {status.dispatch_state} {status.next_decision}")
     result = launcher.read_result(operation_id)
     if result is None:
-        raise EpisodeError(f"agent-run {operation_id} settled without a launcher result")
+        raise EpisodeError(f"agent-run {operation_id} settled without a launcher result: {status.next_decision}")
     raw = launcher.read_output(operation_id, "", "events.jsonl")
     if hashlib.sha256(raw).hexdigest() != result["trajectory_digest"]:
         raise EpisodeError(f"trajectory of {operation_id} changed after the run")

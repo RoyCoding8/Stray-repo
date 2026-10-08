@@ -570,8 +570,8 @@ def _send_sandbox(dsn: str, row: dict, op: BrokerOp, launchers: dict,
             return _status_of(dsn, op.operation_id, decision="incompatible-profile")
         return _status_of(dsn, op.operation_id, decision=f"launcher-error-{exc}")
     if not outcome.sent:
-        return _status_of(dsn, op.operation_id,
-                          decision=outcome.refused_reason or "launcher-refused")
+        return _finish_unsent(dsn, op.operation_id, launchers, generation,
+                              outcome.refused_reason or "launcher-refused")
     if crash:
         return _status_of(dsn, op.operation_id, sent_this_call=True)
     return _finish_send(dsn, op.operation_id, outcome, generation)
@@ -830,8 +830,8 @@ def _send_adapter(dsn: str, row: dict, op: BrokerOp, launchers: dict,
     except Exception as exc:
         return _status_of(dsn, op.operation_id, decision=f"launcher-error-{exc}")
     if not outcome.sent:
-        return _status_of(dsn, op.operation_id,
-                          decision=outcome.refused_reason or "launcher-refused")
+        return _finish_unsent(dsn, op.operation_id, launchers, generation,
+                              outcome.refused_reason or "launcher-refused")
     if crash:
         return _status_of(dsn, op.operation_id, sent_this_call=True)
     return _finish_send(dsn, op.operation_id, outcome, generation)
@@ -864,6 +864,19 @@ def _run_inline(dsn: str, row: dict, op: BrokerOp, launchers: dict,
         sent=True, receipt=ReceiptProposal(
             receipt_identity=f"inline:{op.operation_id}", content=content,
             outcome="success", provenance="broker-inline")), generation)
+
+
+def _finish_unsent(dsn: str, operation_id: str, launchers: dict, generation: int,
+                   reason: str) -> DispatchStatus:
+    proof = _structured_never_sent_proof(dsn, operation_id, launchers, generation)
+    if proof is not None:
+        result = store.reconcile_operation(dsn, Command(
+            request_id=f"broker-unsent-{operation_id}-g{generation}",
+            payload={"operation_id": operation_id, "resolution": "reconciled",
+                     "never_sent_proof": proof, "reason": reason}))
+        if result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+            _deliver(dsn, f"dispatch:{operation_id}")
+    return _status_of(dsn, operation_id, decision=reason)
 
 
 def _admitted(result: Any) -> bool:

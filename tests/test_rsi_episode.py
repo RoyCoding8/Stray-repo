@@ -79,10 +79,11 @@ def test_completed_run_settles_real_tokens_once(env):
 
 def test_leaked_skill_catalog_refuses_before_any_send(env):
     dsn, run, launcher, tmp = env
-    with pytest.raises(ep.EpisodeError, match="not settled"):
+    with pytest.raises(ep.EpisodeError, match="settled without a launcher result"):
         run("leak")
     assert _calls(tmp, "ep1") == []
     assert store.allocation_status(dsn, "a1")["consumed"] == 0
+    assert store.allocation_status(dsn, "a1")["reserved"] == 0
     assert launcher("leak").prove_never_sent("ep1") is True
 
 
