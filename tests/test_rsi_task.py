@@ -45,7 +45,8 @@ def test_task_identity_pins_bytes_split_and_evaluator():
 
 
 @pytest.mark.parametrize("workspace", [
-    {"../calc.py": b""}, {"C:/calc.py": b""}, {"_rsi_verify.py": b""},
+    {"../calc.py": b""}, {"C:/calc.py": b""}, {"C:calc.py": b""},
+    {"dir\\..\\calc.py": b""}, {"\\calc.py": b""}, {"_rsi_verify.py": b""},
     {"calc.py": b"", "CALC.py": b""}, {"calc.py": b"", "calc.py/a": b""},
 ])
 def test_task_rejects_unsafe_solution_slots(workspace):

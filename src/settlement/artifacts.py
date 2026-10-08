@@ -14,7 +14,7 @@ import os
 import stat
 import tempfile
 import time
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 from psycopg.rows import dict_row
@@ -45,7 +45,8 @@ def _digest_bytes(raw: bytes) -> str:
 
 
 def _check_relpath(rel: str) -> None:
-    if not isinstance(rel, str) or not rel or os.path.isabs(rel) or rel.startswith("~"):
+    if (not isinstance(rel, str) or not rel or "\\" in rel
+            or PureWindowsPath(rel).drive or rel.startswith("~")):
         raise SettlementError(f"rejected path {rel!r}: must be relative")
     parts = rel.split("/")
     if ("" in parts) or ("." in parts) or (".." in parts):
