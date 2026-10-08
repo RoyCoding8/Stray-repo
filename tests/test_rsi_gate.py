@@ -11,6 +11,17 @@ from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
 
 
+@pytest.mark.parametrize("model", ["openrouter/free", "openrouter/openrouter/free", "kilo-auto/free"])
+def test_budget_accepts_verified_free_routers(model):
+    assert gate.Budget(model, 1000, 30000).model == model
+
+
+@pytest.mark.parametrize("model", ["openrouter/auto", "kilo-auto", "vendor/free", "gpt-5.4"])
+def test_budget_refuses_paid_or_unknown_router_names(model):
+    with pytest.raises(ValueError, match="approved free model"):
+        gate.Budget(model, 1000, 30000)
+
+
 def test_paired_anchor_rule_requires_gain_without_regression():
     yes = gate.paired_verdict((False,) * 6, (True,) * 6, 0.025)
     assert yes == {"wins": 6, "losses": 0, "p_value": 0.015625, "alpha": 0.025, "promote": True}

@@ -32,7 +32,9 @@ class Budget:
     timeout_ms: int
 
     def __post_init__(self):
-        if not self.model.endswith((":free", "-free")):
+        if not self.model.endswith((":free", "-free")) and self.model not in {
+            "openrouter/free", "openrouter/openrouter/free", "kilo-auto/free"
+        }:
             raise ValueError("gate requires an approved free model")
         if self.token_ceiling <= 0 or self.timeout_ms <= 0:
             raise ValueError("gate budgets must be positive")
