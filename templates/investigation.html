@@ -1,22 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>investigation {{ iid }}</h1>
-<p>objective: {{ view.investigation.objective }}</p>
-<p>revision {{ view.investigation.revision }} | disposition {{ view.investigation.disposition }}</p>
-<p><a href="/learning">episode report (learning view)</a></p>
-<h2>dependency diagram</h2>
-{{ view.diagram | safe }}
-<h2>branches</h2>
-<table><tr><th>attempt</th><th>gen</th><th>lifecycle</th><th>waiting on</th></tr>
-{% for a in view.attempts %}<tr><td>{{ a.id }}</td><td>{{ a.ownership_generation }}</td><td>{{ a.lifecycle }}</td><td>{{ view.wait_reasons[a.id] }}</td></tr>{% endfor %}</table>
-<h2>operations</h2>
-<table><tr><th>operation</th><th>dispatch</th><th>reconcile</th><th>cancel</th></tr>
-{% for o in view.operations %}<tr><td><a href="/operations/{{ o.id }}">{{ o.id }}</a></td><td>{{ o.dispatch_state }}</td><td>{{ o.reconcile_state }}</td><td>{{ o.cancel_state }}</td></tr>{% endfor %}</table>
-<h2>evidence</h2>
-<ul>{% for o in view.observations %}<li>{{ o.id }}: {{ o.content }}</li>{% endfor %}</ul>
-{% if view.t4_observations %}<h3>observations</h3><ul>{% for o in view.t4_observations %}<li>{{ o.receipt_id }}: {{ o.content }}</li>{% endfor %}</ul>{% endif %}
-{% if view.derivations %}<h3>derivations</h3><ul>{% for d in view.derivations %}<li>{{ d.id }}: {{ d.result }}</li>{% endfor %}</ul>{% endif %}
-{% if view.relations %}<h3>relations</h3><ul>{% for r in view.relations %}<li>{{ r.src_ref }} -{{ r.kind }}-&gt; {{ r.dst_ref }}</li>{% endfor %}</ul>{% endif %}
-<h2>versions</h2>
-<ul>{% for r in view.revisions %}<li>r{{ r.revision }}: {{ r.objective }}</li>{% endfor %}</ul>
+<h1>Investigation {{ iid }}</h1>
+<dl>{% for key, value in view.investigation.items() %}<dt>{{ key }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>
+<h2>Attempts</h2>{% for a in view.attempts %}<p>{{ a.id }}: {{ a.lifecycle }}</p>{% endfor %}
+<h2>Operations</h2>
+{% for op in view.operations %}<p><a href="/operations/{{ op.id }}">{{ op.id }}</a>: {{ op.dispatch_state }} / {{ op.reconcile_state }}</p>{% endfor %}
 {% endblock %}

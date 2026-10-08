@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from settlement import artifacts, broker, evidence, steward, store
+from settlement import artifacts, broker, steward, store
 from settlement.broker import BrokerOp, LaunchOutcome, ReceiptProposal
 from settlement.common import Command, MissingEvidence, ResultCode
 from settlement.launcher_local import LocalLauncher
@@ -94,57 +94,6 @@ class CountingLauncher:
 
     def read_result(self, operation_id: str):
         return None
-
-
-def test_fulfill_artifact_claim_requires_root_and_bytes(migrated_db, tmp_path):
-    dsn = migrated_db
-    art = tmp_path / "artifacts"
-    staging = tmp_path / "staging"
-    art.mkdir()
-    staging.mkdir()
-    raw = b"artifact premise bytes"
-    digest = hashlib.sha256(raw).hexdigest()
-    manifest = {"files": [{"path": "doc.txt", "kind": "file",
-                           "digest": digest, "size": len(raw)}],
-                "entry": "doc.txt"}
-    receipt = artifacts.stage_package(dsn, staging, manifest=manifest,
-                                      files={"doc.txt": raw},
-                                      access_label="public")
-    published = artifacts.publish_package(dsn, _cmd({"t": 1}), art, receipt)
-    assert published.code == ResultCode.APPLIED
-    package = published.data["digest"]
-    evidence.propose_claim(dsn, _cmd({"t": 2}), "c-art", {"text": "doc true"})
-    evidence.admit_warrant(dsn, _cmd({"t": 3}), "d-art", "c-art", "review",
-                           "v1", [[(package, "artifact")]])
-    obligations = {"doc": {"claim": "c-art"}}
-    store.seed_allocation(dsn, _cmd({"allocation_id": "fa-a", "domain": "cpu",
-                                     "authorized": 1000}))
-    store.admit_commitment(dsn, _cmd({"investigation_id": "fa-i",
-                                      "objective": "fa",
-                                      "obligations": obligations}))
-    gen = store.acquire_work(dsn, _cmd({"attempt_id": "fa-att",
-                                        "investigation_id": "fa-i"})
-                             ).data["ownership_generation"]
-    assert _complete(dsn, "fa-att", gen).code == ResultCode.APPLIED
-
-    def _try(root):
-        payload = {"investigation_id": "fa-i", "attempt_id": "fa-att",
-                   "ownership_generation": gen, "revision": 1,
-                   "authority_version": int(_control(dsn)["authority_version"]),
-                   "evidence_epoch": int(_control(dsn)["evidence_epoch"]),
-                   "obligations": obligations}
-        if root is not None:
-            payload["artifacts_root"] = str(root)
-        return store.fulfill_investigation(dsn, _cmd(payload))
-
-    refused = _try(None)
-    assert refused.code == ResultCode.MISSING_EVIDENCE
-    assert "artifacts root" in refused.detail
-    assert _try(art).code == ResultCode.APPLIED
-    (art / package).write_bytes(b"tampered")
-    with pytest.raises(MissingEvidence):
-        evidence.check_use_verified(dsn, "c-art",
-                                    int(_control(dsn)["evidence_epoch"]), art)
 
 
 def test_fulfill_valid_payload_applies(migrated_db):

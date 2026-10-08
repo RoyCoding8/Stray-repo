@@ -190,6 +190,7 @@ def publish(dsn: str, genome: Genome, *, staging_root: str | Path,
             cur.execute("SELECT 1 FROM rsi_genomes WHERE digest = %s", (parent,))
             if cur.fetchone() is None:
                 raise GenomeError(f"unknown parent genome {parent[:12]}")
+        artifacts._add_reference(cur, genome.digest, "release", "rsi-genome:" + genome.digest)
         cur.execute("INSERT INTO rsi_genomes (digest, parent, harness, origin)"
                     " VALUES (%s, %s, %s, %s)",
                     (genome.digest, parent, genome.harness, Json({"origin": origin})))

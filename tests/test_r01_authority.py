@@ -8,7 +8,7 @@ from threading import Barrier, Lock
 
 import pytest
 
-from settlement import broker, capabilities, db, store
+from settlement import broker, db, store
 from settlement.broker import ATTEMPT_WORKFLOW_RESOURCES, LaunchOutcome, ReceiptProposal
 from settlement.common import Command, CommandResult, ResultCode
 from settlement.gateway import FakeGatewayAdapter
@@ -51,11 +51,6 @@ class CountingGateway(FakeGatewayAdapter):
         with self._lock:
             self.calls.append(request.operation_id)
         return super().infer(request)
-
-
-class FailGateway:
-    def infer(self, request):
-        raise AssertionError(f"no provider send allowed for {request.operation_id}")
 
 
 class CountingLauncher:
@@ -236,85 +231,10 @@ def test_r01_001_crash_during_receipt_never_resends(migrated_db, monkeypatch):
     assert store.allocation_status(dsn, alloc)["reserved"] > 0
 
 
-def _capability_version(dsn, version):
-    with db.connect(dsn) as conn:
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO capability_versions (id) VALUES (%s)"
-                        " ON CONFLICT (id) DO NOTHING", (version,))
-        conn.commit()
-
-
-def _mutate(dsn, mutation, attempt, gen):
-    if mutation == "grant":
-        return {"grant": None, "gen": None}
-    if mutation == "quarantine":
-        _capability_version(dsn, "r01q-cap")
-        capabilities.pin_capability(dsn, attempt, "r01q-cap")
-        assert capabilities.quarantine(
-            dsn, _cmd({"version_id": "r01q-cap"}), "r01q-cap", "r01 probe").code == ResultCode.APPLIED
-        return {"grant": None, "gen": None}
-    return {"grant": None, "gen": gen + 99}
-
-
 def _revoke_grant(dsn):
     version = int(store.get_control(dsn)["authority_version"])
     assert store.seed_grant(
         dsn, _cmd({"version": version + 1, "charter_text": "r01 revoke"})).code == ResultCode.APPLIED
-
-
-@pytest.mark.parametrize("mutation", ["grant", "quarantine", "generation"])
-def test_r01_002_scheduler_refuses_without_send(migrated_db, mutation):
-    dsn = migrated_db
-    alloc, attempt, gen = _setup(dsn)
-    assert broker.ensure_operation(dsn, **_sandbox("r01s-op", alloc, attempt)).code == ResultCode.APPLIED
-    if mutation == "grant":
-        _revoke_grant(dsn)
-    kw = _mutate(dsn, mutation, attempt, gen)
-    launcher = CountingLauncher()
-    report = broker.dispatch_pending(dsn, _launchers(launcher), gateway=FailGateway(),
-                                     ownership_generation=kw["gen"] if kw["gen"] is not None else gen,
-                                     grant_version=kw["grant"])
-    assert launcher.sends == [] and report.dispatched == []
-    assert broker.read_operation(dsn, "r01s-op")["dispatch_state"] == "prepared"
-
-
-@pytest.mark.parametrize("mutation", ["grant", "quarantine", "generation"])
-def test_r01_002_workflow_refuses_without_send(migrated_db, mutation):
-    dsn = migrated_db
-    alloc, attempt, gen = _setup(dsn)
-    args = _sandbox("r01w-op", alloc, attempt)
-    assert broker.ensure_operation(dsn, **args).code == ResultCode.APPLIED
-    if mutation == "grant":
-        _revoke_grant(dsn)
-    kw = _mutate(dsn, mutation, attempt, gen)
-    launcher = CountingLauncher()
-    key = f"r01w-{mutation}-{uuid.uuid4().hex[:8]}"
-    ATTEMPT_WORKFLOW_RESOURCES[key] = {"launchers": _launchers(launcher),
-                                       "gateway": FailGateway()}
-    try:
-        summary = broker.wf_ensure_dispatch(dsn, dict(args), 0,
-                                            kw["gen"] if kw["gen"] is not None else gen,
-                                            "n1", key)
-    finally:
-        ATTEMPT_WORKFLOW_RESOURCES.pop(key, None)
-    assert launcher.sends == []
-    assert summary["dispatch_state"] == "prepared"
-
-
-@pytest.mark.parametrize("mutation", ["grant", "quarantine", "generation"])
-def test_r01_002_model_refuses_without_provider_send(migrated_db, mutation):
-    dsn = migrated_db
-    alloc, attempt, gen = _setup(dsn)
-    assert broker.ensure_operation(dsn, **_model("r01m-op", alloc, attempt)).code == ResultCode.APPLIED
-    if mutation == "grant":
-        _revoke_grant(dsn)
-    kw = _mutate(dsn, mutation, attempt, gen)
-    status = broker.dispatch_operation(dsn, "r01m-op", gateway=FailGateway(),
-                                       ownership_generation=kw["gen"] if kw["gen"] is not None else gen,
-                                       grant_version=kw["grant"])
-    assert status.sent_this_call is False
-    assert status.dispatch_state == "prepared"
-    assert broker.read_operation(dsn, "r01m-op")["dispatch_state"] == "prepared"
 
 
 def test_r01_002_validation_admission_race_refuses(migrated_db):

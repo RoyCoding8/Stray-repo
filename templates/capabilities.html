@@ -1,9 +1,0 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>capabilities</h1>
-{% if not view.t5.installed %}<p>learning slice pending: trial and release tables are not installed yet</p>{% endif %}
-<h2>artifact lineage</h2>
-<ul>{% for a in view.artifacts %}<li>{{ a.digest }} v{{ a.version }} {{ a.availability }}</li>{% endfor %}</ul>
-<h2>derivations</h2>
-<ul>{% for d in view.derivations %}<li>{{ d.id }}: {{ d.result }}</li>{% endfor %}</ul>
-{% endblock %}

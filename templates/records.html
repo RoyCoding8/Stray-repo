@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ title }}</h1>
+{% for row in rows %}<dl>{% for key, value in row.items() %}<dt>{{ key }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>{% else %}<p>No records yet.</p>{% endfor %}
+{% endblock %}

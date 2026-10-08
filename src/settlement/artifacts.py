@@ -374,22 +374,26 @@ def reconcile_staging(dsn: str, staging_root: str | Path, artifacts_root: str | 
     return {"registered": registered, "reclaimed": reclaimed}
 
 
+def _add_reference(cur, digest: str, holder_kind: str, holder_id: str) -> None:
+    cur.execute("SELECT digest FROM artifact_versions WHERE digest = %s", (digest,))
+    if cur.fetchone() is None:
+        raise SettlementError(f"unknown artifact {digest[:12]}")
+    cur.execute(
+        "INSERT INTO artifact_refs (digest, holder_kind, holder_id) VALUES (%s, %s, %s)"
+        " ON CONFLICT (digest, holder_kind, holder_id) DO NOTHING",
+        (digest, holder_kind, holder_id),
+    )
+    if cur.rowcount:
+        cur.execute("UPDATE artifact_versions SET protection_count = protection_count + 1"
+                    " WHERE digest = %s", (digest,))
+
+
 def add_reference(dsn: str, cmd: Command, digest: str, holder_kind: str, holder_id: str) -> CommandResult:
     if holder_kind not in _HOLDERS:
         raise SettlementError(f"unknown holder kind {holder_kind!r}")
 
     def _fn(cur, control):
-        cur.execute("SELECT digest FROM artifact_versions WHERE digest = %s", (digest,))
-        if cur.fetchone() is None:
-            raise SettlementError(f"unknown artifact {digest[:12]}")
-        cur.execute(
-            "INSERT INTO artifact_refs (digest, holder_kind, holder_id) VALUES (%s, %s, %s)"
-            " ON CONFLICT (digest, holder_kind, holder_id) DO NOTHING",
-            (digest, holder_kind, holder_id),
-        )
-        if cur.rowcount:
-            cur.execute("UPDATE artifact_versions SET protection_count = protection_count + 1"
-                        " WHERE digest = %s", (digest,))
+        _add_reference(cur, digest, holder_kind, holder_id)
         cur.execute("SELECT protection_count FROM artifact_versions WHERE digest = %s", (digest,))
         count = int(cur.fetchone()["protection_count"])
         return (ResultCode.APPLIED, "reference added",
@@ -425,34 +429,6 @@ def retire_artifact(dsn: str, cmd: Command, digest: str) -> CommandResult:
     return store.transact(dsn, cmd, _fn)
 
 
-def _sole_active_evidence(dsn: str, digest: str) -> bool:
-    from . import evidence as _ev
-    with db.connect(dsn) as conn:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                "SELECT DISTINCT d.claim_id FROM derivation_premises p"
-                " JOIN derivations d ON d.id = p.derivation_id"
-                " WHERE p.premise_ref = %s AND p.premise_kind = 'artifact'"
-                " AND d.status = 'valid'",
-                (digest,))
-            claims = [row["claim_id"] for row in cur.fetchall()]
-            conn.commit()
-    for claim_id in claims:
-        support = _ev.current_support(dsn, claim_id)
-        if not support["supported"]:
-            continue
-        with db.connect(dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute("SELECT 1 FROM derivation_premises WHERE derivation_id = ANY(%s)"
-                            " AND premise_ref = %s LIMIT 1",
-                            (support["derivations"], digest))
-                found = cur.fetchone() is not None
-                conn.commit()
-        if found:
-            return True
-    return False
-
-
 def collect_garbage(dsn: str, artifacts_root: str | Path) -> dict:
     roots = Path(artifacts_root)
     removed, kept = [], []
@@ -470,8 +446,7 @@ def collect_garbage(dsn: str, artifacts_root: str | Path) -> dict:
                 fresh = cur.fetchone()
                 conn.commit()
         if (fresh is None or int(fresh["protection_count"]) > 0
-                or fresh["availability"] != "retired"
-                or _sole_active_evidence(dsn, row["digest"])):
+                or fresh["availability"] != "retired"):
             kept.append(row["digest"])
             continue
         with db.connect(dsn) as conn:

@@ -157,107 +157,6 @@ def test_cancel_during_trickle_reports_unknown_outcome():
         thread.join()
 
 
-def _ui_client(migrated_db):
-    import uuid
-
-    from fastapi.testclient import TestClient
-
-    from settlement import api, store
-    from settlement.common import Command
-
-    def cmd(payload: dict) -> Command:
-        return Command(request_id=f"req_{uuid.uuid4().hex[:12]}", payload=payload)
-
-    dsn = migrated_db
-    store.seed_allocation(dsn, cmd({"allocation_id": "a1", "domain": "cpu", "authorized": 100}))
-    for iid in ("i1", "i2"):
-        store.admit_commitment(dsn, cmd({"investigation_id": iid, "objective": f"objective-{iid}"}))
-    store.acquire_work(dsn, cmd({"attempt_id": "w1", "investigation_id": "i1",
-                                 "allocation_id": "a1"}))
-    store.acquire_work(dsn, cmd({"attempt_id": "w2", "investigation_id": "i2",
-                                 "allocation_id": "a1"}))
-    from psycopg.types.json import Json
-
-    with store.db.connect(dsn) as conn:
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO observations (receipt_id, attempt_id, content)"
-                        " VALUES ('o1', 'w1', %s), ('o2', 'w2', %s)",
-                        (Json({"note": "evidence-i1"}), Json({"note": "evidence-i2"})))
-            cur.execute("INSERT INTO claims (id, proposition) VALUES ('c1', %s), ('c2', %s)",
-                        (Json({}), Json({})))
-            cur.execute("INSERT INTO derivations (id, claim_id, procedure, result)"
-                        " VALUES ('d1', 'c1', 'proc', %s), ('d2', 'c2', 'proc', %s)",
-                        (Json({"verdict": "holds-i1"}), Json({"verdict": "holds-i2"})))
-            cur.execute("INSERT INTO derivation_premises (derivation_id, group_id, premise_ref,"
-                        " premise_kind) VALUES ('d1', 0, 'o1', 'observation'),"
-                        " ('d2', 0, 'o2', 'observation')")
-            cur.execute("INSERT INTO evidence_relations (src_ref, dst_ref, kind)"
-                        " VALUES ('w1', 'c1', 'required-support'),"
-                        " ('w2', 'c2', 'required-support')")
-            cur.execute("INSERT INTO trial_protocols (id, candidate_version, reference_version,"
-                        " evaluator_version, exclusions, uncertainty)"
-                        " VALUES ('p1', 'cand-7', 'ref-3', 'eval-2', %s, %s)",
-                        (Json(["bad-task"]), Json({"note": "n=4"})))
-            cur.execute("INSERT INTO trial_assignments (id, protocol_id, task_id, task_group,"
-                        " arm, blind_key) VALUES ('a-c1', 'p1', 't1', 'g', 'candidate', 'b1'),"
-                        " ('a-c2', 'p1', 't2', 'g', 'candidate', 'b2'),"
-                        " ('a-r1', 'p1', 't1', 'g', 'reference', 'b3'),"
-                        " ('a-r2', 'p1', 't2', 'g', 'reference', 'b4')")
-            cur.execute("INSERT INTO trial_results (assignment_id, outcome)"
-                        " VALUES ('a-c1', 'success'), ('a-c2', 'failure'),"
-                        " ('a-r1', 'success'), ('a-r2', 'success')")
-            cur.execute("INSERT INTO expenditure_ledger (protocol_id, category, amount)"
-                        " VALUES ('p1', 'evaluation', 42), ('p1', 'construction', 8)")
-        conn.commit()
-    app = api.create_app(dsn, gateway=None, token="test-token")
-    return TestClient(app, headers={"x-operator-token": "test-token"})
-
-
-def test_detail_poll_targets_current_view(migrated_db):
-    client = _ui_client(migrated_db)
-    for path, poll in (("/investigations/i1", "/investigations/i1"),
-                       ("/learning", "/learning"),
-                       ("/evidence", "/evidence"),
-                       ("/capabilities", "/capabilities"),
-                       ("/trials", "/trials")):
-        body = client.get(path).text
-        assert f'hx-get="{poll}"' in body, path
-        assert 'hx-get="/"' not in body, path
-    first = client.get("/investigations/i1").text
-    assert "investigation i1" in first
-    second = client.get("/investigations/i1").text
-    assert "investigation i1" in second
-    assert "objective-i1" in second
-
-
-def test_investigations_show_distinct_evidence(migrated_db):
-    client = _ui_client(migrated_db)
-    one = client.get("/investigations/i1").text
-    two = client.get("/investigations/i2").text
-    for marker in ("evidence-i1", "holds-i1", "o1"):
-        assert marker in one, marker
-    for marker in ("evidence-i2", "holds-i2", "o2"):
-        assert marker in two, marker
-    for marker in ("evidence-i2", "holds-i2"):
-        assert marker not in one, marker
-    for marker in ("evidence-i1", "holds-i1"):
-        assert marker not in two, marker
-
-
-def test_learning_serves_stored_comparisons(migrated_db):
-    from settlement import api as _api
-
-    client = _ui_client(migrated_db)
-    data = _api.learning_data(migrated_db)
-    assert data["comparisons"], "learning must serve stored comparison results"
-    comp = data["comparisons"][0]
-    assert comp["candidate_version"] == "cand-7"
-    assert comp["reference_version"] == "ref-3"
-    body = client.get("/learning").text
-    for marker in ("cand-7", "ref-3", "bad-task", "42"):
-        assert marker in body, marker
-
-
 def _seed_many_attempts(dsn, n=200, per_inv=50, tag="bulk"):
     import uuid
 
@@ -342,7 +241,6 @@ def test_overview_uses_bounded_projection(migrated_db, monkeypatch):
     view = _api.overview_data(dsn)
     assert view["attempt_total"] == 200
     assert len(view["attempts"]) <= 50
-    assert set(view["next_decisions"]) == {a["id"] for a in view["attempts"]}
     assert counts["connects"] <= 6
     assert counts["executes"] <= 18
 
@@ -362,32 +260,6 @@ def test_overview_query_cost_independent_of_history(migrated_db, monkeypatch):
     big = _api.overview_data(dsn)
     assert len(big["attempts"]) <= 50
     assert (counts["connects"], counts["executes"]) == small_cost
-
-
-def test_shared_next_decision_matches_single_path(migrated_db):
-    import uuid
-
-    from settlement import agenda, store
-    from settlement.common import Command, ResultCode
-
-    dsn = migrated_db
-    _seed_many_attempts(dsn, n=4, per_inv=2)
-    # 5577a89 (2026-09-24) made an operation naming an attempt without its
-    # bound allocation a refusal. `prepare_operation` returns that result
-    # rather than raising, so without the allocation_id below it wrote no
-    # row and `next_decision_for` correctly reported `idle` for a running
-    # attempt holding no operation.
-    prepared = store.prepare_operation(
-        dsn, Command(request_id=f"req_{uuid.uuid4().hex[:12]}",
-                     payload={"operation_id": "bulk-op1",
-                              "attempt_id": "bulk-w0",
-                              "allocation_id": "bulk-a1",
-                              "operation": {"effect": "note"}}))
-    assert prepared.code == ResultCode.APPLIED
-    batch = agenda.next_decisions_for(dsn, ["bulk-w0", "bulk-w1", "bulk-missing"])
-    assert batch["bulk-w0"] == agenda.next_decision_for(dsn, "bulk-w0") == "dispatch-bulk-op1"
-    assert batch["bulk-w1"] == agenda.next_decision_for(dsn, "bulk-w1")
-    assert batch["bulk-missing"] == "unknown-attempt"
 
 
 def test_precancelled_operation_reports_unknown_outcome():

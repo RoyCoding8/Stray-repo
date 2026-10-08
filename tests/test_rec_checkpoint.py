@@ -13,7 +13,7 @@ import pytest
 
 from settlement.checkpoint import dbname_of, run_checkpoint
 
-from settlement import artifacts, db, evidence, store
+from settlement import artifacts, db, store
 from settlement.common import Command
 
 REPO = Path(__file__).parent.parent
@@ -41,8 +41,6 @@ def seed_state(dsn, tag, artifacts_root: Path, staging_root: Path) -> dict:
     receipt = artifacts.stage_package(dsn, staging_root, manifest=manifest,
                                       files={"doc.txt": raw}, access_label="public")
     published = artifacts.publish_package(dsn, _cmd({}, f"{tag}p"), artifacts_root, receipt)
-    evidence.register_observation(dsn, _cmd({}, f"{tag}o"), f"{tag}-att",
-                                  {"checkpoint": tag}, "rec-src")
     return {"allocation_id": f"{tag}-a", "digest": published.data["digest"]}
 
 
@@ -80,7 +78,6 @@ def test_checkpoint_writes_consistent_recovery_set(migrated_db, tmp_path):
     assert manifest["control"]["authority_version"] == 1
     assert manifest["row_counts"]["grants"] >= 1
     assert manifest["row_counts"]["allocations"] >= 1
-    assert manifest["row_counts"]["observations"] >= 1
     assert manifest["row_counts"]["artifact_versions"] >= 1
     assert len(manifest["artifacts"]) == 1
     entry = manifest["artifacts"][0]

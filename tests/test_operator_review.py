@@ -62,13 +62,3 @@ def test_supervision_scope_refuses_task_atomically(migrated_db):
     assert steward.admit_task(
         dsn, _cmd({"investigation_id": "inv1", "attempt_id": "a3",
                    "allocation_id": "sup"})).code == ResultCode.INSUFFICIENT_RESOURCES
-
-
-def test_quarantine_without_learning_slice_is_unavailable(migrated_db, monkeypatch):
-    import sys
-
-    import settlement.capabilities  # noqa: F401  (prove the slice exists here)
-
-    monkeypatch.setitem(sys.modules, "settlement.capabilities", None)
-    out = steward.quarantine_subject(migrated_db, _cmd({"subject": "cap_x"}))
-    assert out.code == ResultCode.UNAVAILABLE_DEPENDENCY

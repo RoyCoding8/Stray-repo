@@ -111,6 +111,7 @@ def publish(dsn: str, task: Task, *, staging_root: str | Path,
         raise TaskError(result.detail)
 
     def record(cur, control):
+        artifacts._add_reference(cur, task.digest, "evidence", "rsi-task:" + task.digest)
         cur.execute("INSERT INTO rsi_tasks (digest, name, split, evaluator_version)"
                     " VALUES (%s, %s, %s, %s) ON CONFLICT (digest) DO NOTHING",
                     (task.digest, task.name, task.split, task.evaluator_version))

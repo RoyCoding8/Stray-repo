@@ -89,6 +89,7 @@ def run_episode(dsn: str, launcher: Any, genome: g.Genome, *, operation_id: str,
                                      "hidden" if task.split == "anchor" else "candidate")
 
     def _fn(cur, control):
+        artifacts._add_reference(cur, trajectory, "attempt", "rsi-episode:" + operation_id)
         cur.execute("INSERT INTO rsi_episodes (operation_id, genome, task, status, tokens,"
                     " seconds, trajectory) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     " ON CONFLICT (operation_id) DO NOTHING",

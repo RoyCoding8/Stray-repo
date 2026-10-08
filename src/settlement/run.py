@@ -395,17 +395,6 @@ def check_eligibility(dsn: str, attempt_id: str, comp: Composition) -> dict[str,
         reasons.append(f"attempt is {attempt['lifecycle']}")
     if disposition in ("withdrawn", "fulfilled"):
         reasons.append(f"investigation is {disposition}")
-    from psycopg import errors as _pgerrors
-
-    from . import capabilities as _capabilities
-
-    try:
-        quarantined = _capabilities.pinned_quarantines(dsn, attempt_id)
-    except _pgerrors.UndefinedTable:
-        quarantined = []
-    for hit in quarantined:
-        reasons.append(
-            f"quarantined capability {hit['version_id']}: {hit['reason']}")
     return {"eligible": not reasons, "reasons": reasons}
 
 

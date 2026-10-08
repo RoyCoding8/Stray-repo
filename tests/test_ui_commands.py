@@ -69,22 +69,10 @@ def test_pause_resume_cancel_cycle_with_external_unknown(client):
     assert "external outcome unknown" in body
 
 
-def test_quarantine_degrades_cleanly_without_t5(client, monkeypatch):
-    import sys
-
-    import settlement.capabilities  # noqa: F401  (prove the slice exists here)
-
-    monkeypatch.setitem(sys.modules, "settlement.capabilities", None)
-    body = client.post("/commands/quarantine", data={"subject": "cap-v9"}).text
-    assert "refused" in body and "unavailable_dependency" in body
-
-
-def test_amend_allocation_and_repair_scan(client):
+def test_amend_allocation(client):
     amend = client.post("/commands/amend-allocation",
                         data={"allocation_id": "a1", "authorized": "150"}).text
     assert "accepted" in amend and "applied" in amend
-    repair = client.post("/commands/repair", data={}).text
-    assert "accepted" in repair
 
 
 def test_inspect_unknown_operation_is_refused(client):

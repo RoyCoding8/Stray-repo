@@ -16,6 +16,7 @@ owns execution, budgets, receipts and artifacts outside agent modification.
 | T3 genome | Content-addressed packages, lineage, restricted settings and workspace materialization. |
 | T4 episodes | Broker-admitted agent runs, bounded execution, skill isolation preflight, token accounting and trajectory artifacts. |
 | T5 bank and verifier | Published tasks, deterministic splits, frozen evaluator versions, solution snapshots and separately admitted pristine verifiers. Completed episodes produce persisted verdicts; infrastructure failures do not receive a task score. |
+| T10 subtraction | Retired nine study modules, migrated operator views, and added a forward drop for 49 study tables. RSI artifacts receive durable holds in their recording transactions. |
 | T6–T9 improvement loop | Archive selection, meta-agent proposals, acceptance gate and matched-budget anchor comparison remain to build. |
 
 T5 evidence: the local 34-exercise Exercism bank has 18 dev, 5 validation and
@@ -31,6 +32,11 @@ tests. The final RSI gate passed 32 and skipped 1 because symlink creation was
 unavailable. No new CI result is claimed. Fake-Codex tests check plumbing only;
 T4's real model run is recorded separately in `tmp/HANDOFF.md`.
 
+T10 verification: the kept run had 493 passes, 20 skips and one error-message
+assertion failure. The corrected rejection and all later cleanup edits passed
+a focused 62-test Windows/PostgreSQL check. Archived heavy tests remain outside
+that verification scope. No cleanup CI result is claimed.
+
 ## Next
 
 1. T6 archive and parent selection. Keep every node selectable and record the
@@ -41,8 +47,7 @@ T4's real model run is recorded separately in `tmp/HANDOFF.md`.
    adaptive-reuse accounting; promote or quarantine.
 4. T9 real closed loop. Compare the promoted genome and parent on the anchor
    at matched budget. A mock run does not demonstrate self-improvement.
-5. T10 retire study controllers/tables after migrating `api` callers; T11
-   verified task synthesis. Update docs and run CI with each checkpoint.
+5. T11 verified task synthesis. Update docs and run CI with each checkpoint.
 
 ## Known gaps
 
@@ -52,7 +57,5 @@ T4's real model run is recorded separately in `tmp/HANDOFF.md`.
 - Infrastructure failures without usage events charge the token ceiling.
   Metering may be needed before T9.
 - Codex preflight refusal leaves a reservation held until kernel recovery.
-- Legacy `agenda`, `authority`, `loop`, `trials` and `evaluation` remain
-  entangled with `api`; retired study tables remain in historical migrations.
 - A 34-task Python exercise bank is a bounded experiment. It does not define
   the intended scope of general autonomous discovery and improvement.

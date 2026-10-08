@@ -8,9 +8,7 @@
 </head>
 <body>
 <nav>
-<a href="/">overview</a> | <a href="/evidence">evidence</a> |
-<a href="/capabilities">capabilities</a> | <a href="/trials">trials</a> |
-<a href="/learning">learning</a>
+<a href="/">overview</a> | <a href="/genomes">genomes</a> | <a href="/episodes">episodes</a>
 </nav>
 {% if gateway_down %}<div id="gateway-banner">models unavailable: inspection and mechanical recovery stay enabled</div>{% endif %}
 <div id="content" hx-get="{{ poll_url | default('/') }}" hx-select="#content" hx-trigger="every 60s" hx-target="#content" hx-swap="outerHTML">

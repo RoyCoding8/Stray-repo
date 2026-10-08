@@ -160,31 +160,6 @@ def test_retention_proposal_cannot_bypass_preservation(migrated_db, tmp_roots):
     assert ok.code == ResultCode.APPLIED
 
 
-def test_gc_never_deletes_sole_active_evidence(migrated_db, tmp_roots):
-    from settlement import evidence as ev
-    dsn = migrated_db
-    receipt = _stage_publish(dsn, tmp_roots, *_pkg(b"sole-evidence", "sole.bin"))
-    digest = receipt["digest"]
-    artifacts.add_reference(dsn, _cmd(), digest, "evidence", "claim-sole")
-    store.admit_commitment(dsn, _cmd({"investigation_id": "invS", "objective": "o"}))
-    store.acquire_work(dsn, _cmd({"attempt_id": "attS", "investigation_id": "invS"}))
-    obs = ev.register_observation(dsn, _cmd(), "attS", {"n": 1},
-                                  source_identity="s").data["receipt_id"]
-    ev.propose_claim(dsn, _cmd(), "c-sole", {"text": "holds"})
-    ev.admit_warrant(dsn, _cmd(), "d-sole", "c-sole", "review", "v1",
-                     [[(obs, "observation"), (digest, "artifact")]])
-    artifacts.retire_artifact(dsn, _cmd(), digest)
-    out = artifacts.collect_garbage(dsn, tmp_roots["artifacts"])
-    assert digest in out["kept"]
-    assert (tmp_roots["artifacts"] / digest).is_file()
-    ev.retract(dsn, _cmd(), obs)
-    out = artifacts.collect_garbage(dsn, tmp_roots["artifacts"])
-    assert digest in out["kept"]
-    artifacts.remove_reference(dsn, _cmd(), digest, "evidence", "claim-sole")
-    out = artifacts.collect_garbage(dsn, tmp_roots["artifacts"])
-    assert digest in out["removed"]
-
-
 def test_untrusted_archive_unpacks_only_via_isolated_process(migrated_db, tmp_roots):
     import io
     import tarfile

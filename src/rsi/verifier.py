@@ -178,6 +178,7 @@ def verify_episode(dsn: str, agent_launcher, verifier_launcher, episode_id: str,
         verdict = _result(dsn, operation_id, task.evaluator_version, version)
 
     def record(cur, control):
+        artifacts._add_reference(cur, verdict.solution, "evidence", "rsi-verdict:" + episode_id)
         cur.execute("INSERT INTO rsi_verdicts (episode, evaluator_version, operation_id,"
                     " solution, status, passed, detail) VALUES (%s, %s, %s, %s, %s, %s, %s)"
                     " ON CONFLICT (episode, evaluator_version) DO NOTHING",

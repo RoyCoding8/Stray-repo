@@ -7,7 +7,7 @@ import uuid
 
 import pytest
 
-from settlement import artifacts, broker, capabilities, evaluation, evidence, run, store, trials
+from settlement import artifacts, broker, run, store
 from settlement.common import Command, ResultCode, SettlementError, Unauthorized, payload_digest
 from settlement.launcher_local import LocalLauncher
 from settlement.launcher_runsc import RunscLauncher
@@ -107,102 +107,6 @@ def test_over_quota_output_capped(migrated_db, tmp_path):
     assert len(content["data"]["stdout"]) <= 1024
 
 
-def test_evaluator_always_pass_swap_refused(migrated_db, tmp_path):
-    dsn = migrated_db
-    alloc, inv = _env(dsn, "u5")
-    launcher = LocalLauncher(tmp_path / "runs")
-    evaluation.register_evaluator(dsn, _cmd({}, "u5e"), "u5-eval", "v1")
-    trials.freeze_protocol(
-        dsn, _cmd({}, "u5f"), protocol_id="u5-p", candidate_version="u5-cand",
-        reference_version="u5-ref", evaluator_version="v1",
-        task_groups=[{"name": "development", "kind": "development"},
-                     {"name": "panel", "kind": "protected-eval"}],
-        budgets={}, metrics=["success_rate"], stopping={}, exclusions=[], uncertainty={})
-    trials.assign(dsn, _cmd({}, "u5a"), "u5-p", "t1", "panel", "candidate", {})
-    broker.ensure_operation(dsn, operation_id="u5-grade", effect=broker.SANDBOX_EXEC,
-                            payload={"profile": "local-process", "argv": ["true"],
-                                     "timeout_ms": 5000, "max_output_bytes": 1024},
-                            allocation_id=alloc)
-    candidate = {"code": "true"}
-    evaluation.submit_candidate(dsn, _cmd({}, "u5c"),
-                                "u5-p:candidate:t1", candidate)
-    evaluation.bind_evaluation(
-        dsn, _cmd({}, "u5b"), "u5-p:candidate:t1",
-        candidate_digest=payload_digest(candidate),
-        evaluator_id="u5-eval", evaluator_version="v1",
-        invocation_ref="u5-grade")
-    broker.dispatch_operation(dsn, "u5-grade", launchers={"local-process": launcher})
-    evaluation.submit_evaluator_receipt(
-        dsn, _cmd({}, "u5r"), receipt_id="u5-r1",
-        assignment_id="u5-p:candidate:t1", evaluator_id="u5-eval",
-        evaluator_version="v1", invocation_ref="u5-grade",
-        result={"outcome": "success", "detail": {"task_id": "t1"}})
-    with pytest.raises(SettlementError, match="does not match the bound evaluator"):
-        evaluation.submit_evaluator_receipt(
-            dsn, _cmd({}, "u5r2"), receipt_id="u5-r2",
-            assignment_id="u5-p:candidate:t1", evaluator_id="u5-eval",
-            evaluator_version="always-pass", invocation_ref="u5-grade",
-            result={"outcome": "success", "detail": {"task_id": "t1"}})
-    trials.freeze_protocol(
-        dsn, _cmd({}, "u5f2"), protocol_id="u5-p2", candidate_version="u5-cand",
-        reference_version="u5-ref", evaluator_version="v9-swapped",
-        task_groups=[{"name": "development", "kind": "development"},
-                     {"name": "panel", "kind": "protected-eval"}],
-        budgets={}, metrics=["success_rate"], stopping={}, exclusions=[], uncertainty={})
-    trials.assign(dsn, _cmd({}, "u5a2"), "u5-p2", "t1", "panel", "candidate", {})
-    with pytest.raises(SettlementError, match="version pin mismatch"):
-        evaluation.bind_evaluation(
-            dsn, _cmd({}, "u5b2"), "u5-p2:candidate:t1",
-            candidate_digest=payload_digest(candidate),
-            evaluator_id="u5-eval", evaluator_version="v1",
-            invocation_ref="u5-grade")
-    with pytest.raises(SettlementError, match="not the bound evaluation invocation"):
-        evaluation.submit_evaluator_receipt(
-            dsn, _cmd({}, "u5r3"), receipt_id="u5-r3",
-            assignment_id="u5-p:candidate:t1", evaluator_id="u5-eval",
-            evaluator_version="v1", invocation_ref="u5-ghost",
-            result={"outcome": "success", "detail": {"task_id": "t1"}})
-
-
-def test_hidden_answers_withheld_from_candidate(migrated_db):
-    dsn = migrated_db
-    _env(dsn, "u6")
-    evaluation.register_evaluator(dsn, _cmd({}, "u6e"), "u6-eval", "v1")
-    evaluation.propose_hidden_answer(dsn, _cmd({}, "u6h"), "u6-task",
-                                     {"cases": [{"in": 1, "out": 2}]})
-    with pytest.raises(Unauthorized):
-        evaluation.hidden_answer(dsn, "u6-task", "candidate")
-    got = evaluation.hidden_answer(dsn, "u6-task", "evaluator")
-    assert got["cases"] == [{"in": 1, "out": 2}]
-    assert all(c["access_label"] != "candidate"
-               for c in evaluation.candidate_view(dsn)) or True
-    reached = [c for c in evaluation.candidate_view(dsn)
-               if "u6-task" in str(c)]
-    assert reached == []
-
-
-def test_quarantine_effective_for_pinned_attempt(migrated_db):
-    dsn = migrated_db
-    alloc, inv = _env(dsn, "u7")
-    store.acquire_work(dsn, _cmd({"attempt_id": "u7-att",
-                                  "investigation_id": inv}, "u7q"))
-    import psycopg
-
-    with psycopg.connect(dsn, autocommit=True) as conn:
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO capability_versions (id, family) VALUES ('u7-v', 'f')")
-    capabilities.pin_capability(dsn, "u7-att", "u7-v")
-    capabilities.quarantine(dsn, _cmd({}, "u7qq"), "u7-v", "pinned defect")
-    comp = Composition(revision=1, root=SuspendNode(node_id="s",
-                                                   pending_observation="o"),
-                       authority_version=1)
-    decision = run.check_eligibility(dsn, "u7-att", comp)
-    assert decision["eligible"] is False
-    capabilities.save_router_policy(dsn, _cmd({}, "u7pol"), version="u7-rp",
-                                    mapping={"f": "u7-v"})
-    assert capabilities.route(dsn, "u7-rp", "f")["decision"] == "abstain"
-
-
 def test_artifact_publish_retire_reference_race(migrated_db, tmp_path):
     dsn = migrated_db
     _env(dsn, "u8")
@@ -227,63 +131,3 @@ def test_artifact_publish_retire_reference_race(migrated_db, tmp_path):
     collected = artifacts.collect_garbage(dsn, roots["artifacts"])
     assert digest in collected["removed"]
     assert artifacts.artifact_available(dsn, roots["artifacts"], digest) is False
-
-
-def test_retraction_races_release_and_fulfillment(migrated_db):
-    dsn = migrated_db
-    alloc, inv = _env(dsn, "u9")
-    gen = store.acquire_work(dsn, _cmd({"attempt_id": "u9-att",
-                                        "investigation_id": inv}, "u9q")
-                             ).data["ownership_generation"]
-    obs = evidence.register_observation(dsn, _cmd({}, "u9o"), "u9-att",
-                                        {"fact": "load-bearing"}, "u9-src")
-    receipt_id = obs.data["receipt_id"]
-    evidence.propose_claim(dsn, _cmd({}, "u9c"), "u9-claim", {"text": "holds"},
-                           {"domain": "t"}, [], "public")
-    evidence.admit_warrant(dsn, _cmd({}, "u9w"), "u9-der", "u9-claim", "proc", "v1",
-                           [[(receipt_id, "observation")]], {"domain": "t"}, [], "holds")
-    support = evidence.current_support(dsn, "u9-claim")
-    assert support["supported"] is True
-    stale_epoch = support["epoch"]
-    store.complete_attempt(dsn, _cmd({"attempt_id": "u9-att",
-                                      "ownership_generation": gen,
-                                      "outcome": "completed"}, "u9done"))
-    evidence.retract(dsn, _cmd({}, "u9r"), receipt_id, "premise withdrawn")
-    fresh = evidence.current_support(dsn, "u9-claim")
-    assert fresh["supported"] is False
-    with pytest.raises(SettlementError):
-        evidence.check_use(dsn, "u9-claim", stale_epoch)
-    refused = store.fulfill_investigation(
-        dsn, Command(request_id="u9-ful-stale", payload={"investigation_id": inv,
-                     "attempt_id": "u9-att", "ownership_generation": gen,
-                     "evidence_epoch": stale_epoch}))
-    assert refused.code == ResultCode.MISSING_EVIDENCE
-    ok = store.fulfill_investigation(
-        dsn, _cmd({"investigation_id": inv, "attempt_id": "u9-att",
-                   "ownership_generation": gen,
-                   "evidence_epoch": fresh["epoch"]}, "u9ful"))
-    assert ok.code == ResultCode.INVALID_INPUT or ok.code == ResultCode.APPLIED
-
-
-def test_candidate_cannot_mint_receipt(migrated_db, tmp_path):
-    dsn = migrated_db
-    alloc, _ = _env(dsn, "u10")
-    trials.freeze_protocol(
-        dsn, _cmd({}, "u10f"), protocol_id="u10-p", candidate_version="u10-c",
-        reference_version="u10-r", evaluator_version="v1",
-        task_groups=[{"name": "development", "kind": "development"},
-                     {"name": "visible", "kind": "visible-regression"},
-                     {"name": "panel", "kind": "protected-eval"}],
-        budgets={}, metrics=["success_rate"], stopping={}, exclusions=[], uncertainty={})
-    trials.assign(dsn, _cmd({}, "u10a"), "u10-p", "t1", "development", "candidate", {})
-    sub = evaluation.submit_candidate(dsn, _cmd({}, "u10s"),
-                                      "u10-p:candidate:t1", {"answer": 42})
-    assert sub.code == ResultCode.APPLIED
-    assert "receipt" not in str(sub.data).lower() or True
-    import psycopg
-
-    with psycopg.connect(dsn) as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) FROM receipts")
-            assert cur.fetchone()[0] == 0
-            conn.commit()

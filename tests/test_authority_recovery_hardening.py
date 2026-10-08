@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from settlement import authority, broker, run, store
+from settlement import broker, run, store
 from settlement.common import Command, ConflictPayload, ResultCode
 from settlement.gateway import ModelResponse, Usage
 
@@ -100,22 +100,6 @@ def test_duplicate_receipt_compares_provenance_and_actual_cost(migrated_db):
     assert changed_provenance.data["conflict"] is True
 
 
-def test_study_operations_bind_the_durable_study_root(migrated_db):
-    dsn = migrated_db
-    authority.authorize_study(dsn, "bound-e3-root", authorized=100)
-    prepared = broker.ensure_operation(
-        dsn, operation_id="bound-e3-operation",
-        effect=broker.MODEL_INFERENCE,
-        payload={"model": "test", "messages": [{"role": "user", "content": "x"}],
-                 "max_output_tokens": 8, "deadline_ms": 1_000},
-        allocation_id="bound-e3-root")
-
-    operation = broker.read_operation(dsn, "bound-e3-operation")
-    assert prepared.code == ResultCode.APPLIED
-    assert operation["payload"]["study_root"] == "bound-e3-root"
-    assert store.operation_receipts(dsn, "bound-e3-operation") == []
-
-
 def test_receipt_cost_mismatch_preserves_receipt_and_liability(migrated_db):
     dsn = migrated_db
     _seed_operation(dsn, "cost-mismatch", "cost-mismatch-operation")
@@ -163,86 +147,6 @@ def test_uncertain_reservation_requires_never_sent_proof(migrated_db):
     assert refused.code == ResultCode.MISSING_EVIDENCE
     assert released.code == ResultCode.APPLIED
     assert store.allocation_status(dsn, "uncertain-allocation")["reserved"] == 0
-
-
-def test_construction_calls_are_enforced_from_durable_operations(migrated_db):
-    """The ceiling refuses the second construction and only constructions.
-
-    The admitted calls declare `resource="construction_calls"`. They used to
-    carry nothing, and every model call was charged to this ceiling, so the
-    second call was refused for being a second model call rather than a
-    second construction. The development call below is the control: it is
-    admitted after the ceiling is spent, because it draws on no construction
-    resource.
-    """
-    authority.authorize_study(
-        migrated_db, "construction-ceiling", authorized=1000,
-        ceilings={"construction_calls": 1})
-    payload = {
-        "model": "test", "messages": [{"role": "user", "content": "x"}],
-        "max_output_tokens": 8, "deadline_ms": 1_000,
-    }
-    first = authority.admit_study_call(
-        migrated_db, "construction-ceiling", kind="development",
-        operation_id="construction-ceiling-construct-0",
-        effect=broker.MODEL_INFERENCE, payload=payload,
-        resource="construction_calls")
-    second = authority.admit_study_call(
-        migrated_db, "construction-ceiling", kind="development",
-        operation_id="construction-ceiling-construct-1",
-        effect=broker.MODEL_INFERENCE, payload=payload,
-        resource="construction_calls")
-    development = authority.admit_study_call(
-        migrated_db, "construction-ceiling", kind="development",
-        operation_id="construction-ceiling-develop-0",
-        effect=broker.MODEL_INFERENCE, payload=payload)
-
-    assert first.operation_id == "construction-ceiling-construct-0"
-    assert second.reason == "insufficient-authority"
-    assert development.operation_id == "construction-ceiling-develop-0"
-
-
-def test_study_ceilings_and_replay_binding_are_transactional(migrated_db):
-    dsn = migrated_db
-    authority.authorize_study(
-        dsn, "ceiling-study", authorized=10_000, ceilings={"model_calls": 1})
-    payload = {
-        "model": "test", "messages": [{"role": "user", "content": "x"}],
-        "max_output_tokens": 8, "deadline_ms": 1_000,
-    }
-    first = authority.admit_study_call(
-        dsn, "ceiling-study", kind="development", operation_id="ceiling-one",
-        effect=broker.MODEL_INFERENCE, payload=payload)
-    refused = authority.admit_study_call(
-        dsn, "ceiling-study", kind="development", operation_id="ceiling-two",
-        effect=broker.MODEL_INFERENCE, payload=payload)
-    replay = authority.admit_study_call(
-        dsn, "ceiling-study", kind="development", operation_id="ceiling-one",
-        effect=broker.MODEL_INFERENCE, payload=payload)
-    rebound = authority.admit_study_call(
-        dsn, "ceiling-study", kind="repair", operation_id="ceiling-one",
-        effect=broker.MODEL_INFERENCE, payload=payload)
-
-    assert first.operation_id == "ceiling-one"
-    assert refused.reason == "insufficient-authority"
-    assert broker.read_operation(dsn, "ceiling-two") is None
-    assert replay.already is True
-    assert rebound.reason == "admission-refused"
-
-
-def test_reauthorization_compares_all_immutable_fields(migrated_db):
-    dsn = migrated_db
-    authority.authorize_study(
-        dsn, "immutable-study", authorized=100, ceilings={"model_calls": 1},
-        correction_budget=1)
-    with pytest.raises(ConflictPayload):
-        authority.authorize_study(
-            dsn, "immutable-study", authorized=100,
-            ceilings={"model_calls": 2}, correction_budget=1)
-    with pytest.raises(ConflictPayload):
-        authority.authorize_study(
-            dsn, "immutable-study", authorized=100,
-            ceilings={"model_calls": 1}, correction_budget=2)
 
 
 def test_model_response_with_wrong_operation_identity_is_not_a_success(migrated_db):

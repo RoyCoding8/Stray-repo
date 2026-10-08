@@ -99,98 +99,6 @@ _DECIDED_OUTCOMES = {"success", "failure"}
 _TERMINAL_ATTEMPT = {"completed", "failed", "cancelled"}
 _TERMINAL_UNKNOWN = "unresolved-terminal"
 CANONICAL_CHARGE_SCALE = 1000
-CEILING_COUNTERS = {
-    "operations": "operations",
-    "model_calls": "model_calls",
-    "model_dispatches": "model_calls",
-    "construction_calls": "construction_calls",
-    "sandbox_calls": "sandbox_calls",
-    "sandbox_execs": "sandbox_calls",
-    "execution_units": "execution_units",
-    "sandbox_units": "execution_units",
-    "calibration": "calibration",
-    "development": "development",
-    "repair": "repair",
-    "use": "use",
-}
-
-
-# Ceilings a study declares that this layer records but does not count.
-# A boundary is a trajectory-level decision and an oracle query is a child
-# call, so neither appears as a durable operation row. Accepting the
-# declaration keeps the sheet whole; refusing it made the study unstartable
-# with a valid grant, which is the worse failure.
-DECLARED_CEILINGS = frozenset({
-    "boundaries", "witness_queries", "dev_episodes", "lineages",
-    "deadline_s", "trajectories", "diagnostic_queries",
-})
-
-
-def is_ceiling_name(name: object) -> bool:
-    """Whether a study may declare this ceiling, with or without `max_`."""
-    text = str(name)
-    bare = text.removeprefix("max_")
-    return (text in CEILING_COUNTERS or bare in CEILING_COUNTERS
-            or text in DECLARED_CEILINGS or bare in DECLARED_CEILINGS)
-
-
-def is_ceiling_enforced(name: object) -> bool:
-    """Whether this layer actually counts and checks the ceiling `name`.
-
-    `is_ceiling_name` answers a different question, and answering only that one
-    is what N-32 named. A name in `DECLARED_CEILINGS` is a legal declaration
-    and is written to `study_authority.ceilings` as authoritative, but
-    `_ceiling_counter` returns None for it, so the enforcement loop skips it
-    and nothing ever checks it again. A live study declares two of them,
-    `max_boundaries` and `max_witness_queries`
-    (`scripts/inv01_study.py:1224`), and reads back a frozen ceiling this
-    layer never enforces.
-
-    Refusing the declaration is not available here. The comment above
-    `DECLARED_CEILINGS` records that refusing one "made the study unstartable
-    with a valid grant, which is the worse failure", and the live caller
-    proves it. So the gap is made answerable instead: a caller that wants to
-    know whether a bound is real asks this, and `trajectory.py`, which reads a
-    campaign `caps` dict rather than the stored `ceilings`, is exactly the kind
-    of caller that was reading two records for one quantity.
-    """
-    return _ceiling_counter(name) is not None
-
-
-def unenforced_ceilings() -> list[str]:
-    """Every ceiling name this layer accepts and will never check."""
-    return sorted(DECLARED_CEILINGS)
-
-
-def require_enforceable_ceilings(ceilings: dict[str, Any]) -> None:
-    """Refuse a cap sheet that names a ceiling this layer cannot enforce.
-
-    For a caller about to report a sheet as a set of enforced bounds. It is
-    not a substitute for the `authorize_study` decision, which is where a
-    declared-only ceiling should be refused outright if a study is going to be
-    unstartable without it. It is the assertion a downstream consumer makes
-    when it is about to treat a name as a bound it can rely on.
-    """
-    unbacked = [str(name) for name in dict(ceilings or {})
-                if not is_ceiling_enforced(name)]
-    if unbacked:
-        raise MissingEvidence(
-            "ceilings this layer does not count or enforce: %s"
-            % ", ".join(sorted(unbacked)))
-
-
-def _ceiling_counter(name: object) -> str | None:
-    """The counter a ceiling names, tolerating a study's `max_` prefix.
-
-    A cap sheet is written as `max_model_calls` and the counter is
-    `model_calls`. Enforcement has to read the same name admission accepts,
-    or a study that was authorized under one spelling fails at the first
-    operation under the other, which reads as a resource bug rather than a
-    naming one.
-    """
-    text = str(name)
-    return CEILING_COUNTERS.get(text) or CEILING_COUNTERS.get(
-        text.removeprefix("max_"))
 
 
 def _j(value: Any) -> Json:
@@ -859,16 +767,8 @@ def reserve(dsn: str, cmd: Command) -> CommandResult:
         # released. Committing that row spends allocation authority on an
         # exposure nothing can ever close.
         #
-        # This guard is here and not in `_take_reservation` because the
-        # internal callers reserve *before* they insert the operation, in the
-        # same transaction: `_prepare_operation`, the study admission path,
-        # `team._insert_operation` and both agenda probe sites. A check in the
-        # shared helper would refuse all six. It is also not a foreign key:
-        # `reservations.operation_id` carries the empty-string sentinel for a
-        # reservation with no operation behind it, and agenda's
-        # `_agenda_charge_decision` deliberately names a charge that is never
-        # an operations row, so no constraint on this column can be satisfied
-        # by all of its writers.
+        # Internal preparation reserves before inserting the operation. Public
+        # reservation requests can only attach to an existing operation.
         if operation_id:
             cur.execute("SELECT 1 FROM operations WHERE id = %s", (operation_id,))
             if cur.fetchone() is None:
@@ -976,16 +876,6 @@ def _check_grant(control: dict, supplied: dict, stored: dict) -> None:
         raise Unauthorized("stale dispatch grant")
 
 
-def _check_release(cur, attempt_id: str) -> None:
-    cur.execute("SELECT q.version_id, q.reason FROM attempt_capability_pins p"
-                " JOIN quarantine_registry q ON q.version_id = p.version_id"
-                " WHERE p.attempt_id = %s ORDER BY q.version_id LIMIT 1", (attempt_id,))
-    hit = cur.fetchone()
-    if hit is not None:
-        raise Unauthorized(
-            f"attempt pinned to quarantined capability {hit['version_id']}: {hit['reason']}")
-
-
 def _admission_checks(cur, control, op, ownership_generation: Any, grant_version: Any) -> None:
     if bool(control.get("dispatch_paused", False)):
         raise SettlementError(
@@ -1009,7 +899,6 @@ def _admission_checks(cur, control, op, ownership_generation: Any, grant_version
             raise StaleRevision(
                 f"attempt {attempt['id']} revision {attempt['investigation_revision']} !="
                 f" current {inv['revision']}")
-        _check_release(cur, op["attempt_id"])
 
 
 def _acquire_work(cur, *, investigation_id: str, attempt_id: str,
@@ -1167,39 +1056,23 @@ def _fulfillment_target(cur, cmd: Command) -> tuple[dict, dict]:
     return inv, p
 
 
-def _check_obligation_witnesses(dsn: str, cur, control, inv: dict, attempt: dict,
-                               artifacts_root: str | None = None) -> None:
-    from . import evidence as _evidence
-
-    wanted = dict(inv["obligations"] or {})
-    epoch = int(control["evidence_epoch"])
-    for name, spec in wanted.items():
-        if not isinstance(spec, dict) or set(spec) not in ({"success"}, {"claim"}):
-            raise MissingEvidence(
-                f"obligation {name!r} has no discharge witness:"
-                " use {\"success\": operation_id} or {\"claim\": claim_id}")
-        if "success" in spec:
-            cur.execute("SELECT attempt_id, dispatch_state, reconcile_state FROM operations WHERE id = %s",
-                        (spec["success"],))
-            op = cur.fetchone()
-            if op is None:
-                raise MissingEvidence(f"obligation {name!r}: unknown operation {spec['success']!r}")
-            if op["attempt_id"] != attempt["id"]:
-                raise MissingEvidence(
-                    f"obligation {name!r}: operation {spec['success']!r} is not this attempt's work")
-            cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s AND outcome = 'success'",
-                        (spec["success"],))
-            if cur.fetchone() is None:
-                raise MissingEvidence(
-                    f"obligation {name!r}: operation {spec['success']!r} never succeeded")
-            if op["reconcile_state"] in ("conflict", "unresolved"):
-                raise MissingEvidence(
-                    f"obligation {name!r}: operation {spec['success']!r} is {op['reconcile_state']}")
-            if op["dispatch_state"] not in ("observed", "reconciled"):
-                raise MissingEvidence(
-                    f"obligation {name!r}: operation {spec['success']!r} has no observed receipt")
-        else:
-            _evidence.check_use_verified(dsn, spec["claim"], epoch, artifacts_root)
+def _check_obligation_witnesses(cur, inv: dict, attempt: dict) -> None:
+    for name, spec in dict(inv["obligations"] or {}).items():
+        if not isinstance(spec, dict) or set(spec) != {"success"}:
+            raise MissingEvidence(f"obligation {name!r} needs a witness {{\"success\": operation_id}}")
+        cur.execute("SELECT attempt_id, dispatch_state, reconcile_state FROM operations WHERE id = %s",
+                    (spec["success"],))
+        op = cur.fetchone()
+        if op is None or op["attempt_id"] != attempt["id"]:
+            raise MissingEvidence(f"obligation {name!r}: operation is not this attempt's work")
+        cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s AND outcome = 'success'",
+                    (spec["success"],))
+        if cur.fetchone() is None:
+            raise MissingEvidence(f"obligation {name!r}: operation never succeeded")
+        if op["reconcile_state"] in ("conflict", "unresolved"):
+            raise MissingEvidence(f"obligation {name!r}: operation is {op['reconcile_state']}")
+        if op["dispatch_state"] not in ("observed", "reconciled"):
+            raise MissingEvidence(f"obligation {name!r}: operation has no observed receipt")
 
 
 def attempts_with_continuations(dsn: str) -> list[dict]:
@@ -1246,9 +1119,7 @@ def fulfill_investigation(dsn: str, cmd: Command) -> CommandResult:
             raise SettlementError("fulfillment needs the current completion obligations")
         if dict(p["obligations"]) != dict(inv["obligations"] or {}):
             raise StaleRevision("completion obligations changed since this fulfillment was prepared")
-        _check_obligation_witnesses(dsn, cur, control, inv, attempt,
-                                   p.get("artifacts_root"))
-        _check_release(cur, attempt["id"])
+        _check_obligation_witnesses(cur, inv, attempt)
         cur.execute(
             "UPDATE investigations SET disposition = 'fulfilled', fulfilled_revision = %s,"
             " updated_at = now() WHERE id = %s",
@@ -1297,73 +1168,6 @@ def _get_operation(cur, operation_id: str) -> dict:
     return row
 
 
-def _study_root_for_allocation(cur, allocation_id: str | None) -> str:
-    if not allocation_id:
-        return ""
-    cur.execute(
-        "WITH RECURSIVE allocation_lineage (id, parent_id, path) AS ("
-        " SELECT id, parent_id, ARRAY[id] FROM allocations WHERE id = %s"
-        # A study root is an ancestor, so the walk climbs `line.parent_id`.
-        # The path runs from the operation's own allocation upward, so the
-        # authority nearest the operation is the one at the *lowest* position
-        # in it. Carrying the path also cuts a revisit: `UNION` cannot, because
-        # a path differs on every pass, so the tuples never dedupe and a cycle
-        # runs to the statement timeout. The walk is still linear, because
-        # `parent_id` is a single column and every allocation has exactly one
-        # path to its root.
-        " UNION ALL SELECT a.id, a.parent_id, line.path || a.id FROM allocations a"
-        " JOIN allocation_lineage line ON line.parent_id = a.id"
-        " WHERE NOT a.id = ANY(line.path))"
-        " SELECT study_authority.study_root,"
-        " array_position(allocation_lineage.path, study_authority.allocation_id)"
-        " AS depth FROM study_authority"
-        " JOIN allocation_lineage ON allocation_lineage.id = study_authority.allocation_id",
-        (allocation_id,))
-    # A plain cursor yields tuples, and a tuple has no ``get``. Reading a
-    # fixed column pair keeps the one-cursor caller and the `dict_row` caller
-    # of this function agreeing, which is what keeps study_root off every
-    # persisted operation when one of them guesses wrong.
-    found = [(row["study_root"] if hasattr(row, "get") else row[0],
-              int(row["depth"]) if hasattr(row, "get") else int(row[1]))
-             for row in cur.fetchall()]
-    if not found:
-        return ""
-    nearest = min(depth for _, depth in found)
-    owners = {str(root) for root, depth in found if depth == nearest}
-    if len(owners) > 1:
-        # Two study roots on the one allocation. `study_authority` keys on
-        # `study_root` and constrains nothing on `allocation_id`, so this is
-        # reachable, and no ordering separates two roots on the same node.
-        # Binding either leaves the other's ceilings unchecked for every
-        # operation admitted below that allocation, so the walk refuses
-        # rather than picks the row it happened to read first.
-        raise ConflictPayload(
-            "allocation %s is claimed by studies %s; no study owns it"
-            % (allocation_id, sorted(owners)))
-    return owners.pop()
-
-
-def _bind_study_allocation(cur, allocation_id: str | None, stored: dict) -> None:
-    study_root = _study_root_for_allocation(cur, allocation_id)
-    if not study_root:
-        return
-    existing = stored.get("study_root")
-    if existing is not None and existing != study_root:
-        raise ConflictPayload("operation is bound to another study root")
-    stored["study_root"] = study_root
-
-
-def _require_study_operation_binding(cur, operation_id: str) -> None:
-    cur.execute("SELECT allocation_id, payload FROM operations WHERE id = %s", (operation_id,))
-    row = cur.fetchone()
-    if row is None:
-        raise SettlementError(f"unknown operation {operation_id}")
-    study_root = _study_root_for_allocation(cur, row.get("allocation_id"))
-    if study_root and dict(row.get("payload") or {}).get("study_root") != study_root:
-        raise MissingAuthority(
-            f"operation {operation_id} is not bound to study {study_root}")
-
-
 def _check_operation_replay(existing: dict[str, Any], *, digest: str,
                             attempt_id: str | None, allocation_id: str | None,
                             reservation_id: str | None, exposure: int,
@@ -1381,93 +1185,6 @@ def _check_operation_replay(existing: dict[str, Any], *, digest: str,
     if not immutable:
         raise ConflictPayload(
             f"operation {existing['id']} replay changed immutable authority metadata")
-
-
-def _counters_spent_by(stored: dict) -> frozenset[str]:
-    """The counters one operation would move if it were admitted.
-
-    A ceiling is a bound on a resource, so it is checked against the
-    operations that actually draw on that resource. Counting every
-    ceiling against every operation makes a ceiling of zero a refusal of
-    all work: `max_model_calls: 0` is a statement that no model is
-    called, and a `domain-command` draws on no model, so it has to be
-    admitted. Refusing it there turned 42 admitted operations into 42
-    refusals, and on a summary line a refused study is
-    indistinguishable from one that made no model calls at all.
-    """
-    effect = (stored or {}).get("effect")
-    spent = {"operations"}
-    if effect == "model-inference":
-        # A ceiling is a bound on a named resource, so it is charged only to
-        # the operations that draw on it. `construction_calls` was charged to
-        # every model call, which made it a second spelling of `model_calls`:
-        # a phase that merely asks a model a question spent the construction
-        # ceiling, and a study that ran its development phase first had no
-        # authority left to construct anything. Charge and credit had to
-        # become one predicate, so both read `resource` here.
-        spent.add("model_calls")
-        if (stored or {}).get("resource") == "construction_calls":
-            spent.add("construction_calls")
-    elif effect == "sandbox-exec":
-        spent |= {"sandbox_calls", "execution_units"}
-    kind = (stored or {}).get("kind")
-    if isinstance(kind, str) and kind:
-        spent.add(kind)
-    return frozenset(spent)
-
-
-def _check_study_ceilings(cur, study_root: Any, stored: dict) -> None:
-    """Refuse a send the study's own frozen ceiling forbids.
-
-    `admit_study_operation` read this column, but its only caller is
-    `authority.admit_study_call` and no live dispatch reaches it. Every send
-    goes through `prepare_operation`, which bound the study root and then
-    never asked, so a study could authorize one send and dispatch any number.
-    The check lives where the operation is actually admitted.
-
-    It runs before the reservation is taken, so an over-ceiling send spends
-    no exposure.
-    """
-    if not study_root:
-        return
-    cur.execute("SELECT ceilings FROM study_authority WHERE study_root = %s",
-                (str(study_root),))
-    row = cur.fetchone()
-    if row is None:
-        return
-    ceilings = dict(row["ceilings"] or {})
-    if not ceilings:
-        return
-    used = _count_study_operations(cur, str(study_root), stored)
-    spent = _counters_spent_by(stored)
-    for name, raw_limit in ceilings.items():
-        if _ceiling_counter(name) not in spent:
-            continue
-        limit = _ceiling_value(raw_limit)
-        counter = _ceiling_counter(name)
-        if counter is None:
-            # A declared-only ceiling names a quantity this layer records and
-            # does not count, such as a wall deadline or a query budget. It is
-            # authorized deliberately, so refusing it here would break every
-            # study that declares one. It is not enforced, and saying so is
-            # better than raising on a name the study may legally declare.
-            continue
-        if limit is None:
-            raise SettlementError(f"unsupported study ceiling {name}")
-        if used.get(counter, 0) + 1 > limit:
-            raise InsufficientResources(
-                f"study {study_root} ceiling {name}={limit} reached at "
-                f"{used.get(counter, 0)}")
-
-
-def _count_study_operations(cur, study_root: str, stored: dict) -> dict:
-    """How many operations of each ceiling kind this study already has."""
-    cur.execute("SELECT allocation_id FROM study_authority WHERE study_root = %s",
-                (study_root,))
-    study = cur.fetchone()
-    if study is None:
-        return {}
-    return _study_operation_counts(cur, str(study["allocation_id"]))
 
 
 def _prepare_operation(cur, authority_version: int, *, operation_id: str,
@@ -1501,8 +1218,6 @@ def _prepare_operation(cur, authority_version: int, *, operation_id: str,
             raise SettlementError("exposure needs reservation_id and allocation_id")
         _take_reservation(cur, allocation_id, reservation_id, int(exposure), operation_id)
     stored = dict(body) if isinstance(body, dict) else {}
-    _bind_study_allocation(cur, allocation_id, stored)
-    _check_study_ceilings(cur, stored.get("study_root"), stored)
     stored["_authority_version"] = int(authority_version)
     cur.execute(
         "INSERT INTO operations (id, attempt_id, allocation_id, reservation_id, payload_digest,"
@@ -1532,181 +1247,6 @@ def prepare_operation(dsn: str, cmd: Command) -> CommandResult:
                 {"operation_id": p["operation_id"],
                  "reservation_id": prepared["reservation_id"]},
                 [("operation.prepared", {"operation_id": p["operation_id"]})], [])
-    return transact(dsn, cmd, _fn)
-
-
-def _empty_study_counts() -> dict[str, int]:
-    """A zeroed counter for every name `CEILING_COUNTERS` can resolve to.
-
-    Building the shape from the table rather than from a hand-written literal
-    is what makes the two agree. A hand-written five-key dict is how
-    `calibration`, `development`, `repair` and `use` came to read zero: they
-    were in `CEILING_COUNTERS`, so a study could declare them, and the walker
-    never incremented them.
-    """
-    return {counter: 0 for counter in set(CEILING_COUNTERS.values())}
-
-
-def _study_operation_counts(cur, allocation_id: str) -> dict[str, int]:
-    cur.execute(
-        "WITH RECURSIVE study_allocs (id) AS ("
-        " SELECT id FROM allocations WHERE id = %s"
-        " UNION SELECT a.id FROM allocations a"
-        " JOIN study_allocs s ON a.parent_id = s.id)"
-        " SELECT id FROM study_allocs", (allocation_id,))
-    allocation_ids = [row["id"] for row in cur.fetchall()]
-    if not allocation_ids:
-        return _empty_study_counts()
-    cur.execute(
-        "SELECT o.id, o.allocation_id, o.payload, COALESCE(r.amount, 0) AS exposure"
-        " FROM operations o LEFT JOIN reservations r ON r.id = o.reservation_id"
-        " WHERE o.allocation_id = ANY(%s) ORDER BY o.id", (allocation_ids,))
-    rows = [dict(row) for row in cur.fetchall()]
-    counts = _empty_study_counts()
-    counts["operations"] = len(rows)
-    for row in rows:
-        payload = row.get("payload") or {}
-        effect = payload.get("effect")
-        if effect == "model-inference":
-            counts["model_calls"] += 1
-            if payload.get("resource") == "construction_calls":
-                counts["construction_calls"] += 1
-        elif effect == "sandbox-exec":
-            counts["sandbox_calls"] += 1
-            counts["execution_units"] += int(row.get("exposure") or 0)
-        # The four study kinds, which are allocation-namespace counters rather
-        # than effect counters. A study operation is admitted under the child
-        # allocation `<parent>/<kind>/<operation>`, so the kind is one path
-        # segment below the study's own allocation. The LIKE fallback counted
-        # these by namespace and the walker could not, which is the
-        # disagreement N-31 named; counting them here reconciles the two by
-        # making one counter that reads both.
-        kind = payload.get("kind")
-        if kind in counts:
-            counts[kind] += 1
-    return counts
-
-
-def _ceiling_value(value: Any) -> int | None:
-    if isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return int(value)
-    if isinstance(value, dict):
-        value = value.get("max", value.get("limit"))
-        if isinstance(value, int) and not isinstance(value, bool):
-            return int(value)
-    return None
-
-
-def admit_study_operation(
-    dsn: str,
-    cmd: Command,
-) -> CommandResult:
-    def _fn(cur, control):
-        p = cmd.payload
-        study_root = str(p["study_root"])
-        kind = str(p["kind"])
-        operation_id = str(p["operation_id"])
-        child_id = str(p["allocation_id"])
-        exposure = int(p["exposure"])
-        # The same boundary rule `_prepare_operation` applies, on the second
-        # site that writes the column. A check on one write site and not the
-        # other is half a check.
-        execution_version = _require_execution_version(
-            p.get("execution_version", ""))
-        body = dict(p["body"])
-        _reject_terminal_intent(body)
-        if (
-                body.get("allocation_id") != child_id
-                or body.get("study_root") != study_root
-                or body.get("kind") != kind
-                or body.get("budget_kind") != p.get("budget_kind")):
-            raise ConflictPayload("study operation intent is not bound to its authority metadata")
-        digest = payload_digest(body)
-        cur.execute("SELECT * FROM study_authority WHERE study_root = %s FOR UPDATE",
-                    (study_root,))
-        study = cur.fetchone()
-        if study is None:
-            raise MissingEvidence(f"no authority for study {study_root}")
-        parent_id = str(study["allocation_id"])
-        if child_id != f"{parent_id}/{kind}/{operation_id}":
-            raise ConflictPayload("study operation allocation is not bound to its study and kind")
-        cur.execute(
-            "SELECT o.*, r.amount AS reservation_amount FROM operations o"
-            " LEFT JOIN reservations r ON r.id = o.reservation_id"
-            " WHERE o.id = %s FOR UPDATE OF o", (operation_id,))
-        existing = cur.fetchone()
-        if existing is not None:
-            _check_operation_replay(
-                existing, digest=digest, attempt_id=p.get("attempt_id"),
-                allocation_id=child_id, reservation_id=str(p["reservation_id"]),
-                exposure=exposure, execution_version=execution_version,
-                authority_version=int(control["authority_version"]))
-            stored = dict(existing["payload"] or {})
-            if existing["allocation_id"] != child_id \
-                    or stored.get("study_root") != study_root \
-                    or stored.get("kind") != kind:
-                raise ConflictPayload(
-                    f"operation {operation_id} is bound to another study, allocation, or kind")
-            return (ResultCode.ALREADY_APPLIED, "study operation already admitted",
-                    {"operation_id": operation_id, "allocation_id": child_id,
-                     "exposure": exposure, "budget_kind": stored["budget_kind"],
-                     "study_root": study_root, "kind": kind}, [], [])
-        # One counter for both paths. This used to read a five-entry `counts`
-        # dict and fall back to `WHERE allocation_id LIKE '<parent>/<counter>/%'`
-        # for any counter the dict did not carry, which is N-31's two sources
-        # of truth: the fallback counted one namespace, and the live path's
-        # `_count_study_operations` counted the whole subtree. They disagreed,
-        # and which one answered depended on which entry point ran. Now both
-        # read `_study_operation_counts`, the walker behind
-        # `_count_study_operations`, so there is one counter. The study row is
-        # already locked above, so the allocation is passed rather than
-        # re-read.
-        used_counts = _study_operation_counts(cur, parent_id)
-        ceilings = dict(study.get("ceilings") or {})
-        spent = _counters_spent_by(body)
-        for name, raw_limit in ceilings.items():
-            if _ceiling_counter(name) not in spent:
-                continue
-            limit = _ceiling_value(raw_limit)
-            counter = _ceiling_counter(name)
-            if limit is None or counter is None:
-                raise SettlementError(f"unsupported study ceiling {name}")
-            used = used_counts.get(counter, 0)
-            if used + 1 > limit:
-                raise InsufficientResources(
-                    f"study {study_root} ceiling {name}={limit} reached at {used}")
-        cur.execute("SELECT * FROM allocations WHERE id = %s FOR UPDATE", (child_id,))
-        child = cur.fetchone()
-        if child is None:
-            parent = _require_child_capacity(cur, parent_id, exposure)
-            cur.execute(
-                "INSERT INTO allocations (id, parent_id, domain, epoch, authorized, amount_scale,"
-                " max_occupancy, owner_scope) VALUES (%s, %s, 'study', %s, %s, %s, %s, '')",
-                (child_id, parent_id, int(parent["epoch"]), exposure,
-                 int(parent["amount_scale"]), int(parent["max_occupancy"])),
-            )
-        elif int(child["authorized"]) != exposure or child["parent_id"] != parent_id:
-            raise ConflictPayload(
-                f"child {child_id} is already bound to another authority or exposure")
-        if p.get("attempt_id") is not None:
-            _attempt_allocation(cur, str(p["attempt_id"]), child_id)
-        _bind_study_allocation(cur, child_id, body)
-        reservation_id = str(p["reservation_id"])
-        _take_reservation(cur, child_id, reservation_id, exposure, operation_id)
-        stored_body = {**body, "_authority_version": int(control["authority_version"])}
-        cur.execute(
-            "INSERT INTO operations (id, attempt_id, allocation_id, reservation_id, payload_digest,"
-            " payload, dispatch_state, execution_version) VALUES (%s, %s, %s, %s, %s, %s, 'prepared', %s)",
-            (operation_id, p.get("attempt_id"), child_id, reservation_id, digest,
-             _j(stored_body), execution_version),
-        )
-        return (ResultCode.APPLIED, f"study operation {operation_id} admitted",
-                {"operation_id": operation_id, "allocation_id": child_id,
-                 "exposure": exposure, "budget_kind": p["budget_kind"],
-                 "study_root": study_root, "kind": kind},
-                [("operation.prepared", {"operation_id": operation_id})], [])
     return transact(dsn, cmd, _fn)
 
 
@@ -2121,7 +1661,6 @@ def confirm_cancellation(dsn: str, cmd: Command) -> CommandResult:
 def operation_receipts(dsn: str, operation_id: str) -> list[dict]:
     with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            _require_study_operation_binding(cur, operation_id)
             cur.execute("SELECT receipt_identity, outcome, content, provenance FROM receipts"
                         " WHERE operation_id = %s"
                         " ORDER BY created_at, receipt_identity", (operation_id,))
@@ -2133,7 +1672,6 @@ def operation_receipts(dsn: str, operation_id: str) -> list[dict]:
 def operation_receipt_conflicts(dsn: str, operation_id: str) -> list[dict]:
     with db.read_connect(dsn) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            _require_study_operation_binding(cur, operation_id)
             cur.execute("SELECT receipt_identity, operation_id, content_digest, content"
                         " FROM receipt_conflicts WHERE operation_id = %s"
                         " ORDER BY id", (operation_id,))
@@ -2419,7 +1957,6 @@ def restart_reconciliation(dsn: str) -> dict:
                         if _terminal_disposition(dict(row)) is None]
             conn.commit()
     return {"unfinished_operations": operations, "live_attempts": attempts, "execution_versions": versions}
-
 
 
 def _bump_inflight_dispatch(cur) -> list[dict]:

@@ -8,7 +8,7 @@ import uuid
 
 import pytest
 
-from settlement import artifacts, capabilities, db, evaluation, store, trials
+from settlement import artifacts, db, store
 from settlement.common import Command, ResultCode, SettlementError
 
 
@@ -19,41 +19,6 @@ def _cmd(payload=None, **kw) -> Command:
 GROUPS = [{"name": "development", "kind": "development"},
           {"name": "panel", "kind": "visible-regression"},
           {"name": "prot", "kind": "protected-eval"}]
-
-
-def _freeze(dsn, pid, **kw):
-    return trials.freeze_protocol(dsn, _cmd(), protocol_id=pid, candidate_version="cv",
-                                  reference_version="rv", evaluator_version="ev1",
-                                  task_groups=GROUPS, **kw)
-
-
-def test_assign_retry_returns_prior_blind_key(migrated_db):
-    dsn = migrated_db
-    _freeze(dsn, "invc-retry")
-    first = trials.assign(dsn, _cmd(), "invc-retry", "t1", "panel", "candidate", {})
-    assert first.code == ResultCode.APPLIED
-    second = trials.assign(dsn, _cmd(), "invc-retry", "t1", "panel", "candidate", {})
-    assert second.code == ResultCode.ALREADY_APPLIED
-    assert second.data["blind_key"] == first.data["blind_key"]
-    assert second.data["assignment_id"] == first.data["assignment_id"]
-
-
-def test_assign_refuses_unfrozen_protocol(migrated_db):
-    dsn = migrated_db
-    _freeze(dsn, "invc-draft", _frozen=False)
-    with pytest.raises(SettlementError, match="not frozen"):
-        trials.assign(dsn, _cmd(), "invc-draft", "t1", "panel", "candidate", {})
-
-
-def test_register_evaluator_refuses_version_change(migrated_db):
-    dsn = migrated_db
-    first = evaluation.register_evaluator(dsn, _cmd(), "invc-eval", "v1")
-    assert first.code == ResultCode.APPLIED
-    again = evaluation.register_evaluator(dsn, _cmd(), "invc-eval", "v1")
-    assert again.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
-    refused = evaluation.register_evaluator(dsn, _cmd(), "invc-eval", "v2")
-    assert refused.code == ResultCode.INVALID_INPUT
-    assert "already" in refused.detail
 
 
 def _pkg(body: bytes = b"hello", name: str = "a.txt"):
@@ -134,13 +99,3 @@ def test_stage_refuses_archive_symlink(migrated_db, tmp_path):
     with pytest.raises(SettlementError, match="links and special files"):
         artifacts.stage_package(None, staging, manifest=manifest,
                                 files={"evil.tar.gz": arc_bytes})
-
-
-def test_extract_entry_malformed_package_is_settlement_error(tmp_path):
-    inner = {"manifest": {"files": [{"path": "data.txt", "kind": "file"}]},
-             "files": {"data.txt": b"hi".hex()}}
-    payload = json.dumps(inner, sort_keys=True, separators=(",", ":")).encode()
-    digest = hashlib.sha256(payload).hexdigest()
-    (tmp_path / digest).write_bytes(payload)
-    with pytest.raises(SettlementError):
-        capabilities._extract_entry(str(tmp_path), digest)

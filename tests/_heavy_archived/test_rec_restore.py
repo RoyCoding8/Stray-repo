@@ -23,7 +23,7 @@ def fence():
         "ci-restore-fence", migrations_dir=Path(__file__).parents[2] / "migrations")
     try:
         with db.connect(database.dsn) as conn:
-            conn.execute("TRUNCATE control, store_identity CASCADE")
+            conn.execute("TRUNCATE control CASCADE")
         yield database.dsn
     finally:
         drop_disposable_db(database)

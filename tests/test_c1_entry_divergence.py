@@ -6,85 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from settlement import artifacts, capabilities
+from settlement import artifacts
 from settlement.common import SettlementError
 
 ENTRY_A = b"ENTRY = 'A'\n"
 ENTRY_B = b"ENTRY = 'B'\n"
-
-
-def _manifest_entry(manifest: dict) -> str:
-    return capabilities.resolve_entry_path(manifest)
-
-
-def _package(entries: list[tuple[str, bytes]], named: str | None) -> tuple[dict, dict]:
-    files = {path: body for path, body in entries}
-    manifest = {
-        "files": [{"path": path, "digest": hashlib.sha256(body).hexdigest(),
-                   "size": len(body), "kind": "file"}
-                  for path, body in entries],
-    }
-    if named is not None:
-        manifest["entry"] = named
-    package = {"manifest": manifest, "scope": "", "files":
-               {path: body.hex() for path, body in files.items()}}
-    return package, manifest
-
-
-def test_resolver_honours_named_entry_over_first_python():
-    _package_body, manifest = _package(
-        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named="B.py")
-
-    assert _manifest_entry(manifest) == "B.py"
-
-
-def test_resolver_falls_back_to_first_python_only_when_unnamed():
-    _package_body, manifest = _package(
-        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named=None)
-
-    assert _manifest_entry(manifest) == "A.py"
-
-
-def test_resolver_refuses_entry_absent_from_files():
-    _package_body, manifest = _package([("A.py", ENTRY_A)], named="missing.py")
-
-    with pytest.raises(SettlementError, match="not in the manifest files"):
-        _manifest_entry(manifest)
-
-
-def test_resolver_refuses_manifest_with_no_executable_entry():
-    _package_body, manifest = _package([("README.txt", b"no code here")], named=None)
-
-    with pytest.raises(SettlementError, match="no executable entry"):
-        _manifest_entry(manifest)
-
-
-def test_extract_and_invoke_resolve_the_same_entry(tmp_path):
-    published, manifest = _package(
-        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named="B.py")
-    staged = artifacts.stage_package(
-        None, tmp_path / "staging", manifest=manifest,
-        files={"A.py": ENTRY_A, "B.py": ENTRY_B})
-    (tmp_path / "store").mkdir()
-    (tmp_path / "store" / staged["digest"]).write_bytes(
-        json.dumps(published, sort_keys=True, separators=(",", ":")).encode())
-
-    path, body, _args = capabilities._extract_entry(
-        tmp_path / "store", staged["digest"])
-
-    assert path == "B.py"
-    assert body == ENTRY_B
-
-
-def test_entry_bytes_selected_are_the_named_file_not_the_first_python():
-    _package_body, manifest = _package(
-        [("A.py", ENTRY_A), ("B.py", ENTRY_B)], named="B.py")
-    files = {"A.py": ENTRY_A, "B.py": ENTRY_B}
-
-    selected = files[_manifest_entry(manifest)]
-
-    assert selected == ENTRY_B
-    assert selected != ENTRY_A
 
 
 def test_safe_write_rejects_an_existing_symlink(tmp_path):

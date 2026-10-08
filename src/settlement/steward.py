@@ -4,17 +4,13 @@ Leases live in ``worker_leases`` (migration 0004). Expiry and revocation bump
 the attempt's ownership_generation inside the same transition, so a stale
 worker's dispatch and fulfillment are refused while its observation submission
 stays open. Attempt deadlines are stored by T2; expiry policy lives here.
-Quarantine delegates to T5's capabilities module by duck-typed import and
-degrades to UNAVAILABLE_DEPENDENCY when its migration is absent.
 """
 
 from __future__ import annotations
 
-import importlib
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from psycopg import errors as _pgerrors
 
 from . import store
 from .common import (
@@ -24,7 +20,6 @@ from .common import (
     ResultCode,
     SettlementError,
     Unauthorized,
-    UnavailableDependency,
 )
 
 _LIVE = ("running", "suspended")
@@ -250,42 +245,6 @@ def expire_attempt(dsn: str, cmd: Command) -> CommandResult:
                 {"attempt_id": attempt["id"], "lifecycle": "cancelled"},
                 [("work.expired", {"attempt_id": attempt["id"]})], [])
     return store.transact(dsn, cmd, _fn)
-
-
-def _delegate(name: str, dsn: str, cmd: Command, *args: Any) -> CommandResult:
-    try:
-        module = importlib.import_module("settlement.capabilities")
-        func = getattr(module, name)
-    except (ImportError, AttributeError) as exc:
-        func = None
-        missing = f"{name} capability is not installed: {exc}"
-    if func is None:
-        def _missing(cur, control):
-            raise UnavailableDependency(missing)
-        return store.transact(dsn, cmd, _missing)
-    try:
-        result = func(dsn, cmd, *args)
-    except SettlementError as exc:
-        def _refused(cur, control):
-            raise exc
-        return store.transact(dsn, cmd, _refused)
-    except _pgerrors.UndefinedTable as exc:
-        def _absent(cur, control):
-            raise UnavailableDependency(
-                f"{name} tables are absent: {exc.diag.message_primary if exc.diag else exc}")
-        return store.transact(dsn, cmd, _absent)
-    if not isinstance(result, CommandResult):
-        raise SettlementError(f"{name} capability returned an unusable result")
-    return result
-
-
-def quarantine_subject(dsn: str, cmd: Command) -> CommandResult:
-    version_id = cmd.payload.get("version_id", cmd.payload.get("subject", ""))
-    return _delegate("quarantine", dsn, cmd, version_id, cmd.payload.get("reason", ""))
-
-
-def release_subject(dsn: str, cmd: Command) -> CommandResult:
-    return _delegate("release", dsn, cmd)
 
 
 def fulfill_investigation(dsn: str, cmd: Command) -> CommandResult:

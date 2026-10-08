@@ -14,7 +14,7 @@ import pytest
 from settlement.checkpoint import run_checkpoint
 from settlement.restore import run_restore
 
-from settlement import broker, capabilities, run, store
+from settlement import broker, run, store
 from settlement.common import Command, CommandResult, ResultCode
 from settlement.gateway import FakeGatewayAdapter, ModelResponse, Usage
 from settlement.launcher_local import LocalLauncher
@@ -222,27 +222,6 @@ def test_fulfillment_rejects_future_epoch(migrated_db):
     payload["evidence_epoch"] = int(payload["evidence_epoch"]) + 1
     result = store.fulfill_investigation(dsn, _cmd(payload, "ful"))
     assert result.code == ResultCode.MISSING_EVIDENCE
-
-
-def test_fulfillment_rejects_quarantined_attempt(migrated_db):
-    dsn = migrated_db
-    env = _seed(dsn, "r02g")
-    with store.db.connect(dsn) as conn:
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO capability_versions (id) VALUES (%s)"
-                        " ON CONFLICT (id) DO NOTHING", ("r02g-cap",))
-            conn.commit()
-    capabilities.pin_capability(dsn, env["attempt"], "r02g-cap")
-    assert capabilities.quarantine(
-        dsn, _cmd({"version_id": "r02g-cap"}, "q"), "r02g-cap", "r02 probe").code \
-        == ResultCode.APPLIED
-    assert store.complete_attempt(
-        dsn, _cmd({"attempt_id": env["attempt"],
-                   "ownership_generation": env["generation"]}, "done")).code == ResultCode.APPLIED
-    result = store.fulfill_investigation(
-        dsn, _cmd(_fulfill_payload(dsn, "r02g-i", env["attempt"], env["generation"], {}),
-                  "ful"))
-    assert result.code == ResultCode.UNAUTHORIZED
 
 
 def test_barrier_pauses_and_resume_reopens(migrated_db):

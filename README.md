@@ -14,7 +14,9 @@ Archive selection, genome proposals and the acceptance gate are still to build.
 | [CI](docs/CI.md) | Remotes and what CI checks |
 
 Studies, scripts and experiments from earlier stages were removed from the
-main line. They are preserved at tag `archive/pre-subtraction-2026-10`.
+main line. The remaining study controllers, context/evidence layer and 49 study tables
+are retired; the operator pages inspect RSI lineage, episodes and verdicts.
+Historical migration files remain unchanged. They are preserved at tag `archive/pre-subtraction-2026-10`.
 Recover a path with `git checkout archive/pre-subtraction-2026-10 -- <path>`.
 
 ## Development

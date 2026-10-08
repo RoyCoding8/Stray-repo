@@ -5,6 +5,8 @@ from pathlib import Path
 import pytest
 
 from rsi import genome as g
+from settlement import artifacts, db
+from settlement.common import Command
 
 SEED = {
     "AGENTS.md": b"# Rules\n- Edit files with apply_patch.\n",
@@ -67,3 +69,17 @@ def test_publish_load_round_trip_and_lineage(migrated_db, tmp_path: Path):
     with pytest.raises(g.GenomeError, match="unknown parent"):
         g.publish(dsn, g.Genome({"AGENTS.md": b"orphan\n"}), parent="0" * 64,
                   origin="x", **roots)
+
+
+def test_recorded_genome_survives_retirement_and_gc(migrated_db, tmp_path):
+    seed = g.Genome(SEED)
+    roots = {"staging_root": tmp_path / "stage", "artifacts_root": tmp_path / "art"}
+    for _ in range(2):
+        g.publish(migrated_db, seed, parent=None, origin="test", **roots)
+    with db.connect(migrated_db) as conn:
+        assert conn.execute("SELECT protection_count FROM artifact_versions WHERE digest = %s",
+                            (seed.digest,)).fetchone()[0] == 1
+    artifacts.retire_artifact(migrated_db, Command(request_id="retire-seed", payload={}), seed.digest)
+    assert artifacts.collect_garbage(migrated_db, roots["artifacts_root"]) == {
+        "removed": [], "kept": [seed.digest]}
+    assert g.load(migrated_db, roots["artifacts_root"], seed.digest).files == SEED
