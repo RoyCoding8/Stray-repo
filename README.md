@@ -6,7 +6,9 @@ receipts and artifacts. `src/rsi` versions the genome that Codex CLI reads,
 runs recorded episodes, and verifies solutions against a frozen task bank.
 The genome archive records fixed parent selection and attributed decisions.
 A meta-agent proposes child genomes from development evidence using editable
-meta instructions. The acceptance gate is still to build.
+meta instructions. A frozen gate checks validation, solved-task regressions
+and fresh anchor outcomes at a matched model and execution budget. Cooperative
+benchmark gains remain experimental; trusted promotion requires containment.
 
 | Read | For |
 |---|---|
