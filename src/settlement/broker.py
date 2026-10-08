@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import inspect
+import re
 import uuid
 from typing import Any, Protocol
 
@@ -25,8 +26,12 @@ SANDBOX_EXEC = "sandbox-exec"
 ARTIFACT_IO = "artifact-io"
 OBSERVATION_ADAPTER = "observation-adapter"
 DOMAIN_COMMAND = "domain-command"
+# One run of a coding-agent harness over a prepared workspace. The launcher is
+# keyed by harness; cost is model tokens, so exposure is the token ceiling.
+AGENT_RUN = "agent-run"
 
-EFFECTS = (MODEL_INFERENCE, SANDBOX_EXEC, ARTIFACT_IO, OBSERVATION_ADAPTER, DOMAIN_COMMAND)
+EFFECTS = (MODEL_INFERENCE, SANDBOX_EXEC, ARTIFACT_IO, OBSERVATION_ADAPTER, DOMAIN_COMMAND,
+           AGENT_RUN)
 
 ADMITTED_OBSERVATION_ADAPTERS = ("clock", "agenda-probe")
 AG01_PROBE_ADAPTER = "agenda-probe"
@@ -62,6 +67,7 @@ def validate_effect(effect: str, payload: dict[str, Any]) -> dict[str, Any]:
         ARTIFACT_IO: _validate_artifact,
         OBSERVATION_ADAPTER: _validate_observation,
         DOMAIN_COMMAND: _validate_domain,
+        AGENT_RUN: _validate_agent_run,
     }
     return validators[effect](payload)
 
@@ -134,6 +140,29 @@ def _validate_domain(p: dict[str, Any]) -> dict[str, Any]:
             "idempotency_key": key}
 
 
+_DIGEST = re.compile(r"[0-9a-f]{64}")
+
+
+def _validate_agent_run(p: dict[str, Any]) -> dict[str, Any]:
+    _no_extra(p, {"harness", "genome", "task", "instruction", "config", "timeout_ms",
+                  "token_ceiling"}, "agent-run")
+    _nonempty_str(p.get("harness"), "agent-run needs a harness")
+    for key in ("genome", "task"):
+        _require(isinstance(p.get(key), str) and bool(_DIGEST.fullmatch(p[key])),
+                 f"agent-run {key} must be a sha256 digest")
+    _nonempty_str(p.get("instruction"), "agent-run needs an instruction")
+    config = p.get("config", {})
+    _require(isinstance(config, dict) and all(
+        isinstance(k, str) and isinstance(v, (str, int, float, bool))
+        for k, v in config.items()), "agent-run config must map names to scalars")
+    for key in ("timeout_ms", "token_ceiling"):
+        _require(isinstance(p.get(key), int) and not isinstance(p[key], bool) and p[key] > 0,
+                 f"{key} must be a positive integer")
+    return {"harness": p["harness"], "genome": p["genome"], "task": p["task"],
+            "instruction": p["instruction"], "config": dict(config),
+            "timeout_ms": p["timeout_ms"], "token_ceiling": p["token_ceiling"]}
+
+
 def exposure_schedule(effect: str, payload: dict[str, Any], retries: int = 0) -> tuple[int, str]:
     table = {
         MODEL_INFERENCE: _model_exposure,
@@ -141,6 +170,7 @@ def exposure_schedule(effect: str, payload: dict[str, Any], retries: int = 0) ->
         ARTIFACT_IO: lambda p, r: (int(p["size_max"]) // 1024 + 1, "hard-ceiling"),
         OBSERVATION_ADAPTER: lambda p, r: (1, "hard-ceiling"),
         DOMAIN_COMMAND: lambda p, r: (1, "hard-ceiling"),
+        AGENT_RUN: lambda p, r: (int(p["token_ceiling"]) * (r + 1), "estimated-budget"),
     }
     units, kind = table[effect](payload, max(int(retries), 0))
     return units, kind
@@ -446,8 +476,8 @@ def _resume_dispatching(dsn: str, row: dict[str, Any], operation_id: str,
     body = row["payload"]
     effect = body.get("effect")
     payload = body.get("payload", {})
-    if effect == SANDBOX_EXEC:
-        launcher = (launchers or {}).get(payload.get("profile"))
+    if effect in (SANDBOX_EXEC, AGENT_RUN):
+        launcher = (launchers or {}).get(_launcher_key(effect, payload))
     elif effect == OBSERVATION_ADAPTER and (payload.get("adapter") or "") != "clock":
         launcher = (launchers or {}).get("adapter:%s" % payload.get("adapter", ""))
     else:
@@ -492,7 +522,7 @@ def dispatch_operation(
                                                 attempt_id=row["attempt_id"]),
                              launchers or {}, ownership_generation, grant_version,
                              _crash_after_send)
-    routes = {MODEL_INFERENCE: _send_model, SANDBOX_EXEC: _send_sandbox,
+    routes = {MODEL_INFERENCE: _send_model, SANDBOX_EXEC: _send_sandbox, AGENT_RUN: _send_sandbox,
               OBSERVATION_ADAPTER: _run_inline, DOMAIN_COMMAND: _run_inline}
     if effect == ARTIFACT_IO:
         return _status_of(dsn, operation_id, decision="awaiting-artifact-store")
@@ -506,10 +536,14 @@ def dispatch_operation(
                           _crash_after_send)
 
 
+def _launcher_key(effect: str, payload: dict[str, Any]) -> Any:
+    return payload.get("harness") if effect == AGENT_RUN else payload.get("profile")
+
+
 def _send_sandbox(dsn: str, row: dict, op: BrokerOp, launchers: dict,
                   gateway: Any, ownership_generation: int | None,
                   grant_version: int | None, crash: bool) -> DispatchStatus:
-    launcher = launchers.get(op.payload.get("profile"))
+    launcher = launchers.get(_launcher_key(op.effect, op.payload))
     if launcher is None:
         return _status_of(dsn, op.operation_id, decision="incompatible-profile")
     advanced = _advance(dsn, op.operation_id, launcher.launcher_id, "",

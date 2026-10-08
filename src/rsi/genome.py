@@ -53,6 +53,7 @@ class Genome:
             raise GenomeError(f"unknown harness {self.harness!r}")
         settings(self)  # parse now so a bad harness.toml never gets a digest
         object.__setattr__(self, "files", dict(sorted(self.files.items())))
+        skill_catalog(self)  # every skill must advertise a name and description
         object.__setattr__(self, "digest", _package_digest(self._manifest(), self.files))
 
     def _manifest(self) -> dict:
@@ -101,22 +102,74 @@ def settings(genome: Genome) -> dict:
     return parsed
 
 
+def skill_catalog(genome: Genome) -> list[tuple[str, str, str]]:
+    """(name, description, workspace path) for each skill, from SKILL.md frontmatter."""
+    out = []
+    for rel, raw in genome.files.items():
+        parts = rel.split("/")
+        if len(parts) != 3 or parts[0] != "skills" or parts[2] != "SKILL.md":
+            continue
+        meta = _frontmatter(raw.decode("utf-8", "replace"))
+        if not meta.get("name") or not meta.get("description"):
+            raise GenomeError(f"{rel} needs frontmatter with name and description")
+        out.append((meta["name"], meta["description"], ".agents/" + rel))
+    return out
+
+
+def _frontmatter(text: str) -> dict[str, str]:
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}
+    meta = {}
+    for line in lines[1:]:
+        if line.strip() == "---":
+            return meta
+        key, sep, value = line.partition(":")
+        if sep:
+            meta[key.strip()] = value.strip().strip("'\"")
+    return {}
+
+
+def agents_md(genome: Genome) -> bytes:
+    """The workspace AGENTS.md: the genome's rules plus its skill catalog.
+
+    The harness's own skill discovery is switched off (it also loads the
+    operator's personal skills and the harness's bundled ones, which would
+    contaminate every comparison), so the genome advertises its skills here,
+    in the same name/description/path form harnesses use.
+    """
+    body = genome.files.get("AGENTS.md", b"").decode("utf-8")
+    catalog = skill_catalog(genome)
+    if not catalog:
+        return body.encode("utf-8")
+    lines = ["", "## Skills", "",
+             "Each skill is a folder with a SKILL.md. Read the SKILL.md before"
+             " starting a task its description matches.", ""]
+    lines += [f"- {name}: {desc} (file: {path})" for name, desc, path in catalog]
+    return (body.rstrip("\n") + "\n" + "\n".join(lines) + "\n").encode("utf-8")
+
+
 def workspace_path(rel: str) -> str | None:
     """Where a genome file lands in a task workspace; None if it does not."""
-    if rel == "AGENTS.md":
-        return "AGENTS.md"
     if rel.startswith("skills/"):
         return ".agents/" + rel
-    return None  # harness.toml becomes config overrides; meta/ is for the meta agent
+    return None  # AGENTS.md is composed; harness.toml becomes overrides; meta/ is for the meta agent
+
+
+def workspace_view(genome: Genome) -> dict[str, bytes]:
+    """The files the task agent sees, keyed by workspace path."""
+    views = {workspace_path(rel): raw for rel, raw in genome.files.items()}
+    views.pop(None, None)
+    composed = agents_md(genome)
+    if composed:
+        views["AGENTS.md"] = composed
+    return views
 
 
 def materialize(genome: Genome, workspace: Path) -> list[str]:
     """Write the task-agent view of `genome` into `workspace`."""
     placed = []
-    for rel, raw in genome.files.items():
-        dest = workspace_path(rel)
-        if dest is None:
-            continue
+    for dest, raw in workspace_view(genome).items():
         target = artifacts._contained(workspace, dest)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(raw)

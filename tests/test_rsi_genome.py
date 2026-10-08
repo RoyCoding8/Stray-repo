@@ -40,9 +40,18 @@ def test_harness_toml_cannot_set_kernel_keys():
 def test_materialize_places_task_agent_view_only(tmp_path: Path):
     placed = g.materialize(g.Genome(SEED), tmp_path)
     assert sorted(placed) == [".agents/skills/run-tests/SKILL.md", "AGENTS.md"]
-    assert (tmp_path / "AGENTS.md").read_bytes() == SEED["AGENTS.md"]
+    assert (tmp_path / "AGENTS.md").read_text() == (
+        "# Rules\n- Edit files with apply_patch.\n\n## Skills\n\n"
+        "Each skill is a folder with a SKILL.md. Read the SKILL.md before starting"
+        " a task its description matches.\n\n"
+        "- run-tests: run pytest (file: .agents/skills/run-tests/SKILL.md)\n")
     assert not (tmp_path / "meta").exists()
     assert not (tmp_path / "harness.toml").exists()
+
+
+def test_skill_without_frontmatter_is_refused():
+    with pytest.raises(g.GenomeError, match="frontmatter"):
+        g.Genome({"skills/x/SKILL.md": b"just text\n"})
 
 
 def test_publish_load_round_trip_and_lineage(migrated_db, tmp_path: Path):
