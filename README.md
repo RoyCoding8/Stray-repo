@@ -4,7 +4,8 @@ An autonomous system that improves agents and their improver, keeping changes
 only when evidence supports them. `src/settlement` owns budgets, execution,
 receipts and artifacts. `src/rsi` versions the genome that Codex CLI reads,
 runs recorded episodes, and verifies solutions against a frozen task bank.
-Archive selection, genome proposals and the acceptance gate are still to build.
+The genome archive records fixed parent selection and attributed decisions.
+Genome proposals and the acceptance gate are still to build.
 
 | Read | For |
 |---|---|

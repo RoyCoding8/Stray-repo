@@ -17,7 +17,8 @@ owns execution, budgets, receipts and artifacts outside agent modification.
 | T4 episodes | Broker-admitted agent runs, bounded execution, skill isolation preflight, token accounting and trajectory artifacts. |
 | T5 bank and verifier | Published tasks, deterministic splits, frozen evaluator versions, solution snapshots and separately admitted pristine verifiers. Completed episodes produce persisted verdicts; infrastructure failures do not receive a task score. |
 | T10 subtraction | Retired nine study modules, migrated operator views, and added a forward drop for 49 study tables. RSI artifacts receive durable holds in their recording transactions. |
-| T6–T9 improvement loop | Archive selection, meta-agent proposals, acceptance gate and matched-budget anchor comparison remain to build. |
+| T6 archive | All published genomes remain selectable. Fixed sigmoid/children selection records its dev task set, node weights and draw; replays retain their original parent. |
+| T7–T9 improvement loop | Meta-agent proposals, acceptance gate and matched-budget anchor comparison remain to build. |
 
 T5 evidence: the local 34-exercise Exercism bank has 18 dev, 5 validation and
 11 anchor tasks. All 34 references passed and all 34 stubs failed through real
@@ -37,10 +38,11 @@ assertion failure. The corrected rejection and all later cleanup edits passed
 a focused 62-test Windows/PostgreSQL check. Archived heavy tests remain outside
 that verification scope. No cleanup CI result is claimed.
 
+T6 verification: three focused Windows/PostgreSQL tests passed. This proves
+selection and decision replay plumbing, not model-led improvement.
+
 ## Next
 
-1. T6 archive and parent selection. Keep every node selectable and record the
-   fixed selection rule separately from AI decisions.
 2. T7 meta-agent. Propose a child genome from dev evidence and editable
    `meta/IMPROVE.md`. Exclude anchor content and trajectories from its inputs.
 3. T8 frozen acceptance gate. Validation, solved-task regression, anchor and
