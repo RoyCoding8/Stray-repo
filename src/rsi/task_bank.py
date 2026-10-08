@@ -65,7 +65,7 @@ def import_bank(dsn: str, source: Path, root: Path, *, sanity: bool = True,
                                          and r["stub"]["passed"] is False
                                          for r in report["sanity"])
     root.mkdir(parents=True, exist_ok=True)
-    (root / "bank-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (root / "bank-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
     return report
 
 

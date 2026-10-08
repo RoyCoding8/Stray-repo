@@ -45,7 +45,7 @@ final attribution and timeout-test edits. Archived heavy tests were excluded.
 The final loop/synthesis check passed **6 tests**, covering the new timeout
 case, separate AI/fixed attribution, and qualification recovery. These are
 separate verification scopes. The changed new modules and fixtures passed
-Ruff checks. Final delivery requires matching remotes and green CI on the
+Ruff checks. A separate real bank-import test passed for LF-only summary exports, and a recorded native CLI run replayed without a new send. Final delivery requires matching remotes and green CI on the
 pushed commit; see the CI link above and the current continuation handoff.
 Executable fixtures test proposal, gate, synthesis and replay behavior;
 they do not establish AI learning. A fixture solver ran the full benchmark

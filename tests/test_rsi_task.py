@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-from rsi import episode, genome, task, verifier
+from rsi import episode, genome, task, task_bank, verifier
 from settlement import artifacts, db, store
 from settlement.common import Command, SettlementError
 from settlement.launcher_codex import CodexLauncher, Provider
@@ -258,3 +258,21 @@ def test_solution_snapshot_rejects_directory_and_link(env):
         pytest.skip("host does not permit symlink creation")
     with pytest.raises(verifier.VerifierError, match="escapes|link"):
         verifier.solution_files(TASK, tmp)
+
+
+def test_bank_export_qualifies_reference_and_stub_and_uses_lf(migrated_db, tmp_path):
+    source = tmp_path / "bank" / "calc"
+    (source / ".docs").mkdir(parents=True)
+    (source / ".meta").mkdir()
+    (source / ".docs/instructions.md").write_text("Implement add.", encoding="utf-8")
+    (source / "calc.py").write_bytes(TASK.workspace["calc.py"])
+    (source / "calc_test.py").write_bytes(TESTS)
+    (source / ".meta/example.py").write_bytes(TASK.reference["calc.py"])
+    root = tmp_path / "kernel"
+    report = task_bank.import_bank(migrated_db, source.parent, root)
+    assert report["sanity_passed"] is True
+    assert report["sanity"][0]["reference"]["passed"] is True
+    assert report["sanity"][0]["stub"]["passed"] is False
+    raw = (root / "bank-report.json").read_bytes()
+    assert json.loads(raw)["tasks"] == 1
+    assert b"\r" not in raw and raw.endswith(b"\n")

@@ -108,7 +108,7 @@ def main():
             field: status[field] for field in ("authorized", "reserved", "consumed")
         }
     output = root / (args.run_id + "-report.json")
-    output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(
         json.dumps(
             {"report": str(output), "rounds": len(report["rounds"]), "stop": report["stop"]},
