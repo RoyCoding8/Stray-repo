@@ -105,6 +105,25 @@ def test_loop_quarantines_regression_retains_archive_and_replays(migrated_db, tm
     assert node["score"] == 0 and node["measured"] == 0
 
 
+def test_loop_records_an_unsent_dev_refusal_without_an_episode(migrated_db, tmp_path):
+    roots, seed, _, agent, checker, epoch = setup(migrated_db, tmp_path)
+    with db.connect(migrated_db) as conn:
+        conn.execute("UPDATE allocations SET authorized = 0 WHERE id = 'tokens'")
+    report = loop.run(
+        migrated_db, agent, checker, run_id="refused", epoch=epoch,
+        seed=seed.digest, generations=1, token_allocation="tokens",
+        cpu_allocation="cpu", **roots)
+    assert "cannot cover 5000" in report["stop"]
+    assert report["rounds"] == []
+    assert report["dev"][0]["status"] == "refused"
+    assert report["dev"][0]["passed"] is None
+    assert report["dev"][0]["tokens"] is None
+    state = investigation.read(migrated_db, report["dev"][0]["investigation"])
+    assert state["status"] == "unresolved" and state["pending_decision"] is None
+    with db.connect(migrated_db) as conn:
+        assert conn.execute("SELECT count(*) FROM operations").fetchone()[0] == 0
+
+
 def test_loop_can_propose_from_a_dev_timeout_without_assigning_a_score(migrated_db, tmp_path):
     roots, seed, tasks, agent, checker, _ = setup(migrated_db, tmp_path)
     agent.codex_cmd = [
