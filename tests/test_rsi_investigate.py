@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
-from rsi import genome, investigation as state_store, investigate, task
+from rsi import genome, investigate, task
+from rsi import investigation as state_store
 from settlement import broker, store
 from settlement.common import Command, ResultCode
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
-
 
 ROOT = Path(__file__).resolve().parents[1]
 FAKE = ROOT / "tests" / "fixtures" / "fake_investigate.py"
@@ -45,7 +45,8 @@ def _task() -> task.Task:
 
 
 def _scenario(migrated_db, tmp_path, investigation_id: str, scenario: str,
-              *, objective: str | None = None, token_authorized: int = 100_000):
+              *, objective: str | None = None, token_authorized: int = 100_000,
+              cpu_authorized: int = 100_000):
     tmp_path.mkdir(parents=True, exist_ok=True)
     dsn = migrated_db
     staging_root = tmp_path / "stage"
@@ -65,7 +66,7 @@ def _scenario(migrated_db, tmp_path, investigation_id: str, scenario: str,
     store.seed_allocation(dsn, _command(
         "p01-cpu-" + investigation_id,
         {"allocation_id": "cpu-" + investigation_id,
-         "domain": "cpu", "authorized": 100_000},
+         "domain": "cpu", "authorized": cpu_authorized},
     ))
     run_root = tmp_path / "runs"
     agent = CodexLauncher(
@@ -286,6 +287,26 @@ def test_insufficient_token_allocation_records_refusal_without_dispatch(migrated
     assert _worker_calls(run["worker_log"]) == []
 
 
+def test_insufficient_cpu_allocation_records_verifier_refusal(migrated_db, tmp_path):
+    run = _scenario(
+        migrated_db, tmp_path, "p01-g", "pass-first", cpu_authorized=1
+    )
+
+    returned = investigate.step(
+        run["dsn"], run["agent"], run["checker"], "p01-g", **run["roots"]
+    )
+    reread = investigate.read(run["dsn"], "p01-g")
+
+    assert {key: returned[key] for key in reread} == reread
+    assert reread["status"] == "unresolved"
+    assert reread["pending_decision"] is None
+    assert reread["last_observation"]["status"] == "refused"
+    assert reread["last_observation"]["passed"] is None
+    assert reread["last_observation"]["verdict"] is None
+    assert "cpu-p01-g" in reread["last_observation"]["reason"]
+    assert len(_worker_calls(run["worker_log"])) == 1
+
+
 def _child_env(dsn: str) -> dict[str, str]:
     env = os.environ.copy()
     # The pytest isolation hook rewrites the admin route to a per-run DB in
@@ -307,6 +328,7 @@ def test_fresh_process_resumes_settled_pending_operation_without_resend(
     crashing = subprocess.run(
         [sys.executable, str(RESUME_CHILD), "interrupt-before-check", "p01-b",
          str(tmp_path), str(FAKE)],
+        check=False,
         cwd=ROOT,
         env=_child_env(run["dsn"]),
         capture_output=True,
@@ -325,6 +347,7 @@ def test_fresh_process_resumes_settled_pending_operation_without_resend(
 
     resumed = subprocess.run(
         [sys.executable, str(RESUME_CHILD), "resume", "p01-b", str(tmp_path), str(FAKE)],
+        check=False,
         cwd=ROOT,
         env=_child_env(run["dsn"]),
         capture_output=True,

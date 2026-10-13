@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
-from rsi import investigate, genome
+from rsi import genome, investigate
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
-
 
 mode, investigation_id, root_arg, fake_path = sys.argv[1:]
 root = Path(root_arg)
