@@ -111,7 +111,8 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
                 expected_revision=state["revision"],
                 payload={"investigation_id": investigation_id, "decision_id": pending["id"],
                          "operation_id": pending["operation_id"], "outcome": "unresolved",
-                         "observation": {"status": "refused", "passed": None,
+                         "observation": {"episode": pending["operation_id"],
+                                         "status": "refused", "passed": None,
                                          "verdict": None, "solution": None}}))
             state = investigation.read(dsn, investigation_id)
         return {**state, "execution_error": str(exc)}
