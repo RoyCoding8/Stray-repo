@@ -5,7 +5,6 @@ import re
 import sys
 from pathlib import Path
 
-
 log_path = Path(sys.argv[1])
 scenario = sys.argv[2]
 args = sys.argv[3:]
@@ -66,7 +65,7 @@ repair = scenario == "pass-first" or (
     scenario == "repair-after-feedback" and call_number > 1 and feedback_is_complete
 )
 objective_marker = (
-    f"# objective: {continuation['objective']}\n".encode("utf-8")
+    f"# objective: {continuation['objective']}\n".encode()
     if scenario == "pass-first" and continuation is not None
     else b""
 )
