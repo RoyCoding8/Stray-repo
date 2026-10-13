@@ -20,6 +20,13 @@ from settlement.common import (
 )
 
 _OUTCOMES = {"ready", "completed", "unresolved"}
+_DEFINITE_PREP_REFUSALS = {
+    ResultCode.INVALID_INPUT.value,
+    ResultCode.INSUFFICIENT_RESOURCES.value,
+    ResultCode.UNAUTHORIZED.value,
+    ResultCode.INCOMPATIBLE_VERSION.value,
+    ResultCode.MISSING_EVIDENCE.value,
+}
 
 
 def _state(cur, investigation_id: str, *, lock: bool = False) -> dict:
@@ -83,6 +90,34 @@ def _load_public(cur, investigation_id: str, *, lock: bool = False) -> dict:
             "visible_input": data.get("visible_input"),
         }
     return _public(row)
+
+
+def _record_refusal(cur, state: dict, *, operation_id: str, reason: str) -> tuple:
+    """Close a worker attempt only from a durable, definitive prepare refusal."""
+    cur.execute("SELECT 1 FROM operations WHERE attempt_id = %s LIMIT 1",
+                (state["pending_attempt_id"],))
+    if cur.fetchone() is not None:
+        return (ResultCode.OUTCOME_UNKNOWN,
+                "attempt has an operation row; refusal cannot establish no effect",
+                {"status": "pending", "operation_id": operation_id}, [], [])
+    observation = {"episode": operation_id, "status": "refused", "passed": None,
+                   "verdict": None, "solution": None, "reason": reason}
+    cur.execute("INSERT INTO attempt_observations (attempt_id, decision_id, content)"
+                " VALUES (%s, %s, %s)",
+                (state["pending_attempt_id"], state["pending_decision_id"], Json(observation)))
+    cur.execute("SELECT * FROM attempts WHERE id = %s FOR UPDATE",
+                (state["pending_attempt_id"],))
+    attempt = cur.fetchone()
+    store._end_attempt(cur, attempt, "failed")
+    revision = int(state["revision"]) + 1
+    cur.execute("UPDATE rsi_investigations SET revision = %s, status = 'unresolved',"
+                " pending_decision_id = NULL, pending_attempt_id = NULL,"
+                " last_observation = %s, updated_at = now() WHERE investigation_id = %s",
+                (revision, Json(observation), state["investigation_id"]))
+    data = {"investigation_id": state["investigation_id"], "revision": revision,
+            "status": "unresolved", "operation_id": operation_id}
+    return (ResultCode.APPLIED, "durable pre-dispatch refusal recorded as unresolved", data,
+            [("rsi.investigation.unresolved", {**data, "reason": reason})], [])
 
 
 def create(dsn: str, cmd: Command) -> CommandResult:
@@ -284,7 +319,23 @@ def observe(dsn: str, cmd: Command) -> CommandResult:
         cur.execute("SELECT id, attempt_id, settled, dispatch_state, reconcile_state"
                     " FROM operations WHERE id = %s", (operation_id,))
         op = cur.fetchone()
-        if (op is None or op["attempt_id"] != state["pending_attempt_id"]
+        if op is None:
+            prep_id = f"broker-prep-{operation_id}"
+            cur.execute("SELECT result_code, result_detail FROM command_journal WHERE request_id = %s",
+                        (prep_id,))
+            refusal = cur.fetchone()
+            if (refusal is not None and refusal["result_code"] in _DEFINITE_PREP_REFUSALS
+                    and p.get("outcome") == "unresolved"
+                    and supplied.get("status") == "refused"
+                    and supplied.get("passed") is None
+                    and supplied.get("verdict") is None
+                    and supplied.get("solution") is None):
+                return _record_refusal(cur, state, operation_id=operation_id,
+                                       reason=str(refusal["result_detail"]))
+            return (ResultCode.OUTCOME_UNKNOWN,
+                    "operation is absent without a definitive prepare refusal; pending identity retained",
+                    {"status": "pending", "operation_id": operation_id}, [], [])
+        if (op["attempt_id"] != state["pending_attempt_id"]
                 or not bool(op["settled"]) or op["dispatch_state"] not in ("observed", "reconciled")
                 or op["reconcile_state"] in ("conflict", "unresolved")):
             return (ResultCode.OUTCOME_UNKNOWN, "worker operation is not settled; pending identity retained",
