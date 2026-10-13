@@ -20,13 +20,27 @@ combined architecture or its novelty.
 The [architecture synthesis](../docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md)
 now selects one persistent investigation owner, versioned operational/learning
 policies and the existing execution kernel. Its previous consolidation plan is
-preserved in Git. Eight component responsibilities are grouped into three builds:
+preserved in Git. The human requested separate plans so each part can work before
+the next is built. The [master plan](../docs/plans/MASTER-PLAN.md) now owns their
+dependencies and build order. The three research themes are divided into ten parts:
 
-| Package | State | Next obligation |
+| Component | Current state | Working target |
 |---|---|---|
-| A: investigation, memory/context, executable capability use | Research direction selected; not implemented as this package | Formalize investigation/claim/capability semantics, visibility, continuation and applicability; compare representations before a builder contract. |
-| B: discovery history, replay and adaptive learning agenda | Mechanism proposal | Specify recorded support versus fresh execution; connect acquisition to future experience selection. |
-| C: learner revision, teams, transfer and sustained campaigns | Mechanism proposal | Specify inherited learning decisions, descendant assessment and executable work/join behavior. |
+| P01: persistent investigations | Planned; next to build | One durable objective with continuing decisions and restart. |
+| P02: evidence and memory | Planned | Reusable evidence and revisable claims with opposition. |
+| P03: context construction | Planned | A bounded evidence-selection policy consumed by actual decisions. |
+| P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
+| P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
+| P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
+| P07: learner revision | Planned | An inherited executable learner controls later successor production. |
+| P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
+| P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
+| P10: continuing campaigns and assessment | Planned | Bounded unattended operation, resume and longitudinal evidence. |
+
+These statuses describe the new component contracts, not the absence of reusable
+prototype code. Every component plan has delivery slices and behavioral checks.
+Build P01, then P02 and P03, then P04. P05 and P10 provide an early continuing
+autonomous prototype before advanced replay, learner revision and teams.
 
 The foundation prototype is accepted at its bounded scope. This does not close
 Stage 10's general-autonomy or learning objectives, nor qualify deployment.
@@ -35,8 +49,9 @@ utility, transfer and improvement evidence. No statistical gain is required to
 finish an exploratory implementation, and no such gain is claimed here.
 
 This pass changed research documents only. No runtime code, test results, live
-model outcomes or frozen evidence changed. Next work is Package A formal design,
-not another transport study or an automatically authorized new coding batch.
+model outcomes or frozen evidence changed. The next implementation unit is P01,
+starting with its explicit state and transition contract. No runtime implementation
+has started in this planning pass.
 
 ## State (2026-10-08)
 
@@ -187,8 +202,8 @@ can complete an experiment without completing the learning objective.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-Next design target: formalize Package A's connected investigation and capability
-use before assigning implementation. Prospective utility comparisons must account
+Next implementation target: P01's continuing investigation and resume path, following
+its component plan. Prospective utility comparisons must account
 for free-router variation and include an unchanged-copy control where relevant.
 Do not re-dispatch closed operations or refund allocations. Live instruction
 acquisition is demonstrated; executable-skill utility and learning advantage

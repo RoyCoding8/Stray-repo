@@ -181,17 +181,20 @@ These are our proposals, not established paper results:
 
 These couplings are the research center. An inventory of eight sophisticated modules would not demonstrate them.
 
-## 7. Refinement and build order
+## 7. Component plans and build order
 
 The original philosophy-to-release stages remain. This program refines architecture across stages 8–10; it neither restarts the project nor declares release readiness.
 
-| Package | Design first | Connected implementation | Informative completion |
-|---|---|---|---|
-| A. Persistent investigation and capability use | Investigation, claim and capability semantics; one owner; visibility; applicability and continuation contracts | Investigation owner, experience/context views, acquired executable capability, fresh-process later use; migrate the relevant fixed loop | A multi-round investigation selects its next probe, acquires or rejects a method, and resumes later use. Include contradiction and failure. Positive gain is not required to close the build. |
-| B. Experience-directed development | Replay support; resource objectives; policy interface; curriculum and archive comparisons | Discovery branches, executable exploration policy, replay screening, live coverage expansion, consolidation and adaptive agenda | Policies produce different decisions; replay and live outcomes can be compared; experience changes later work selection. A null result still informs design. |
-| C. Learner revision and coordinated discovery | Learning-procedure inheritance; descendant assessment; work/join contracts; transfer meaning | Executable learner revision, teams where justified, cross-domain capability/representation reuse and persistent campaigns | Revised learners govern subsequent development; transferred methods and team decisions execute. Utility and improver benefit remain separate outcomes. |
+The [master build plan](../plans/MASTER-PLAN.md) divides this architecture into
+ten component plans with dependencies, delivery slices and acceptance scenarios.
+It owns the build order. The broad research themes remain investigation and
+capability use, experience-directed development, and learner revision with
+coordination and transfer. They are not indivisible implementation batches.
 
-For each package: concept → competing mechanisms → formal obligations and rejecting examples → representation/ownership → implementation contract → code → behavioral qualification → extended observation. Finalize technology only where the mechanism requires it.
+Build one part to a working checkpoint before advancing. Basic investigation,
+memory, context and capability use lead to an autonomous agenda and continuing
+campaign. Advanced replay, learner revision, transfer and teams can follow.
+Finalize technology where the component mechanism requires it.
 
 Existing detailed mechanism drafts are inputs, not automatically current API contracts. Review them against this synthesis and the simplified runtime. Do not revive an archived implementation because its old document has a matching name.
 
@@ -207,8 +210,12 @@ Measure later use across learning rounds, including acquisition costs. If a free
 
 Build completion means intended decisions and effects occur and can be inspected. Improvement requires an appropriate comparison; improved learning requires better successor production. Broad superiority requires far broader evidence than we currently have.
 
-## 9. Next design deliverable
+## 9. Next implementation unit
 
-Formalize **Package A** next: durable investigation, claim and capability objects; what decisions can observe; how acquisition changes available experiments; and restart/contradiction examples that reject a weak design. Compare two plausible representations before choosing one. This is architecture work, not another route test or a premature coding assignment.
+The next implementation unit is [P01, persistent investigations](../plans/01-INVESTIGATIONS.md).
+Pin its state and transition contract, then implement its public continuing and
+resuming consumer. Later plans constrain shared interfaces without requiring
+their implementation now. This planning pass starts no runtime work.
 
-Stop that pass when a builder need not invent decision ownership, evidence semantics or capability selection. Then delegate a substantial coherent build. Leave detailed engineering audits to implementation; reopen architecture when findings contradict these responsibilities or intended behaviors.
+Leave detailed engineering audits to implementation. Reopen architecture when
+findings contradict decision ownership, evidence semantics or intended behavior.

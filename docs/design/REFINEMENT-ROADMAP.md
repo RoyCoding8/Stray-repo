@@ -1,6 +1,6 @@
 # Philosophy to final implementation
 
-This is the mental model, not another task diary. The [project ledger](../../reports/PROJECT-LEDGER.md) gives current evidence; the [architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) gives the component research program. Implementation starts from an explicitly assigned worker prompt.
+This is the mental model, not another task diary. The [project ledger](../../reports/PROJECT-LEDGER.md) gives current evidence. The [architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) explains the design, and the [master build plan](../plans/MASTER-PLAN.md) references the component plans and their build order.
 
 General autonomous discovery remains the goal. Memory, background development, teams and executable skills are candidate mechanisms. Their value is what they enable the system to learn and do; more machinery alone is not progress.
 
@@ -43,15 +43,14 @@ reuse and convincing improvement remain distinct. Free-router variation and
 weak-parent comparisons must not manufacture a gain.
 
 The selected direction is one persistent investigation owner with versioned
-operational and learning policies over the execution kernel. Refine it in three
-connected packages: A, investigation/memory/context/executable capability use;
-B, discovery history/replay/adaptive agenda; C, learner revision/coordination/
-transfer and continuing campaigns. The synthesis owns the details and tradeoffs.
+operational and learning policies over the execution kernel. The master plan
+divides it into ten independently checkable parts. These refine stages 8–10
+rather than replace the original stages.
 
-For each package, move from concepts to competing mechanisms, formal obligations,
-representation, implementation contract, code and extended observation. The next
-design pass formalizes Package A. Technology follows the mechanism; archived
-study APIs are not automatically the new implementation contract.
+The next implementation unit is P01, persistent investigations. Resolve its
+contract, implement its delivery slices and verify its working checkpoint before
+P02. Later components have plans now but need not be built together. Technology
+follows the mechanism; archived study APIs are not current implementation contracts.
 
 The genome may contain executable skill resources as well as instructions,
 harness settings and the improver's instructions. Editing these instructions

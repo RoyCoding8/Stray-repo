@@ -6,7 +6,7 @@ Build general autonomous investigation, capability acquisition and transfer. SWE
 
 - Human instructions govern. Read reports/PROJECT-LEDGER.md for the current research checkpoint and WORKER-PROMPT.md for the broader acceptance scope. Start implementation only when assigned; an old study prompt is not an instruction to rerun it.
 - reports/PROJECT-LEDGER.md owns current status and outstanding work.
-- IMPLEMENTATION-WORKFLOW.md owns reusable engineering and parallel-work rules.
+- docs/plans/MASTER-PLAN.md owns component build order and shared build rules. Each linked component plan owns its scope and acceptance.
 - docs/design/REFINEMENT-ROADMAP.md owns the philosophy-to-release mental model.
 - docs/HISTORY.md locates retired assignments and diaries in Git.
 

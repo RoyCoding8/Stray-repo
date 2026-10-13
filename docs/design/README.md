@@ -4,9 +4,13 @@ The central proposal is a persistent investigation loop: observe a difficulty, c
 
 Start with the [project ledger](../../reports/PROJECT-LEDGER.md) and the [roadmap](REFINEMENT-ROADMAP.md). Implementation documents for retired studies are at tag `archive/pre-subtraction-2026-10`.
 
+For new implementation, use the [master build plan](../plans/MASTER-PLAN.md).
+It links ten current component plans. The mechanism documents below explain
+design background; their historical implementation sections are not new tasks.
+
 | Document | Purpose |
 |---|---|
-| [Architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) | Current component architecture, alternatives and three connected refinement packages; refreshed 2026-10-13 |
+| [Architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) | Current architecture and research choices; links the component build plans |
 | [Conceptual architecture](REFINED-ARCHITECTURE.md) | Purpose, entities and responsibilities |
 | [Glossary](GLOSSARY.md) | Precise meanings |
 | [Representation design](REPRESENTATION-DESIGN.md) | State and executable packages |
