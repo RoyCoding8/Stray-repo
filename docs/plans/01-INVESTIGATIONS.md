@@ -39,3 +39,39 @@ Use deterministic workers to qualify transitions, then a bounded live multi-deci
 ## Working checkpoint
 
 The operator can create, inspect, suspend and resume one objective through the public consumer. Export its decisions, observations and unresolved effects. P02 can attach memory to these same identities. Do not add an autonomous scheduler, general claim graph or new UI application in this part.
+
+## Implementation contract (2026-10-13)
+
+Reuse the kernel investigation as the objective authority. Its commitment revision
+continues to fence attempts. A one-to-one SQL extension owns a separate continuation
+revision, domain configuration, questions, artifact references and pending decision.
+Do not advance the commitment revision merely because a worker returned a result.
+The extension references the objective; it does not copy or redefine it.
+
+An expected continuation revision reserves exactly one decision and attempt before
+dispatch. Record decisions in the existing immutable RSI decision history and
+observations under the existing attempt history. The pending decision fixes its
+operation identity, visible continuation and input artifact references. Kernel
+operation state remains authoritative for whether an effect was sent or settled.
+No external execution or nested store command occurs inside the state transaction.
+
+Suspension blocks new decisions. It does not cancel or erase an admitted effect.
+Resumption finishes that effect under its existing identity before another decision.
+Uncertain effects retain the pending reference and cannot complete the objective.
+Invalid actions end with an explicit unresolved result and no fabricated success.
+
+Keep each domain task and evaluator immutable. Bind the worker's continuation and
+previous solution snapshot to its admitted instruction, including the input content
+digest. A new worker gets a separate workspace materialized from those bytes. Task
+projection was rejected because it would rename one task on every continuation.
+Event-only state reconstruction was rejected because the existing journal does not
+derive the current questions and pending decision without a second interpreter.
+
+The initial task instrument checks solutions with the existing pristine verifier.
+Its bounded seed policy either attempts the task, continues from a failed checked
+solution, or stops with an unresolved result. It supplies no hidden tests or reference
+solution to worker context. Migrate development-task execution in the existing loop
+through this owner, keeping archive selection and sealed comparisons in their
+existing owners. The migrated default remains one worker attempt so existing frozen
+loop budgets retain their meaning; the public investigation entry allows a larger
+prospectively bounded attempt count.

@@ -26,7 +26,7 @@ dependencies and build order. The three research themes are divided into ten par
 
 | Component | Current state | Working target |
 |---|---|---|
-| P01: persistent investigations | Planned; next to build | One durable objective with continuing decisions and restart. |
+| P01: persistent investigations | In progress | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Planned | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Planned | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
@@ -39,6 +39,14 @@ dependencies and build order. The three research themes are divided into ten par
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
+Human direction for this implementation batch: build P01 only. P02–P10 are paused.
+
+P01 task list:
+- [ ] Pin the state, decision and pending-effect contract against the existing kernel.
+- [ ] Implement the investigation owner and identity-bound worker continuation.
+- [ ] Verify continuation, fresh-process resume, stale refusal, isolation and unresolved outcomes.
+- [ ] Migrate one existing task workflow, remove replaced ownership and deliver a verified checkpoint.
+
 Build P01, then P02 and P03, then P04. P05 and P10 provide an early continuing
 autonomous prototype before advanced replay, learner revision and teams.
 
@@ -48,10 +56,8 @@ Short behavioral probes qualify mechanisms; continuing campaigns accumulate
 utility, transfer and improvement evidence. No statistical gain is required to
 finish an exploratory implementation, and no such gain is claimed here.
 
-This pass changed research documents only. No runtime code, test results, live
-model outcomes or frozen evidence changed. The next implementation unit is P01,
-starting with its explicit state and transition contract. No runtime implementation
-has started in this planning pass.
+The planning checkpoint changed research documents only. P01 implementation is
+now assigned; its verification and live evidence will be recorded separately below.
 
 ## State (2026-10-08)
 
