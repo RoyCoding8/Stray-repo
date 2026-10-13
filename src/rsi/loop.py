@@ -5,7 +5,7 @@ from pathlib import Path
 from settlement import db
 from settlement.common import SettlementError
 
-from . import archive, episode, gate, genome, improve, task, verifier
+from . import archive, episode, gate, genome, improve, investigate, task
 
 
 def run(
@@ -63,24 +63,23 @@ def run(
         for digest in dev:
             op = "rsi-dev-" + gate._digest({"run": run_id, "genome": subject, "task": digest})
             item = task.load(dsn, artifacts_root, digest)
-            ep = episode.run_episode(
-                dsn,
-                agent,
-                current,
-                operation_id=op,
-                task=item,
-                allocation_id=token_allocation,
-                attempt_id=None,
-                token_ceiling=budget.token_ceiling,
-                timeout_ms=budget.timeout_ms,
-                **roots,
-            )
+            investigate.create(
+                dsn, agent, current, investigation_id=op, task=item,
+                token_allocation=token_allocation, cpu_allocation=cpu_allocation,
+                max_steps=1, token_ceiling=budget.token_ceiling,
+                timeout_ms=budget.timeout_ms, **roots)
+            state = investigate.run(dsn, agent, checker, op, **roots)
+            observed = state["last_observation"]
+            if observed is None:
+                raise SettlementError(state.get("execution_error", "dev investigation needs recovery"))
+            ep = episode.read_episode(dsn, observed["episode"], agent)
             row = {
                 "genome": subject,
                 "task": digest,
-                "episode": op,
-                "status": ep.status,
-                "passed": None,
+                "episode": ep.operation_id,
+                "investigation": op,
+                "status": observed["status"],
+                "passed": observed["passed"],
                 "tokens": ep.tokens,
             }
             report["dev"].append(row)
@@ -88,12 +87,9 @@ def run(
                 if ep.status == "infra_failed":
                     raise SettlementError("dev agent has no outcome: " + ep.status)
                 continue
-            checked = verifier.verify_episode(
-                dsn, agent, checker, op, allocation_id=cpu_allocation, attempt_id=None, **roots
-            )
-            row.update(status=checked.status, passed=checked.passed, verdict=checked.operation_id)
-            if checked.passed is None:
-                raise SettlementError("dev verifier has no outcome: " + checked.status)
+            row["verdict"] = observed["verdict"]
+            if observed["passed"] is None:
+                raise SettlementError("dev verifier has no outcome: " + observed["status"])
         evaluated.add(subject)
 
     stop = "generation limit reached"

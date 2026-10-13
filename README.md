@@ -68,6 +68,30 @@ Timeouts and infrastructure errors have no passing/failing score. The local
 verifier launcher bounds processes but does not confine filesystem/network
 access; these benchmark checks do not certify hostile code.
 
+## Persistent investigations
+
+`rsi.investigate.create` pins a development objective, genome, task, allocations
+and maximum number of worker actions. `step` performs one action and pristine
+check. A failed check leaves a named question open and retains the solution
+snapshot. The next action receives that observation and those solution bytes in
+a separate workspace. `run` continues within the pinned limit. A passing check
+completes the objective; exhausting the limit leaves it unresolved.
+
+The public CLI is `python -m rsi.investigate`. Its commands are `create`, `inspect`,
+`step`, `suspend`, `resume` and `export`. Every command takes `--dsn`, `--id` and
+`--root`. `create` also takes published `--genome` and `--task` digests, existing
+`--token-allocation` and `--cpu-allocation`, and finite `--max-steps`,
+`--timeout-ms` and `--token-ceiling` bounds. Worker commands use external
+`--route-file` and `--codex` paths, as in the experiment below.
+
+`resume` reuses the admitted operation identity before making another decision.
+Suspension blocks new decisions and preserves already-admitted effects; it is not
+process cancellation. `export` includes the decision and observation history and
+unresolved operations. The task instrument accepts development tasks only, keeping
+sealed tests and references out of continuation context. The existing archive
+loop now uses this owner for development tasks with a one-action limit; its
+frozen budgets and sealed comparison policy retain their existing meaning.
+
 ## Bounded improvement experiments
 
 Create a genome directory with `AGENTS.md` and `meta/IMPROVE.md`. Use a

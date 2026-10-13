@@ -42,7 +42,7 @@ prototype code. Every component plan has delivery slices and behavioral checks.
 Human direction for this implementation batch: build P01 only. P02–P10 are paused.
 
 P01 task list:
-- [ ] Pin the state, decision and pending-effect contract against the existing kernel.
+- [x] Pin the state, decision and pending-effect contract against the existing kernel (`74f2b65f`).
 - [ ] Implement the investigation owner and identity-bound worker continuation.
 - [ ] Verify continuation, fresh-process resume, stale refusal, isolation and unresolved outcomes.
 - [ ] Migrate one existing task workflow, remove replaced ownership and deliver a verified checkpoint.

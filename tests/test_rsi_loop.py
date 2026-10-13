@@ -3,7 +3,7 @@ from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
-from rsi import archive, episode, gate, genome, loop, task
+from rsi import archive, episode, gate, genome, investigation, loop, task
 from settlement import db, store
 from settlement.common import Command
 from settlement.launcher_codex import CodexLauncher, Provider
@@ -66,6 +66,11 @@ def test_loop_quarantines_regression_retains_archive_and_replays(migrated_db, tm
     assert report["rounds"][0]["gate"]["reason"] == "validation score decreased"
     assert report["rounds"][0]["gate"]["disposition"] == "quarantine"
     assert report["incumbent"] == seed.digest
+    for row in report["dev"]:
+        state = investigation.read(migrated_db, row["investigation"])
+        assert state["config"]["max_steps"] == 1
+        assert state["last_observation"]["episode"] == row["episode"]
+        assert state["last_observation"]["passed"] == row["passed"]
     before = store.allocation_status(migrated_db, "tokens")["consumed"]
     assert loop.run(migrated_db, agent, checker, **kw) == report
     assert store.allocation_status(migrated_db, "tokens")["consumed"] == before
