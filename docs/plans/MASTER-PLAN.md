@@ -72,4 +72,5 @@ A part is working when its public consumer performs the declared behavior, its a
 
 Do not spend each batch demanding a sustained learning win. Close the mechanism build with attributable behavior and an informative outcome. P10 accumulates longer-term evidence. Formal promotion, deployment qualification and release remain separate milestones.
 
-The immediate next build is P01 only. Finish its contract and delivery slices before implementing P02. Plans for later parts constrain interfaces, but they do not require speculative implementation now.
+P01 reached its qualified checkpoint. The current build is P02 only. Plans for
+P03–P10 constrain interfaces, but those implementations remain paused.

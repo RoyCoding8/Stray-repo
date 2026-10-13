@@ -27,7 +27,7 @@ dependencies and build order. The three research themes are divided into ten par
 | Component | Current state | Working target |
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
-| P02: evidence and memory | Planned | Reusable evidence and revisable claims with opposition. |
+| P02: evidence and memory | In progress | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Planned | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
@@ -39,7 +39,22 @@ dependencies and build order. The three research themes are divided into ten par
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
-Human direction for this implementation batch: build P01 only. P02–P10 are paused.
+Human direction for the current implementation batch: build P02 on the P01
+checkpoint. P03–P10 remain paused.
+
+P02 task list:
+- [ ] Ground the existing observation, artifact and consumer paths; compare storage shapes.
+- [ ] Pin the evidence, claim revision, visibility and later-use contracts before code fan-out.
+- [ ] Implement immutable experience lookup and revisable lessons in isolated lanes.
+- [ ] Connect later investigations and qualify acceptance scenarios P02-A through P02-E.
+- [ ] Run independent GPT-6.1 Sol High verification and a bounded live contradiction probe.
+- [ ] Record exact evidence boundaries, remove owned worktrees and sync the checkpoint.
+
+P02 throughput checkpoint. The contract and migration shape block implementation.
+Experience storage, claim operations and the investigation consumer have separate
+file owners. Each lane uses a private worktree and disposable test databases.
+The coordinator owns integration and documents; merges and final gates are serial.
+The smallest useful split is these three lanes, followed by independent review.
 
 P01 task list:
 - [x] Pin the state, decision and pending-effect contract against the existing kernel (`74f2b65f`).

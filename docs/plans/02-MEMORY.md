@@ -2,6 +2,92 @@
 
 Make prior experience usable without turning interpretations into facts. Depends on [P01](01-INVESTIGATIONS.md). The [master plan](MASTER-PLAN.md) owns shared rules. P03 owns context selection rather than storage semantics.
 
+## Pinned implementation contract (2026-10-13)
+
+P02 extends the current P01 consumer. It does not restore the retired study
+drivers or implement P03. The coordinator compared direct projection from P01
+history with a revisioned inventory of immutable source references. Select the
+reference inventory. A live projection with a sequence high-water mark can admit
+late commits into an old snapshot. An explicitly captured source and a serialized
+memory revision give later decisions a stable view without copying observations
+into another authority.
+
+Use three small tables in migration `0030_memory.sql`: a singleton revision clock,
+captured experience references keyed by original observation ID, and append-only
+claim versions keyed by claim ID and version. Captures and claim revisions lock
+the same clock row within their write transaction. Duplicate capture is a no-op.
+No synchronizer, embedding service, graph store or background worker is needed.
+The older generic claim tables have no current source consumer and do not own P02.
+
+`rsi.experience` owns source capture and resolution. Its public calls are:
+
+```python
+capture(dsn, observation_id, *, artifacts_root) -> dict
+capture_investigation(dsn, investigation_id, *, artifacts_root) -> list[dict]
+resolve(dsn, observation_ids, *, artifacts_root, revision=None,
+        visibility="learner") -> dict
+```
+
+Captured metadata identifies the original investigation, decision, attempt,
+worker operation, task, evaluator and artifact digests. A source content digest
+detects changed canonical records. Scope and visibility come from provenance,
+not caller labels. Only development-task observations enter learner memory.
+Protected task splits or artifact ancestry cannot be relabeled as development.
+Rendered experience contains public task instruction, compact checked outcome
+and provenance. It never contains pristine tests, reference solutions, raw
+verifier details or unrestricted trajectory text. Registered source packages are
+byte-verified at capture and resolution. Missing or changed bytes produce explicit
+missing-information entries. They do not become an empty search result or support.
+
+`rsi.memory` is the consumer's one query and claim API:
+
+```python
+revise(dsn, *, claim_id, expected_version, text, scope, status,
+       support=(), opposition=(), derived_from=(), supersedes=(),
+       kind="lesson", artifacts_root) -> dict
+query(dsn, *, purpose, investigation_id, scope, artifacts_root,
+      visibility="learner", revision=None, view="structured",
+      claim_ids=(), observation_ids=(), limit=10) -> dict
+history(dsn, claim_id, *, artifacts_root, visibility="learner") -> list[dict]
+```
+
+Scope is a dictionary of explicit applicability filters; `domain="task"` permits
+reuse across task identities. Relationships reference exact observation IDs or
+exact `(claim_id, version)` pairs. Existing versions and observations never
+change. Expected version prevents lost updates. Text and relationship collections
+have finite bounds. An untested interpretation may lack support; a supported
+interpretation needs available original evidence. Derived text remains labeled
+interpretation. Flatten provenance to distinct original observation identities;
+copies or merged lessons add no independent corroboration. Preserve inherited
+opposition and withdrawal/supersession history rather than laundering it through
+consolidation. New versions may narrow scope, challenge or withdraw a lesson.
+
+Queries require a real investigation, purpose, scope and recognized visibility.
+Apply source visibility before matching, returning content or counting results.
+Default structured retrieval omits withdrawn and superseded heads. Exact history
+can reconstruct prior versions. Exact and lexical matching are deterministic.
+Each selected lesson brings its support, opposition, derivation roots and missing
+information, even if an opposing source has different lexical text. A raw-history
+view returns original experience without treating interpretations as observations.
+The returned revision is a committed memory high-water mark; querying an earlier
+revision selects the same captured references and claim versions after restart.
+Byte availability remains a current qualification and may change independently.
+
+The investigation consumer captures its observed history idempotently and queries
+memory only before admitting a new decision. Pin the result in that decision's
+`visible_input`; pending replay reuses the admitted bytes and identities. An
+optional frozen `memory` configuration declares scope, view and result limit.
+Default later-use retrieval uses the task domain and objective as purpose. Before
+dispatch, revalidate any referenced bytes; missing evidence must refuse rather
+than silently omit a required remembered contradiction. Preserve the existing
+64-KiB continuation bound. Do not add another context lifecycle or truncation.
+
+Acceptance uses real PostgreSQL and actual fixture child execution. The later
+worker must change its observable behavior when the contradicted lesson is
+disconnected or replaced by wrong evidence. A separate prospectively bounded
+free-route probe checks actual model conditioning. Failure or unavailable transport
+is an honest live result, not a reason to weaken the deterministic contract.
+
 ## Objects and ownership
 
 Keep immutable observation references to decisions, operations and artifact bytes. A claim is a versioned interpretation with scope, supporting observations, opposing observations and status. A lesson is a proposed reusable interpretation of experience. A continuation belongs to its investigation and is not another free-form memory summary.
