@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from pathlib import Path
 
 from rsi import genome, investigate, task
@@ -305,6 +306,40 @@ def test_insufficient_cpu_allocation_records_verifier_refusal(migrated_db, tmp_p
     assert reread["last_observation"]["verdict"] is None
     assert "cpu-p01-g" in reread["last_observation"]["reason"]
     assert len(_worker_calls(run["worker_log"])) == 1
+
+
+def test_preflight_never_sent_failure_settles_once_without_receipt(migrated_db, tmp_path):
+    run = _scenario(migrated_db, tmp_path, "p01-h", "pass-first")
+    run["agent"].provider = replace(
+        run["agent"].provider, catalog_template="missing-template"
+    )
+
+    returned = investigate.step(
+        run["dsn"], run["agent"], run["checker"], "p01-h", **run["roots"]
+    )
+    reread = investigate.read(run["dsn"], "p01-h")
+    operation_id = investigate.export(run["dsn"], "p01-h")["decisions"][-1]["data"][
+        "operation_id"
+    ]
+    operation = broker.read_operation(run["dsn"], operation_id)
+    token_status = store.allocation_status(run["dsn"], "tokens-p01-h")
+
+    assert {key: returned[key] for key in reread} == reread
+    assert reread["status"] == "unresolved"
+    assert reread["pending_decision"] is None
+    assert reread["last_observation"]["status"] == "refused"
+    assert "never-sent" in reread["last_observation"]["reason"].lower()
+    assert operation["dispatch_state"] == operation["reconcile_state"] == "reconciled"
+    assert operation["settled"] is False
+    assert store.operation_receipts(run["dsn"], operation_id) == []
+    assert token_status["consumed"] == token_status["reserved"] == 0
+    assert _worker_calls(run["worker_log"]) == []
+
+    again = investigate.step(
+        run["dsn"], run["agent"], run["checker"], "p01-h", **run["roots"]
+    )
+    assert again == reread
+    assert _worker_calls(run["worker_log"]) == []
 
 
 def _child_env(dsn: str) -> dict[str, str]:
