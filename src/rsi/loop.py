@@ -76,13 +76,15 @@ def run(
             row = {
                 "genome": subject,
                 "task": digest,
-                "episode": ep.operation_id,
+                "episode": observed["episode"],
                 "investigation": op,
                 "status": observed["status"],
                 "passed": observed["passed"],
-                "tokens": ep.tokens,
+                "tokens": ep.tokens if ep else None,
             }
             report["dev"].append(row)
+            if ep is None:
+                raise SettlementError(observed["reason"])
             if ep.status != "completed":
                 if ep.status == "infra_failed":
                     raise SettlementError("dev agent has no outcome: " + ep.status)

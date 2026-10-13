@@ -143,6 +143,11 @@ def read_verdict(dsn: str, episode_id: str, evaluator_version: str) -> Verificat
     return Verification(row[0], evaluator_version, row[1], row[2], row[3], row[4])
 
 
+def operation_id_for(episode_id: str, evaluator_version: str) -> str:
+    return "rsi-verify-" + hashlib.sha256(
+        f"{episode_id}:{evaluator_version}".encode()).hexdigest()
+
+
 def verify_episode(dsn: str, agent_launcher, verifier_launcher, episode_id: str, *,
                    allocation_id: str, attempt_id: str | None,
                    staging_root: str | Path, artifacts_root: str | Path,
@@ -156,8 +161,7 @@ def verify_episode(dsn: str, agent_launcher, verifier_launcher, episode_id: str,
     known = read_verdict(dsn, episode_id, task.evaluator_version)
     if known is not None:
         return known
-    operation_id = "rsi-verify-" + hashlib.sha256(
-        f"{episode_id}:{task.evaluator_version}".encode()).hexdigest()
+    operation_id = operation_id_for(episode_id, task.evaluator_version)
     existing = broker.read_operation(dsn, operation_id)
     if existing is None:
         files = solution_files(task, episode.workspace)
