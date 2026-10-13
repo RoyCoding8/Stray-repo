@@ -92,16 +92,13 @@ def _load_public(cur, investigation_id: str, *, lock: bool = False) -> dict:
     return _public(row)
 
 
-def _record_refusal(cur, state: dict, *, operation_id: str, reason: str) -> tuple:
+def _record_refusal(cur, state: dict, *, episode_id: str,
+                    refused_operation: str, reason: str) -> tuple:
     """Close a worker attempt only from a durable, definitive prepare refusal."""
-    cur.execute("SELECT 1 FROM operations WHERE attempt_id = %s LIMIT 1",
-                (state["pending_attempt_id"],))
-    if cur.fetchone() is not None:
-        return (ResultCode.OUTCOME_UNKNOWN,
-                "attempt has an operation row; refusal cannot establish no effect",
-                {"status": "pending", "operation_id": operation_id}, [], [])
-    observation = {"episode": operation_id, "status": "refused", "passed": None,
+    observation = {"episode": episode_id, "status": "refused", "passed": None,
                    "verdict": None, "solution": None, "reason": reason}
+    if refused_operation != episode_id:
+        observation["refused_operation"] = refused_operation
     cur.execute("INSERT INTO attempt_observations (attempt_id, decision_id, content)"
                 " VALUES (%s, %s, %s)",
                 (state["pending_attempt_id"], state["pending_decision_id"], Json(observation)))
@@ -115,7 +112,7 @@ def _record_refusal(cur, state: dict, *, operation_id: str, reason: str) -> tupl
                 " last_observation = %s, updated_at = now() WHERE investigation_id = %s",
                 (revision, Json(observation), state["investigation_id"]))
     data = {"investigation_id": state["investigation_id"], "revision": revision,
-            "status": "unresolved", "operation_id": operation_id}
+            "status": "unresolved", "operation_id": refused_operation}
     return (ResultCode.APPLIED, "durable pre-dispatch refusal recorded as unresolved", data,
             [("rsi.investigation.unresolved", {**data, "reason": reason})], [])
 
@@ -346,8 +343,12 @@ def observe(dsn: str, cmd: Command) -> CommandResult:
                     and supplied.get("passed") is None
                     and supplied.get("verdict") is None
                     and supplied.get("solution") is None):
-                return _record_refusal(cur, state, operation_id=operation_id,
-                                       reason=str(refusal["result_detail"]))
+                cur.execute("SELECT 1 FROM operations WHERE attempt_id = %s LIMIT 1",
+                            (state["pending_attempt_id"],))
+                if cur.fetchone() is None:
+                    return _record_refusal(cur, state, episode_id=operation_id,
+                                           refused_operation=operation_id,
+                                           reason=str(refusal["result_detail"]))
             return (ResultCode.OUTCOME_UNKNOWN,
                     "operation is absent without a definitive prepare refusal; pending identity retained",
                     {"status": "pending", "operation_id": operation_id}, [], [])
@@ -386,10 +387,37 @@ def observe(dsn: str, cmd: Command) -> CommandResult:
         if outcome not in _OUTCOMES:
             raise SettlementError("outcome must be ready, completed, or unresolved")
         if verdict is None or not bool(verdict["verifier_settled"]):
+            if episode["status"] == "completed":
+                if (outcome == "unresolved" and supplied.get("status") == "refused"
+                        and supplied.get("passed") is None
+                        and supplied.get("verdict") is None
+                        and supplied.get("solution") is None):
+                    cur.execute("SELECT evaluator_version FROM rsi_tasks WHERE digest = %s",
+                                (episode["task"],))
+                    task = cur.fetchone()
+                    if task is not None:
+                        from .verifier import operation_id_for
+
+                        verifier_id = operation_id_for(operation_id, task["evaluator_version"])
+                        cur.execute("SELECT 1 FROM operations WHERE id = %s", (verifier_id,))
+                        verifier_op = cur.fetchone()
+                        if verifier_op is None:
+                            cur.execute("SELECT result_code, result_detail FROM command_journal"
+                                        " WHERE request_id = %s", (f"broker-prep-{verifier_id}",))
+                            refusal = cur.fetchone()
+                            if (refusal is not None
+                                    and refusal["result_code"] in _DEFINITE_PREP_REFUSALS):
+                                return _record_refusal(
+                                    cur, state, episode_id=operation_id,
+                                    refused_operation=verifier_id,
+                                    reason=str(refusal["result_detail"]),
+                                )
+                return (ResultCode.OUTCOME_UNKNOWN,
+                        "checked verdict or definitive verifier refusal is unavailable; pending identity retained",
+                        {"status": "pending", "operation_id": operation_id}, [], [])
             # A real, settled non-completed episode is an inspectable terminal
             # failure, but cannot establish task success or a checked continuation.
-            if (outcome != "unresolved" or episode["status"] == "completed"
-                    or supplied.get("status") != episode["status"]
+            if (outcome != "unresolved" or supplied.get("status") != episode["status"]
                     or supplied.get("passed") is not None
                     or supplied.get("verdict") is not None
                     or supplied.get("solution") is not None):
