@@ -1,0 +1,44 @@
+{
+  "second_received_checked_failure": true,
+  "same_investigation": true,
+  "decisions": 2,
+  "workers": [
+    {
+      "operation_id": "p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "source_sha256": "e1a894022d1a082987b87adecb623438c9e386d86b2b621cff4a5fe7fdf7edc8",
+      "source": "def add(a, b):\n    return a - b\n",
+      "status": "completed",
+      "tokens": {
+        "input_tokens": 226116,
+        "cached_input_tokens": 102752,
+        "output_tokens": 2868,
+        "reasoning_output_tokens": 1378
+      },
+      "trajectory_digest": "6078ee430c33924823d03f7ed3537f7be2007f732c13d798ba541c10c4aee3ba"
+    },
+    {
+      "operation_id": "p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "source_sha256": "4a48a969fa7f14314ae0384771e504955b2fe5d2933c3532737a671159848891",
+      "source": "def add(a, b):\n    return a + b\r\n",
+      "status": "completed",
+      "tokens": {
+        "input_tokens": 122578,
+        "cached_input_tokens": 112,
+        "output_tokens": 2155,
+        "reasoning_output_tokens": 792
+      },
+      "trajectory_digest": "c9ce5ee67319296bb5bc93ce932c7a7b4327c271cac38f81966571fe8746e0b8"
+    }
+  ],
+  "final_verdict": null,
+  "model_invoice": "unmeasured; route is the human-approved free alias",
+  "final_refusal": {
+    "passed": null,
+    "reason": "allocation p01-live-cpu-r3 cannot cover 111",
+    "status": "refused",
+    "episode": "p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+    "verdict": null,
+    "solution": null,
+    "refused_operation": "rsi-verify-ed588a81dbe3e7b3bea54629829dc85b3a212a8566af27a6758209bec1fc677d"
+  }
+}

@@ -1,0 +1,367 @@
+{
+  "journal": [
+    [
+      "rsi-task-art-3e95a3951440f18e73c99a21de54943e80f3a73fe907fb73be55b74176ffc56b",
+      "applied",
+      "artifact 3e95a3951440 published"
+    ],
+    [
+      "rsi-task-3e95a3951440f18e73c99a21de54943e80f3a73fe907fb73be55b74176ffc56b",
+      "applied",
+      "task published"
+    ],
+    [
+      "rsi-genome-art-bf8f6e52b21c086c3bc2def09d7c623f747fb0b8a3c95efbdd3e195352115d75",
+      "applied",
+      "artifact bf8f6e52b21c published"
+    ],
+    [
+      "rsi-genome-bf8f6e52b21c086c3bc2def09d7c623f747fb0b8a3c95efbdd3e195352115d75-root",
+      "applied",
+      "genome published"
+    ],
+    [
+      "req_d4a2e6619b0647c5",
+      "applied",
+      "allocation p01-live-tokens seeded"
+    ],
+    [
+      "req_ab4a53270402443c",
+      "applied",
+      "allocation p01-live-cpu seeded"
+    ],
+    [
+      "p01-create:p01-live-20261013",
+      "applied",
+      "investigation p01-live-20261013 created"
+    ],
+    [
+      "req_f0bbb4a3f71741fc",
+      "applied",
+      "investigation suspended; admitted effects retained"
+    ],
+    [
+      "req_d1c92f559de04b8a",
+      "applied",
+      "investigation resumed"
+    ],
+    [
+      "p01-decide:39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "applied",
+      "decision and attempt reserved before dispatch"
+    ],
+    [
+      "broker-prep-p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "applied",
+      "operation p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068 prepared"
+    ],
+    [
+      "broker-adv-p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068-codex-a5b7a76e4c69",
+      "applied",
+      "operation p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068 dispatching"
+    ],
+    [
+      "broker-adv-p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068-codex-9101ae62dea7",
+      "already_applied",
+      "already dispatching"
+    ],
+    [
+      "broker-unsent-p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068-g1",
+      "applied",
+      "operation p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068 reconciled with never-sent proof"
+    ],
+    [
+      "broker-del-dispatch:p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "applied",
+      "delivery recorded"
+    ],
+    [
+      "req_051f8ef7ed4e41c9",
+      "outcome_unknown",
+      "worker operation is not settled; pending identity retained"
+    ],
+    [
+      "req_9fecd0134c9d4049",
+      "applied",
+      "durable pre-dispatch refusal recorded as unresolved"
+    ],
+    [
+      "p01-create:p01-live-20261013-r2",
+      "applied",
+      "investigation p01-live-20261013-r2 created"
+    ],
+    [
+      "p01-decide:5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "applied",
+      "decision and attempt reserved before dispatch"
+    ],
+    [
+      "broker-prep-p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "applied",
+      "operation p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2 prepared"
+    ],
+    [
+      "broker-adv-p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2-codex-4310d4735f4d",
+      "applied",
+      "operation p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2 dispatching"
+    ],
+    [
+      "broker-adv-p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2-codex-7c9910306cd6",
+      "already_applied",
+      "already dispatching"
+    ],
+    [
+      "broker-rc-codex:p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2:g1-ceffe8d9f185",
+      "applied",
+      "receipt admitted, outcome failure"
+    ],
+    [
+      "broker-del-dispatch:p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "applied",
+      "delivery recorded"
+    ],
+    [
+      "rsi-traj-44f6fdca7bd733d3e5f4086ff2c4199818b7d0495ad5f028e0d2cf65df7d01f2",
+      "applied",
+      "artifact 44f6fdca7bd7 published"
+    ],
+    [
+      "rsi-episode-p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "applied",
+      "episode recorded"
+    ],
+    [
+      "p01-observe:p01-decision-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "applied",
+      "checked observation recorded"
+    ],
+    [
+      "req_ad8f34737b484aee",
+      "applied",
+      "allocation p01-live-tokens-r3 seeded"
+    ],
+    [
+      "req_9dc0b910967b424f",
+      "applied",
+      "allocation p01-live-cpu-r3 seeded"
+    ],
+    [
+      "p01-create:p01-live-20261013-r3",
+      "applied",
+      "investigation p01-live-20261013-r3 created"
+    ],
+    [
+      "p01-decide:2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "applied",
+      "decision and attempt reserved before dispatch"
+    ],
+    [
+      "broker-prep-p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "applied",
+      "operation p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96 prepared"
+    ],
+    [
+      "broker-adv-p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96-codex-1eee8053183d",
+      "applied",
+      "operation p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96 dispatching"
+    ],
+    [
+      "broker-adv-p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96-codex-bd5e3de87456",
+      "already_applied",
+      "already dispatching"
+    ],
+    [
+      "broker-rc-codex:p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96:g1-539c70f8e796",
+      "applied",
+      "receipt admitted, outcome success"
+    ],
+    [
+      "broker-del-dispatch:p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "applied",
+      "delivery recorded"
+    ],
+    [
+      "rsi-traj-5ee2f48b2d391ec5d913e68ed700796b4e701ad322e78c1ea0b4bb8ff7ac09ba",
+      "applied",
+      "artifact 5ee2f48b2d39 published"
+    ],
+    [
+      "rsi-episode-p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "applied",
+      "episode recorded"
+    ],
+    [
+      "rsi-solution-41fb8779b2dd6309f5a71d22ff46f3d06a150e19c6f63f0a5a8106df8675d9d8",
+      "applied",
+      "artifact 41fb8779b2dd published"
+    ],
+    [
+      "broker-prep-rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63",
+      "applied",
+      "operation rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63 prepared"
+    ],
+    [
+      "broker-adv-rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63-local-1-bec549b296c8",
+      "applied",
+      "operation rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63 dispatching"
+    ],
+    [
+      "broker-adv-rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63-local-1-91a9bf2083cf",
+      "already_applied",
+      "already dispatching"
+    ],
+    [
+      "broker-rc-local:rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63_41fb8779b2dd6309f5a71d22ff46f3d06a150e19c6f63f0a5a8106df8675d9d8.result-cf841e215367",
+      "applied",
+      "receipt admitted, outcome failure"
+    ],
+    [
+      "broker-del-dispatch:rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63",
+      "applied",
+      "delivery recorded"
+    ],
+    [
+      "rsi-verdict-rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63",
+      "applied",
+      "verdict recorded"
+    ],
+    [
+      "p01-observe:p01-decision-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "applied",
+      "checked observation recorded"
+    ],
+    [
+      "req_deff76a28702407e",
+      "applied",
+      "investigation suspended; admitted effects retained"
+    ],
+    [
+      "req_cdce38300bc34ec0",
+      "applied",
+      "investigation resumed"
+    ],
+    [
+      "p01-decide:33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "applied",
+      "decision and attempt reserved before dispatch"
+    ],
+    [
+      "broker-prep-p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "applied",
+      "operation p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da prepared"
+    ],
+    [
+      "broker-adv-p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da-codex-cde3d2395dda",
+      "applied",
+      "operation p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da dispatching"
+    ],
+    [
+      "broker-adv-p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da-codex-0fd4cd0512d8",
+      "already_applied",
+      "already dispatching"
+    ],
+    [
+      "broker-rc-codex:p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da:g1-821956769ff8",
+      "applied",
+      "receipt admitted, outcome success"
+    ],
+    [
+      "broker-del-dispatch:p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "applied",
+      "delivery recorded"
+    ],
+    [
+      "rsi-traj-ec93f0140ea409a8f0f78d1e2cb54671b944d7b86495bdcd718b062bae1e93a8",
+      "applied",
+      "artifact ec93f0140ea4 published"
+    ],
+    [
+      "rsi-episode-p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "applied",
+      "episode recorded"
+    ],
+    [
+      "rsi-solution-0d3dd30a509b09ad62f33fa0ba8beb369cae08adb281d939f106bb121df7397d",
+      "applied",
+      "artifact 0d3dd30a509b published"
+    ],
+    [
+      "broker-prep-rsi-verify-ed588a81dbe3e7b3bea54629829dc85b3a212a8566af27a6758209bec1fc677d",
+      "insufficient_resources",
+      "allocation p01-live-cpu-r3 cannot cover 111"
+    ],
+    [
+      "req_2104a15035dc4f46",
+      "applied",
+      "durable pre-dispatch refusal recorded as unresolved"
+    ]
+  ],
+  "operations": [
+    [
+      "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "reconciled",
+      "reconciled",
+      false,
+      {
+        "claim": "never-sent",
+        "subject": "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+        "provenance": "codex:prove_never_sent",
+        "dispatch_generation": 1
+      }
+    ],
+    [
+      "p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "observed",
+      "none",
+      true,
+      null
+    ],
+    [
+      "p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "observed",
+      "none",
+      true,
+      null
+    ],
+    [
+      "rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63",
+      "observed",
+      "none",
+      true,
+      null
+    ],
+    [
+      "p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "observed",
+      "none",
+      true,
+      null
+    ]
+  ],
+  "receipts": [
+    [
+      "p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "codex:p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2:g1",
+      "558b06f9cd5b5956a95168ba148c86b62d81540f3a5593de10d64c6f61b90cd4",
+      "failure"
+    ],
+    [
+      "p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "codex:p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96:g1",
+      "5724835340181327bf4385a55708af7a7283055009ced5d616f7a75ab386412f",
+      "success"
+    ],
+    [
+      "rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63",
+      "local:rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63_41fb8779b2dd6309f5a71d22ff46f3d06a150e19c6f63f0a5a8106df8675d9d8.result",
+      "2abdbc47a82f7e4fe61522d39c2716eaf1f063217d2bacdf1482cb711ef444a7",
+      "failure"
+    ],
+    [
+      "p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "codex:p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da:g1",
+      "be2c60c35f08796338ceb5c9302fabaffc2d8cbc88583d615f4ef5c9c9f1edb6",
+      "success"
+    ]
+  ]
+}

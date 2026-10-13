@@ -1,0 +1,37 @@
+{
+  "investigation_id": "p01-live-20261013-r3",
+  "objective": "Continue this two-action investigation of calc.add. Follow the continuation JSON. If previous_observation is null, inspect calc.py and explain the defect, but do not change any files: this first action is diagnosis only. If a previous checked observation exists, fix calc.py to implement addition for integers using the saved workspace and that feedback. Do not seek hidden tests. Stay within this workspace.",
+  "objective_revision": 1,
+  "revision": 2,
+  "status": "ready",
+  "domain": "task",
+  "config": {
+    "task": "3e95a3951440f18e73c99a21de54943e80f3a73fe907fb73be55b74176ffc56b",
+    "model": "openrouter/openrouter/free",
+    "genome": "bf8f6e52b21c086c3bc2def09d7c623f747fb0b8a3c95efbdd3e195352115d75",
+    "max_steps": 2,
+    "timeout_ms": 180000,
+    "token_ceiling": 300000,
+    "cpu_allocation": "p01-live-cpu-r3",
+    "token_allocation": "p01-live-tokens-r3"
+  },
+  "policy": {
+    "id": "task-seed/1"
+  },
+  "open_questions": [
+    "Does the solution satisfy the task obligation?"
+  ],
+  "artifact_refs": {
+    "solution": "41fb8779b2dd6309f5a71d22ff46f3d06a150e19c6f63f0a5a8106df8675d9d8",
+    "trajectory": "5ee2f48b2d391ec5d913e68ed700796b4e701ad322e78c1ea0b4bb8ff7ac09ba"
+  },
+  "pending_decision": null,
+  "last_observation": {
+    "passed": false,
+    "reason": "",
+    "status": "failed",
+    "episode": "p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+    "verdict": "rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63",
+    "solution": "41fb8779b2dd6309f5a71d22ff46f3d06a150e19c6f63f0a5a8106df8675d9d8"
+  }
+}

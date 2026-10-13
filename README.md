@@ -83,6 +83,9 @@ The public CLI is `python -m rsi.investigate`. Its commands are `create`, `inspe
 `--token-allocation` and `--cpu-allocation`, and finite `--max-steps`,
 `--timeout-ms` and `--token-ceiling` bounds. Worker commands use external
 `--route-file` and `--codex` paths, as in the experiment below.
+Use `--catalog-template` when the installed Codex catalogue lacks the launcher's
+default template. This selects bundled tool metadata; it does not change the
+gateway model named in the route file.
 
 `resume` reuses the admitted operation identity before making another decision.
 Suspension blocks new decisions and preserves already-admitted effects; it is not

@@ -1,0 +1,36 @@
+{
+  "investigation_id": "p01-live-20261013-r2",
+  "objective": "Continue this two-action investigation of calc.add. Follow the continuation JSON. If previous_observation is null, inspect calc.py and explain the defect, but do not change any files: this first action is diagnosis only. If a previous checked observation exists, fix calc.py to implement addition for integers using the saved workspace and that feedback. Do not seek hidden tests. Stay within this workspace.",
+  "objective_revision": 1,
+  "revision": 2,
+  "status": "unresolved",
+  "domain": "task",
+  "config": {
+    "task": "3e95a3951440f18e73c99a21de54943e80f3a73fe907fb73be55b74176ffc56b",
+    "model": "openrouter/openrouter/free",
+    "genome": "bf8f6e52b21c086c3bc2def09d7c623f747fb0b8a3c95efbdd3e195352115d75",
+    "max_steps": 2,
+    "timeout_ms": 180000,
+    "token_ceiling": 40000,
+    "cpu_allocation": "p01-live-cpu",
+    "token_allocation": "p01-live-tokens"
+  },
+  "policy": {
+    "id": "task-seed/1"
+  },
+  "open_questions": [
+    "Does the solution satisfy the task obligation?"
+  ],
+  "artifact_refs": {
+    "trajectory": "44f6fdca7bd733d3e5f4086ff2c4199818b7d0495ad5f028e0d2cf65df7d01f2"
+  },
+  "pending_decision": null,
+  "last_observation": {
+    "passed": null,
+    "reason": "",
+    "status": "over_budget",
+    "episode": "p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+    "verdict": null,
+    "solution": null
+  }
+}

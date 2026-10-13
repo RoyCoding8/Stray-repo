@@ -26,7 +26,7 @@ dependencies and build order. The three research themes are divided into ten par
 
 | Component | Current state | Working target |
 |---|---|---|
-| P01: persistent investigations | In progress | One durable objective with continuing decisions and restart. |
+| P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Planned | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Planned | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
@@ -43,9 +43,56 @@ Human direction for this implementation batch: build P01 only. P02–P10 are pau
 
 P01 task list:
 - [x] Pin the state, decision and pending-effect contract against the existing kernel (`74f2b65f`).
-- [ ] Implement the investigation owner and identity-bound worker continuation.
-- [ ] Verify continuation, fresh-process resume, stale refusal, isolation and unresolved outcomes.
-- [ ] Migrate one existing task workflow, remove replaced ownership and deliver a verified checkpoint.
+- [x] Implement the investigation owner and identity-bound worker continuation.
+- [x] Verify continuation, fresh-process resume, stale refusal, isolation and unresolved outcomes.
+- [x] Migrate one existing task workflow, remove replaced ownership and deliver a verified checkpoint.
+
+### P01 implementation checkpoint (2026-10-13)
+
+`rsi.investigate` now creates, inspects, steps, suspends, resumes and exports a
+development-task investigation. The kernel remains the objective and dispatch
+authority. A one-to-one SQL extension owns the continuation revision, questions,
+artifact references and pending decision; existing decision and attempt histories
+record its actions and observations. Worker instructions bind the continuation
+and saved solution bytes. The existing loop routes development work through this
+owner with one action per task, preserving its frozen comparison budgets.
+
+Eight acceptance scenarios cover checked continuation, fresh-process recovery
+after worker settlement but before verification, stale decisions, concurrent
+workspace isolation, invalid actions, token refusal, verifier refusal and proven
+never-sent preflight failure. Definitive refusals become inspectable unresolved
+results; uncertain effects retain their pending identity. These are distinct
+outcomes. The task consumer remains a fixed bounded seed policy, not a learned
+agenda or an unattended campaign.
+
+Primary verification, source checkpoint `5888cb50`: **29 passed, zero skips**
+across the final state, public acceptance and loop-refusal gates on disposable
+PostgreSQL 18.0 databases with actual fixture child processes. A preceding broader
+RSI regression run passed **99 tests with one Windows symlink-privilege skip**;
+it preceded the final never-sent handling and its added acceptance scenario.
+Those changes are covered by the final 29-test gate. A separate real checkpoint
+test passed and included migration `0029`. Changed Python files passed Ruff and
+`git diff --check`. No whole-repository suite or CI pass is inferred from these
+checks. Luna implemented isolated lanes; the primary ran the final gates, with
+an additional GPT-6.1 Sol High source/handler review of the material fixes.
+
+[Live evidence](evidence/p01-live-20261013/README.md) records the free-route
+continuation smoke and its limits. The first preflight was proved never sent;
+the second envelope completed diagnosis but exceeded its token allowance. A fresh
+larger envelope then completed two worker actions: diagnosis, a failed pristine
+check, suspension, and fresh CLI resumption with the checked observation and saved
+solution. The model changed subtraction to addition. The final verifier was
+refused because the study's 120 CPU units covered only one 111-unit reservation.
+That under-sized allocation is an experiment setup error. The investigation stays
+unresolved; no final passing live verdict is claimed. No limit or earlier result
+was rewritten to make it pass. P01's continuation mechanism is qualified; task
+utility, transfer, learning benefit and hostile-code containment remain unproved.
+
+All owned implementation worktrees and temporary lane branches were removed.
+The live receipt anchor remains in `p01_live_20261013` on port 55432 and
+`D:/AI/tools/p01-live-20261013`. P02–P10 remain paused. Future continuation studies
+should derive checker exposure from the broker's profile and allow for CLI input
+overhead rather than treating wall time or a short task as the resource cost.
 
 Build P01, then P02 and P03, then P04. P05 and P10 provide an early continuing
 autonomous prototype before advanced replay, learner revision and teams.
@@ -56,8 +103,8 @@ Short behavioral probes qualify mechanisms; continuing campaigns accumulate
 utility, transfer and improvement evidence. No statistical gain is required to
 finish an exploratory implementation, and no such gain is claimed here.
 
-The planning checkpoint changed research documents only. P01 implementation is
-now assigned; its verification and live evidence will be recorded separately below.
+The initial planning checkpoint changed research documents only. The P01
+implementation and its separate verification categories are recorded above.
 
 ## State (2026-10-08)
 
@@ -208,8 +255,8 @@ can complete an experiment without completing the learning objective.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-Next implementation target: P01's continuing investigation and resume path, following
-its component plan. Prospective utility comparisons must account
+The next planned component is P02, currently paused by human direction.
+Prospective utility comparisons must account
 for free-router variation and include an unchanged-copy control where relevant.
 Do not re-dispatch closed operations or refund allocations. Live instruction
 acquisition is demonstrated; executable-skill utility and learning advantage

@@ -1,0 +1,102 @@
+{
+  "operations": [
+    [
+      "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "agent-run",
+      "reconciled",
+      "reconciled",
+      false
+    ],
+    [
+      "p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "agent-run",
+      "observed",
+      "none",
+      true
+    ],
+    [
+      "p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "agent-run",
+      "observed",
+      "none",
+      true
+    ],
+    [
+      "rsi-verify-61dd634b0b3a1df6452e3baf7b20a601ed9af21b4c434bba6929c3a5c8683a63",
+      "sandbox-exec",
+      "observed",
+      "none",
+      true
+    ],
+    [
+      "p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "agent-run",
+      "observed",
+      "none",
+      true
+    ]
+  ],
+  "episodes": [
+    [
+      "p01-worker-5a7a683b694b17220809f835e67498520338f9b6a81b888f0ad66c9f231877e2",
+      "over_budget",
+      {
+        "input_tokens": 87482,
+        "output_tokens": 1171,
+        "cached_input_tokens": 23072,
+        "reasoning_output_tokens": 427
+      },
+      "44f6fdca7bd733d3e5f4086ff2c4199818b7d0495ad5f028e0d2cf65df7d01f2"
+    ],
+    [
+      "p01-worker-2441fe00f884754c6e309a503c6c7f005368020d9d596623ab7223201edbac96",
+      "completed",
+      {
+        "input_tokens": 226116,
+        "output_tokens": 2868,
+        "cached_input_tokens": 102752,
+        "reasoning_output_tokens": 1378
+      },
+      "5ee2f48b2d391ec5d913e68ed700796b4e701ad322e78c1ea0b4bb8ff7ac09ba"
+    ],
+    [
+      "p01-worker-33a169f5abf8ec591ad6eb1868f2e387fc894d90003d9bffe2efd884f1de72da",
+      "completed",
+      {
+        "input_tokens": 122578,
+        "output_tokens": 2155,
+        "cached_input_tokens": 112,
+        "reasoning_output_tokens": 792
+      },
+      "ec93f0140ea409a8f0f78d1e2cb54671b944d7b86495bdcd718b062bae1e93a8"
+    ]
+  ],
+  "tokens": {
+    "id": "p01-live-tokens-r3",
+    "parent_id": null,
+    "domain": "tokens",
+    "epoch": 0,
+    "authorized": 600000,
+    "amount_scale": 1,
+    "consumed": 353717,
+    "reserved": 0,
+    "occupancy": 0,
+    "max_occupancy": 8,
+    "owner_scope": "",
+    "created_at": "2026-10-13 16:07:56.469139-04:00"
+  },
+  "cpu": {
+    "id": "p01-live-cpu-r3",
+    "parent_id": null,
+    "domain": "cpu",
+    "epoch": 0,
+    "authorized": 120,
+    "amount_scale": 1,
+    "consumed": 111,
+    "reserved": 0,
+    "occupancy": 0,
+    "max_occupancy": 8,
+    "owner_scope": "",
+    "created_at": "2026-10-13 16:07:56.532388-04:00"
+  }
+}

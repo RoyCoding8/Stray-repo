@@ -1,0 +1,47 @@
+{
+  "investigation_id": "p01-live-20261013",
+  "objective": "Continue this two-action investigation of calc.add. Follow the continuation JSON. If previous_observation is null, inspect calc.py and explain the defect, but do not change any files: this first action is diagnosis only. If a previous checked observation exists, fix calc.py to implement addition for integers using the saved workspace and that feedback. Do not seek hidden tests. Stay within this workspace.",
+  "objective_revision": 1,
+  "revision": 3,
+  "status": "pending",
+  "domain": "task",
+  "config": {
+    "task": "3e95a3951440f18e73c99a21de54943e80f3a73fe907fb73be55b74176ffc56b",
+    "model": "openrouter/openrouter/free",
+    "genome": "bf8f6e52b21c086c3bc2def09d7c623f747fb0b8a3c95efbdd3e195352115d75",
+    "max_steps": 2,
+    "timeout_ms": 180000,
+    "token_ceiling": 40000,
+    "cpu_allocation": "p01-live-cpu",
+    "token_allocation": "p01-live-tokens"
+  },
+  "policy": {
+    "id": "task-seed/1"
+  },
+  "open_questions": [
+    "Does the solution satisfy the task obligation?"
+  ],
+  "artifact_refs": {},
+  "pending_decision": {
+    "id": "p01-decision-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+    "attempt_id": "p01-attempt-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+    "operation_id": "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+    "action": {
+      "kind": "worker",
+      "explanation": "Attempt the open obligation using checked feedback.",
+      "intended_observation": "Does the solution satisfy the task obligation?"
+    },
+    "visible_input": {
+      "objective": "Continue this two-action investigation of calc.add. Follow the continuation JSON. If previous_observation is null, inspect calc.py and explain the defect, but do not change any files: this first action is diagnosis only. If a previous checked observation exists, fix calc.py to implement addition for integers using the saved workspace and that feedback. Do not seek hidden tests. Stay within this workspace.",
+      "artifact_refs": {},
+      "open_questions": [
+        "Does the solution satisfy the task obligation?"
+      ],
+      "state_revision": 2,
+      "objective_revision": 1,
+      "previous_observation": null
+    }
+  },
+  "last_observation": null,
+  "execution_error": "agent-run p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068 settled without a launcher result: model catalog: bundled catalog has no 'gpt-5.4'"
+}

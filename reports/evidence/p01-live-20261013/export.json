@@ -1,0 +1,88 @@
+{
+  "state": {
+    "investigation_id": "p01-live-20261013",
+    "objective": "Continue this two-action investigation of calc.add. Follow the continuation JSON. If previous_observation is null, inspect calc.py and explain the defect, but do not change any files: this first action is diagnosis only. If a previous checked observation exists, fix calc.py to implement addition for integers using the saved workspace and that feedback. Do not seek hidden tests. Stay within this workspace.",
+    "objective_revision": 1,
+    "revision": 4,
+    "status": "unresolved",
+    "domain": "task",
+    "config": {
+      "task": "3e95a3951440f18e73c99a21de54943e80f3a73fe907fb73be55b74176ffc56b",
+      "model": "openrouter/openrouter/free",
+      "genome": "bf8f6e52b21c086c3bc2def09d7c623f747fb0b8a3c95efbdd3e195352115d75",
+      "max_steps": 2,
+      "timeout_ms": 180000,
+      "token_ceiling": 40000,
+      "cpu_allocation": "p01-live-cpu",
+      "token_allocation": "p01-live-tokens"
+    },
+    "policy": {
+      "id": "task-seed/1"
+    },
+    "open_questions": [
+      "Does the solution satisfy the task obligation?"
+    ],
+    "artifact_refs": {},
+    "pending_decision": null,
+    "last_observation": {
+      "passed": null,
+      "reason": "kernel reconciled operation with never-sent proof",
+      "status": "refused",
+      "episode": "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "verdict": null,
+      "solution": null
+    }
+  },
+  "decisions": [
+    {
+      "id": "p01-decision-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "kind": "worker",
+      "actor": "fixed",
+      "data": {
+        "action": {
+          "kind": "worker",
+          "explanation": "Attempt the open obligation using checked feedback.",
+          "intended_observation": "Does the solution satisfy the task obligation?"
+        },
+        "attempt_id": "p01-attempt-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+        "operation_id": "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+        "visible_input": {
+          "objective": "Continue this two-action investigation of calc.add. Follow the continuation JSON. If previous_observation is null, inspect calc.py and explain the defect, but do not change any files: this first action is diagnosis only. If a previous checked observation exists, fix calc.py to implement addition for integers using the saved workspace and that feedback. Do not seek hidden tests. Stay within this workspace.",
+          "artifact_refs": {},
+          "open_questions": [
+            "Does the solution satisfy the task obligation?"
+          ],
+          "state_revision": 2,
+          "objective_revision": 1,
+          "previous_observation": null
+        }
+      },
+      "created_at": "2026-10-13 15:54:37.580191-04:00"
+    }
+  ],
+  "observations": [
+    {
+      "id": 1,
+      "decision_id": "p01-decision-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "content": {
+        "passed": null,
+        "reason": "kernel reconciled operation with never-sent proof",
+        "status": "refused",
+        "episode": "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+        "verdict": null,
+        "solution": null
+      },
+      "created_at": "2026-10-13 16:05:10.284064-04:00"
+    }
+  ],
+  "unresolved_effects": [
+    {
+      "id": "p01-worker-39a0705cbacdc9526b4c1ec548a793f495f808953dcb605c5e0dad14904c9068",
+      "dispatch_state": "reconciled",
+      "reconcile_state": "reconciled",
+      "settled": false,
+      "receipt_provenance": "",
+      "receipts": []
+    }
+  ]
+}

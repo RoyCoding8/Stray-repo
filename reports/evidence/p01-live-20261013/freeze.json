@@ -1,0 +1,15 @@
+{
+  "source": "e5593806830356d549a177b0bb9cdbefb0d8283f",
+  "model": "openrouter/openrouter/free",
+  "investigation": "p01-live-20261013",
+  "task": "3e95a3951440f18e73c99a21de54943e80f3a73fe907fb73be55b74176ffc56b",
+  "genome": "bf8f6e52b21c086c3bc2def09d7c623f747fb0b8a3c95efbdd3e195352115d75",
+  "max_worker_actions": 2,
+  "worker_timeout_ms": 180000,
+  "token_ceiling_per_worker": 40000,
+  "total_token_authorization": 80000,
+  "cpu_authorization_seconds": 120,
+  "model_acquisition": false,
+  "experiment": "authored diagnosis then repair; continuation smoke only",
+  "native_containment": "unproved; cooperative child execution only"
+}
