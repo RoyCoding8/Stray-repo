@@ -6,12 +6,12 @@ results support cooperative benchmark evaluation, not hostile-code acceptance.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
-from pathlib import Path
 import stat
 import sys
-from typing import Mapping
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
 
 from psycopg.types.json import Json
 
