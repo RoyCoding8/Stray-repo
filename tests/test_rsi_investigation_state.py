@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import uuid
 
+import pytest
+
 from rsi import investigation
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode
@@ -52,6 +54,32 @@ def test_create_binds_objective_and_reads_initial_continuation(migrated_db):
         "pending_decision": None,
         "last_observation": None,
     }
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("objective", None),
+    ("domain", None),
+    ("allocation_id", None),
+    ("config", None),
+    ("policy", None),
+    ("artifact_refs", None),
+    ("open_questions", "question"),
+    ("open_questions", []),
+    ("open_questions", [None]),
+])
+def test_create_rejects_invalid_input_shapes(migrated_db, field, value):
+    payload, _ = _create(migrated_db)
+    # The fixture's valid row gives this case its real objective/allocation context;
+    # use a new identity for the rejected request.
+    payload["investigation_id"] = "inv-p01-invalid"
+    payload[field] = value
+
+    result = investigation.create(migrated_db, _cmd(payload))
+
+    assert result.code == ResultCode.INVALID_INPUT
+    with db.connect(migrated_db) as conn:
+        assert conn.execute("SELECT count(*) FROM investigations"
+                            " WHERE id = 'inv-p01-invalid'").fetchone()[0] == 0
 
 
 def test_stale_decision_cannot_reserve_an_attempt_or_operation(migrated_db):
