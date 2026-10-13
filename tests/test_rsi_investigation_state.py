@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 
 from rsi import investigation
-from settlement import db, store
+from settlement import broker, db, store
 from settlement.common import Command, ResultCode
 
 
@@ -12,10 +12,11 @@ def _cmd(payload, *, expected_revision=None):
                    expected_revision=expected_revision, payload=payload)
 
 
-def _create(dsn, *, max_steps=2):
+def _create(dsn, *, max_steps=2, token_authorized=100_000):
     for allocation_id, domain in (("tokens", "tokens"), ("cpu", "cpu")):
         store.seed_allocation(dsn, _cmd({"allocation_id": allocation_id,
-                                         "domain": domain, "authorized": 100_000}))
+                                         "domain": domain,
+                                         "authorized": token_authorized if domain == "tokens" else 100_000}))
     payload = {
         "investigation_id": "inv-p01",
         "objective": "Solve the public task.",
@@ -131,6 +132,66 @@ def test_uncertain_or_unrecorded_effect_keeps_pending_identity(migrated_db):
     assert state["revision"] == 1 and state["status"] == "pending"
     assert state["pending_decision"]["operation_id"] == "operation-0"
     assert state["last_observation"] is None
+    with db.connect(migrated_db) as conn:
+        conn.execute("INSERT INTO command_journal (request_id, payload_digest, result_code, result_detail)"
+                     " VALUES (%s, %s, 'outcome_unknown', 'prepare result uncertain')",
+                     ("broker-prep-operation-0", "d" * 64))
+    uncertain = investigation.observe(
+        migrated_db,
+        _cmd({"investigation_id": payload["investigation_id"],
+              "decision_id": "decision-0", "operation_id": "operation-0",
+              "outcome": "unresolved", "open_questions": payload["open_questions"],
+              "artifact_refs": {},
+              "observation": {"episode": "operation-0", "status": "refused",
+                              "passed": None, "verdict": None, "solution": None,
+                              "reason": "untrusted caller text"}}, expected_revision=1),
+    )
+    assert uncertain.code == ResultCode.OUTCOME_UNKNOWN
+    assert investigation.read(migrated_db, payload["investigation_id"])["status"] == "pending"
+
+
+def test_durable_budget_refusal_ends_as_inspectable_unresolved(migrated_db):
+    payload, _ = _create(migrated_db, token_authorized=1)
+    investigation.decide(
+        migrated_db,
+        _cmd({"investigation_id": payload["investigation_id"],
+              "decision_id": "decision-0", "attempt_id": "attempt-0",
+              "operation_id": "operation-refused",
+              "action": {"kind": "worker", "explanation": "try",
+                         "intended_observation": "check"},
+              "visible_input": {"objective": payload["objective"],
+                                "objective_revision": 1, "state_revision": 0,
+                                "open_questions": payload["open_questions"],
+                                "artifact_refs": {}, "previous_observation": None}},
+             expected_revision=0),
+    )
+    refused = broker.ensure_operation(
+        migrated_db, operation_id="operation-refused", effect=broker.AGENT_RUN,
+        payload={"harness": "public", "genome": "a" * 64, "task": "b" * 64,
+                 "instruction": payload["objective"], "config": {},
+                 "timeout_ms": 30_000, "token_ceiling": 5_000},
+        allocation_id="tokens", attempt_id="attempt-0",
+    )
+    assert refused.code == ResultCode.INSUFFICIENT_RESOURCES
+    result = investigation.observe(
+        migrated_db,
+        _cmd({"investigation_id": payload["investigation_id"],
+              "decision_id": "decision-0", "operation_id": "operation-refused",
+              "outcome": "unresolved", "open_questions": payload["open_questions"],
+              "artifact_refs": {},
+              "observation": {"episode": "operation-refused", "status": "refused",
+                              "passed": None, "verdict": None, "solution": None,
+                              "reason": "caller reason is ignored"}}, expected_revision=1),
+    )
+
+    state = investigation.read(migrated_db, payload["investigation_id"])
+    assert result.code == ResultCode.APPLIED
+    assert state["revision"] == 2 and state["status"] == "unresolved"
+    assert state["pending_decision"] is None and state["artifact_refs"] == {}
+    assert state["last_observation"]["reason"] == refused.detail
+    with db.connect(migrated_db) as conn:
+        assert conn.execute("SELECT count(*) FROM operations").fetchone()[0] == 0
+        assert conn.execute("SELECT lifecycle FROM attempts WHERE id = 'attempt-0'").fetchone()[0] == "failed"
 
 
 def test_suspending_pending_effect_preserves_identity_and_resume_recovers_it(migrated_db):
