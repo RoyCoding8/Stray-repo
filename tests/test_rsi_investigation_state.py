@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import uuid
 
 import pytest
@@ -8,6 +9,7 @@ from psycopg.types.json import Json
 from rsi import investigation, verifier
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode
+from settlement.launcher_codex import CodexLauncher, Provider
 
 
 def _cmd(payload, *, expected_revision=None):
@@ -304,6 +306,67 @@ def test_durable_verifier_budget_refusal_ends_completed_worker_unresolved(migrat
         assert conn.execute("SELECT count(*) FROM operations WHERE id = %s",
                             (verifier_operation,)).fetchone()[0] == 0
         assert conn.execute("SELECT lifecycle FROM attempts WHERE id = 'attempt-0'").fetchone()[0] == "failed"
+
+
+def test_broker_never_sent_proof_closes_preflight_refusal_without_receipt(migrated_db, tmp_path):
+    payload, _ = _create(migrated_db, genome="a" * 64, task="b" * 64)
+    operation_id = "operation-never-sent"
+    assert _reserve_worker(migrated_db, payload, operation_id=operation_id).code == ResultCode.APPLIED
+    fake_cli = tmp_path / "codex_empty_catalog.py"
+    fake_cli.write_text("import json, sys\n"
+                        "assert sys.argv[1:3] == ['debug', 'models']\n"
+                        "print(json.dumps({'models': []}))\n", encoding="utf-8")
+    run_dir = tmp_path / "runs"
+    launcher = CodexLauncher(
+        run_dir, codex_cmd=[sys.executable, str(fake_cli)],
+        provider=Provider("http://127.0.0.1:9/v1", "model", "key",
+                          catalog_template="missing-template"),
+        allowed_overrides=frozenset(),
+    )
+    admitted = broker.ensure_operation(
+        migrated_db, operation_id=operation_id, effect=broker.AGENT_RUN,
+        payload={"harness": "codex", "genome": payload["config"]["genome"],
+                 "task": payload["config"]["task"], "instruction": "Solve the public task.",
+                 "config": {}, "timeout_ms": 30_000, "token_ceiling": 5_000},
+        allocation_id="tokens", attempt_id="attempt-0",
+    )
+    assert admitted.code == ResultCode.APPLIED
+
+    status = broker.dispatch_operation(migrated_db, operation_id,
+                                       launchers={"codex": launcher})
+    operation = broker.read_operation(migrated_db, operation_id)
+    assert status.dispatch_state == "reconciled" and not status.settled
+    proof = operation["payload"]["_never_sent_proof"]
+    assert proof == {"claim": "never-sent", "subject": operation_id,
+                     "provenance": "codex:prove_never_sent", "dispatch_generation": 1}
+    assert not (run_dir / operation_id / "claim").exists()
+    with db.connect(migrated_db) as conn:
+        assert conn.execute("SELECT state FROM reservations WHERE operation_id = %s",
+                            (operation_id,)).fetchone()[0] == "released"
+        assert conn.execute("SELECT count(*) FROM receipts WHERE operation_id = %s",
+                            (operation_id,)).fetchone()[0] == 0
+
+    result = investigation.observe(
+        migrated_db,
+        _cmd({"investigation_id": payload["investigation_id"],
+              "decision_id": "decision-0", "operation_id": operation_id,
+              "outcome": "unresolved", "open_questions": payload["open_questions"],
+              "artifact_refs": {},
+              "observation": {"episode": operation_id, "status": "refused",
+                              "passed": None, "verdict": None, "solution": None,
+                              "reason": "ephemeral launcher detail is ignored"}},
+             expected_revision=1),
+    )
+
+    state = investigation.read(migrated_db, payload["investigation_id"])
+    assert result.code == ResultCode.APPLIED
+    assert state["revision"] == 2 and state["status"] == "unresolved"
+    assert state["pending_decision"] is None
+    assert state["last_observation"]["reason"] == "kernel reconciled operation with never-sent proof"
+    with db.connect(migrated_db) as conn:
+        assert conn.execute("SELECT lifecycle FROM attempts WHERE id = 'attempt-0'").fetchone()[0] == "failed"
+        assert conn.execute("SELECT count(*) FROM receipts WHERE operation_id = %s",
+                            (operation_id,)).fetchone()[0] == 0
 
 
 def test_uncertain_verifier_preparation_keeps_completed_worker_pending(migrated_db):

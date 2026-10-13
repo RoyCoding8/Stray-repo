@@ -117,6 +117,40 @@ def _record_refusal(cur, state: dict, *, episode_id: str,
             [("rsi.investigation.unresolved", {**data, "reason": reason})], [])
 
 
+def _never_sent_refusal(cur, op: dict, operation_id: str, attempt_id: str) -> str | None:
+    """Recognize only the broker's durable proof that this dispatch was never sent."""
+    if (op["attempt_id"] != attempt_id or bool(op["settled"])
+            or op["dispatch_state"] != "reconciled"
+            or op["reconcile_state"] != "reconciled"):
+        return None
+    payload = dict(op.get("payload") or {})
+    proof = payload.get("_never_sent_proof")
+    generation = payload.get("_dispatch_generation")
+    proof_generation = proof.get("dispatch_generation") if isinstance(proof, dict) else None
+    if (not isinstance(proof, dict) or proof.get("claim") != "never-sent"
+            or proof.get("subject") != operation_id
+            or not isinstance(proof.get("provenance"), str)
+            or not proof["provenance"].strip()
+            or isinstance(generation, bool) or not isinstance(generation, int) or generation <= 0
+            or isinstance(proof_generation, bool) or not isinstance(proof_generation, int)
+            or proof_generation != generation):
+        return None
+    cur.execute("SELECT 1 FROM receipts WHERE operation_id = %s LIMIT 1", (operation_id,))
+    if cur.fetchone() is not None:
+        return None
+    cur.execute("SELECT 1 FROM receipt_conflicts WHERE operation_id = %s LIMIT 1", (operation_id,))
+    if cur.fetchone() is not None:
+        return None
+    reservation_id = op.get("reservation_id")
+    if reservation_id is None:
+        return None
+    cur.execute("SELECT state FROM reservations WHERE id = %s", (reservation_id,))
+    reservation = cur.fetchone()
+    if reservation is None or reservation["state"] != "released":
+        return None
+    return "kernel reconciled operation with never-sent proof"
+
+
 def create(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
@@ -329,7 +363,7 @@ def observe(dsn: str, cmd: Command) -> CommandResult:
             raise SettlementError("worker episode must use the reserved operation identity")
         # A pending or uncertain effect is not an observation. Preserve the exact
         # reservation so recovery can inspect or settle this same operation.
-        cur.execute("SELECT id, attempt_id, settled, dispatch_state, reconcile_state"
+        cur.execute("SELECT id, attempt_id, settled, dispatch_state, reconcile_state, payload, reservation_id"
                     " FROM operations WHERE id = %s", (operation_id,))
         op = cur.fetchone()
         if op is None:
@@ -352,12 +386,41 @@ def observe(dsn: str, cmd: Command) -> CommandResult:
             return (ResultCode.OUTCOME_UNKNOWN,
                     "operation is absent without a definitive prepare refusal; pending identity retained",
                     {"status": "pending", "operation_id": operation_id}, [], [])
-        if (op["attempt_id"] != state["pending_attempt_id"]
-                or not bool(op["settled"]) or op["dispatch_state"] not in ("observed", "reconciled")
-                or op["reconcile_state"] in ("conflict", "unresolved")):
+        if op["attempt_id"] != state["pending_attempt_id"]:
             return (ResultCode.OUTCOME_UNKNOWN, "worker operation is not settled; pending identity retained",
                     {"status": "pending", "operation_id": operation_id}, [], [])
+        never_sent_reason = _never_sent_refusal(
+            cur, op, operation_id, state["pending_attempt_id"])
+        settled_worker = (bool(op["settled"])
+                          and op["dispatch_state"] in ("observed", "reconciled")
+                          and op["reconcile_state"] not in ("conflict", "unresolved"))
+        if not settled_worker and never_sent_reason is None:
+            return (ResultCode.OUTCOME_UNKNOWN, "worker operation is not settled; pending identity retained",
+                    {"status": "pending", "operation_id": operation_id}, [], [])
+        outcome = p.get("outcome")
+        if never_sent_reason is not None and (
+                outcome != "unresolved" or supplied.get("status") != "refused"
+                or supplied.get("passed") is not None or supplied.get("verdict") is not None
+                or supplied.get("solution") is not None):
+            return (ResultCode.OUTCOME_UNKNOWN,
+                    "never-sent worker operation has no domain outcome; pending identity retained",
+                    {"status": "pending", "operation_id": operation_id}, [], [])
         config = dict(state["config"] or {})
+        if never_sent_reason is not None:
+            cur.execute("SELECT id, settled, dispatch_state, reconcile_state FROM operations"
+                        " WHERE attempt_id = %s ORDER BY id", (state["pending_attempt_id"],))
+            effects = cur.fetchall()
+            if any(effect["id"] != operation_id and (
+                    not bool(effect["settled"])
+                    or effect["dispatch_state"] not in ("observed", "reconciled")
+                    or effect["reconcile_state"] in ("conflict", "unresolved"))
+                   for effect in effects):
+                return (ResultCode.OUTCOME_UNKNOWN,
+                        "another associated effect is unsettled or conflicted; pending identity retained",
+                        {"status": "pending", "operation_id": operation_id}, [], [])
+            return _record_refusal(cur, state, episode_id=operation_id,
+                                   refused_operation=operation_id,
+                                   reason=never_sent_reason)
         cur.execute("SELECT operation_id, genome, task, status, trajectory"
                     " FROM rsi_episodes WHERE operation_id = %s",
                     (operation_id,))
@@ -383,7 +446,6 @@ def observe(dsn: str, cmd: Command) -> CommandResult:
                     " JOIN rsi_tasks t ON t.digest = e.task AND t.evaluator_version = v.evaluator_version"
                     " WHERE v.episode = %s ORDER BY v.created_at DESC LIMIT 1", (operation_id,))
         verdict = cur.fetchone()
-        outcome = p.get("outcome")
         if outcome not in _OUTCOMES:
             raise SettlementError("outcome must be ready, completed, or unresolved")
         if verdict is None or not bool(verdict["verifier_settled"]):
