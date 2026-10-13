@@ -123,22 +123,38 @@ def _record_refusal(cur, state: dict, *, operation_id: str, reason: str) -> tupl
 def create(dsn: str, cmd: Command) -> CommandResult:
     def _fn(cur, control):
         p = cmd.payload
-        inv_id = str(p["investigation_id"])
-        objective = str(p["objective"]).strip()
-        domain = str(p["domain"]).strip()
-        config = dict(p.get("config", {}))
-        policy = dict(p.get("policy", {}))
-        allocation_id = str(p.get("allocation_id", ""))
-        questions = list(p.get("open_questions", []))
-        refs = dict(p.get("artifact_refs", {}))
-        if not objective or not domain or not allocation_id:
-            raise SettlementError("objective, domain, and allocation_id are required")
-        if not isinstance(config, dict) or not isinstance(policy, dict):
+        inv_id = p.get("investigation_id")
+        objective = p.get("objective")
+        domain = p.get("domain")
+        allocation_id = p.get("allocation_id")
+        if not isinstance(inv_id, str) or not inv_id.strip():
+            raise SettlementError("investigation_id must be a non-empty string")
+        if not isinstance(objective, str) or not objective.strip():
+            raise SettlementError("objective must be a non-empty string")
+        if not isinstance(domain, str) or not domain.strip():
+            raise SettlementError("domain must be a non-empty string")
+        if not isinstance(allocation_id, str) or not allocation_id.strip():
+            raise SettlementError("allocation_id must be a non-empty string")
+        inv_id = inv_id.strip()
+        objective = objective.strip()
+        domain = domain.strip()
+        allocation_id = allocation_id.strip()
+        config_value = p.get("config")
+        policy_value = p.get("policy")
+        questions_value = p.get("open_questions")
+        refs_value = p.get("artifact_refs")
+        if not isinstance(config_value, dict) or not isinstance(policy_value, dict):
             raise SettlementError("config and policy must be objects")
+        if not isinstance(refs_value, dict):
+            raise SettlementError("artifact_refs must be an object")
+        if not isinstance(questions_value, list) or not questions_value:
+            raise SettlementError("open_questions must be a non-empty list")
+        config = dict(config_value)
+        policy = dict(policy_value)
+        questions = list(questions_value)
+        refs = dict(refs_value)
         if any(not isinstance(q, str) or not q.strip() for q in questions):
             raise SettlementError("open_questions must contain non-empty strings")
-        if not isinstance(refs, dict):
-            raise SettlementError("artifact_refs must be an object")
         if domain == "task":
             if not isinstance(config.get("max_steps"), int) or isinstance(config.get("max_steps"), bool) or config["max_steps"] < 1:
                 raise SettlementError("task config max_steps must be a positive integer")
