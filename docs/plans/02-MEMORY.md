@@ -33,6 +33,10 @@ worker operation, task, evaluator and artifact digests. A source content digest
 detects changed canonical records. Scope and visibility come from provenance,
 not caller labels. Only development-task observations enter learner memory.
 Protected task splits or artifact ancestry cannot be relabeled as development.
+The canonical development task package is evaluator-labeled because it contains
+pristine tests. The resolver may verify that typed package after checking its
+development split, but renders only its public instruction. This exception does
+not grant access to evaluator-labeled solution or trajectory packages.
 Rendered experience contains public task instruction, compact checked outcome
 and provenance. It never contains pristine tests, reference solutions, raw
 verifier details or unrestricted trajectory text. Registered source packages are
@@ -64,7 +68,8 @@ consolidation. New versions may narrow scope, challenge or withdraw a lesson.
 
 Queries require a real investigation, purpose, scope and recognized visibility.
 Apply source visibility before matching, returning content or counting results.
-Default structured retrieval omits withdrawn and superseded heads. Exact history
+Default structured retrieval omits withdrawn and superseded heads, including
+derived lessons whose declared ancestry has since been withdrawn. Exact history
 can reconstruct prior versions. Exact and lexical matching are deterministic.
 Each selected lesson brings its support, opposition, derivation roots and missing
 information, even if an opposing source has different lexical text. A raw-history

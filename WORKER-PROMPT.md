@@ -1,14 +1,13 @@
 # Next implementation handoff
 
-Planning checkpoint, 2026-10-13. No runtime work started in this pass.
+Component build checkpoint, 2026-10-13. P01 reached its qualified checkpoint.
 
 Work in D:/AI/Agent-Society-v2. Read [the ledger](reports/PROJECT-LEDGER.md),
-then [the master plan](docs/plans/MASTER-PLAN.md). The current request produced
-component plans. When implementation is assigned, start with
-[P01, persistent investigations](docs/plans/01-INVESTIGATIONS.md) only.
+then [the master plan](docs/plans/MASTER-PLAN.md). The current assignment builds
+[P02, evidence and memory](docs/plans/02-MEMORY.md) only. P03–P10 remain paused.
 
-Pin P01's state and transition contract, implement its delivery slices and
-qualify its public continuation and fresh-process resume path. Later plans
+Follow P02's pinned contract, implement its delivery slices and qualify later
+use of revisable lessons together with contrary evidence. Later plans
 constrain shared interfaces but are not tasks to implement in the same batch.
 
 The master plan owns common build rules, evidence distinctions and cleanup.
