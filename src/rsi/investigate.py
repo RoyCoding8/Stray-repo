@@ -105,9 +105,15 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
             observation.update(status=checked.status, passed=checked.passed,
                                verdict=checked.operation_id, solution=checked.solution)
     except SettlementError as exc:
-        # The broker owns unsent/refused/uncertain effects. Never replace the
-        # pending identity with a new action merely because this call failed.
         state = investigation.read(dsn, investigation_id)
+        if state["pending_decision"] == pending:
+            investigation.observe(dsn, Command(
+                expected_revision=state["revision"],
+                payload={"investigation_id": investigation_id, "decision_id": pending["id"],
+                         "operation_id": pending["operation_id"], "outcome": "unresolved",
+                         "observation": {"status": "refused", "passed": None,
+                                         "verdict": None, "solution": None}}))
+            state = investigation.read(dsn, investigation_id)
         return {**state, "execution_error": str(exc)}
     history = investigation.export(dsn, investigation_id)
     spent = len(history["decisions"])
