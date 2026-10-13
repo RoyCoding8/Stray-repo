@@ -151,6 +151,7 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--route-file", type=Path)
     parser.add_argument("--codex")
+    parser.add_argument("--catalog-template", default=Provider.catalog_template)
     parser.add_argument("--genome")
     parser.add_argument("--task")
     parser.add_argument("--objective")
@@ -181,7 +182,8 @@ def main():
         agent = CodexLauncher(args.root / "runs", codex_cmd=[args.codex],
                               provider=Provider(route["SETTLEMENT_GATEWAY_ENDPOINT"],
                                                 route["SETTLEMENT_GATEWAY_MODEL"],
-                                                route["SETTLEMENT_GATEWAY_KEY"]),
+                                                route["SETTLEMENT_GATEWAY_KEY"],
+                                                catalog_template=args.catalog_template),
                               allowed_overrides=genomes.HARNESS_KEYS)
         checker = LocalLauncher(args.root / "verifiers")
         if args.command == "create":
