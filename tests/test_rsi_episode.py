@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 import uuid
@@ -10,8 +11,8 @@ import pytest
 from rsi import episode as ep
 from rsi import genome as g
 from rsi import task as t
-from settlement import broker, store
-from settlement.common import Command
+from settlement import artifacts, broker, store
+from settlement.common import Command, ResultCode
 from settlement.launcher_codex import CodexLauncher, Provider, summarize_events
 
 FAKE = str(Path(__file__).parent / "fixtures" / "fake_codex.py")
@@ -46,16 +47,30 @@ def env(migrated_db, tmp_path):
                              provider=Provider("http://127.0.0.1:9/v1", "m", "k"),
                              allowed_overrides=g.HARNESS_KEYS)
 
-    def run(mode, op="ep1", timeout_ms=30_000):
+    def run(mode, op="ep1", timeout_ms=30_000, **episode_inputs):
         return ep.run_episode(dsn, launcher(mode), GENOME, operation_id=op, task=TASK,
                               allocation_id="a1", attempt_id="att1", timeout_ms=timeout_ms,
-                              token_ceiling=CEILING, **roots)
+                              token_ceiling=CEILING, **roots, **episode_inputs)
     return dsn, run, launcher, tmp_path
 
 
 def _calls(tmp_path, op):
     path = tmp_path / "runs" / op / "fake-calls.txt"
     return path.read_text().splitlines() if path.exists() else []
+
+
+def _publish_solution(env, files, *, task_digest=None):
+    dsn, _, _, tmp = env
+    task_digest = TASK.digest if task_digest is None else task_digest
+    manifest = {"kind": "rsi-solution", "task": task_digest,
+                "files": t.file_manifest(files)}
+    receipt = artifacts.stage_package(
+        dsn, tmp / "stage", manifest=manifest, files=dict(files),
+        scope="rsi-solution", access_label="candidate", format="rsi-solution")
+    result = artifacts.publish_package(
+        dsn, _cmd({"digest": receipt["digest"]}), tmp / "art", receipt)
+    assert result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED)
+    return receipt["digest"]
 
 
 def test_completed_run_settles_real_tokens_once(env):
@@ -73,8 +88,57 @@ def test_completed_run_settles_real_tokens_once(env):
     again = run("ok")
     assert again == first
     assert len(_calls(tmp, "ep1")) == 1
+    assert broker.read_operation(dsn, "ep1")["payload"]["payload"]["instruction"] == TASK.instruction
     package = json.loads((tmp / "art" / first.trajectory).read_bytes())
     assert b"turn.completed" in bytes.fromhex(package["files"]["events.jsonl"])
+
+
+def test_continuation_and_solution_are_worker_inputs_and_replay_bound(env):
+    dsn, run, _, tmp = env
+    continuation = {"open_question": "Which branch handles zero?", "observed": "base case absent"}
+    solution_bytes = b"def calc(x):\n    return 7\n"
+    solution = _publish_solution(env, {"calc.py": solution_bytes})
+
+    result = run("ok", op="continued", continuation=continuation, solution=solution)
+
+    assert (result.workspace / "calc.py").read_bytes() == solution_bytes
+    operation = broker.read_operation(dsn, "continued")
+    instruction = operation["payload"]["payload"]["instruction"]
+    assert json.dumps(continuation, sort_keys=True, separators=(",", ":")) in instruction
+    files = {**g.workspace_view(GENOME), "calc.py": solution_bytes}
+    manifest = [{"path": path, "size": len(raw), "digest": hashlib.sha256(raw).hexdigest()}
+                for path, raw in sorted(files.items())]
+    input_digest = hashlib.sha256(json.dumps(
+        manifest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    assert f"Input digest: {input_digest}" in instruction
+    assert len(_calls(tmp, "continued")) == 1
+
+    with pytest.raises(ep.EpisodeError, match="different input"):
+        run("ok", op="continued", continuation={"open_question": "Changed"},
+            solution=solution)
+    changed_solution = _publish_solution(env, {"calc.py": b"def calc(x):\n    return 8\n"})
+    with pytest.raises(ep.EpisodeError, match="different input"):
+        run("ok", op="continued", continuation=continuation, solution=changed_solution)
+    assert len(_calls(tmp, "continued")) == 1
+
+
+def test_solution_artifact_is_rehashed_and_bound_to_task_and_slots(env):
+    dsn, run, _, tmp = env
+    tampered = _publish_solution(env, {"calc.py": b"x = 3\n"})
+    (tmp / "art" / tampered).write_bytes(b"changed after publication")
+    with pytest.raises(ep.EpisodeError, match="digest"):
+        run("ok", op="tampered-solution", solution=tampered)
+    assert broker.read_operation(dsn, "tampered-solution") is None
+
+    wrong_task = _publish_solution(env, {"calc.py": b"x = 4\n"}, task_digest="0" * 64)
+    with pytest.raises(ep.EpisodeError, match="another task"):
+        run("ok", op="wrong-task-solution", solution=wrong_task)
+    assert broker.read_operation(dsn, "wrong-task-solution") is None
+
+    wrong_slot = _publish_solution(env, {"other.py": b"x = 5\n"})
+    with pytest.raises(ep.EpisodeError, match="task workspace"):
+        run("ok", op="wrong-slot-solution", solution=wrong_slot)
+    assert broker.read_operation(dsn, "wrong-slot-solution") is None
 
 
 def test_completed_run_without_usage_charges_ceiling_once(env):
