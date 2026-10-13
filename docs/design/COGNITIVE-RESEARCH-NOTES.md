@@ -1,59 +1,70 @@
-# Research references for the next cognitive mechanisms
+# Research inputs for component refinement
 
-Read 2026-09-11. This is a focused primary-source pass for brainstorming and design criticism, not a systematic review, replication, or novelty certification. Paper results belong to their environments and budgets. Our design implications below are proposals for Settlement, not conclusions established by those papers. No implementation dependency is selected by citation.
+Primary-source reading, 2026-10-13. This is a focused design investigation, not a systematic review, replication or novelty certification. Reading scopes below are deliberately narrower than entire papers. Reported mechanisms and our proposals are separate. The [architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) owns the selected design.
 
-## Sources and what they change in our reasoning
+## Core RSI references
 
-| Source and reading scope | Relevant reported mechanism or limitation | Our design implication |
+### Dream-RSI: Recursive Self-Improvement through Evolving Worlds
+
+[Paper, v1](https://arxiv.org/html/2609.14858v1). Read main mechanism and experiments/analysis, sections 2–5, plus selected replay details in appendix B.
+
+The changing object is executable exploration-policy code. A fixed discovery agent produces candidates; a fixed evaluator supplies outcomes. Recorded trees support replay of alternative exploration choices. The policy developer is also fixed. Replay reveals recorded branches without evaluating arbitrary untried interventions.
+
+**Adopt:** one decision interface for replay and live exploration; visible history prefixes; reusable discovery branches. **Modify for our goal:** broaden the editable learning procedure and record missing replay coverage explicitly. A change to construction, context or capability bytes generally needs new outcomes. Replay improvement is a screening result, not evidence of better future discoveries. Do not copy a parallelism reward without measuring its costs.
+
+### The Last AI Built by Humans: Toward Genuine Recursive Self-Improvement
+
+[Paper, v1](https://arxiv.org/html/2609.11873v1). Read evidence scope in section 2.3, experience autonomy in 3.4, meta-improvement in 3.6, cross-level synthesis and selected challenges in section 6.
+
+This is a survey/framework, including evidence of differing maturity, not one implemented RSI algorithm. It distinguishes autonomy over learning experience from autonomy over improvement strategies, and structural inheritance of an improver from effective improvement of that improver.
+
+**Adopt:** explicitly state which learning decisions the system controls. Acquired experience must change later acquisition decisions. A revised improver must govern a later round before claiming structural recursion; better successors require additional evidence. Human mission, protected evaluation and resource authority can remain fixed. Do not treat a level diagram as a competence score.
+
+### HyperAgents
+
+[Paper, v1](https://arxiv.org/html/2603.19461v1). Reread sections 3 and 7; earlier project reading also covered experiments in sections 4–5.
+
+Task execution and meta-level generation are combined in a modifiable program within an archive-based search. The main framework retains fixed outer selection/evaluation and a fixed task distribution.
+
+**Adopt:** make the procedure generating improvements an executable, inherited object. **Limit:** editable meta instructions or stronger task solving alone do not demonstrate a better improver. Our comparison should follow descendant production under comparable starting conditions and budgets.
+
+### Darwin Gödel Machine
+
+[Paper, v1](https://arxiv.org/html/2505.22954v1). Read abstract and section 3.
+
+Empirical agent revision replaces a theoretical proof-of-improvement requirement; an archive preserves alternative agents as possible starting points.
+
+**Adopt:** preserve useful alternatives rather than always mutate one winner. Our current genome archive already supplies part of this substrate. Do not claim that an archive makes search open-ended in effectiveness, or that a coding-score gain proves a general improvement process.
+
+## Memory, context and executable competence
+
+| Source and inspected scope | Mechanism relevant here | Design consequence and limit |
 |---|---|---|
-| [DreamCoder](https://arxiv.org/abs/2006.08381), abstract | Learns symbolic program abstractions alongside neural guidance, using imagined and replayed tasks. | Treat executable abstraction as a carrier of accumulated competence. Its trained search component is outside our initial compute assumption; copying the wake/sleep name would not reproduce the mechanism. |
-| [Stitch: Top-Down Synthesis for Library Learning](https://arxiv.org/abs/2211.16605), abstract; [official implementation](https://github.com/mlb2251/stitch), repository description | Finds shared program structure through corpus-guided abstraction search; the reported library-quality measure concerns compression. | A bounded corpus of successful procedures can seed abstraction candidates. Compression supplies candidates, while task fidelity and later use decide retention. Do not adopt a universal DSL or this dependency before our corpus and interpreter justify it. |
-| [LILO](https://arxiv.org/html/2310.19791v2), mechanism, examples and discussion | Combines synthesis, symbolic compression and generated documentation. The paper reports both useful naming/documentation effects and incorrect descriptions; its LLM-only baseline also improves over time. | Compare executable retention against a strong textual/library baseline. Keep an invocation's observable behavior separate from the model's interpretation of it; check the description where downstream decisions depend on it. |
-| [FunSearch](https://www.nature.com/articles/s41586-023-06924-6), specification, pretrained-model and implementation sections | Searches programs using an evaluator, a seed program and often a supplied skeleton. It requires no problem-specific model fine-tuning; the reported campaign uses extensive sampling. | Inference-only discovery is a substantive research direction. The evaluator and search representation remain important supplied structure; neither general discovery from minimal teaching nor cheap operation follows automatically. |
-| [Darwin Gödel Machine](https://arxiv.org/abs/2505.22954), abstract | Modifies coding agents and evaluates them on coding benchmarks, preserving an archive for further exploration. | Retain bounded experimental alternatives as possible parents rather than replacing the entire system after every apparent gain. Benchmark improvement and a generally better improvement process remain distinct claims. |
-| [HyperAgents](https://arxiv.org/html/2603.19461v1), sections 3–5 and limitations | Makes task and modification behavior editable. Main experiments retain fixed outer selection/evaluation components and a fixed task distribution. Section 5.2 includes an initial math-grading format failure. | Compare improvement policies on common initial capabilities and full resource costs. Preserve format-versus-semantic failure attribution. State exactly which revision scopes remain externally controlled; do not label a bounded evolving component unrestricted self-improvement. |
-| [Towards a Science of Scaling Agent Systems](https://arxiv.org/html/2512.08296v1), task comparisons and limitations | Reports task-dependent benefits and losses from coordination. Limitations include a small benchmark set, within-family model heterogeneity, and non-optimized architecture-specific prompts. | Treat decomposition, sequential dependence and communication cost as hypotheses for selecting teams. Do not import its numerical thresholds or explanations of model internals as universal laws or runtime configuration. |
+| [Agentic Context Engineering, v1](https://arxiv.org/html/2510.04618v1), section 3 and discussion | Structured context entries, incremental updates and refinement rather than repeated monolithic rewriting. | Use localized lesson updates as a strong baseline. Model-reported helpfulness is feedback, not independent evidence. Structured text can help; executable learning does not require rejecting it. |
+| [A-MEM, v1](https://arxiv.org/html/2502.12110v1), sections 3.1–3.4 and 6 | Structured notes, generated semantic links and evolving descriptions, with model-dependent organization. | Separate immutable observations from revisable interpretations. Retrieve through derived structure while preserving opposition and source identity. A semantic link is not an established causal relation. |
+| [Recursive Language Models, v1](https://arxiv.org/html/2512.24601v1), section 2.2 and limitations in 5 | External context inspected through a REPL, with optional subordinate model calls. Evaluated recursion and execution choices have limits and overhead. | Treat context selection as bounded computation. Compare programmatic inspection with and without subcalls; do not promise unlimited context or costless recursion. |
+| [LILO, v2](https://arxiv.org/html/2310.19791v2), sections 3 and 5 | Alternates program synthesis, symbolic abstraction/compression and documentation of the learned library. | Mine recurring computations for reusable methods. Compression proposes abstractions; fidelity and later use justify them. Its domain languages and search machinery are supplied structure, not a ready-made general Python skill learner. |
+| [Voyager](https://arxiv.org/abs/2305.16291), abstract only in this pass | Automatic curriculum, executable skill library and iterative environment feedback using a fixed API model. | Supports studying persistent external skill growth without weight training. Minecraft supplies a rich environment and feedback; the abstract does not justify copying its architecture across arbitrary domains. |
 
-## Representation-01 reference check
+## Search and coordination
 
-Read 2026-09-11: Zeller and Hildebrandt's author-hosted [Simplifying and Isolating Failure-Inducing Input](https://www.st.cs.uni-saarland.de/papers/tse2002/) abstract and paper contents, and Zeller's [Reducing Failure-Inducing Inputs](https://www.debuggingbook.org/html/DeltaDebugger.html) introduction/interface examples. Delta debugging already searches for smaller inputs preserving a failure; reduction is established prior art. The book illustrates reduction across collections and a reusable programmatic interface. Our proposed witness-preserving core must be compared against that class of existing tool, not presented as an original discovery because a model writes it.
+| Source and inspected scope | Mechanism relevant here | Design consequence and limit |
+|---|---|---|
+| [GEPA, v2](https://arxiv.org/html/2507.19457v2), sections 3 and 3.1 | Reflects on traces to propose prompt revisions; selects complementary candidates using per-task performance rather than only the aggregate winner. | Use a strong prompt optimizer and complementary policy archive as comparators. Prompt adaptation can be substantive; our executable mechanisms must demonstrate an additional useful decision or affordance. |
+| [Towards a Science of Scaling Agent Systems, v1](https://arxiv.org/html/2512.08296v1), section 4.4 and limitations in 5; earlier task-comparison reading | Coordination overhead and benefits depend on task, topology and model setting. Studied collectives and heterogeneity are limited. | Learn when decomposition is useful; retain a strong single worker and parallel portfolio baseline. Do not import numerical thresholds as universal routing rules or equate agent count with intelligence. |
 
-This changes the first experiment: include tested generic deletion and domain-aware greedy reducers; state exactly which witness is preserved; distinguish an acquired operational interpretation, reused code and complete task benefit. The proposed core/adapter/source-checker split and pilot rules are our design choices, not results established by these sources. Software-to-graph reduction deliberately supplies a common problem form; it cannot establish discovery of that bridge. If the generated package merely reconstructs a standard reducer, record scaffolded acquisition or code reuse and evaluate whether its costs justify retention.
+Prior background remains relevant: [DreamCoder](https://arxiv.org/abs/2006.08381), [Stitch](https://arxiv.org/abs/2211.16605) and [FunSearch](https://www.nature.com/articles/s41586-023-06924-6). Their earlier reading record is preserved in this file's Git history. They were not newly replicated or fully reread in this pass.
 
-## Synthesis: ideas to keep, challenge and avoid
+## Our synthesis and unresolved questions
 
-**Keep a search space larger than stored answers.** A retained change can introduce an operation, an instrument, an input distinction, a translation or a decision policy. Those changes alter which future computations are affordable or possible. Our current design already permits this; the next documents supply stricter obligations for making it usable.
+The architecture proposal connects evidence, executable capabilities and decision policies through a persistent investigation. Its central hypotheses are that acquired instruments should change the agenda; replay coverage should direct fresh exploration; contradicted claims should trigger development; and revised learners should be assessed by their descendants. These are proposed couplings, not results established by the sources above.
 
-**Challenge the selection pressure.** Short code, more candidates, higher benchmark scores and more agreeing agents can each reward behavior that fails the intended task. Each proposed mechanism therefore needs its own rejecting example and an outcome measure outside its own description of success. There is no single score that usefully replaces these distinctions across all domains.
+Before choosing representations or libraries, answer:
 
-**Keep semantic and experimental grounding separate.** A checked translation can be too costly to help. A useful heuristic can lack a universal proof. A new program can improve the solver without improving the procedure that develops programs. These are different outcomes, all worth recording accurately.
+1. What must survive between worker invocations for a question to remain the same investigation?
+2. Which evidence and counterevidence should a decision see, and what is deliberately unavailable?
+3. What makes a procedure applicable, and how does a new instrument expand possible experiments?
+4. Which policy changes can existing history evaluate, and which require fresh execution?
+5. What later outcomes distinguish an improved learner from a stronger one-off solver?
 
-**Allow useful intermediates without an unlimited archive.** Preserve exact historical evidence and a bounded set of experimental alternatives with a reason to revisit them. A proposed stepping stone has a finite allocation and reassessment condition; its imagined future value is not evidence of achieved competence.
-
-**Use disagreements to propose measurements.** Teams should create independently inspectable artifacts, distinctions or counterexamples. Additional prose agreement alone need not reduce uncertainty. A measurement plan may be a better result than a synthesized confident answer.
-
-**Keep the simplest strong alternatives.** Textual lessons, a fixed rotation, a well-equipped single worker and a fixed development policy remain meaningful comparators. Their success would tell us to remove unnecessary machinery, not that the overall project failed.
-
-## Questions this research does not answer
-
-### Team 01 reference check, 2026-09-12
-
-These are references and counterpressure for the selected design, not evidence that Settlement already benefits from it.
-
-- [Towards a Science of Scaling Agent Systems, v1](https://arxiv.org/html/2512.08296v1): the controlled study reports task-dependent coordination gains and overhead, with limitations on the architectures, model diversity and prompt optimization explored. Design implication: retain task-level comparisons and strong single-worker execution; do not import its empirical thresholds as our routing policy.
-- [Rethinking the Value of Multi-Agent Workflow, v1](https://arxiv.org/abs/2601.12307v1), abstract inspected: reports that single-agent execution can match homogeneous workflows across its evaluated benchmarks. Design implication: S can plan, change roles and self-review. Separate contexts and additional agents must earn their overhead. The abstract is not a replication or a universal equivalence theorem.
-- [Verification-Aware Planning for Multi-Agent Systems, v1](https://arxiv.org/html/2510.17109v1), method and verification-error discussion inspected: integrates planned checks with execution, but its generated verifiers still make false-positive and false-negative errors. Design implication: generated local checks are useful feedback; retain a separately specified final task oracle. Neither this paper nor our local tests certify arbitrary parent obligations.
-- [Meta-Agent: From Task Descriptions to Verified Multi-Agent Systems, v1](https://arxiv.org/abs/2605.25233v1), abstract inspected: explicitly combines task graphs, input/output contracts, verification and recovery. This directly limits novelty claims about our work-graph proposal. Our design emphasis is its integration with persistent experimental templates, bounded authority and measured later use; that combination is also a hypothesis, not an established novelty result.
-- [Why Do Multi-Agent LLM Systems Fail?, v3](https://arxiv.org/abs/2503.13657v3), abstract inspected: distinguishes system-design failures, inter-agent misalignment and verification failures. Design implication: trace the actual composed outcome and its information flow instead of equating individual completion reports with system success. Its taxonomy does not establish causal responsibility for our incidents.
-
-Our additional synthesis is to make a failed integration a candidate source of a future executable diagnostic or coordination template. Test that candidate on changed inputs, with cold/warm controls and its acquisition cost exposed. The [team refinement](TEMPORARY-TEAMS.md) states this proposal; [Team 01](TEAM-01-IMPLEMENTATION.md) supplies a rejecting pilot. No claim that this is globally optimal, unprecedented, or equivalent to parameter training is made.
-
-### Remaining questions
-
-- Which representation family our actual experience corpus can support without an expensive custom synthesizer.
-- Whether current construction, grading, billing and context paths preserve enough information to measure acquisition and transfer.
-- What reuse horizons justify consolidation or which team decompositions our workload contains.
-- Whether a candidate learning policy produces reliable benefits under the available models and real costs.
-- Whether the combined design is novel, globally best, or capable of unbounded scientific progress.
-
-The first two require the worker's engineering evidence. The following design drafts can proceed without it: [representation and transfer](REPRESENTATION-AND-TRANSFER.md), [temporary teams](TEMPORARY-TEAMS.md), and [learner revision and consolidation](LEARNER-REVISION.md). Their choices are reasoned hypotheses with rejection conditions; they are not replications of these papers or current implementation assignments.
+No source establishes a globally best architecture, unrestricted recursive improvement, or superiority over another general assistant framework. The proposed program must earn those narrower claims it actually tests.

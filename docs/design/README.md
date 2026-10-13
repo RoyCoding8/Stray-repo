@@ -6,7 +6,7 @@ Start with the [project ledger](../../reports/PROJECT-LEDGER.md) and the [roadma
 
 | Document | Purpose |
 |---|---|
-| [Architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) | Research direction and the operational/improvement distinction |
+| [Architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) | Current component architecture, alternatives and three connected refinement packages; refreshed 2026-10-13 |
 | [Conceptual architecture](REFINED-ARCHITECTURE.md) | Purpose, entities and responsibilities |
 | [Glossary](GLOSSARY.md) | Precise meanings |
 | [Representation design](REPRESENTATION-DESIGN.md) | State and executable packages |

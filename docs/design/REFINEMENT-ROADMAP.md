@@ -1,6 +1,6 @@
 # Philosophy to final implementation
 
-This is the mental model, not another task diary. The [project ledger](../../reports/PROJECT-LEDGER.md) gives current evidence; the [worker prompt](../../WORKER-PROMPT.md) gives the next complete assignment.
+This is the mental model, not another task diary. The [project ledger](../../reports/PROJECT-LEDGER.md) gives current evidence; the [architecture synthesis](ARCHITECTURE-SYNTHESIS-2026-09-22.md) gives the component research program. Implementation starts from an explicitly assigned worker prompt.
 
 General autonomous discovery remains the goal. Memory, background development, teams and executable skills are candidate mechanisms. Their value is what they enable the system to learn and do; more machinery alone is not progress.
 
@@ -22,7 +22,7 @@ remain unproved. See the ledger for the separate historical and current results.
 | 6. Practical specification | Builder protocols and acceptance conditions | Foundation specified |
 | 7. Foundation prototype | Durable bounded execution, evidence, trials and continuity | Built; deployment validation remains partial |
 | 8. Cognitive-policy refinement | Acquired competence, memory, agenda, representations and teams | Historical bounded mechanisms studied; their implementations are archived. General learning remains open. |
-| 9. Architecture consolidation | Converge production ownership and compare executable operational/improvement behavior | Task-driven architecture implemented. Live instruction revision and fresh-process use qualify on an authored smoke task. Task-bank utility and fair revision comparison remain open. |
+| 9. Architecture consolidation | Converge production ownership and compare executable operational/improvement behavior | Foundation prototype accepted at its bounded scope. Live instruction revision and fresh-process smoke use qualify. Component refinement selected on 2026-10-13; broader utility remains open. |
 | 10. Complete system prototype | Connected representations/transfer, autonomous agenda/teams, learner revision and consolidation | Partial. A model-generated instruction revision is retained and used. Retained gains, executable-skill acquisition, transfer and sustained general autonomy are unproved. |
 | 11. Operational qualification | Supported deployment, containment, recovery and controls | Partial groundwork; not qualified. Unchanged by the 2026-10-01 batch. |
 | 12. Final implementation/release | Supported infrastructure product with migrations, installation, lifecycle UI and evidence | Not started as a release milestone |
@@ -36,12 +36,22 @@ studies are no longer a milestone. Use a brief availability check and move into
 live development and evaluation; diagnose transport again only when it prevents
 interpreting a concrete experiment.
 
-Qualify this simpler loop before adding another framework. Live tool use and
-instruction acquisition now work on a small authored task. Establish actual
-task-bank competence, then compare the candidate with the current incumbent
-on fresh held-out content under a prospective budget. Free routers can vary
-their underlying models; treat that variation explicitly. Improvement over a
-weaker archive parent alone does not establish an improved incumbent.
+Accept the bounded loop as the foundation prototype and develop the missing
+cognitive mechanisms. Do not wait for a long-running improvement study before
+allowing the next architectural iteration. Behavioral qualification, useful
+reuse and convincing improvement remain distinct. Free-router variation and
+weak-parent comparisons must not manufacture a gain.
+
+The selected direction is one persistent investigation owner with versioned
+operational and learning policies over the execution kernel. Refine it in three
+connected packages: A, investigation/memory/context/executable capability use;
+B, discovery history/replay/adaptive agenda; C, learner revision/coordination/
+transfer and continuing campaigns. The synthesis owns the details and tradeoffs.
+
+For each package, move from concepts to competing mechanisms, formal obligations,
+representation, implementation contract, code and extended observation. The next
+design pass formalizes Package A. Technology follows the mechanism; archived
+study APIs are not automatically the new implementation contract.
 
 The genome may contain executable skill resources as well as instructions,
 harness settings and the improver's instructions. Editing these instructions

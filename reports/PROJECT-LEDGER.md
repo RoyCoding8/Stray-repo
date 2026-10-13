@@ -3,6 +3,41 @@
 Current state and evidence. Removed studies are recoverable at
 `archive/pre-subtraction-2026-10`; implementation history lives in Git.
 
+## Research checkpoint (2026-10-13)
+
+Human direction: accept the existing prototype at its scope and research stronger
+components. Do not turn another brief live-route or improvement-proof campaign
+into a prerequisite for architectural development. The destination remains
+general autonomous investigation, executable capability acquisition and transfer,
+accumulated experience and improvement of the learner.
+
+Primary-source reading refreshed Dream-RSI and The Last AI Built by Humans,
+with targeted HyperAgents, DGM, GEPA, memory/context, library-learning and
+coordination research. [Research notes](../docs/design/COGNITIVE-RESEARCH-NOTES.md)
+record reading scope and limitations. Papers inform the design; none proves our
+combined architecture or its novelty.
+
+The [architecture synthesis](../docs/design/ARCHITECTURE-SYNTHESIS-2026-09-22.md)
+now selects one persistent investigation owner, versioned operational/learning
+policies and the existing execution kernel. Its previous consolidation plan is
+preserved in Git. Eight component responsibilities are grouped into three builds:
+
+| Package | State | Next obligation |
+|---|---|---|
+| A: investigation, memory/context, executable capability use | Research direction selected; not implemented as this package | Formalize investigation/claim/capability semantics, visibility, continuation and applicability; compare representations before a builder contract. |
+| B: discovery history, replay and adaptive learning agenda | Mechanism proposal | Specify recorded support versus fresh execution; connect acquisition to future experience selection. |
+| C: learner revision, teams, transfer and sustained campaigns | Mechanism proposal | Specify inherited learning decisions, descendant assessment and executable work/join behavior. |
+
+The foundation prototype is accepted at its bounded scope. This does not close
+Stage 10's general-autonomy or learning objectives, nor qualify deployment.
+Short behavioral probes qualify mechanisms; continuing campaigns accumulate
+utility, transfer and improvement evidence. No statistical gain is required to
+finish an exploratory implementation, and no such gain is claimed here.
+
+This pass changed research documents only. No runtime code, test results, live
+model outcomes or frozen evidence changed. Next work is Package A formal design,
+not another transport study or an automatically authorized new coding batch.
+
 ## State (2026-10-08)
 
 The aim is general autonomous discovery and agent improvement. This Python
@@ -130,16 +165,10 @@ observe failures. Reopen transport diagnosis only when a concrete failure makes
 the result uninterpretable. Preserve attribution without expanding it into
 another infrastructure project.
 
-The next work is Stage 9 task competence and useful revision, feeding Stage 10.
-Start with clear public interfaces and a small development set that completes
-within its budget. Use its failures to acquire and test a revision, then assess
-it on fresh content against the incumbent. Instruction revisions are valid
-experiments, but the broader destination includes executable skills and reusable
-experience. Do not require statistically established improvement before every
-design iteration; distinguish exploratory evidence from a promotion claim.
-Stop an exploratory batch with completed behavior and an informative result,
-or a diagnosed blocker that determines the next design change. A fair negative
-can complete an experiment; it does not complete the learning objective.
+The 2026-10-13 research checkpoint above supersedes the earlier next-task priority.
+Completed task competence and fair comparison remain useful evidence targets,
+not prerequisites for designing the missing cognitive mechanisms. A fair negative
+can complete an experiment without completing the learning objective.
 
 - Stronger sandboxing is deferred at the user's request. Native process-tree
   and resource limits remain; filesystem/network containment is unproved.
@@ -158,13 +187,9 @@ can complete an experiment; it does not complete the learning objective.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-Next evidence target: establish completed task-bank competence with a clear
-public task interface, then fairly assess the retained revision against the
-incumbent on fresh content. The free routers are stochastic services, not pinned
-backbones; prospective comparisons must account for that variation and use an
-unchanged-copy control. Do not re-dispatch the closed study's operations or
-refund its allocations. Stop with either an attributable completed comparison
-or a diagnosed blocking failure. Acquisition is now demonstrated; utility and
-learning advantage remain unproved. Explore stronger native
-or container isolation as a separate future checkpoint. No WSL is required
-for the current benchmark.
+Next design target: formalize Package A's connected investigation and capability
+use before assigning implementation. Prospective utility comparisons must account
+for free-router variation and include an unchanged-copy control where relevant.
+Do not re-dispatch closed operations or refund allocations. Live instruction
+acquisition is demonstrated; executable-skill utility and learning advantage
+remain unproved. Isolation remains separate qualification work.

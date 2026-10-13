@@ -1,5 +1,11 @@
 # RSI continuation, 2026-10-08
 
+Research update, 2026-10-13: the ledger and architecture synthesis now select a
+component-refinement program. This file preserves the previous task-loop
+continuation scope; it is not an instruction to rerun it. The next work is
+Package A formal design. A later explicit implementation assignment will update
+this same prompt rather than create a competing handoff.
+
 Work in D:/AI/Agent-Society-v2 on codex/agent-society. Read the project ledger,
 then the refinement roadmap if needed. Historical study packets are not orders.
 Inspect status first. Preserve other sessions' changes and frozen evidence.
