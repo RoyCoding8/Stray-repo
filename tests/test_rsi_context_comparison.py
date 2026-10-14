@@ -37,11 +37,28 @@ def _run_cell(dsn, tmp_path, policy, condition):
     {"id": "unknown", "settled": True,
      "receipts": [{"operation_id": "unknown", "receipt_identity": "receipt", "tokens": None}]},
 ])
-def test_unknown_receipt_usage_has_no_measured_cost(operation):
+def test_unknown_receipt_usage_stays_unknown(operation):
     assert recompute._operation_usage(operation) == {
         "operation_id": "unknown", "tokens": None, "status": "unknown",
-        "actual_cost_units": None,
     }
+
+
+def test_worker_usage_aggregator_does_not_sum_costs_or_other_operations():
+    operations = [
+        {"id": "worker", "settled": True, "receipts": [{
+            "operation_id": "worker", "receipt_identity": "worker-receipt",
+            "tokens": {"input_tokens": 10, "output_tokens": 2}, "actual_cost": 12,
+        }]},
+        {"id": "verifier", "settled": True, "receipts": [{
+            "operation_id": "verifier", "receipt_identity": "verifier-receipt",
+            "tokens": {"input_tokens": 0, "output_tokens": 3000}, "actual_cost": 3000,
+        }]},
+    ]
+    summary = recompute._aggregate_worker_usage(operations, "worker")
+    assert summary["recorded_tokens"] == 12
+    assert summary["known_token_subtotal"] == 12
+    assert summary["unknown_usage_operations"] == []
+    assert not any("cost" in key for key in summary)
 
 
 def test_frozen_nine_cell_fixture_comparison_recomputes_and_rejects_tampering():
