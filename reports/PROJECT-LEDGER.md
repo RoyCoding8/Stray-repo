@@ -61,19 +61,18 @@ P03 task list:
 - [ ] Run a prospectively bounded free-route comparison and report its actual limits.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: P02 consolidation and CI passed. Two independent
-Luna designs and a Luna cross-review informed the pinned P03 plan: one immutable
-packet per decision, required/optional evidence semantics, complete opposition
-bundles and bounded inspection within one builder. The coordinator removed the
-proposed separate context lifecycle and premature per-read reservation service.
-P03 implementation is assigned through completion and consolidation. Blocking
-first step is the shared request/packet contract. Independent workstreams are
-one context builder and one P01 consumer migration with disjoint test ownership.
-The command journal is shared durable state; the existing transaction owner
-serializes its writes. The smallest safe decomposition is these two owners,
-then integrated acceptance and policy comparison. Independent Sol verification
-follows that implementation gate. The earlier three read-only design worktrees
-and branches are removed. P04 remains paused until human authorization.
+Current throughput checkpoint: the P03 context builder is integrated through
+`1ad5e2f0`. The coordinator passed all nine builder tests on PostgreSQL 18,
+zero skips, in 146.19 seconds. Interrupted builds reuse completed inspection
+results under stable request and ordinal identities. Selection keeps required
+support and opposition together, including when unrelated records are present.
+The consumer lane passed seven integration tests and eight migrated P02 tests;
+its final consumption check and integration are still underway. The comparison
+lane is waiting for that consumer commit before running the nine-cell fixture
+comparison. These are focused lane results, not the integrated acceptance gate.
+Independent GPT-6.1 Sol High review follows the integrated gate. Then run the
+bounded free-route comparison and finish consolidation, CI and cleanup.
+P04 remains paused until human authorization.
 
 ### P02 consolidation (2026-10-14)
 

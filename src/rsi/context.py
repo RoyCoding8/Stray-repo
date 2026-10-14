@@ -1,4 +1,9 @@
-"""Bounded, immutable context packets for persistent investigations."""
+"""Bounded, immutable context packets for persistent investigations.
+
+Packet counts describe logical work over P02-resolved learner-visible strings.
+They do not measure P02's underlying filesystem reads or wall-clock time.
+``excerpt_bytes`` is the UTF-8 size retained in the final packet.
+"""
 
 from __future__ import annotations
 
@@ -152,10 +157,7 @@ def _required_needs(request: dict, view: dict) -> list[dict]:
             unavailable = any(item.get("claim_id") == claim_id
                               for item in view["missing_information"]
                               if isinstance(item, dict))
-            if unavailable:
-                needs.append({"kind": "claim", "id": claim_id,
-                              "reason": "required claim has no available historical evidence"})
-            elif not view["observations"]:
+            if unavailable or not view["observations"]:
                 needs.append({"kind": "claim", "id": claim_id,
                               "reason": "required claim has no available historical evidence"})
     return needs
@@ -287,22 +289,42 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
             text = item.get("content", {}).get("task_instruction", "")
             if not isinstance(text, str):
                 continue
-            result, scanned, used = _inspect(text, inspection_terms, scan_left, excerpt_left)
-            counts["actions"] += 1
+            ordinal = counts["actions"] + 1
+            action_identity = {"request_digest": _digest(request), "ordinal": ordinal}
+            action_input = {
+                **action_identity,
+                "revision": revision,
+                "observation_id": item["observation_id"],
+                "terms": inspection_terms,
+                "scan_limit": scan_left,
+                "excerpt_limit": excerpt_left,
+            }
+            action_id = f"rsi-context-inspect:{_digest(action_identity)}"
+
+            def inspect_action(cur, _control, source=text, query_terms=inspection_terms,
+                               scan_limit=scan_left, excerpt_limit=excerpt_left):
+                result, scanned, used = _inspect(
+                    source, query_terms, scan_limit, excerpt_limit)
+                data = {"result": result, "scanned_bytes": scanned, "excerpt_bytes": used}
+                return ResultCode.APPLIED, "context inspection cached", data, [], []
+
+            action = store.transact(
+                dsn, Command(request_id=action_id, payload=action_input), inspect_action)
+            if action.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+                raise SettlementError(action.detail)
+            cached = action.data
+            result = cached.get("result")
+            scanned = cached.get("scanned_bytes")
+            used = cached.get("excerpt_bytes")
+            if (not isinstance(result, dict) or type(scanned) is not int
+                    or type(used) is not int or scanned < 0 or used < 0
+                    or scanned > scan_left or used > excerpt_left):
+                raise SettlementError("cached context inspection is malformed or exceeds its input budget")
+            counts["actions"] = ordinal
             counts["scanned_bytes"] += scanned
             counts["excerpt_bytes"] += used
             scan_left -= scanned
             excerpt_left -= used
-            # Stable action identity is scoped to this pinned request and ordinal.
-            action_payload = {"request_digest": _digest(request), "revision": revision,
-                              "ordinal": counts["actions"], "observation_id": item["observation_id"],
-                              "result": result}
-            action_id = f"rsi-context-inspect:{_digest(action_payload)}"
-
-            def save_action(cur, _control, data=result):
-                return ResultCode.APPLIED, "context inspection cached", data, [], []
-
-            store.transact(dsn, Command(request_id=action_id, payload=action_payload), save_action)
             if result["matched"] and result["excerpt"]:
                 excerpts.append({"observation_id": item["observation_id"],
                                  "text": result["excerpt"], "matched_terms": result["terms"]})
@@ -349,6 +371,8 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
             excerpts = [item for item in excerpts
                         if item["observation_id"] in {o["observation_id"] for o in observations}]
             packet["excerpts"] = excerpts
+            packet["counts"]["excerpt_bytes"] = sum(
+                len(item["text"].encode("utf-8")) for item in excerpts)
             packet["counts"]["claims"] = len(selected_claims)
             packet["counts"]["observations"] = len(observations)
             omissions.append({"claim_id": optional["claim_id"],
@@ -367,6 +391,10 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
                 drop_id = optional_ids[-1]
                 observations = [item for item in observations if item["observation_id"] != drop_id]
                 memory_view["observations"] = observations
+                excerpts = [item for item in excerpts if item["observation_id"] != drop_id]
+                packet["excerpts"] = excerpts
+                packet["counts"]["excerpt_bytes"] = sum(
+                    len(item["text"].encode("utf-8")) for item in excerpts)
                 packet["counts"]["observations"] = len(observations)
                 omissions.append({"observation_id": drop_id,
                                   "reason": "optional observation exceeded packet budget"})
@@ -393,6 +421,8 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
     packet["needs"] = needs
     packet["counts"]["claims"] = len(packet["memory_view"]["claims"])
     packet["counts"]["observations"] = len(packet["memory_view"]["observations"])
+    packet["counts"]["excerpt_bytes"] = sum(
+        len(item["text"].encode("utf-8")) for item in packet["excerpts"])
     packet["status"] = "needs_information" if needs else "ready"
     size = _set_size_count(packet)
     packet["digest"] = _digest({key: value for key, value in packet.items() if key != "digest"})
