@@ -11,7 +11,7 @@ import pytest
 from settlement.checkpoint import run_checkpoint
 from settlement.restore import run_restore
 
-from settlement import broker, db, store
+from settlement import broker, db
 from settlement.launcher_local import LocalLauncher
 from test_rec_checkpoint import seed_state
 
@@ -23,7 +23,13 @@ def fence():
         "ci-restore-fence", migrations_dir=Path(__file__).parents[2] / "migrations")
     try:
         with db.connect(database.dsn) as conn:
-            conn.execute("TRUNCATE control CASCADE")
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT tablename FROM pg_tables "
+                    "WHERE schemaname = 'public' AND tablename != 'schema_migrations'")
+                for (table,) in cur.fetchall():
+                    cur.execute(f'TRUNCATE TABLE "{table}" CASCADE')
+            conn.commit()
         yield database.dsn
     finally:
         drop_disposable_db(database)
@@ -121,7 +127,8 @@ def test_restored_db_predating_effect_reconciles(migrated_db, fence, tmp_path):
     manifest = json.loads((backup / "manifest.json").read_text())
     launcher = LocalLauncher(runs)
     broker.ensure_operation(dsn, operation_id="rs4-op", effect=broker.SANDBOX_EXEC,
-                            payload={"profile": "local-process", "argv": ["/bin/true"],
+                            payload={"profile": "local-process",
+                                     "argv": [sys.executable, "-I", "-S", "-c", "pass"],
                                      "timeout_ms": 30_000, "max_output_bytes": 1024},
                             allocation_id=env["allocation_id"], attempt_id="rs4-att")
     status = broker.dispatch_operation(dsn, "rs4-op",
