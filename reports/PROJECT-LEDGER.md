@@ -28,7 +28,7 @@ dependencies and build order. The three research themes are divided into ten par
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
-| P03: context construction | In design after P02 consolidation | A bounded evidence-selection policy consumed by actual decisions. |
+| P03: context construction | Design pinned; implementation next | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
@@ -54,19 +54,23 @@ P02 task list:
 - [x] Consolidate P02, repair the archived restore CI failure, and confirm checkpoint CI (`c998c5d1`, run `38585414989`, all seven jobs green).
 
 P03 task list:
-- [ ] Ground the consumer and compare context-policy designs after the P02 gate.
-- [ ] Pin packet identity, allocation, inspection accounting and invocation contracts.
+- [x] Ground the consumer and compare two independent context-policy designs after the P02 gate.
+- [x] Pin packet identity, allocation, inspection accounting and invocation contracts in the P03 plan.
 - [ ] Implement and integrate baseline context, bounded inspections and policy comparison.
 - [ ] Run integrated acceptance scenarios, then independent GPT-6.1 Sol High verification.
 - [ ] Run a prospectively bounded free-route comparison and report its actual limits.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: P02 consolidation and CI passed. P03's blocking
-step is selecting and pinning the packet/consumer contract. Two independent
-read-only designs use isolated worktrees; the coordinator owns shared plans and
-integration. No implementation fan-out occurs before ownership and interfaces
-are pinned. Prefer one context owner and one consumer owner over fragmented
-helpers that share evolving data shapes.
+Current throughput checkpoint: P02 consolidation and CI passed. Two independent
+Luna designs and a Luna cross-review informed the pinned P03 plan: one immutable
+packet per decision, required/optional evidence semantics, complete opposition
+bundles and bounded inspection within one builder. The coordinator removed the
+proposed separate context lifecycle and premature per-read reservation service.
+P03 code is not implemented. Next is the deterministic baseline through the real
+P01 consumer, followed by active inspection and a matched policy comparison.
+Independent Sol verification follows the integrated implementation gate.
+All three read-only design worktrees and branches are removed; only the main
+checkout remains. This checkpoint changes plans and status, not P03 runtime code.
 
 ### P02 consolidation (2026-10-14)
 
@@ -80,7 +84,9 @@ It now discovers and clears domain tables, preserving the production freshness
 guard. Its real subprocess uses Python instead of the POSIX-only `/bin/true`.
 The lane reproduced four failures before repair, then passed all four on PG18;
 the coordinator repeated all four in 55.46 seconds. The consolidation lane passed
-18 P02 tests in 384.42 seconds. CI run `38585414989` passed all seven jobs on
+18 P02 tests in 384.42 seconds. The coordinator's combined gate on the merged
+source passed all 22 P02/restore tests, zero skips, in 489.64 seconds, then removed
+both disposable databases. CI run `38585414989` passed all seven jobs on
 `c998c5d1`, including both database shards, three portable jobs and heavy archived
 checks. Owned consolidation worktrees and branches are removed; both backups
 contain the checkpoint. Existing live anchors and evidence remain unchanged.
