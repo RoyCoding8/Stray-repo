@@ -8,8 +8,9 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-from experiments.context03 import driver, recompute
 from isolation_db import disposable_db
+
+from experiments.context03 import driver, recompute
 
 
 def main():

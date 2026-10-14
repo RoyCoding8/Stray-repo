@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
-from rsi import context, investigate, memory
 from test_rsi_context import _request
 from test_rsi_memory_integration import (
     LATER_INSTRUCTION,
@@ -13,6 +11,8 @@ from test_rsi_memory_integration import (
     _task,
     _worker_calls,
 )
+
+from rsi import context, investigate, memory
 from rsi import investigation as state_store
 
 
