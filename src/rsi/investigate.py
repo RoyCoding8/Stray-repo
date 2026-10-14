@@ -11,7 +11,7 @@ from settlement.common import Command, ResultCode, SettlementError
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
 
-from . import episode, experience, investigation, memory, verifier
+from . import context, episode, experience, investigation, memory, verifier
 from . import genome as genomes
 from . import task as tasks
 from .investigation import export, read
@@ -50,65 +50,120 @@ def _memory_options(value):
     return {"scope": scope, "view": view, "limit": limit}
 
 
-def _memory_snapshot(dsn, investigation_id, state, options, artifacts_root):
-    purpose = f"task: {state['objective']}"
-    result = memory.query(
-        dsn, purpose=purpose, investigation_id=investigation_id,
-        scope=options["scope"], artifacts_root=artifacts_root,
-        visibility="learner", view=options["view"], limit=options["limit"])
-    fields = ("revision", "purpose", "scope", "view", "claims",
-              "observations", "missing_information")
-    if not isinstance(result, dict) or any(field not in result for field in fields):
-        raise SettlementError("memory query returned an incomplete snapshot")
-    if (type(result["revision"]) is not int
-            or not isinstance(result["claims"], list)
-            or not isinstance(result["observations"], list)
-            or not isinstance(result["missing_information"], list)):
-        raise SettlementError("memory query returned a malformed snapshot")
-    return {field: result[field] for field in fields}
+def _context_options(value, memory_value, *, stored=False):
+    memory_options = _memory_options(memory_value)
+    if value is None:
+        options = {
+            "policy": ("raw-history/1" if memory_options["view"] == "raw-history"
+                       else "structured/1"),
+            "scope": memory_options["scope"],
+            "limit": memory_options["limit"],
+            "budget": dict(context.DEFAULT_BUDGET),
+            "required_observation_ids": [],
+            "required_claim_ids": [],
+        }
+    else:
+        allowed = {"policy", "budget", "required_observation_ids", "required_claim_ids"}
+        if stored:
+            allowed |= {"scope", "limit"}
+        if not isinstance(value, dict) or set(value) - allowed:
+            raise SettlementError("context must contain only policy, budget, and required evidence ids")
+        options = {
+            "policy": value.get("policy", "structured/1"),
+            "scope": value.get("scope", memory_options["scope"]),
+            "limit": value.get("limit", memory_options["limit"]),
+            "budget": value.get("budget", dict(context.DEFAULT_BUDGET)),
+            "required_observation_ids": value.get("required_observation_ids", []),
+            "required_claim_ids": value.get("required_claim_ids", []),
+        }
+        if not stored:
+            try:
+                options["budget"] = json.loads(json.dumps(
+                    options["budget"], sort_keys=True, allow_nan=False))
+            except (TypeError, ValueError) as exc:
+                raise SettlementError(f"context budget must be JSON data: {exc}") from exc
+    if not isinstance(options["policy"], str) or options["policy"] not in context.POLICIES:
+        raise SettlementError("context policy is unsupported")
+    if not isinstance(options["scope"], dict):
+        raise SettlementError("context scope must be an object")
+    if (type(options["limit"]) is not int or options["limit"] <= 0
+            or options["limit"] > context.MAX_LIMIT):
+        raise SettlementError(
+            f"context limit must be between 1 and {context.MAX_LIMIT}")
+    if not isinstance(options["budget"], dict):
+        raise SettlementError("context budget must be an object")
+    if set(options["budget"]) - set(context.DEFAULT_BUDGET):
+        raise SettlementError("context budget contains unsupported fields")
+    for field, default in context.DEFAULT_BUDGET.items():
+        number = options["budget"].get(field, default)
+        if type(number) is not int or number <= 0:
+            raise SettlementError(f"context budget {field} must be a positive integer")
+        if field == "packet_bytes" and number > context.MAX_PACKET_BYTES:
+            raise SettlementError(
+                f"context budget packet_bytes cannot exceed {context.MAX_PACKET_BYTES}")
+        options["budget"][field] = number
+    for field, identity_type in (("required_observation_ids", int),
+                                 ("required_claim_ids", str)):
+        values = options[field]
+        if (not isinstance(values, list)
+                or any(type(item) is not identity_type for item in values)
+                or (field == "required_observation_ids"
+                    and any(item <= 0 for item in values))
+                or (field == "required_claim_ids"
+                    and any(not item.strip() for item in values))
+                or len(set(values)) != len(values)):
+            raise SettlementError(f"context {field} must be a unique list of {identity_type.__name__} values")
+    return options
 
 
-def _revalidate_memory(dsn, snapshot, artifacts_root):
-    if snapshot is None:
-        return
-    if not isinstance(snapshot, dict):
-        raise SettlementError("pending decision has no pinned memory snapshot")
-    observations = snapshot.get("observations")
-    if not isinstance(observations, list):
-        raise SettlementError("pinned memory observations are malformed")
-    ids = [item.get("observation_id") for item in observations
-           if isinstance(item, dict)]
-    if len(ids) != len(observations) or any(type(item) is not int for item in ids):
-        raise SettlementError("pinned memory observation identity is missing")
-    if len(set(ids)) != len(ids):
-        raise SettlementError("pinned memory snapshot repeats an observation")
-    resolved = experience.resolve(
-        dsn, ids, artifacts_root=artifacts_root,
-        revision=snapshot.get("revision"), visibility="learner")
-    if not isinstance(resolved, dict):
-        raise SettlementError("memory resolution returned a malformed result")
-    if resolved.get("revision") != snapshot.get("revision"):
-        raise SettlementError("pinned memory revision could not be reproduced")
-    if resolved.get("missing_information"):
-        raise SettlementError("pinned memory evidence is unavailable")
-    current = resolved.get("observations")
-    if not isinstance(current, list):
-        raise SettlementError("memory resolution returned malformed observations")
-    if any(not isinstance(item, dict) or type(item.get("observation_id")) is not int
-           for item in current):
-        raise SettlementError("memory resolution returned malformed observation identities")
-    by_id = {item.get("observation_id"): item
-             for item in current if isinstance(item, dict)}
-    if set(by_id) != set(ids) or len(by_id) != len(current):
-        raise SettlementError("pinned memory evidence is unavailable")
-    original = {item["observation_id"]: item for item in observations}
-    if by_id != original:
-        raise SettlementError("pinned memory evidence changed after query")
+def _context_validation(dsn, visible, artifacts_root):
+    if "context_packet" in visible:
+        packet = visible["context_packet"]
+        if not isinstance(packet, dict):
+            return {"status": "stale", "reason": "pending context packet is malformed"}
+        return context.validate(dsn, packet, artifacts_root=artifacts_root)
+    snapshot = visible.get("memory")
+    if snapshot is not None:
+        return context.validate(
+            dsn, {"schema": "p02-legacy", "memory_view": snapshot},
+            artifacts_root=artifacts_root)
+    return {"status": "ready", "reason": "legacy decision has no memory snapshot"}
+
+
+def _context_request(investigation_id, objective_revision, state_revision,
+                     decision_id, attempt_id, operation_id, objective,
+                     continuation, options):
+    return {
+        "investigation_id": investigation_id,
+        "objective_revision": objective_revision,
+        "state_revision": state_revision,
+        "decision_id": decision_id,
+        "attempt_id": attempt_id,
+        "operation_id": operation_id,
+        "continuation": continuation,
+        "purpose": f"task: {objective}",
+        "scope": options["scope"],
+        "policy": options["policy"],
+        "limit": options["limit"],
+        "required_observation_ids": options["required_observation_ids"],
+        "required_claim_ids": options["required_claim_ids"],
+        "budget": options["budget"],
+    }
+
+
+def _continuation_fields(visible):
+    fields = ("objective", "objective_revision", "state_revision",
+              "open_questions", "artifact_refs", "previous_observation")
+    return {field: visible[field] for field in fields}
+
+
+def _packet_matches(packet, request):
+    return isinstance(packet, dict) and packet.get("request") == request
 
 
 def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
            cpu_allocation, max_steps, timeout_ms, token_ceiling,
-           staging_root, artifacts_root, objective=None, memory=None):
+           staging_root, artifacts_root, objective=None, memory=None, context=None):
     """Pin one development objective and its finite execution envelope."""
     for name, value in (("max_steps", max_steps), ("timeout_ms", timeout_ms),
                         ("token_ceiling", token_ceiling)):
@@ -118,11 +173,11 @@ def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
     if task.split != "dev":
         raise SettlementError("continuing task investigations accept development tasks only")
     genomes.load(dsn, artifacts_root, genome.digest)
-    memory_options = _memory_options(memory)
+    context_options = _context_options(context, memory)
     config = {"task": task.digest, "genome": genome.digest,
               "token_allocation": token_allocation, "cpu_allocation": cpu_allocation,
               "max_steps": max_steps, "timeout_ms": timeout_ms,
-              "memory": memory_options,
+              "context": context_options,
               "token_ceiling": token_ceiling, "model": agent.provider.model}
     payload = {"investigation_id": investigation_id, "objective": objective or task.instruction,
                "domain": "task", "allocation_id": token_allocation, "config": config,
@@ -140,7 +195,6 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
     if state["domain"] != "task" or state["policy"] != POLICY:
         raise SettlementError("unsupported investigation domain or seed policy")
     config = state["config"]
-    memory_options = _memory_options(config.get("memory"))
     pending = state["pending_decision"]
     experience.capture_investigation(
         dsn, investigation_id, artifacts_root=artifacts_root)
@@ -152,20 +206,60 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
     current = genomes.load(dsn, artifacts_root, config["genome"])
     if pending is None:
         identity = hashlib.sha256(f"{investigation_id}:{state['revision']}".encode()).hexdigest()
-        visible = {"objective": state["objective"],
-                   "objective_revision": state["objective_revision"],
-                   "state_revision": state["revision"],
-                   "open_questions": state["open_questions"],
-                   "artifact_refs": state["artifact_refs"],
-                   "previous_observation": state["last_observation"],
-                   "memory": _memory_snapshot(
-                       dsn, investigation_id, state, memory_options, artifacts_root)}
+        decision_id = "p01-decision-" + identity
+        attempt_id = "p01-attempt-" + identity
+        operation_id = "p01-worker-" + identity
+        continuation = {
+            "objective": state["objective"],
+            "objective_revision": state["objective_revision"],
+            "state_revision": state["revision"],
+            "open_questions": state["open_questions"],
+            "artifact_refs": state["artifact_refs"],
+            "previous_observation": state["last_observation"],
+        }
+        options = _context_options(config.get("context"), config.get("memory"), stored=True)
+        request = _context_request(
+            investigation_id, state["objective_revision"], state["revision"],
+            decision_id, attempt_id, operation_id, state["objective"],
+            continuation, options)
+        packet = context.build(dsn, request, artifacts_root=artifacts_root)
+        if packet.get("status") != "ready":
+            return {
+                **state,
+                "context_outcome": {
+                    "status": "needs_information",
+                    "request_id": identity,
+                    "packet": packet,
+                    "needs": packet.get("needs", []),
+                },
+            }
+        if not _packet_matches(packet, request):
+            return {
+                **state,
+                "context_outcome": {
+                    "status": "stale",
+                    "request_id": identity,
+                    "reason": "context packet is not pinned to this decision request",
+                },
+            }
+        validation = context.validate(dsn, packet, artifacts_root=artifacts_root)
+        if validation.get("status") != "ready":
+            return {
+                **state,
+                "context_outcome": {
+                    "status": validation.get("status"),
+                    "request_id": identity,
+                    "packet": packet,
+                    "reason": validation.get("reason"),
+                },
+            }
+        visible = {**continuation, "context_packet": packet}
         _require(investigation.decide(dsn, Command(
             request_id="p01-decide:" + identity, expected_revision=state["revision"],
             payload={"investigation_id": investigation_id,
-                     "decision_id": "p01-decision-" + identity,
-                     "attempt_id": "p01-attempt-" + identity,
-                     "operation_id": "p01-worker-" + identity,
+                     "decision_id": decision_id,
+                     "attempt_id": attempt_id,
+                     "operation_id": operation_id,
                      "action": {"kind": "worker",
                                 "explanation": "Attempt the open obligation using checked feedback.",
                                 "intended_observation": QUESTION},
@@ -174,7 +268,44 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
         pending = state["pending_decision"]
     roots = {"staging_root": staging_root, "artifacts_root": artifacts_root}
     visible = pending["visible_input"]
-    _revalidate_memory(dsn, visible.get("memory"), artifacts_root)
+    if "context_packet" in visible:
+        options = _context_options(config.get("context"), config.get("memory"), stored=True)
+        try:
+            request = _context_request(
+                investigation_id, visible["objective_revision"], visible["state_revision"],
+                pending["id"], pending["attempt_id"], pending["operation_id"],
+                visible["objective"], _continuation_fields(visible), options)
+        except KeyError:
+            validation = {
+                "status": "stale",
+                "reason": "pending context continuation is incomplete",
+            }
+        else:
+            if not _packet_matches(visible["context_packet"], request):
+                validation = {
+                    "status": "stale",
+                    "reason": "context packet is not pinned to the admitted decision",
+                }
+            else:
+                validation = _context_validation(dsn, visible, artifacts_root)
+    elif config.get("context") is not None:
+        validation = {
+            "status": "stale",
+            "reason": "P03 decision is missing its context packet",
+        }
+    else:
+        validation = _context_validation(dsn, visible, artifacts_root)
+    if validation.get("status") != "ready":
+        return {
+            **state,
+            "context_outcome": {
+                "status": validation.get("status"),
+                "decision_id": pending["id"],
+                "attempt_id": pending["attempt_id"],
+                "operation_id": pending["operation_id"],
+                "reason": validation.get("reason"),
+            },
+        }
     try:
         ep = episode.run_episode(
             dsn, agent, current, operation_id=pending["operation_id"], task=item,
@@ -245,6 +376,8 @@ def main():
     parser.add_argument("--genome")
     parser.add_argument("--task")
     parser.add_argument("--objective")
+    parser.add_argument("--context-policy", choices=tuple(sorted(context.POLICIES)))
+    parser.add_argument("--context-budget-bytes", type=int)
     parser.add_argument("--token-allocation")
     parser.add_argument("--cpu-allocation")
     parser.add_argument("--max-steps", type=int, default=2)
@@ -279,12 +412,22 @@ def main():
         if args.command == "create":
             if not all((args.genome, args.task, args.token_allocation, args.cpu_allocation)):
                 parser.error("create requires genome, task and token/cpu allocation identities")
+            context_options = None
+            if args.context_policy is not None or args.context_budget_bytes is not None:
+                context_options = {}
+                if args.context_policy is not None:
+                    context_options["policy"] = args.context_policy
+                if args.context_budget_bytes is not None:
+                    context_options["budget"] = {
+                        "packet_bytes": args.context_budget_bytes,
+                    }
             result = create(
                 args.dsn, agent, genomes.load(args.dsn, roots["artifacts_root"], args.genome),
                 investigation_id=args.id, task=tasks.load(args.dsn, roots["artifacts_root"], args.task),
                 token_allocation=args.token_allocation, cpu_allocation=args.cpu_allocation,
                 max_steps=args.max_steps, timeout_ms=args.timeout_ms,
-                token_ceiling=args.token_ceiling, objective=args.objective, **roots)
+                token_ceiling=args.token_ceiling, objective=args.objective,
+                context=context_options, **roots)
         else:
             if args.command == "resume":
                 state = investigation.read(args.dsn, args.id)
