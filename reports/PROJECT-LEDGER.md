@@ -39,8 +39,8 @@ dependencies and build order. The three research themes are divided into ten par
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
-Human direction for the current implementation batch: build P02 on the P01
-checkpoint. P03–P10 remain paused.
+The completed implementation batch built P02 on the P01 checkpoint.
+P03–P10 remain paused.
 
 P02 task list:
 - [x] Ground the existing observation, artifact and consumer paths; compare storage shapes.
@@ -152,7 +152,7 @@ utility, transfer, learning benefit and hostile-code containment remain unproved
 
 All owned implementation worktrees and temporary lane branches were removed.
 The live receipt anchor remains in `p01_live_20261013` on port 55432 and
-`D:/AI/tools/p01-live-20261013`. P02–P10 remain paused. Future continuation studies
+`D:/AI/tools/p01-live-20261013`. P02–P10 were paused at the P01 checkpoint. Future continuation studies
 should derive checker exposure from the broker's profile and allow for CLI input
 overhead rather than treating wall time or a short task as the resource cost.
 
@@ -317,7 +317,7 @@ can complete an experiment without completing the learning objective.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-The next planned component is P02, currently paused by human direction.
+The next planned component is P03, currently paused by human direction.
 Prospective utility comparisons must account
 for free-router variation and include an unchanged-copy control where relevant.
 Do not re-dispatch closed operations or refund allocations. Live instruction
