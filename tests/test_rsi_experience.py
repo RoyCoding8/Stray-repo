@@ -34,7 +34,7 @@ def _task(split: str = "dev") -> task.Task:
     )
 
 
-def _scenario(dsn: str, tmp_path: Path, investigation_id: str):
+def _scenario(dsn: str, tmp_path: Path, investigation_id: str, *, cpu_authorized=100_000):
     stage = tmp_path / "stage"
     root = tmp_path / "artifacts"
     stage.mkdir(parents=True)
@@ -50,7 +50,7 @@ def _scenario(dsn: str, tmp_path: Path, investigation_id: str):
     }))
     store.seed_allocation(dsn, _cmd("memory-cpu-" + investigation_id, {
         "allocation_id": "memory-cpu-" + investigation_id,
-        "domain": "cpu", "authorized": 100_000,
+        "domain": "cpu", "authorized": cpu_authorized,
     }))
     agent = CodexLauncher(
         tmp_path / "runs",
@@ -215,3 +215,28 @@ def test_missing_artifact_is_reported_and_resolution_does_not_mutate_registry(
         row = conn.execute("SELECT availability FROM artifact_versions WHERE digest = %s",
                            (digest,)).fetchone()
     assert row[0] == "available"
+
+
+def test_verifier_refusal_preserves_completed_worker(migrated_db, tmp_path_factory):
+    run = _scenario(migrated_db, tmp_path_factory.mktemp("p02e"),
+                    "memory-verifier-refusal", cpu_authorized=1)
+    state = investigate.step(migrated_db, run["agent"], run["checker"],
+                             run["investigation_id"], **run["roots"])
+    assert state["last_observation"]["status"] == "refused"
+    assert state["last_observation"]["passed"] is None
+    with store.db.connect(migrated_db) as conn:
+        episode, = conn.execute("SELECT status FROM rsi_episodes").fetchone()
+    assert episode == "completed"
+
+    captured, = experience.capture_investigation(
+        migrated_db, run["investigation_id"], artifacts_root=run["roots"]["artifacts_root"])
+    resolved = experience.resolve(migrated_db, [captured["observation_id"]],
+                                  artifacts_root=run["roots"]["artifacts_root"])
+    item, = resolved["observations"]
+    assert item["content"]["status"] == "refused"
+    assert item["content"]["passed"] is None
+    assert item["identities"]["verifier_operation_id"] is None
+    assert len(item["artifacts"]) == 2
+    again = investigate.step(migrated_db, run["agent"], run["checker"],
+                             run["investigation_id"], **run["roots"])
+    assert again["last_observation"] == state["last_observation"]

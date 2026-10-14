@@ -170,8 +170,8 @@ def _source(cur, dsn: str, artifacts_root: str | Path, observation_id: int,
                          "over_budget")
           or passed is not None or observation.get("verdict") is not None
           or observation.get("solution") is not None
-          or (source["episode_id"] is None and status != "refused")
-          or (source["episode_id"] is not None and status != source["episode_status"])):
+          or (status != "refused" and (source["episode_id"] is None
+                                      or status != source["episode_status"]))):
         raise SettlementError("observation failed P01 uncertainty validation")
 
     task_artifact = _artifact(cur, source["task_digest"], expected_scope="rsi-task",
