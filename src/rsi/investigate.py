@@ -11,7 +11,7 @@ from settlement.common import Command, ResultCode, SettlementError
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
 
-from . import episode, investigation, verifier
+from . import episode, experience, investigation, memory, verifier
 from . import genome as genomes
 from . import task as tasks
 from .investigation import export, read
@@ -20,6 +20,8 @@ __all__ = ["create", "export", "read", "run", "step"]
 
 QUESTION = "Does the solution satisfy the task obligation?"
 POLICY = {"id": "task-seed/1"}
+MEMORY_DEFAULT = {"scope": {"domain": "task"}, "view": "structured", "limit": 10}
+MEMORY_VIEWS = {"structured", "raw-history"}
 
 
 def _require(result):
@@ -28,9 +30,88 @@ def _require(result):
     return result
 
 
+def _memory_options(value):
+    if value is None:
+        return dict(MEMORY_DEFAULT)
+    if not isinstance(value, dict) or set(value) - {"scope", "view", "limit"}:
+        raise SettlementError("memory must contain only scope, view, and limit")
+    scope = value.get("scope", MEMORY_DEFAULT["scope"])
+    view = value.get("view", MEMORY_DEFAULT["view"])
+    limit = value.get("limit", MEMORY_DEFAULT["limit"])
+    if not isinstance(scope, dict):
+        raise SettlementError("memory scope must be an object")
+    if not isinstance(view, str) or view not in MEMORY_VIEWS:
+        raise SettlementError("memory view must be structured or raw-history")
+    if type(limit) is not int or limit <= 0:
+        raise SettlementError("memory limit must be a positive integer")
+    try:
+        scope = json.loads(json.dumps(scope, sort_keys=True, allow_nan=False))
+    except (TypeError, ValueError) as exc:
+        raise SettlementError(f"memory scope must be JSON data: {exc}") from exc
+    return {"scope": scope, "view": view, "limit": limit}
+
+
+def _memory_snapshot(dsn, investigation_id, state, options, artifacts_root):
+    purpose = f"task: {state['objective']}"
+    result = memory.query(
+        dsn, purpose=purpose, investigation_id=investigation_id,
+        scope=options["scope"], artifacts_root=artifacts_root,
+        visibility="learner", view=options["view"], limit=options["limit"])
+    fields = ("revision", "purpose", "scope", "view", "claims",
+              "observations", "missing_information")
+    if not isinstance(result, dict) or any(field not in result for field in fields):
+        raise SettlementError("memory query returned an incomplete snapshot")
+    if (type(result["revision"]) is not int
+            or not isinstance(result["claims"], list)
+            or not isinstance(result["observations"], list)
+            or not isinstance(result["missing_information"], list)):
+        raise SettlementError("memory query returned a malformed snapshot")
+    return {field: result[field] for field in fields}
+
+
+def _revalidate_memory(dsn, snapshot, artifacts_root):
+    if snapshot is None:
+        return
+    if not isinstance(snapshot, dict):
+        raise SettlementError("pending decision has no pinned memory snapshot")
+    observations = snapshot.get("observations")
+    if not isinstance(observations, list):
+        raise SettlementError("pinned memory observations are malformed")
+    ids = [item.get("observation_id") for item in observations
+           if isinstance(item, dict)]
+    if len(ids) != len(observations) or any(type(item) is not int for item in ids):
+        raise SettlementError("pinned memory observation identity is missing")
+    if len(set(ids)) != len(ids):
+        raise SettlementError("pinned memory snapshot repeats an observation")
+    if snapshot.get("missing_information"):
+        raise SettlementError("pinned memory snapshot has missing evidence")
+    resolved = experience.resolve(
+        dsn, ids, artifacts_root=artifacts_root,
+        revision=snapshot.get("revision"), visibility="learner")
+    if not isinstance(resolved, dict):
+        raise SettlementError("memory resolution returned a malformed result")
+    if resolved.get("revision") != snapshot.get("revision"):
+        raise SettlementError("pinned memory revision could not be reproduced")
+    if resolved.get("missing_information"):
+        raise SettlementError("pinned memory evidence is unavailable")
+    current = resolved.get("observations")
+    if not isinstance(current, list):
+        raise SettlementError("memory resolution returned malformed observations")
+    if any(not isinstance(item, dict) or type(item.get("observation_id")) is not int
+           for item in current):
+        raise SettlementError("memory resolution returned malformed observation identities")
+    by_id = {item.get("observation_id"): item
+             for item in current if isinstance(item, dict)}
+    if set(by_id) != set(ids) or len(by_id) != len(current):
+        raise SettlementError("pinned memory evidence is unavailable")
+    original = {item["observation_id"]: item for item in observations}
+    if by_id != original:
+        raise SettlementError("pinned memory evidence changed after query")
+
+
 def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
            cpu_allocation, max_steps, timeout_ms, token_ceiling,
-           staging_root, artifacts_root, objective=None):
+           staging_root, artifacts_root, objective=None, memory=None):
     """Pin one development objective and its finite execution envelope."""
     for name, value in (("max_steps", max_steps), ("timeout_ms", timeout_ms),
                         ("token_ceiling", token_ceiling)):
@@ -40,9 +121,11 @@ def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
     if task.split != "dev":
         raise SettlementError("continuing task investigations accept development tasks only")
     genomes.load(dsn, artifacts_root, genome.digest)
+    memory_options = _memory_options(memory)
     config = {"task": task.digest, "genome": genome.digest,
               "token_allocation": token_allocation, "cpu_allocation": cpu_allocation,
               "max_steps": max_steps, "timeout_ms": timeout_ms,
+              "memory": memory_options,
               "token_ceiling": token_ceiling, "model": agent.provider.model}
     payload = {"investigation_id": investigation_id, "objective": objective or task.instruction,
                "domain": "task", "allocation_id": token_allocation, "config": config,
@@ -59,14 +142,17 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
         raise SettlementError("unknown investigation " + investigation_id)
     if state["domain"] != "task" or state["policy"] != POLICY:
         raise SettlementError("unsupported investigation domain or seed policy")
+    config = state["config"]
+    memory_options = _memory_options(config.get("memory"))
+    pending = state["pending_decision"]
+    experience.capture_investigation(
+        dsn, investigation_id, artifacts_root=artifacts_root)
     if state["status"] in ("suspended", "completed", "unresolved"):
         return state
-    config = state["config"]
     if config["model"] != agent.provider.model:
         raise SettlementError("worker model differs from investigation configuration")
     item = tasks.load(dsn, artifacts_root, config["task"])
     current = genomes.load(dsn, artifacts_root, config["genome"])
-    pending = state["pending_decision"]
     if pending is None:
         identity = hashlib.sha256(f"{investigation_id}:{state['revision']}".encode()).hexdigest()
         visible = {"objective": state["objective"],
@@ -74,7 +160,9 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
                    "state_revision": state["revision"],
                    "open_questions": state["open_questions"],
                    "artifact_refs": state["artifact_refs"],
-                   "previous_observation": state["last_observation"]}
+                   "previous_observation": state["last_observation"],
+                   "memory": _memory_snapshot(
+                       dsn, investigation_id, state, memory_options, artifacts_root)}
         _require(investigation.decide(dsn, Command(
             request_id="p01-decide:" + identity, expected_revision=state["revision"],
             payload={"investigation_id": investigation_id,
@@ -89,6 +177,7 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
         pending = state["pending_decision"]
     roots = {"staging_root": staging_root, "artifacts_root": artifacts_root}
     visible = pending["visible_input"]
+    _revalidate_memory(dsn, visible.get("memory"), artifacts_root)
     try:
         ep = episode.run_episode(
             dsn, agent, current, operation_id=pending["operation_id"], task=item,
@@ -130,6 +219,8 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
                  "operation_id": pending["operation_id"], "observation": observation,
                  "outcome": outcome, "artifact_refs": refs,
                  "open_questions": [] if outcome == "completed" else [QUESTION]})))
+    experience.capture_investigation(
+        dsn, investigation_id, artifacts_root=artifacts_root)
     return investigation.read(dsn, investigation_id)
 
 
