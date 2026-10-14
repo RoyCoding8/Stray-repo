@@ -65,6 +65,8 @@ interpretation. Flatten provenance to distinct original observation identities;
 copies or merged lessons add no independent corroboration. Preserve inherited
 opposition and withdrawal/supersession history rather than laundering it through
 consolidation. New versions may narrow scope, challenge or withdraw a lesson.
+Cross-claim supersession must also declare derivation from the exact retired
+version, so consolidation cannot discard its original opposing evidence.
 
 Queries require a real investigation, purpose, scope and recognized visibility.
 Apply source visibility before matching, returning content or counting results.
@@ -74,6 +76,11 @@ can reconstruct prior versions. Exact and lexical matching are deterministic.
 Each selected lesson brings its support, opposition, derivation roots and missing
 information, even if an opposing source has different lexical text. A raw-history
 view returns original experience without treating interpretations as observations.
+Both views can discover scoped original experience by public task instruction
+before any lesson is written. Normal raw-history lookup does not search claim
+text. Exact claim IDs can select original roots without rendering the claim.
+Candidate resolution is bounded to 256 original references and reports incomplete
+search explicitly. P03 owns improved selection when that simple bound is reached.
 The returned revision is a committed memory high-water mark; querying an earlier
 revision selects the same captured references and claim versions after restart.
 Byte availability remains a current qualification and may change independently.

@@ -43,18 +43,23 @@ Human direction for the current implementation batch: build P02 on the P01
 checkpoint. P03–P10 remain paused.
 
 P02 task list:
-- [ ] Ground the existing observation, artifact and consumer paths; compare storage shapes.
-- [ ] Pin the evidence, claim revision, visibility and later-use contracts before code fan-out.
-- [ ] Implement immutable experience lookup and revisable lessons in isolated lanes.
-- [ ] Connect later investigations and qualify acceptance scenarios P02-A through P02-E.
+- [x] Ground the existing observation, artifact and consumer paths; compare storage shapes.
+- [x] Pin the evidence, claim revision, visibility and later-use contracts before code fan-out (`cff8c980`).
+- [x] Implement immutable experience lookup and revisable lessons in isolated lanes.
+- [x] Connect later investigations and qualify acceptance scenarios P02-A through P02-E.
 - [ ] Run independent GPT-6.1 Sol High verification and a bounded live contradiction probe.
 - [ ] Record exact evidence boundaries, remove owned worktrees and sync the checkpoint.
 
-P02 throughput checkpoint. The contract and migration shape block implementation.
-Experience storage, claim operations and the investigation consumer have separate
-file owners. Each lane uses a private worktree and disposable test databases.
-The coordinator owns integration and documents; merges and final gates are serial.
-The smallest useful split is these three lanes, followed by independent review.
+P02 throughput checkpoint (2026-10-14). All implementation lanes completed and
+are merged at `a3a4e233`. The coordinator's integrated RSI and real checkpoint
+migration gate passed **116 tests with one skip** in 355.14 seconds. This is a
+scoped regression gate, not a whole-repository or live-learning claim. Source
+capture, claim revision and later-use scenarios now share the committed revision
+clock and the P01 decision owner. Fixture defects and a verifier-refusal capture
+defect were repaired before this gate. Independent GPT-6.1 Sol High verification
+can now begin on the integrated version, as requested. The earlier reviewer was
+deliberately paused and issued no verdict. The bounded live probe, review fixes,
+final evidence record, cleanup and backup synchronization remain outstanding.
 
 P01 task list:
 - [x] Pin the state, decision and pending-effect contract against the existing kernel (`74f2b65f`).
