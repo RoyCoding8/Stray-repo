@@ -10,8 +10,8 @@ import pytest
 
 from rsi import genome, investigate, memory, task
 from rsi import investigation as state_store
-from settlement import store
-from settlement.common import Command, ResultCode, SettlementError
+from settlement import db, store
+from settlement.common import Command, ResultCode
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
 
@@ -59,7 +59,8 @@ def _task(task_id: str, instruction: str, *, empty: bool = False, split: str = "
     )
 
 
-def _create(tmp_path, dsn, investigation_id, candidate, *, objective=None, memory_options=None):
+def _create(tmp_path, dsn, investigation_id, candidate, *, objective=None,
+            memory_options=None, context_options=None):
     root = tmp_path / investigation_id
     staging_root = root / "stage"
     artifacts_root = tmp_path / "p02-artifacts"
@@ -93,6 +94,7 @@ def _create(tmp_path, dsn, investigation_id, candidate, *, objective=None, memor
         objective=objective or candidate.instruction,
         staging_root=staging_root, artifacts_root=artifacts_root,
         memory=memory_options,
+        context=context_options,
     )
     return {
         "dsn": dsn,
@@ -120,6 +122,23 @@ def _worker_calls(run):
     if not path.exists():
         return []
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+
+def _mark_pre_p03_config(run):
+    context_options = run["state"]["config"]["context"]
+    legacy = {
+        "scope": context_options["scope"],
+        "view": context_options["policy"].removesuffix("/1"),
+        "limit": context_options["limit"],
+    }
+    with db.connect(run["dsn"]) as conn, conn.cursor() as cur:
+        cur.execute(
+            "UPDATE rsi_investigations SET config = (config - 'context') ||"
+            " jsonb_build_object('memory', %s::jsonb) WHERE investigation_id = %s",
+            (json.dumps(legacy), run["id"]),
+        )
+        conn.commit()
+
 
 
 def _sources(tmp_path, dsn):
@@ -198,12 +217,12 @@ def test_p02_b_later_consumer_uses_lesson_and_opposition_roots(
         tmp_path, migrated_db, "p02-later-structured",
         _task("p02-maximum-later", LATER_INSTRUCTION, empty=True),
     )
-    assert structured["state"]["config"]["memory"] == {
-        "scope": {"domain": "task"}, "view": "structured", "limit": 10,
-    }
+    assert structured["state"]["config"]["context"]["policy"] == "structured/1"
+    assert structured["state"]["config"]["context"]["scope"] == {"domain": "task"}
+    assert structured["state"]["config"]["context"]["limit"] == 10
     completed = _step(structured)
     call, = _worker_calls(structured)
-    snapshot = call["continuation"]["memory"]
+    snapshot = call["continuation"]["context_packet"]["memory_view"]
     claim, = [item for item in snapshot["claims"] if item["claim_id"] == "p02-max-lesson"]
     observation_ids = {item["observation_id"] for item in snapshot["observations"]}
 
@@ -220,10 +239,10 @@ def test_p02_b_later_consumer_uses_lesson_and_opposition_roots(
         _task("p02-maximum-history", LATER_INSTRUCTION, empty=True),
         memory_options={"scope": {"domain": "task"}, "view": "raw-history", "limit": 10},
     )
-    assert raw["state"]["config"]["memory"]["view"] == "raw-history"
+    assert raw["state"]["config"]["context"]["policy"] == "raw-history/1"
     raw_result = _step(raw)
     raw_call, = _worker_calls(raw)
-    raw_snapshot = raw_call["continuation"]["memory"]
+    raw_snapshot = raw_call["continuation"]["context_packet"]["memory_view"]
     assert raw_result["last_observation"]["passed"] is True
     assert raw_snapshot["view"] == "raw-history" and raw_snapshot["claims"] == []
     assert {support, opposition} <= {
@@ -239,7 +258,7 @@ def test_p02_b_later_consumer_uses_lesson_and_opposition_roots(
     disconnected_result = _step(disconnected)
     disconnected_call, = _worker_calls(disconnected)
     assert disconnected_result["last_observation"]["passed"] is False
-    assert disconnected_call["continuation"]["memory"]["claims"] == []
+    assert disconnected_call["continuation"]["context_packet"]["memory_view"]["claims"] == []
 
     memory.revise(
         migrated_db, claim_id="p02-max-wrong-source", expected_version=0,
@@ -254,7 +273,7 @@ def test_p02_b_later_consumer_uses_lesson_and_opposition_roots(
     )
     wrong_result = _step(wrong_source)
     wrong_call, = _worker_calls(wrong_source)
-    wrong_snapshot = wrong_call["continuation"]["memory"]
+    wrong_snapshot = wrong_call["continuation"]["context_packet"]["memory_view"]
     wrong_claim, = wrong_snapshot["claims"]
     assert wrong_result["last_observation"]["passed"] is False
     assert wrong_claim["claim_id"] == "p02-max-wrong-source"
@@ -274,6 +293,7 @@ def test_p02_c_and_e_pending_replay_keeps_withdrawn_lesson_snapshot_after_restar
         tmp_path, migrated_db, "p02-pending-withdrawn",
         _task("p02-maximum-pending", LATER_INSTRUCTION, empty=True),
     )
+    _mark_pre_p03_config(target)
     pinned = _query(target)
     state = target["state"]
     visible = {
@@ -343,6 +363,7 @@ def test_p02_pending_dispatch_revalidates_memory_artifacts(
         tmp_path, migrated_db, "p02-pending-corrupt-source",
         _task("p02-maximum-corrupt-source", LATER_INSTRUCTION, empty=True),
     )
+    _mark_pre_p03_config(target)
     pinned = _query(target)
     state = target["state"]
     visible = {
@@ -378,8 +399,8 @@ def test_p02_pending_dispatch_revalidates_memory_artifacts(
     assert path.is_file()
     path.write_bytes(b"corrupted source evidence")
 
-    with pytest.raises(SettlementError, match="evidence|artifact|observation"):
-        _step(target)
+    result = _step(target)
+    assert result["context_outcome"]["status"] in ("stale", "needs_information")
     assert _worker_calls(target) == []
     assert investigate.read(migrated_db, target["id"])["pending_decision"] is not None
 
@@ -409,14 +430,15 @@ def test_p02_d_sealed_task_package_does_not_enter_learner_memory(
 
     state = _step(target)
     call, = _worker_calls(target)
-    memory_text = json.dumps(call["continuation"]["memory"], sort_keys=True)
+    packet = call["continuation"]["context_packet"]
+    memory_text = json.dumps(packet["memory_view"], sort_keys=True)
     prompt = call["prompt"]
 
     assert state["status"] == "completed"
     assert SEALED_MARKER not in memory_text and SEALED_MARKER not in prompt
     assert "return max(xs) if xs else 0" not in memory_text
-    assert call["continuation"]["memory"]["claims"] == []
-    assert call["continuation"]["memory"]["observations"] == []
+    assert packet["memory_view"]["claims"] == []
+    assert packet["memory_view"]["observations"] == []
 
 
 @pytest.mark.parametrize("view", ["structured", "raw-history"])
@@ -437,7 +459,7 @@ def test_discovery_gaps_do_not_block_valid_selected_evidence(
                      memory_options=options)
     assert _step(target)["status"] == "completed"
     call, = _worker_calls(target)
-    partial = call["continuation"]["memory"]
+    partial = call["continuation"]["context_packet"]["memory_view"]
     assert partial["missing_information"]
     assert [o["observation_id"] for o in partial["observations"]] == [baseline_id]
     missing_path.write_bytes(original_bytes)
@@ -448,7 +470,7 @@ def test_discovery_gaps_do_not_block_valid_selected_evidence(
                       memory_options=options)
     assert _step(bounded)["status"] == "completed"
     bounded_call, = _worker_calls(bounded)
-    bounded_memory = bounded_call["continuation"]["memory"]
+    bounded_memory = bounded_call["continuation"]["context_packet"]["memory_view"]
     assert bounded_memory["missing_information"] == [{
         "reason": "experience search reached its bounded candidate limit",
     }]
@@ -466,7 +488,7 @@ def test_missing_opposition_withholds_lesson_and_exposes_incomplete_discovery(
     (changed["artifacts_root"] / failure["last_observation"]["solution"]).unlink()
     result = _step(target)
     call, = _worker_calls(target)
-    partial = call["continuation"]["memory"]
+    partial = call["continuation"]["context_packet"]["memory_view"]
     assert partial["claims"] == []
     assert partial["missing_information"]
     assert opposition not in {o["observation_id"] for o in partial["observations"]}

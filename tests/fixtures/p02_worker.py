@@ -35,7 +35,12 @@ match = re.search(
     re.MULTILINE | re.DOTALL,
 )
 continuation = json.loads(match.group(1)) if match else None
-memory_view = continuation.get("memory") if isinstance(continuation, dict) else None
+packet = continuation.get("context_packet") if isinstance(continuation, dict) else None
+memory_view = (
+    packet.get("memory_view") if isinstance(packet, dict)
+    else continuation.get("memory") if isinstance(continuation, dict)
+    else None
+)
 observations = {
     item.get("observation_id"): item
     for item in (memory_view or {}).get("observations", [])
