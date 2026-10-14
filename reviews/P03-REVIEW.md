@@ -2,6 +2,9 @@
 
 Reviewed application source `9844d876e8192dd955b3db2606e6f38328cda0e0` against
 `dafb7624`. Application source remained read-only in `codex/p03-review`.
+Revalidated the merged repair at `a72ccfac9f935658527bf9499deeda845ff384d3`.
+The final verdict on that revision remains request changes for the R2 omissions
+described below.
 
 ## Review tasks
 
@@ -11,7 +14,7 @@ Reviewed application source `9844d876e8192dd955b3db2606e6f38328cda0e0` against
 - [x] Test new-packet withdrawal and adaptive feedback with independent source observations.
 - [x] Retain an independent nine-cell fixture baseline and challenge its offline recomputation.
 - [x] Record the findings on the reviewed implementation source.
-- [ ] Verify repairs against the actual merged application revision.
+- [x] Verify repairs against the actual merged application revision.
 
 ## Findings on the reviewed source
 
@@ -42,6 +45,33 @@ findings concern the offline evidence boundary, rather than packet construction.
 These findings do not claim cryptographic authenticity of exported responses.
 They identify concrete internal consistency checks required to bind the result
 to its declared frozen campaign and recorded outcome.
+
+## Merged repair revalidation
+
+Read repair `cd8cd5e9` and independently loaded the actual main source at
+`a72ccfac`. Reused the preserved nine-cell baseline without workers or database
+effects. The unchanged baseline passed, both original findings were rejected,
+instruction and packet mutations were rejected, unknown usage stayed unknown,
+and unrelated receipt costs did not change worker token totals. The original
+six controls passed with exit code 0.
+
+Two requested narrow checks show that R2 is incomplete on this revision.
+
+- Delete only the structured-complete cell's `state.last_observation`, leaving
+  its completed `attempt_observations` unchanged. Recomputation accepts it,
+  reports the cell's grade as `null`, and changes the connected passing baseline
+  flag to `false`. The early return in `_verify_last_observation` must not discard
+  a retained completed outcome when the state copy is absent.
+- Delete `verdict` from both the state observation and matching attempt
+  observation, retaining `passed: true` and all exported operations and receipts.
+  Recomputation accepts the Boolean grade and still reports quality `1.0`.
+  A Boolean grade requires its explicit verifier-operation association. An
+  unknown, ungraded result may legitimately lack that association.
+
+Both cases concern missing outcome-consistency checks within R2. They do not
+require proving response authenticity. The expanded audit returns exit code 2
+on `a72ccfac`. Its log is
+`D:/AI/tools/p03/sol-review/offline-a72ccfac-omissions.log`.
 
 ## Independently verified behavior
 
@@ -126,6 +156,11 @@ $env:S09ISO_TOKEN='fe4a57dc'
 & D:/AI/Agent-Society-v2/.venv/Scripts/python.exe -u reviews/p03_offline_probe.py fixture --root D:/AI/tools/p03/sol-review/fixture
 & D:/AI/Agent-Society-v2/.venv/Scripts/python.exe -u reviews/p03_offline_probe.py audit --root D:/AI/tools/p03/sol-review/fixture
 ```
+
+For the merged-source audit, set `PYTHONPATH` to
+`D:/AI/Agent-Society-v2/src;D:/AI/Agent-Society-v2/tests;D:/AI/Agent-Society-v2`
+and invoke the script from the review checkout. This imports the actual main
+application while keeping the reviewer artifacts in the isolated worktree.
 
 Private logs are `D:/AI/tools/p03/sol-review/consumer-gate.log`,
 `own-probes.log`, and `fixture-gate.log`. The retained fixture archive contains
