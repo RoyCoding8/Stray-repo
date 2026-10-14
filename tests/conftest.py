@@ -42,6 +42,7 @@ def migrated_db(dsn):
         with conn.cursor() as cur:
             for table in _tables(cur):
                 cur.execute(f'TRUNCATE TABLE "{table}" CASCADE')
+            cur.execute("INSERT INTO rsi_memory_clock (id, revision) VALUES (1, 0)")
         conn.commit()
     yield dsn
 
