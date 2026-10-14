@@ -69,6 +69,26 @@ def main():
         findings["outcome_disagrees_with_observation"] = {
             "rejected": False, "verified_quality_rate": result["verified_quality_rate"],
             "baseline_quality_rate": baseline["verified_quality_rate"]}
+    erased_state = copy.deepcopy(records)
+    erased_state[0]["state"].pop("last_observation")
+    try:
+        result = recompute.recompute(manifest, erased_state)
+    except ValueError as exc:
+        findings["completed_observation_erased_from_state"] = {"rejected": True, "reason": str(exc)}
+    else:
+        findings["completed_observation_erased_from_state"] = {
+            "rejected": False, "structured_complete_baseline_pass":
+            result["structured_complete_baseline_pass"], "cell_passed": result["cells"][0]["passed"]}
+    missing_verdict = copy.deepcopy(records)
+    missing_verdict[0]["state"]["last_observation"].pop("verdict")
+    missing_verdict[0]["attempt_observations"][0]["content"].pop("verdict")
+    try:
+        result = recompute.recompute(manifest, missing_verdict)
+    except ValueError as exc:
+        findings["boolean_grade_without_verdict"] = {"rejected": True, "reason": str(exc)}
+    else:
+        findings["boolean_grade_without_verdict"] = {
+            "rejected": False, "verified_quality_rate": result["verified_quality_rate"]}
     disconnected = copy.deepcopy(records)
     invocation = disconnected[0]["invocation"]
     continuation = invocation["continuation"]
