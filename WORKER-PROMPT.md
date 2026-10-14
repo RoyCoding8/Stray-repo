@@ -3,8 +3,9 @@
 P01 and P02 have reached their qualified working checkpoints. Read
 [the ledger](reports/PROJECT-LEDGER.md) for exact source revisions, evidence
 boundaries and outstanding work, then [the master plan](docs/plans/MASTER-PLAN.md)
-for component order. P03, context construction, is next but remains paused.
-No later component is assigned by this file.
+for component order. Complete P02 consolidation and CI repair, then build P03,
+context construction, against its component plan. P04–P10 remain paused.
+Every component ends with consolidation and CI repair before the next begins.
 
 Do not rerun old study prompts or rebuild completed slices without a current
 human assignment. The master plan owns shared implementation and verification

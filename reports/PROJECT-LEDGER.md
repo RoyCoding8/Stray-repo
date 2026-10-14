@@ -39,8 +39,10 @@ dependencies and build order. The three research themes are divided into ten par
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
-The completed implementation batch built P02 on the P01 checkpoint.
-P03–P10 remain paused.
+The completed implementation batch built P02 on the P01 checkpoint. Human
+direction now requires consolidation and CI repair after every component,
+followed by the next assigned part. P03 is assigned after P02 consolidation;
+P04–P10 remain paused.
 
 P02 task list:
 - [x] Ground the existing observation, artifact and consumer paths; compare storage shapes.
@@ -49,6 +51,20 @@ P02 task list:
 - [x] Connect later investigations and qualify acceptance scenarios P02-A through P02-E.
 - [x] Run independent GPT-6.1 Sol High verification and a bounded live contradiction probe.
 - [x] Record exact evidence boundaries, remove owned worktrees and sync the checkpoint.
+- [ ] Consolidate P02, repair the archived restore CI failure, and confirm checkpoint CI.
+
+P03 task list:
+- [ ] Ground the consumer and compare context-policy designs after the P02 gate.
+- [ ] Pin packet identity, allocation, inspection accounting and invocation contracts.
+- [ ] Implement and integrate baseline context, bounded inspections and policy comparison.
+- [ ] Run integrated acceptance scenarios, then independent GPT-6.1 Sol High verification.
+- [ ] Run a prospectively bounded free-route comparison and report its actual limits.
+- [ ] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
+
+Current throughput checkpoint: the blocking gate is P02 consolidation plus CI.
+Restore-test repair and a read-only P02 simplification audit have disjoint scopes.
+The coordinator alone edits shared plans and merges. P03 design begins after
+that gate, with ownership split only once its consumer contract is pinned.
 
 ### P02 implementation checkpoint (2026-10-14)
 
@@ -95,8 +111,8 @@ cell also saw the preceding raw-cell result. This establishes live use at scope,
 not a matched memory advantage, autonomous acquisition, transfer or learning.
 Provider billing and hostile-code containment remain unverified.
 
-The next architectural part is P03, context construction, which remains paused
-pending human assignment. P02 supplies its evidence objects and stable revisions;
+The next architectural part is P03, context construction, assigned after the
+P02 consolidation and CI gate. P02 supplies its evidence objects and stable revisions;
 learned ranking, automatic lesson construction and ongoing campaigns are not
 claimed by this checkpoint. All owned implementation/review worktrees and task
 branches are removed. Only the main checkout remains. The checkpoint is synced to
@@ -317,7 +333,7 @@ can complete an experiment without completing the learning objective.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-The next planned component is P03, currently paused by human direction.
+The next assigned component is P03, after P02 consolidation and CI repair.
 Prospective utility comparisons must account
 for free-router variation and include an unchanged-copy control where relevant.
 Do not re-dispatch closed operations or refund allocations. Live instruction

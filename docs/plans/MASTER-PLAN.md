@@ -51,7 +51,8 @@ The earlier architecture packages map onto these parts. A contains P01–P04. B 
 3. Implement its delivery slices in order. End each slice at a working public consumer and focused check. The owner integrates changes serially.
 4. Run the component's acceptance scenarios against the integrated path. Include an unchanged baseline and a deliberate disconnection or wrong artifact where specified. A broken baseline cannot validate a tamper test.
 5. Run a bounded live path when the component requires model-conditioned behavior. Use an authorized verified free route. A fixture proves mechanics, not model acquisition or learning.
-6. Update the ledger with revision, evidence category, verdict and remaining limitation. Remove replaced callers and owned temporary worktrees. Push the checkpoint backup.
+6. Consolidate before the next component. Remove obsolete callers, duplicate rules and temporary scaffolding. Inspect CI on the integrated checkpoint, reproduce failures, and repair either the implementation or a demonstrably stale test contract. Do not weaken correct assertions to obtain green CI.
+7. Record the consolidation diff and exact verification boundaries in the ledger. Remove owned temporary worktrees and branches, sync the checkpoint backups, and confirm CI is green before starting the next assigned component. Carry unrelated externally blocked checks explicitly instead of calling them passing.
 
 Engineering regressions are the builder's responsibility. Use isolated worktrees for authorized parallel work, with disjoint ownership and serial integration. The master plan does not authorize spawning agents where session instructions require asking first. Paid models and Jev are outside the current scope.
 
@@ -72,6 +73,6 @@ A part is working when its public consumer performs the declared behavior, its a
 
 Do not spend each batch demanding a sustained learning win. Close the mechanism build with attributable behavior and an informative outcome. P10 accumulates longer-term evidence. Formal promotion, deployment qualification and release remain separate milestones.
 
-P01 and P02 reached their qualified component checkpoints. P03 is the next
-planned part; P03–P10 remain paused pending human assignment. The ledger owns
+P01 and P02 reached their qualified component checkpoints. P02 consolidation and
+CI repair precede the assigned P03 build. P04–P10 remain paused. The ledger owns
 exact verification boundaries and outstanding work.
