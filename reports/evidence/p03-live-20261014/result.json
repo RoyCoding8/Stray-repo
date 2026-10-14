@@ -1,0 +1,273 @@
+{
+  "cells": [
+    {
+      "build_counts": {
+        "actions": 0,
+        "claims": 1,
+        "excerpt_bytes": 159,
+        "observations": 2,
+        "packet_bytes": 4830,
+        "scanned_bytes": 0
+      },
+      "build_status": "ready",
+      "cell_id": "p03-context03-structured-1-complete",
+      "condition": "complete",
+      "instruction_bytes": 5067,
+      "known_token_subtotal": 126515,
+      "passed": true,
+      "policy": "structured/1",
+      "receipt_count": 2,
+      "recorded_tokens": 126515,
+      "step_elapsed_ms": 65115,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": true,
+      "worker_usage": {
+        "operation_id": "p01-worker-8a07da48dfac72a44bf42b97314aadb5653120e8366975da57b92033b5ca1259",
+        "status": "measured",
+        "tokens": 126515
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 0,
+        "claims": 1,
+        "excerpt_bytes": 159,
+        "observations": 2,
+        "packet_bytes": 4817,
+        "scanned_bytes": 0
+      },
+      "build_status": "ready",
+      "cell_id": "p03-context03-structured-1-misleading",
+      "condition": "misleading",
+      "instruction_bytes": 5054,
+      "known_token_subtotal": 70748,
+      "passed": false,
+      "policy": "structured/1",
+      "receipt_count": 2,
+      "recorded_tokens": 70748,
+      "step_elapsed_ms": 97379,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": true,
+      "worker_usage": {
+        "operation_id": "p01-worker-d8dd652093208c883c7d27a32e7ac403c2214235a7b3298a45a263bf9bc6672e",
+        "status": "measured",
+        "tokens": 70748
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 0,
+        "claims": 0,
+        "excerpt_bytes": 0,
+        "observations": 0,
+        "packet_bytes": 2386,
+        "scanned_bytes": 0
+      },
+      "build_status": "needs_information",
+      "cell_id": "p03-context03-structured-1-source-removed",
+      "condition": "source-removed",
+      "instruction_bytes": null,
+      "known_token_subtotal": 0,
+      "passed": null,
+      "policy": "structured/1",
+      "receipt_count": 0,
+      "recorded_tokens": 0,
+      "step_elapsed_ms": 1448,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": false,
+      "worker_usage": {
+        "operation_id": null,
+        "status": "not_dispatched",
+        "tokens": 0
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 0,
+        "claims": 0,
+        "excerpt_bytes": 88,
+        "observations": 1,
+        "packet_bytes": 3218,
+        "scanned_bytes": 0
+      },
+      "build_status": "ready",
+      "cell_id": "p03-context03-raw-history-1-complete",
+      "condition": "complete",
+      "instruction_bytes": 3455,
+      "known_token_subtotal": 0,
+      "passed": null,
+      "policy": "raw-history/1",
+      "receipt_count": 1,
+      "recorded_tokens": null,
+      "step_elapsed_ms": 33705,
+      "unknown_usage_operation_count": 1,
+      "unknown_usage_operations": [
+        "p01-worker-8868718b7bae07048e733f2aa13cc5cfc0f62e597c352fbe0415692642542ff8"
+      ],
+      "worker_dispatched": true,
+      "worker_usage": {
+        "operation_id": "p01-worker-8868718b7bae07048e733f2aa13cc5cfc0f62e597c352fbe0415692642542ff8",
+        "status": "unknown",
+        "tokens": null
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 0,
+        "claims": 0,
+        "excerpt_bytes": 88,
+        "observations": 1,
+        "packet_bytes": 3222,
+        "scanned_bytes": 0
+      },
+      "build_status": "ready",
+      "cell_id": "p03-context03-raw-history-1-misleading",
+      "condition": "misleading",
+      "instruction_bytes": 3459,
+      "known_token_subtotal": 114196,
+      "passed": true,
+      "policy": "raw-history/1",
+      "receipt_count": 2,
+      "recorded_tokens": 114196,
+      "step_elapsed_ms": 58340,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": true,
+      "worker_usage": {
+        "operation_id": "p01-worker-f5799fb388bcb4a26e76f1607723caa8ce432b9aaf260a429682bca3ec0aad1a",
+        "status": "measured",
+        "tokens": 114196
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 0,
+        "claims": 0,
+        "excerpt_bytes": 0,
+        "observations": 0,
+        "packet_bytes": 2327,
+        "scanned_bytes": 0
+      },
+      "build_status": "needs_information",
+      "cell_id": "p03-context03-raw-history-1-source-removed",
+      "condition": "source-removed",
+      "instruction_bytes": null,
+      "known_token_subtotal": 0,
+      "passed": null,
+      "policy": "raw-history/1",
+      "receipt_count": 0,
+      "recorded_tokens": 0,
+      "step_elapsed_ms": 999,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": false,
+      "worker_usage": {
+        "operation_id": null,
+        "status": "not_dispatched",
+        "tokens": 0
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 2,
+        "claims": 1,
+        "excerpt_bytes": 159,
+        "observations": 2,
+        "packet_bytes": 4917,
+        "scanned_bytes": 159
+      },
+      "build_status": "ready",
+      "cell_id": "p03-context03-adaptive-1-complete",
+      "condition": "complete",
+      "instruction_bytes": 5154,
+      "known_token_subtotal": 332701,
+      "passed": true,
+      "policy": "adaptive/1",
+      "receipt_count": 2,
+      "recorded_tokens": 332701,
+      "step_elapsed_ms": 120217,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": true,
+      "worker_usage": {
+        "operation_id": "p01-worker-ca0bd64efb37d19bd494be0858e55fab42f1795afa2e652104a32069d8474bcc",
+        "status": "measured",
+        "tokens": 332701
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 2,
+        "claims": 1,
+        "excerpt_bytes": 159,
+        "observations": 2,
+        "packet_bytes": 4904,
+        "scanned_bytes": 159
+      },
+      "build_status": "ready",
+      "cell_id": "p03-context03-adaptive-1-misleading",
+      "condition": "misleading",
+      "instruction_bytes": 5141,
+      "known_token_subtotal": 215387,
+      "passed": null,
+      "policy": "adaptive/1",
+      "receipt_count": 1,
+      "recorded_tokens": 215387,
+      "step_elapsed_ms": 192001,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": true,
+      "worker_usage": {
+        "operation_id": "p01-worker-2a6739c6ce49aa68c9a411474b6cd755c8ec8313d45541573f6c0d65a3e8aff6",
+        "status": "measured",
+        "tokens": 215387
+      }
+    },
+    {
+      "build_counts": {
+        "actions": 0,
+        "claims": 0,
+        "excerpt_bytes": 0,
+        "observations": 0,
+        "packet_bytes": 2382,
+        "scanned_bytes": 0
+      },
+      "build_status": "needs_information",
+      "cell_id": "p03-context03-adaptive-1-source-removed",
+      "condition": "source-removed",
+      "instruction_bytes": null,
+      "known_token_subtotal": 0,
+      "passed": null,
+      "policy": "adaptive/1",
+      "receipt_count": 0,
+      "recorded_tokens": 0,
+      "step_elapsed_ms": 1856,
+      "unknown_usage_operation_count": 0,
+      "unknown_usage_operations": [],
+      "worker_dispatched": false,
+      "worker_usage": {
+        "operation_id": null,
+        "status": "not_dispatched",
+        "tokens": 0
+      }
+    }
+  ],
+  "claim_limit": "recorded outcomes and worker token usage; per-operation costs remain attributed in receipts, and response authenticity is not proven",
+  "dispatched_workers": 6,
+  "known_token_subtotal": 859547,
+  "matrix_cells": 9,
+  "mode": "live",
+  "model_alias": "openrouter/openrouter/free",
+  "recorded_token_total": null,
+  "schema": "p03-context-recompute/1",
+  "source_removal_refusals": 3,
+  "structured_complete_baseline_pass": true,
+  "unknown_usage_operation_count": 1,
+  "unknown_usage_operations": [
+    "p01-worker-8868718b7bae07048e733f2aa13cc5cfc0f62e597c352fbe0415692642542ff8"
+  ],
+  "verified_quality_rate": 0.75
+}

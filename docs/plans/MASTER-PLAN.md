@@ -73,6 +73,7 @@ A part is working when its public consumer performs the declared behavior, its a
 
 Do not spend each batch demanding a sustained learning win. Close the mechanism build with attributable behavior and an informative outcome. P10 accumulates longer-term evidence. Formal promotion, deployment qualification and release remain separate milestones.
 
-P01 and P02 reached their qualified component checkpoints. P02 consolidation and
-CI repair are complete; P03 design is pinned and its build is next. P04–P10 remain paused. The ledger owns
+P01 and P02 reached their qualified component checkpoints. P03 implementation,
+independent review, bounded live comparison and consolidation are complete;
+final checkpoint CI is pending. P04–P10 remain paused. The ledger owns
 exact verification boundaries and outstanding work.

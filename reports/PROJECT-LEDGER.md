@@ -28,7 +28,7 @@ dependencies and build order. The three research themes are divided into ten par
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
-| P03: context construction | Integrated; independent review underway | A bounded evidence-selection policy consumed by actual decisions. |
+| P03: context construction | Working checkpoint; final CI pending | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
@@ -39,7 +39,7 @@ dependencies and build order. The three research themes are divided into ten par
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
-The completed implementation batch built P02 on the P01 checkpoint. Human
+The component batches built P02 and P03 on the P01 checkpoint. Human
 direction now requires consolidation and CI repair after every component,
 followed by the next assigned part. P03 is assigned after P02 consolidation;
 P04–P10 remain paused.
@@ -57,22 +57,79 @@ P03 task list:
 - [x] Ground the consumer and compare two independent context-policy designs after the P02 gate.
 - [x] Pin packet identity, allocation, inspection accounting and invocation contracts in the P03 plan.
 - [x] Implement and integrate baseline context, bounded inspections and policy comparison.
-- [ ] Run integrated acceptance scenarios, then independent GPT-6.1 Sol High verification.
-- [ ] Run a prospectively bounded free-route comparison and report its actual limits.
+- [x] Run integrated acceptance scenarios, then independent GPT-6.1 Sol High verification.
+- [x] Run a prospectively bounded free-route comparison and report its actual limits.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: P03 is integrated at `9844d876`. The coordinator
-passed the combined builder, consumer and migrated P02 gate with 24 tests,
-zero skips, in 486.06 seconds on PostgreSQL 18. The complete nine-cell fixture
-comparison and result-shape regressions passed with five tests in 336.94 seconds
-at `19179650`. That run followed repair of a real unknown-cost result-shape bug
-found by the first integrated comparison. Consolidation then removed mixed-unit
-cost aggregation and premature record publication. Its final focused gate passed
-five tests, one matrix test deselected, in 43.68 seconds at `9844d876`.
-These are separate observed runs, not a whole-repository pass. Independent
-GPT-6.1 Sol High review is now underway on the integrated source. After repairs,
-run the prospectively bounded free-route comparison and finish CI and cleanup.
+Current throughput checkpoint: implementation, independent review, the bounded
+live comparison and consolidation are complete. Final checkpoint CI and backup
+synchronization remain. See the P03 checkpoint below for separate evidence classes.
 P04 remains paused until human authorization.
+
+### P03 implementation and consolidation (2026-10-14)
+
+`rsi.context` constructs one immutable packet per investigation state revision,
+using P02 evidence and claims and the existing command journal. It keeps required
+support and opposition together, selects optional bundles under the complete
+canonical continuation budget, and caches completed bounded inspections. Adaptive
+inspection can change its next query from an earlier result. P01 stores the exact
+packet and binds it to the actual broker instruction; resume retains the admitted
+decision and operation. Changed selected bytes or claim eligibility refuse the
+affected new decision. The validate-only legacy adapter preserves the inherited
+saved-memory contract for pre-P03 pending work.
+
+The replaced memory builder/revalidator were removed from `investigate.py`.
+Consolidation also removed premature comparison publication and an invalid sum
+of CPU and token charges. Worker token usage stays separate from raw operation
+costs. No new migration, service, context lifecycle or grant authority was added.
+
+Coordinator verification on PostgreSQL 18 passed the combined builder, consumer
+and migrated P02 gate with **24 tests, zero skips**, in 486.06 seconds at
+`bf234616`. The complete nine-cell fixture comparison and result-shape regressions
+passed **five tests** in 336.94 seconds at `19179650`, following repair of a real
+late accounting bug caught by its first integrated run. Consolidation passed
+**five tests, one matrix test deselected**, in 43.68 seconds at `9844d876`.
+Neighbor checks separately passed 43 tests; a checkpoint failure caused by the
+missing local `pg_dump` path passed its one-test rerun after environment repair.
+These separate runs are not summed into a whole-repository result.
+
+[GPT-6.1 Sol High review](../reviews/P03-REVIEW.md) independently passed seven
+consumer tests, three source/withdrawal/legacy checks and a retained nine-cell
+fixture baseline. It exposed source-freeze binding and grading-consistency gaps.
+The repairs reject changed prospective hashes, changed or deleted observations
+and grades missing their verifier reference. Final independent audit at source
+`0800a14c` kept the clean baseline passing and rejected all six altered-data
+controls in 3.40 seconds. Unknown usage and cost/token separation stayed correct.
+The coordinator repeated five focused gates in 42.33 seconds before the final
+omission guards; those guards passed three cheap regressions in 1.77 seconds,
+with all three counterexamples accepted by the actual pre-fix source. An extra
+lane matrix run was interrupted and contributes no passing result; its exact
+leftover disposable database was removed. Ruff and whitespace checks passed.
+
+The [live comparison](evidence/p03-live-20261014/README.md) ran once under
+prospective freeze `543a0956`, with separate arm stores and shuffled order.
+Six actual free-route workers yielded **three passes, one failed task and two
+unavailable grades**. All three required-source-removal controls refused without
+dispatch. The structured misleading cell retained the initial procedure and
+failed its empty-input test. Adaptive misleading timed out; raw complete lost
+its response stream. Ten target operations have ten settled receipts and no
+exported unresolved effects. Five worker receipts report a known subtotal of
+859,547 tokens; the missing stream usage leaves the full total unknown.
+The 88-record/artifact archive passes standard-library-only recomputation with
+gateway variables absent and a nonexistent database DSN. Raw duplicate export
+directories were removed after byte verification. No unavailable cell was retried.
+
+This qualifies authored context construction and live use at scope. It does not
+establish a context advantage, autonomous policy acquisition, transfer, learner
+improvement, provider billing, hostile-code containment or deployment. Logical
+inspection counts do not measure all physical reads or interrupted CPU work.
+All owned P03 worktrees and branches are removed. The nine new live databases
+and private run area remain receipt anchors; older live anchors are unchanged.
+Small completed scratch folders under `D:/AI/tools/p03` remain because automatic
+approval review blocked their recursive deletion. They are outside the repository.
+
+CI run `38626500441` passed all seven jobs on the earlier implementation
+`237a7677`. Final source/evidence checkpoint CI is pending. P04 stays paused.
 
 ### P02 consolidation (2026-10-14)
 
