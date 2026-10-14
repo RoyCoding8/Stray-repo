@@ -119,6 +119,42 @@ def _decision_input(record: dict) -> dict | None:
     return visible
 
 
+def _verify_last_observation(record: dict) -> None:
+    observation = (record.get("state") or {}).get("last_observation")
+    if observation is None:
+        return
+    if not isinstance(observation, dict):
+        raise ValueError(f"{record['cell_id']}: last observation is malformed")  # noqa: TRY004
+    attempts = record.get("attempt_observations")
+    if not isinstance(attempts, list):
+        raise ValueError(f"{record['cell_id']}: attempt observations are missing")  # noqa: TRY004
+    matching = [item for item in attempts
+                if isinstance(item, dict) and item.get("content") == observation]
+    if len(matching) != 1:
+        raise ValueError(f"{record['cell_id']}: last observation differs from its attempt observation")
+    attempt = matching[0]
+    decisions = record.get("decisions")
+    if not isinstance(decisions, list):
+        raise ValueError(f"{record['cell_id']}: decisions are missing")  # noqa: TRY004
+    decision_matches = [item for item in decisions
+                        if isinstance(item, dict) and item.get("id") == attempt.get("decision_id")
+                        and item.get("kind") == "worker"]
+    if len(decision_matches) != 1:
+        raise ValueError(f"{record['cell_id']}: last observation has no unique worker decision")
+    worker_operation = (decision_matches[0].get("data") or {}).get("operation_id")
+    if not isinstance(worker_operation, str) or observation.get("episode") != worker_operation:
+        raise ValueError(f"{record['cell_id']}: last observation episode differs from its worker decision")
+    verdict = observation.get("verdict")
+    if verdict is not None:
+        operations = record.get("operations")
+        if (not isinstance(verdict, str) or not isinstance(operations, list)
+                or re.fullmatch(r"rsi-verify-[0-9a-f]{64}", verdict) is None
+                or sum(isinstance(item, dict) and item.get("id") == verdict
+                       for item in operations) != 1
+                or verdict == worker_operation):
+            raise ValueError(f"{record['cell_id']}: last observation verdict has no verifier operation")
+
+
 def _selected_sources(packet: dict) -> dict:
     view = packet.get("memory_view") or {}
     observations = [{
@@ -264,6 +300,11 @@ def recompute(manifest: dict, records: list[dict]) -> dict:
     mode = next(iter(modes))
     if mode == "live" and expected_alias != LIVE_ALIAS:
         raise ValueError("live manifest does not name the permitted free alias")
+    source_pins = manifest.get("source_sha256")
+    if mode == "live" and (not isinstance(source_pins, dict) or not source_pins):
+        raise ValueError("live manifest requires prospective source pins")
+    if "source_sha256" in manifest and (not isinstance(source_pins, dict) or not source_pins):
+        raise ValueError("manifest prospective source pins are malformed")
     if any(record.get("model_alias") != expected_alias for record in by_cell.values()):
         raise ValueError("cell model alias differs from the frozen manifest")
 
@@ -283,6 +324,13 @@ def recompute(manifest: dict, records: list[dict]) -> dict:
         source_digests = freeze.get("source_sha256")
         if not isinstance(source_digests, dict) or not source_digests:
             raise ValueError(f"{cell_id}: source digests are missing")
+        if source_pins is not None:
+            for path, digest in source_digests.items():
+                if source_pins.get(path) != digest:
+                    raise ValueError(f"{cell_id}: runtime source differs from prospective source pin")
+            driver_pin = source_pins.get("experiments/context03/driver.py")
+            if not isinstance(driver_pin, str) or freeze.get("driver_sha256") != driver_pin:
+                raise ValueError(f"{cell_id}: driver differs from prospective source pin")
         if freeze.get("policy") != record["policy"] or freeze.get("condition") != record["condition"]:
             raise ValueError(f"{cell_id}: freeze identity differs from the cell")
         if freeze.get("model_alias") != expected_alias:
@@ -302,6 +350,7 @@ def recompute(manifest: dict, records: list[dict]) -> dict:
         if record.get("selected_sources") != _selected_sources(packet):
             raise ValueError(f"{cell_id}: exported source references differ from the packet")
         visible = _decision_input(record)
+        _verify_last_observation(record)
         condition = record["condition"]
         if condition == "source-removed":
             required_id = record["corpus"]["required_observation_id"]
