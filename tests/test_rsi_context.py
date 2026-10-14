@@ -4,9 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
-from rsi import context, memory
-from settlement.common import ConflictPayload
 from test_rsi_memory_integration import (
     LATER_INSTRUCTION,
     _create,
@@ -14,6 +11,9 @@ from test_rsi_memory_integration import (
     _sources,
     _task,
 )
+
+from rsi import context, memory
+from settlement.common import ConflictPayload
 
 
 def test_context_module_exposes_the_packet_boundary():
@@ -120,6 +120,8 @@ def test_adaptive_policy_search_changes_visible_excerpt_within_byte_budget(
     assert packet["counts"]["actions"] == 2
     assert packet["counts"]["scanned_bytes"] <= 4096
     assert packet["counts"]["excerpt_bytes"] <= 256
+    assert packet["counts"]["excerpt_bytes"] == sum(
+        len(item["text"].encode("utf-8")) for item in packet["excerpts"])
     assert packet["counts"]["packet_bytes"] <= req["budget"]["packet_bytes"]
     assert packet["excerpts"]
     assert {item["observation_id"] for item in packet["memory_view"]["observations"]} == {
@@ -152,7 +154,7 @@ def test_packet_validation_ignores_unselected_memory_growth_and_rejects_tamperin
     migrated_db, tmp_path_factory
 ):
     tmp_path = tmp_path_factory.mktemp("context")
-    run, support, opposition = _lesson_context(tmp_path, migrated_db)
+    run, support, _ = _lesson_context(tmp_path, migrated_db)
     req = _request(run["id"], required_claims=["p02-max-lesson"])
     packet = context.build(migrated_db, req, artifacts_root=run["artifacts_root"])
 
@@ -174,7 +176,7 @@ def test_tiny_budget_returns_information_need_instead_of_truncated_opposition(
     migrated_db, tmp_path_factory
 ):
     tmp_path = tmp_path_factory.mktemp("context")
-    run, support, opposition = _lesson_context(tmp_path, migrated_db)
+    run, _, _ = _lesson_context(tmp_path, migrated_db)
     req = _request(
         run["id"], required_claims=["p02-max-lesson"],
         budget={"packet_bytes": 1000, "scan_bytes": 1000,
