@@ -15,7 +15,7 @@ from settlement.common import SettlementError, StaleRevision
 from . import experience
 
 _STATUSES = {"untested", "supported", "challenged", "withdrawn", "superseded"}
-_VIEWS = {"structured", "raw-history"}
+VIEWS = frozenset({"structured", "raw-history"})
 _MAX_TEXT = 16 * 1024
 _MAX_PURPOSE = 1024
 _MAX_SCOPE_ITEMS = 16
@@ -457,7 +457,7 @@ def query(dsn: str, *, purpose: str, investigation_id: str, scope: dict,
     scope = _scope(scope, "query scope")
     if visibility != "learner":
         raise SettlementError("unsupported memory visibility")
-    if view not in _VIEWS:
+    if view not in VIEWS:
         raise SettlementError("view must be structured or raw-history")
     if type(limit) is not int or limit < 1 or limit > _MAX_QUERY_LIMIT:
         raise SettlementError(f"limit must be between 1 and {_MAX_QUERY_LIMIT}")

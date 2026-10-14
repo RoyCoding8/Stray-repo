@@ -21,7 +21,6 @@ __all__ = ["create", "export", "read", "run", "step"]
 QUESTION = "Does the solution satisfy the task obligation?"
 POLICY = {"id": "task-seed/1"}
 MEMORY_DEFAULT = {"scope": {"domain": "task"}, "view": "structured", "limit": 10}
-MEMORY_VIEWS = {"structured", "raw-history"}
 
 
 def _require(result):
@@ -40,7 +39,7 @@ def _memory_options(value):
     limit = value.get("limit", MEMORY_DEFAULT["limit"])
     if not isinstance(scope, dict):
         raise SettlementError("memory scope must be an object")
-    if not isinstance(view, str) or view not in MEMORY_VIEWS:
+    if not isinstance(view, str) or view not in memory.VIEWS:
         raise SettlementError("memory view must be structured or raw-history")
     if type(limit) is not int or limit <= 0:
         raise SettlementError("memory limit must be a positive integer")

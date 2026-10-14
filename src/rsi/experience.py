@@ -240,17 +240,13 @@ def _source(cur, dsn: str, artifacts_root: str | Path, observation_id: int,
 
 
 def _captured(cur, source: dict) -> dict:
-    cur.execute("SELECT observation_id, revision, source_digest, scope, visibility"
-                " FROM rsi_memory_experiences WHERE observation_id = %s",
-                (source["observation_id"],))
-    existing = cur.fetchone()
+    existing = _captured_read(cur, source["observation_id"])
     if existing is not None:
-        record = dict(existing)
-        if (record["source_digest"] != source["source_digest"]
-                or dict(record["scope"] or {}) != source["scope"]
-                or record["visibility"] != source["visibility"]):
+        if (existing["source_digest"] != source["source_digest"]
+                or existing["scope"] != source["scope"]
+                or existing["visibility"] != source["visibility"]):
             raise SettlementError("captured observation source changed")
-        return {**record, "scope": dict(record["scope"] or {})}
+        return existing
     revision = _next_revision(cur)
     cur.execute("INSERT INTO rsi_memory_experiences"
                 " (observation_id, revision, source_digest, scope, visibility)"
