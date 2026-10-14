@@ -175,6 +175,12 @@ def test_withdrawn_exact_ancestor_hides_dependent_claim_but_asof_keeps_it(
         derived_from=(("superseded-source", 1),), artifacts_root=roots["artifacts_root"],
     )
     memory.revise(
+        dsn, claim_id="transitive-dependent", expected_version=0,
+        text="later execution path", scope={"domain": "task"},
+        status="supported", derived_from=(("superseded-dependent", 1),),
+        artifacts_root=roots["artifacts_root"],
+    )
+    memory.revise(
         dsn, claim_id="superseding-replacement", expected_version=0,
         text="replacement policy", scope={"domain": "task"}, status="supported",
         derived_from=(("superseded-source", 1),),
@@ -188,6 +194,11 @@ def test_withdrawn_exact_ancestor_hides_dependent_claim_but_asof_keeps_it(
     assert [item["claim_id"] for item in superseded["claims"]] == [
         "superseding-replacement",
     ]
+    transitive = memory.query(
+        dsn, purpose="later execution path", investigation_id=investigation_id,
+        scope={"domain": "task"}, artifacts_root=roots["artifacts_root"],
+    )
+    assert transitive["claims"] == []
 
 
 def test_checked_original_experience_is_searchable_without_claims(

@@ -403,7 +403,7 @@ def _stale_ancestry(row: dict, heads: dict[str, dict],
         if ancestor is None:
             return True
         seen.add(key)
-        if _stale_ancestry(ancestor, heads, versions, seen):
+        if _stale_ancestry(ancestor, heads, versions, superseded, seen):
             return True
         seen.remove(key)
     return False
