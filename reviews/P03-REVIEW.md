@@ -1,10 +1,16 @@
 # Independent P03 review
 
-Reviewed application source `9844d876e8192dd955b3db2606e6f38328cda0e0` against
-`dafb7624`. Application source remained read-only in `codex/p03-review`.
-Revalidated the merged repair at `a72ccfac9f935658527bf9499deeda845ff384d3`.
-The final verdict on that revision remains request changes for the R2 omissions
-described below.
+**Final verdict: clear at the reviewed scope.** Independently revalidated actual
+main source `0800a14c8461634c5b3e02d8e8142911baccbc61`. The unchanged retained
+nine-cell baseline passed. All six altered-data controls were rejected, and both
+usage controls passed. No material findings remain open within this review.
+No live comparison, whole-repository, CI, or deployment result is inferred.
+
+The original application review covered
+`9844d876e8192dd955b3db2606e6f38328cda0e0` against `dafb7624`. Intermediate repair
+`a72ccfac9f935658527bf9499deeda845ff384d3` fixed the original counterexamples but
+retained two R2 omissions. Both are repaired in the final source. Application
+source remained read-only throughout this independent review.
 
 ## Review tasks
 
@@ -16,10 +22,11 @@ described below.
 - [x] Record the findings on the reviewed implementation source.
 - [x] Verify repairs against the actual merged application revision.
 
-## Findings on the reviewed source
+## Historical findings on the original source
 
-Request changes before the live comparison. Two independently reproduced P2
-findings concern the offline evidence boundary, rather than packet construction.
+The original verdict requested changes before the live comparison. Two
+independently reproduced P2 findings concerned the offline evidence boundary,
+rather than packet construction.
 
 1. **Bind cell source hashes to the prospective manifest.**
    `experiments/context03/recompute.py:283` reads each cell's source hashes and
@@ -47,6 +54,19 @@ They identify concrete internal consistency checks required to bind the result
 to its declared frozen campaign and recorded outcome.
 
 ## Merged repair revalidation
+
+Final revalidation read repair `a4fa9277`, confirmed main revision `0800a14c`,
+and loaded the application from main through `PYTHONPATH`. The retained-baseline
+audit passed with exit code 0 in 3.40 seconds. It rejected a mismatched prospective
+source pin, a changed state grade, an erased state observation, a Boolean grade
+without a verifier reference, an actually disconnected rendered instruction,
+and a changed packet. Unknown worker usage stayed unknown. Unrelated receipt
+costs did not change worker token totals. The valid source-removed cells remained
+accepted as refusals, with no observation or dispatch. No workers or database
+effects were rerun. The final log is
+`D:/AI/tools/p03/sol-review/offline-0800a14c.log`.
+
+The following records the intermediate repair and its remaining omissions.
 
 Read repair `cd8cd5e9` and independently loaded the actual main source at
 `a72ccfac`. Reused the preserved nine-cell baseline without workers or database
