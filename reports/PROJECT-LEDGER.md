@@ -28,7 +28,7 @@ dependencies and build order. The three research themes are divided into ten par
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
-| P03: context construction | Implementing baseline and consumer | A bounded evidence-selection policy consumed by actual decisions. |
+| P03: context construction | Integrated; independent review underway | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
@@ -56,22 +56,22 @@ P02 task list:
 P03 task list:
 - [x] Ground the consumer and compare two independent context-policy designs after the P02 gate.
 - [x] Pin packet identity, allocation, inspection accounting and invocation contracts in the P03 plan.
-- [ ] Implement and integrate baseline context, bounded inspections and policy comparison.
+- [x] Implement and integrate baseline context, bounded inspections and policy comparison.
 - [ ] Run integrated acceptance scenarios, then independent GPT-6.1 Sol High verification.
 - [ ] Run a prospectively bounded free-route comparison and report its actual limits.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: the P03 context builder is integrated through
-`1ad5e2f0`. The coordinator passed all nine builder tests on PostgreSQL 18,
-zero skips, in 146.19 seconds. Interrupted builds reuse completed inspection
-results under stable request and ordinal identities. Selection keeps required
-support and opposition together, including when unrelated records are present.
-The consumer lane passed seven integration tests and eight migrated P02 tests;
-its final consumption check and integration are still underway. The comparison
-lane is waiting for that consumer commit before running the nine-cell fixture
-comparison. These are focused lane results, not the integrated acceptance gate.
-Independent GPT-6.1 Sol High review follows the integrated gate. Then run the
-bounded free-route comparison and finish consolidation, CI and cleanup.
+Current throughput checkpoint: P03 is integrated at `9844d876`. The coordinator
+passed the combined builder, consumer and migrated P02 gate with 24 tests,
+zero skips, in 486.06 seconds on PostgreSQL 18. The complete nine-cell fixture
+comparison and result-shape regressions passed with five tests in 336.94 seconds
+at `19179650`. That run followed repair of a real unknown-cost result-shape bug
+found by the first integrated comparison. Consolidation then removed mixed-unit
+cost aggregation and premature record publication. Its final focused gate passed
+five tests, one matrix test deselected, in 43.68 seconds at `9844d876`.
+These are separate observed runs, not a whole-repository pass. Independent
+GPT-6.1 Sol High review is now underway on the integrated source. After repairs,
+run the prospectively bounded free-route comparison and finish CI and cleanup.
 P04 remains paused until human authorization.
 
 ### P02 consolidation (2026-10-14)
