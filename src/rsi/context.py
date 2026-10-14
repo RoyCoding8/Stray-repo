@@ -289,22 +289,42 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
             text = item.get("content", {}).get("task_instruction", "")
             if not isinstance(text, str):
                 continue
-            result, scanned, used = _inspect(text, inspection_terms, scan_left, excerpt_left)
-            counts["actions"] += 1
+            ordinal = counts["actions"] + 1
+            action_identity = {"request_digest": _digest(request), "ordinal": ordinal}
+            action_input = {
+                **action_identity,
+                "revision": revision,
+                "observation_id": item["observation_id"],
+                "terms": inspection_terms,
+                "scan_limit": scan_left,
+                "excerpt_limit": excerpt_left,
+            }
+            action_id = f"rsi-context-inspect:{_digest(action_identity)}"
+
+            def inspect_action(cur, _control, source=text, query_terms=inspection_terms,
+                               scan_limit=scan_left, excerpt_limit=excerpt_left):
+                result, scanned, used = _inspect(
+                    source, query_terms, scan_limit, excerpt_limit)
+                data = {"result": result, "scanned_bytes": scanned, "excerpt_bytes": used}
+                return ResultCode.APPLIED, "context inspection cached", data, [], []
+
+            action = store.transact(
+                dsn, Command(request_id=action_id, payload=action_input), inspect_action)
+            if action.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+                raise SettlementError(action.detail)
+            cached = action.data
+            result = cached.get("result")
+            scanned = cached.get("scanned_bytes")
+            used = cached.get("excerpt_bytes")
+            if (not isinstance(result, dict) or type(scanned) is not int
+                    or type(used) is not int or scanned < 0 or used < 0
+                    or scanned > scan_left or used > excerpt_left):
+                raise SettlementError("cached context inspection is malformed or exceeds its input budget")
+            counts["actions"] = ordinal
             counts["scanned_bytes"] += scanned
             counts["excerpt_bytes"] += used
             scan_left -= scanned
             excerpt_left -= used
-            # Stable action identity is scoped to this pinned request and ordinal.
-            action_payload = {"request_digest": _digest(request), "revision": revision,
-                              "ordinal": counts["actions"], "observation_id": item["observation_id"],
-                              "result": result}
-            action_id = f"rsi-context-inspect:{_digest(action_payload)}"
-
-            def save_action(cur, _control, data=result):
-                return ResultCode.APPLIED, "context inspection cached", data, [], []
-
-            store.transact(dsn, Command(request_id=action_id, payload=action_payload), save_action)
             if result["matched"] and result["excerpt"]:
                 excerpts.append({"observation_id": item["observation_id"],
                                  "text": result["excerpt"], "matched_terms": result["terms"]})
