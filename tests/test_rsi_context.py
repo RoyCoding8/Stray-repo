@@ -9,10 +9,11 @@ from test_rsi_memory_integration import (
     _create,
     _revise_lesson,
     _sources,
+    _step,
     _task,
 )
 
-from rsi import context, memory
+from rsi import context, investigation, memory
 from settlement.common import ConflictPayload
 
 
@@ -46,6 +47,12 @@ def _request(investigation_id, *, policy="structured/1", required_obs=(),
         "required_claim_ids": list(required_claims),
         **({"budget": budget} if budget is not None else {}),
     }
+
+
+def _state_revision(request, revision):
+    request["state_revision"] = revision
+    request["continuation"]["state_revision"] = revision
+    return request
 
 
 def _lesson_context(tmp_path, migrated_db):
@@ -185,3 +192,127 @@ def test_tiny_budget_returns_information_need_instead_of_truncated_opposition(
     packet = context.build(migrated_db, req, artifacts_root=run["artifacts_root"])
     assert packet["status"] == "needs_information"
     assert packet["needs"]
+
+
+def test_selection_discards_interleaved_unrelated_lessons_and_preserves_raw_roots(
+    migrated_db, tmp_path_factory
+):
+    tmp_path = tmp_path_factory.mktemp("context-selection")
+
+    def source(name, instruction):
+        run = _create(tmp_path, migrated_db, name, _task(name, instruction))
+        result = _step(run)
+        assert result.get("last_observation") is not None
+        observation_id = investigation.export(migrated_db, name)["observations"][0]["id"]
+        return run, observation_id
+
+    relevant, support = source(
+        "context-selection-support",
+        "Implement maximum(xs) for a nonempty list and return its largest value.",
+    )
+    noise_before, noise_before_id = source(
+        "context-selection-noise-before",
+        "Tessellate a hexagonal field with alternating amber bands.",
+    )
+    memory.revise(
+        migrated_db, claim_id="context-noise-before", expected_version=0,
+        text="Amber hexagons alternate along the tessellation boundary.",
+        scope={"domain": "task"}, status="untested", support=(noise_before_id,),
+        opposition=(), artifacts_root=noise_before["artifacts_root"],
+    )
+    _, opposition = source(
+        "context-selection-opposition",
+        "Implement maximum(xs) and return 0 when xs is empty; otherwise return its largest value.",
+    )
+    _revise_lesson(
+        migrated_db, relevant["artifacts_root"], support, opposition,
+        claim_id="context-relevant-maximum",
+    )
+    noise_after, noise_after_id = source(
+        "context-selection-noise-after",
+        "Rotate a Möbius strip by three quarter turns.",
+    )
+    memory.revise(
+        migrated_db, claim_id="context-noise-after", expected_version=0,
+        text="Möbius surface orientation persists through three revolutions.",
+        scope={"domain": "task"}, status="untested", support=(noise_after_id,),
+        opposition=(), artifacts_root=noise_after["artifacts_root"],
+    )
+
+    request = _request(
+        relevant["id"], budget={"packet_bytes": 8_000, "scan_bytes": 8_192,
+                                "excerpt_bytes": 256, "actions": 2},
+    )
+    selected = context.build(migrated_db, request, artifacts_root=relevant["artifacts_root"])
+    claims = selected["memory_view"]["claims"]
+    relevant_claim, = [item for item in claims if item["claim_id"] == "context-relevant-maximum"]
+    assert {item["claim_id"] for item in claims} == {"context-relevant-maximum"}
+    assert relevant_claim["support"] == [support]
+    assert relevant_claim["opposition"] == [opposition]
+    assert {item["observation_id"] for item in selected["memory_view"]["observations"]} == {
+        support, opposition,
+    }
+    assert selected["status"] == "ready"
+
+    raw_request = _request(
+        relevant["id"], policy="raw-history/1", required_claims=["context-relevant-maximum"],
+        budget={"packet_bytes": 8_000, "scan_bytes": 8_192,
+                "excerpt_bytes": 256, "actions": 2},
+    )
+    _state_revision(raw_request, 2)
+    raw = context.build(migrated_db, raw_request, artifacts_root=relevant["artifacts_root"])
+    assert raw["status"] == "ready"
+    assert {item["observation_id"] for item in raw["memory_view"]["observations"]} == {
+        support, opposition,
+    }
+
+    bounded_request = _request(
+        relevant["id"], policy="raw-history/1", required_claims=["context-relevant-maximum"],
+        budget={"packet_bytes": 1_000, "scan_bytes": 8_192,
+                "excerpt_bytes": 256, "actions": 2},
+    )
+    _state_revision(bounded_request, 3)
+    bounded = context.build(
+        migrated_db, bounded_request, artifacts_root=relevant["artifacts_root"])
+    assert bounded["status"] == "needs_information"
+    assert bounded["needs"]
+
+
+def test_adaptive_inspection_journal_reuses_completed_actions_after_interruption(
+    migrated_db, tmp_path_factory, monkeypatch
+):
+    tmp_path = tmp_path_factory.mktemp("context-interrupted")
+    run, _, _ = _lesson_context(tmp_path, migrated_db)
+    request = _request(
+        run["id"], policy="adaptive/1", required_claims=["p02-max-lesson"],
+        budget={"packet_bytes": 48_000, "scan_bytes": 4096,
+                "excerpt_bytes": 256, "actions": 2},
+    )
+    real_transact = context.store.transact
+    inspect = context._inspect
+    calls = []
+
+    def counted_inspect(*args):
+        calls.append(args[1])
+        return inspect(*args)
+
+    monkeypatch.setattr(context, "_inspect", counted_inspect)
+
+    def interrupt_packet_finalize(dsn, command, handler, *args):
+        if command.request_id.endswith(":packet"):
+            raise RuntimeError("simulated interruption before packet finalization")
+        return real_transact(dsn, command, handler, *args)
+
+    monkeypatch.setattr(context.store, "transact", interrupt_packet_finalize)
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        context.build(migrated_db, request, artifacts_root=run["artifacts_root"])
+    assert len(calls) == 2
+
+    def must_reuse_cached_action(*_args):
+        raise AssertionError("completed inspection action was recomputed")
+
+    monkeypatch.setattr(context.store, "transact", real_transact)
+    monkeypatch.setattr(context, "_inspect", must_reuse_cached_action)
+    packet = context.build(migrated_db, request, artifacts_root=run["artifacts_root"])
+    assert packet["status"] == "ready"
+    assert packet["counts"]["actions"] == 2
