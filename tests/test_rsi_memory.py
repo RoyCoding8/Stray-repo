@@ -107,6 +107,100 @@ def test_consolidation_keeps_roots_and_withdrawn_ancestry_out_of_current_memory(
         )
 
 
+def test_withdrawn_exact_ancestor_hides_dependent_claim_but_asof_keeps_it(
+    migrated_db, tmp_path
+):
+    run = _scenario(migrated_db, tmp_path, "p02-exact-ancestry", "repair-after-feedback")
+    investigation_id = run["state"]["investigation_id"]
+    dsn = run["dsn"]
+    roots = run["roots"]
+    first = investigate.step(dsn, run["agent"], run["checker"], investigation_id, **roots)
+    assert first["last_observation"]["passed"] is False
+    experience.capture_investigation(dsn, investigation_id, artifacts_root=roots["artifacts_root"])
+    support = export(dsn, investigation_id)["observations"][0]["id"]
+
+    memory.revise(
+        dsn, claim_id="ancestry-root", expected_version=0,
+        text="root method", scope={"domain": "task"}, status="supported",
+        support=(support,), artifacts_root=roots["artifacts_root"],
+    )
+    memory.revise(
+        dsn, claim_id="ancestry-middle", expected_version=0,
+        text="intermediate method", scope={"domain": "task"}, status="supported",
+        derived_from=(("ancestry-root", 1),), artifacts_root=roots["artifacts_root"],
+    )
+    memory.revise(
+        dsn, claim_id="ancestry-child", expected_version=0,
+        text="quaternion eigenvectors", scope={"domain": "task"}, status="supported",
+        derived_from=(("ancestry-middle", 1),), artifacts_root=roots["artifacts_root"],
+    )
+
+    prior = memory.query(
+        dsn, purpose="quaternion eigenvectors", investigation_id=investigation_id,
+        scope={"domain": "task"}, artifacts_root=roots["artifacts_root"],
+    )
+    assert [item["claim_id"] for item in prior["claims"]] == ["ancestry-child"]
+
+    memory.revise(
+        dsn, claim_id="ancestry-middle", expected_version=1,
+        text="independent intermediate", scope={"domain": "task"}, status="supported",
+        support=(support,), artifacts_root=roots["artifacts_root"],
+    )
+    memory.revise(
+        dsn, claim_id="ancestry-root", expected_version=1,
+        text="withdrawn root method", scope={"domain": "task"}, status="withdrawn",
+        artifacts_root=roots["artifacts_root"],
+    )
+
+    current = memory.query(
+        dsn, purpose="quaternion eigenvectors", investigation_id=investigation_id,
+        scope={"domain": "task"}, artifacts_root=roots["artifacts_root"],
+    )
+    historical = memory.query(
+        dsn, purpose="quaternion eigenvectors", investigation_id=investigation_id,
+        scope={"domain": "task"}, artifacts_root=roots["artifacts_root"],
+        revision=prior["revision"],
+    )
+    assert current["claims"] == []
+    assert [item["claim_id"] for item in historical["claims"]] == ["ancestry-child"]
+
+    memory.revise(
+        dsn, claim_id="superseded-source", expected_version=0,
+        text="retired policy", scope={"domain": "task"}, status="supported",
+        support=(support,), artifacts_root=roots["artifacts_root"],
+    )
+    memory.revise(
+        dsn, claim_id="superseded-dependent", expected_version=0,
+        text="derived retired policy", scope={"domain": "task"}, status="supported",
+        derived_from=(("superseded-source", 1),), artifacts_root=roots["artifacts_root"],
+    )
+    memory.revise(
+        dsn, claim_id="transitive-dependent", expected_version=0,
+        text="later execution path", scope={"domain": "task"},
+        status="supported", derived_from=(("superseded-dependent", 1),),
+        artifacts_root=roots["artifacts_root"],
+    )
+    memory.revise(
+        dsn, claim_id="superseding-replacement", expected_version=0,
+        text="replacement policy", scope={"domain": "task"}, status="supported",
+        derived_from=(("superseded-source", 1),),
+        supersedes=(("superseded-source", 1),),
+        artifacts_root=roots["artifacts_root"],
+    )
+    superseded = memory.query(
+        dsn, purpose="derived retired policy", investigation_id=investigation_id,
+        scope={"domain": "task"}, artifacts_root=roots["artifacts_root"],
+    )
+    assert [item["claim_id"] for item in superseded["claims"]] == [
+        "superseding-replacement",
+    ]
+    transitive = memory.query(
+        dsn, purpose="later execution path", investigation_id=investigation_id,
+        scope={"domain": "task"}, artifacts_root=roots["artifacts_root"],
+    )
+    assert transitive["claims"] == []
+
+
 def test_checked_original_experience_is_searchable_without_claims(
     migrated_db, tmp_path, monkeypatch
 ):

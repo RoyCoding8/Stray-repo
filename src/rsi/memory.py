@@ -387,18 +387,25 @@ def _public_claim(row: dict, roots: tuple[set[int], set[int]],
 
 
 def _stale_ancestry(row: dict, heads: dict[str, dict],
-                    seen: set[str] | None = None) -> bool:
+                    versions: dict[tuple[str, int], dict],
+                    superseded: set[tuple[str, int]],
+                    seen: set[tuple[str, int]] | None = None) -> bool:
     seen = set() if seen is None else seen
-    for parent, _version in row["derived_from"]:
-        if parent in seen:
+    for parent, version in row["derived_from"]:
+        key = (parent, int(version))
+        superseded_by_another = key in superseded and [*key] not in row["supersedes"]
+        if key in seen or superseded_by_another:
             return True
         head = heads.get(parent)
         if head is None or head["status"] in {"withdrawn", "superseded"}:
             return True
-        seen.add(parent)
-        if _stale_ancestry(head, heads, seen):
+        ancestor = versions.get(key)
+        if ancestor is None:
             return True
-        seen.remove(parent)
+        seen.add(key)
+        if _stale_ancestry(ancestor, heads, versions, superseded, seen):
+            return True
+        seen.remove(key)
     return False
 
 
@@ -483,7 +490,7 @@ def query(dsn: str, *, purpose: str, investigation_id: str, scope: dict,
             hidden_ancestry = True
             continue
         roots = _scope_roots(roots, row["scope"], captured)
-        if view == "structured" and _stale_ancestry(row, heads):
+        if view == "structured" and _stale_ancestry(row, heads, versions, targets):
             continue
         applicable.append((row, roots))
 
