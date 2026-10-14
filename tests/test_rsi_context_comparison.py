@@ -80,6 +80,33 @@ def test_frozen_nine_cell_fixture_comparison_recomputes_and_rejects_tampering():
     assert result["source_removal_refusals"] == 3
     assert result["structured_complete_baseline_pass"] is True
     assert result["claim_limit"].startswith("recorded outcomes")
+
+    source_pins = dict(records[0]["freeze"]["source_sha256"])
+    source_pins["experiments/context03/driver.py"] = records[0]["freeze"]["driver_sha256"]
+    pinned_manifest = {**manifest, "source_sha256": source_pins}
+    assert recompute.recompute(pinned_manifest, records)["matrix_cells"] == 9
+
+    altered_source_pin = {**pinned_manifest, "source_sha256": dict(source_pins)}
+    altered_source_pin["source_sha256"]["src/rsi/context.py"] = "0" * 64
+    with pytest.raises(ValueError, match="prospective source pin"):
+        recompute.recompute(altered_source_pin, records)
+
+    altered_observation = json.loads(json.dumps(records))
+    baseline_record = next(
+        item for item in altered_observation
+        if item["policy"] == "structured/1" and item["condition"] == "complete"
+    )
+    baseline_record["state"]["last_observation"]["passed"] = False
+    with pytest.raises(ValueError, match="last observation differs from its attempt observation"):
+        recompute.recompute(manifest, altered_observation)
+
+    live_without_pins = json.loads(json.dumps(records))
+    for item in live_without_pins:
+        item["mode"] = "live"
+        item["model_alias"] = recompute.LIVE_ALIAS
+    with pytest.raises(ValueError, match="live manifest requires prospective source pins"):
+        recompute.recompute({**manifest, "model_alias": recompute.LIVE_ALIAS}, live_without_pins)
+
     structured_distractor = next(
         item for item in records
         if item["policy"] == "structured/1" and item["condition"] == "misleading"
