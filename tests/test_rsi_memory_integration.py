@@ -417,3 +417,57 @@ def test_p02_d_sealed_task_package_does_not_enter_learner_memory(
     assert "return max(xs) if xs else 0" not in memory_text
     assert call["continuation"]["memory"]["claims"] == []
     assert call["continuation"]["memory"]["observations"] == []
+
+
+@pytest.mark.parametrize("view", ["structured", "raw-history"])
+def test_discovery_gaps_do_not_block_valid_selected_evidence(
+    migrated_db, tmp_path_factory, monkeypatch, view,
+):
+    root = tmp_path_factory.mktemp("p02")
+    unrelated = _create(root, migrated_db, "other", _task("other", "Zygote spectra resonance."))
+    assert _step(unrelated)["status"] == "completed"
+    baseline = _create(root, migrated_db, "base", _task("base", "Quaternion eigenvectors."))
+    assert _step(baseline)["status"] == "completed"
+    baseline_id = state_store.export(migrated_db, baseline["id"])["observations"][0]["id"]
+    missing_path = unrelated["artifacts_root"] / unrelated["task"].digest
+    original_bytes = missing_path.read_bytes()
+    missing_path.unlink()
+    options = {"scope": {"domain": "task"}, "view": view, "limit": 10}
+    target = _create(root, migrated_db, "target", _task("target", "Quaternion eigenvectors."),
+                     memory_options=options)
+    assert _step(target)["status"] == "completed"
+    call, = _worker_calls(target)
+    partial = call["continuation"]["memory"]
+    assert partial["missing_information"]
+    assert [o["observation_id"] for o in partial["observations"]] == [baseline_id]
+    missing_path.write_bytes(original_bytes)
+
+    # A small candidate window exercises the same boundary as a large history.
+    monkeypatch.setattr(memory, "_MAX_QUERY_IDS", 1)
+    bounded = _create(root, migrated_db, "bounded", _task("bounded", "Quaternion eigenvectors."),
+                      memory_options=options)
+    assert _step(bounded)["status"] == "completed"
+    bounded_call, = _worker_calls(bounded)
+    bounded_memory = bounded_call["continuation"]["memory"]
+    assert bounded_memory["missing_information"] == [{
+        "reason": "experience search reached its bounded candidate limit",
+    }]
+    assert len(bounded_memory["observations"]) == 1
+    assert bounded_memory["observations"][0]["content"]["task_instruction"] == "Quaternion eigenvectors."
+
+
+def test_missing_opposition_withholds_lesson_and_exposes_incomplete_discovery(
+    migrated_db, tmp_path_factory,
+):
+    root = tmp_path_factory.mktemp("p02")
+    original, _, changed, failure, support, opposition = _sources(root, migrated_db)
+    _revise_lesson(migrated_db, original["artifacts_root"], support, opposition)
+    target = _create(root, migrated_db, "partial", _task("partial", LATER_INSTRUCTION, empty=True))
+    (changed["artifacts_root"] / failure["last_observation"]["solution"]).unlink()
+    result = _step(target)
+    call, = _worker_calls(target)
+    partial = call["continuation"]["memory"]
+    assert partial["claims"] == []
+    assert partial["missing_information"]
+    assert opposition not in {o["observation_id"] for o in partial["observations"]}
+    assert result["last_observation"]["passed"] is False

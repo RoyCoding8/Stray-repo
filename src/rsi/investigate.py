@@ -83,8 +83,6 @@ def _revalidate_memory(dsn, snapshot, artifacts_root):
         raise SettlementError("pinned memory observation identity is missing")
     if len(set(ids)) != len(ids):
         raise SettlementError("pinned memory snapshot repeats an observation")
-    if snapshot.get("missing_information"):
-        raise SettlementError("pinned memory snapshot has missing evidence")
     resolved = experience.resolve(
         dsn, ids, artifacts_root=artifacts_root,
         revision=snapshot.get("revision"), visibility="learner")
@@ -204,6 +202,8 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
                                          "status": "refused", "passed": None,
                                          "verdict": None, "solution": None}}))
             state = investigation.read(dsn, investigation_id)
+        experience.capture_investigation(
+            dsn, investigation_id, artifacts_root=artifacts_root)
         return {**state, "execution_error": str(exc)}
     history = investigation.export(dsn, investigation_id)
     spent = len(history["decisions"])

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from rsi import experience, genome, investigate, task
+from rsi import experience, genome, investigate, memory, task
 from settlement import store
 from settlement.common import Command, SettlementError
 from settlement.launcher_codex import CodexLauncher, Provider
@@ -227,6 +227,13 @@ def test_verifier_refusal_preserves_completed_worker(migrated_db, tmp_path_facto
     with store.db.connect(migrated_db) as conn:
         episode, = conn.execute("SELECT status FROM rsi_episodes").fetchone()
     assert episode == "completed"
+    result = memory.query(
+        migrated_db, purpose="Implement add so it returns the sum.",
+        investigation_id=run["investigation_id"], scope={"domain": "task"},
+        artifacts_root=run["roots"]["artifacts_root"], view="raw-history")
+    original, = result["observations"]
+    assert original["content"]["status"] == "refused"
+    assert original["content"]["passed"] is None
 
     captured, = experience.capture_investigation(
         migrated_db, run["investigation_id"], artifacts_root=run["roots"]["artifacts_root"])

@@ -80,7 +80,12 @@ Both views can discover scoped original experience by public task instruction
 before any lesson is written. Normal raw-history lookup does not search claim
 text. Exact claim IDs can select original roots without rendering the claim.
 Candidate resolution is bounded to 256 original references and reports incomplete
-search explicitly. P03 owns improved selection when that simple bound is reached.
+search explicitly. Discovery warnings remain visible to the worker; incomplete
+search or an unavailable unselected candidate does not block a valid decision.
+Withhold a lesson as a whole when any required root is unavailable, including its
+opposition. Every selected original is still mandatory for dispatch and must pass
+byte revalidation. Partial discovery never means a complete search or clean absence.
+P03 owns improved selection when that simple bound is reached.
 The returned revision is a committed memory high-water mark; querying an earlier
 revision selects the same captured references and claim versions after restart.
 Byte availability remains a current qualification and may change independently.
