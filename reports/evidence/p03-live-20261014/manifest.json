@@ -1,0 +1,111 @@
+{
+  "databases": {
+    "p03-context03-adaptive-1-complete": "p03_live_20261014_2",
+    "p03-context03-adaptive-1-misleading": "p03_live_20261014_4",
+    "p03-context03-adaptive-1-source-removed": "p03_live_20261014_9",
+    "p03-context03-raw-history-1-complete": "p03_live_20261014_5",
+    "p03-context03-raw-history-1-misleading": "p03_live_20261014_3",
+    "p03-context03-raw-history-1-source-removed": "p03_live_20261014_7",
+    "p03-context03-structured-1-complete": "p03_live_20261014_1",
+    "p03-context03-structured-1-misleading": "p03_live_20261014_6",
+    "p03-context03-structured-1-source-removed": "p03_live_20261014_8"
+  },
+  "grading": "Unchanged pristine maximum task; fixture priors and authored claims.",
+  "limits": "Six bounded worker invocations, not six provider HTTP turns or an invoice ceiling.",
+  "live_worker_actions_max": 6,
+  "matrix": [
+    [
+      "structured/1",
+      "complete"
+    ],
+    [
+      "structured/1",
+      "misleading"
+    ],
+    [
+      "structured/1",
+      "source-removed"
+    ],
+    [
+      "raw-history/1",
+      "complete"
+    ],
+    [
+      "raw-history/1",
+      "misleading"
+    ],
+    [
+      "raw-history/1",
+      "source-removed"
+    ],
+    [
+      "adaptive/1",
+      "complete"
+    ],
+    [
+      "adaptive/1",
+      "misleading"
+    ],
+    [
+      "adaptive/1",
+      "source-removed"
+    ]
+  ],
+  "model_alias": "openrouter/openrouter/free",
+  "order_seed": 20261014,
+  "request_retries": 0,
+  "run_order": [
+    [
+      "structured/1",
+      "complete"
+    ],
+    [
+      "adaptive/1",
+      "complete"
+    ],
+    [
+      "raw-history/1",
+      "misleading"
+    ],
+    [
+      "adaptive/1",
+      "misleading"
+    ],
+    [
+      "raw-history/1",
+      "complete"
+    ],
+    [
+      "structured/1",
+      "misleading"
+    ],
+    [
+      "raw-history/1",
+      "source-removed"
+    ],
+    [
+      "structured/1",
+      "source-removed"
+    ],
+    [
+      "adaptive/1",
+      "source-removed"
+    ]
+  ],
+  "schema": "p03-live-campaign/1",
+  "source": "136197190eb3407e78c0cc874fe9b29d41038d89",
+  "source_sha256": {
+    "experiments/context03/driver.py": "f66a61b994329f9c476a5b1baf1dcfc213fcc54ef5727a1440bbf776ad2adf5e",
+    "experiments/context03/recompute.py": "df74cba11d8f94a2b31055affa8abf1850ec76a284d9d6d7f71b963ce80b40a2",
+    "src/rsi/context.py": "eb32fbd1d157d585bf1dc6518da0865f7381922f2895cd71d10c0c3f3d0a55ac",
+    "src/rsi/episode.py": "77b93daeafdbf8b8db6a6d0bf8e2ba1eab489040129ddcc4fb6166516f079cae",
+    "src/rsi/investigate.py": "156d3c5eec5c16a45124cca5354ef825d56259fcbb834914574582bda0229dd7",
+    "src/settlement/broker.py": "a5b3957fc49b6c81480ba7ce7d8336d2e12c5b6db62317288ee155c9294dc2d6",
+    "src/settlement/launcher_codex.py": "15a46d0a465a8342fb66b353422f42ea72067eadd21b2f163bcada94a4bdd99e"
+  },
+  "stream_retries": 0,
+  "underlying_model": "Dynamic free router; underlying provider model is not pinned.",
+  "worker_actions_per_cell_max": 1,
+  "worker_timeout_ms": 180000,
+  "worker_token_allowance": 500000
+}
