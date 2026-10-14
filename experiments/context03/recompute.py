@@ -189,16 +189,13 @@ def _verify_invocation(record: dict, visible: dict, packet: dict) -> None:
 
 def _operation_usage(operation: dict) -> dict:
     operation_id = operation.get("id")
-    unknown = {"operation_id": operation_id, "tokens": None, "status": "unknown",
-               "actual_cost_units": None}
+    unknown = {"operation_id": operation_id, "tokens": None, "status": "unknown"}
     receipts = operation.get("receipts")
     if not isinstance(receipts, list) or operation.get("settled") is not True:
         return unknown
     if not receipts:
         return unknown
     total = 0
-    actual_cost = 0
-    cost_complete = True
     identities = set()
     for receipt in receipts:
         if (not isinstance(receipt, dict) or receipt.get("operation_id") != operation_id
@@ -214,13 +211,23 @@ def _operation_usage(operation: dict) -> dict:
                 or min(tokens["input_tokens"], tokens["output_tokens"]) < 0):
             return unknown
         total += tokens["input_tokens"] + tokens["output_tokens"]
-        cost = receipt.get("actual_cost")
-        if type(cost) is not int or cost < 0:
-            cost_complete = False
-        else:
-            actual_cost += cost
-    return {"operation_id": operation_id, "tokens": total, "status": "measured",
-            "actual_cost_units": actual_cost if cost_complete else None}
+    return {"operation_id": operation_id, "tokens": total, "status": "measured"}
+
+
+def _aggregate_worker_usage(operations: list[dict], worker_id: str | None) -> dict:
+    if worker_id is None:
+        return {"recorded_tokens": 0, "known_token_subtotal": 0,
+                "unknown_usage_operations": [], "unknown_usage_operation_count": 0,
+                "worker_usage": {"operation_id": None, "tokens": 0,
+                                 "status": "not_dispatched"}}
+    worker_operation = next((item for item in operations if item.get("id") == worker_id), None)
+    usage = (_operation_usage(worker_operation) if worker_operation is not None else
+             {"operation_id": worker_id, "tokens": None, "status": "unknown"})
+    unknown = [worker_id] if usage["status"] == "unknown" else []
+    subtotal = usage["tokens"] if not unknown else 0
+    return {"recorded_tokens": usage["tokens"], "known_token_subtotal": subtotal,
+            "unknown_usage_operations": unknown,
+            "unknown_usage_operation_count": len(unknown), "worker_usage": usage}
 
 
 def recompute(manifest: dict, records: list[dict]) -> dict:
@@ -336,37 +343,15 @@ def recompute(manifest: dict, records: list[dict]) -> dict:
         packet = record["context_packet"]
         counts = packet.get("counts") or {}
         operations = record.get("operations", [])
-        operation_usage = [_operation_usage(op) for op in operations]
-        unknown_usage = [item["operation_id"] for item in operation_usage
-                         if item["status"] == "unknown"]
-        unknown_cost = [item["operation_id"] for item in operation_usage
-                        if item.get("actual_cost_units") is None]
-        known_subtotal = sum(item["tokens"] for item in operation_usage
-                             if item["status"] == "measured")
-        cost_subtotal = sum(item["actual_cost_units"] or 0 for item in operation_usage)
         all_receipts = [receipt for op in operations for receipt in op.get("receipts", [])]
         invocation = record.get("invocation")
-        worker_usage = next((item for item in operation_usage
-                             if invocation and item["operation_id"] == invocation.get("operation_id")), None)
-        if invocation and worker_usage is None:
-            worker_usage = {"operation_id": invocation.get("operation_id"),
-                            "tokens": None, "status": "unknown"}
-            unknown_usage.append(invocation.get("operation_id"))
-        if not invocation:
-            worker_usage = {"operation_id": None, "tokens": 0, "status": "not_dispatched"}
-        if not operations:
-            cost_subtotal = 0
+        usage = _aggregate_worker_usage(
+            operations, invocation.get("operation_id") if invocation else None)
         measured.append({
             "cell_id": record["cell_id"], "policy": policy, "condition": condition,
             "build_status": packet.get("status"), "passed": passed,
             "worker_dispatched": record.get("invocation") is not None,
-            "recorded_tokens": known_subtotal if not unknown_usage else None,
-            "known_token_subtotal": known_subtotal,
-            "unknown_usage_operations": unknown_usage,
-            "unknown_usage_operation_count": len(unknown_usage),
-            "recorded_actual_cost_units": cost_subtotal if not unknown_cost else None,
-            "unknown_cost_operations": unknown_cost,
-            "worker_usage": worker_usage,
+            **usage,
             "receipt_count": len(all_receipts), "step_elapsed_ms": record.get("step_elapsed_ms"),
             "build_counts": {key: counts.get(key) for key in
                              ("claims", "observations", "scanned_bytes", "excerpt_bytes",
@@ -395,14 +380,8 @@ def recompute(manifest: dict, records: list[dict]) -> dict:
                                      for operation_id in item["unknown_usage_operations"]],
         "unknown_usage_operation_count": sum(
             item["unknown_usage_operation_count"] for item in measured),
-        "recorded_actual_cost_units": (
-            sum(item["recorded_actual_cost_units"] for item in measured)
-            if all(item["recorded_actual_cost_units"] is not None for item in measured)
-            else None),
-        "unknown_cost_operations": [operation_id for item in measured
-                                    for operation_id in item["unknown_cost_operations"]],
         "cells": measured,
-        "claim_limit": "recorded outcomes and settlement usage/cost units; no provider invoice or response authenticity is proven",
+        "claim_limit": "recorded outcomes and worker token usage; per-operation costs remain attributed in receipts, and response authenticity is not proven",
     }
 
 

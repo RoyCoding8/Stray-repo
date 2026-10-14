@@ -311,7 +311,7 @@ def _source_digests(repository: Path) -> dict[str, str]:
     return result
 
 
-def _step_record(dsn, identity, step_result, elapsed_ms, output_path, child_log):
+def _step_record(dsn, identity, step_result, elapsed_ms, child_log):
     exported = export_investigation(dsn, identity)
     durable_state = exported["state"]
     decisions = exported["decisions"]
@@ -365,7 +365,7 @@ def _step_record(dsn, identity, step_result, elapsed_ms, output_path, child_log)
     if child_log.is_file():
         child = [json.loads(line) for line in child_log.read_text(encoding="utf-8").splitlines() if line]
     record = {
-        "schema": "p03-context-cell/1", "cell_id": output_path.stem,
+        "schema": "p03-context-cell/1",
         "investigation_id": identity,
         "state": durable_state, "decisions": decisions,
         "attempt_observations": exported["observations"],
@@ -380,7 +380,6 @@ def _step_record(dsn, identity, step_result, elapsed_ms, output_path, child_log)
         "step_elapsed_ms": elapsed_ms,
         "child_inputs": child,
     }
-    _save(output_path, record)
     return record
 
 
@@ -517,7 +516,7 @@ def run_cell(args) -> Path:
                              artifacts_root=roots["artifacts_root"])
     elapsed_ms = (time.monotonic_ns() - started) // 1_000_000
     output_path = evidence_dir / "cell.json"
-    record = _step_record(args.dsn, cell.id, state, elapsed_ms, output_path,
+    record = _step_record(args.dsn, cell.id, state, elapsed_ms,
                           cell_root / f"{cell.id}.jsonl")
     corpus_export = {**corpus, "required_observation_id": required_observation_id}
     corpus_export["digest"] = _digest(_json_bytes(corpus_export))
