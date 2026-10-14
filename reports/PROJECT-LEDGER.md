@@ -28,7 +28,7 @@ dependencies and build order. The three research themes are divided into ten par
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
-| P03: context construction | Planned | A bounded evidence-selection policy consumed by actual decisions. |
+| P03: context construction | In design after P02 consolidation | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
@@ -51,7 +51,7 @@ P02 task list:
 - [x] Connect later investigations and qualify acceptance scenarios P02-A through P02-E.
 - [x] Run independent GPT-6.1 Sol High verification and a bounded live contradiction probe.
 - [x] Record exact evidence boundaries, remove owned worktrees and sync the checkpoint.
-- [ ] Consolidate P02, repair the archived restore CI failure, and confirm checkpoint CI.
+- [x] Consolidate P02, repair the archived restore CI failure, and confirm checkpoint CI (`c998c5d1`, run `38585414989`, all seven jobs green).
 
 P03 task list:
 - [ ] Ground the consumer and compare context-policy designs after the P02 gate.
@@ -61,10 +61,29 @@ P03 task list:
 - [ ] Run a prospectively bounded free-route comparison and report its actual limits.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: the blocking gate is P02 consolidation plus CI.
-Restore-test repair and a read-only P02 simplification audit have disjoint scopes.
-The coordinator alone edits shared plans and merges. P03 design begins after
-that gate, with ownership split only once its consumer contract is pinned.
+Current throughput checkpoint: P02 consolidation and CI passed. P03's blocking
+step is selecting and pinning the packet/consumer contract. Two independent
+read-only designs use isolated worktrees; the coordinator owns shared plans and
+integration. No implementation fan-out occurs before ownership and interfaces
+are pinned. Prefer one context owner and one consumer owner over fragmented
+helpers that share evolving data shapes.
+
+### P02 consolidation (2026-10-14)
+
+Source `c998c5d1` reuses one captured-observation lookup and one immutable set of
+supported memory views. No broader dead path justified deletion. The audited
+production consolidation removes five net lines across three files.
+
+CI run `38581711770` had six green jobs and four archived restore failures.
+The fresh-target fixture cleared only `control`, leaving P02's seeded clock row.
+It now discovers and clears domain tables, preserving the production freshness
+guard. Its real subprocess uses Python instead of the POSIX-only `/bin/true`.
+The lane reproduced four failures before repair, then passed all four on PG18;
+the coordinator repeated all four in 55.46 seconds. The consolidation lane passed
+18 P02 tests in 384.42 seconds. CI run `38585414989` passed all seven jobs on
+`c998c5d1`, including both database shards, three portable jobs and heavy archived
+checks. Owned consolidation worktrees and branches are removed; both backups
+contain the checkpoint. Existing live anchors and evidence remain unchanged.
 
 ### P02 implementation checkpoint (2026-10-14)
 
