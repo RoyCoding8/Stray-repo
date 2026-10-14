@@ -71,7 +71,7 @@ This compatibility behavior is not a newly selected withdrawn claim.
 The retained independent nine-cell fixture comparison completed all nine cells.
 Six workers dispatched, all six passed their pristine task, and all three
 source-removal cells refused before dispatch. The connected structured-complete
-baseline passed. Recomputation measured 5,160 fixture worker tokens and zero
+baseline passed. Recomputation totaled 5,160 tokens reported by fixtures and zero
 unknown worker-usage operations. Replacing one worker's receipt token data with
 `null`, consistently in the invocation and accounting exports, retained unknown
 usage and made the total `null`. The two altered-data controls above were accepted
@@ -80,6 +80,9 @@ Removing the packet from the actual rendered instruction while recomputing that
 instruction's byte count and hash was rejected. Removing observations from the
 packet was also rejected. These controls show that the original checker has
 sensitivity at the packet and invocation boundaries, but not at the two findings.
+Setting every exported receipt's `actual_cost` to 3,000, including verifier
+receipts, left the fixture worker token total at 5,160 and produced no aggregate
+actual-cost field. CPU and model cost figures were not added to worker tokens.
 
 ## Scope and evidence limits
 

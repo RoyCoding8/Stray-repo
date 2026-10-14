@@ -102,6 +102,19 @@ def main():
     assert result["recorded_token_total"] is None
     assert result["unknown_usage_operations"] == [worker_id]
     findings["unknown_worker_usage"] = {"preserved": True}
+    unrelated_costs = copy.deepcopy(records)
+    for record in unrelated_costs:
+        for operation in record["operations"]:
+            for receipt in operation["receipts"]:
+                receipt["actual_cost"] = 3000
+        if record["invocation"]:
+            worker = next(item for item in record["operations"]
+                          if item["id"] == record["invocation"]["operation_id"])
+            record["invocation"]["receipts"] = worker["receipts"]
+    result = recompute.recompute(manifest, unrelated_costs)
+    assert result["recorded_token_total"] == 5160
+    assert "total_actual_cost" not in result
+    findings["worker_tokens_exclude_unrelated_costs"] = {"preserved": True}
     (root / "probe-results.json").write_text(json.dumps(findings, indent=2), encoding="utf-8")
     print(json.dumps(findings, indent=2), flush=True)
     if not all(item.get("rejected", True) for item in findings.values()):
