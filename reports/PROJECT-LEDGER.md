@@ -28,7 +28,7 @@ dependencies and build order. The three research themes are divided into ten par
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
-| P03: context construction | Design pinned; implementation next | A bounded evidence-selection policy consumed by actual decisions. |
+| P03: context construction | Implementing baseline and consumer | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
@@ -66,11 +66,14 @@ Luna designs and a Luna cross-review informed the pinned P03 plan: one immutable
 packet per decision, required/optional evidence semantics, complete opposition
 bundles and bounded inspection within one builder. The coordinator removed the
 proposed separate context lifecycle and premature per-read reservation service.
-P03 code is not implemented. Next is the deterministic baseline through the real
-P01 consumer, followed by active inspection and a matched policy comparison.
-Independent Sol verification follows the integrated implementation gate.
-All three read-only design worktrees and branches are removed; only the main
-checkout remains. This checkpoint changes plans and status, not P03 runtime code.
+P03 implementation is assigned through completion and consolidation. Blocking
+first step is the shared request/packet contract. Independent workstreams are
+one context builder and one P01 consumer migration with disjoint test ownership.
+The command journal is shared durable state; the existing transaction owner
+serializes its writes. The smallest safe decomposition is these two owners,
+then integrated acceptance and policy comparison. Independent Sol verification
+follows that implementation gate. The earlier three read-only design worktrees
+and branches are removed. P04 remains paused until human authorization.
 
 ### P02 consolidation (2026-10-14)
 
