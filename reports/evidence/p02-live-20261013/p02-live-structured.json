@@ -1,0 +1,206 @@
+{
+  "state": {
+    "investigation_id": "p02-live-structured",
+    "objective": "Implement maximum(xs), including the empty-input convention. Determine that convention from earlier checked maximum experience in memory.",
+    "objective_revision": 1,
+    "revision": 2,
+    "status": "completed",
+    "domain": "task",
+    "config": {
+      "task": "6e29c2dbcd60b2d3a212bee6b1b80adfa8e0edc8eab8a38dd890153ae228cae6",
+      "model": "openrouter/openrouter/free",
+      "genome": "7026e1719f86b7ab2a3435b8601b3add2f91f291db05e93b4797c05365e2d73f",
+      "memory": {
+        "view": "structured",
+        "limit": 5,
+        "scope": {
+          "domain": "task"
+        }
+      },
+      "max_steps": 1,
+      "timeout_ms": 180000,
+      "token_ceiling": 500000,
+      "cpu_allocation": "p02-live-structured-cpu",
+      "token_allocation": "p02-live-structured-tokens"
+    },
+    "policy": {
+      "id": "task-seed/1"
+    },
+    "open_questions": [],
+    "artifact_refs": {
+      "solution": "de56d411a2bb9027ad51a02cb1fa567a1631fead1927cf24855c4bd2fa20d556",
+      "trajectory": "f0ceb2b6dbfebc2012657c526e4a3a6c88c12eaaa428688b347cd84cb3e7ced9"
+    },
+    "pending_decision": null,
+    "last_observation": {
+      "passed": true,
+      "reason": "",
+      "status": "passed",
+      "episode": "p01-worker-9b34332f4ff07f2eb7af55acd8897fd447302b9bfc1097c72f5a8d124121e855",
+      "verdict": "rsi-verify-6c9732a32a1cff085d88bae62a7e369a81027085c85f1607c31e2e557fe86588",
+      "solution": "de56d411a2bb9027ad51a02cb1fa567a1631fead1927cf24855c4bd2fa20d556"
+    }
+  },
+  "decisions": [
+    {
+      "id": "p01-decision-9b34332f4ff07f2eb7af55acd8897fd447302b9bfc1097c72f5a8d124121e855",
+      "kind": "worker",
+      "actor": "fixed",
+      "data": {
+        "action": {
+          "kind": "worker",
+          "explanation": "Attempt the open obligation using checked feedback.",
+          "intended_observation": "Does the solution satisfy the task obligation?"
+        },
+        "attempt_id": "p01-attempt-9b34332f4ff07f2eb7af55acd8897fd447302b9bfc1097c72f5a8d124121e855",
+        "operation_id": "p01-worker-9b34332f4ff07f2eb7af55acd8897fd447302b9bfc1097c72f5a8d124121e855",
+        "visible_input": {
+          "memory": {
+            "view": "structured",
+            "scope": {
+              "domain": "task"
+            },
+            "claims": [
+              {
+                "kind": "lesson",
+                "text": "sorted(xs)[-1] works for nonempty lists but fails on empty lists. The checked empty-input task specifies a zero default.",
+                "scope": {
+                  "domain": "task"
+                },
+                "status": "challenged",
+                "support": [
+                  1
+                ],
+                "version": 2,
+                "claim_id": "maximum-rule",
+                "revision": 4,
+                "opposition": [
+                  2
+                ],
+                "supersedes": [],
+                "derived_from": [],
+                "direct_support": [
+                  1
+                ],
+                "direct_opposition": [
+                  2
+                ]
+              }
+            ],
+            "purpose": "task: Implement maximum(xs), including the empty-input convention. Determine that convention from earlier checked maximum experience in memory.",
+            "revision": 5,
+            "observations": [
+              {
+                "scope": {
+                  "task": "2105bf62eeca34360f0bdfa598e8f332993137c64f80f1e84cdb6681730a335a",
+                  "domain": "task"
+                },
+                "content": {
+                  "passed": true,
+                  "status": "passed",
+                  "task_instruction": "Implement maximum(xs) for nonempty lists and return their largest value."
+                },
+                "artifacts": [
+                  "2105bf62eeca34360f0bdfa598e8f332993137c64f80f1e84cdb6681730a335a",
+                  "66d5cc82e400041a28c667e7bf87983fde97082f7546a9b02a9f76fdafe2a2b9",
+                  "3ad74718cacb87d189f635e2da4f7623c4bf1fa89d2ac91982c2878fb325c0cb"
+                ],
+                "identities": {
+                  "attempt_id": "p01-attempt-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+                  "decision_id": "p01-decision-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+                  "task_digest": "2105bf62eeca34360f0bdfa598e8f332993137c64f80f1e84cdb6681730a335a",
+                  "evaluator_version": "4b455961d1ee3735cd4fd4537357f77c547237773203da1b6f434d14e9ccff67",
+                  "worker_operation_id": "p01-worker-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+                  "verifier_operation_id": "rsi-verify-68b92d92eb868f0d55cd3d90f40375600e49d5d35bc7e40f7c7ad67485e938e0"
+                },
+                "visibility": "learner",
+                "observation_id": 1,
+                "investigation_id": "p02-prior-nonempty"
+              },
+              {
+                "scope": {
+                  "task": "06ae8fbce4daf7356daade039ae85978ef94e6f50889633873c6f87bdeb9ff48",
+                  "domain": "task"
+                },
+                "content": {
+                  "passed": false,
+                  "status": "failed",
+                  "task_instruction": "Implement maximum(xs); when the list is empty return 0, otherwise its largest value."
+                },
+                "artifacts": [
+                  "06ae8fbce4daf7356daade039ae85978ef94e6f50889633873c6f87bdeb9ff48",
+                  "1d7c26ba5535c9440b5f5ca31c86e7c27a56edeef325b5264f212e6ec53edef4",
+                  "69479ffc67465c14a136e3762585c61879c4460c1f3dd506103e81c8229cf4b4"
+                ],
+                "identities": {
+                  "attempt_id": "p01-attempt-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+                  "decision_id": "p01-decision-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+                  "task_digest": "06ae8fbce4daf7356daade039ae85978ef94e6f50889633873c6f87bdeb9ff48",
+                  "evaluator_version": "e6ff5f51ba2972bf6c29bada540e8324223142597644517937617a36e1aaa247",
+                  "worker_operation_id": "p01-worker-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+                  "verifier_operation_id": "rsi-verify-141347b4feaef7256207dfa5e9919c726113f28e7086733fc8dbb6c657f44bb5"
+                },
+                "visibility": "learner",
+                "observation_id": 2,
+                "investigation_id": "p02-prior-empty"
+              },
+              {
+                "scope": {
+                  "task": "84d2a1fa63eafecfeb62b1fe51c5b5dcf306110cbd02c4a8c9501a15e63181dc",
+                  "domain": "task"
+                },
+                "content": {
+                  "passed": true,
+                  "status": "passed",
+                  "task_instruction": "Implement maximum(xs), including the empty-input convention. Determine that convention from earlier checked maximum experience in memory."
+                },
+                "artifacts": [
+                  "84d2a1fa63eafecfeb62b1fe51c5b5dcf306110cbd02c4a8c9501a15e63181dc",
+                  "616fbb013062bcfc13fc1e6051ab09ea30ab282ac46e659987aeb13c02526ce5",
+                  "7a126da76ed0fa8226fce179c3dc9020672a708d8c4861bdd3a285082c0bf88f"
+                ],
+                "identities": {
+                  "attempt_id": "p01-attempt-e8d0cc35a20d1f049c820761331a51863f8c217411506f17e0df1ccc97ebc65e",
+                  "decision_id": "p01-decision-e8d0cc35a20d1f049c820761331a51863f8c217411506f17e0df1ccc97ebc65e",
+                  "task_digest": "84d2a1fa63eafecfeb62b1fe51c5b5dcf306110cbd02c4a8c9501a15e63181dc",
+                  "evaluator_version": "e6ff5f51ba2972bf6c29bada540e8324223142597644517937617a36e1aaa247",
+                  "worker_operation_id": "p01-worker-e8d0cc35a20d1f049c820761331a51863f8c217411506f17e0df1ccc97ebc65e",
+                  "verifier_operation_id": "rsi-verify-8a6a1c0d67231d6babd5c436571a82d0162a2b23a183129360fb1bbbfa64b9bd"
+                },
+                "visibility": "learner",
+                "observation_id": 3,
+                "investigation_id": "p02-live-raw-history"
+              }
+            ],
+            "missing_information": []
+          },
+          "objective": "Implement maximum(xs), including the empty-input convention. Determine that convention from earlier checked maximum experience in memory.",
+          "artifact_refs": {},
+          "open_questions": [
+            "Does the solution satisfy the task obligation?"
+          ],
+          "state_revision": 0,
+          "objective_revision": 1,
+          "previous_observation": null
+        }
+      },
+      "created_at": "2026-10-14 09:57:23.220049-04:00"
+    }
+  ],
+  "observations": [
+    {
+      "id": 4,
+      "decision_id": "p01-decision-9b34332f4ff07f2eb7af55acd8897fd447302b9bfc1097c72f5a8d124121e855",
+      "content": {
+        "passed": true,
+        "reason": "",
+        "status": "passed",
+        "episode": "p01-worker-9b34332f4ff07f2eb7af55acd8897fd447302b9bfc1097c72f5a8d124121e855",
+        "verdict": "rsi-verify-6c9732a32a1cff085d88bae62a7e369a81027085c85f1607c31e2e557fe86588",
+        "solution": "de56d411a2bb9027ad51a02cb1fa567a1631fead1927cf24855c4bd2fa20d556"
+      },
+      "created_at": "2026-10-14 09:58:48.635592-04:00"
+    }
+  ],
+  "unresolved_effects": []
+}

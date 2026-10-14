@@ -25,3 +25,4 @@
 reports/evidence/rsi-live-20261008/** -text
 reports/evidence/rsi-live-20261008/gate-tests.log whitespace=cr-at-eol
 reports/evidence/p01-live-20261013/** whitespace=cr-at-eol
+reports/evidence/p02-live-20261013/** -text whitespace=cr-at-eol

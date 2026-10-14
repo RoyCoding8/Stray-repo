@@ -3,7 +3,7 @@
 Current state and evidence. Removed studies are recoverable at
 `archive/pre-subtraction-2026-10`; implementation history lives in Git.
 
-## Research checkpoint (2026-10-13)
+## Research checkpoint (2026-10-14)
 
 Human direction: accept the existing prototype at its scope and research stronger
 components. Do not turn another brief live-route or improvement-proof campaign
@@ -27,7 +27,7 @@ dependencies and build order. The three research themes are divided into ten par
 | Component | Current state | Working target |
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
-| P02: evidence and memory | In progress | Reusable evidence and revisable claims with opposition. |
+| P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Planned | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
@@ -47,19 +47,61 @@ P02 task list:
 - [x] Pin the evidence, claim revision, visibility and later-use contracts before code fan-out (`cff8c980`).
 - [x] Implement immutable experience lookup and revisable lessons in isolated lanes.
 - [x] Connect later investigations and qualify acceptance scenarios P02-A through P02-E.
-- [ ] Run independent GPT-6.1 Sol High verification and a bounded live contradiction probe.
-- [ ] Record exact evidence boundaries, remove owned worktrees and sync the checkpoint.
+- [x] Run independent GPT-6.1 Sol High verification and a bounded live contradiction probe.
+- [x] Record exact evidence boundaries, remove owned worktrees and sync the checkpoint.
 
-P02 throughput checkpoint (2026-10-14). All implementation lanes completed and
-are merged at `a3a4e233`. The coordinator's integrated RSI and real checkpoint
-migration gate passed **116 tests with one skip** in 355.14 seconds. This is a
-scoped regression gate, not a whole-repository or live-learning claim. Source
-capture, claim revision and later-use scenarios now share the committed revision
-clock and the P01 decision owner. Fixture defects and a verifier-refusal capture
-defect were repaired before this gate. Independent GPT-6.1 Sol High verification
-can now begin on the integrated version, as requested. The earlier reviewer was
-deliberately paused and issued no verdict. The bounded live probe, review fixes,
-final evidence record, cleanup and backup synchronization remain outstanding.
+### P02 implementation checkpoint (2026-10-14)
+
+Implementation and independent review are complete at source `84385f7b`.
+`rsi.experience` inventories original development observations with byte-verified
+provenance. `rsi.memory` stores versioned interpretations, support, opposition,
+derivation, withdrawal and supersession. Later investigation decisions pin one
+memory revision and its actual content; resume retains that decision and
+revalidates every selected original. Raw-history lookup and structured lessons
+share this source authority. No embedding service or second lifecycle was added.
+
+The independent review found a global refusal on incomplete discovery and an
+ancestry walk that followed newer heads instead of declared parent versions.
+Repairs preserve visible discovery warnings while refusing changed selected
+bytes, and follow exact transitive ancestry with current withdrawal/supersession.
+The coordinator also repaired immediate capture on error returns. Regression
+checks failed before these fixes. A recursive-argument error in the first ancestry
+patch was caught before merge and repaired with a transitive supersession check.
+
+GPT-6.1 Sol High independently passed **18 component tests, zero skips**, in
+324.89 seconds and **four adapted counterexamples** in 73.00 seconds on the
+repaired source. They covered original evidence, opposition, withdrawn ancestry,
+valid replacement descendants, as-of reconstruction, immediate refusal capture,
+replay identity and selected byte tamper. A separate original-tip probe captured
+257 genuine refused observations and demonstrated global blockage plus recovery;
+it passed in 534.33 seconds. Its evidence is bound to `ae1dca44`, not the repaired
+version. The final coordinator gate passed **120 tests with one skip** in
+835.20 seconds on PostgreSQL 18.0, covering every `tests/test_rsi*.py` file plus
+`tests/test_rec_checkpoint.py::test_checkpoint_writes_consistent_recovery_set`.
+The skip names Windows symlink creation permission. Actual fixture child
+processes ran; the checkpoint included migration `0030`. Changed Python files
+passed Ruff, the diff passed whitespace checks, and the changed-file credential
+scan was clean. No whole-repository, CI or deployment pass is inferred.
+
+The [live memory probe](evidence/p02-live-20261013/README.md), source `ae1dca44`,
+completed both actual free-route workers with passing pristine task checks.
+The raw worker explicitly used an earlier failed empty-input case. The structured
+worker received the challenged lesson and its original support/opposition. All
+8 worker/verifier operations settled with 8 receipts. Live worker usage was
+341,911 input and 2,347 output tokens. Package hashes, references and usage
+agreement pass the offline archive check, independently repeated by Sol.
+The prior observations were fixtures and the lesson was authored. The structured
+cell also saw the preceding raw-cell result. This establishes live use at scope,
+not a matched memory advantage, autonomous acquisition, transfer or learning.
+Provider billing and hostile-code containment remain unverified.
+
+The next architectural part is P03, context construction, which remains paused
+pending human assignment. P02 supplies its evidence objects and stable revisions;
+learned ranking, automatic lesson construction and ongoing campaigns are not
+claimed by this checkpoint. All owned implementation/review worktrees and task
+branches are removed. Only the main checkout remains. The checkpoint is synced to
+both backups; the source qualification above remains bound to `84385f7b`, and the
+following closeout commit contains documentation and archived evidence only.
 
 P01 task list:
 - [x] Pin the state, decision and pending-effect contract against the existing kernel (`74f2b65f`).

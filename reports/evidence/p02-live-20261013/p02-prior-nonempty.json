@@ -1,0 +1,98 @@
+{
+  "state": {
+    "investigation_id": "p02-prior-nonempty",
+    "objective": "Implement maximum(xs) for nonempty lists and return their largest value.",
+    "objective_revision": 1,
+    "revision": 2,
+    "status": "completed",
+    "domain": "task",
+    "config": {
+      "task": "2105bf62eeca34360f0bdfa598e8f332993137c64f80f1e84cdb6681730a335a",
+      "model": "fixture:free",
+      "genome": "7026e1719f86b7ab2a3435b8601b3add2f91f291db05e93b4797c05365e2d73f",
+      "memory": {
+        "view": "structured",
+        "limit": 5,
+        "scope": {
+          "domain": "task"
+        }
+      },
+      "max_steps": 1,
+      "timeout_ms": 180000,
+      "token_ceiling": 5000,
+      "cpu_allocation": "p02-prior-nonempty-cpu",
+      "token_allocation": "p02-prior-nonempty-tokens"
+    },
+    "policy": {
+      "id": "task-seed/1"
+    },
+    "open_questions": [],
+    "artifact_refs": {
+      "solution": "3ad74718cacb87d189f635e2da4f7623c4bf1fa89d2ac91982c2878fb325c0cb",
+      "trajectory": "66d5cc82e400041a28c667e7bf87983fde97082f7546a9b02a9f76fdafe2a2b9"
+    },
+    "pending_decision": null,
+    "last_observation": {
+      "passed": true,
+      "reason": "",
+      "status": "passed",
+      "episode": "p01-worker-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+      "verdict": "rsi-verify-68b92d92eb868f0d55cd3d90f40375600e49d5d35bc7e40f7c7ad67485e938e0",
+      "solution": "3ad74718cacb87d189f635e2da4f7623c4bf1fa89d2ac91982c2878fb325c0cb"
+    }
+  },
+  "decisions": [
+    {
+      "id": "p01-decision-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+      "kind": "worker",
+      "actor": "fixed",
+      "data": {
+        "action": {
+          "kind": "worker",
+          "explanation": "Attempt the open obligation using checked feedback.",
+          "intended_observation": "Does the solution satisfy the task obligation?"
+        },
+        "attempt_id": "p01-attempt-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+        "operation_id": "p01-worker-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+        "visible_input": {
+          "memory": {
+            "view": "structured",
+            "scope": {
+              "domain": "task"
+            },
+            "claims": [],
+            "purpose": "task: Implement maximum(xs) for nonempty lists and return their largest value.",
+            "revision": 0,
+            "observations": [],
+            "missing_information": []
+          },
+          "objective": "Implement maximum(xs) for nonempty lists and return their largest value.",
+          "artifact_refs": {},
+          "open_questions": [
+            "Does the solution satisfy the task obligation?"
+          ],
+          "state_revision": 0,
+          "objective_revision": 1,
+          "previous_observation": null
+        }
+      },
+      "created_at": "2026-10-14 09:56:18.442660-04:00"
+    }
+  ],
+  "observations": [
+    {
+      "id": 1,
+      "decision_id": "p01-decision-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+      "content": {
+        "passed": true,
+        "reason": "",
+        "status": "passed",
+        "episode": "p01-worker-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+        "verdict": "rsi-verify-68b92d92eb868f0d55cd3d90f40375600e49d5d35bc7e40f7c7ad67485e938e0",
+        "solution": "3ad74718cacb87d189f635e2da4f7623c4bf1fa89d2ac91982c2878fb325c0cb"
+      },
+      "created_at": "2026-10-14 09:56:20.495211-04:00"
+    }
+  ],
+  "unresolved_effects": []
+}

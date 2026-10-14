@@ -1,25 +1,13 @@
-# Next implementation handoff
+# Current component checkpoint
 
-Component build checkpoint, 2026-10-13. P01 reached its qualified checkpoint.
+P01 and P02 have reached their qualified working checkpoints. Read
+[the ledger](reports/PROJECT-LEDGER.md) for exact source revisions, evidence
+boundaries and outstanding work, then [the master plan](docs/plans/MASTER-PLAN.md)
+for component order. P03, context construction, is next but remains paused.
+No later component is assigned by this file.
 
-Work in D:/AI/Agent-Society-v2. Read [the ledger](reports/PROJECT-LEDGER.md),
-then [the master plan](docs/plans/MASTER-PLAN.md). The current assignment builds
-[P02, evidence and memory](docs/plans/02-MEMORY.md) only. P03–P10 remain paused.
-
-Follow P02's pinned contract, implement its delivery slices and qualify later
-use of revisable lessons together with contrary evidence. Later plans
-constrain shared interfaces but are not tasks to implement in the same batch.
-
-The master plan owns common build rules, evidence distinctions and cleanup.
-The ledger records implementation status. Historical worker reports and
-archived study prompts are not instructions to rerun those studies.
-
-Use the existing kernel and useful worker/artifact paths. The current machine
-uses PowerShell and .venv/Scripts/python.exe. Inspect local state before edits.
-Preserve frozen evidence and unrelated projects. Keep credentials outside Git.
-Follow session rules before delegation. No paid model or Jev calls are assigned.
-
-At the working checkpoint, update the ledger with exact verification bounds,
-remove owned temporary worktrees and push the backup. Do not turn a negative
-learning result into an unfinished mechanism build or claim a benefit without
-the relevant comparison.
+Do not rerun old study prompts or rebuild completed slices without a current
+human assignment. The master plan owns shared implementation and verification
+rules. Follow session instructions before delegation; no paid model or Jev calls
+are assigned. Work locally, preserve frozen evidence and unrelated projects,
+keep credentials outside Git and sync completed checkpoints to the backups.

@@ -1,0 +1,19 @@
+{
+  "claim_id": "maximum-rule",
+  "version": 2,
+  "revision": 4,
+  "kind": "lesson",
+  "status": "challenged",
+  "text": "sorted(xs)[-1] works for nonempty lists but fails on empty lists. The checked empty-input task specifies a zero default.",
+  "scope": {
+    "domain": "task"
+  },
+  "support": [
+    1
+  ],
+  "opposition": [
+    2
+  ],
+  "derived_from": [],
+  "supersedes": []
+}

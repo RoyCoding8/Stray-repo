@@ -95,6 +95,21 @@ sealed tests and references out of continuation context. The existing archive
 loop now uses this owner for development tasks with a one-action limit; its
 frozen budgets and sealed comparison policy retain their existing meaning.
 
+## Evidence and memory
+
+Investigations capture development observations through `rsi.experience` and
+query them through `rsi.memory` before a new decision. Original experience keeps
+its observation identity and byte-verified provenance. Claims are separate,
+versioned interpretations with scope, support, opposition and derivation links.
+Withdrawing a lesson removes it from active retrieval while preserving history.
+
+`rsi.memory.query` offers raw-history and structured views. Both include original
+sources and explicit missing information. The decision pins the returned memory
+revision and content; resume reuses that snapshot and rechecks its source bytes.
+An investigation's optional `memory` configuration sets its scope, view and limit.
+See the [P02 contract](docs/plans/02-MEMORY.md) for the APIs and acceptance scope.
+Learned retrieval and context selection belong to P03.
+
 ## Bounded improvement experiments
 
 Create a genome directory with `AGENTS.md` and `meta/IMPROVE.md`. Use a

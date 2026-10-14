@@ -1,0 +1,128 @@
+{
+  "state": {
+    "investigation_id": "p02-prior-empty",
+    "objective": "Implement maximum(xs); when the list is empty return 0, otherwise its largest value.",
+    "objective_revision": 1,
+    "revision": 2,
+    "status": "unresolved",
+    "domain": "task",
+    "config": {
+      "task": "06ae8fbce4daf7356daade039ae85978ef94e6f50889633873c6f87bdeb9ff48",
+      "model": "fixture:free",
+      "genome": "7026e1719f86b7ab2a3435b8601b3add2f91f291db05e93b4797c05365e2d73f",
+      "memory": {
+        "view": "structured",
+        "limit": 5,
+        "scope": {
+          "domain": "task"
+        }
+      },
+      "max_steps": 1,
+      "timeout_ms": 180000,
+      "token_ceiling": 5000,
+      "cpu_allocation": "p02-prior-empty-cpu",
+      "token_allocation": "p02-prior-empty-tokens"
+    },
+    "policy": {
+      "id": "task-seed/1"
+    },
+    "open_questions": [
+      "Does the solution satisfy the task obligation?"
+    ],
+    "artifact_refs": {
+      "solution": "69479ffc67465c14a136e3762585c61879c4460c1f3dd506103e81c8229cf4b4",
+      "trajectory": "1d7c26ba5535c9440b5f5ca31c86e7c27a56edeef325b5264f212e6ec53edef4"
+    },
+    "pending_decision": null,
+    "last_observation": {
+      "passed": false,
+      "reason": "",
+      "status": "failed",
+      "episode": "p01-worker-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+      "verdict": "rsi-verify-141347b4feaef7256207dfa5e9919c726113f28e7086733fc8dbb6c657f44bb5",
+      "solution": "69479ffc67465c14a136e3762585c61879c4460c1f3dd506103e81c8229cf4b4"
+    }
+  },
+  "decisions": [
+    {
+      "id": "p01-decision-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+      "kind": "worker",
+      "actor": "fixed",
+      "data": {
+        "action": {
+          "kind": "worker",
+          "explanation": "Attempt the open obligation using checked feedback.",
+          "intended_observation": "Does the solution satisfy the task obligation?"
+        },
+        "attempt_id": "p01-attempt-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+        "operation_id": "p01-worker-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+        "visible_input": {
+          "memory": {
+            "view": "structured",
+            "scope": {
+              "domain": "task"
+            },
+            "claims": [],
+            "purpose": "task: Implement maximum(xs); when the list is empty return 0, otherwise its largest value.",
+            "revision": 1,
+            "observations": [
+              {
+                "scope": {
+                  "task": "2105bf62eeca34360f0bdfa598e8f332993137c64f80f1e84cdb6681730a335a",
+                  "domain": "task"
+                },
+                "content": {
+                  "passed": true,
+                  "status": "passed",
+                  "task_instruction": "Implement maximum(xs) for nonempty lists and return their largest value."
+                },
+                "artifacts": [
+                  "2105bf62eeca34360f0bdfa598e8f332993137c64f80f1e84cdb6681730a335a",
+                  "66d5cc82e400041a28c667e7bf87983fde97082f7546a9b02a9f76fdafe2a2b9",
+                  "3ad74718cacb87d189f635e2da4f7623c4bf1fa89d2ac91982c2878fb325c0cb"
+                ],
+                "identities": {
+                  "attempt_id": "p01-attempt-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+                  "decision_id": "p01-decision-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+                  "task_digest": "2105bf62eeca34360f0bdfa598e8f332993137c64f80f1e84cdb6681730a335a",
+                  "evaluator_version": "4b455961d1ee3735cd4fd4537357f77c547237773203da1b6f434d14e9ccff67",
+                  "worker_operation_id": "p01-worker-f2242d6bb533d2da4cb57c04d413e6167eea3ca5b9d0d8e71aa94b3b16c688a0",
+                  "verifier_operation_id": "rsi-verify-68b92d92eb868f0d55cd3d90f40375600e49d5d35bc7e40f7c7ad67485e938e0"
+                },
+                "visibility": "learner",
+                "observation_id": 1,
+                "investigation_id": "p02-prior-nonempty"
+              }
+            ],
+            "missing_information": []
+          },
+          "objective": "Implement maximum(xs); when the list is empty return 0, otherwise its largest value.",
+          "artifact_refs": {},
+          "open_questions": [
+            "Does the solution satisfy the task obligation?"
+          ],
+          "state_revision": 0,
+          "objective_revision": 1,
+          "previous_observation": null
+        }
+      },
+      "created_at": "2026-10-14 09:56:21.567474-04:00"
+    }
+  ],
+  "observations": [
+    {
+      "id": 2,
+      "decision_id": "p01-decision-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+      "content": {
+        "passed": false,
+        "reason": "",
+        "status": "failed",
+        "episode": "p01-worker-2d9f855ae341c9a129ca94ff8936498e188b403da23dceac10395f8a2876438f",
+        "verdict": "rsi-verify-141347b4feaef7256207dfa5e9919c726113f28e7086733fc8dbb6c657f44bb5",
+        "solution": "69479ffc67465c14a136e3762585c61879c4460c1f3dd506103e81c8229cf4b4"
+      },
+      "created_at": "2026-10-14 09:56:23.484418-04:00"
+    }
+  ],
+  "unresolved_effects": []
+}

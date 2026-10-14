@@ -1,0 +1,21 @@
+{
+  "source": "ae1dca44491d3b482821ea64a4cfe5badfe0e8aa",
+  "driver_sha256": "6ff65125b5db7ab2104c00cd613aa47815088865f2b19320c7139e752ab93afa",
+  "model": "openrouter/openrouter/free",
+  "live_worker_actions": 2,
+  "fixture_worker_actions": 2,
+  "max_actions_per_investigation": 1,
+  "token_allowance_per_live_worker": 500000,
+  "total_live_token_authorization": 1000000,
+  "cpu_authorization_per_investigation": 1000,
+  "timeout_ms_per_worker": 180000,
+  "views": [
+    "raw-history",
+    "structured"
+  ],
+  "request_retries": 0,
+  "stream_retries": 0,
+  "origin": "authored task/genome/lesson; earlier observations from labeled fixture children",
+  "ordering": "raw-history then structured; sequential evidence, not a matched superiority comparison",
+  "claim": "conditioning probe only; no learned ranking, utility advantage or transfer test"
+}
