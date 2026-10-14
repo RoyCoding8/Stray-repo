@@ -3,13 +3,12 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from rsi import experience, genome, investigate, task
-from settlement import artifacts, store
+from settlement import store
 from settlement.common import Command, SettlementError
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher

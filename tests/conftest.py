@@ -5,13 +5,14 @@ import uuid
 from pathlib import Path
 
 import pytest
+from conftest_isolation import (  # noqa: F401
+    pytest_configure,
+    pytest_runtest_call,
+    pytest_runtest_setup,
+    pytest_unconfigure,
+)
 
 from settlement import db
-
-from conftest_isolation import pytest_configure, pytest_unconfigure  # noqa: F401
-from conftest_isolation import pytest_runtest_call  # noqa: F401
-from conftest_isolation import pytest_runtest_setup  # noqa: F401
-
 
 TRUNCATE_DSN_ENV = "SETTLEMENT_TEST_TRUNCATE_DSN"
 
