@@ -121,11 +121,13 @@ def _decision_input(record: dict) -> dict | None:
 
 def _verify_last_observation(record: dict) -> None:
     observation = (record.get("state") or {}).get("last_observation")
+    attempts = record.get("attempt_observations")
     if observation is None:
+        if attempts != []:
+            raise ValueError(f"{record['cell_id']}: state omitted its recorded attempt observation")
         return
     if not isinstance(observation, dict):
         raise ValueError(f"{record['cell_id']}: last observation is malformed")  # noqa: TRY004
-    attempts = record.get("attempt_observations")
     if not isinstance(attempts, list):
         raise ValueError(f"{record['cell_id']}: attempt observations are missing")  # noqa: TRY004
     matching = [item for item in attempts
@@ -145,6 +147,8 @@ def _verify_last_observation(record: dict) -> None:
     if not isinstance(worker_operation, str) or observation.get("episode") != worker_operation:
         raise ValueError(f"{record['cell_id']}: last observation episode differs from its worker decision")
     verdict = observation.get("verdict")
+    if type(observation.get("passed")) is bool and verdict is None:
+        raise ValueError(f"{record['cell_id']}: graded observation has no verifier operation")
     if verdict is not None:
         operations = record.get("operations")
         if (not isinstance(verdict, str) or not isinstance(operations, list)

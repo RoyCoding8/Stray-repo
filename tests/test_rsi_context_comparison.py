@@ -61,6 +61,26 @@ def test_worker_usage_aggregator_does_not_sum_costs_or_other_operations():
     assert not any("cost" in key for key in summary)
 
 
+def test_deleted_state_observation_cannot_hide_a_recorded_result():
+    with pytest.raises(ValueError, match="state omitted its recorded attempt observation"):
+        recompute._verify_last_observation({
+            "cell_id": "complete", "state": {"last_observation": None},
+            "attempt_observations": [{"decision_id": "decision", "content": {"passed": False}}],
+        })
+
+
+@pytest.mark.parametrize("passed", [True, False])
+def test_graded_observation_requires_its_verifier(passed):
+    observation = {"episode": "worker", "passed": passed}
+    with pytest.raises(ValueError, match="graded observation has no verifier operation"):
+        recompute._verify_last_observation({
+            "cell_id": "complete", "state": {"last_observation": observation},
+            "attempt_observations": [{"decision_id": "decision", "content": observation}],
+            "decisions": [{"id": "decision", "kind": "worker", "data": {"operation_id": "worker"}}],
+            "operations": [],
+        })
+
+
 def test_frozen_nine_cell_fixture_comparison_recomputes_and_rejects_tampering():
     admin = os.environ.get("SETTLEMENT_TEST_DSN")
     if not admin:
