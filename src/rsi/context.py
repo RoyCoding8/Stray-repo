@@ -301,8 +301,10 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
             }
             action_id = f"rsi-context-inspect:{_digest(action_identity)}"
 
-            def inspect_action(cur, _control):
-                result, scanned, used = _inspect(text, inspection_terms, scan_left, excerpt_left)
+            def inspect_action(cur, _control, source=text, query_terms=inspection_terms,
+                               scan_limit=scan_left, excerpt_limit=excerpt_left):
+                result, scanned, used = _inspect(
+                    source, query_terms, scan_limit, excerpt_limit)
                 data = {"result": result, "scanned_bytes": scanned, "excerpt_bytes": used}
                 return ResultCode.APPLIED, "context inspection cached", data, [], []
 
