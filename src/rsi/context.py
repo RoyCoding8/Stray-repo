@@ -1,4 +1,9 @@
-"""Bounded, immutable context packets for persistent investigations."""
+"""Bounded, immutable context packets for persistent investigations.
+
+Packet counts describe logical work over P02-resolved learner-visible strings.
+They do not measure P02's underlying filesystem reads or wall-clock time.
+``excerpt_bytes`` is the UTF-8 size retained in the final packet.
+"""
 
 from __future__ import annotations
 
@@ -152,10 +157,7 @@ def _required_needs(request: dict, view: dict) -> list[dict]:
             unavailable = any(item.get("claim_id") == claim_id
                               for item in view["missing_information"]
                               if isinstance(item, dict))
-            if unavailable:
-                needs.append({"kind": "claim", "id": claim_id,
-                              "reason": "required claim has no available historical evidence"})
-            elif not view["observations"]:
+            if unavailable or not view["observations"]:
                 needs.append({"kind": "claim", "id": claim_id,
                               "reason": "required claim has no available historical evidence"})
     return needs
@@ -349,6 +351,8 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
             excerpts = [item for item in excerpts
                         if item["observation_id"] in {o["observation_id"] for o in observations}]
             packet["excerpts"] = excerpts
+            packet["counts"]["excerpt_bytes"] = sum(
+                len(item["text"].encode("utf-8")) for item in excerpts)
             packet["counts"]["claims"] = len(selected_claims)
             packet["counts"]["observations"] = len(observations)
             omissions.append({"claim_id": optional["claim_id"],
@@ -367,6 +371,10 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
                 drop_id = optional_ids[-1]
                 observations = [item for item in observations if item["observation_id"] != drop_id]
                 memory_view["observations"] = observations
+                excerpts = [item for item in excerpts if item["observation_id"] != drop_id]
+                packet["excerpts"] = excerpts
+                packet["counts"]["excerpt_bytes"] = sum(
+                    len(item["text"].encode("utf-8")) for item in excerpts)
                 packet["counts"]["observations"] = len(observations)
                 omissions.append({"observation_id": drop_id,
                                   "reason": "optional observation exceeded packet budget"})
@@ -393,6 +401,8 @@ def _build_packet(dsn: str, request: dict, pin: dict, artifacts_root: str) -> di
     packet["needs"] = needs
     packet["counts"]["claims"] = len(packet["memory_view"]["claims"])
     packet["counts"]["observations"] = len(packet["memory_view"]["observations"])
+    packet["counts"]["excerpt_bytes"] = sum(
+        len(item["text"].encode("utf-8")) for item in packet["excerpts"])
     packet["status"] = "needs_information" if needs else "ready"
     size = _set_size_count(packet)
     packet["digest"] = _digest({key: value for key, value in packet.items() if key != "digest"})
