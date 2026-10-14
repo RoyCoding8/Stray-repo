@@ -31,6 +31,19 @@ def _run_cell(dsn, tmp_path, policy, condition):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+@pytest.mark.parametrize("operation", [
+    {"id": "unknown", "settled": False},
+    {"id": "unknown", "settled": True, "receipts": []},
+    {"id": "unknown", "settled": True,
+     "receipts": [{"operation_id": "unknown", "receipt_identity": "receipt", "tokens": None}]},
+])
+def test_unknown_receipt_usage_has_no_measured_cost(operation):
+    assert recompute._operation_usage(operation) == {
+        "operation_id": "unknown", "tokens": None, "status": "unknown",
+        "actual_cost_units": None,
+    }
+
+
 def test_frozen_nine_cell_fixture_comparison_recomputes_and_rejects_tampering():
     admin = os.environ.get("SETTLEMENT_TEST_DSN")
     if not admin:

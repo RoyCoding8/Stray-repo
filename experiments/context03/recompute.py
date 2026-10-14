@@ -189,7 +189,8 @@ def _verify_invocation(record: dict, visible: dict, packet: dict) -> None:
 
 def _operation_usage(operation: dict) -> dict:
     operation_id = operation.get("id")
-    unknown = {"operation_id": operation_id, "tokens": None, "status": "unknown"}
+    unknown = {"operation_id": operation_id, "tokens": None, "status": "unknown",
+               "actual_cost_units": None}
     receipts = operation.get("receipts")
     if not isinstance(receipts, list) or operation.get("settled") is not True:
         return unknown
