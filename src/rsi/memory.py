@@ -216,6 +216,8 @@ def _validate_links(cur, *, claim_id: str, version: int, scope: dict,
         raise SettlementError("a claim cannot derive from another version of itself")
     if [claim_id, version] in supersedes:
         raise SettlementError("a claim version cannot link to itself")
+    if any(pair[0] != claim_id and pair not in links for pair in supersedes):
+        raise SettlementError("cross-claim supersession must derive from that version")
     for pair in links + supersedes:
         cur.execute(
             "SELECT scope FROM rsi_memory_claim_versions"

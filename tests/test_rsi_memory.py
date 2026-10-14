@@ -31,6 +31,13 @@ def test_consolidation_keeps_roots_and_withdrawn_ancestry_out_of_current_memory(
             status="challenged", support=(support,), opposition=(opposition,),
             artifacts_root=roots["artifacts_root"],
         )
+    with pytest.raises(SettlementError, match="cross-claim supersession"):
+        memory.revise(
+            dsn, claim_id="memory-laundered", expected_version=0,
+            text="replacement without inherited evidence", scope={"domain": "task"},
+            status="challenged", supersedes=(("memory-left", 1),),
+            artifacts_root=roots["artifacts_root"],
+        )
     merged = memory.revise(
         dsn, claim_id="memory-merged", expected_version=0,
         text="consolidated method after review", scope={"domain": "task"},
