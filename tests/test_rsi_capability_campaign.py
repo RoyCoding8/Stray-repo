@@ -129,7 +129,7 @@ def _bundle(tmp_path):
             "_verdict": "success", "parse": "typed-json",
             "data": {"supervised": True, "worker": {
                 "status": "ok", "error": "", "data": {
-                    "tests": 1, "errors": 0, "failures": 0}}}}}
+                    "tests": 1, "errors": 0, "failures": 0, "skipped": 0}}}}}
         execution_operations.extend([
             {"operation": operation, "receipts": [operation_receipt]},
             {"operation": verifier_operation, "receipts": [verifier_receipt]},
@@ -295,8 +295,9 @@ def test_verify_freeze_allows_a_later_documentation_commit(tmp_path):
     assert driver.verify_freeze(ROOT, bundle) == manifest
 
 
+@pytest.mark.parametrize("fail_development", [False, True])
 def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
-        migrated_db, tmp_path, monkeypatch):
+        migrated_db, tmp_path, monkeypatch, fail_development):
 
     import settlement.launcher_codex as codex_module
     from settlement import db
@@ -323,7 +324,7 @@ def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
                 "import json\n"
                 "def invoke(request):\n"
                 "    values = request['value']\n"
-                "    result = {'count': len(values), 'total': sum(values), "
+                f"    result = {{'count': len(values), 'total': sum(values) + {int(fail_development)}, "
                 "'minimum': min(values) if values else None, "
                 "'maximum': max(values) if values else None}\n"
                 "    return {'value': result, 'files': "
@@ -369,8 +370,17 @@ def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
     result = driver.run(ROOT, bundle, migrated_db, tmp_path / "route.env",
                         tmp_path / "logs", "scripted-codex")
 
-    assert result["status"] == "completed"
     report = json.loads((bundle / "report.json").read_text(encoding="utf-8"))
+    if fail_development:
+        assert result["status"] == "candidate-failed-development"
+        assert report["retention"]["status"] == "rejected"
+        assert len(report["uses"]) == 1
+        assert report["uses"][0]["verdict"]["passed"] is False
+        assert check.check_bundle(bundle) == {
+            "status": "no-acquisition", "checked_uses": 1,
+            "construction_status": "candidate-failed-development"}
+        return
+    assert result["status"] == "completed"
     assert report["retention"]["status"] == "retained"
     assert report["selection"]["status"] == "selected"
     assert [use["request"]["value"] for use in report["uses"]] == [
@@ -416,6 +426,7 @@ def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
     (bundle / "report.json").write_bytes(_canonical(swapped_verifiers))
     with pytest.raises(ValueError):
         check.check_bundle(bundle)
+    (bundle / "report.json").write_bytes(_canonical(clean))
 
 
 def test_checker_rejects_negative_claim_without_constructor_evidence(tmp_path):
@@ -451,6 +462,9 @@ def test_checker_requires_failed_development_receipt_and_rejection(tmp_path):
                               if row["operation"]["id"] == use["verdict"]["operation_id"])
     verifier_data = verifier_operation["receipts"][0]["content"]["data"]["worker"]["data"]
     verifier_data.update(failures=1)
+    verifier_operation["receipts"][0]["outcome"] = "failure"
+    verifier_operation["receipts"][0]["content"]["_verdict"] = "failure"
+    verifier_operation["receipts"][0]["content"]["data"]["worker"]["status"] = "error"
     solution_bytes = {name: value.encode() for name, value in use["solution_files"].items()}
     verifier_operation["operation"]["execution_version"] = hashlib.sha256(_canonical({
         "manifest": {"kind": "rsi-solution", "task": use["task"]["digest"],

@@ -138,7 +138,8 @@ def _check_construction_evidence(report, record):
         raise ValueError("constructor operation does not consume the captured evidence")
 
 
-def _worker_result(report, operation_id):
+def _worker_result(report, operation_id, *, status="ok"):
+    outcome = "success" if status == "ok" else "failure"
     matches = [item for item in report.get("operations", [])
                if isinstance(item, dict)
                and isinstance(item.get("operation"), dict)
@@ -156,19 +157,19 @@ def _worker_result(report, operation_id):
             or operation.get("settled") is not True
             or not isinstance(receipts, list) or len(receipts) != 1
             or not isinstance(receipts[0], dict)
-            or receipts[0].get("outcome") != "success"):
-        raise ValueError("execution lacks one settled successful broker receipt")
+            or receipts[0].get("outcome") != outcome):
+        raise ValueError("execution lacks one settled broker receipt for its result")
     content = receipts[0].get("content")
     if not isinstance(content, dict):
         raise TypeError("execution receipt has no typed content")
     data = content.get("data")
     worker = data.get("worker") if isinstance(data, dict) else None
-    if (content.get("_verdict") != "success" or content.get("parse") != "typed-json"
+    if (content.get("_verdict") != outcome or content.get("parse") != "typed-json"
             or not isinstance(data, dict)
             or data.get("supervised") is not True or not isinstance(worker, dict)
-            or worker.get("status") != "ok" or worker.get("error") != ""
+            or worker.get("status") != status or worker.get("error") != ""
             or not isinstance(worker.get("data"), dict)):
-        raise ValueError("execution receipt lacks a successful typed worker result")
+        raise ValueError("execution receipt differs from its typed worker result")
     return record, worker["data"]
 
 
@@ -189,7 +190,8 @@ def _check_verdict(report, use, task):
         f"{episode.get('id')}:{evaluator_version}".encode())
     if verdict["operation_id"] != expected_id:
         raise ValueError("verifier operation is not assigned to this episode and Task")
-    record, result = _worker_result(report, verdict["operation_id"])
+    record, result = _worker_result(report, verdict["operation_id"],
+                                    status="ok" if verdict["passed"] else "error")
     operation = record["operation"]
     solution_files = use.get("solution_files")
     if not isinstance(solution_files, dict):
@@ -217,9 +219,10 @@ def _check_verdict(report, use, task):
         raise ValueError("verifier operation does not bind this Task and solution")
     if (type(result.get("tests")) is not int or result["tests"] < 1
             or type(result.get("errors")) is not int
-            or type(result.get("failures")) is not int):
+            or type(result.get("failures")) is not int
+            or type(result.get("skipped")) is not int):
         raise ValueError("verifier receipt lacks typed test results")
-    passed = result["errors"] == 0 and result["failures"] == 0
+    passed = result["errors"] == 0 and result["failures"] == 0 and result["skipped"] == 0
     if verdict.get("passed") is not passed or verdict.get("status") != (
             "passed" if passed else "failed"):
         raise ValueError("verdict differs from its settled verifier receipt")

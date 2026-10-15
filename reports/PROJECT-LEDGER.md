@@ -97,6 +97,24 @@ High review started only after this gate finished. No P04 live model call has ru
 yet. Both backups are synced through this source tip. GitHub CI run
 `38663722417` passed all seven jobs at `183e1788`, including both database
 shards, archived tests and all three portable operating-system jobs.
+Independent review at `183e1788` found three material gaps. **P04-R1**
+allowed construction recovery to replace already published bytes. The repair
+`2e7fcb31` pins an existing genome artifact before lineage publication and
+recovers from that snapshot, including previously published identical content.
+Three crash-boundary regressions failed before the repair. **P04-R2/R3**
+allowed positive and negative campaign claims without their native or constructor
+receipts. The merged repair `2b5f0551` requires the actual operations, typed
+outputs, task/solution-bound verifier results and constructor evidence. Its clean
+fixture control passes while deleted receipts and swapped verifiers refuse.
+The complete merged P04 gate passed **42 tests, zero skips**, in **278.35 seconds**
+on PostgreSQL 18 with native subprocesses. Sol High's recheck accepted the
+original operation-linkage controls and exposed one remaining R3 defect with a
+real failing candidate. Ordinary failed tests produce failure receipts; the
+checker had required success even when validating a rejection. The follow-up
+repair binds each outcome to its typed worker status and recomputes failed,
+error and skipped-test results. A real wrong-method campaign now accompanies
+the successful fixture campaign. Final merged verification is in progress.
+
 The informative stopping condition is a working
 acquire/check/retain/select/execute path with substitution, applicability and
 restart controls, plus an attributable live outcome. A learning win is not a
