@@ -223,6 +223,11 @@ def _include_operations(dsn: str, history: dict, output: dict) -> None:
         }
 
 
+def _read_jsonl(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()] if path.exists() else []
+
+
 def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode: str,
             route_file: Path | None = None, codex: str = "codex") -> dict:
     if arm_id not in {"seed", "adaptive"} or mode not in {"fixture", "live"}:
@@ -327,9 +332,8 @@ def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode:
               "artifacts": {p.name: base64.b64encode(p.read_bytes()).decode("ascii")
                             for p in roots["art"].iterdir() if p.is_file()},
               "fixture_calls": {
-                  "initial": json.loads((root / "prior" / "calls.jsonl").read_text(encoding="utf-8")),
-                  "campaign": (json.loads((root / "calls.jsonl").read_text(encoding="utf-8"))
-                               if (root / "calls.jsonl").exists() else []),
+                  "initial": _read_jsonl(root / "prior" / "calls.jsonl"),
+                  "campaign": _read_jsonl(root / "calls.jsonl"),
               }}
     output.mkdir(parents=True, exist_ok=True)
     (output / (agenda_id + ".json")).write_text(
