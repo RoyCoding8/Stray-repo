@@ -15,6 +15,7 @@ import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from settlement import db, store
@@ -146,6 +147,52 @@ def paired_verdict(parent: tuple[bool, ...], candidate: tuple[bool, ...], alpha:
     }
 
 
+def _known_test_result(dsn, verdict) -> bool:
+    """Accept only settled outcomes from a nonempty pristine test run."""
+    detail = verdict.detail if isinstance(verdict.detail, dict) else {}
+    receipt_data = detail.get("data")
+    if not isinstance(receipt_data, dict):
+        return False
+    worker = receipt_data.get("worker", {})
+    worker = worker if isinstance(worker, dict) else {}
+    test_data = worker.get("data", {})
+    test_data = test_data if isinstance(test_data, dict) else {}
+    counts = [test_data.get(key) for key in ("tests", "failures", "errors", "skipped")]
+    if (verdict.status not in {"passed", "failed"}
+            or type(verdict.passed) is not bool
+            or detail.get("parse") != "typed-json"
+            or detail.get("truncated") is not False
+            or receipt_data.get("timed_out") is not False
+            or detail.get("_verdict") not in {"success", "failure"}
+            or worker.get("status") not in {"ok", "error"}
+            or any(type(value) is not int or value < 0 for value in counts)
+            or counts[0] <= 0 or counts[0] - counts[3] <= 0
+            or verdict.status != ("passed" if verdict.passed else "failed")):
+        return False
+    derived = worker["status"] == "ok" and counts[1:] == [0, 0, 0]
+    if (verdict.passed is not derived
+            or detail["_verdict"] != ("success" if derived else "failure")):
+        return False
+    with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            "SELECT settled,dispatch_state,reconcile_state FROM operations WHERE id=%s",
+            (verdict.operation_id,),
+        )
+        op = cur.fetchone()
+        cur.execute(
+            "SELECT outcome,content FROM receipts WHERE operation_id=%s ORDER BY receipt_identity",
+            (verdict.operation_id,),
+        )
+        receipts = cur.fetchall()
+    return bool(
+        op is not None and op["settled"]
+        and op["dispatch_state"] in {"observed", "reconciled"}
+        and op["reconcile_state"] not in {"conflict", "unresolved"}
+        and len(receipts) == 1 and receipts[0]["outcome"] in {"success", "failure"}
+        and receipts[0]["content"] == detail
+    )
+
+
 def run(
     dsn: str,
     agent_launcher,
@@ -159,6 +206,7 @@ def run(
     cpu_allocation: str,
     staging_root: Path,
     artifacts_root: Path,
+    route_identity: str | None = None,
 ) -> dict:
     payload = {"epoch": epoch, "parent": parent, "candidate": candidate}
 
@@ -194,12 +242,18 @@ def run(
         "phases": {},
         "scope": execution,
     }
+    if route_identity is not None:
+        report["route_identity"] = route_identity
 
     def finish(disposition, reason):
         report.update(disposition=disposition, reason=reason)
         archive.record(
             dsn, "gate:" + gate_id, kind="gate", actor="fixed", subject=candidate, data=report
         )
+        return report
+
+    def incomplete(reason):
+        report.update(disposition="incomplete", reason=reason)
         return report
 
     # Launcher declarations belong to the controller, never to a genome.
@@ -221,6 +275,9 @@ def run(
     ):
         return finish("blocked", "frozen evaluator mismatch")
     genomes = {d: genome.load(dsn, artifacts_root, d) for d in (parent, candidate)}
+
+    class UnknownEffect(Exception):
+        pass
 
     def measure(label, digests, subjects):
         outcomes = {d: [] for d in subjects}
@@ -254,7 +311,7 @@ def run(
                             "passed": None,
                         }
                     )
-                    raise SettlementError("agent execution did not complete: " + ep.status)
+                    raise UnknownEffect("agent execution did not complete: " + ep.status)
                 verdict = verifier.verify_episode(
                     dsn,
                     agent_launcher,
@@ -277,28 +334,57 @@ def run(
                         "seconds": ep.seconds,
                     }
                 )
-                if verdict.passed is None:
-                    raise SettlementError("verifier has no task outcome: " + verdict.status)
+                if not _known_test_result(dsn, verdict):
+                    raise UnknownEffect("verifier has no settled pristine test result: " + verdict.status)
                 outcomes[subject].append(verdict.passed)
         return outcomes
+
+    def regression_baseline(nonanchors):
+        decision_id = "gate-baseline:" + gate_id
+        known_baseline = archive.decision(dsn, decision_id)
+        if known_baseline is not None:
+            if (known_baseline["kind"] != "rsi.gate.baseline"
+                    or known_baseline["subject"] != gate_id
+                    or not isinstance(known_baseline["data"], dict)):
+                raise SettlementError("gate regression baseline identity conflicts")
+            return known_baseline["data"]
+        with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                "SELECT e.operation_id AS episode,e.genome,e.task,e.status AS episode_status,"
+                "e.tokens,e.seconds,e.trajectory,v.evaluator_version,"
+                "v.operation_id AS verifier,v.solution,v.status,v.passed,v.detail "
+                "FROM rsi_episodes e JOIN rsi_verdicts v ON v.episode=e.operation_id "
+                "WHERE e.genome=%s AND e.task=ANY(%s) AND v.passed IS TRUE "
+                "ORDER BY e.task,e.operation_id,v.evaluator_version",
+                (parent, list(nonanchors)),
+            )
+            checks = [dict(r) for r in cur.fetchall()]
+        data = {"task_ids": sorted({row["task"] for row in checks}), "checks": checks}
+        return archive.record(
+            dsn, decision_id, kind="rsi.gate.baseline", actor="fixed",
+            subject=gate_id, data=data,
+        )["data"]
 
     try:
         validation = [d for d, t in items.items() if t.split == "val"]
         values = measure("val", validation, (parent, candidate))
         if sum(values[candidate]) < sum(values[parent]):
             return finish("quarantine", "validation score decreased")
-        with db.connect(dsn) as conn:
-            rows = conn.execute(
-                "SELECT DISTINCT e.task FROM rsi_episodes e JOIN rsi_verdicts v ON v.episode=e.operation_id"
-                " WHERE e.genome=%s AND e.task=ANY(%s) AND v.passed IS TRUE",
-                (parent, [d for d, t in items.items() if t.split != "anchor"]),
-            ).fetchall()
-        solved = [r[0] for r in rows]
+        nonanchors = [d for d, t in items.items() if t.split != "anchor"]
+        baseline = regression_baseline(nonanchors)
+        historical_checks = baseline["checks"]
+        solved = baseline["task_ids"]
+        report["regression_baseline"] = historical_checks
         regressions = measure("regression", solved, (candidate,))
         if not all(regressions[candidate]):
             return finish("quarantine", "previously solved task regressed")
         anchors = tuple(t for t in items.values() if t.split == "anchor")
-        alpha = reserve_anchor(dsn, gate_id, anchors)
+        try:
+            alpha = reserve_anchor(dsn, gate_id, anchors)
+        except SettlementError as exc:
+            if "anchor content already exposed" in str(exc):
+                return finish("blocked", str(exc))
+            raise
         values = measure("anchor", [t.digest for t in anchors], (parent, candidate))
         verdict = paired_verdict(tuple(values[parent]), tuple(values[candidate]), alpha)
         report["anchor_comparison"] = verdict
@@ -309,5 +395,9 @@ def run(
             if verdict["promote"]
             else "anchor evidence does not support promotion",
         )
-    except SettlementError as exc:
-        return finish("blocked", str(exc))
+    except UnknownEffect as exc:
+        return incomplete(str(exc))
+    except (SettlementError, OSError, TimeoutError) as exc:
+        # Past admission, a settlement error may mean the send boundary or receipt
+        # is uncertain. Keep the deterministic operation identities retryable.
+        return incomplete(f"comparison effects need recovery: {exc}")
