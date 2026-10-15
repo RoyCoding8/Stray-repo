@@ -7,7 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from settlement.common import Command, ResultCode, SettlementError
+from settlement.common import Command, ResultCode, SettlementError, StaleRevision
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
 
@@ -178,6 +178,25 @@ def _packet_matches(packet, request):
     return isinstance(packet, dict) and packet.get("request") == request
 
 
+def _step_ids(investigation_id, revision):
+    identity = hashlib.sha256(f"{investigation_id}:{revision}".encode()).hexdigest()
+    return ("p01-decision-" + identity, "p01-attempt-" + identity,
+            "p01-worker-" + identity)
+
+
+def _target_was_observed(dsn, investigation_id, decision_id, attempt_id, operation_id):
+    history = investigation.export(dsn, investigation_id)
+    decision = next((item for item in history["decisions"]
+                     if item["id"] == decision_id), None)
+    if (decision is None or decision["kind"] != "worker"
+            or decision["data"].get("attempt_id") != attempt_id
+            or decision["data"].get("operation_id") != operation_id):
+        return False
+    return any(item["decision_id"] == decision_id
+               and item["content"].get("episode") == operation_id
+               for item in history["observations"])
+
+
 def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
            cpu_allocation, max_steps, timeout_ms, token_ceiling,
            staging_root, artifacts_root, objective=None, memory=None, context=None,
@@ -209,8 +228,11 @@ def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
     return investigation.read(dsn, investigation_id)
 
 
-def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root):
+def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root,
+         target_revision=None):
     """Finish a pending action or admit and perform at most one new worker action."""
+    if target_revision is not None and (type(target_revision) is not int or target_revision < 0):
+        raise SettlementError("target_revision must be a non-negative integer")
     state = investigation.read(dsn, investigation_id)
     if state is None:
         raise SettlementError("unknown investigation " + investigation_id)
@@ -218,6 +240,18 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
         raise SettlementError("unsupported investigation domain or seed policy")
     config = state["config"]
     pending = state["pending_decision"]
+    target_ids = (_step_ids(investigation_id, target_revision)
+                  if target_revision is not None else None)
+    if target_ids is not None:
+        decision_id, attempt_id, operation_id = target_ids
+        if pending is not None:
+            if (pending["id"], pending["attempt_id"], pending["operation_id"]) != target_ids:
+                raise StaleRevision("pending P01 action differs from the pinned agenda turn")
+        elif state["revision"] != target_revision:
+            if _target_was_observed(
+                    dsn, investigation_id, decision_id, attempt_id, operation_id):
+                return state
+            raise StaleRevision("P01 revision advanced without the pinned agenda observation")
     experience.capture_investigation(
         dsn, investigation_id, artifacts_root=artifacts_root)
     if state["status"] in ("suspended", "completed", "unresolved"):
@@ -228,10 +262,9 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
     item = tasks.load(dsn, artifacts_root, config["task"])
     current = genomes.load(dsn, artifacts_root, config["genome"])
     if pending is None:
-        identity = hashlib.sha256(f"{investigation_id}:{state['revision']}".encode()).hexdigest()
-        decision_id = "p01-decision-" + identity
-        attempt_id = "p01-attempt-" + identity
-        operation_id = "p01-worker-" + identity
+        decision_id, attempt_id, operation_id = _step_ids(
+            investigation_id, state["revision"])
+        identity = decision_id.removeprefix("p01-decision-")
         selection = None
         if method_options is not None:
             from . import capability
