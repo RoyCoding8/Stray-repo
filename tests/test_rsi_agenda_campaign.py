@@ -8,12 +8,11 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from isolation_db import disposable_db
 
-from experiments.agenda05.check import recompute
-from experiments.agenda05.check import recompute_pair
+from experiments.agenda05.check import recompute, recompute_pair
 from experiments.agenda05.driver import build_scenario, run_arm
 from experiments.agenda05.freeze import freeze
-from isolation_db import disposable_db
 
 
 @pytest.mark.parametrize(("policy", "expected"), [
