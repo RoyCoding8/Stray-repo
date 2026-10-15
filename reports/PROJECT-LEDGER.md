@@ -64,29 +64,17 @@ P03 task list:
 - [x] Run a prospectively bounded free-route comparison and report its actual limits.
 - [x] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: P05 is closed at its qualified mechanism scope.
-P10 is the next implementation, using the selected campaign contract.
-P05 runtime, feedback, concurrency/restart and comparison apparatus are integrated.
-The merged gate at `149342fb` passed 52 tests with no skips in 204.44 seconds
-on real PostgreSQL and bounded children. Both disposable databases were removed;
-Ruff and the diff whitespace check passed. All seven CI jobs passed in run
-`38768429243` on `f9bf24e4`. Independent Sol High review found five material
-gaps at `149342fb`. P05-R1 caches pre-choice deferrals after eligibility changes;
-P05-R2 admits an existing P01 execution above the opportunity's bounds;
-P05-R5 can crash when a peer acknowledges the captured choice first. One isolated
-Luna lane owns these repairs and maintained regressions. P05-R3 now accepts
-valid inactive seed/adaptive pairs at `f4d1299b`; its integrated campaign gate
-passed six tests. P05-R4 requires positive, unskipped pristine test counts for
-initial lesson support at `acfde4e9`; the public pair and altered-support test
-passed. P05-R6 is a minor return limitation: artifact loss immediately after
-choice persistence can raise once, while preserving the flight; restoration
-resumes with one child invocation. It does not justify another recovery owner.
-The merged P05 repairs at `7f59a909` passed the complete 65-test gate with zero
-skips in 377.72 seconds. Both disposable databases were dropped. Independent
-Sol High verification on that exact source passed 51 tests with zero skips in
-390.77 seconds, plus claim-specific public-path and altered-export probes. It
-closed material R1 through R5 and retained R6's stated minor boundary. These are
-separate verification scopes, not a combined whole-repository suite.
+Current throughput checkpoint: P01 through P05 are closed at their qualified
+component scope. P10 is implementing the continuing campaign contract. The
+remaining queue is P06, P07, P09, then P08.
+
+Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
+seconds on PostgreSQL 18 and bounded children. Independent Sol High verification
+on that source passed 51 tests with zero skips in 390.77 seconds and closed all
+material findings. These are separate scopes, not a whole-repository suite.
+The [review](../reviews/P05-REVIEW.md) preserves the findings and remaining minor
+boundary: artifact loss immediately after a choice can raise once while keeping
+its flight, and restoration resumes without another worker invocation.
 P05's prospective free-route freeze at `260b0044` produced one real worker
 invocation per arm. Both returned `over_budget`; their pinned flights remain
 pending and the checker returns incomplete, with one unscored choice per arm.
@@ -100,7 +88,6 @@ preserves the exact outcomes; offline recomputation is byte-identical with route
 variables unset and an unreachable DSN. Task utility and learning remain unmeasured.
 All seven CI jobs passed at `a37bca24` in run `38774674479`, covering final P05
 source and public live evidence. The older run was cancelled, not a failed gate.
-The [independent review](../reviews/P05-REVIEW.md) records exact scopes and R6.
 The P10 ownership and assessment design is pinned in its component plan.
 All P05 worktrees and merged task branches are removed. Private scratch is
 archived in `.git/verification/p05-20261015.zip`, with 11,157 verified files.
@@ -153,9 +140,14 @@ P10 task list:
   then fixed admission at `13918fe3` using the same scoped eligibility owner.
   The joined scope and agenda gate passed four tests with zero skips in 117.18
   seconds. Both completed lane worktrees and branches are removed.
-  Campaign assessment and the bounded pilot apparatus remain in isolated
-  implementation lanes. Full integration and independent review are pending.
-  No P10 live effects have run.
+  Campaign assessment `d69f06e1` is merged at `a53ef0a4`. The joined campaign,
+  lifecycle, gate and CLI gate passed 36 tests with zero skips in 286.73 seconds.
+  The pilot then exposed a pre-first-turn suspend/resume gap. The coordinator
+  reproduced it through the CLI and repaired first-choice detection at
+  `71b3a0d7`; all three CLI integration tests passed with zero skips in 69.40
+  seconds. The campaign lane worktree and branch are removed. The bounded pilot
+  is completing fixture qualification against that fix. Final integration and
+  independent review are pending. No P10 live effects have run.
 - [x] Ground existing agenda, gate, capability, grant and exposure ownership.
 - [x] Compare assessment-flight and immutable-assignment designs; pin shared interfaces and race boundaries in the component plan.
 - [x] Agree. Proceed under the existing assignment, without another approval step.
