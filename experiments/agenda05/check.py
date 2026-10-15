@@ -184,6 +184,75 @@ def _verify_prior(report: dict, task_id: str, genome_id: str,
         raise ValueError("initial lesson is not supported by a pristine passing verifier")
 
 
+def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
+    evidence = report.get("accounting")
+    if not isinstance(evidence, dict) or not isinstance(evidence.get("allocations"), dict):
+        raise ValueError("direct-root resource accounting is absent")
+    if evidence.get("scope") != "direct agenda roots and their reservations; no child allocation authority":
+        raise ValueError("resource accounting scope is unsupported")
+    rows = evidence.get("reservations")
+    if not isinstance(rows, list):
+        raise ValueError("reservation accounting is malformed")
+    roots = {domain: arm["charter"]["allocations"][domain]
+             for domain in ("tokens", "cpu")}
+    allocation_ids = {row["id"] for row in roots.values()}
+    allocations = evidence["allocations"]
+    if allocations.keys() != allocation_ids:
+        raise ValueError("resource accounting does not cover the exact charter roots")
+    for domain, expected in roots.items():
+        actual = allocations[expected["id"]]
+        numbers = [actual.get(key) for key in ("authorized", "reserved", "consumed", "child_authorized")]
+        if (actual.get("id") != expected["id"] or actual.get("parent_id") is not None
+                or actual.get("domain") != domain or actual.get("authorized") != expected["units"]
+                or any(type(value) is not int or value < 0 for value in numbers)
+                or actual["child_authorized"] != 0
+                or actual["reserved"] + actual["consumed"] > actual["authorized"]):
+            raise ValueError("allocation root identity or finite balance is invalid")
+    reservation_ids, reserved_by_root, consumed_by_root, unknown_usage = set(), {}, {}, set()
+    for row in rows:
+        identity, allocation_id, op_id = (row.get("reservation_id"), row.get("allocation_id"),
+                                          row.get("operation_id"))
+        amount, state = row.get("amount"), row.get("state")
+        if (not isinstance(identity, str) or identity in reservation_ids
+                or allocation_id not in allocation_ids or type(amount) is not int or amount <= 0
+                or op_id not in operations or state not in {"reserved", "uncertain", "settled", "released"}):
+            raise ValueError("reservation accounting identity or amount is invalid")
+        reservation_ids.add(identity)
+        operation = operations[op_id].get("operation")
+        if operation is not None and operation.get("reservation_id") != identity:
+            raise ValueError("reservation is detached from its operation")
+        if state in {"reserved", "uncertain"}:
+            if row.get("charge_basis") != "unknown" or row.get("charged_units") is not None:
+                raise ValueError("unsettled usage was assigned a zero or settled charge")
+            reserved_by_root[allocation_id] = reserved_by_root.get(allocation_id, 0) + amount
+            unknown_usage.add(op_id)
+        elif state == "settled":
+            cost = row.get("receipt_actual_cost")
+            if cost is None:
+                charge = amount
+                basis = "reserved_amount_fallback"
+            else:
+                if type(cost) is not int or cost < 0 or cost > amount:
+                    raise ValueError("receipt actual cost exceeds its reservation")
+                charge = cost
+                basis = "receipt_actual_cost"
+            if row.get("charge_basis") != basis or row.get("charged_units") != charge:
+                raise ValueError("settled cost basis differs from the source reservation")
+            consumed_by_root[allocation_id] = consumed_by_root.get(allocation_id, 0) + charge
+    if evidence.get("unknown_usage_operation_ids") != sorted(unknown_usage):
+        raise ValueError("uncertain usage is not preserved separately from consumed charges")
+    for identity in allocation_ids:
+        actual = allocations[identity]
+        if (actual["reserved"] != reserved_by_root.get(identity, 0)
+                or actual["consumed"] != consumed_by_root.get(identity, 0)):
+            raise ValueError("allocation balances differ from the direct reservation union")
+    return {"scope": evidence["scope"],
+            "authorized": sum(row["authorized"] for row in allocations.values()),
+            "reserved": sum(row["reserved"] for row in allocations.values()),
+            "consumed": sum(row["consumed"] for row in allocations.values()),
+            "unknown_usage_operation_ids": sorted(unknown_usage)}
+
+
 def recompute(frozen: dict, report: dict) -> dict:
     """Validate one frozen campaign arm and independently grade its task receipts."""
     if frozen.get("schema") != "p05-agenda-freeze/1" or report.get("schema") != "p05-agenda-arm/1":
@@ -230,6 +299,7 @@ def recompute(frozen: dict, report: dict) -> dict:
                       for domain in ("tokens", "cpu")]
     if report.get("allocation_ids") != expected_roots:
         raise ValueError("reported allocation roots differ from the frozen charter")
+    accounting = _recompute_accounting(report, arm, operations)
     catalog = {row["id"]: row for row in arm["charter"]["opportunities"]}
     packages = report.get("task_packages", {})
     genome_package = _package(report.get("genome_package"), arm["genome_id"], "genome")
@@ -323,7 +393,8 @@ def recompute(frozen: dict, report: dict) -> dict:
             "choices": len(choices), "verified": sum(r["status"] == "passed" for r in results),
             "failed": sum(r["status"] == "failed" for r in results),
             "unscored": sum(r["status"] == "unscored" for r in results),
-            "feedback_effects": used_feedback, "task_results": results}
+            "feedback_effects": used_feedback, "task_results": results,
+            "resource_accounting": accounting}
 
 
 def recompute_pair(frozen: dict, reports: list[dict]) -> dict:

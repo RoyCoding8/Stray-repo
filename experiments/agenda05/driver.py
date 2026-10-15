@@ -11,6 +11,8 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
+from psycopg.rows import dict_row
+
 from experiments.agenda05.freeze import verify_freeze
 from rsi import agenda, experience, genome, investigate, investigation, memory, task
 from settlement import broker, db, store
@@ -223,6 +225,52 @@ def _include_operations(dsn: str, history: dict, output: dict) -> None:
                                 "receipts": store.operation_receipts(dsn, operation_id)}
 
 
+def _resource_accounting(dsn: str, allocation_ids: list[str], operations: list[dict]) -> dict:
+    allocations = {identity: store.allocation_status(dsn, identity)
+                   for identity in allocation_ids}
+    reservations = []
+    with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+        for identity in allocation_ids:
+            cur.execute("SELECT * FROM reservations WHERE allocation_id=%s ORDER BY id", (identity,))
+            reservations.extend(dict(row) for row in cur.fetchall())
+        for identity, allocation in allocations.items():
+            cur.execute("SELECT COALESCE(SUM(authorized),0) AS total FROM allocations WHERE parent_id=%s",
+                        (identity,))
+            allocation["child_authorized"] = int(cur.fetchone()["total"])
+    operation_by_id = {row["operation_id"]: row for row in operations}
+    cost_records, unknown_usage = [], []
+    for reservation in reservations:
+        op_row = operation_by_id.get(reservation["operation_id"])
+        op = op_row.get("operation") if op_row else None
+        payload = op.get("payload", {}) if isinstance(op, dict) else {}
+        has_actual = "_receipt_actual_cost" in payload
+        actual = payload.get("_receipt_actual_cost")
+        if reservation["state"] == "settled":
+            if type(actual) is int and actual >= 0:
+                basis, charge = "receipt_actual_cost", actual
+            else:
+                basis, charge = "reserved_amount_fallback", int(reservation["amount"])
+        else:
+            basis, charge = "unknown", None
+            if reservation["state"] in {"reserved", "uncertain"}:
+                unknown_usage.append(reservation["operation_id"])
+        cost_records.append({"operation_id": reservation["operation_id"],
+                             "allocation_id": reservation["allocation_id"],
+                             "reservation_id": reservation["id"],
+                             "amount": int(reservation["amount"]),
+                             "state": reservation["state"],
+                             "receipt_actual_cost_present": has_actual,
+                             "receipt_actual_cost": actual if type(actual) is int and actual >= 0 else None,
+                             "charge_basis": basis, "charged_units": charge})
+    return {"scope": "direct agenda roots and their reservations; no child allocation authority",
+            "allocations": {identity: {key: allocation[key] for key in
+                            ("id", "parent_id", "domain", "authorized", "reserved", "consumed",
+                             "child_authorized")}
+                            for identity, allocation in allocations.items()},
+            "reservations": cost_records,
+            "unknown_usage_operation_ids": sorted(set(unknown_usage))}
+
+
 def _read_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
             if line.strip()] if path.exists() else []
@@ -318,6 +366,8 @@ def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode:
                 p01_exports[inv_id] = history
                 _include_operations(dsn, history, operations)
     _include_operations(dsn, prior_history, operations)
+    operation_rows = list(operations.values())
+    accounting = _resource_accounting(dsn, [token, cpu], operation_rows)
     report = {"schema": "p05-agenda-arm/1", "freeze_sha256": hashlib.sha256(
               json.dumps(frozen, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
                          allow_nan=False).encode()).hexdigest(),
@@ -329,7 +379,8 @@ def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode:
               "initial_investigation": prior_history, "created": created,
               "results": results, "result": results[-1] if results else None,
               "agenda_export": exported,
-              "investigations": p01_exports, "operations": list(operations.values()),
+              "investigations": p01_exports, "operations": operation_rows,
+              "accounting": accounting,
               "task_packages": {t.digest: base64.b64encode((roots["art"] / t.digest).read_bytes()).decode("ascii")
                                 for t in tasks.values()},
               "genome_package": base64.b64encode((roots["art"] / organism.digest).read_bytes()).decode("ascii"),
