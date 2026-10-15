@@ -133,7 +133,7 @@ def _load_catalogue(dsn, artifacts_root, charter, *, allow_missing=False):
         try:
             dev_task = task.load(dsn, artifacts_root, item["task_id"])
             organism = genome.load(dsn, artifacts_root, item["genome_id"])
-        except SettlementError:
+        except (SettlementError, OSError):
             if not allow_missing:
                 raise
             result[item["id"]] = None
@@ -539,8 +539,8 @@ def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifac
     opportunity = next(i for i in state["charter"]["opportunities"]
                        if i["id"] == flight["opportunity_id"])
     if loaded.get(opportunity["id"]) is None:
-        return _defer_flight(dsn, agenda_id, flight,
-                             {"context_outcome": "catalogue source is unavailable"})
+        return {"status": "pending", "opportunity_id": opportunity["id"],
+                "reason": "catalogue source is unavailable; pinned flight is retained"}
     result = _ensure_p01(dsn, agent, checker, opportunity, flight, state["charter"], loaded,
                          staging_root, artifacts_root)
     evidence = _ack_evidence(dsn, flight)
@@ -550,17 +550,21 @@ def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifac
                 "investigation": result, "acknowledgement": evidence}
     refusal = _refusal_evidence(dsn, flight)
     if refusal is not None:
-        return _defer_flight(dsn, agenda_id, flight, {"reason": refusal["reason"]})
+        return _defer_flight(dsn, agenda_id, flight)
     if result.get("context_outcome") or result.get("capability_outcome"):
-        return _defer_flight(dsn, agenda_id, flight, result)
+        return {"status": "pending", "opportunity_id": opportunity["id"],
+                "reason": result.get("context_outcome") or result.get("capability_outcome")}
     return {"status": "pending", "opportunity_id": opportunity["id"],
             "investigation": result}
 
 
-def _defer_flight(dsn, agenda_id, flight, outcome):
+def _defer_flight(dsn, agenda_id, flight):
+    refusal = _refusal_evidence(dsn, flight)
+    if refusal is None:
+        return {"status": "pending", "opportunity_id": flight["opportunity_id"],
+                "reason": "pinned flight has no definitive never-sent proof"}
     state = _row(dsn, agenda_id)
-    data = {**flight, "reason": outcome.get(
-        "reason", outcome.get("context_outcome", outcome.get("capability_outcome")))}
+    data = {**flight, "reason": refusal["reason"]}
     command = Command(request_id=f"p05-deferral:{agenda_id}:{state['revision']}",
                       payload={"agenda_id": agenda_id, "revision": state["revision"], "data": data})
 

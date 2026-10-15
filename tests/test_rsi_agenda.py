@@ -152,6 +152,82 @@ def test_definitive_pre_dispatch_refusal_closes_pinned_flight(migrated_db, tmp_p
     assert _worker_calls(run["worker_log"]) == []
 
 
+def test_missing_catalogue_source_keeps_dispatched_flight_pinned(
+    migrated_db, tmp_path, monkeypatch
+):
+    from test_rsi_investigate import _worker_calls
+
+    run = _scenario(migrated_db, tmp_path / "p01", "p05-source-gap", "pass-first")
+    charter = _charter(run, agenda_id="p05-source-gap")
+    _grant(migrated_db, charter, "p05-source-gap")
+    agenda.create(migrated_db, agenda_id="p05-source-gap", charter=charter,
+                  artifacts_root=run["roots"]["artifacts_root"])
+
+    def interrupt_before_verification(*args, **kwargs):
+        raise RuntimeError("interrupted after worker dispatch")
+
+    verify = investigate.verifier.verify_episode
+    monkeypatch.setattr(investigate.verifier, "verify_episode", interrupt_before_verification)
+    with pytest.raises(RuntimeError, match="interrupted after worker dispatch"):
+        agenda.wake(
+            migrated_db, run["agent"], run["checker"], "p05-source-gap",
+            staging_root=run["roots"]["staging_root"],
+            artifacts_root=run["roots"]["artifacts_root"])
+
+    before = agenda.read(migrated_db, "p05-source-gap")
+    pending = investigate.read(migrated_db, "p05-source-gap")
+    assert before["flight"] is not None
+    assert pending["status"] == "pending"
+    operation_id = pending["pending_decision"]["operation_id"]
+    assert len(_worker_calls(run["worker_log"])) == 1
+
+    load_task = task.load
+
+    def unavailable_task(dsn, artifacts_root, digest):
+        if digest == run["candidate"].digest:
+            raise task.TaskError("published task artifact is unavailable")
+        return load_task(dsn, artifacts_root, digest)
+
+    monkeypatch.setattr(task, "load", unavailable_task)
+    missing = agenda.wake(
+        migrated_db, run["agent"], run["checker"], "p05-source-gap",
+        staging_root=run["roots"]["staging_root"],
+        artifacts_root=run["roots"]["artifacts_root"])
+
+    assert missing["status"] == "pending"
+    assert "catalogue source is unavailable" in missing["reason"]
+    assert agenda.read(migrated_db, "p05-source-gap")["flight"] == before["flight"]
+    assert investigate.read(migrated_db, "p05-source-gap")["pending_decision"][
+        "operation_id"] == operation_id
+    assert len(_worker_calls(run["worker_log"])) == 1
+
+    monkeypatch.setattr(task, "load", load_task)
+    package_path = run["roots"]["artifacts_root"] / run["candidate"].digest
+    package = package_path.read_bytes()
+    package_path.unlink()
+    try:
+        absent = agenda.wake(
+            migrated_db, run["agent"], run["checker"], "p05-source-gap",
+            staging_root=run["roots"]["staging_root"],
+            artifacts_root=run["roots"]["artifacts_root"])
+    finally:
+        package_path.write_bytes(package)
+    assert absent["status"] == "pending"
+    assert agenda.read(migrated_db, "p05-source-gap")["flight"] == before["flight"]
+    assert len(_worker_calls(run["worker_log"])) == 1
+
+    monkeypatch.setattr(investigate.verifier, "verify_episode", verify)
+    resumed = agenda.wake(
+        migrated_db, run["agent"], run["checker"], "p05-source-gap",
+        staging_root=run["roots"]["staging_root"],
+        artifacts_root=run["roots"]["artifacts_root"])
+    assert resumed["status"] == "acknowledged"
+    assert resumed["acknowledgement"]["observation"]["passed"] is True
+    assert len(_worker_calls(run["worker_log"])) == 1
+    assert [row["kind"] for row in agenda.export(
+        migrated_db, "p05-source-gap")["decisions"]] == ["p05.choice", "p05.ack"]
+
+
 def test_ranked_competing_investigations_share_one_granted_root(migrated_db, tmp_path):
     run = _scenario(migrated_db, tmp_path / "p01", "p05-first", "repair-after-feedback")
     config = run["state"]["config"]
@@ -226,6 +302,31 @@ def test_missing_source_is_deferred_without_effect(migrated_db, tmp_path):
     assert result["status"] == "deferred"
     assert "source is unavailable" in result["ranked"][0]["reason"]
     assert agenda.read(migrated_db, "p05-unavailable")["turns"] == 0
+    assert _worker_calls(run["worker_log"]) == []
+
+
+@pytest.mark.parametrize("outcome", ["context_outcome", "capability_outcome"])
+def test_p01_pre_effect_outcome_keeps_committed_flight(migrated_db, tmp_path, monkeypatch, outcome):
+    from test_rsi_investigate import _worker_calls
+
+    run = _scenario(migrated_db, tmp_path / "p01", "p05-outcome-" + outcome, "pass-first")
+    agenda_id = "p05-outcome-" + outcome
+    charter = _charter(run, agenda_id=agenda_id)
+    _grant(migrated_db, charter, agenda_id)
+    agenda.create(migrated_db, agenda_id=agenda_id, charter=charter,
+                  artifacts_root=run["roots"]["artifacts_root"])
+    monkeypatch.setattr(agenda, "_ensure_p01", lambda *_args, **_kwargs: {
+        outcome: {"status": "needs_information"}})
+
+    result = agenda.wake(
+        migrated_db, run["agent"], run["checker"], agenda_id,
+        staging_root=run["roots"]["staging_root"],
+        artifacts_root=run["roots"]["artifacts_root"])
+
+    assert result["status"] == "pending"
+    assert agenda.read(migrated_db, agenda_id)["flight"] is not None
+    assert [row["kind"] for row in agenda.export(
+        migrated_db, agenda_id)["decisions"]] == ["p05.choice"]
     assert _worker_calls(run["worker_log"]) == []
 
 
