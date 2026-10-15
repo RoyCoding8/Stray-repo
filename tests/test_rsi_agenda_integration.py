@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from rsi import investigate
 from test_rsi_investigate import _scenario, _worker_calls
+
+from rsi import investigate
 
 
 def test_pinned_p01_revision_replays_its_observation_without_a_new_worker(
