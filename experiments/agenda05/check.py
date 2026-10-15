@@ -218,7 +218,9 @@ def recompute(frozen: dict, report: dict) -> dict:
     if not choices or len(choices) > scenario["choice_cap"]:
         raise ValueError("campaign exceeds its cap or has no choices")
     ack_by_choice = {row.get("choice_id"): row for row in acks}
-    if None in ack_by_choice or len(ack_by_choice) != len(acks):
+    choice_ids = {row.get("choice_id") for row in choices}
+    if (None in ack_by_choice or len(ack_by_choice) != len(acks)
+            or not ack_by_choice.keys() <= choice_ids):
         raise ValueError("agenda acknowledgements are duplicated or unidentified")
     operations = {row.get("operation_id", row.get("operation", {}).get("id")): row
                   for row in report.get("operations", [])}

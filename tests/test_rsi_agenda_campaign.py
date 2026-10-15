@@ -40,8 +40,11 @@ def test_frozen_fixture_arm_uses_public_agenda_and_pristine_p01(
     assert report["agenda_export"]["agenda"]["flight"] is None
     assert len(report["operations"]) >= len(choices) * 2
     grade = recompute(frozen, report)
+    assert grade["task_results"][0]["status"] == "failed"
+    assert any(result["status"] == "passed" for result in grade["task_results"])
     assert grade["failed"] >= 1
     assert grade["verified"] >= 1
+    assert grade["unscored"] == 0
     if policy == "adaptive/1":
         assert grade["feedback_effects"]
         assert grade["feedback_effects"][0]["selected"] != \
