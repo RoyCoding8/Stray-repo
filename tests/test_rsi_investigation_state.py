@@ -339,7 +339,8 @@ def test_broker_never_sent_proof_closes_preflight_refusal_without_receipt(migrat
     proof = operation["payload"]["_never_sent_proof"]
     assert proof == {"claim": "never-sent", "subject": operation_id,
                      "provenance": "codex:prove_never_sent", "dispatch_generation": 1}
-    assert not (run_dir / operation_id / "claim").exists()
+    assert launcher.prove_never_sent(operation_id, 1)
+    assert not launcher.prove_never_sent(operation_id, 2)
     with db.connect(migrated_db) as conn:
         assert conn.execute("SELECT state FROM reservations WHERE operation_id = %s",
                             (operation_id,)).fetchone()[0] == "released"
