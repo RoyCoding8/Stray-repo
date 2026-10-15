@@ -91,8 +91,54 @@ def _bundle(tmp_path):
             "execution_version": "cap1-test",
             "output_digest": hashlib.sha256(artifact_package).hexdigest(),
         }
+        allocation_id = "fixture-allocation"
+        attempt_id = "fixture-attempt:" + operation_id
+        payload = {"effect": "sandbox-exec",
+                   "payload": {"argv": ["python", "trusted_runner.py", "identity.json"]}}
+        operation = {"id": operation_id, "allocation_id": allocation_id,
+                     "attempt_id": attempt_id, "execution_version": "cap1-test",
+                     "payload_digest": hashlib.sha256(_canonical(payload)).hexdigest(),
+                     "payload": payload, "dispatch_state": "observed", "settled": True}
+        operation_receipt = {"outcome": "success", "content": {
+            "_verdict": "success", "parse": "typed-json",
+            "data": {"supervised": True, "worker": {
+                "status": "ok", "error": "", "data": {
+                    "kind": "capability-result",
+                    "output": {"value": expected, "files": files}}}}}}
+        evaluator_version = json.loads(base64.b64decode(
+            task_evidence["package"]))["manifest"]["evaluator_version"]
+        verifier_id = "rsi-verify-" + hashlib.sha256(
+            f"{operation_id}:{evaluator_version}".encode()).hexdigest()
+        solution_bytes = {name: value.encode() for name, value in files.items()}
+        solution_package = _canonical({
+            "manifest": {"kind": "rsi-solution", "task": task_evidence["digest"],
+                         "files": [{"path": name, "kind": "file", "size": len(raw),
+                                    "digest": hashlib.sha256(raw).hexdigest()}
+                                   for name, raw in sorted(solution_bytes.items())]},
+            "scope": "rsi-solution",
+            "files": {name: raw.hex() for name, raw in solution_bytes.items()},
+        })
+        verifier_payload = {"effect": "sandbox-exec", "payload": {
+            "argv": ["python", "-I", "-S", "-B", "_rsi_verify.py", "test_summary.py"]}}
+        verifier_operation = {**operation, "id": verifier_id,
+                              "payload": verifier_payload,
+                              "execution_version": hashlib.sha256(solution_package).hexdigest(),
+                              "payload_digest": hashlib.sha256(
+                                  _canonical(verifier_payload)).hexdigest()}
+        verifier_receipt = {"outcome": "success", "content": {
+            "_verdict": "success", "parse": "typed-json",
+            "data": {"supervised": True, "worker": {
+                "status": "ok", "error": "", "data": {
+                    "tests": 1, "errors": 0, "failures": 0}}}}}
+        execution_operations.extend([
+            {"operation": operation, "receipts": [operation_receipt]},
+            {"operation": verifier_operation, "receipts": [verifier_receipt]},
+        ])
         return {
             **identity, "decision": identity, "status": "completed",
+            "allocation_id": allocation_id, "attempt_id": attempt_id,
+            "payload_digest": hashlib.sha256(_canonical(payload["payload"])).hexdigest(),
+            "operation": operation,
             "request": request, "dispatch_request": dispatch_request,
             "value": expected, "files": files,
             "result_artifact": base64.b64encode(artifact_package).decode(),
@@ -102,12 +148,18 @@ def _bundle(tmp_path):
             "fresh_process": ({"model_calls": 0, "execution": "native-method-episode"}
                               if operation_id == "dev-use" else
                               {"pid": 321, "exit_code": 0, "model_calls": 0}),
-            "verdict": {"passed": True}, "solution_files": files,
+            "verdict": {"operation_id": verifier_id, "status": "passed",
+                        "passed": True}, "solution_files": files,
             "task": task_evidence,
         }
 
     values = ([3, -2, 7], [-8, -3], [], [4, 4, 1])
     tasks = [task_doc(value, str(i)) for i, value in enumerate(values)]
+    execution_operations = []
+    campaign_uses = [use("dev-use", values[0], tasks[0]),
+                     use("transfer-1", values[1], tasks[1]),
+                     use("transfer-2", values[2], tasks[2]),
+                     use("transfer-3", values[3], tasks[3])]
     constructor_events = b'{"type":"constructed"}\n'
     constructor_events_digest = hashlib.sha256(constructor_events).hexdigest()
     constructor_trajectory = _canonical({
@@ -118,37 +170,59 @@ def _bundle(tmp_path):
         "files": {"events.jsonl": constructor_events.hex()},
     })
     constructor_trajectory_digest = hashlib.sha256(constructor_trajectory).hexdigest()
+    context_packet = {"schema": "fixture-context/1", "evidence": []}
+    construction_input = {
+        "parent": parent.digest, "name": "summary", "interface": method.interface,
+        "context_digest": hashlib.sha256(_canonical(context_packet)).hexdigest(),
+        "operation_id": "construct-use", "model": "fixture-model",
+        "allocation_id": "fixture-tokens",
+        "timeout_ms": 180000, "token_ceiling": 100000,
+    }
+    evidence_file = _canonical({"construction": construction_input,
+                                "context_packet": context_packet})
+    evidence_package = _canonical({
+        "scope": "rsi-dev-evidence",
+        "manifest": {"kind": "rsi-dev-evidence", "files": [{
+            "path": "evidence.json", "digest": hashlib.sha256(evidence_file).hexdigest(),
+            "size": len(evidence_file), "kind": "file"}]},
+        "files": {"evidence.json": evidence_file.hex()},
+    })
+    evidence_digest = hashlib.sha256(evidence_package).hexdigest()
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_bytes(_canonical(manifest))
     report = {
         "schema": "p04-capability-campaign/1",
+        "status": "completed",
         "source_manifest_digest": hashlib.sha256(_canonical(manifest)).hexdigest(),
         "parent": parent_doc,
         "construction_calls": 1,
         "construction_operation_id": "construct-use",
         "construction": {"status": "completed", "child": child.digest,
-                         "operation_id": "construct-use", "name": "summary",
+                         **construction_input,
                          "interface": method.interface, "method_digest": method.digest,
-                         "evidence": hashlib.sha256(b"evidence").hexdigest(),
+                         "evidence": evidence_digest,
                          "trajectory": constructor_trajectory_digest},
         "operations": [{"operation": {"id": "construct-use",
                                          "dispatch_state": "observed",
                                          "payload": {"effect": "agent-run",
-                                                     "payload": {"harness": "codex"}}},
+                                                     "payload": {"task": evidence_digest,
+                                                                 "genome": parent.digest,
+                                                                 "timeout_ms": 180000,
+                                                                 "token_ceiling": 100000}}},
                         "receipts": [{"outcome": "success",
-                                      "content": {"trajectory_digest": constructor_events_digest},
-                                      "receipt_identity": "fixture:construct-use"}]}],
+                                      "content": {"operation_id": "construct-use",
+                                                  "response_digest": constructor_events_digest,
+                                                  "trajectory_digest": constructor_events_digest},
+                                      "receipt_identity": "fixture:construct-use"}]},
+                       *execution_operations],
         "child": child_doc,
         "task": tasks[0][2],
-        "uses": [use("dev-use", values[0], tasks[0]),
-                 use("transfer-1", values[1], tasks[1]),
-                 use("transfer-2", values[2], tasks[2]),
-                 use("transfer-3", values[3], tasks[3])],
+        "uses": campaign_uses,
         "retention": {"status": "retained", "episode_id": "dev-use"},
         "selection": {"status": "selected", "executed_genome": child.digest,
                       "executed_name": "summary", "method_digest": method.digest},
     }
-    artifact_blobs = {b"evidence", constructor_trajectory}
+    artifact_blobs = {evidence_package, constructor_trajectory}
     artifact_blobs.update(("trace:" + use["operation_id"]).encode()
                           for use in report["uses"])
     report["artifact_bytes"] = {
@@ -172,7 +246,8 @@ def test_checker_accepts_bound_method_use_and_pristine_solutions(tmp_path):
 
 
 @pytest.mark.parametrize("mutation", ["method_digest", "input_digest", "dispatch_task",
-                                      "artifact", "solution", "construction_receipt"])
+                                      "artifact", "solution", "construction_receipt",
+                                      "construction_evidence"])
 def test_checker_rejects_broken_identity_or_result_evidence(tmp_path, mutation):
     root, report = _bundle(tmp_path)
     use = report["uses"][0]
@@ -186,8 +261,10 @@ def test_checker_rejects_broken_identity_or_result_evidence(tmp_path, mutation):
         use["output_digest"] = "0" * 64
     elif mutation == "solution":
         report["task"]["reference"]["summary.json"] = "{}\n"
-    else:
+    elif mutation == "construction_receipt":
         report["operations"][0]["receipts"] = []
+    else:
+        report["construction"]["evidence"] = report["construction"]["trajectory"]
     (root / "report.json").write_bytes(_canonical(report))
 
     with pytest.raises(ValueError):
@@ -196,7 +273,8 @@ def test_checker_rejects_broken_identity_or_result_evidence(tmp_path, mutation):
 
 def test_checker_preserves_candidate_failure_as_no_acquisition(tmp_path):
     root, report = _bundle(tmp_path)
-    report["construction"] = {"status": "invalid", "child": None}
+    report["construction"]["status"] = "invalid"
+    report["status"] = "no-acquisition"
     report.pop("child")
     report["uses"] = []
     (root / "report.json").write_bytes(_canonical(report))
@@ -300,3 +378,98 @@ def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
     assert all(use["verdict"]["passed"] for use in report["uses"])
     assert report["retention"]["episode_id"] == report["uses"][0]["episode"]["id"]
     assert check.check_bundle(bundle)["checked_uses"] == 4
+
+    import copy
+
+    clean = copy.deepcopy(report)
+    use_operation_ids = {use["operation_id"] for use in report["uses"]}
+    missing_uses = copy.deepcopy(clean)
+    missing_uses["operations"] = [row for row in clean["operations"]
+                                   if row["operation"]["id"] not in use_operation_ids]
+    for use in missing_uses["uses"]:
+        use.pop("operation", None)
+    (bundle / "report.json").write_bytes(_canonical(missing_uses))
+    with pytest.raises(ValueError):
+        check.check_bundle(bundle)
+
+    empty_use_receipt = copy.deepcopy(clean)
+    operation = next(row for row in empty_use_receipt["operations"]
+                     if row["operation"]["id"] == report["uses"][0]["operation_id"])
+    operation["receipts"] = []
+    (bundle / "report.json").write_bytes(_canonical(empty_use_receipt))
+    with pytest.raises(ValueError):
+        check.check_bundle(bundle)
+
+    missing_verifiers = copy.deepcopy(clean)
+    verifier_ids = {use["verdict"]["operation_id"] for use in clean["uses"]}
+    missing_verifiers["operations"] = [row for row in clean["operations"]
+                                        if row["operation"]["id"] not in verifier_ids]
+    (bundle / "report.json").write_bytes(_canonical(missing_verifiers))
+    with pytest.raises(ValueError):
+        check.check_bundle(bundle)
+
+    swapped_verifiers = copy.deepcopy(clean)
+    first = swapped_verifiers["uses"][0]["verdict"]["operation_id"]
+    second = swapped_verifiers["uses"][1]["verdict"]["operation_id"]
+    swapped_verifiers["uses"][0]["verdict"]["operation_id"] = second
+    swapped_verifiers["uses"][1]["verdict"]["operation_id"] = first
+    (bundle / "report.json").write_bytes(_canonical(swapped_verifiers))
+    with pytest.raises(ValueError):
+        check.check_bundle(bundle)
+
+
+def test_checker_rejects_negative_claim_without_constructor_evidence(tmp_path):
+    root, report = _bundle(tmp_path)
+    report.update(status="no-acquisition", construction={"status": "invalid"},
+                  operations=[], artifact_bytes={}, uses=[])
+    (root / "report.json").write_bytes(_canonical(report))
+
+    with pytest.raises(ValueError):
+        check.check_bundle(root)
+
+
+def test_checker_requires_failed_development_receipt_and_rejection(tmp_path):
+    root, report = _bundle(tmp_path)
+    use = report["uses"][0]
+    use["value"] = {"count": 3, "total": 8, "minimum": -2, "maximum": 6}
+    use["files"] = {"summary.json": json.dumps(use["value"], sort_keys=True)}
+    use["solution_files"] = use["files"]
+    result = {"value": use["value"], "files": use["files"]}
+    artifact = _canonical({
+        "manifest": {"kind": "rsi-capability-result", "operation_id": use["operation_id"]},
+        "files": {"result.json": _canonical(result).hex()},
+    })
+    use["result_artifact"] = base64.b64encode(artifact).decode()
+    use["output_digest"] = hashlib.sha256(artifact).hexdigest()
+    use["decision"]["output_digest"] = use["output_digest"]
+    use_operation = next(row for row in report["operations"]
+                         if row["operation"]["id"] == use["operation_id"])
+    use_receipt_data = use_operation["receipts"][0]["content"]["data"]["worker"]["data"]
+    use_receipt_data["output"] = result
+    use["verdict"].update(status="failed", passed=False)
+    verifier_operation = next(row for row in report["operations"]
+                              if row["operation"]["id"] == use["verdict"]["operation_id"])
+    verifier_data = verifier_operation["receipts"][0]["content"]["data"]["worker"]["data"]
+    verifier_data.update(failures=1)
+    solution_bytes = {name: value.encode() for name, value in use["solution_files"].items()}
+    verifier_operation["operation"]["execution_version"] = hashlib.sha256(_canonical({
+        "manifest": {"kind": "rsi-solution", "task": use["task"]["digest"],
+                     "files": [{"path": name, "kind": "file", "size": len(raw),
+                                "digest": hashlib.sha256(raw).hexdigest()}
+                               for name, raw in sorted(solution_bytes.items())]},
+        "scope": "rsi-solution",
+        "files": {name: raw.hex() for name, raw in solution_bytes.items()},
+    })).hexdigest()
+    report["uses"] = [use]
+    report["retention"] = {"status": "rejected", "episode_id": use["episode"]["id"]}
+    report["status"] = "candidate-failed-development"
+    (root / "report.json").write_bytes(_canonical(report))
+
+    assert check.check_bundle(root) == {
+        "status": "no-acquisition", "checked_uses": 1,
+        "construction_status": "candidate-failed-development"}
+
+    verifier_operation["receipts"] = []
+    (root / "report.json").write_bytes(_canonical(report))
+    with pytest.raises(ValueError):
+        check.check_bundle(root)
