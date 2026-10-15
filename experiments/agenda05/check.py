@@ -45,10 +45,18 @@ def _receipt(operation: dict, records: dict, operation_id: str, effect: str) -> 
     receipt = receipts[0]
     content = receipt.get("content") if isinstance(receipt, dict) else None
     if (not isinstance(content, dict)
-            or _sha(_canonical(content)) != receipt.get("content_digest")
-            or receipt.get("outcome") not in {"success", "failure", "unknown"}
-            or content.get("_verdict") != receipt.get("outcome")):
+            or not isinstance(receipt.get("receipt_identity"), str)
+            or operation_id not in receipt["receipt_identity"]
+            or receipt.get("outcome") not in {"success", "failure", "unknown"}):
         raise ValueError(f"{effect} receipt is missing, swapped, or altered")
+    if effect == "agent-run":
+        if (content.get("operation_id") != operation_id
+                or content.get("response_digest") != content.get("trajectory_digest")
+                or (content.get("status") == "completed") != (receipt.get("outcome") == "success")):
+            raise ValueError("agent-run receipt is not bound to its operation trajectory")
+        return {"operation": op, "receipt": receipt, "result": content}
+    if content.get("_verdict") != receipt.get("outcome"):
+        raise ValueError(f"{effect} receipt verdict differs from its stored outcome")
     data = content.get("data", {})
     worker = data.get("worker") if isinstance(data, dict) else None
     if (content.get("parse") != "typed-json" or not isinstance(worker, dict)
@@ -188,6 +196,14 @@ def recompute(frozen: dict, report: dict) -> dict:
         arm = scenario["arms"][arm_id]
     except (KeyError, TypeError, ValueError, UnicodeError) as exc:
         raise ValueError("report arm is absent from the frozen scenario") from exc
+    initial = scenario.get("initial_evidence", {})
+    claim = report.get("initial_claim")
+    if (not isinstance(claim, dict)
+            or report.get("initial_evidence_sha256") != scenario.get("initial_evidence_sha256")
+            or claim.get("claim_id") != initial.get("claim_id")
+            or claim.get("version") != initial.get("version")
+            or claim.get("source") != "authored-from-scripted-pristine-example"):
+        raise ValueError("initial lesson identity differs from the frozen evidence")
     agenda = report.get("agenda_export", {})
     state = agenda.get("agenda", {})
     if (report.get("agenda_id") != arm["agenda_id"] or report.get("policy") != arm["policy"]
@@ -204,6 +220,10 @@ def recompute(frozen: dict, report: dict) -> dict:
     operations = {row.get("operation", {}).get("id"): row for row in report.get("operations", [])}
     if len(operations) != len(report.get("operations", [])):
         raise ValueError("operation exports are duplicated or unidentified")
+    expected_roots = [arm["charter"]["allocations"][domain]["id"]
+                      for domain in ("tokens", "cpu")]
+    if report.get("allocation_ids") != expected_roots:
+        raise ValueError("reported allocation roots differ from the frozen charter")
     catalog = {row["id"]: row for row in arm["charter"]["opportunities"]}
     packages = report.get("task_packages", {})
     genome_package = _package(report.get("genome_package"), arm["genome_id"], "genome")
@@ -257,27 +277,73 @@ def recompute(frozen: dict, report: dict) -> dict:
                 raise ValueError("scope feedback did not follow a checked failed experience")
             no_feedback = [{**row, "triggered": False} for row in ranked]
             control = rank(no_feedback, arm["policy"])
-            if not control or control[0]["id"] == ranked[0]["id"]:
-                raise ValueError("connected feedback did not change the selected opportunity")
+            changed = bool(control and control[0]["id"] != ranked[0]["id"])
+            if not control or (arm["policy"] == "adaptive/1") != changed:
+                raise ValueError("policy feedback did not match the selected opportunity")
             used_feedback.append({"source": source_id, "selected": ranked[0]["id"],
-                                  "without_feedback": control[0]["id"]})
+                                  "without_feedback": control[0]["id"],
+                                  "changed_selection": changed})
         result = _verify_choice(report, choice, ack, task_id, genome_id, task_package, operations)
         results.append(result)
     return {"schema": "p05-agenda-recomputed/1", "arm": arm_id,
+            "evidence_basis": "attested runtime exports; no independent provider authentication",
             "choices": len(choices), "verified": sum(r["status"] == "passed" for r in results),
             "failed": sum(r["status"] == "failed" for r in results),
             "unscored": sum(r["status"] == "unscored" for r in results),
             "feedback_effects": used_feedback, "task_results": results}
 
 
+def recompute_pair(frozen: dict, reports: list[dict]) -> dict:
+    """Compare seed/adaptive exports after validating each arm independently."""
+    if len(reports) != 2:
+        raise ValueError("paired comparison requires exactly two arm reports")
+    by_id = {report.get("arm_id"): report for report in reports}
+    if by_id.keys() != {"seed", "adaptive"}:
+        raise ValueError("paired comparison must include seed and adaptive arms")
+    grades = {arm_id: recompute(frozen, report) for arm_id, report in by_id.items()}
+    scenario = json.loads(base64.b64decode(frozen["scenario"], validate=True))
+    seed, adaptive = by_id["seed"], by_id["adaptive"]
+    seed_arm, adaptive_arm = scenario["arms"]["seed"], scenario["arms"]["adaptive"]
+    seed_tasks = {item["id"]: item["task_id"] for item in seed_arm["charter"]["opportunities"]}
+    adaptive_tasks = {item["id"]: item["task_id"]
+                      for item in adaptive_arm["charter"]["opportunities"]}
+    roots = [seed.get("allocation_ids"), adaptive.get("allocation_ids")]
+    seed_source = [row.get("content") for row in seed.get("initial_investigation", {}).get(
+        "observations", [])]
+    adaptive_source = [row.get("content") for row in adaptive.get("initial_investigation", {}).get(
+        "observations", [])]
+    if (seed_tasks != adaptive_tasks or seed_arm["genome_id"] != adaptive_arm["genome_id"]
+            or seed.get("initial_evidence_sha256") != scenario["initial_evidence_sha256"]
+            or adaptive.get("initial_evidence_sha256") != scenario["initial_evidence_sha256"]
+            or seed.get("initial_claim") != adaptive.get("initial_claim")
+            or seed_source != adaptive_source
+            or any(not isinstance(row, list) or len(row) != 2 for row in roots)
+            or set(roots[0]) & set(roots[1])
+            or not any(row["changed_selection"] is False
+                       for row in grades["seed"]["feedback_effects"])
+            or not any(row["changed_selection"] is True
+                       for row in grades["adaptive"]["feedback_effects"])):
+        raise ValueError("arms do not share initial evidence or isolate their allocation pools")
+    return {"schema": "p05-agenda-pair/1", "arms": grades,
+            "evidence_basis": "attested runtime exports; no independent provider authentication",
+            "same_task_packages": True, "same_genome": True,
+            "same_initial_evidence": True, "separate_allocation_pools": True}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--paired-report", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    result = recompute(json.loads(args.manifest.read_text(encoding="utf-8")),
-                       json.loads(args.report.read_text(encoding="utf-8")))
+    frozen = json.loads(args.manifest.read_text(encoding="utf-8"))
+    report = json.loads(args.report.read_text(encoding="utf-8"))
+    if args.paired_report:
+        result = recompute_pair(frozen, [report, json.loads(
+            args.paired_report.read_text(encoding="utf-8"))])
+    else:
+        result = recompute(frozen, report)
     text = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(text, encoding="utf-8", newline="\n")

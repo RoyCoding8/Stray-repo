@@ -322,6 +322,7 @@ def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode:
               "policy": policy, "mode": mode,
               "initial_claim": {**claim, "source": "authored-from-scripted-pristine-example"},
               "initial_evidence_sha256": scenario["initial_evidence_sha256"],
+              "allocation_ids": [token, cpu],
               "initial_investigation": prior_history, "created": created,
               "results": results, "result": results[-1] if results else None,
               "agenda_export": exported,
