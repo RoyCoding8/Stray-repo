@@ -89,8 +89,17 @@ def _construction_record(report, *, settled):
                 or len(receipts) != 1 or receipts[0].get("outcome") != "success"):
             raise ValueError("construction lacks one settled successful broker receipt")
         content = receipts[0].get("content")
+        trajectory_digest = report.get("construction", {}).get("trajectory")
+        try:
+            trajectory_raw = base64.b64decode(
+                report["artifact_bytes"][trajectory_digest], validate=True)
+            trajectory = json.loads(trajectory_raw)
+            file_digests = {item.get("digest") for item in
+                            trajectory["manifest"]["files"]}
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("constructor trajectory artifact is malformed") from exc
         if (not isinstance(content, dict)
-                or content.get("trajectory_digest") != report.get("construction", {}).get("trajectory")):
+                or content.get("trajectory_digest") not in file_digests):
             raise ValueError("constructor receipt does not bind its captured trajectory")
     return record
 

@@ -108,6 +108,16 @@ def _bundle(tmp_path):
 
     values = ([3, -2, 7], [-8, -3], [], [4, 4, 1])
     tasks = [task_doc(value, str(i)) for i, value in enumerate(values)]
+    constructor_events = b'{"type":"constructed"}\n'
+    constructor_events_digest = hashlib.sha256(constructor_events).hexdigest()
+    constructor_trajectory = _canonical({
+        "scope": "rsi-trajectory",
+        "manifest": {"kind": "rsi-trajectory", "files": [{
+            "path": "events.jsonl", "digest": constructor_events_digest,
+            "size": len(constructor_events), "kind": "file"}]},
+        "files": {"events.jsonl": constructor_events.hex()},
+    })
+    constructor_trajectory_digest = hashlib.sha256(constructor_trajectory).hexdigest()
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_bytes(_canonical(manifest))
     report = {
@@ -120,14 +130,13 @@ def _bundle(tmp_path):
                          "operation_id": "construct-use", "name": "summary",
                          "interface": method.interface, "method_digest": method.digest,
                          "evidence": hashlib.sha256(b"evidence").hexdigest(),
-                         "trajectory": hashlib.sha256(b"construct-trace").hexdigest()},
+                         "trajectory": constructor_trajectory_digest},
         "operations": [{"operation": {"id": "construct-use",
                                          "dispatch_state": "observed",
                                          "payload": {"effect": "agent-run",
                                                      "payload": {"harness": "codex"}}},
                         "receipts": [{"outcome": "success",
-                                      "content": {"trajectory_digest": hashlib.sha256(
-                                          b"construct-trace").hexdigest()},
+                                      "content": {"trajectory_digest": constructor_events_digest},
                                       "receipt_identity": "fixture:construct-use"}]}],
         "child": child_doc,
         "task": tasks[0][2],
@@ -139,7 +148,7 @@ def _bundle(tmp_path):
         "selection": {"status": "selected", "executed_genome": child.digest,
                       "executed_name": "summary", "method_digest": method.digest},
     }
-    artifact_blobs = {b"evidence", b"construct-trace"}
+    artifact_blobs = {b"evidence", constructor_trajectory}
     artifact_blobs.update(("trace:" + use["operation_id"]).encode()
                           for use in report["uses"])
     report["artifact_bytes"] = {
