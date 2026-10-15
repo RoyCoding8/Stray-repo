@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from types import SimpleNamespace
 
 from fixtures.p10_campaign import ROOT, prepare_campaign
+
 from rsi import archive, episode, gate, genome, verifier
 from settlement import db
 from settlement.launcher_codex import CodexLauncher, Provider

@@ -60,7 +60,7 @@ def _parse_protocol(protocol, max_turns):
     if not isinstance(rounds, list) or not 0 < len(rounds) <= _MAX_ROUNDS:
         raise SettlementError(f"assessment protocol needs 1..{_MAX_ROUNDS} rounds")
     required = {"id", "after_turn", "epoch", "parent", "candidate", "model", "route_identity"}
-    ids, milestones, routes = set(), [], set()
+    ids, milestones = set(), []
     for item in rounds:
         if not isinstance(item, dict) or set(item) != required:
             raise SettlementError("each assessment round must have the pinned protocol fields")
@@ -77,7 +77,6 @@ def _parse_protocol(protocol, max_turns):
         route = item["route_identity"]
         if len(route) != 64 or any(c not in "0123456789abcdef" for c in route):
             raise SettlementError("route_identity must be a lowercase SHA-256 digest")
-        routes.add(route)
     if milestones != sorted(milestones):
         raise SettlementError("assessment milestones must be nondecreasing")
     return protocol, raw
@@ -139,7 +138,7 @@ def _validate_exposure(dsn, artifacts_root, charter, anchors_by_round):
                    for item in charter["opportunities"]]
     development_ids = {gate.anchor_identity(item) for item in development}
     seen = set()
-    for round_id, anchors in anchors_by_round.items():
+    for anchors in anchors_by_round.values():
         current = {gate.anchor_identity(item) for item in anchors}
         if len(current) != len(anchors):
             raise SettlementError("protected anchor content repeats within an assessment round")
@@ -312,7 +311,7 @@ def _load_protocol(dsn, state, artifacts_root):
 
 
 def _run_assignment(dsn, campaign_id, assignment, agent, checker, staging_root, artifacts_root):
-    data = assignment["data"] if "data" in assignment else assignment
+    data = assignment.get("data", assignment)
     provider = getattr(agent, "provider", None)
     if provider is None or provider.model != data["model"]:
         return {"status": "control", "reason": "launcher model differs from pinned assessment"}

@@ -7,13 +7,13 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from test_rsi_investigate import _task
+
 from rsi import campaign, gate, genome, task
 from settlement import store
 from settlement.common import Command
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
-
-from test_rsi_investigate import _task
 
 ROOT = Path(__file__).resolve().parents[2]
 

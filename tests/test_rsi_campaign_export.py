@@ -4,6 +4,7 @@ import copy
 import sys
 
 from fixtures.p10_campaign import ROOT, prepare_campaign
+
 from rsi import campaign
 from settlement.launcher_codex import CodexLauncher, Provider
 
@@ -59,7 +60,7 @@ def _remove_operation(bundle, operation_id):
 
 def test_recompute_derives_gain_from_complete_phase_receipt_evidence(migrated_db, tmp_path):
     baseline = _complete_export(migrated_db, tmp_path)
-    report, gate_id = _assessment_gate(baseline)
+    report, _ = _assessment_gate(baseline)
     assert report["disposition"] == "quarantine"
     assert report["phases"]["val"]
 

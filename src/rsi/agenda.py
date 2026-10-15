@@ -889,7 +889,7 @@ def _wake(dsn, agent, checker, agenda_id, *, staging_root, artifacts_root):
     memory_changed = (snapshot["memory_revision"] != state["memory_revision"]
                       and _relevant_memory_change(dsn, charter, state["memory_revision"]))
     cached_deferral = (state.get("last_result") or {}).get("status") == "deferred"
-    changed = (state["revision"] == 0 or cached_deferral or memory_changed
+    changed = (not state["last_result"] or cached_deferral or memory_changed
                or (snapshot["event_epoch"] != state["source_epoch"]
                    and _relevant(dsn, snapshot, agenda_id, charter)))
     if not changed:
