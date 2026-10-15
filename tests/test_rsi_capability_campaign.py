@@ -9,6 +9,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+DRIVER_SPEC = importlib.util.spec_from_file_location(
+    "p04_driver", ROOT / "experiments" / "capability04" / "driver.py")
+driver = importlib.util.module_from_spec(DRIVER_SPEC)
+assert DRIVER_SPEC.loader is not None
+DRIVER_SPEC.loader.exec_module(driver)
 SPEC = importlib.util.spec_from_file_location(
     "p04_check", ROOT / "experiments" / "capability04" / "check.py")
 check = importlib.util.module_from_spec(SPEC)
@@ -168,3 +173,98 @@ def test_checker_preserves_candidate_failure_as_no_acquisition(tmp_path):
 
     assert result == {"status": "no-acquisition", "checked_uses": 0,
                       "construction_status": "invalid"}
+
+
+def test_verify_freeze_allows_a_later_documentation_commit(tmp_path):
+    manifest = driver.source_manifest(ROOT)
+    manifest["commit"] = "later-documentation-only-commit"
+    bundle = tmp_path / "bundle"
+    bundle.mkdir()
+    (bundle / "manifest.json").write_bytes(_canonical(manifest))
+
+    assert driver.verify_freeze(ROOT, bundle) == manifest
+
+
+def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
+        migrated_db, tmp_path, monkeypatch):
+
+    import settlement.launcher_codex as codex_module
+    from settlement import db
+    from settlement.broker import LaunchOutcome, ReceiptProposal
+    from settlement.launcher_codex import CodexLauncher
+
+    class ScriptedCodex(CodexLauncher):
+        def dispatch(self, op):
+            run_dir = self._dir(op.operation_id)
+            if (run_dir / "result.json").exists() or (run_dir / "claim").exists():
+                return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
+            workspace = run_dir / "workspace"
+            skill = workspace / "genome" / "skills" / "summary"
+            skill.mkdir(parents=True)
+            (skill / "SKILL.md").write_text(
+                "---\nname: summary\ndescription: integer summary\n---\n", encoding="utf-8")
+            (skill / "capability.json").write_bytes(_canonical({
+                "schema": "rsi-capability/1", "interface": "integer-summary/1",
+                "entrypoint": "method.py:invoke", "dependencies": ["python-stdlib"],
+                "effects": ["return", "solution-files"],
+                "limits": {"timeout_ms": 5000, "max_output_bytes": 65536},
+            }))
+            (skill / "method.py").write_text(
+                "import json\n"
+                "def invoke(request):\n"
+                "    values = request['value']\n"
+                "    result = {'count': len(values), 'total': sum(values), "
+                "'minimum': min(values) if values else None, "
+                "'maximum': max(values) if values else None}\n"
+                "    return {'value': result, 'files': "
+                "{'summary.json': json.dumps(result, sort_keys=True)}}\n",
+                encoding="utf-8")
+            run_dir.mkdir(parents=True, exist_ok=True)
+            (run_dir / "claim").write_text("fixture\n", encoding="utf-8")
+            trajectory = b'{"type":"fixture.completed"}\n'
+            (run_dir / "events.jsonl").write_bytes(trajectory)
+            result = {
+                "status": "completed", "exit_code": 0, "seconds": 0.01,
+                "tokens": None, "infra_reason": "", "commands": 0,
+                "final_message": "scripted fixture method", "trajectory_digest":
+                    hashlib.sha256(trajectory).hexdigest(), "trajectory_bytes": len(trajectory),
+            }
+            (run_dir / "result.json").write_text(json.dumps(result), encoding="utf-8")
+            receipt = ReceiptProposal(
+                receipt_identity=f"fixture:{op.operation_id}:g{op.dispatch_generation}",
+                content={**result, "operation_id": op.operation_id,
+                         "response_digest": result["trajectory_digest"]},
+                outcome="success", provenance="scripted-fixture", actual_cost=0)
+            return LaunchOutcome(sent=True, receipt=receipt)
+
+    def allow_only_empty_operations(dsn):
+        with db.connect(dsn) as conn:
+            count, = conn.execute("SELECT count(*) FROM operations").fetchone()
+        if count:
+            raise RuntimeError("fixture refuses a used operations store")
+
+    with pytest.raises(RuntimeError, match="unused dedicated database"):
+        driver._refuse_used_database(migrated_db)
+    monkeypatch.setattr(driver, "_refuse_used_database", allow_only_empty_operations)
+    monkeypatch.setattr(driver, "_route", lambda _: {
+        "SETTLEMENT_GATEWAY_ENDPOINT": "https://fixture.invalid",
+        "SETTLEMENT_GATEWAY_MODEL": "openrouter/openrouter/free",
+        "SETTLEMENT_GATEWAY_KEY": "fixture-only-key",
+    })
+    monkeypatch.setattr(driver, "_check_route", lambda _: None)
+    monkeypatch.setattr(codex_module, "CodexLauncher", ScriptedCodex)
+
+    bundle = tmp_path / "bundle"
+    driver.freeze(ROOT, bundle)
+    result = driver.run(ROOT, bundle, migrated_db, tmp_path / "route.env",
+                        tmp_path / "logs", "scripted-codex")
+
+    assert result["status"] == "completed"
+    report = json.loads((bundle / "report.json").read_text(encoding="utf-8"))
+    assert report["retention"]["status"] == "retained"
+    assert report["selection"]["status"] == "selected"
+    assert [use["request"]["value"] for use in report["uses"]] == [
+        [3, -2, 7], [-8, -3], [], [4, 4, 1]]
+    assert all(use["verdict"]["passed"] for use in report["uses"])
+    assert report["retention"]["episode_id"] == report["uses"][0]["episode"]["id"]
+    assert check.check_bundle(bundle)["checked_uses"] == 4
