@@ -87,7 +87,7 @@ def _route(path: Path) -> Provider:
 
 
 def _preflight(provider: Provider) -> None:
-    endpoint = provider.endpoint.rstrip("/")
+    endpoint = provider.base_url.rstrip("/")
     url = endpoint if endpoint.endswith("/models") else endpoint + "/models"
     request = urllib.request.Request(url, headers={
         "Authorization": "Bearer " + provider.api_key, "Accept": "application/json"})

@@ -5,14 +5,45 @@ import copy
 import hashlib
 import json
 from datetime import UTC, datetime, timedelta
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from threading import Thread
 
 import pytest
 from isolation_db import disposable_db
 
 from experiments.agenda05.check import recompute, recompute_pair
-from experiments.agenda05.driver import build_scenario, run_arm
+from experiments.agenda05.driver import MODEL, _preflight, build_scenario, run_arm
 from experiments.agenda05.freeze import freeze
+from settlement.launcher_codex import Provider
+
+
+def test_preflight_reads_model_catalog_from_provider_base_url():
+    requests = []
+
+    class CatalogHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            requests.append((self.path, self.headers.get("Authorization")))
+            body = json.dumps({"data": [{"id": MODEL}]}).encode()
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *_args):
+            return
+
+    server = HTTPServer(("127.0.0.1", 0), CatalogHandler)
+    thread = Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        base_url = f"http://127.0.0.1:{server.server_port}/v1"
+        _preflight(Provider(base_url, MODEL, "p05-local-test-key"))
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=2)
+    assert requests == [("/v1/models", "Bearer p05-local-test-key")]
 
 
 @pytest.mark.parametrize(("policy", "expected"), [
