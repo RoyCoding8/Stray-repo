@@ -4,7 +4,7 @@ P01, P02 and P03 have reached their qualified working checkpoints. Read
 [the ledger](reports/PROJECT-LEDGER.md) for exact source revisions, evidence
 boundaries and outstanding work, then [the master plan](docs/plans/MASTER-PLAN.md)
 for component order. P03 implementation, independent review, bounded live
-comparison and consolidation are complete; final checkpoint CI is pending.
+comparison, consolidation and final checkpoint CI are complete.
 P04–P10 remain paused until the next human assignment.
 Every component ends with consolidation and CI repair before the next begins.
 

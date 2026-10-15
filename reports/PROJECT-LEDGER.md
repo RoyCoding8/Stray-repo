@@ -28,7 +28,7 @@ dependencies and build order. The three research themes are divided into ten par
 |---|---|---|
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
-| P03: context construction | Working checkpoint; final CI pending | A bounded evidence-selection policy consumed by actual decisions. |
+| P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
@@ -41,7 +41,7 @@ These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
 The component batches built P02 and P03 on the P01 checkpoint. Human
 direction now requires consolidation and CI repair after every component,
-followed by the next assigned part. P03 is assigned after P02 consolidation;
+followed by the next assigned part. P03 and its consolidation are complete;
 P04–P10 remain paused.
 
 P02 task list:
@@ -59,11 +59,11 @@ P03 task list:
 - [x] Implement and integrate baseline context, bounded inspections and policy comparison.
 - [x] Run integrated acceptance scenarios, then independent GPT-6.1 Sol High verification.
 - [x] Run a prospectively bounded free-route comparison and report its actual limits.
-- [ ] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
+- [x] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: implementation, independent review, the bounded
-live comparison and consolidation are complete. Final checkpoint CI and backup
-synchronization remain. See the P03 checkpoint below for separate evidence classes.
+Current throughput checkpoint: P03 implementation, independent review, bounded
+live comparison, consolidation and checkpoint CI are complete. Both backups are
+synced. See the P03 checkpoint below for separate evidence classes.
 P04 remains paused until human authorization.
 
 ### P03 implementation and consolidation (2026-10-14)
@@ -128,8 +128,12 @@ and private run area remain receipt anchors; older live anchors are unchanged.
 Small completed scratch folders under `D:/AI/tools/p03` remain because automatic
 approval review blocked their recursive deletion. They are outside the repository.
 
-CI run `38626500441` passed all seven jobs on the earlier implementation
-`237a7677`. Final source/evidence checkpoint CI is pending. P04 stays paused.
+Final CI run `38632408127` passed all seven jobs on source/evidence checkpoint
+`8ffc003b`. Committed-byte verification caught Git normalizing the frozen checker
+snapshot's line endings; a scoped raw-byte attribute and re-add restored its
+prospective digest. Standard-library recomputation also passed from a fresh Git
+archive of that checkpoint. The closure commit changes status documents only;
+it does not extend the source qualification. P04 stays paused.
 
 ### P02 consolidation (2026-10-14)
 
@@ -195,8 +199,8 @@ cell also saw the preceding raw-cell result. This establishes live use at scope,
 not a matched memory advantage, autonomous acquisition, transfer or learning.
 Provider billing and hostile-code containment remain unverified.
 
-The next architectural part is P03, context construction, assigned after the
-P02 consolidation and CI gate. P02 supplies its evidence objects and stable revisions;
+At the P02 checkpoint, P03 context construction was assigned after the
+consolidation and CI gate. P02 supplies its evidence objects and stable revisions;
 learned ranking, automatic lesson construction and ongoing campaigns are not
 claimed by this checkpoint. All owned implementation/review worktrees and task
 branches are removed. Only the main checkout remains. The checkpoint is synced to
@@ -417,7 +421,7 @@ can complete an experiment without completing the learning objective.
   and tests are correct. Held-out content duplicates are rejected; accepted
   tasks can enter a future dev task set without changing a frozen epoch.
 
-The next assigned component is P03, after P02 consolidation and CI repair.
+P03 subsequently completed after P02 consolidation and CI repair, as recorded above.
 Prospective utility comparisons must account
 for free-router variation and include an unchanged-copy control where relevant.
 Do not re-dispatch closed operations or refund allocations. Live instruction
