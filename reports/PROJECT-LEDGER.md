@@ -69,8 +69,12 @@ independent review, fixes, scratch archival and all seven CI jobs. P05 is active
 P05 runtime, feedback, concurrency/restart and comparison apparatus are integrated.
 The merged gate at `149342fb` passed 52 tests with no skips in 204.44 seconds
 on real PostgreSQL and bounded children. Both disposable databases were removed;
-Ruff and the diff whitespace check passed. Independent Sol High review is active
-on that complete source. The remaining work is review closure, the bounded live
+Ruff and the diff whitespace check passed. All seven CI jobs passed in run
+`38768429243` on `f9bf24e4`. Independent Sol High review is active
+on the complete source. It reproduced two gaps at `149342fb`: P05-R1 leaves
+pre-choice deferrals stuck after catalogue restoration; P05-R2 admits an existing
+P01 operation above the selected opportunity's token ceiling. One isolated Luna
+lane owns their repair and maintained regressions. The remaining work is review closure, the bounded live
 comparison, consolidation, CI and backup sync. Live agenda utility and learning
 remain unmeasured.
 
