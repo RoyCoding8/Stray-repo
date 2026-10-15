@@ -10,6 +10,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 import uuid
@@ -60,11 +61,11 @@ def source_manifest(repo: Path):
         sources[rel] = _sha(path.read_bytes())
     commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, check=True,
                             capture_output=True, text=True).stdout.strip()
-    dirty = subprocess.run(["git", "status", "--porcelain"],
+    dirty = subprocess.run(["git", "status", "--porcelain", "--", *SOURCE_PATHS],
                            cwd=repo, check=True, capture_output=True,
                            text=True).stdout.strip()
     if dirty:
-        raise RuntimeError("freeze requires committed source files")
+        raise RuntimeError("freeze requires clean pinned source files")
     return {
         "schema": "p04-capability-source/1", "commit": commit,
         "sources": sources,
@@ -76,7 +77,7 @@ def source_manifest(repo: Path):
                    "objective": "For a finite JSON list of integers, return count, total, minimum and maximum; use null bounds for an empty list.",
                    "development_value": VALUES[0], "later_values": list(VALUES[1:]),
                    "solution_file": "summary.json", "parent_genome": ["AGENTS.md"]},
-        "limits": {"construction_calls": 2, "constructor_timeout_ms": 180_000,
+         "limits": {"max_construction_calls": 2, "constructor_timeout_ms": 180_000,
                    "constructor_tokens": 100_000, "allocation_tokens": 200_000,
                    "method_timeout_ms": 30_000, "max_steps": 1},
     }
@@ -96,8 +97,10 @@ def verify_freeze(repo: Path, bundle: Path):
     manifest_path = bundle / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     current = source_manifest(repo.resolve())
-    if current != manifest:
-        raise RuntimeError("source or git commit changed after the experiment freeze")
+    frozen = {key: value for key, value in manifest.items() if key != "commit"}
+    observed = {key: value for key, value in current.items() if key != "commit"}
+    if observed != frozen:
+        raise RuntimeError("pinned source, runtime, or experiment contract changed after freeze")
     return manifest
 
 
@@ -185,8 +188,11 @@ def _summary_task(values, run_id):
     expected = _expected(values)
     reference = json.dumps(expected, sort_keys=True, separators=(",", ":")) + "\n"
     verifier = (
-        "import json\nfrom pathlib import Path\n"
-        f"assert json.loads(Path('summary.json').read_text(encoding='utf-8')) == {expected!r}\n"
+        "import json\nimport unittest\nfrom pathlib import Path\n"
+        "class SummaryTest(unittest.TestCase):\n"
+        "    def test_summary(self):\n"
+        "        self.assertEqual(json.loads(Path('summary.json').read_text(encoding='utf-8')), "
+        f"{expected!r})\n"
     ).encode()
     instruction = ("Implement the public integer-summary/1 method contract for the input "
                    + json.dumps(values) + ". Write summary.json.")
@@ -212,7 +218,7 @@ def _context_packet(dsn, state, artifacts_root):
         "p04-context-decision-" + suffix, "p04-context-attempt-" + suffix,
         "p04-context-operation-" + suffix, state["objective"], continuation,
         investigate._context_options(state["config"].get("context"),
-                                     state["config"].get("memory")),
+                                     state["config"].get("memory"), stored=True),
     )
     packet = context.build(dsn, request, artifacts_root=artifacts_root)
     validation = context.validate(dsn, packet, artifacts_root=artifacts_root)
@@ -254,7 +260,6 @@ def run(repo: Path, bundle: Path, dsn: str, route_file: Path,
     for path in (staging, artifacts_root, logs_root):
         path.mkdir(parents=True, exist_ok=True)
     db.apply_migrations(dsn, repo / "migrations")
-    _refuse_used_database_after_migration(dsn)
     run_id = uuid.uuid4().hex[:12]
     token_allocation, cpu_allocation = _allocations(dsn, run_id)
     parent = _public_parent()
@@ -281,6 +286,7 @@ def run(repo: Path, bundle: Path, dsn: str, route_file: Path,
     report = {"schema": "p04-capability-campaign/1",
               "source_manifest_digest": _sha(_canonical(manifest)),
               "run_id": run_id, "route_model": MODEL,
+              "construction_calls": 0,
               "allocations": {name: _allocation_summary(store.allocation_status(dsn, name))
                               for name in (token_allocation, cpu_allocation)},
               "parent": {"digest": parent.digest,
@@ -296,6 +302,7 @@ def run(repo: Path, bundle: Path, dsn: str, route_file: Path,
                            _record_artifact(artifacts_root, dev_task.digest)).decode("ascii")},
               "uses": []}
     try:
+        report["construction_calls"] = 1
         construction = capability.construct(
             dsn, agent, parent, name=NAME, interface=INTERFACE,
             context_packet=packet, operation_id=report["construction_operation_id"],
@@ -326,7 +333,7 @@ def run(repo: Path, bundle: Path, dsn: str, route_file: Path,
     try:
         dev = _run_and_export_method(
             dsn, run_id + "-dev", child, dev_task, VALUES[0], native, local,
-            cpu_allocation, cpu_allocation, staging, artifacts_root)
+            cpu_allocation, staging, artifacts_root)
     except Exception as exc:  # noqa: BLE001 - preserve any unsettled method effect
         report["status"] = "unresolved"
         report["stop"] = {"operation_id": run_id + "-dev", "detail": type(exc).__name__}
@@ -366,18 +373,8 @@ def run(repo: Path, bundle: Path, dsn: str, route_file: Path,
             "report": str(bundle / "report.json")}
 
 
-def _refuse_used_database_after_migration(dsn):
-    from settlement import db
-
-    with db.connect(dsn) as conn:
-        rows = conn.execute("SELECT count(*) FROM operations").fetchone()
-    if rows and rows[0]:
-        raise RuntimeError("P04 database contains prior operations; refusing reuse")
-
-
 def _run_and_export_method(dsn, operation_id, genome, task, values, launcher,
-                           verifier_launcher, allocation_id, cpu_allocation,
-                           staging_root, artifacts_root):
+                           verifier_launcher, allocation_id, staging_root, artifacts_root):
     from rsi import episode, verifier
 
     request = {"interface": INTERFACE, "value": values,
@@ -392,7 +389,7 @@ def _run_and_export_method(dsn, operation_id, genome, task, values, launcher,
     if result.status == "completed":
         checked = verifier.verify_episode(
             dsn, launcher, verifier_launcher, result.operation_id,
-            allocation_id=cpu_allocation, attempt_id=None,
+            allocation_id=allocation_id, attempt_id=None,
             staging_root=staging_root, artifacts_root=artifacts_root,
         )
     return _export_use(dsn, launcher, artifacts_root, task, result.operation_id,
@@ -400,9 +397,8 @@ def _run_and_export_method(dsn, operation_id, genome, task, values, launcher,
                        checked=checked, workspace=result.workspace)
 
 
-def _run_later_in_fresh_process(*args, **kwargs):
-    (dsn, run_id, index, genome, values, token_allocation, cpu_allocation,
-     root, staging_root, artifacts_root, logs_root) = args
+def _run_later_in_fresh_process(dsn, run_id, index, genome, values, token_allocation,
+                                cpu_allocation, root, staging_root, artifacts_root, logs_root):
     from rsi import episode, investigate, task, verifier
     from settlement.launcher_local import LocalLauncher
 
@@ -427,10 +423,17 @@ def _run_later_in_fresh_process(*args, **kwargs):
             env.pop(key, None)
     src = str(Path(__file__).resolve().parents[2] / "src")
     env["PYTHONPATH"] = src + os.pathsep + env.get("PYTHONPATH", "")
+    timed_out = False
     with log_path.open("wb") as log:
-        process = subprocess.run(command, cwd=Path(__file__).resolve().parents[2],
-                                 env=env, stdout=log, stderr=subprocess.STDOUT,
-                                 timeout=90, check=False)
+        process = subprocess.Popen(command, cwd=Path(__file__).resolve().parents[2],
+                                   env=env, stdout=log, stderr=subprocess.STDOUT)
+        pid = process.pid
+        try:
+            process.communicate(timeout=90)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            process.kill()
+            process.communicate()
     state = investigate.investigation.read(dsn, investigation_id)
     episode_id = (state or {}).get("last_observation", {}).get("episode")
     if not episode_id:
@@ -442,7 +445,8 @@ def _run_later_in_fresh_process(*args, **kwargs):
     checked = verifier.read_verdict(dsn, episode_id, use_task.evaluator_version)
     record = _export_use(
         dsn, launcher, artifacts_root, use_task, episode_id,
-        process={"pid": process.pid, "exit_code": process.returncode, "model_calls": 0},
+        process={"pid": pid, "exit_code": process.returncode,
+                 "model_calls": 0, "timed_out": timed_out},
         checked=checked, workspace=ep.workspace if ep else None,
     )
     record["task"] = {"digest": use_task.digest, "reference": {
@@ -450,8 +454,8 @@ def _run_later_in_fresh_process(*args, **kwargs):
         "split": use_task.split,
         "package": base64.b64encode(
             _record_artifact(Path(artifacts_root), use_task.digest)).decode("ascii")}
-    if process.returncode != 0:
-        record["fresh_process"]["exit_code"] = process.returncode
+    if timed_out or process.returncode != 0:
+        raise RuntimeError("fresh method process did not exit successfully")
     return record
 
 
@@ -460,6 +464,12 @@ def _allocation_summary(status):
 
 
 def _checkpoint(report, bundle, dsn, artifacts_root, route):
+    from settlement import store
+
+    report["allocations"] = {
+        name: _allocation_summary(store.allocation_status(dsn, name))
+        for name in report.get("allocations", {})
+    }
     _export_journal(report, dsn, artifacts_root, route)
     _write_json(bundle / "report.json", report)
 
@@ -571,7 +581,7 @@ def main():
     parser.add_argument("--dsn")
     parser.add_argument("--route-file", type=Path)
     parser.add_argument("--logs-root", type=Path,
-                        default=Path("D:/AI/tools/p04/experiment/logs"))
+                        default=Path(tempfile.gettempdir()) / "agent-society-p04-logs")
     parser.add_argument("--codex", default=shutil.which("codex") or "codex")
     args = parser.parse_args()
     try:

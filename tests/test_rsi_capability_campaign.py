@@ -44,7 +44,8 @@ def _bundle(tmp_path):
                     "skills/summary/capability.json": _canonical(descriptor),
                     "skills/summary/method.py": b"def invoke(request): return {}\n"})
     method, = catalogue(child)
-    manifest = {"schema": "p04-capability-source/1", "sources": {}}
+    manifest = {"schema": "p04-capability-source/1", "sources": {},
+                "limits": {"max_construction_calls": 2}}
     parent_doc = {"digest": parent.digest,
                   "files": {path: raw.hex() for path, raw in parent.files.items()},
                   "package": base64.b64encode(package_bytes(
@@ -112,9 +113,17 @@ def _bundle(tmp_path):
         "schema": "p04-capability-campaign/1",
         "source_manifest_digest": hashlib.sha256(_canonical(manifest)).hexdigest(),
         "parent": parent_doc,
+        "construction_calls": 1,
+        "construction_operation_id": "construct-use",
         "construction": {"status": "completed", "child": child.digest,
-                         "requested_name": "summary", "interface": method.interface,
-                         "method_digest": method.digest},
+                         "operation_id": "construct-use", "name": "summary",
+                         "interface": method.interface, "method_digest": method.digest},
+        "operations": [{"operation": {"id": "construct-use",
+                                         "dispatch_state": "observed",
+                                         "payload": {"effect": "agent-run",
+                                                     "payload": {"harness": "codex"}}},
+                        "receipts": [{"outcome": "success",
+                                      "receipt_identity": "fixture:construct-use"}]}],
         "child": child_doc,
         "task": tasks[0][2],
         "uses": [use("dev-use", values[0], tasks[0]),
@@ -142,7 +151,7 @@ def test_checker_accepts_bound_method_use_and_pristine_solutions(tmp_path):
 
 
 @pytest.mark.parametrize("mutation", ["method_digest", "input_digest", "dispatch_task",
-                                      "artifact", "solution"])
+                                      "artifact", "solution", "construction_receipt"])
 def test_checker_rejects_broken_identity_or_result_evidence(tmp_path, mutation):
     root, report = _bundle(tmp_path)
     use = report["uses"][0]
@@ -154,8 +163,10 @@ def test_checker_rejects_broken_identity_or_result_evidence(tmp_path, mutation):
         use["dispatch_request"]["context"]["task_digest"] = "0" * 64
     elif mutation == "artifact":
         use["output_digest"] = "0" * 64
-    else:
+    elif mutation == "solution":
         report["task"]["reference"]["summary.json"] = "{}\n"
+    else:
+        report["operations"][0]["receipts"] = []
     (root / "report.json").write_bytes(_canonical(report))
 
     with pytest.raises(ValueError):

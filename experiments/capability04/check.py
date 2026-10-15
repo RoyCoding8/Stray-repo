@@ -67,6 +67,30 @@ def _task_reference(task):
     return reference
 
 
+def _construction_record(report, *, settled):
+    operation_id = report.get("construction_operation_id")
+    matches = [item for item in report.get("operations", [])
+               if isinstance(item, dict)
+               and isinstance(item.get("operation"), dict)
+               and item["operation"].get("id") == operation_id]
+    if len(matches) != 1:
+        raise ValueError("construction operation is missing or ambiguous in journal export")
+    record = matches[0]
+    operation = record["operation"]
+    payload = operation.get("payload")
+    if (not isinstance(payload, dict) or payload.get("effect") != "agent-run"
+            or not isinstance(payload.get("payload"), dict)):
+        raise ValueError("construction operation does not bind the agent-run effect")
+    receipts = record.get("receipts")
+    if not isinstance(receipts, list):
+        raise ValueError("construction receipt export is malformed")
+    if settled:
+        if (operation.get("dispatch_state") not in ("observed", "reconciled")
+                or len(receipts) != 1 or receipts[0].get("outcome") != "success"):
+            raise ValueError("construction lacks one settled successful broker receipt")
+    return record
+
+
 def _summary(value):
     if not isinstance(value, list) or any(type(item) is not int for item in value):
         raise ValueError("summary request value must be a list of integers")
@@ -187,9 +211,17 @@ def check_bundle(root):
         raise ValueError("unsupported frozen source manifest")
     if report.get("schema") != "p04-capability-campaign/1":
         raise ValueError("unsupported campaign report")
+    limits = manifest.get("limits", {})
+    maximum = limits.get("max_construction_calls")
+    calls = report.get("construction_calls")
+    if (type(maximum) is not int or maximum < 1 or type(calls) is not int
+            or calls < 0 or calls > maximum):
+        raise ValueError("construction call count exceeds the frozen campaign limit")
     if report.get("source_manifest_digest") != _sha(_canonical(manifest)):
         raise ValueError("campaign report does not bind the frozen manifest")
     if report.get("status") == "unresolved":
+        if report.get("construction", {}).get("status") == "unresolved":
+            _construction_record(report, settled=False)
         return {"status": "unresolved", "checked_uses": 0,
                 "stop": report.get("stop", report.get("construction_operation_id"))}
     if report.get("status") in ("no-acquisition", "candidate-failed-development"):
@@ -200,16 +232,23 @@ def check_bundle(root):
         return {"status": "no-acquisition", "checked_uses": 0,
                 "construction_status": failed_construction}
     if failed_construction == "unresolved":
+        _construction_record(report, settled=False)
         return {"status": "unresolved", "checked_uses": 0,
                 "operation_id": report.get("construction_operation_id")}
     if failed_construction != "completed":
         raise ValueError("construction did not settle to completed or a candidate failure")
+    if calls != 1:
+        raise ValueError("completed construction must bind exactly one constructor call")
+    construction_record = _construction_record(report, settled=True)
 
     parent = _genome(report.get("parent"))
     child = _genome(report.get("child"))
     construction = report["construction"]
     if (construction.get("status") != "completed" or construction.get("child") != child.digest
-            or construction.get("requested_name") != "summary"):
+            or construction.get("name") != "summary"
+            or construction.get("operation_id") != report.get("construction_operation_id")
+            or construction_record["operation"].get("dispatch_state") not in
+               ("observed", "reconciled")):
         raise ValueError("construction report does not bind the child genome")
     old = {name: raw for name, raw in parent.files.items()
            if not name.startswith("skills/summary/")}
