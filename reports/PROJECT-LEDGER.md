@@ -66,13 +66,13 @@ P03 task list:
 
 Current throughput checkpoint: P04 is closed at its qualified scope, including
 independent review, fixes, scratch archival and all seven CI jobs. P05 is active.
-The selected portfolio-row design, pure ranking policy and first runtime slice are integrated.
-P05 feedback, concurrency/restart qualification and independent review remain open.
-Pure ranking is integrated and its five focused behavior tests pass at `382a2f7d`.
-Runtime and experiment lanes own isolated worktrees; Sol review waits for their
-complete integration. Its
-next bottleneck is one durable agenda choice that admits exactly one P01 action
-and changes later choices from newly incorporated experience.
+P05 runtime, feedback, concurrency/restart and comparison apparatus are integrated.
+The merged gate at `149342fb` passed 52 tests with no skips in 204.44 seconds
+on real PostgreSQL and bounded children. Both disposable databases were removed;
+Ruff and the diff whitespace check passed. Independent Sol High review is active
+on that complete source. The remaining work is review closure, the bounded live
+comparison, consolidation, CI and backup sync. Live agenda utility and learning
+remain unmeasured.
 
 P04 task list:
 - [x] Ground. Trace genome publication, bounded child execution, investigation decisions and retained use.
@@ -90,11 +90,12 @@ P05 task list:
 - [x] Ground the actual P01 owner, P02 evidence, P04 capabilities and existing allocation paths.
 - [x] Compare two structural agenda designs, choose one and pin its contract in the P05 plan.
 - [x] Implement real option selection/admission and experience-driven follow-up through P01.
-- [ ] Qualify P05-A through P05-E and seed/adaptive comparison on the integrated path.
+- [x] Qualify P05-A through P05-E and seed/adaptive comparison on the integrated path.
   Runtime and recovery integration at `82ea945b` passed 27 combined checks,
   zero skips, in 114.29 seconds on real PostgreSQL and bounded children. Both
-  disposable databases were removed; Ruff passed. The comparison apparatus
-  still needs integration and independent review.
+  disposable databases were removed; Ruff passed. The complete gate at
+  `149342fb` additionally includes the seed/adaptive apparatus and its offline
+  accounting checks. Its 52 passes are one integrated run, not a sum of lanes.
   Recovery qualification found two real child invocations for one operation
   during concurrent wakes. `d7f2cfa7` moves the existing Codex dispatch claim
   before preflight and acquires it exclusively. Missing or incomplete claims
