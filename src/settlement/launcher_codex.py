@@ -8,9 +8,8 @@ Isolation is checked, not assumed. Before anything is sent, ``codex debug
 prompt-input`` renders the model-visible input without a model call, and the
 launch is refused if any skill catalog from outside the workspace appears.
 
-Send-once comes from a durable claim file written before the spawn: a claim
-present means "may have been sent", absent with the run dir present proves
-nothing was.
+Send-once comes from an exclusive durable claim acquired before preflight.
+Only an explicit preflight refusal proves that generation was never sent.
 """
 
 from __future__ import annotations
@@ -75,7 +74,7 @@ class CodexLauncher:
             home = self.run_dir / ".catalog-home"
             home.mkdir(exist_ok=True)
             env = {k: os.environ[k] for k in ("SYSTEMROOT", "PATH") if k in os.environ}
-            proc = subprocess.run([*self.codex_cmd, "debug", "models"], capture_output=True,
+            proc = subprocess.run([*self.codex_cmd, "debug", "models"], check=False, capture_output=True,
                                   stdin=subprocess.DEVNULL, timeout=60,
                                   env=dict(env, CODEX_HOME=str(home)))
             try:
@@ -134,8 +133,14 @@ class CodexLauncher:
         return (self._dir(operation_id) / "claim").exists()
 
     def prove_never_sent(self, operation_id: str, dispatch_generation: int | None = None) -> bool:
-        d = self._dir(operation_id)
-        return d.is_dir() and not (d / "claim").exists()
+        try:
+            claim = json.loads((self._dir(operation_id) / "claim").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return False
+        return (isinstance(claim, dict) and claim.get("phase") == "never-sent"
+                and type(claim.get("generation")) is int
+                and (dispatch_generation is None
+                     or claim["generation"] == dispatch_generation))
 
     def read_result(self, operation_id: str) -> dict[str, Any] | None:
         path = self._dir(operation_id) / "result.json"
@@ -204,6 +209,7 @@ class CodexLauncher:
     def isolation_problem(self, d: Path, config: dict[str, Any]) -> str | None:
         """Render the model-visible input (no model call) and look for leaks."""
         proc = subprocess.run(self._argv(["debug", "prompt-input"], config) + ["probe"],
+                              check=False,
                               cwd=d / "workspace", env=self._env(d), capture_output=True,
                               stdin=subprocess.DEVNULL, timeout=120)
         text = proc.stdout.decode("utf-8", "replace")
@@ -218,14 +224,34 @@ class CodexLauncher:
 
     def dispatch(self, op: BrokerOp) -> LaunchOutcome:
         d = self._dir(op.operation_id)
-        if (d / "result.json").exists() or (d / "claim").exists():
+        d.mkdir(parents=True, exist_ok=True)
+        if (d / "result.json").exists():
             return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
+        claim = {"generation": op.dispatch_generation, "at": time.time(), "phase": "preparing"}
+        try:
+            with open(d / "claim", "x", encoding="utf-8") as handle:
+                json.dump(claim, handle)
+                handle.flush()
+                os.fsync(handle.fileno())
+        except FileExistsError:
+            return LaunchOutcome(sent=False, refused_reason="prior-send-recorded")
+        fsync_dir(d)
+
+        def refuse(reason: str) -> LaunchOutcome:
+            claim["phase"] = "never-sent"
+            with open(d / "claim.tmp", "w", encoding="utf-8") as handle:
+                json.dump(claim, handle)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(d / "claim.tmp", d / "claim")
+            fsync_dir(d)
+            return LaunchOutcome(sent=False, refused_reason=reason)
+
         p = op.payload
         config = dict(p.get("config") or {})
         extra = set(config) - self.allowed_overrides
         if extra:
-            return LaunchOutcome(sent=False,
-                                 refused_reason=f"config sets kernel-owned keys {sorted(extra)}")
+            return refuse(f"config sets kernel-owned keys {sorted(extra)}")
         (d / "workspace").mkdir(parents=True, exist_ok=True)
         (d / "codex-home").mkdir(exist_ok=True)
         (d / "codex-home" / "config.toml").write_text(self.config_toml(d / "codex-home"),
@@ -233,18 +259,13 @@ class CodexLauncher:
         try:
             (d / "codex-home" / "catalog.json").write_bytes(self.model_catalog())
         except (OSError, subprocess.TimeoutExpired, SettlementError) as exc:
-            return LaunchOutcome(sent=False, refused_reason=f"model catalog: {exc}")
+            return refuse(f"model catalog: {exc}")
         try:
             problem = self.isolation_problem(d, config)
         except (OSError, subprocess.TimeoutExpired) as exc:
             problem = f"isolation check failed to run: {exc}"
         if problem is not None:
-            return LaunchOutcome(sent=False, refused_reason=f"isolation: {problem}")
-        with open(d / "claim", "w", encoding="utf-8") as handle:
-            handle.write(json.dumps({"generation": op.dispatch_generation, "at": time.time()}))
-            handle.flush()
-            os.fsync(handle.fileno())
-        fsync_dir(d)
+            return refuse(f"isolation: {problem}")
         self._live.add(op.operation_id)
         try:
             result = self._run(d, p, config)
