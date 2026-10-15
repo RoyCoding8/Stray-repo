@@ -160,7 +160,7 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
         replay = _replay(dsn, artifacts_root, prior_decision, capability,
                          input_digest, execution_version)
         if replay.output_digest:
-            _protect_artifact(dsn, replay.output_digest, operation_id)
+            _protect_artifact(dsn, replay.output_digest, 'rsi-capability-use:' + operation_id)
         return replay
     if prior is not None:
         if (prior.get("payload", {}).get("effect") != broker.SANDBOX_EXEC
@@ -204,7 +204,7 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
     archive.record(dsn, decision_id, kind="capability-use", actor="fixed",
                    subject=capability.digest, data=data)
     if invocation.output_digest:
-        _protect_artifact(dsn, invocation.output_digest, operation_id)
+        _protect_artifact(dsn, invocation.output_digest, 'rsi-capability-use:' + operation_id)
     return invocation
 
 
@@ -314,14 +314,12 @@ def _replay(dsn: str, artifacts_root: str | Path,
                       data.get("detail", ""))
 
 
-def _protect_artifact(dsn: str, digest: str, operation_id: str) -> None:
-    reference = "rsi-capability-use:" + operation_id
-
+def _protect_artifact(dsn: str, digest: str, reference: str) -> None:
     def add(cur, control):
         artifacts._add_reference(cur, digest, "attempt", reference)
         return ResultCode.APPLIED, "capability result protected", {"digest": digest}, [], []
 
-    store.transact(dsn, Command(request_id="rsi-capability-ref:" + operation_id,
+    store.transact(dsn, Command(request_id="rsi-capability-ref:" + reference,
                                 payload={"digest": digest}), add)
 
 
@@ -665,18 +663,34 @@ def construct(dsn: str, agent: Any, parent: genome_module.Genome, *, name: str,
         'Use evidence.json for the public objective, method specification and development evidence. '
         'Do not claim to have passed independent checks. Explain the procedure in your final message.'
     )
-    output = meta.execute(
-        dsn, agent, parent, operation_id=operation_id,
-        evidence=lambda: _canonical({'construction': request, 'context_packet': context_packet}),
-        files={**{'genome/' + rel: raw for rel, raw in parent.files.items()},
-               'AGENTS.md': instruction.encode()}, instruction=instruction,
-        allocation_id=allocation_id, token_ceiling=token_ceiling, timeout_ms=timeout_ms,
-        staging_root=Path(staging_root), artifacts_root=Path(artifacts_root))
-    report = {**request, 'status': output.status, 'child': None, 'method_digest': None,
-              'evidence': output.evidence, 'trajectory': output.trajectory, 'detail': output.detail}
-    if output.status == 'completed':
+    capture_id = identity + ':candidate'
+    captured = _known(dsn, capture_id, 'capability-construction-capture', request)
+    if captured is None:
+        output = meta.execute(
+            dsn, agent, parent, operation_id=operation_id,
+            evidence=lambda: _canonical({'construction': request, 'context_packet': context_packet}),
+            files={**{'genome/' + rel: raw for rel, raw in parent.files.items()},
+                   'AGENTS.md': instruction.encode()}, instruction=instruction,
+            allocation_id=allocation_id, token_ceiling=token_ceiling, timeout_ms=timeout_ms,
+            staging_root=Path(staging_root), artifacts_root=Path(artifacts_root))
+        report = {**request, 'status': output.status, 'child': None, 'method_digest': None,
+                  'evidence': output.evidence, 'trajectory': output.trajectory, 'detail': output.detail}
+    else:
+        report = dict(captured)
+    if report['status'] == 'completed':
         try:
-            candidate = genome_module.from_dir(output.workspace / 'genome', parent.harness)
+            if captured is None:
+                candidate = genome_module.from_dir(output.workspace / 'genome', parent.harness)
+            else:
+                digest = captured['child']
+                if not artifacts.artifact_available(dsn, artifacts_root, digest):
+                    raise CapabilityError('captured construction artifact is unavailable')
+                package = json.loads((Path(artifacts_root) / digest).read_bytes())
+                candidate = genome_module.Genome(
+                    {rel: bytes.fromhex(raw) for rel, raw in package['files'].items()},
+                    harness=parent.harness)
+                if candidate.digest != digest:
+                    raise CapabilityError('captured construction bytes changed')
             before = {rel: raw for rel, raw in parent.files.items() if not rel.startswith(prefix)}
             after = {rel: raw for rel, raw in candidate.files.items() if not rel.startswith(prefix)}
             if before != after or candidate.digest == parent.digest:
@@ -684,11 +698,23 @@ def construct(dsn: str, agent: Any, parent: genome_module.Genome, *, name: str,
             method = _capability(candidate, name)
             if method.interface != interface:
                 raise CapabilityError('constructed method uses a different interface')
+            if captured is None:
+                receipt = artifacts.stage_package(
+                    dsn, staging_root, manifest=candidate._manifest(),
+                    files=dict(candidate.files), scope=genome_module.SCOPE, format='rsi-genome')
+                published = artifacts.publish_package(dsn, Command(
+                    request_id='rsi-genome-art-' + candidate.digest,
+                    payload={'digest': candidate.digest}), artifacts_root, receipt)
+                if published.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+                    raise CapabilityError('constructed artifact not published: ' + published.detail)
+                _protect_artifact(dsn, candidate.digest, capture_id)
+                _record(dsn, capture_id, 'capability-construction-capture', candidate.digest,
+                        {**report, 'child': candidate.digest, 'method_digest': method.digest})
             genome_module.publish(dsn, candidate, parent=parent.digest,
                                   origin='capability-construction:' + operation_id,
                                   staging_root=staging_root, artifacts_root=artifacts_root)
             report.update(child=candidate.digest, method_digest=method.digest)
         except SettlementError as exc:
-            report.update(status='invalid', detail=str(exc))
+            report.update(status='invalid', child=None, method_digest=None, detail=str(exc))
     return archive.record(dsn, identity, kind='capability-construction', actor='ai',
                           subject=report['child'] or parent.digest, data=report)['data']

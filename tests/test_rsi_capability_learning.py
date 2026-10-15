@@ -249,6 +249,49 @@ def test_construct_replay_returns_stored_result_without_second_send(migrated_db,
     _assert_durable_run(case, operation_id, first)
 
 
+@pytest.mark.parametrize("boundary,preexisting", [
+    ("report", False), ("lineage", False), ("report", True),
+])
+def test_construct_recovers_captured_bytes_after_publication_crash(
+        migrated_db, tmp_path, monkeypatch, boundary, preexisting):
+    case = _case(tmp_path, migrated_db, label="capture")
+    operation_id = "p04-construct-capture"
+    expected = genome.Genome({**case["parent"].files, **METHOD_FILES})
+    if preexisting:
+        genome.publish(migrated_db, expected, parent=case["parent"].digest,
+                       origin="earlier-construction", staging_root=case["staging_root"],
+                       artifacts_root=case["artifacts_root"])
+    record, publish = archive.record, genome.publish
+
+    def interrupt_record(dsn, identity, **kwargs):
+        if identity == "capability-construction:" + operation_id:
+            raise RuntimeError("crash at construction report")
+        return record(dsn, identity, **kwargs)
+
+    def interrupt_publish(*args, **kwargs):
+        raise RuntimeError("crash at genome lineage")
+
+    if boundary == "report":
+        monkeypatch.setattr(archive, "record", interrupt_record)
+    else:
+        monkeypatch.setattr(genome, "publish", interrupt_publish)
+    with pytest.raises(RuntimeError, match="crash at"):
+        _construct(case, operation_id=operation_id)
+    monkeypatch.setattr(archive, "record", record)
+    monkeypatch.setattr(genome, "publish", publish)
+    workspace, operation_dir = case["agent"].exec_dirs(operation_id, "")
+    source = Path(workspace) / "genome" / "skills" / NAME / "method.py"
+    source.write_text("def invoke(request):\n    return {'value': 999, 'files': {}}\n")
+    (Path(operation_dir) / "events.jsonl").unlink()
+
+    recovered = _construct(case, operation_id=operation_id)
+
+    assert recovered["child"] == expected.digest
+    assert genome.load(migrated_db, case["artifacts_root"], recovered["child"]) == expected
+    assert len(_call_file(case, operation_id).read_text().splitlines()) == 1
+    _assert_durable_run(case, operation_id, recovered)
+
+
 @pytest.mark.parametrize("changed", ["interface", "context", "allocation"])
 def test_construct_rejects_changed_identity_for_existing_operation(migrated_db, tmp_path, changed):
     case = _case(tmp_path, migrated_db, label="identity-" + changed)

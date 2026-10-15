@@ -73,7 +73,8 @@ P04 task list:
 - [x] Implement. Qualify independently authored execution, construction/checking, experimental retention and fresh-process use.
 - [x] Scrap check. The selected ownership boundaries held; no replacement architecture was needed.
 - [x] Run integrated P04-A through P04-E and neighboring P01–P03 checks.
-- [ ] Complete the experiment apparatus gate, then independent GPT-6.1 Sol High verification.
+- [x] Complete the experiment apparatus gate on the integrated source.
+- [ ] Finish independent GPT-6.1 Sol High verification, started after integration. Initial review found one construction-capture recovery defect and two offline evidence-linkage gaps; targeted repairs and re-verification are in progress.
 - [ ] Run one prospectively bounded free-route construction and later-use experiment; preserve negative outcomes.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync both backups.
 
@@ -87,8 +88,15 @@ rejection, immutable receipt recovery and fresh-process changed-input use.
 Regressions exposed and repaired import-time output corruption, the nested
 operation effect shape and kernel payload normalization during receipt recovery.
 The runner returns one result; the episode consumer owns solution materialization.
-The experiment lane is qualifying its full fixture path before independent
-Sol review. No P04 live model call has run yet.
+At `183e1788`, all **36 P04 tests passed in 274.19 seconds** on PostgreSQL 18.
+This includes the replayable campaign driver, offline checker and a fixture
+constructor followed by checking, retention and three fresh-process changed-input
+uses. It qualifies apparatus behavior, not live model acquisition. The gate also
+includes the earlier runtime and constructor controls. Independent GPT-6.1 Sol
+High review started only after this gate finished. No P04 live model call has run
+yet. Both backups are synced through this source tip. GitHub CI run
+`38663722417` passed all seven jobs at `183e1788`, including both database
+shards, archived tests and all three portable operating-system jobs.
 The informative stopping condition is a working
 acquire/check/retain/select/execute path with substitution, applicability and
 restart controls, plus an attributable live outcome. A learning win is not a

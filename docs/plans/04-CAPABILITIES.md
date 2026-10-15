@@ -112,6 +112,11 @@ applicability. It records requested and executed identities separately.
 `construct` reuses the broker-routed meta worker and P03-selected development
 evidence. It gives the model the full ABI before construction, never a hidden
 reference implementation. Invalid outputs retain their trajectory and cost.
+Before lineage publication, construction records a durable capture decision
+that pins the candidate's existing genome artifact and constructor evidence.
+Recovery uses that snapshot even if the workspace changes or the same genome
+was published earlier by another operation. The initial workspace capture
+remains a cooperative execution boundary, not hostile-code containment.
 
 ### Implementation and falsification order
 
