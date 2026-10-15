@@ -515,7 +515,7 @@ def _export_use(dsn, launcher, artifacts_root, task, operation_id, *, process,
         package = json.loads(result_artifact)
         output_doc = json.loads(bytes.fromhex(package["files"]["result.json"]))
     with db.connect(dsn) as conn:
-        row = conn.execute("SELECT trajectory FROM rsi_episodes WHERE id=%s",
+        row = conn.execute("SELECT trajectory FROM rsi_episodes WHERE operation_id=%s",
                            (operation_id,)).fetchone()
     use = {
         **identity, "decision": identity, "request": request,
