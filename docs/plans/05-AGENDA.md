@@ -113,8 +113,10 @@ Persist the agenda choice before creation/admission/execution. Creation identiti
 are deterministic and replayable. Acknowledgement names the actual P01 decision,
 attempt, operation and observed outcome, and clears the portfolio flight in one
 transaction. A completed choice is never executed again. Uncertain effects retain
-the flight and block new choices; a definitive no-effect context/capability
-refusal records a deferral and its wake condition. Concurrent wakes can recover
+the flight and block new choices. Missing context, capability or source bytes
+after selection also retain that choice until it can resume. Only an exact P01
+definitive never-sent outcome may clear it as a deferral. Before selection,
+ineligible options remain deferred without creating a flight. Concurrent wakes can recover
 the same flight but cannot create a competing one. No network transaction is held
 open during a child run.
 

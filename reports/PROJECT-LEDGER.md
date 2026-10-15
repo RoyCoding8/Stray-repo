@@ -89,19 +89,21 @@ P04 task list:
 P05 task list:
 - [x] Ground the actual P01 owner, P02 evidence, P04 capabilities and existing allocation paths.
 - [x] Compare two structural agenda designs, choose one and pin its contract in the P05 plan.
-- [ ] Implement real option selection/admission and experience-driven follow-up through P01.
+- [x] Implement real option selection/admission and experience-driven follow-up through P01.
 - [ ] Qualify P05-A through P05-E and seed/adaptive comparison on the integrated path.
-  The first runtime slice at `5f6ea5d9` uses one portfolio row and the existing P01
-  owner. Its two lane tests cover actual child execution with pristine verification
-  and failed-but-ready action replay. This is not full A-E qualification.
-  Root verification on that integrated tip passed seven tests, zero skips, in
-  31.26 seconds; both disposable databases were removed. Ruff passed.
-  Recovery qualification then found two real child invocations for one operation
+  Runtime and recovery integration at `82ea945b` passed 27 combined checks,
+  zero skips, in 114.29 seconds on real PostgreSQL and bounded children. Both
+  disposable databases were removed; Ruff passed. The comparison apparatus
+  still needs integration and independent review.
+  Recovery qualification found two real child invocations for one operation
   during concurrent wakes. `d7f2cfa7` moves the existing Codex dispatch claim
   before preflight and acquires it exclusively. Missing or incomplete claims
   no longer prove no send; an explicit refusal proves only its generation.
-  The new tests failed before the fix, and 22 launcher/catalog/episode checks
-  pass afterward. Actual-child recovery requalification remains in progress.
+  The new tests failed before the fix; 22 launcher/catalog/episode checks and
+  actual-child recovery pass afterward. `3b46ea56` also repairs a reproduced
+  missing-artifact path that cleared a pending flight. Restoring its package now
+  resumes verification with one worker invocation. These are mechanism results,
+  not live learning evidence.
 - [ ] Complete independent Sol High verification, then a bounded free-route feedback sequence.
 - [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
 
