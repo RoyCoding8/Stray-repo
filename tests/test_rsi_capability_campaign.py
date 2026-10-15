@@ -295,9 +295,11 @@ def test_verify_freeze_allows_a_later_documentation_commit(tmp_path):
     assert driver.verify_freeze(ROOT, bundle) == manifest
 
 
-@pytest.mark.parametrize("fail_development", [False, True])
+@pytest.mark.parametrize("constructor_status,fail_development", [
+    ("completed", False), ("completed", True), ("timeout", False), ("infra_failed", False),
+])
 def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
-        migrated_db, tmp_path, monkeypatch, fail_development):
+        migrated_db, tmp_path, monkeypatch, constructor_status, fail_development):
 
     import settlement.launcher_codex as codex_module
     from settlement import db
@@ -335,7 +337,7 @@ def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
             trajectory = b'{"type":"fixture.completed"}\n'
             (run_dir / "events.jsonl").write_bytes(trajectory)
             result = {
-                "status": "completed", "exit_code": 0, "seconds": 0.01,
+                "status": constructor_status, "exit_code": 0, "seconds": 0.01,
                 "tokens": None, "infra_reason": "", "commands": 0,
                 "final_message": "scripted fixture method", "trajectory_digest":
                     hashlib.sha256(trajectory).hexdigest(), "trajectory_bytes": len(trajectory),
@@ -345,7 +347,8 @@ def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
                 receipt_identity=f"fixture:{op.operation_id}:g{op.dispatch_generation}",
                 content={**result, "operation_id": op.operation_id,
                          "response_digest": result["trajectory_digest"]},
-                outcome="success", provenance="scripted-fixture", actual_cost=0)
+                outcome="success" if constructor_status == "completed" else "failure",
+                provenance="scripted-fixture", actual_cost=0)
             return LaunchOutcome(sent=True, receipt=receipt)
 
     def allow_only_empty_operations(dsn):
@@ -371,6 +374,21 @@ def test_fixture_campaign_constructs_retains_and_reuses_in_fresh_process(
                         tmp_path / "logs", "scripted-codex")
 
     report = json.loads((bundle / "report.json").read_text(encoding="utf-8"))
+    if constructor_status != "completed":
+        assert result["status"] == report["status"] == "unscored"
+        assert report["uses"] == []
+        assert "retention" not in report and "selection" not in report
+        expected = {"status": "unscored", "checked_uses": 0,
+                    "construction_status": constructor_status, "reported_status": "unscored"}
+        assert check.check_bundle(bundle) == expected
+        report["status"] = "no-acquisition"
+        (bundle / "report.json").write_bytes(_canonical(report))
+        assert check.check_bundle(bundle) == {**expected, "reported_status": "no-acquisition"}
+        report["operations"][0]["receipts"] = []
+        (bundle / "report.json").write_bytes(_canonical(report))
+        with pytest.raises(ValueError):
+            check.check_bundle(bundle)
+        return
     if fail_development:
         assert result["status"] == "candidate-failed-development"
         assert report["retention"]["status"] == "rejected"
