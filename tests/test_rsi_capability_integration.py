@@ -138,7 +138,9 @@ def test_noop_fails_the_same_check_and_is_not_retained(env):
     assert checked.passed is False
     assert retained["status"] == "rejected"
     selected = capability.select(dsn, "no-op-selection", genome=noop, name="maximum",
-                                 interface="sequence-maximum/1", artifacts_root=roots["artifacts_root"])
+                                 interface="sequence-maximum/1",
+                                 task_id=_task("qualification", 3).digest,
+                                 value=[-5, 3, 0], artifacts_root=roots["artifacts_root"])
     assert selected["status"] == "declined"
     assert store.allocation_status(dsn, "cpu")["consumed"] > 0
 
@@ -167,12 +169,16 @@ def test_admitted_selection_cannot_change_the_executed_identity(env):
     _qualify(env)
     selected = capability.select(dsn, "pinned-choice", genome=candidate, name="maximum",
                                  interface="sequence-maximum/1",
+                                 task_id=_task("qualification", 3).digest,
+                                 value=[-5, 3, 0],
                                  artifacts_root=roots["artifacts_root"])
     assert selected["status"] == "selected"
     forged = {**selected, "executed_genome": "0" * 64}
     with pytest.raises(capability.CapabilityError, match="recorded choice"):
         capability.validate_selection(dsn, forged, genome=candidate, name="maximum",
                                       interface="sequence-maximum/1",
+                                      task_id=_task("qualification", 3).digest,
+                                      value=[-5, 3, 0],
                                       artifacts_root=roots["artifacts_root"])
 
 

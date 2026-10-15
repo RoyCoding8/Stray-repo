@@ -352,7 +352,8 @@ def run(repo: Path, bundle: Path, dsn: str, route_file: Path,
         episode_id=dev["episode"]["id"], artifacts_root=artifacts_root)
     report["selection"] = capability.select(
         dsn, "p04-select-" + run_id, genome=child, name=NAME,
-        interface=INTERFACE, artifacts_root=artifacts_root)
+        interface=INTERFACE, task_id=dev_task.digest, value=VALUES[0],
+        artifacts_root=artifacts_root)
     _checkpoint(report, bundle, dsn, artifacts_root, route)
     if report["selection"].get("status") != "selected":
         raise RuntimeError("checked method was not selected for changed-input investigation")
