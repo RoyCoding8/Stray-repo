@@ -1,0 +1,70 @@
+{
+  "commit": "d18c67a5585b7e49c06994176f5a83dc0bfc4e13",
+  "limits": {
+    "allocation_tokens": 200000,
+    "constructor_timeout_ms": 180000,
+    "constructor_tokens": 100000,
+    "max_construction_calls": 2,
+    "max_steps": 1,
+    "method_timeout_ms": 30000
+  },
+  "method": {
+    "development_value": [
+      3,
+      -2,
+      7
+    ],
+    "interface": "integer-summary/1",
+    "later_values": [
+      [
+        -8,
+        -3
+      ],
+      [],
+      [
+        4,
+        4,
+        1
+      ]
+    ],
+    "name": "summary",
+    "objective": "For a finite JSON list of integers, return count, total, minimum and maximum; use null bounds for an empty list.",
+    "parent_genome": [
+      "AGENTS.md"
+    ],
+    "solution_file": "summary.json"
+  },
+  "pinned": {
+    "development_task": "7d6db8a575e6a7e52311920fa0d798a8535eb5c4d29473c5e2832c56abf02657",
+    "parent_genome": "f0869c1226a8ba6d757e19f32a17008a9a8f0cc8cba3d8a33c38195af68c8fa4"
+  },
+  "route_model": "openrouter/openrouter/free",
+  "runtime_python": "3.13.14 (main, Jul 23 2026, 14:44:10) [MSC v.1944 64 bit (AMD64)]",
+  "schema": "p04-capability-source/1",
+  "sources": {
+    "AGENTS.md": "552d455525bffae05ae8882233c4abacfb18cff6411ae7bc65ec962dfb0caea1",
+    "docs/plans/04-CAPABILITIES.md": "bbed03d179816b4c48d41274acc19e22073d201f4b24eee82c1862c8ed88f938",
+    "experiments/capability04/check.py": "a10d8a0c899a3c57cad7646e8822e0a7b8c81f2a1ab36fe804dc14157658caaa",
+    "experiments/capability04/driver.py": "daadc40e1bb25763cec7cc36c75926a75ba03bbfc217c7b0f649b2d9b2a13354",
+    "pyproject.toml": "fe823f29ad79977c098af13d0af6e43ffacf505c95c1dd725621285034fa4706",
+    "src/rsi/_method_runner.py": "c107904e40048871bff060afcfe0380fd785d33d695e1f042d100a08cffb0261",
+    "src/rsi/archive.py": "5e48da9fb3f4f8bcccc1c556b7d66c97764584dbc66ac3182a9f31cbb88b8389",
+    "src/rsi/capability.py": "aed88754b2326de9ded9bdc8f5879a4bdbc195eb2b1bbdd5a81b7b7e0d4a7d10",
+    "src/rsi/context.py": "eb32fbd1d157d585bf1dc6518da0865f7381922f2895cd71d10c0c3f3d0a55ac",
+    "src/rsi/episode.py": "35e64d19851b0dfc8c821d5b8a2259577bc163a0723f5388b77fdcef0b2dbd52",
+    "src/rsi/genome.py": "e124e102eeaa416ff81f3f61c6e64ec7886dafcb700f2332e6e9341c5cd6f5be",
+    "src/rsi/investigate.py": "d2e6383f5c7d0275b8a0a5b11097e7908c568d07b24cae5bfdf59d8efa4884a0",
+    "src/rsi/investigation.py": "c2c7855e9f86eb228abd9de385e10a6ecb0ede2711ad9dab2159dd4acc2dec21",
+    "src/rsi/task.py": "0e1daeaedb9e7d4218ff1d11d427731003a3c67a95c3aca9ddfa70fe46d8a9b4",
+    "src/rsi/verifier.py": "402fe0310b7687cc1984f8cd47b50eab92390ce0ecb470b46826bdd6b77ec312",
+    "src/settlement/artifacts.py": "968865c3a0e79c39ccf1069eb88adcea369ac286f93d3e41e8d019ad45030ff7",
+    "src/settlement/broker.py": "a5b3957fc49b6c81480ba7ce7d8336d2e12c5b6db62317288ee155c9294dc2d6",
+    "src/settlement/common.py": "ae1d9e175b9223147f9abb6c68c1b8de27b9513de9dd11c6cf66493fee56de3e",
+    "src/settlement/db.py": "f6a933d015776d7eea52a53f6b85f3c4c4458c162fd993412b55779ce9b68eab",
+    "src/settlement/launcher_codex.py": "eee5d108489d541160818210beedeb82cdf6b9f28cbfcfb8281273c469203941",
+    "src/settlement/launcher_local.py": "aa19ab281e7beff0496c8222f944ca404bc96b08c66efdbe2dbdd208b4851d3d",
+    "src/settlement/store.py": "35872c9d876433a80bc8b59ee992f6d31031dfb27751fd233266f28d73c2c0f5",
+    "tests/test_rsi_capability_campaign.py": "eb118b19917ac2bc30090fdb7f27b92dc06ca43b5205c5592724534408ddc455",
+    "uv.lock": "5fb55fa919ce652903d102d43268011967f6e37b23896ce38befc2938f53f1f5"
+  }
+}

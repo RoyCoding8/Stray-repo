@@ -129,9 +129,11 @@ zero receipts and zero consumed/reserved units. The driver/checker preserve
 repair updates the metadata template without changing the free inference route;
 its regression failed before the repair. The installed catalogue and prompt
 isolation now pass without a model call. The affected gate passed 70 tests;
-three campaign tests refused the deliberately dirty pinned source tree. They
-will be rerun after committing the same source, without changing their assertions.
-Independent re-verification and a fresh freeze precede live inference.
+three campaign tests refused the deliberately dirty pinned source tree. The complete campaign and catalogue gate then passed **16 tests, zero skips**,
+in **82.01 seconds** at `d18c67a5`, with the same source committed and no
+assertion changes. Independent Sol High compatibility review passed at `d18c67a5`, including
+2 independently rerun regressions, the installed-binary catalogue/isolation
+probe and never-sent evidence. A fresh freeze precedes live inference.
 
 The informative stopping condition is a working
 acquire/check/retain/select/execute path with substitution, applicability and
