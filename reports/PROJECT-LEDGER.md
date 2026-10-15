@@ -30,7 +30,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
-| P05: autonomous agenda | Active design | Experience changes what the system chooses to investigate next. |
+| P05: autonomous agenda | Contract pinned; implementation next | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
@@ -66,7 +66,7 @@ P03 task list:
 
 Current throughput checkpoint: P04 is closed at its qualified scope, including
 independent review, fixes, scratch archival and all seven CI jobs. P05 is active.
-Two grounded structural designs are being compared before implementation. Its
+The selected portfolio-row design and pure policy contract are pinned in P05. Its
 next bottleneck is one durable agenda choice that admits exactly one P01 action
 and changes later choices from newly incorporated experience.
 
@@ -76,21 +76,21 @@ P04 task list:
 - [x] Agree. Proceed under the assigned P04 scope; no additional design approval is requested.
 - [x] Implement. Qualify independently authored execution, construction/checking, experimental retention and fresh-process use.
 - [x] Scrap check. The selected ownership boundaries held; no replacement architecture was needed.
-- [x] Run integrated P04-A through P04-E and neighboring P01Ã¢â‚¬â€œP03 checks.
+- [x] Run integrated P04-A through P04-E and neighboring P01ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“P03 checks.
 - [x] Complete the experiment apparatus gate on the integrated source.
 - [x] Finish independent GPT-6.1 Sol High verification after integration. All three findings are repaired and independently closed at `ba95df09`.
 - [x] Run the prospectively bounded free-route experiment. Preserve the first never-sent stop and the retry timeout; no live acquisition is claimed.
 - [x] Consolidate, repair CI, remove owned worktrees and sync both backups.
 
 P05 task list:
-- [ ] Ground the actual P01 owner, P02 evidence, P04 capabilities and existing allocation paths.
-- [ ] Compare two structural agenda designs, choose one and pin its contract in the P05 plan.
+- [x] Ground the actual P01 owner, P02 evidence, P04 capabilities and existing allocation paths.
+- [x] Compare two structural agenda designs, choose one and pin its contract in the P05 plan.
 - [ ] Implement real option selection/admission and experience-driven follow-up through P01.
 - [ ] Qualify P05-A through P05-E and seed/adaptive comparison on the integrated path.
 - [ ] Complete independent Sol High verification, then a bounded free-route feedback sequence.
 - [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
 
-Remaining queue: P10 Ã¢â€ â€™ P06 Ã¢â€ â€™ P07 Ã¢â€ â€™ P09 Ã¢â€ â€™ P08. Each receives its own task list
+Remaining queue: P10 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ P06 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ P07 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ P09 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ P08. Each receives its own task list
 when active. Qualified mechanisms do not imply acquisition, utility or learning.
 
 ### P04 implementation and consolidation (2026-10-14)
@@ -104,7 +104,7 @@ applicability, authored fallback or new skill database.
 
 The complete P04 gate at `ba95df09` passed **43 tests, zero skips**, in
 **285.53 seconds**, on PostgreSQL 18 and native subprocesses. The earlier combined
-P04/P01Ã¢â‚¬â€œP03 gate passed **49 tests** at `21f0dee9`. They are separate focused
+P04/P01ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“P03 gate passed **49 tests** at `21f0dee9`. They are separate focused
 scopes, not a whole-repository suite. Independent Sol High review closed
 P04-R1/R2/R3 after reproducing construction publication crashes, actual failed
 verifier receipts and six evidence-removal or contradictory-retention mutations.
@@ -345,7 +345,7 @@ utility, transfer, learning benefit and hostile-code containment remain unproved
 
 All owned implementation worktrees and temporary lane branches were removed.
 The live receipt anchor remains in `p01_live_20261013` on port 55432 and
-`D:/AI/tools/p01-live-20261013`. P02Ã¢â‚¬â€œP10 were paused at the P01 checkpoint. Future continuation studies
+`D:/AI/tools/p01-live-20261013`. P02ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“P10 were paused at the P01 checkpoint. Future continuation studies
 should derive checker exposure from the broker's profile and allow for CLI input
 overhead rather than treating wall time or a short task as the resource cost.
 
