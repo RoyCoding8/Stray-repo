@@ -10,7 +10,7 @@ fail_pairs = {tuple(map(int, item.split(","))) for item in sys.argv[2].split(";"
 args = sys.argv[3:]
 
 if args[:2] == ["debug", "models"]:
-    print(json.dumps({"models": [{"slug": "fixture:free", "context_window": 1024}]}))
+    print(json.dumps({"models": [{"slug": "gpt-6-luna", "context_window": 1024}]}))
     raise SystemExit(0)
 if args[:2] == ["debug", "prompt-input"]:
     print(json.dumps([]))
