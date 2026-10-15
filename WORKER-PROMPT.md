@@ -1,18 +1,18 @@
 # Current component checkpoint
 
-P01, P02 and P03 have reached their qualified working checkpoints. Read
-[the ledger](reports/PROJECT-LEDGER.md) for exact source revisions, evidence
-boundaries and outstanding work, then [the master plan](docs/plans/MASTER-PLAN.md)
-for component order. P03 implementation, independent review, bounded live
-comparison, consolidation and final checkpoint CI are complete.
-P04 executable capabilities is now assigned. Follow its component plan and the
-ledger task list. P05–P10 remain paused. Use the existing genome/artifact and
-bounded worker paths; retain independent execution and live acquisition evidence
-separately. Finish integration before independent Sol High verification.
-Every component ends with consolidation and CI repair before the next begins.
+P01 through P03 have reached their qualified working checkpoints. P04 mechanics,
+independent review and the bounded live attempt are complete; final consolidation
+is tracked in [the ledger](reports/PROJECT-LEDGER.md). The live timeout is unscored,
+not evidence of acquisition or learning.
+
+The human has authorized all remaining parts. Finish each component's fixes,
+debloat, independent verification, cleanup and green CI before implementing the
+next. Follow [the master plan](docs/plans/MASTER-PLAN.md) in order: P05, P10, P06,
+P07, P09, P08. The ledger owns the active task list and exact evidence boundaries.
+P05 design grounding can overlap P04 closeout; implementation waits for that close.
 
 Do not rerun old study prompts or rebuild completed slices without a current
-human assignment. The master plan owns shared implementation and verification
-rules. Follow session instructions before delegation; no paid model or Jev calls
-are assigned. Work locally, preserve frozen evidence and unrelated projects,
-keep credentials outside Git and sync completed checkpoints to the backups.
+assignment. Follow session instructions before delegation. No paid model or Jev
+calls are assigned. Existing authorization covers prospectively bounded experiments
+on the verified free route. Preserve frozen evidence and unrelated projects,
+keep credentials outside Git and sync completed checkpoints to both backups.

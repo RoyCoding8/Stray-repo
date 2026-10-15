@@ -3,7 +3,7 @@
 Current state and evidence. Removed studies are recoverable at
 `archive/pre-subtraction-2026-10`; implementation history lives in Git.
 
-## Research checkpoint (2026-10-14)
+## Research checkpoint (2026-10-15)
 
 Human direction: accept the existing prototype at its scope and research stronger
 components. Do not turn another brief live-route or improvement-proof campaign
@@ -29,7 +29,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
-| P04: executable capabilities | Integrated; final independent review and live study pending | Construction, checked retention and later executable use. |
+| P04: executable capabilities | Mechanics qualified; live unscored; consolidation pending | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
@@ -42,7 +42,10 @@ prototype code. Every component plan has delivery slices and behavioral checks.
 The component batches built P02 and P03 on the P01 checkpoint. Human
 direction now requires consolidation and CI repair after every component,
 followed by the next assigned part. P03 and its consolidation are complete.
-P04 is now assigned; P05–P10 remain paused.
+Human direction, 2026-10-15: finish P04 including fixes, debloat, cleanup and
+green CI, then proceed automatically through the remaining component plans.
+The master plan orders P05, P10, P06, P07, P09, then P08. Each component must
+close its full build and consolidation before the next implementation starts.
 
 P02 task list:
 - [x] Ground the existing observation, artifact and consumer paths; compare storage shapes.
@@ -61,10 +64,10 @@ P03 task list:
 - [x] Run a prospectively bounded free-route comparison and report its actual limits.
 - [x] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: P03 implementation, independent review, bounded
-live comparison, consolidation and checkpoint CI are complete. Both backups are
-synced. See the P03 checkpoint below for separate evidence classes.
-The human authorized P04 after closure. P05–P10 remain paused.
+Current throughput checkpoint: P04 mechanics and independent core review are
+qualified. The bounded live attempt timed out and is unscored. Finish outcome
+review, consolidation and checkpoint CI. P05 design grounding can proceed
+while closeout runs; its implementation waits for the P04 checkpoint.
 
 P04 task list:
 - [x] Ground. Trace genome publication, bounded child execution, investigation decisions and retained use.
@@ -75,71 +78,75 @@ P04 task list:
 - [x] Run integrated P04-A through P04-E and neighboring P01–P03 checks.
 - [x] Complete the experiment apparatus gate on the integrated source.
 - [x] Finish independent GPT-6.1 Sol High verification after integration. All three findings are repaired and independently closed at `ba95df09`.
-- [ ] Run one prospectively bounded free-route construction and later-use experiment; preserve negative outcomes.
+- [x] Run the prospectively bounded free-route experiment. Preserve the first never-sent stop and the retry timeout; no live acquisition is claimed.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync both backups.
 
-P04 throughput checkpoint: the selected genome method ABI, broker-routed
-construction, native method episodes, checked experimental retention and public
-investigation selection/use are integrated. At `21f0dee9`, the combined P04 and
-neighboring P01–P03 gate passed **49 tests in 687.41 seconds**, on real
-PostgreSQL 18 and subprocesses. This is a focused gate, not a full-suite claim.
-It includes no-op rejection, incompatible interface refusal, substituted-solution
-rejection, immutable receipt recovery and fresh-process changed-input use.
-Regressions exposed and repaired import-time output corruption, the nested
-operation effect shape and kernel payload normalization during receipt recovery.
-The runner returns one result; the episode consumer owns solution materialization.
-At `183e1788`, all **36 P04 tests passed in 274.19 seconds** on PostgreSQL 18.
-This includes the replayable campaign driver, offline checker and a fixture
-constructor followed by checking, retention and three fresh-process changed-input
-uses. It qualifies apparatus behavior, not live model acquisition. The gate also
-includes the earlier runtime and constructor controls. Independent GPT-6.1 Sol
-High review started only after this gate finished. No P04 live model call has run
-yet. Both backups are synced through this source tip. GitHub CI run
-`38663722417` passed all seven jobs at `183e1788`, including both database
-shards, archived tests and all three portable operating-system jobs.
-Independent review at `183e1788` found three material gaps. **P04-R1**
-allowed construction recovery to replace already published bytes. The repair
-`2e7fcb31` pins an existing genome artifact before lineage publication and
-recovers from that snapshot, including previously published identical content.
-Three crash-boundary regressions failed before the repair. **P04-R2/R3**
-allowed positive and negative campaign claims without their native or constructor
-receipts. The merged repair `2b5f0551` requires the actual operations, typed
-outputs, task/solution-bound verifier results and constructor evidence. Its clean
-fixture control passes while deleted receipts and swapped verifiers refuse.
-The complete merged P04 gate passed **42 tests, zero skips**, in **278.35 seconds**
-on PostgreSQL 18 with native subprocesses. Sol High's recheck accepted the
-original operation-linkage controls and exposed one remaining R3 defect with a
-real failing candidate. Ordinary failed tests produce failure receipts; the
-checker had required success even when validating a rejection. The follow-up
-repair binds each outcome to its typed worker status and recomputes failed,
-error and skipped-test results. A real wrong-method campaign now accompanies
-the successful fixture campaign. At `ba95df09`, the final P04 gate passed
-**43 tests, zero skips**, in **285.53 seconds** on PostgreSQL 18. CI run
-`38675671161` passed all seven jobs at that revision. Final independent
-re-verification passed at `ba95df09`. Its real PostgreSQL/native probes passed
-2/2 in 20.16 seconds; positive, negative and invalid-constructor controls
-checked, and all six evidence-removal or contradictory-retention mutations
-were rejected. No material finding remains within this review scope.
-The prospective first study at `69716d9f` stopped before any model request.
-The installed Codex catalogue no longer contains the launcher's default
-`gpt-5.4` metadata template. The operation reconciled with never-sent proof,
-zero receipts and zero consumed/reserved units. The driver/checker preserve
-`unresolved`, not a model negative. Its frozen manifest and report are in
-`experiments/capability04/evidence/live1/`. A narrow launcher compatibility
-repair updates the metadata template without changing the free inference route;
-its regression failed before the repair. The installed catalogue and prompt
-isolation now pass without a model call. The affected gate passed 70 tests;
-three campaign tests refused the deliberately dirty pinned source tree. The complete campaign and catalogue gate then passed **16 tests, zero skips**,
-in **82.01 seconds** at `d18c67a5`, with the same source committed and no
-assertion changes. Independent Sol High compatibility review passed at `d18c67a5`, including
-2 independently rerun regressions, the installed-binary catalogue/isolation
-probe and never-sent evidence. A fresh freeze precedes live inference.
+P05 task list:
+- [ ] Ground the actual P01 owner, P02 evidence, P04 capabilities and existing allocation paths.
+- [ ] Compare two structural agenda designs, choose one and pin its contract in the P05 plan.
+- [ ] Implement real option selection/admission and experience-driven follow-up through P01.
+- [ ] Qualify P05-A through P05-E and seed/adaptive comparison on the integrated path.
+- [ ] Complete independent Sol High verification, then a bounded free-route feedback sequence.
+- [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
 
-The informative stopping condition is a working
-acquire/check/retain/select/execute path with substitution, applicability and
-restart controls, plus an attributable live outcome. A learning win is not a
-completion requirement. Authored packages and model-acquired packages remain
-separate evidence classes.
+Remaining queue: P10 → P06 → P07 → P09 → P08. Each receives its own task list
+when active. Qualified mechanisms do not imply acquisition, utility or learning.
+
+### P04 implementation and consolidation (2026-10-14)
+
+Methods live inside existing genome artifacts as a descriptor and Python closure.
+The broker routes construction and bounded native invocation. The public
+investigation consumer selects checked methods, materializes their immutable
+returned files and uses the existing pristine verifier. Exact interface and
+content identities govern experimental retention; there is no inferred broad
+applicability, authored fallback or new skill database.
+
+The complete P04 gate at `ba95df09` passed **43 tests, zero skips**, in
+**285.53 seconds**, on PostgreSQL 18 and native subprocesses. The earlier combined
+P04/P01–P03 gate passed **49 tests** at `21f0dee9`. They are separate focused
+scopes, not a whole-repository suite. Independent Sol High review closed
+P04-R1/R2/R3 after reproducing construction publication crashes, actual failed
+verifier receipts and six evidence-removal or contradictory-retention mutations.
+Construction recovery now consumes the artifact captured before publication,
+not mutable constructor output.
+
+The first prospective study, frozen at `69716d9f`, never sent a model request.
+The installed Codex catalogue lacked the retired default metadata template.
+Its operation reconciled with never-sent proof and zero consumed/reserved units.
+The narrow P04-R4 repair at `d18c67a5` updates the metadata template while keeping
+inference exactly on `openrouter/openrouter/free`. Independent Sol High review
+reran both catalogue regressions and the installed-binary isolation probe.
+The affected gate passed 70 checks; three freeze tests refused uncommitted pinned
+source. After committing the same bytes, the campaign/catalogue gate passed
+**16 tests, zero skips**, in **82.01 seconds**, without assertion changes.
+
+The retry was frozen at `b058499c`. One real constructor invocation timed out
+at 180 seconds after 15 completed shell commands, seven failed. The trace
+contains Unix/cmd syntax and quoting errors in PowerShell. It produced no
+candidate, check, retention or later use. The settled failure receipt leaves
+zero reserved units. Unknown token usage is ceiling-charged at 100,000 units;
+this is not measured model usage. Provider billing was not independently measured.
+The original report's `no-acquisition` label remains byte-identical. The
+P04-R5 repair at `47f395ef` derives **unscored** from the matching failure receipt
+and captured construction evidence, exposing the older reported label. It never
+turns a timeout into a capability result. Both timeout/infra-failure regressions
+failed before the repair; the final campaign/catalogue gate passed **18 tests,
+zero skips**, in **98.45 seconds**. Independent Sol High outcome review passed
+27 checks, including 21 rejected mutations. Positive and completed-negative
+controls match the previous checker; the original report and manifest remain
+byte-identical. This qualifies classification, not acquisition.
+
+[Attempt 1](../experiments/capability04/evidence/live1/README.md) and
+[attempt 2](../experiments/capability04/evidence/live2/README.md) contain the frozen
+manifests and exported evidence. Offline recomputation uses no gateway or database.
+Fixture evidence establishes construction, checking, retention and three
+fresh-process changed-input uses. Live acquisition, useful live later use,
+learning advantage and broad transfer remain **unproved**. Native execution is
+cooperative and **uncontained**; trusted promotion is not enabled by this part.
+
+Consolidation removed obsolete constructor-output replay authority and temporary
+parallel lanes. Checkpoint CI and private scratch archival are the remaining closeout tasks. The remaining components are now authorized
+in the master plan order.
 
 ### P03 implementation and consolidation (2026-10-14)
 
