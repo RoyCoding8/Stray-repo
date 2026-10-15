@@ -83,7 +83,7 @@ def _construction_record(report, *, settled):
         raise ValueError("construction operation does not bind the agent-run effect")
     receipts = record.get("receipts")
     if not isinstance(receipts, list):
-        raise ValueError("construction receipt export is malformed")
+        raise TypeError("construction receipt export is malformed")
     if settled:
         if (operation.get("dispatch_state") not in ("observed", "reconciled")
                 or len(receipts) != 1 or receipts[0].get("outcome") != "success"):
@@ -189,7 +189,7 @@ def _check_use(use, genome, method, expected, *, development=False):
     if episode.get("status") != "completed" or not episode.get("id"):
         raise ValueError("method episode is not completed")
     if not isinstance(episode.get("trajectory"), str):
-        raise ValueError("method episode lacks its published trajectory identity")
+        raise TypeError("method episode lacks its published trajectory identity")
     process = use["fresh_process"]
     if not isinstance(process, dict) or process.get("model_calls") != 0:
         raise ValueError("later method use lacks fresh model-free process evidence")
@@ -228,7 +228,7 @@ def check_bundle(root):
         raise ValueError("unsupported campaign report")
     artifact_bytes = report.get("artifact_bytes", {})
     if not isinstance(artifact_bytes, dict):
-        raise ValueError("captured artifact bytes are malformed")
+        raise TypeError("captured artifact bytes are malformed")
     for digest, encoded in artifact_bytes.items():
         try:
             raw = base64.b64decode(encoded, validate=True)
