@@ -70,22 +70,25 @@ P04 task list:
 - [x] Ground. Trace genome publication, bounded child execution, investigation decisions and retained use.
 - [x] Sketch. Compare two independently designed package/selection shapes and pin the chosen interface in the P04 plan.
 - [x] Agree. Proceed under the assigned P04 scope; no additional design approval is requested.
-- [ ] Implement. Qualify independently authored execution, construction/checking, experimental retention and fresh-process use.
-- [ ] Scrap. Revisit the sketch if repeated implementation deviations expose a wrong ownership boundary.
-- [ ] Run integrated P04-A through P04-E, then independent GPT-6.1 Sol High verification.
+- [x] Implement. Qualify independently authored execution, construction/checking, experimental retention and fresh-process use.
+- [x] Scrap check. The selected ownership boundaries held; no replacement architecture was needed.
+- [x] Run integrated P04-A through P04-E and neighboring P01–P03 checks.
+- [ ] Complete the experiment apparatus gate, then independent GPT-6.1 Sol High verification.
 - [ ] Run one prospectively bounded free-route construction and later-use experiment; preserve negative outcomes.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync both backups.
 
-P04 throughput checkpoint: package identity and invocation ownership are pinned
-in the component plan after two independent Luna sketches and a read-only
-cross-judge. The runtime is integrated; its five real PostgreSQL/subprocess
-checks pass, including literal changed outputs and replay. A parent regression
-first showed import-time prints corrupting the typed result, then passed after
-capturing import and call output through the same adapter. The runner returns
-one result; the episode consumer owns solution materialization. Construction,
-checked retention and selection are implemented but not yet integrated-qualified.
-Isolated episode, constructor-test and experiment lanes are finishing their
-disjoint scopes. Independent Sol review has not started.
+P04 throughput checkpoint: the selected genome method ABI, broker-routed
+construction, native method episodes, checked experimental retention and public
+investigation selection/use are integrated. At `21f0dee9`, the combined P04 and
+neighboring P01–P03 gate passed **49 tests in 687.41 seconds**, on real
+PostgreSQL 18 and subprocesses. This is a focused gate, not a full-suite claim.
+It includes no-op rejection, incompatible interface refusal, substituted-solution
+rejection, immutable receipt recovery and fresh-process changed-input use.
+Regressions exposed and repaired import-time output corruption, the nested
+operation effect shape and kernel payload normalization during receipt recovery.
+The runner returns one result; the episode consumer owns solution materialization.
+The experiment lane is qualifying its full fixture path before independent
+Sol review. No P04 live model call has run yet.
 The informative stopping condition is a working
 acquire/check/retain/select/execute path with substitution, applicability and
 restart controls, plus an attributable live outcome. A learning win is not a

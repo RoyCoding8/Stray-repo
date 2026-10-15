@@ -70,7 +70,6 @@ class Invocation:
     output_digest: str | None
     seconds: float
     detail: str
-    workspace: Path | None = None
 
 
 def catalogue(genome: genome_module.Genome) -> tuple[Capability, ...]:
@@ -158,7 +157,7 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
                                       payload, operation_id, allocation_id, attempt_id)
         if any(prior_decision["data"].get(k) != v for k, v in expected.items()):
             raise CapabilityError("operation id already records different method inputs")
-        replay = _replay(dsn, launcher, artifacts_root, prior_decision, capability,
+        replay = _replay(dsn, artifacts_root, prior_decision, capability,
                          input_digest, execution_version)
         if replay.output_digest:
             _protect_artifact(dsn, replay.output_digest, operation_id)
@@ -193,7 +192,7 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
     if len(receipts) != 1:
         raise CapabilityError("settled method operation needs one unambiguous receipt")
     raw_result = receipts[0]['content']
-    invocation = _interpret(dsn, launcher, artifacts_root, capability, operation_id,
+    invocation = _interpret(dsn, artifacts_root, capability, operation_id,
                             input_digest, execution_version, raw_result, elapsed,
                             output_limit, staging_root)
     data = _decision_identity(genome, capability, input_digest, execution_version,
@@ -209,7 +208,7 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
     return invocation
 
 
-def _interpret(dsn: str, launcher: Any, artifacts_root: str | Path,
+def _interpret(dsn: str, artifacts_root: str | Path,
                capability: Capability, operation_id: str, input_digest: str,
                execution_version: str, result: dict[str, Any], elapsed: float,
                output_limit: int, staging_root: str | Path) -> Invocation:
@@ -276,8 +275,7 @@ def _interpret(dsn: str, launcher: Any, artifacts_root: str | Path,
                                       staging_root)
     return Invocation(operation_id, capability.genome, capability.name, capability.digest,
                       input_digest, execution_version, "completed", output["value"],
-                      tuple(sorted(output_files)), result_artifact, seconds, "",
-                      Path(launcher.exec_dirs(operation_id, execution_version)[1]))
+                      tuple(sorted(output_files)), result_artifact, seconds, "")
 
 
 def _publish_result(dsn: str, operation_id: str, raw: bytes,
@@ -294,7 +292,7 @@ def _publish_result(dsn: str, operation_id: str, raw: bytes,
     return receipt["digest"]
 
 
-def _replay(dsn: str, launcher: Any, artifacts_root: str | Path,
+def _replay(dsn: str, artifacts_root: str | Path,
             record: dict, capability: Capability, input_digest: str,
             execution_version: str) -> Invocation:
     data = record["data"]
