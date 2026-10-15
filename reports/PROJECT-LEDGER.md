@@ -147,9 +147,15 @@ P10 task list:
 - Lifecycle lane `35777a61` is merged at `6b601b78`. Its combined PostgreSQL
   gate passed 36 tests; the coordinator reran its nine lifecycle tests on the
   merged owner with zero skips. Its worktree and branch are removed.
-  Campaign assessment, exact applicability and the bounded pilot apparatus
-  remain in isolated implementation lanes. Full integration and independent
-  review are pending. No P10 live effects have run.
+  Exact applicability `6449cfd9` is merged at `92b65ea7`. Its final scope and
+  capability gate passed seven tests; the P04 campaign passed 16 afterward.
+  The coordinator reproduced an agenda that pinned an already-failed input,
+  then fixed admission at `13918fe3` using the same scoped eligibility owner.
+  The joined scope and agenda gate passed four tests with zero skips in 117.18
+  seconds. Both completed lane worktrees and branches are removed.
+  Campaign assessment and the bounded pilot apparatus remain in isolated
+  implementation lanes. Full integration and independent review are pending.
+  No P10 live effects have run.
 - [x] Ground existing agenda, gate, capability, grant and exposure ownership.
 - [x] Compare assessment-flight and immutable-assignment designs; pin shared interfaces and race boundaries in the component plan.
 - [x] Agree. Proceed under the existing assignment, without another approval step.
