@@ -16,6 +16,112 @@ Offline recomputation checks results derivable from the exported evidence. It
 does not independently authenticate the provider, wall time or other runtime
 measurements. Label those observations and their measurement source explicitly.
 
+## Selected ownership and interface
+
+Design selected after tracing the integrated P05 owner and comparing an assessment
+flight against fixed assessment assignments. Implementation follows P05 closure.
+
+Campaign identity equals agenda identity. `rsi_agendas` remains the only mutable
+lifecycle owner. The existing P01 flight keeps its meaning. Publish an immutable,
+content-addressed assessment protocol through the artifact store and pin only its
+digest in the charter. Do not add a campaign table, budget, cursor or watcher.
+
+The public consumer is `rsi.campaign` with `start`, `run`, `inspect`, `suspend`,
+`resume`, `stop`, `export` and pure `recompute`. Provide the same operations through
+`python -m rsi.campaign`. `start` accepts staging and artifact roots, validates the
+protocol and existing authority, and creates the agenda idempotently. `run` accepts
+a positive finite `max_wakes` and wall bound, plus the worker/verifier launchers.
+It reloads the existing owner rather than accepting a new next-task sequence.
+Inspection exposes status and protocol identity, not protected assessment content.
+
+The protocol fixes a finite ordered set of assessment rounds before outcomes.
+Each round pins its turn milestone, gate epoch, parent and candidate genomes,
+model and sanitized route identity. Epochs fix task splits, evaluator versions and
+execution bounds. Use the existing gate only for its actual genome comparison
+contract. Its result does not establish native-method transfer or learner benefit.
+Require disjoint fresh anchor content across rounds and no overlap with campaign
+development work. Renaming a task does not make its ground truth fresh. Reuse the
+existing content-based anchor reservation and conservative exposure accounting.
+
+The existing immutable grant must name development and assessment tasks, all
+comparison genomes, allowed effects and the shared allocation roots. Validate
+these names before dispatch. Resource authority remains in the existing roots and
+broker reservations. Neither protocol publication nor a stored task grants authority.
+
+### Assessment admission and lifecycle
+
+Store each admitted round as one immutable `p10.assessment.assignment` decision in
+`rsi_decisions`. Its identity is deterministic from campaign and round; its
+transaction request also includes the expected agenda revision. Under the agenda
+row lock, require active status, that revision, no P01 flight and no unresolved
+earlier assignment. Insert the assignment and advance revision without charging a
+P01 turn. Derive pending assessment from the assignment and existing gate,
+operation, episode and verifier records. Do not store a second mutable cursor.
+
+Campaign-owned agendas reject direct public `agenda.wake` calls before execution.
+The campaign consumer uses the same internal agenda transition. This prevents a
+second public driver from admitting development work while assessment is pending.
+Ordinary P05 agendas retain their public wake behavior.
+
+Add `suspended` to the existing agenda status constraint. Lifecycle controls take
+an expected revision. Suspend prevents new work and preserves the flight and
+assessment assignment. Resume reactivates only suspended campaigns. Stop is
+terminal for new admissions. Acknowledgement preserves a concurrently committed
+suspended or stopped status.
+
+Choice or assessment assignment commit is the admission boundary. If control wins
+first, no assignment starts. If assignment wins first, only that already admitted
+finite work may finish or remain uncertain. Stop does not promise to cancel a
+running gate between its fixed cases. Restart while suspended drives no effects.
+Neither stop nor restart refunds or discards unresolved exposure.
+
+`run` resumes an existing assignment first, then admits the next due round, then
+advances one P01 choice. It returns on pending or unscored work, lifecycle control,
+unchanged or deferred eligibility, deadline, wall bound or call bound. A completed
+agenda may still owe its final predeclared assessment; do not drop a due round when
+the last P01 acknowledgement reaches the turn cap.
+
+Gate recovery uses its existing operation identities. Repair its current final
+`blocked` write for infrastructure exceptions and unknown verifier outcomes.
+Those return incomplete with no final score and preserve the same assignment.
+A failed pristine test with a known boolean remains a task result. A terminal
+infrastructure receipt cannot be retried under a new identity to obtain a result.
+Deterministic configuration refusals remain distinct from incomplete effects.
+
+### Applicability and evidence boundaries
+
+P10-D requires a veto at `capability.select`, not just a diagnostic opportunity.
+Bind new selections to the requested task and input condition. A verified failed
+later native use suppresses future default selections of that exact method,
+genome and scope. Reuse checked use and selection evidence; add no mutable
+blacklist. Validate the failed use, solution, pristine verifier and settled effects
+before applying the veto. Unknown infrastructure outcomes cannot veto applicability.
+Preserve already admitted selections on resume. Do not generalize a single failure
+to unrelated inputs, tasks or methods. A changed-input P05 probe remains eligible
+when supported by its own trigger.
+
+Assessment runs outside P01 feedback capture. Protected task contents, answers,
+verifier details and verdicts never enter agenda ranking, P01 context or P02 memory.
+Verify that boundary with actual inputs and literal protected-value checks, not
+only an artifact access label.
+
+Export protocol and artifact bytes, P05 and P10 decisions, investigations, gate
+epochs/runs, exposure reservations, episodes, verdicts, operations and receipts.
+Include historical parent checks used by the regression phase. Deduplicate the
+resource union by operation identity and keep token and CPU units separate.
+Recompute identities and known results from that bundle without database or route
+access. Missing or contradictory evidence cannot produce a gain verdict.
+Runtime/provider/compute attestations remain labeled; offline consistency checks
+cannot authenticate a coordinated rewrite of trusted exports.
+
+Three disjoint implementation lanes own lifecycle, campaign assessment, and
+applicability. The coordinator integrates and exercises the public CLI before
+Sol High review. Tests first establish a valid export, then challenge mutations.
+Use a short prospectively bounded free-route campaign with interruptions after
+review. Stop at the declared limits even when the result is incomplete or null.
+Extended learning observation is a later use of the campaign, not a condition
+for declaring its mechanisms implemented.
+
 ## Delivery slices
 
 1. **P10-1. Run and resume a bounded campaign.** Wire the existing components through one public consumer. Export enough state to inspect why each investigation continued, stopped or remained unresolved.
