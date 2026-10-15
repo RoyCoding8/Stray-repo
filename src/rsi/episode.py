@@ -20,6 +20,7 @@ from psycopg.types.json import Json
 from settlement import artifacts, broker, db, store
 from settlement.common import Command, ResultCode, SettlementError
 
+from . import capability as c
 from . import genome as g
 from . import task as t
 
@@ -125,6 +126,149 @@ def run_episode(dsn: str, launcher: Any, genome: g.Genome, *, operation_id: str,
     return found
 
 
+def run_method_episode(dsn: str, launcher: Any, genome: g.Genome, *, name: str,
+                       request: dict, operation_id: str, task: t.Task,
+                       allocation_id: str, attempt_id: str | None,
+                       staging_root: str | Path, artifacts_root: str | Path,
+                       timeout_ms: int | None = None,
+                       ownership_generation: int | None = None) -> Episode:
+    """Run a genome method once and record it as a native, zero-token episode."""
+    task = t.load(dsn, artifacts_root, task.digest)
+    _validate_method_request_files(request, task)
+
+    # invoke owns the broker operation and returns its immutable result on replay.
+    # Materialize those returned bytes for the existing pristine verifier.
+    invocation = c.invoke(
+        dsn, launcher, genome, name, request, operation_id=operation_id,
+        allocation_id=allocation_id, attempt_id=attempt_id,
+        staging_root=staging_root, artifacts_root=artifacts_root,
+        timeout_ms=timeout_ms,
+        ownership_generation=ownership_generation)
+    if invocation.genome != genome.digest or invocation.name != name:
+        raise EpisodeError("method invocation identity disagrees with its request")
+    if invocation.status == "completed":
+        _write_method_outputs(launcher, invocation, task)
+
+    known = read_episode(dsn, operation_id, launcher)
+    if known is not None:
+        if (known.genome, known.task) != (genome.digest, task.digest):
+            raise EpisodeError("operation id already belongs to another genome or task")
+        return known
+
+    raw = _method_trajectory(invocation, task, allocation_id, attempt_id)
+    trajectory = _publish_trajectory(
+        dsn, raw, staging_root, artifacts_root,
+        "hidden" if task.split == "anchor" else "candidate", format="native-jsonl")
+
+    def record(cur, control):
+        artifacts._add_reference(cur, trajectory, "attempt", "rsi-episode:" + operation_id)
+        cur.execute("INSERT INTO rsi_episodes (operation_id, genome, task, status, tokens,"
+                    " seconds, trajectory) VALUES (%s, %s, %s, %s, NULL, %s, %s)"
+                    " ON CONFLICT (operation_id) DO NOTHING",
+                    (operation_id, genome.digest, task.digest, invocation.status,
+                     float(invocation.seconds), trajectory))
+        return (ResultCode.APPLIED, "method episode recorded", {"operation_id": operation_id},
+                [("rsi.episode", {"operation_id": operation_id,
+                                  "status": invocation.status, "kind": "method"})], [])
+    result = store.transact(dsn, Command(request_id=f"rsi-method-episode-{operation_id}",
+                                         payload={"operation_id": operation_id}), record)
+    if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        raise EpisodeError(result.detail)
+    found = read_episode(dsn, operation_id, launcher)
+    if found is None:
+        raise EpisodeError(f"method episode {operation_id} was not recorded")
+    # The broker result is durable, and Invocation.detail is the method runner's
+    # bounded status detail. Preserve it for the call that first records the row.
+    infra_reason = str(invocation.detail) if invocation.status == "infra_failed" else ""
+    return Episode(**{**found.__dict__, "infra_reason": infra_reason})
+
+
+def _validate_method_request_files(request: dict, task: t.Task) -> None:
+    if not isinstance(request, dict) or set(request) != {"interface", "value", "files", "context"}:
+        raise EpisodeError("method request must contain interface, value, files and context")
+    files = request["files"]
+    if not isinstance(files, Mapping) or set(files) - set(task.workspace):
+        raise EpisodeError("method request files must use task workspace slots")
+    for slot, content in files.items():
+        if not isinstance(content, str):
+            raise EpisodeError(f"method request file {slot!r} must be UTF-8 text")
+        try:
+            content.encode("utf-8")
+        except UnicodeEncodeError as exc:
+            raise EpisodeError(f"method request file {slot!r} is not valid UTF-8") from exc
+
+
+def _write_method_outputs(launcher: Any, invocation: Any, task: t.Task) -> Path:
+    _, output_dir = launcher.exec_dirs(invocation.operation_id, invocation.execution_version)
+    root = Path(output_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    files = dict(invocation.files)
+    if set(files) - set(task.workspace):
+        raise EpisodeError("method returned a file outside the task workspace")
+    if any(not isinstance(raw, bytes) for raw in files.values()):
+        raise EpisodeError("method returned invalid solution bytes")
+
+    # Clear declared slots first so a replay cannot inherit files from a prior
+    # workspace state when the immutable invocation omitted one.
+    for rel in task.workspace:
+        dest = root.joinpath(*rel.split("/"))
+        _check_method_path(root, dest)
+        if dest.is_symlink():
+            raise EpisodeError(f"method output {rel!r} is a link")
+        if dest.exists():
+            if not dest.is_file():
+                raise EpisodeError(f"method output {rel!r} is not a regular file")
+            dest.unlink()
+    for rel, raw in sorted(files.items()):
+        dest = root.joinpath(*rel.split("/"))
+        _check_method_path(root, dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        _check_method_path(root, dest)
+        dest.write_bytes(raw)
+    return root
+
+
+def _check_method_path(root: Path, dest: Path) -> None:
+    try:
+        dest.relative_to(root)
+    except ValueError as exc:
+        raise EpisodeError("method output path escapes its workspace") from exc
+    current = root
+    for part in dest.relative_to(root).parts[:-1]:
+        current = current / part
+        if current.is_symlink():
+            raise EpisodeError("method output path contains a link")
+
+
+def _method_trajectory(invocation: Any, task: t.Task, allocation_id: str,
+                       attempt_id: str | None) -> bytes:
+    event = {
+        "type": "method.invocation.result",
+        "operation_id": invocation.operation_id,
+        "genome": invocation.genome,
+        "task": task.digest,
+        "name": invocation.name,
+        "method_digest": invocation.method_digest,
+        "input_digest": invocation.input_digest,
+        "output_digest": invocation.output_digest,
+        "execution_version": invocation.execution_version,
+        "allocation_id": allocation_id,
+        "attempt_id": attempt_id,
+        "status": invocation.status,
+        "value": invocation.value,
+        "files": [{"slot": slot, "size": len(raw),
+                   "digest": hashlib.sha256(raw).hexdigest()}
+                  for slot, raw in invocation.files],
+        "seconds": invocation.seconds,
+        "detail": invocation.detail,
+    }
+    try:
+        return (json.dumps(event, sort_keys=True, separators=(",", ":"),
+                           ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8")
+    except (TypeError, ValueError, UnicodeError) as exc:
+        raise EpisodeError(f"method result is not canonical JSON: {exc}") from exc
+
+
 def _instruction(base: str, continuation: dict | None, files: Mapping[str, bytes], *,
                  include_digest: bool) -> str:
     if continuation is None and not include_digest:
@@ -215,13 +359,14 @@ def _read_solution(dsn: str, artifacts_root: str | Path, task: t.Task,
 
 
 def _publish_trajectory(dsn: str, raw: bytes, staging_root: str | Path,
-                        artifacts_root: str | Path, label: str) -> str:
+                        artifacts_root: str | Path, label: str, *,
+                        format: str = "codex-jsonl") -> str:
     manifest = {"kind": "rsi-trajectory", "files": [
         {"path": "events.jsonl", "kind": "file", "size": len(raw),
          "digest": hashlib.sha256(raw).hexdigest()}]}
     receipt = artifacts.stage_package(dsn, staging_root, manifest=manifest,
                                       files={"events.jsonl": raw}, scope=TRAJECTORY_SCOPE,
-                                      access_label=label, format="codex-jsonl")
+                                      access_label=label, format=format)
     artifacts.publish_package(dsn, Command(request_id=f"rsi-traj-{receipt['digest']}",
                                            payload={"digest": receipt["digest"]}),
                               artifacts_root, receipt)
@@ -237,8 +382,22 @@ def read_episode(dsn: str, operation_id: str, launcher: Any) -> Episode | None:
         conn.commit()
     if row is None:
         return None
+    operation = broker.read_operation(dsn, operation_id)
+    if operation is None:
+        raise EpisodeError(f"episode {operation_id} has no admitted operation")
+    envelope = operation.get("payload") or {}
+    effect = envelope.get("effect")
+    if effect == broker.AGENT_RUN:
+        execution_version = ""
+        workspace, _ = launcher.exec_dirs(operation_id, execution_version)
+    elif effect == broker.SANDBOX_EXEC:
+        execution_version = operation.get("execution_version", "")
+        if not execution_version:
+            raise EpisodeError(f"method episode {operation_id} has no execution version")
+        _, workspace = launcher.exec_dirs(operation_id, execution_version)
+    else:
+        raise EpisodeError(f"episode {operation_id} has unsupported operation effect {effect!r}")
     result = launcher.read_result(operation_id) or {}
-    workspace, _ = launcher.exec_dirs(operation_id, "")
     return Episode(operation_id=operation_id, genome=row[0], task=row[1], status=row[2],
                    tokens=row[3], seconds=row[4], trajectory=row[5],
                    workspace=Path(workspace), infra_reason=result.get("infra_reason", ""))
