@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
+from test_rsi_investigate import _scenario
 
 from rsi import agenda
 from settlement import broker, store
 from settlement.common import Command
-from test_rsi_investigate import _scenario
 
 
 def _charter(run, *, agenda_id="p05-one", max_turns=1, priority=10):
@@ -20,7 +21,7 @@ def _charter(run, *, agenda_id="p05-one", max_turns=1, priority=10):
         },
         "policy": "seed/1",
         "max_turns": max_turns,
-        "deadline": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
+        "deadline": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
         "opportunities": [{
             "id": "first", "task_id": config["task"], "genome_id": config["genome"],
             "investigation_id": run["state"]["investigation_id"],

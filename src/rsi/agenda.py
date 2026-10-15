@@ -1,24 +1,34 @@
 """Bounded P05 portfolio runtime.
 
-One immutable agenda row owns its finite catalogue, shared token/CPU roots,
-turn cap, both source clocks, and at most one persisted flight. P01 owns each
-investigation. Choices precede P01 calls; acknowledgements identify the exact
-decision, attempt, operation, checked outcome and settled receipts. Only
-learner-visible sources count; timeouts and labels are not learning evidence.
+Charter shape: ``{grant_version, objective, allocations:{tokens:{id,units},
+cpu:{id,units}}, policy, max_turns, deadline, opportunities:[{id, task_id,
+genome_id, investigation_id?, objective, question, priority,
+resource_ceilings:{tokens,cpu}, timeout_ms, max_steps, expected_observation,
+stop_condition, method_request?:{name,interface,value}, scope_probe?:
+{source_opportunity_id,lesson_refs:[{claim_id,version}],changed_condition,
+competing_explanations}}]}``. Task IDs are canonical Task.digest values. CPU ceilings
+are broker allocation units; timeout_ms is a separate per-opportunity bound.
+
+One immutable agenda row owns its finite catalogue, explicitly granted shared
+token/CPU roots, turn cap, both source clocks, and at most one persisted flight.
+P01 owns each investigation. Choices precede P01 calls; acknowledgements name
+the exact decision, attempt, operation, checked outcome and settled receipts.
+Only learner-visible sources count; timeouts and labels are not learning evidence.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import json
+from datetime import UTC, datetime
 
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode, SettlementError, StaleRevision
-from . import agenda_policy, capability, genome, investigate, investigation, task
+
+from . import agenda_policy, capability, genome, investigate, investigation, memory, task
 
 _MAX_OPTIONS = 64
 _MAX_TURNS = 100
@@ -53,7 +63,7 @@ def _parse(charter):
     _positive(charter["grant_version"], "grant_version")
     _positive(charter["max_turns"], "max_turns", _MAX_TURNS)
     try:
-        deadline = datetime.fromisoformat(charter["deadline"].replace("Z", "+00:00"))
+        deadline = datetime.fromisoformat(charter["deadline"])
     except (AttributeError, ValueError) as exc:
         raise SettlementError("deadline must be an ISO-8601 UTC timestamp") from exc
     if deadline.tzinfo is None or deadline.utcoffset().total_seconds() != 0:
@@ -254,50 +264,51 @@ def _record(cur, agenda_id, kind, revision, data):
 
 def _commit_choice(dsn, agenda_id, state, snapshot, choice):
     charter = state["charter"]
-    for attempt in range(1):
-        command = Command(
-            request_id=f"p05-choose:{agenda_id}:{state['revision']}:{attempt}",
-            payload={"agenda_id": agenda_id, "revision": state["revision"],
-                     "choice": choice["id"],
-                     "snapshot": [snapshot["event_epoch"], snapshot["memory_revision"]]})
+    identity = hashlib.sha256(
+        f"{state['revision']}:{snapshot['event_epoch']}:{snapshot['memory_revision']}:{choice['id']}"
+        .encode()).hexdigest()[:24]
+    command = Command(
+        request_id=f"p05-choose:{agenda_id}:{identity}",
+        payload={"agenda_id": agenda_id, "revision": state["revision"],
+                 "choice": choice["id"],
+                 "snapshot": [snapshot["event_epoch"], snapshot["memory_revision"]]})
 
-        def commit(cur, control):
-            cur.execute("SELECT * FROM rsi_agendas WHERE agenda_id=%s FOR UPDATE", (agenda_id,))
-            current = cur.fetchone()
-            if current is None or int(current["revision"]) != int(state["revision"]):
-                raise StaleRevision("agenda changed during source snapshot")
-            if current["flight"] is not None:
-                raise StaleRevision("another wake already pinned a flight")
-            cur.execute("SELECT revision FROM rsi_memory_clock WHERE id=1 FOR UPDATE")
-            memory_row = cur.fetchone()
-            if (int(control["event_epoch"]) != snapshot["event_epoch"]
-                    or int(memory_row["revision"]) != snapshot["memory_revision"]):
-                raise StaleRevision("source snapshot changed before choice")
-            _authority(cur, agenda_id, charter)
-            flight = {"opportunity_id": choice["id"],
-                      "investigation_id": choice["investigation_id"],
-                      "target_revision": choice["target_revision"],
-                      "choice_id": _choice_id(agenda_id, int(state["revision"]), "choice"),
-                      "source_snapshot": {"event_epoch": snapshot["event_epoch"],
-                                          "memory_revision": snapshot["memory_revision"]}}
-            data = {**choice, **flight, "turn": int(state["turns"]) + 1,
-                    "ranked": choice["ranked"], "policy": charter["policy"],
-                    "reason": choice["rank_reason"]}
-            _record(cur, agenda_id, "choice", int(state["revision"]), data)
-            cur.execute("UPDATE rsi_agendas SET revision=revision+1,turns=turns+1,flight=%s,"
-                        "source_epoch=%s,memory_revision=%s,updated_at=now() WHERE agenda_id=%s",
-                        (Json(flight), snapshot["event_epoch"], snapshot["memory_revision"], agenda_id))
-            return (ResultCode.APPLIED, "choice persisted", flight,
-                    [("rsi.agenda.choice", {"agenda_id": agenda_id,
-                                             "opportunity_id": choice["id"]})], [])
+    def commit(cur, control):
+        cur.execute("SELECT * FROM rsi_agendas WHERE agenda_id=%s FOR UPDATE", (agenda_id,))
+        current = cur.fetchone()
+        if current is None or int(current["revision"]) != int(state["revision"]):
+            raise StaleRevision("agenda changed during source snapshot")
+        if current["flight"] is not None:
+            raise StaleRevision("another wake already pinned a flight")
+        cur.execute("SELECT revision FROM rsi_memory_clock WHERE id=1 FOR UPDATE")
+        memory_row = cur.fetchone()
+        if (int(control["event_epoch"]) != snapshot["event_epoch"]
+                or int(memory_row["revision"]) != snapshot["memory_revision"]):
+            raise StaleRevision("source snapshot changed before choice")
+        _authority(cur, agenda_id, charter)
+        flight = {"opportunity_id": choice["id"],
+                  "investigation_id": choice["investigation_id"],
+                  "target_revision": choice["target_revision"],
+                  "choice_id": _choice_id(agenda_id, int(state["revision"]), "choice"),
+                  "source_snapshot": {"event_epoch": snapshot["event_epoch"],
+                                      "memory_revision": snapshot["memory_revision"]}}
+        data = {**choice, **flight, "turn": int(state["turns"]) + 1,
+                "ranked": choice["ranked"], "policy": charter["policy"],
+                "reason": choice["rank_reason"]}
+        _record(cur, agenda_id, "choice", int(state["revision"]), data)
+        cur.execute("UPDATE rsi_agendas SET revision=revision+1,turns=turns+1,flight=%s,"
+                    "source_epoch=%s,memory_revision=%s,updated_at=now() WHERE agenda_id=%s",
+                    (Json(flight), snapshot["event_epoch"], snapshot["memory_revision"], agenda_id))
+        return (ResultCode.APPLIED, "choice persisted", flight,
+                [("rsi.agenda.choice", {"agenda_id": agenda_id,
+                                         "opportunity_id": choice["id"]})], [])
 
-        result = store.transact(dsn, command, commit)
-        if result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
-            return result.data
-        if result.code == ResultCode.STALE_REVISION:
-            return None
-        raise SettlementError(result.detail)
-    return None
+    result = store.transact(dsn, command, commit)
+    if result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        return result.data
+    if result.code == ResultCode.STALE_REVISION:
+        return None
+    raise SettlementError(result.detail)
 
 
 def _settled(effect):
@@ -353,11 +364,12 @@ def _ack_evidence(dsn, flight):
 def _ack(dsn, agenda_id, flight, evidence):
     state = _row(dsn, agenda_id)
     for attempt in range(2):
+        expected_revision = int(state["revision"])
         cmd = Command(request_id=f"p05-ack:{agenda_id}:{state['revision']}:{attempt}",
                       payload={"agenda_id": agenda_id, "revision": state["revision"],
                                "decision_id": evidence["decision_id"]})
 
-        def commit(cur, control):
+        def commit(cur, control, expected_revision=expected_revision):
             cur.execute("SELECT * FROM rsi_agendas WHERE agenda_id=%s FOR UPDATE", (agenda_id,))
             current = cur.fetchone()
             if current is None:
@@ -368,11 +380,11 @@ def _ack(dsn, agenda_id, flight, evidence):
             if current["flight"] is None and prior is not None:
                 return (ResultCode.ALREADY_APPLIED, "flight already acknowledged",
                         dict(prior["data"] or {}), [], [])
-            if (int(current["revision"]) != int(state["revision"])
+            if (int(current["revision"]) != expected_revision
                     or current["flight"] != flight):
                 raise StaleRevision("agenda flight changed before acknowledgement")
             data = {**flight, **evidence}
-            _record(cur, agenda_id, "ack", int(state["revision"]), data)
+            _record(cur, agenda_id, "ack", expected_revision, data)
             # Keep the pre-effect cursors. The next wake must examine the P01
             # outcome and P02 capture generated by this flight.
             cur.execute("UPDATE rsi_agendas SET revision=revision+1,flight=NULL,status="
@@ -547,11 +559,12 @@ def _relevant(dsn, snapshot, agenda_id, charter):
         if event["kind"] == "rsi.investigation.observed" and payload.get("investigation_id") in inv_ids:
             return True
         if (event["kind"] == "rsi.decision" and payload.get("kind") == "capability-retention"
-                and dict(payload.get("data") or {}).get("status") == "retained"):
-            if any(payload.get("subject") == item["genome_id"]
-                   and dict(payload.get("data") or {}).get("name") == (item.get("method_request") or {}).get("name")
-                   for item in charter["opportunities"]):
-                return True
+                and dict(payload.get("data") or {}).get("status") == "retained"
+                and any(payload.get("subject") == item["genome_id"]
+                        and dict(payload.get("data") or {}).get("name")
+                        == (item.get("method_request") or {}).get("name")
+                        for item in charter["opportunities"])):
+            return True
     return False
 
 
@@ -638,8 +651,8 @@ def _stop(dsn, agenda_id, state, snapshot, reason):
 def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
                     staging_root, artifacts_root):
     charter = state["charter"]
-    deadline = datetime.fromisoformat(charter["deadline"].replace("Z", "+00:00"))
-    if state["turns"] >= charter["max_turns"] or datetime.now(timezone.utc) >= deadline:
+    deadline = datetime.fromisoformat(charter["deadline"])
+    if state["turns"] >= charter["max_turns"] or datetime.now(UTC) >= deadline:
         return _stop(dsn, agenda_id, state, snapshot, "hard turn/deadline cap")
     current_grant = int(store.get_control(dsn)["authority_version"]) == charter["grant_version"]
     token_root, cpu_root = (charter["allocations"]["tokens"]["id"],
