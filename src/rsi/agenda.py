@@ -28,7 +28,7 @@ from psycopg.types.json import Json
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode, SettlementError, StaleRevision
 
-from . import agenda_policy, capability, genome, investigate, investigation, memory, task
+from . import agenda_policy, capability, genome, investigate, investigation, memory, task, verifier
 
 _MAX_OPTIONS = 64
 _MAX_TURNS = 100
@@ -127,26 +127,43 @@ def _kind(item):
             "instrument" if item.get("method_request") is not None else "investigation")
 
 
-def _load_catalogue(dsn, artifacts_root, charter):
+def _load_catalogue(dsn, artifacts_root, charter, *, allow_missing=False):
     result = {}
     for item in charter["opportunities"]:
-        dev_task = task.load(dsn, artifacts_root, item["task_id"])
-        organism = genome.load(dsn, artifacts_root, item["genome_id"])
+        try:
+            dev_task = task.load(dsn, artifacts_root, item["task_id"])
+            organism = genome.load(dsn, artifacts_root, item["genome_id"])
+        except SettlementError:
+            if not allow_missing:
+                raise
+            result[item["id"]] = None
+            continue
         if dev_task.split != "dev":
-            raise SettlementError("agenda accepts published development tasks only")
+            if not allow_missing:
+                raise SettlementError("agenda accepts published development tasks only")
+            result[item["id"]] = None
+            continue
         method = item.get("method_request")
         if method is not None and not any(
                 cap.name == method["name"] and cap.interface == method["interface"]
                 for cap in capability.catalogue(organism)):
-            raise SettlementError("method request does not name this genome's exact interface")
+            if not allow_missing:
+                raise SettlementError("method request does not name this genome's exact interface")
+            result[item["id"]] = None
+            continue
         result[item["id"]] = (dev_task, organism)
     for item in charter["opportunities"]:
         probe = item.get("scope_probe")
         if probe is not None:
-            source = result[probe["source_opportunity_id"]][0]
-            target = result[item["id"]][0]
+            source_entry, target_entry = (result[probe["source_opportunity_id"]],
+                                          result[item["id"]])
+            if source_entry is None or target_entry is None:
+                continue
+            source, target = source_entry[0], target_entry[0]
             if source.instruction == target.instruction and dict(source.workspace) == dict(target.workspace):
-                raise SettlementError("scope probe must change actual task input")
+                if not allow_missing:
+                    raise SettlementError("scope probe must change actual task input")
+                result[item["id"]] = None
     return result
 
 
@@ -185,7 +202,7 @@ def create(dsn, *, agenda_id, charter, artifacts_root):
         raise SettlementError("agenda_id must be non-empty")
     charter, digest = _json(charter)
     charter = _parse(charter)
-    _load_catalogue(dsn, artifacts_root, charter)
+    _load_catalogue(dsn, artifacts_root, charter, allow_missing=True)
 
     def save(cur, control):
         cur.execute("SELECT charter_digest FROM rsi_agendas WHERE agenda_id=%s", (agenda_id,))
@@ -361,6 +378,74 @@ def _ack_evidence(dsn, flight):
             "receipts": {"worker": worker["receipts"], "verifier": verifier["receipts"]}}
 
 
+def _refusal_evidence(dsn, flight):
+    history = investigation.export(dsn, flight["investigation_id"])
+    if history is None:
+        return None
+    digest = hashlib.sha256(
+        f"{flight['investigation_id']}:{flight['target_revision']}".encode()).hexdigest()
+    decision_id = "p01-decision-" + digest
+    decision = next((d for d in history["decisions"] if d["id"] == decision_id), None)
+    if decision is None or decision["kind"] != "worker":
+        return None
+    data = decision["data"]
+    attempt_id, operation_id = data.get("attempt_id"), data.get("operation_id")
+    observation = next((o["content"] for o in history["observations"]
+                        if o["decision_id"] == decision_id
+                        and o["content"].get("episode") == operation_id), None)
+    if (not isinstance(attempt_id, str) or not isinstance(operation_id, str)
+            or observation is None or observation.get("status") != "refused"
+            or observation.get("passed") is not None or observation.get("verdict") is not None
+            or observation.get("solution") is not None):
+        return None
+    refused = observation.get("refused_operation", operation_id)
+    if refused == operation_id:
+        with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT id,attempt_id,settled,dispatch_state,reconcile_state,payload,reservation_id"
+                        " FROM operations WHERE id=%s", (operation_id,))
+            op = cur.fetchone()
+            if op is not None:
+                reason = investigation._never_sent_refusal(cur, dict(op), operation_id, attempt_id)
+                if reason is None:
+                    return None
+            else:
+                cur.execute("SELECT result_code,result_detail FROM command_journal WHERE request_id=%s",
+                            ("broker-prep-" + operation_id,))
+                refusal = cur.fetchone()
+                cur.execute("SELECT 1 FROM operations WHERE attempt_id=%s LIMIT 1", (attempt_id,))
+                if (refusal is None or refusal["result_code"] not in
+                        investigation._DEFINITE_PREP_REFUSALS or cur.fetchone() is not None):
+                    return None
+                reason = str(refusal["result_detail"])
+        return {"decision_id": decision_id, "attempt_id": attempt_id,
+                "operation_id": operation_id, "refused_operation": refused,
+                "reason": "P01 worker was definitively refused before dispatch: " + reason}
+
+    with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("SELECT t.evaluator_version FROM rsi_episodes e JOIN rsi_tasks t"
+                    " ON t.digest=e.task WHERE e.operation_id=%s", (operation_id,))
+        task_row = cur.fetchone()
+        if task_row is None or refused != verifier.operation_id_for(
+                operation_id, task_row["evaluator_version"]):
+            return None
+        cur.execute("SELECT 1 FROM operations WHERE id=%s", (refused,))
+        if cur.fetchone() is not None:
+            return None
+        cur.execute("SELECT result_code,result_detail FROM command_journal WHERE request_id=%s",
+                    ("broker-prep-" + refused,))
+        refusal = cur.fetchone()
+    effects = _attempt_effects(dsn, attempt_id)
+    worker = effects.get(operation_id)
+    if (refusal is None or refusal["result_code"] not in investigation._DEFINITE_PREP_REFUSALS
+            or not _settled(worker) or worker["effect"] not in {broker.AGENT_RUN, broker.SANDBOX_EXEC}
+            or any(not _settled(effect) for effect in effects.values())):
+        return None
+    return {"decision_id": decision_id, "attempt_id": attempt_id,
+            "operation_id": operation_id, "refused_operation": refused,
+            "reason": "P01 verifier was definitively refused before dispatch: "
+                      + str(refusal["result_detail"])}
+
+
 def _ack(dsn, agenda_id, flight, evidence):
     state = _row(dsn, agenda_id)
     for attempt in range(2):
@@ -409,10 +494,21 @@ def _inv_id(agenda_id, option_id):
     return "p05-inv-" + hashlib.sha256(f"{agenda_id}:{option_id}".encode()).hexdigest()[:32]
 
 
+def _lesson_claim_ids(charter, opportunity_id):
+    refs = {ref["claim_id"] for item in charter["opportunities"]
+            if item["id"] == opportunity_id
+            for ref in (item.get("scope_probe") or {}).get("lesson_refs", [])}
+    refs.update(ref["claim_id"] for item in charter["opportunities"]
+                if (item.get("scope_probe") or {}).get("source_opportunity_id") == opportunity_id
+                for ref in item["scope_probe"]["lesson_refs"])
+    return sorted(refs)
+
+
 def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
                 staging_root, artifacts_root):
     inv_id = flight["investigation_id"]
     state = investigation.read(dsn, inv_id)
+    lessons = _lesson_claim_ids(charter, opportunity["id"])
     if state is None:
         dev_task, organism = loaded[opportunity["id"]]
         investigate.create(
@@ -422,13 +518,16 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
             max_steps=opportunity["max_steps"], timeout_ms=opportunity["timeout_ms"],
             token_ceiling=opportunity["resource_ceilings"]["tokens"],
             objective=opportunity["objective"], method=opportunity.get("method_request"),
+            context={"required_claim_ids": lessons} if lessons else None,
             staging_root=staging_root, artifacts_root=artifacts_root)
         state = investigation.read(dsn, inv_id)
     config = state["config"]
     if (config.get("task") != opportunity["task_id"]
             or config.get("genome") != opportunity["genome_id"]
             or config.get("token_allocation") != charter["allocations"]["tokens"]["id"]
-            or config.get("cpu_allocation") != charter["allocations"]["cpu"]["id"]):
+            or config.get("cpu_allocation") != charter["allocations"]["cpu"]["id"]
+            or not set(lessons) <= set((config.get("context") or {}).get(
+                "required_claim_ids", []))):
         raise SettlementError("P01 investigation differs from the pinned portfolio opportunity")
     return investigate.step(dsn, agent, checker, inv_id, staging_root=staging_root,
                             artifacts_root=artifacts_root,
@@ -439,6 +538,9 @@ def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifac
     flight = state["flight"]
     opportunity = next(i for i in state["charter"]["opportunities"]
                        if i["id"] == flight["opportunity_id"])
+    if loaded.get(opportunity["id"]) is None:
+        return _defer_flight(dsn, agenda_id, flight,
+                             {"context_outcome": "catalogue source is unavailable"})
     result = _ensure_p01(dsn, agent, checker, opportunity, flight, state["charter"], loaded,
                          staging_root, artifacts_root)
     evidence = _ack_evidence(dsn, flight)
@@ -446,6 +548,9 @@ def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifac
         _ack(dsn, agenda_id, flight, evidence)
         return {"status": "acknowledged", "opportunity_id": opportunity["id"],
                 "investigation": result, "acknowledgement": evidence}
+    refusal = _refusal_evidence(dsn, flight)
+    if refusal is not None:
+        return _defer_flight(dsn, agenda_id, flight, {"reason": refusal["reason"]})
     if result.get("context_outcome") or result.get("capability_outcome"):
         return _defer_flight(dsn, agenda_id, flight, result)
     return {"status": "pending", "opportunity_id": opportunity["id"],
@@ -454,7 +559,8 @@ def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifac
 
 def _defer_flight(dsn, agenda_id, flight, outcome):
     state = _row(dsn, agenda_id)
-    data = {**flight, "reason": outcome.get("context_outcome", outcome.get("capability_outcome"))}
+    data = {**flight, "reason": outcome.get(
+        "reason", outcome.get("context_outcome", outcome.get("capability_outcome")))}
     command = Command(request_id=f"p05-deferral:{agenda_id}:{state['revision']}",
                       payload={"agenda_id": agenda_id, "revision": state["revision"], "data": data})
 
@@ -502,8 +608,10 @@ def _checked_failed_lesson_use(dsn, agenda_id, item, charter, loaded, artifacts_
         return False
     source = next(i for i in charter["opportunities"]
                   if i["id"] == probe["source_opportunity_id"])
-    origin_task = loaded[source["id"]][0]
-    probe_task = loaded[item["id"]][0]
+    source_entry, probe_entry = loaded.get(source["id"]), loaded.get(item["id"])
+    if source_entry is None or probe_entry is None:
+        return False
+    origin_task, probe_task = source_entry[0], probe_entry[0]
     if origin_task.instruction == probe_task.instruction and dict(origin_task.workspace) == dict(probe_task.workspace):
         return False
     expected = {(r["claim_id"], r["version"]) for r in probe["lesson_refs"]}
@@ -519,25 +627,30 @@ def _checked_failed_lesson_use(dsn, agenda_id, item, charter, loaded, artifacts_
                              if d["id"] == observation["decision_id"]), None)
             if decision is None or decision["kind"] != "worker":
                 continue
-            visible = dict((decision["data"].get("visible_input") or {}).get("context_packet") or {})
-            refs = {(c.get("claim_id"), c.get("version")) for c in visible.get("claims", [])
+            packet = dict((decision["data"].get("visible_input") or {}).get("context_packet") or {})
+            memory_view = dict(packet.get("memory_view") or {})
+            refs = {(c.get("claim_id"), c.get("version")) for c in memory_view.get("claims", [])
                     if isinstance(c, dict)}
+            operation_id = decision["data"].get("operation_id")
             operation_evidence = _attempt_effects(dsn, decision["data"].get("attempt_id"))
+            worker_evidence = operation_evidence.get(operation_id)
             verdict_evidence = operation_evidence.get(content.get("verdict"))
-            if (expected <= refs and _settled(verdict_evidence)
+            if (expected <= refs and _settled(worker_evidence)
+                    and worker_evidence["effect"] in {broker.AGENT_RUN, broker.SANDBOX_EXEC}
+                    and _settled(verdict_evidence)
                     and verdict_evidence["effect"] == broker.SANDBOX_EXEC
                     and all(_settled(effect) for effect in operation_evidence.values())):
-                # The public P02 resolver is the visibility and ancestry check.
-                for claim_id, version in expected:
-                    try:
-                        versions = memory.history(dsn, claim_id, artifacts_root=artifacts_root)
-                    except SettlementError:
-                        break
-                    if not any(v["version"] == version and v["status"] == "supported"
-                               and any(type(o["content"].get("passed")) is bool
-                                       for o in v["observations"]) for v in versions):
-                        break
-                else:
+                source_state = investigation.read(dsn, inv_id)
+                scope = source_state["config"].get("context", {}).get(
+                    "scope", {"domain": "task"})
+                visible = memory.query(
+                    dsn, purpose="task: " + source_state["objective"],
+                    investigation_id=inv_id, scope=scope,
+                    claim_ids=sorted({claim_id for claim_id, _ in expected}),
+                    artifacts_root=artifacts_root, limit=len(expected))
+                current = {(claim["claim_id"], claim["version"])
+                           for claim in visible["claims"] if claim["status"] == "supported"}
+                if expected <= current and not visible["missing_information"]:
                     return True
     return False
 
@@ -563,6 +676,8 @@ def _relevant(dsn, snapshot, agenda_id, charter):
                 and any(payload.get("subject") == item["genome_id"]
                         and dict(payload.get("data") or {}).get("name")
                         == (item.get("method_request") or {}).get("name")
+                        and dict(payload.get("data") or {}).get("interface")
+                        == (item.get("method_request") or {}).get("interface")
                         for item in charter["opportunities"])):
             return True
     return False
@@ -665,11 +780,18 @@ def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
         p01 = investigation.read(dsn, inv_id)
         history = investigation.export(dsn, inv_id) if p01 is not None else None
         spent = sum(d["kind"] == "worker" for d in history["decisions"]) if history else 0
-        eligible = current_grant and (p01 is None or
-                    (p01["status"] == "ready" and p01["pending_decision"] is None
-                     and spent < item["max_steps"]))
+        lessons = set(_lesson_claim_ids(charter, item["id"]))
+        configured_lessons = set((p01["config"].get("context") or {}).get(
+            "required_claim_ids", [])) if p01 else lessons
+        source_available = loaded.get(item["id"]) is not None
+        ready = (p01 is None or (p01["status"] == "ready"
+                 and p01["pending_decision"] is None and spent < item["max_steps"]))
+        context_ready = lessons <= configured_lessons
+        eligible = current_grant and source_available and context_ready and ready
         reason = ("eligible" if eligible else "agenda grant is no longer current"
-                  if not current_grant else "investigation is not ready")
+                  if not current_grant else "catalogue source is unavailable"
+                  if not source_available else "investigation does not pin the required lesson refs"
+                  if not context_ready else "investigation is not ready")
         cpu_units = broker.exposure_schedule(broker.SANDBOX_EXEC, {"timeout_ms": 30_000})[0]
         if item.get("method_request") is not None:
             cpu_units += broker.exposure_schedule(
@@ -713,7 +835,7 @@ def wake(dsn, agent, checker, agenda_id, *, staging_root, artifacts_root):
     if state is None:
         raise SettlementError("unknown agenda " + agenda_id)
     charter = _parse(state["charter"])
-    loaded = _load_catalogue(dsn, artifacts_root, charter)
+    loaded = _load_catalogue(dsn, artifacts_root, charter, allow_missing=True)
     if state["flight"] is not None:
         return _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root)
     if state["status"] != "active":
