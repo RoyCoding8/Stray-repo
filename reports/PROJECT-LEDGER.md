@@ -30,7 +30,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
-| P05: autonomous agenda | Contract pinned; implementation next | Experience changes what the system chooses to investigate next. |
+| P05: autonomous agenda | Runtime slice integrated; qualification active | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
@@ -66,7 +66,8 @@ P03 task list:
 
 Current throughput checkpoint: P04 is closed at its qualified scope, including
 independent review, fixes, scratch archival and all seven CI jobs. P05 is active.
-The selected portfolio-row design and pure policy contract are pinned in P05.
+The selected portfolio-row design, pure ranking policy and first runtime slice are integrated.
+P05 feedback, concurrency/restart qualification and independent review remain open.
 Pure ranking is integrated and its five focused behavior tests pass at `382a2f7d`.
 Runtime and experiment lanes own isolated worktrees; Sol review waits for their
 complete integration. Its
@@ -90,6 +91,11 @@ P05 task list:
 - [x] Compare two structural agenda designs, choose one and pin its contract in the P05 plan.
 - [ ] Implement real option selection/admission and experience-driven follow-up through P01.
 - [ ] Qualify P05-A through P05-E and seed/adaptive comparison on the integrated path.
+  The first runtime slice at `5f6ea5d9` uses one portfolio row and the existing P01
+  owner. Its two lane tests cover actual child execution with pristine verification
+  and failed-but-ready action replay. This is not full A-E qualification.
+  Root verification on that integrated tip passed seven tests, zero skips, in
+  31.26 seconds; both disposable databases were removed. Ruff passed.
 - [ ] Complete independent Sol High verification, then a bounded free-route feedback sequence.
 - [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
 
