@@ -6,15 +6,13 @@ import json
 import pytest
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
-
-from rsi import agenda, archive
-from rsi import investigation
-from settlement import db, store
-from settlement.common import Command, ResultCode, SettlementError, StaleRevision
-
 from test_rsi_agenda import _charter, _grant
 from test_rsi_agenda_recovery import _child_wake
 from test_rsi_investigate import _scenario, _worker_calls
+
+from rsi import agenda, archive, investigation
+from settlement import db, store
+from settlement.common import Command, ResultCode, SettlementError, StaleRevision
 
 
 def _create(migrated_db, tmp_path, agenda_id="p10-lifecycle", *, campaign=False):
@@ -214,7 +212,7 @@ def test_pending_assignment_blocks_campaign_lane_development_admission(
         staging_root=run["roots"]["staging_root"],
         artifacts_root=run["roots"]["artifacts_root"])
     state = agenda.read(migrated_db, agenda_id)
-    assert result["status"] == "unchanged"
+    assert result["status"] == "stale"
     assert state["flight"] is None
 
     p01 = investigation.read(migrated_db, run["state"]["investigation_id"])

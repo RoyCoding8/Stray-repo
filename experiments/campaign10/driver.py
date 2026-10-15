@@ -384,7 +384,6 @@ def main(argv: list[str] | None = None) -> int:
             result = step(args.dsn, args.id, run_dir, phase=args.command,
                           route_file=args.route_file, codex=args.codex)
     except Exception as exc:  # noqa: BLE001 - sanitize possibly credential-bearing failure text.
-        # Exception text can contain provider configuration. Keep this public log safe.
         print(json.dumps({"status": "incomplete", "error_type": type(exc).__name__,
                           "campaign_id": args.id}, sort_keys=True))
         return 2
