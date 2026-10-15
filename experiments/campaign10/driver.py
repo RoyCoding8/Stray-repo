@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime, timedelta
 import json
 import os
-from pathlib import Path
 import re
 import sys
 import time
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 from rsi import campaign, gate, genome, task
 from settlement import store
@@ -18,9 +18,9 @@ from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
 
 try:
-    from .freeze import HERE, ROOT, SCENARIO, freeze_document, verify_freeze
+    from .freeze import HERE, SCENARIO, freeze_document, verify_freeze
 except ImportError:  # Direct script execution from this experiment directory.
-    from freeze import HERE, ROOT, SCENARIO, freeze_document, verify_freeze
+    from freeze import HERE, SCENARIO, freeze_document, verify_freeze
 
 LIVE_ROUTE_FILE = Path("D:/AI/tools/rsi-openrouter-route.env")
 LIVE_CODEX = Path("C:/Users/roysh/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe")
@@ -136,7 +136,6 @@ def prepare(dsn: str, campaign_id: str, run_dir: Path, *, mode: str,
         "epoch": epoch, "parent": parent_digest, "candidate": candidate_digest,
         "model": scenario["model"], "route_identity": route_id,
     }]}
-    task_ids = [item["digest"] for item in published.values()]
     assessment_task_ids = [published[key]["digest"] for key in (
         "assessment-development", "assessment-validation", "assessment-anchor")]
     grant = {
@@ -254,7 +253,7 @@ def _evidence_snapshot(dsn: str, campaign_id: str, run_dir: Path) -> dict:
             "unresolved_operations": _pending_operation_ids(bundle),
             "recomputed": recomputed,
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 - preserve an unavailable export as incomplete evidence.
         return {"evidence_status": "unavailable"}
 
 
@@ -309,7 +308,7 @@ def step(dsn: str, campaign_id: str, run_dir: Path, *, phase: str,
             max_wakes=(1 if is_development else scenario["caps"]["max_wakes_per_run"]),
             wall_seconds=wall,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - campaign/provider failures remain incomplete, never scores.
         body = {"label": frozen["mode"], "phase": phase, "status": "incomplete",
                 "unfinished_campaigns": [campaign_id], "score": None,
                 "reason": "campaign call ended without a classifiable result"}
@@ -326,9 +325,14 @@ def step(dsn: str, campaign_id: str, run_dir: Path, *, phase: str,
             "score": None}
     if is_development:
         current = campaign.inspect(dsn, campaign_id)
-        if current and current["status"] in {"active", "complete"} and not current["flight_pending"]:
+        if current and current["status"] in {"active", "complete"}:
             campaign.suspend(dsn, campaign_id, current["revision"])
-            body["status"] = "development_complete_suspended"
+            body["unfinished_campaigns"] = [campaign_id]
+            if run_result.get("status") == "bound" and not current["flight_pending"]:
+                body["status"] = "development_complete_suspended"
+            else:
+                body["status"] = "incomplete"
+                body["reason"] = "development did not complete a bounded turn"
         else:
             body["unfinished_campaigns"] = [campaign_id]
             body["status"] = "incomplete"
@@ -379,7 +383,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             result = step(args.dsn, args.id, run_dir, phase=args.command,
                           route_file=args.route_file, codex=args.codex)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - sanitize possibly credential-bearing failure text.
         # Exception text can contain provider configuration. Keep this public log safe.
         print(json.dumps({"status": "incomplete", "error_type": type(exc).__name__,
                           "campaign_id": args.id}, sort_keys=True))

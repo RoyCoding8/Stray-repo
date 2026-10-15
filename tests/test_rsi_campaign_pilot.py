@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -12,7 +12,6 @@ from experiments.campaign10 import driver
 from experiments.campaign10.freeze import freeze_document, verify_freeze
 from rsi import campaign
 from settlement import db
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
