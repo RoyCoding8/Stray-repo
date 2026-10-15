@@ -451,14 +451,18 @@ def recompute_pair(frozen: dict, reports: list[dict]) -> dict:
             or seed_claim != adaptive_claim
             or seed_source != adaptive_source
             or any(not isinstance(row, list) or len(row) != 2 for row in roots)
-            or set(roots[0]) & set(roots[1])
-            or not any(row["changed_selection"] is False
-                       for row in grades["seed"]["feedback_effects"])
-            or not any(row["changed_selection"] is True
-                       for row in grades["adaptive"]["feedback_effects"])):
+            or set(roots[0]) & set(roots[1])):
         raise ValueError("arms do not share initial evidence or isolate their allocation pools")
     return {"schema": "p05-agenda-pair/1", "arms": grades,
             "evidence_basis": "attested runtime exports; no independent provider authentication",
+            "comparison_status": "incomplete" if any(
+                grade["unscored"] for grade in grades.values()) else "observed",
+            "feedback_observed": {arm_id: bool(grade["feedback_effects"])
+                                  for arm_id, grade in grades.items()},
+            "different_selections": [row["data"]["opportunity_id"] for row in
+                seed["agenda_export"]["decisions"] if row["kind"] == "p05.choice"] != [
+                row["data"]["opportunity_id"] for row in adaptive["agenda_export"]["decisions"]
+                if row["kind"] == "p05.choice"],
             "same_task_packages": True, "same_genome": True,
             "same_initial_evidence": True, "separate_allocation_pools": True}
 
