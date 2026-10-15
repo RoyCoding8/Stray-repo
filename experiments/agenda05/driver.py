@@ -120,7 +120,7 @@ def _claim(dsn: str, organism: genome.Genome, candidate: task.Task,
                               prior["investigation_id"],
                               staging_root=roots["stage"], artifacts_root=roots["art"])
     if result["status"] != "completed" or result["last_observation"]["passed"] is not True:
-        raise RuntimeError("authored seed experience failed its pristine verifier")
+        raise RuntimeError(f"authored seed experience failed its pristine verifier: {result}")
     captured, = experience.capture_investigation(
         dsn, "p05-prior", artifacts_root=roots["art"])
     claim = memory.revise(
