@@ -3,11 +3,17 @@
 import json
 import re
 import sys
+import time
 from pathlib import Path
 
 log_path = Path(sys.argv[1])
 fail_pairs = {tuple(map(int, item.split(","))) for item in sys.argv[2].split(";") if item}
-args = sys.argv[3:]
+delay_text = next((item.partition("=")[2] for item in sys.argv[3:]
+                   if item.startswith("--delay-pairs=")), "")
+delay_pairs = {tuple(map(int, item.split(","))) for item in delay_text.split(";") if item}
+command_index = next((index for index, item in enumerate(sys.argv)
+                      if item in {"debug", "exec"}), len(sys.argv))
+args = sys.argv[command_index:]
 
 if args[:2] == ["debug", "models"]:
     print(json.dumps({"models": [{"slug": "gpt-6-luna", "context_window": 1024}]}))
@@ -23,6 +29,8 @@ count = len(log_path.read_text(encoding="utf-8").splitlines()) if log_path.exist
 prompt = args[-1]
 match = re.search(r"add\((-?\d+),\s*(-?\d+)\)", prompt)
 pair = tuple(map(int, match.groups())) if match else None
+if pair in delay_pairs:
+    time.sleep(5)
 correct = pair not in fail_pairs
 source = "def add(a, b):\n    return a + b\n" if correct else (
     "def add(a, b):\n    return a - b\n")

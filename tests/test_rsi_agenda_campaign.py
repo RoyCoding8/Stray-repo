@@ -100,3 +100,36 @@ def test_frozen_fixture_arm_uses_public_agenda_and_pristine_p01(
              if option["id"] == "scope-probe")["triggered"] = False
         with pytest.raises(ValueError, match="ranking"):
             recompute(frozen, disconnected)
+
+
+def test_fixture_timeout_preserves_pending_flight_and_unknown_usage(migrated_db, tmp_path):
+    repo = Path(__file__).resolve().parents[1]
+    bundle = tmp_path / "freeze"
+    scenario_path = tmp_path / "scenario.json"
+    scenario_path.write_text(json.dumps(build_scenario(
+        (datetime.now(UTC) + timedelta(hours=1)).isoformat(), timeout_ms=300)), encoding="utf-8")
+    frozen = freeze(repo, bundle, scenario_path)
+    report = run_arm(repo, bundle, tmp_path / "campaign", migrated_db,
+                     "seed", "fixture", fixture_delay_pairs="2,3")
+
+    assert [result["status"] for result in report["results"]] == ["pending"]
+    assert report["agenda_export"]["agenda"]["flight"] is not None
+    assert not [row for row in report["agenda_export"]["decisions"]
+                if row["kind"] == "p05.ack"]
+    grade = recompute(frozen, report)
+    assert grade["unscored"] == 1
+    assert grade["failed"] == grade["verified"] == 0
+
+    choice = next(row["data"] for row in report["agenda_export"]["decisions"]
+                  if row["kind"] == "p05.choice")
+    history = report["investigations"][choice["investigation_id"]]
+    worker = next(row["data"]["operation_id"] for row in history["decisions"]
+                  if row["kind"] == "worker")
+    accounting = report["accounting"]
+    cost = next(row for row in accounting["reservations"] if row["operation_id"] == worker)
+    assert cost["receipt_actual_cost"] is None
+    assert cost["charge_basis"] == "reserved_amount_fallback"
+    assert cost["charged_units"] == cost["amount"] > 0
+    assert cost["usage_status"] == "unknown"
+    assert worker in accounting["unknown_usage_operation_ids"]
+    assert accounting["allocations"][cost["allocation_id"]]["reserved"] == 0

@@ -135,9 +135,9 @@ def _claim(dsn: str, organism: genome.Genome, candidate: task.Task,
 
 def _charter(agenda_id: str, policy: str, token: str, cpu: str,
              organism: genome.Genome, tasks: dict, investigations: dict,
-             deadline: str) -> dict:
+             deadline: str, timeout_ms: int) -> dict:
     shared = {"genome_id": organism.digest, "max_steps": 1,
-              "timeout_ms": 30_000,
+              "timeout_ms": timeout_ms,
               "resource_ceilings": {"tokens": 5_000, "cpu": 3_000_000}}
     def item(option_id, name, question, priority, *, source=None, investigation_id=None):
         value = {**shared, "id": option_id, "task_id": tasks[name].digest,
@@ -171,7 +171,7 @@ def _charter(agenda_id: str, policy: str, token: str, cpu: str,
             ]}
 
 
-def build_scenario(deadline: str) -> dict:
+def build_scenario(deadline: str, *, timeout_ms: int = 30_000) -> dict:
     try:
         parsed_deadline = datetime.fromisoformat(
             deadline[:-1] + "+00:00" if deadline.endswith("Z") else deadline)
@@ -192,7 +192,7 @@ def build_scenario(deadline: str) -> dict:
         token, cpu = _roots_names(agenda_id)
         investigations = {"source": "p05-source", "probe": "p05-probe"}
         charter = _charter(agenda_id, policy, token, cpu, organism, tasks,
-                           investigations, deadline)
+                           investigations, deadline, timeout_ms)
         arms[short] = {"agenda_id": agenda_id, "policy": policy,
                        "charter": charter,
                        "task_ids": {name: item.digest for name, item in tasks.items()},
@@ -250,10 +250,13 @@ def _resource_accounting(dsn: str, allocation_ids: list[str], operations: list[d
                 basis, charge = "receipt_actual_cost", actual
             else:
                 basis, charge = "reserved_amount_fallback", int(reservation["amount"])
+        elif reservation["state"] == "released":
+            basis, charge = "released", 0
         else:
             basis, charge = "unknown", None
-            if reservation["state"] in {"reserved", "uncertain"}:
-                unknown_usage.append(reservation["operation_id"])
+        usage_status = "unknown" if (basis == "unknown" or basis == "reserved_amount_fallback") else "known"
+        if usage_status == "unknown":
+            unknown_usage.append(reservation["operation_id"])
         cost_records.append({"operation_id": reservation["operation_id"],
                              "allocation_id": reservation["allocation_id"],
                              "reservation_id": reservation["id"],
@@ -261,7 +264,8 @@ def _resource_accounting(dsn: str, allocation_ids: list[str], operations: list[d
                              "state": reservation["state"],
                              "receipt_actual_cost_present": has_actual,
                              "receipt_actual_cost": actual if type(actual) is int and actual >= 0 else None,
-                             "charge_basis": basis, "charged_units": charge})
+                             "charge_basis": basis, "charged_units": charge,
+                             "usage_status": usage_status})
     return {"scope": "direct agenda roots and their reservations; no child allocation authority",
             "allocations": {identity: {key: allocation[key] for key in
                             ("id", "parent_id", "domain", "authorized", "reserved", "consumed",
@@ -277,7 +281,8 @@ def _read_jsonl(path: Path) -> list[dict]:
 
 
 def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode: str,
-            route_file: Path | None = None, codex: str = "codex") -> dict:
+            route_file: Path | None = None, codex: str = "codex",
+            fixture_delay_pairs: str = "") -> dict:
     if arm_id not in {"seed", "adaptive"} or mode not in {"fixture", "live"}:
         raise ValueError("unsupported policy or arm mode")
     if mode == "live" and route_file is None:
@@ -328,15 +333,18 @@ def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode:
         command = [codex]
     else:
         command = [sys.executable, str(repo / "experiments/agenda05/fixture_worker.py"),
-                   str(root / "calls.jsonl"), "2,3;3,8"]
+                   str(root / "calls.jsonl"), "2,3;3,8",
+                   "--delay-pairs=" + fixture_delay_pairs]
     agent = CodexLauncher(root / "agent-runs", codex_cmd=command, provider=provider,
                           allowed_overrides=genome.HARNESS_KEYS)
     investigations = {"source": "p05-source", "probe": "p05-probe"}
     for key, task_name in (("source", "source"), ("probe", "probe")):
+        opportunity = next(row for row in charter["opportunities"]
+                           if row["task_id"] == tasks[task_name].digest)
         investigate.create(
             dsn, agent, organism, investigation_id=investigations[key],
             task=tasks[task_name], token_allocation=token, cpu_allocation=cpu,
-            max_steps=1, timeout_ms=30_000, token_ceiling=5_000,
+            max_steps=1, timeout_ms=opportunity["timeout_ms"], token_ceiling=5_000,
             objective="Use the supported addition rule and check the assigned input.",
             context={"required_claim_ids": [CLAIM]},
             staging_root=roots["stage"], artifacts_root=roots["art"])

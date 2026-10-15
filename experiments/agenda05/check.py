@@ -231,6 +231,7 @@ def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
             if cost is None:
                 charge = amount
                 basis = "reserved_amount_fallback"
+                unknown_usage.add(op_id)
             else:
                 if type(cost) is not int or cost < 0 or cost > amount:
                     raise ValueError("receipt actual cost exceeds its reservation")
@@ -238,7 +239,12 @@ def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
                 basis = "receipt_actual_cost"
             if row.get("charge_basis") != basis or row.get("charged_units") != charge:
                 raise ValueError("settled cost basis differs from the source reservation")
+            if row.get("usage_status") != ("unknown" if cost is None else "known"):
+                raise ValueError("missing actual usage was collapsed into a known zero")
             consumed_by_root[allocation_id] = consumed_by_root.get(allocation_id, 0) + charge
+        elif (row.get("charge_basis") != "released" or row.get("charged_units") != 0
+              or row.get("usage_status") != "known"):
+            raise ValueError("released reservation was assigned an unsupported charge")
     if evidence.get("unknown_usage_operation_ids") != sorted(unknown_usage):
         raise ValueError("uncertain usage is not preserved separately from consumed charges")
     for identity in allocation_ids:
@@ -318,6 +324,11 @@ def recompute(frozen: dict, report: dict) -> dict:
         task_package = _package(packages.get(task_id), task_id, "task")
         if task_package.get("manifest", {}).get("split") != "dev":
             raise ValueError("selected task is not a development task")
+        ranked = choice.get("ranked")
+        if not isinstance(ranked, list) or rank(ranked, arm["policy"]) != ranked:
+            raise ValueError("choice ranking does not recompute under the frozen policy")
+        if not ranked or ranked[0].get("id") != choice["opportunity_id"]:
+            raise ValueError("agenda chose a different option from its ranked list")
         if ack is None:
             inv_id = choice.get("investigation_id")
             history = report.get("investigations", {}).get(inv_id)
@@ -345,11 +356,6 @@ def recompute(frozen: dict, report: dict) -> dict:
             continue
         if choice.get("choice_id") != ack.get("choice_id"):
             raise ValueError("agenda acknowledgement is paired with a different choice")
-        ranked = choice.get("ranked")
-        if not isinstance(ranked, list) or rank(ranked, arm["policy"]) != ranked:
-            raise ValueError("choice ranking does not recompute under the frozen policy")
-        if not ranked or ranked[0].get("id") != choice["opportunity_id"]:
-            raise ValueError("agenda chose a different option from its ranked list")
         if option.get("scope_probe") and any(row.get("id") == option["id"] and row.get("triggered")
                                               for row in ranked):
             source_id = option["scope_probe"]["source_opportunity_id"]
