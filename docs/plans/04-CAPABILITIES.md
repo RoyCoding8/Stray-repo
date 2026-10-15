@@ -131,7 +131,8 @@ remains a cooperative execution boundary, not hostile-code containment.
    no-op or disconnection controls.
 4. Run Sol High independent verification after integration. Freeze one bounded
    free-route construction/use experiment only after its apparatus is qualified.
-5. Consolidate and complete CI before closing P04. P05–P10 stay paused.
+5. Consolidate and complete CI before closing P04, then follow the master plan
+   and current human assignment for the next component.
 
 The deployment boundary remains separate. Bounded native child execution is
 permitted for cooperative experiments. It does not establish hostile containment,

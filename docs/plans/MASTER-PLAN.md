@@ -25,7 +25,7 @@ Dependencies mean usable contracts, not proven learning advantages. The parts ar
 | P07 | [Learner revision](07-LEARNER-REVISION.md) | P02, P03, P04, P05 | An inherited executable learning policy governs a later development round. P06 adds replay evidence when available. |
 | P08 | [Temporary teams](08-TEAMS.md) | P01, P03, P04, P05 | A retained work graph controls real delegation, joins and rework. |
 | P09 | [Representations and transfer](09-TRANSFER.md) | P02, P03, P04 | A retained abstraction or method executes on meaningfully changed work with explicit applicability. |
-| P10 | [Continuing campaigns and assessment](10-CAMPAIGNS.md) | P01, P02, P04, P05 | An unattended bounded campaign resumes, exports results and accumulates later-use evidence. P06Ã¢â‚¬â€œP09 can join later. |
+| P10 | [Continuing campaigns and assessment](10-CAMPAIGNS.md) | P01, P02, P04, P05 | An unattended bounded campaign resumes, exports results and accumulates later-use evidence. P06–P09 can join later. |
 
 Assessment is present from P01. P10 adds longitudinal assessment and operation; it does not introduce correctness checking for the first time. Likewise, P01 includes basic bounded context and explicit next actions. P03 and P05 improve those decisions rather than making P01 depend on unfinished components.
 
@@ -42,7 +42,7 @@ Assessment is present from P01. P10 adds longitudinal assessment and operation; 
 
 This is a recommended sequence, not a demand to finish every later plan before using the system. P09 may start after P04 when there is a suitable corpus. P08 may start after P05 when a workload exposes a concrete decomposition opportunity. Avoid speculative parallel implementation across unknown shared contracts.
 
-The earlier architecture packages map onto these parts. A contains P01Ã¢â‚¬â€œP04. B contains P05Ã¢â‚¬â€œP06 and relevant consolidation. C contains P07Ã¢â‚¬â€œP09. P10 connects operation and assessment across them. These are subdivisions of stages 8Ã¢â‚¬â€œ10, not ten new project stages.
+The earlier architecture packages map onto these parts. A contains P01–P04. B contains P05–P06 and relevant consolidation. C contains P07–P09. P10 connects operation and assessment across them. These are subdivisions of stages 8–10, not ten new project stages.
 
 ## How to build one part
 
@@ -73,7 +73,9 @@ A part is working when its public consumer performs the declared behavior, its a
 
 Do not spend each batch demanding a sustained learning win. Close the mechanism build with attributable behavior and an informative outcome. P10 accumulates longer-term evidence. Formal promotion, deployment qualification and release remain separate milestones.
 
-P01, P02 and P03 reached their qualified component checkpoints. P03 implementation,
-independent review, bounded live comparison, consolidation and final checkpoint
-CI are complete. P04 is active; P05Ã¢â‚¬â€œP10 remain paused. The ledger owns
-exact verification boundaries and outstanding work.
+P01 through P04 reached their qualified component checkpoints, including
+independent review, bounded live experiments, consolidation and CI. P05 is active.
+Human direction on 2026-10-15 authorizes the remaining sequence P05, P10, P06,
+P07, P09, P08. Each part includes fixes, debloat, independent verification, cleanup
+and green CI before the next implementation starts. The ledger owns exact
+verification boundaries and outstanding work.
