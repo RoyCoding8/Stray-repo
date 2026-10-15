@@ -140,21 +140,22 @@ def _run(meta_path: Path) -> dict:
         raise RuntimeError("entrypoint is outside the pinned method closure")
     source_path = method_dir / source
     sys.path.insert(0, str(source_path.parent))
+    capture = _Capture(min(int(meta["max_output_bytes"]), 16_384))
+    error_capture = _Capture(4_096)
     try:
-        spec = importlib.util.spec_from_file_location("_rsi_candidate", source_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError("method entrypoint cannot be loaded")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        function = getattr(module, meta["function"])
-        if not callable(function):
-            raise TypeError("method entrypoint is not callable")
+        with contextlib.redirect_stdout(capture), contextlib.redirect_stderr(error_capture):
+            spec = importlib.util.spec_from_file_location("_rsi_candidate", source_path)
+            if spec is None or spec.loader is None:
+                raise RuntimeError("method entrypoint cannot be loaded")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            function = getattr(module, meta["function"])
+            if not callable(function):
+                raise TypeError("method entrypoint is not callable")
     except Exception as exc:  # noqa: BLE001
         return {"status": "error", "data": {"kind": "candidate-error",
                                                 "detail": f"{type(exc).__name__}: {exc}"}}
 
-    capture = _Capture(min(int(meta["max_output_bytes"]), 16_384))
-    error_capture = _Capture(4_096)
     try:
         with contextlib.redirect_stdout(capture), contextlib.redirect_stderr(error_capture):
             output = function(request)
@@ -183,12 +184,6 @@ def _run(meta_path: Path) -> dict:
         return {"status": "error", "data": {"kind": "candidate-error",
                                                 "detail": "method output is not canonical JSON",
                                                 "candidate_stdout": capture.getvalue()}}
-    output_dir = base / "outputs"
-    output_dir.mkdir(exist_ok=True)
-    for slot, text in files.items():
-        target = output_dir / slot
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(text.encode("utf-8"))
     return {"status": "ok", "data": {"kind": "capability-result",
                                        "output": output,
                                        "input_slots": sorted(request["files"]),

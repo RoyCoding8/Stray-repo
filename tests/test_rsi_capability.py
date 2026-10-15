@@ -73,6 +73,7 @@ def test_local_runtime_returns_changed_values_files_and_replays_once(
     tag = uuid.uuid4().hex[:8]
     allocation, ownership, attempt = _environment(dsn, tag)
     genome = _genome(
+        "print('module log')\n"
         "def invoke(request):\n"
         "    print('method log')\n"
         "    value = request['value']\n"
@@ -106,7 +107,7 @@ def test_local_runtime_returns_changed_values_files_and_replays_once(
     assert decision["data"]["input_digest"] == first.input_digest
     assert decision["data"]["result_digest"] == first.output_digest
     receipt = store.operation_receipts(dsn, first.operation_id)[-1]
-    assert receipt["content"]["data"]["worker"]["data"]["candidate_stdout"] == "method log\n"
+    assert receipt["content"]["data"]["worker"]["data"]["candidate_stdout"] == "module log\nmethod log\n"
 
 
 def test_noop_and_malformed_candidate_output_are_distinct(migrated_db, tmp_path):
