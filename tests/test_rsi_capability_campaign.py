@@ -97,6 +97,7 @@ def _bundle(tmp_path):
             "value": expected, "files": files,
             "result_artifact": base64.b64encode(artifact_package).decode(),
             "episode": {"id": operation_id, "task_digest": task_evidence["digest"],
+                        "trajectory": hashlib.sha256(("trace:" + operation_id).encode()).hexdigest(),
                         "status": "completed"},
             "fresh_process": ({"model_calls": 0, "execution": "native-method-episode"}
                               if operation_id == "dev-use" else
@@ -117,12 +118,16 @@ def _bundle(tmp_path):
         "construction_operation_id": "construct-use",
         "construction": {"status": "completed", "child": child.digest,
                          "operation_id": "construct-use", "name": "summary",
-                         "interface": method.interface, "method_digest": method.digest},
+                         "interface": method.interface, "method_digest": method.digest,
+                         "evidence": hashlib.sha256(b"evidence").hexdigest(),
+                         "trajectory": hashlib.sha256(b"construct-trace").hexdigest()},
         "operations": [{"operation": {"id": "construct-use",
                                          "dispatch_state": "observed",
                                          "payload": {"effect": "agent-run",
                                                      "payload": {"harness": "codex"}}},
                         "receipts": [{"outcome": "success",
+                                      "content": {"trajectory_digest": hashlib.sha256(
+                                          b"construct-trace").hexdigest()},
                                       "receipt_identity": "fixture:construct-use"}]}],
         "child": child_doc,
         "task": tasks[0][2],
@@ -133,6 +138,13 @@ def _bundle(tmp_path):
         "retention": {"status": "retained", "episode_id": "dev-use"},
         "selection": {"status": "selected", "executed_genome": child.digest,
                       "executed_name": "summary", "method_digest": method.digest},
+    }
+    artifact_blobs = {b"evidence", b"construct-trace"}
+    artifact_blobs.update(("trace:" + use["operation_id"]).encode()
+                          for use in report["uses"])
+    report["artifact_bytes"] = {
+        hashlib.sha256(raw).hexdigest(): base64.b64encode(raw).decode()
+        for raw in artifact_blobs
     }
     root = tmp_path / "bundle"
     root.mkdir()

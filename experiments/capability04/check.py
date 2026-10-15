@@ -88,6 +88,10 @@ def _construction_record(report, *, settled):
         if (operation.get("dispatch_state") not in ("observed", "reconciled")
                 or len(receipts) != 1 or receipts[0].get("outcome") != "success"):
             raise ValueError("construction lacks one settled successful broker receipt")
+        content = receipts[0].get("content")
+        if (not isinstance(content, dict)
+                or content.get("trajectory_digest") != report.get("construction", {}).get("trajectory")):
+            raise ValueError("constructor receipt does not bind its captured trajectory")
     return record
 
 
@@ -175,6 +179,8 @@ def _check_use(use, genome, method, expected, *, development=False):
         raise ValueError("durable capability-use decision differs from invocation")
     if episode.get("status") != "completed" or not episode.get("id"):
         raise ValueError("method episode is not completed")
+    if not isinstance(episode.get("trajectory"), str):
+        raise ValueError("method episode lacks its published trajectory identity")
     process = use["fresh_process"]
     if not isinstance(process, dict) or process.get("model_calls") != 0:
         raise ValueError("later method use lacks fresh model-free process evidence")
@@ -211,6 +217,16 @@ def check_bundle(root):
         raise ValueError("unsupported frozen source manifest")
     if report.get("schema") != "p04-capability-campaign/1":
         raise ValueError("unsupported campaign report")
+    artifact_bytes = report.get("artifact_bytes", {})
+    if not isinstance(artifact_bytes, dict):
+        raise ValueError("captured artifact bytes are malformed")
+    for digest, encoded in artifact_bytes.items():
+        try:
+            raw = base64.b64decode(encoded, validate=True)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("captured artifact bytes are not valid base64") from exc
+        if not isinstance(digest, str) or _sha(raw) != digest:
+            raise ValueError("captured artifact bytes differ from their pinned digest")
     limits = manifest.get("limits", {})
     maximum = limits.get("max_construction_calls")
     calls = report.get("construction_calls")
@@ -240,6 +256,11 @@ def check_bundle(root):
     if calls != 1:
         raise ValueError("completed construction must bind exactly one constructor call")
     construction_record = _construction_record(report, settled=True)
+    construction = report["construction"]
+    for key in ("evidence", "trajectory"):
+        digest = construction.get(key)
+        if not isinstance(digest, str) or digest not in artifact_bytes:
+            raise ValueError("constructor evidence or trajectory bytes are missing")
 
     parent = _genome(report.get("parent"))
     child = _genome(report.get("child"))
@@ -285,6 +306,9 @@ def check_bundle(root):
         raise ValueError("verified solution differs from the pristine task reference")
     checked = _check_use(development[0], child, method, ([3, -2, 7], expected_dev),
                          development=True)
+    if any(use.get("episode", {}).get("trajectory") not in artifact_bytes
+           for use in development):
+        raise ValueError("method episode trajectory bytes are missing")
     retention = report.get("retention", {})
     if retention.get("status") != "retained" or retention.get("episode_id") != development[0]["episode"]["id"]:
         raise ValueError("retention is not bound to the passing development episode")

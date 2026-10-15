@@ -466,6 +466,21 @@ def _allocation_summary(status):
 def _checkpoint(report, bundle, dsn, artifacts_root, route):
     from settlement import store
 
+    captured = report.setdefault("artifact_bytes", {})
+    candidates = [report.get("construction", {})]
+    for use in report.get("uses", []):
+        if isinstance(use, dict):
+            candidates.extend((use, use.get("episode", {})))
+    for record in candidates:
+        if not isinstance(record, dict):
+            continue
+        for key in ("evidence", "trajectory", "trajectory_digest"):
+            digest = record.get(key)
+            if isinstance(digest, str) and len(digest) == 64 and digest not in captured:
+                path = Path(artifacts_root) / digest
+                if path.is_file():
+                    captured[digest] = base64.b64encode(_record_artifact(
+                        Path(artifacts_root), digest)).decode("ascii")
     report["allocations"] = {
         name: _allocation_summary(store.allocation_status(dsn, name))
         for name in report.get("allocations", {})
@@ -477,7 +492,7 @@ def _checkpoint(report, bundle, dsn, artifacts_root, route):
 def _export_use(dsn, launcher, artifacts_root, task, operation_id, *, process,
                 checked, workspace=None):
     from rsi import archive, verifier
-    from settlement import broker
+    from settlement import broker, db
 
     decision = archive.decision(dsn, "capability-use:" + operation_id)
     if decision is None:
@@ -499,12 +514,16 @@ def _export_use(dsn, launcher, artifacts_root, task, operation_id, *, process,
     if result_artifact:
         package = json.loads(result_artifact)
         output_doc = json.loads(bytes.fromhex(package["files"]["result.json"]))
+    with db.connect(dsn) as conn:
+        row = conn.execute("SELECT trajectory FROM rsi_episodes WHERE id=%s",
+                           (operation_id,)).fetchone()
     use = {
         **identity, "decision": identity, "request": request,
         "dispatch_request": dispatch_request,
         "value": output_doc.get("value"), "files": output_doc.get("files", {}),
         "result_artifact": base64.b64encode(result_artifact).decode("ascii"),
         "episode": {"id": operation_id, "task_digest": task.digest,
+                    "trajectory": row[0] if row else None,
                     "status": "completed" if identity.get("status") == "completed" else identity.get("status")},
         "fresh_process": process,
     }
