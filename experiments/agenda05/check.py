@@ -215,9 +215,13 @@ def recompute(frozen: dict, report: dict) -> dict:
     rows = agenda.get("decisions", [])
     choices = [row["data"] for row in rows if row.get("kind") == "p05.choice"]
     acks = [row["data"] for row in rows if row.get("kind") == "p05.ack"]
-    if not choices or len(choices) > scenario["choice_cap"] or len(choices) != len(acks):
-        raise ValueError("campaign exceeds its cap or has unacknowledged choices")
-    operations = {row.get("operation", {}).get("id"): row for row in report.get("operations", [])}
+    if not choices or len(choices) > scenario["choice_cap"]:
+        raise ValueError("campaign exceeds its cap or has no choices")
+    ack_by_choice = {row.get("choice_id"): row for row in acks}
+    if None in ack_by_choice or len(ack_by_choice) != len(acks):
+        raise ValueError("agenda acknowledgements are duplicated or unidentified")
+    operations = {row.get("operation_id", row.get("operation", {}).get("id")): row
+                  for row in report.get("operations", [])}
     if len(operations) != len(report.get("operations", [])):
         raise ValueError("operation exports are duplicated or unidentified")
     expected_roots = [arm["charter"]["allocations"][domain]["id"]
@@ -233,9 +237,8 @@ def recompute(frozen: dict, report: dict) -> dict:
     _verify_prior(report, source_task, arm["genome_id"],
                   _package(packages[source_task], source_task, "task"), operations)
     results, used_feedback = [], []
-    for choice, ack in zip(choices, acks):
-        if choice.get("choice_id") != ack.get("choice_id"):
-            raise ValueError("agenda acknowledgement is paired with a different choice")
+    for choice in choices:
+        ack = ack_by_choice.get(choice.get("choice_id"))
         option = catalog.get(choice.get("opportunity_id"))
         if option is None or choice.get("policy") != arm["policy"]:
             raise ValueError("selected choice is outside the frozen catalogue or policy")
@@ -243,6 +246,33 @@ def recompute(frozen: dict, report: dict) -> dict:
         task_package = _package(packages.get(task_id), task_id, "task")
         if task_package.get("manifest", {}).get("split") != "dev":
             raise ValueError("selected task is not a development task")
+        if ack is None:
+            inv_id = choice.get("investigation_id")
+            history = report.get("investigations", {}).get(inv_id)
+            config = history.get("state", {}).get("config", {}) if isinstance(history, dict) else {}
+            if config.get("task") != task_id or config.get("genome") != genome_id:
+                raise ValueError("unacknowledged choice lacks its pinned P01 identity")
+            expected_ops = {row.get("data", {}).get("operation_id")
+                            for row in history.get("decisions", []) if row.get("kind") == "worker"}
+            expected_ops.update(row.get("content", {}).get("verdict")
+                                for row in history.get("observations", []))
+            expected_ops.update(row.get("id") for row in history.get("unresolved_effects", []))
+            expected_ops.discard(None)
+            if not expected_ops <= operations.keys():
+                raise ValueError("unacknowledged P01 effects are absent from the export")
+            for operation_id in expected_ops:
+                row = operations[operation_id]
+                op = row.get("operation")
+                if op is not None:
+                    payload = op.get("payload", {}).get("payload", {})
+                    if (op.get("id") != operation_id or payload.get("task") != task_id
+                            or payload.get("genome") != genome_id):
+                        raise ValueError("unacknowledged P01 operation has a different identity")
+            results.append({"status": "unscored", "reason": "choice lacks settled acknowledgement",
+                            "accounted_operations": sorted(expected_ops)})
+            continue
+        if choice.get("choice_id") != ack.get("choice_id"):
+            raise ValueError("agenda acknowledgement is paired with a different choice")
         ranked = choice.get("ranked")
         if not isinstance(ranked, list) or rank(ranked, arm["policy"]) != ranked:
             raise ValueError("choice ranking does not recompute under the frozen policy")

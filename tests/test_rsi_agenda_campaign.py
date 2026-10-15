@@ -49,8 +49,12 @@ def test_frozen_fixture_arm_uses_public_agenda_and_pristine_p01(
 
     first_ack = next(row["data"] for row in report["agenda_export"]["decisions"]
                      if row["kind"] == "p05.ack")
-    task_id = next(row["data"]["task_id"] for row in report["agenda_export"]["decisions"]
-                   if row["kind"] == "p05.choice")
+    scenario = json.loads(base64.b64decode(frozen["scenario"], validate=True))
+    first_choice = next(row["data"] for row in report["agenda_export"]["decisions"]
+                        if row["kind"] == "p05.choice")
+    selected = next(row for row in scenario["arms"][report["arm_id"]]["charter"]["opportunities"]
+                    if row["id"] == first_choice["opportunity_id"])
+    task_id = selected["task_id"]
     task_package = json.loads(base64.b64decode(report["task_packages"][task_id]))
     evaluator = task_package["manifest"]["evaluator_version"]
     verifier_id = "rsi-verify-" + hashlib.sha256(

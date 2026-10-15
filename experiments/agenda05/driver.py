@@ -216,11 +216,11 @@ def _include_operations(dsn: str, history: dict, output: dict) -> None:
                      for row in history.get("decisions", [])}
     operation_ids.update(row.get("content", {}).get("verdict")
                          for row in history.get("observations", []))
+    operation_ids.update(row.get("id") for row in history.get("unresolved_effects", []))
     for operation_id in operation_ids - {None}:
-        output[operation_id] = {
-            "operation": broker.read_operation(dsn, operation_id),
-            "receipts": store.operation_receipts(dsn, operation_id),
-        }
+        output[operation_id] = {"operation_id": operation_id,
+                                "operation": broker.read_operation(dsn, operation_id),
+                                "receipts": store.operation_receipts(dsn, operation_id)}
 
 
 def _read_jsonl(path: Path) -> list[dict]:
@@ -301,19 +301,22 @@ def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode:
                              staging_root=roots["stage"], artifacts_root=roots["art"])
         results.append(result)
         state = agenda.read(dsn, agenda_id)
-        if result.get("status") in {"deferred", "stopped", "complete", "unchanged"}:
+        if result.get("status") in {"deferred", "pending", "stopped", "complete", "unchanged"}:
             break
-        if state["status"] in {"complete", "stopped"}:
+        if state["flight"] is not None or state["status"] in {"complete", "stopped"}:
             break
     exported = agenda.export(dsn, agenda_id)
     p01_exports, operations = {}, {}
     for decision in exported["decisions"]:
         data = decision["data"]
-        if decision["kind"] != "p05.ack":
+        if decision["kind"] != "p05.choice":
             continue
-        history = investigation.export(dsn, data["investigation_id"])
-        p01_exports[data["investigation_id"]] = history
-        _include_operations(dsn, history, operations)
+        inv_id = data.get("investigation_id")
+        if inv_id is not None and inv_id not in p01_exports:
+            history = investigation.export(dsn, inv_id)
+            if history is not None:
+                p01_exports[inv_id] = history
+                _include_operations(dsn, history, operations)
     _include_operations(dsn, prior_history, operations)
     report = {"schema": "p05-agenda-arm/1", "freeze_sha256": hashlib.sha256(
               json.dumps(frozen, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
