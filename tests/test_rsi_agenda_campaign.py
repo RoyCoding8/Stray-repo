@@ -79,6 +79,20 @@ def test_frozen_fixture_arm_uses_public_agenda_and_pristine_p01(
     with pytest.raises(ValueError, match="receipt"):
         recompute(frozen, swapped)
 
+    missing_reservation = copy.deepcopy(report)
+    worker_reservation = next(row for row in missing_reservation["accounting"]["reservations"]
+                              if row["operation_id"] == first_ack["operation_id"])
+    missing_reservation["accounting"]["reservations"].remove(worker_reservation)
+    with pytest.raises(ValueError, match="reservation|balances"):
+        recompute(frozen, missing_reservation)
+
+    altered_cost = copy.deepcopy(report)
+    cost_row = next(row for row in altered_cost["accounting"]["reservations"]
+                    if row["operation_id"] == first_ack["operation_id"])
+    cost_row["receipt_actual_cost"] = 1
+    with pytest.raises(ValueError, match="linked operation"):
+        recompute(frozen, altered_cost)
+
     changed = copy.deepcopy(report)
     choice_row = next(row for row in changed["agenda_export"]["decisions"]
                       if row["kind"] == "p05.choice")

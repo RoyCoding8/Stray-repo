@@ -209,6 +209,7 @@ def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
                 or actual["reserved"] + actual["consumed"] > actual["authorized"]):
             raise ValueError("allocation root identity or finite balance is invalid")
     reservation_ids, reserved_by_root, consumed_by_root, unknown_usage = set(), {}, {}, set()
+    reservation_by_operation = {}
     for row in rows:
         identity, allocation_id, op_id = (row.get("reservation_id"), row.get("allocation_id"),
                                           row.get("operation_id"))
@@ -218,9 +219,20 @@ def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
                 or op_id not in operations or state not in {"reserved", "uncertain", "settled", "released"}):
             raise ValueError("reservation accounting identity or amount is invalid")
         reservation_ids.add(identity)
+        if op_id in reservation_by_operation:
+            raise ValueError("an operation is linked to multiple reservations")
+        reservation_by_operation[op_id] = identity
         operation = operations[op_id].get("operation")
-        if operation is not None and operation.get("reservation_id") != identity:
-            raise ValueError("reservation is detached from its operation")
+        if operation is not None:
+            if operation.get("reservation_id") != identity:
+                raise ValueError("reservation is detached from its operation")
+            payload = operation.get("payload", {})
+            actual_present = "_receipt_actual_cost" in payload
+            actual = payload.get("_receipt_actual_cost")
+            actual = actual if type(actual) is int and actual >= 0 else None
+            if (row.get("receipt_actual_cost_present") is not actual_present
+                    or row.get("receipt_actual_cost") != actual):
+                raise ValueError("reservation cost basis differs from its linked operation")
         if state in {"reserved", "uncertain"}:
             if row.get("charge_basis") != "unknown" or row.get("charged_units") is not None:
                 raise ValueError("unsettled usage was assigned a zero or settled charge")
@@ -245,6 +257,12 @@ def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
         elif (row.get("charge_basis") != "released" or row.get("charged_units") != 0
               or row.get("usage_status") != "known"):
             raise ValueError("released reservation was assigned an unsupported charge")
+    for operation_id, row in operations.items():
+        operation = row.get("operation")
+        if operation is not None:
+            reservation_id = operation.get("reservation_id")
+            if reservation_id is not None and reservation_by_operation.get(operation_id) != reservation_id:
+                raise ValueError("exported operation reservation is missing from the accounting union")
     if evidence.get("unknown_usage_operation_ids") != sorted(unknown_usage):
         raise ValueError("uncertain usage is not preserved separately from consumed charges")
     for identity in allocation_ids:
@@ -252,10 +270,11 @@ def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
         if (actual["reserved"] != reserved_by_root.get(identity, 0)
                 or actual["consumed"] != consumed_by_root.get(identity, 0)):
             raise ValueError("allocation balances differ from the direct reservation union")
-    return {"scope": evidence["scope"],
-            "authorized": sum(row["authorized"] for row in allocations.values()),
-            "reserved": sum(row["reserved"] for row in allocations.values()),
-            "consumed": sum(row["consumed"] for row in allocations.values()),
+    balances = {domain: {"authorized": allocations[expected["id"]]["authorized"],
+                         "reserved": allocations[expected["id"]]["reserved"],
+                         "consumed": allocations[expected["id"]]["consumed"]}
+                for domain, expected in roots.items()}
+    return {"scope": evidence["scope"], "domains": balances,
             "unknown_usage_operation_ids": sorted(unknown_usage)}
 
 
