@@ -264,7 +264,8 @@ def recompute(frozen: dict, report: dict) -> dict:
                                   if row.get("kind") == "worker" and row.get("id") == source_ack.get("decision_id")), None)
             if source_worker is None:
                 raise ValueError("scope feedback source lacks its P01 worker")
-            visible = source_worker.get("data", {}).get("visible_input", {}).get("context_packet", {})
+            visible = (source_worker.get("data", {}).get("visible_input", {})
+                       .get("context_packet", {}).get("memory_view", {}))
             visible_refs = {(row.get("claim_id"), row.get("version"))
                             for row in visible.get("claims", []) if isinstance(row, dict)}
             if not refs <= visible_refs:
