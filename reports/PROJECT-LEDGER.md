@@ -29,7 +29,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
-| P04: executable capabilities | Planned; existing package machinery can be reused | Construction, checked retention and later executable use. |
+| P04: executable capabilities | Active; grounding and interface design | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
@@ -41,8 +41,8 @@ These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
 The component batches built P02 and P03 on the P01 checkpoint. Human
 direction now requires consolidation and CI repair after every component,
-followed by the next assigned part. P03 and its consolidation are complete;
-P04–P10 remain paused.
+followed by the next assigned part. P03 and its consolidation are complete.
+P04 is now assigned; P05–P10 remain paused.
 
 P02 task list:
 - [x] Ground the existing observation, artifact and consumer paths; compare storage shapes.
@@ -64,7 +64,24 @@ P03 task list:
 Current throughput checkpoint: P03 implementation, independent review, bounded
 live comparison, consolidation and checkpoint CI are complete. Both backups are
 synced. See the P03 checkpoint below for separate evidence classes.
-P04 remains paused until human authorization.
+The human authorized P04 after closure. P05–P10 remain paused.
+
+P04 task list:
+- [ ] Ground. Trace genome publication, bounded child execution, investigation decisions and retained use.
+- [ ] Sketch. Compare two independently designed package/selection shapes and pin the chosen interface in the P04 plan.
+- [ ] Agree. Proceed under the assigned P04 scope; no additional design approval is requested.
+- [ ] Implement. Qualify independently authored execution, construction/checking, experimental retention and fresh-process use.
+- [ ] Scrap. Revisit the sketch if repeated implementation deviations expose a wrong ownership boundary.
+- [ ] Run integrated P04-A through P04-E, then independent GPT-6.1 Sol High verification.
+- [ ] Run one prospectively bounded free-route construction and later-use experiment; preserve negative outcomes.
+- [ ] Consolidate, repair CI, remove owned worktrees and sync both backups.
+
+P04 throughput checkpoint: first resolve package identity and invocation ownership
+against the existing kernel. The informative stopping condition is a working
+acquire/check/retain/select/execute path with substitution, applicability and
+restart controls, plus an attributable live outcome. A learning win is not a
+completion requirement. Authored packages and model-acquired packages remain
+separate evidence classes.
 
 ### P03 implementation and consolidation (2026-10-14)
 
@@ -133,7 +150,7 @@ Final CI run `38632408127` passed all seven jobs on source/evidence checkpoint
 snapshot's line endings; a scoped raw-byte attribute and re-add restored its
 prospective digest. Standard-library recomputation also passed from a fresh Git
 archive of that checkpoint. The closure commit changes status documents only;
-it does not extend the source qualification. P04 stays paused.
+it does not extend the source qualification. P04 was subsequently assigned.
 
 ### P02 consolidation (2026-10-14)
 

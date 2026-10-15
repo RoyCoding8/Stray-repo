@@ -5,7 +5,10 @@ P01, P02 and P03 have reached their qualified working checkpoints. Read
 boundaries and outstanding work, then [the master plan](docs/plans/MASTER-PLAN.md)
 for component order. P03 implementation, independent review, bounded live
 comparison, consolidation and final checkpoint CI are complete.
-P04–P10 remain paused until the next human assignment.
+P04 executable capabilities is now assigned. Follow its component plan and the
+ledger task list. P05–P10 remain paused. Use the existing genome/artifact and
+bounded worker paths; retain independent execution and live acquisition evidence
+separately. Finish integration before independent Sol High verification.
 Every component ends with consolidation and CI repair before the next begins.
 
 Do not rerun old study prompts or rebuild completed slices without a current

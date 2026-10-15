@@ -75,5 +75,5 @@ Do not spend each batch demanding a sustained learning win. Close the mechanism 
 
 P01, P02 and P03 reached their qualified component checkpoints. P03 implementation,
 independent review, bounded live comparison, consolidation and final checkpoint
-CI are complete. P04–P10 remain paused. The ledger owns
+CI are complete. P04 is active; P05–P10 remain paused. The ledger owns
 exact verification boundaries and outstanding work.
