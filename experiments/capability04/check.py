@@ -67,7 +67,7 @@ def _task_reference(task):
     return reference
 
 
-def _construction_record(report, *, settled):
+def _construction_record(report, *, settled, outcome="success"):
     operation_id = report.get("construction_operation_id")
     matches = [item for item in report.get("operations", [])
                if isinstance(item, dict)
@@ -86,8 +86,8 @@ def _construction_record(report, *, settled):
         raise TypeError("construction receipt export is malformed")
     if settled:
         if (operation.get("dispatch_state") not in ("observed", "reconciled")
-                or len(receipts) != 1 or receipts[0].get("outcome") != "success"):
-            raise ValueError("construction lacks one settled successful broker receipt")
+                or len(receipts) != 1 or receipts[0].get("outcome") != outcome):
+            raise ValueError("construction lacks one settled broker receipt with matching outcome")
         content = receipts[0].get("content")
         trajectory_digest = report.get("construction", {}).get("trajectory")
         try:
@@ -393,6 +393,20 @@ def check_bundle(root):
         return {"status": "unresolved", "checked_uses": 0,
                 "stop": report.get("stop", report.get("construction_operation_id"))}
     failed_construction = report.get("construction", {}).get("status")
+    if failed_construction in ("timeout", "infra_failed"):
+        if (report.get("status") not in ("unscored", "no-acquisition") or calls != 1
+                or report.get("uses") != [] or report.get("child")
+                or report.get("retention") or report.get("selection")
+                or report["construction"].get("child")):
+            raise ValueError("unscored constructor cannot support acquisition or method use")
+        record = _construction_record(report, settled=True, outcome="failure")
+        _check_construction_evidence(report, record)
+        if (record["operation"].get("settled") is not True
+                or record["receipts"][0]["content"].get("status") != failed_construction):
+            raise ValueError("unscored constructor differs from its settled failure receipt")
+        return {"status": "unscored", "checked_uses": 0,
+                "construction_status": failed_construction,
+                "reported_status": report["status"]}
     if failed_construction in ("invalid", "failed", "no_candidate"):
         if report.get("status") != "no-acquisition" or calls != 1:
             raise ValueError("construction failure is not bound to a completed constructor attempt")

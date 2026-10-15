@@ -317,9 +317,10 @@ def run(repo: Path, bundle: Path, dsn: str, route_file: Path,
     report["construction"] = construction
     _checkpoint(report, bundle, dsn, artifacts_root, route)
     if construction.get("status") != "completed" or not construction.get("child"):
-        report["status"] = "no-acquisition"
+        report["status"] = ("unscored" if construction.get("status") in
+                            ("timeout", "infra_failed") else "no-acquisition")
         _checkpoint(report, bundle, dsn, artifacts_root, route)
-        return {"status": "no-acquisition", "construction": construction.get("status")}
+        return {"status": report["status"], "construction": construction.get("status")}
 
     child = genome.load(dsn, artifacts_root, construction["child"])
     report["child"] = {"digest": child.digest,
