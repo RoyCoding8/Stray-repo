@@ -149,6 +149,7 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
                         str(runner_path), str(meta_path)],
                "timeout_ms": timeout,
                "max_output_bytes": MAX_OUTPUT_BYTES}
+    payload = broker.validate_effect(broker.SANDBOX_EXEC, payload)
     decision_id = "capability-use:" + operation_id
     prior = broker.read_operation(dsn, operation_id)
     prior_decision = archive.decision(dsn, decision_id)
@@ -163,7 +164,7 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
             _protect_artifact(dsn, replay.output_digest, operation_id)
         return replay
     if prior is not None:
-        if (prior.get("effect") != broker.SANDBOX_EXEC
+        if (prior.get("payload", {}).get("effect") != broker.SANDBOX_EXEC
                 or prior.get("execution_version") != execution_version
                 or prior.get("payload", {}).get("payload") != payload):
             raise CapabilityError("operation id already belongs to different invocation inputs")
@@ -188,9 +189,10 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
     if status.dispatch_state not in ("observed", "reconciled"):
         raise CapabilityError(f"method operation remains unsettled: {status.dispatch_state} "
                               f"{status.next_decision}")
-    raw_result = launcher.read_result(operation_id)
-    if not isinstance(raw_result, dict):
-        raise CapabilityError("settled method operation has no launcher result")
+    receipts = store.operation_receipts(dsn, operation_id)
+    if len(receipts) != 1:
+        raise CapabilityError("settled method operation needs one unambiguous receipt")
+    raw_result = receipts[0]['content']
     invocation = _interpret(dsn, launcher, artifacts_root, capability, operation_id,
                             input_digest, execution_version, raw_result, elapsed,
                             output_limit, staging_root)
@@ -516,8 +518,11 @@ def _checked_use(dsn: str, genome: genome_module.Genome, name: str,
     if any(data.get(k) != v for k, v in expected.items()):
         raise CapabilityError('retention method does not match the checked invocation')
     operation = broker.read_operation(dsn, episode_id)
-    if (operation is None or operation['effect'] != broker.SANDBOX_EXEC
+    if (operation is None or operation['payload']['effect'] != broker.SANDBOX_EXEC
             or operation['execution_version'] != data['execution_version']
+            or _sha(_canonical(operation['payload']['payload'])) != data['payload_digest']
+            or operation['allocation_id'] != data['allocation_id']
+            or operation['attempt_id'] != data['attempt_id']
             or operation['dispatch_state'] not in ('observed', 'reconciled')
             or not store.operation_receipts(dsn, episode_id)):
         raise CapabilityError('retention requires the settled native operation')
@@ -623,6 +628,7 @@ def construct(dsn: str, agent: Any, parent: genome_module.Genome, *, name: str,
         raise CapabilityError('construction interface must be a bounded nonempty string')
     request = {'parent': parent.digest, 'name': name, 'interface': interface,
                'context_digest': _sha(_canonical(context_packet)), 'operation_id': operation_id,
+               'model': agent.provider.model,
                'allocation_id': allocation_id, 'token_ceiling': token_ceiling,
                'timeout_ms': timeout_ms}
     identity = 'capability-construction:' + operation_id
@@ -682,4 +688,5 @@ def construct(dsn: str, agent: Any, parent: genome_module.Genome, *, name: str,
             report.update(child=candidate.digest, method_digest=method.digest)
         except SettlementError as exc:
             report.update(status='invalid', detail=str(exc))
-    return _record(dsn, identity, 'capability-construction', report['child'] or parent.digest, report)
+    return archive.record(dsn, identity, kind='capability-construction', actor='ai',
+                          subject=report['child'] or parent.digest, data=report)['data']

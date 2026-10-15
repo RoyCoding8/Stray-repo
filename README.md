@@ -108,7 +108,32 @@ sources and explicit missing information. The decision pins the returned memory
 revision and content; resume reuses that snapshot and rechecks its source bytes.
 An investigation's optional `memory` configuration sets its scope, view and limit.
 See the [P02 contract](docs/plans/02-MEMORY.md) for the APIs and acceptance scope.
-Learned retrieval and context selection belong to P03.
+`rsi.context` builds a bounded packet with required support and opposition,
+selected excerpts and explicit missing information. Decisions pin this packet;
+resume revalidates its original sources. See the
+[P03 contract](docs/plans/03-CONTEXT.md) for policies and limits.
+
+## Executable methods
+
+`rsi.capability` derives methods from genome directories containing `SKILL.md`,
+`capability.json` and ordinary Python source. The descriptor pins an interface,
+entrypoint, dependencies, effects and execution bounds. `invoke` runs the exact
+package in a bounded child and publishes its structured value and solution files.
+The coordinator never imports the method. Native execution is uncontained.
+
+`construct` supplies the full interface and a pinned development context packet
+to the model worker. A constructed package needs a genuine method episode and a
+passing pristine development check before `retain` records experimental use.
+`select` requires that checked interface and the same bytes. It declines an
+incompatible request instead of running an incumbent under the method's name.
+Retention establishes a checked example, not general applicability or promotion.
+
+An investigation can pin `method={"name": ..., "interface": ..., "value": ...}`
+in `create`, or supply that JSON object with `--method-request` in the CLI.
+Its later `step` or `resume` selects and executes the method without a model
+route. The admitted input and method identity survive restart; replay loads the
+original result artifact. A new input needs a new operation and executes again.
+See the [P04 contract](docs/plans/04-CAPABILITIES.md) for acceptance and evidence.
 
 ## Bounded improvement experiments
 

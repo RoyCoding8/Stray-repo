@@ -29,6 +29,23 @@ def _require(result):
     return result
 
 
+def _method_options(value):
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) != {"name", "interface", "value"}:
+        raise SettlementError("method request needs name, interface and value")
+    if any(not isinstance(value[key], str) or not value[key].strip()
+           for key in ("name", "interface")):
+        raise SettlementError("method name and interface must be non-empty strings")
+    try:
+        raw = json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()
+        if len(raw) > 32_768:
+            raise ValueError("method request exceeds 32768 bytes")
+        return json.loads(raw)
+    except (TypeError, ValueError, UnicodeError) as exc:
+        raise SettlementError(f"method request must be bounded finite JSON: {exc}") from exc
+
+
 def _memory_options(value):
     if value is None:
         return dict(MEMORY_DEFAULT)
@@ -163,7 +180,8 @@ def _packet_matches(packet, request):
 
 def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
            cpu_allocation, max_steps, timeout_ms, token_ceiling,
-           staging_root, artifacts_root, objective=None, memory=None, context=None):
+           staging_root, artifacts_root, objective=None, memory=None, context=None,
+           method=None):
     """Pin one development objective and its finite execution envelope."""
     for name, value in (("max_steps", max_steps), ("timeout_ms", timeout_ms),
                         ("token_ceiling", token_ceiling)):
@@ -174,11 +192,15 @@ def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
         raise SettlementError("continuing task investigations accept development tasks only")
     genomes.load(dsn, artifacts_root, genome.digest)
     context_options = _context_options(context, memory)
+    method_options = _method_options(method)
     config = {"task": task.digest, "genome": genome.digest,
               "token_allocation": token_allocation, "cpu_allocation": cpu_allocation,
               "max_steps": max_steps, "timeout_ms": timeout_ms,
               "context": context_options,
-              "token_ceiling": token_ceiling, "model": agent.provider.model}
+              "token_ceiling": token_ceiling,
+              "model": None if method_options is not None else agent.provider.model}
+    if method_options is not None:
+        config["method"] = method_options
     payload = {"investigation_id": investigation_id, "objective": objective or task.instruction,
                "domain": "task", "allocation_id": token_allocation, "config": config,
                "policy": POLICY, "open_questions": [QUESTION], "artifact_refs": {}}
@@ -200,7 +222,8 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
         dsn, investigation_id, artifacts_root=artifacts_root)
     if state["status"] in ("suspended", "completed", "unresolved"):
         return state
-    if config["model"] != agent.provider.model:
+    method_options = _method_options(config.get("method"))
+    if method_options is None and config["model"] != agent.provider.model:
         raise SettlementError("worker model differs from investigation configuration")
     item = tasks.load(dsn, artifacts_root, config["task"])
     current = genomes.load(dsn, artifacts_root, config["genome"])
@@ -209,6 +232,16 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
         decision_id = "p01-decision-" + identity
         attempt_id = "p01-attempt-" + identity
         operation_id = "p01-worker-" + identity
+        selection = None
+        if method_options is not None:
+            from . import capability
+
+            selection = capability.select(
+                dsn, "p04-select:" + identity, genome=current,
+                name=method_options["name"], interface=method_options["interface"],
+                artifacts_root=artifacts_root)
+            if selection["status"] != "selected":
+                return {**state, "capability_outcome": selection}
         continuation = {
             "objective": state["objective"],
             "objective_revision": state["objective_revision"],
@@ -254,6 +287,8 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
                 },
             }
         visible = {**continuation, "context_packet": packet}
+        if selection is not None:
+            visible["capability"] = {"selection": selection, "request": method_options}
         _require(investigation.decide(dsn, Command(
             request_id="p01-decide:" + identity, expected_revision=state["revision"],
             payload={"investigation_id": investigation_id,
@@ -307,17 +342,42 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root)
             },
         }
     try:
-        ep = episode.run_episode(
-            dsn, agent, current, operation_id=pending["operation_id"], task=item,
-            allocation_id=config["token_allocation"], attempt_id=pending["attempt_id"],
-            timeout_ms=config["timeout_ms"], token_ceiling=config["token_ceiling"],
-            continuation=visible, solution=visible["artifact_refs"].get("solution"), **roots)
+        worker = agent
+        if method_options is None:
+            ep = episode.run_episode(
+                dsn, agent, current, operation_id=pending["operation_id"], task=item,
+                allocation_id=config["token_allocation"], attempt_id=pending["attempt_id"],
+                timeout_ms=config["timeout_ms"], token_ceiling=config["token_ceiling"],
+                continuation=visible, solution=visible["artifact_refs"].get("solution"), **roots)
+        else:
+            from . import capability
+
+            admitted = visible.get("capability", {})
+            if admitted.get("request") != method_options:
+                raise SettlementError("method request differs from the admitted continuation")
+            selection = admitted.get("selection", {})
+            capability.validate_selection(
+                dsn, selection, genome=current, name=method_options["name"],
+                interface=method_options["interface"], artifacts_root=artifacts_root)
+            worker = checker
+            ep = episode.run_method_episode(
+                dsn, checker, current, name=method_options["name"],
+                request={"interface": method_options["interface"],
+                         "value": method_options["value"],
+                         "files": {path: raw.decode("utf-8")
+                                   for path, raw in item.workspace.items()},
+                         "context": {**_continuation_fields(visible),
+                                     "context_packet": visible["context_packet"]}},
+                operation_id=pending["operation_id"], task=item,
+                allocation_id=config["cpu_allocation"], attempt_id=pending["attempt_id"],
+                timeout_ms=config["timeout_ms"],
+                **roots)
         observation = {"episode": ep.operation_id, "status": ep.status,
                        "passed": None, "verdict": None, "solution": None,
                        "reason": ep.infra_reason}
         if ep.status == "completed":
             checked = verifier.verify_episode(
-                dsn, agent, checker, ep.operation_id,
+                dsn, worker, checker, ep.operation_id,
                 allocation_id=config["cpu_allocation"], attempt_id=pending["attempt_id"], **roots)
             observation.update(status=checked.status, passed=checked.passed,
                                verdict=checked.operation_id, solution=checked.solution)
@@ -376,6 +436,8 @@ def main():
     parser.add_argument("--genome")
     parser.add_argument("--task")
     parser.add_argument("--objective")
+    parser.add_argument("--method-request", type=Path,
+                        help="JSON object with a method name, interface and input value")
     parser.add_argument("--context-policy", choices=tuple(sorted(context.POLICIES)))
     parser.add_argument("--context-budget-bytes", type=int)
     parser.add_argument("--token-allocation")
@@ -398,16 +460,23 @@ def main():
             expected_revision=state["revision"], payload={"investigation_id": args.id})))
         result = investigation.read(args.dsn, args.id)
     else:
-        if not args.route_file or not args.codex:
-            parser.error("create, step and resume require --route-file and --codex")
-        route = dict(line.split("=", 1) for line in args.route_file.read_text().splitlines()
-                     if line and not line.startswith("#"))
-        agent = CodexLauncher(args.root / "runs", codex_cmd=[args.codex],
-                              provider=Provider(route["SETTLEMENT_GATEWAY_ENDPOINT"],
-                                                route["SETTLEMENT_GATEWAY_MODEL"],
-                                                route["SETTLEMENT_GATEWAY_KEY"],
-                                                catalog_template=args.catalog_template),
-                              allowed_overrides=genomes.HARNESS_KEYS)
+        method = (_method_options(json.loads(args.method_request.read_text(encoding="utf-8")))
+                  if args.method_request is not None else None)
+        saved = investigation.read(args.dsn, args.id) if args.command != "create" else None
+        native = method is not None if args.command == "create" else (
+            saved is not None and saved["config"].get("method") is not None)
+        agent = None
+        if not native:
+            if not args.route_file or not args.codex:
+                parser.error("agent investigations require --route-file and --codex")
+            route = dict(line.split("=", 1) for line in args.route_file.read_text().splitlines()
+                         if line and not line.startswith("#"))
+            agent = CodexLauncher(args.root / "runs", codex_cmd=[args.codex],
+                                  provider=Provider(route["SETTLEMENT_GATEWAY_ENDPOINT"],
+                                                    route["SETTLEMENT_GATEWAY_MODEL"],
+                                                    route["SETTLEMENT_GATEWAY_KEY"],
+                                                    catalog_template=args.catalog_template),
+                                  allowed_overrides=genomes.HARNESS_KEYS)
         checker = LocalLauncher(args.root / "verifiers")
         if args.command == "create":
             if not all((args.genome, args.task, args.token_allocation, args.cpu_allocation)):
@@ -427,7 +496,7 @@ def main():
                 token_allocation=args.token_allocation, cpu_allocation=args.cpu_allocation,
                 max_steps=args.max_steps, timeout_ms=args.timeout_ms,
                 token_ceiling=args.token_ceiling, objective=args.objective,
-                context=context_options, **roots)
+                context=context_options, method=method, **roots)
         else:
             if args.command == "resume":
                 state = investigation.read(args.dsn, args.id)

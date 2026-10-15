@@ -110,6 +110,39 @@ def test_local_runtime_returns_changed_values_files_and_replays_once(
     assert receipt["content"]["data"]["worker"]["data"]["candidate_stdout"] == "module log\nmethod log\n"
 
 
+def test_settlement_before_use_record_resumes_without_a_second_send(migrated_db, tmp_path, monkeypatch):
+    tag = uuid.uuid4().hex[:8]
+    allocation, ownership, attempt = _environment(migrated_db, tag)
+    candidate = _genome("def invoke(request):\n"
+                        "    return {'value': request['value'], 'files': {'answer.txt': 'once'}}\n")
+    launcher = LocalLauncher(tmp_path / "runs")
+    kwargs = {"operation_id": tag + "-crash", "allocation_id": allocation, "attempt_id": attempt,
+              "ownership_generation": ownership, "staging_root": tmp_path / "stage",
+              "artifacts_root": tmp_path / "art"}
+    original = archive.record
+
+    def interrupt(*args, **kw):
+        if kw.get("kind") == "capability-use":
+            raise capability.CapabilityError("interrupted after settlement")
+        return original(*args, **kw)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(archive, "record", interrupt)
+        with pytest.raises(capability.CapabilityError, match="after settlement"):
+            capability.invoke(migrated_db, launcher, candidate, "echo", _request(7), **kwargs)
+    assert broker.read_operation(migrated_db, kwargs["operation_id"])["dispatch_state"] == "observed"
+    assert archive.decision(migrated_db, "capability-use:" + kwargs["operation_id"]) is None
+    local_result, = launcher.run_dir.glob("*.result.json")
+    replaced = json.loads(local_result.read_text())
+    replaced["data"]["worker"]["data"]["output"] = {
+        "value": 99, "files": {"answer.txt": "substituted"}}
+    local_result.write_text(json.dumps(replaced))
+    resumed = capability.invoke(migrated_db, launcher, candidate, "echo", _request(7), **kwargs)
+    assert (resumed.status, resumed.value, dict(resumed.files)) == (
+        "completed", 7, {"answer.txt": b"once"})
+    assert len(list(launcher.run_dir.glob("*.spawns"))) == 1
+
+
 def test_noop_and_malformed_candidate_output_are_distinct(migrated_db, tmp_path):
     dsn = migrated_db
     tag = uuid.uuid4().hex[:8]

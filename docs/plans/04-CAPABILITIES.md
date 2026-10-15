@@ -80,9 +80,15 @@ network isolation.
 The trusted runner passes `invoke(request)` one JSON object with `interface`,
 `value`, public task `files` and the admitted `context` continuation. The return
 object has exactly `value` and `files`. Returned files map declared solution
-slots to UTF-8 text. The runner stages these files for independent verification.
-It never repairs candidate semantics. Arbitrary JSON values support non-SWE
+slots to UTF-8 text. The adapter never repairs candidate semantics.
+Arbitrary JSON values support non-SWE
 procedures; the initial task verifier consumes returned solution files.
+
+Task episodes wrap `context` as `{"continuation": original_context,
+"task_digest": canonical_task.digest}` before invocation. This binds the task
+and evaluator identity even if a crash occurs before the episode row is saved.
+The trusted runner returns one structured result; the episode consumer
+materializes its immutable returned files into the verifier workspace.
 
 The domain interface is sketched as follows. Implementation may simplify these
 names, but must preserve the ownership and evidence boundaries.
