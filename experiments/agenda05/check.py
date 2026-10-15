@@ -187,12 +187,12 @@ def _verify_prior(report: dict, task_id: str, genome_id: str,
 def _recompute_accounting(report: dict, arm: dict, operations: dict) -> dict:
     evidence = report.get("accounting")
     if not isinstance(evidence, dict) or not isinstance(evidence.get("allocations"), dict):
-        raise ValueError("direct-root resource accounting is absent")
+        raise TypeError("direct-root resource accounting is absent")
     if evidence.get("scope") != "direct agenda roots and their reservations; no child allocation authority":
         raise ValueError("resource accounting scope is unsupported")
     rows = evidence.get("reservations")
     if not isinstance(rows, list):
-        raise ValueError("reservation accounting is malformed")
+        raise TypeError("reservation accounting is malformed")
     roots = {domain: arm["charter"]["allocations"][domain]
              for domain in ("tokens", "cpu")}
     allocation_ids = {row["id"] for row in roots.values()}
