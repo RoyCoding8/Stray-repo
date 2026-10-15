@@ -165,7 +165,7 @@ def _charter(agenda_id: str, policy: str, token: str, cpu: str,
                 item("scope-probe", "probe", "Discriminate general from narrow addition behavior.",
                      1, source="source", investigation_id=investigations["probe"]),
                 item("followup-probe", "followup", "Check the probe lesson on a changed input.",
-                     0, source="scope-probe"),
+                     1, source="scope-probe"),
             ]}
 
 
