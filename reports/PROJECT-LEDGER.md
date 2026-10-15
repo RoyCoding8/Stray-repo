@@ -144,6 +144,10 @@ P05 task list:
 - [x] Fix, debloat, confirm checkpoint CI and remove owned worktrees. Preserve the two pending live anchors and sync completed checkpoints to both backups.
 
 P10 task list:
+- Active implementation lanes use isolated `codex/p10-lifecycle`,
+  `codex/p10-campaign` and `codex/p10-applicability` worktrees from `fce487d2`.
+  Lifecycle admission lands first. Campaign qualification waits for the real
+  integrated lifecycle owner; independent review follows complete integration.
 - [x] Ground existing agenda, gate, capability, grant and exposure ownership.
 - [x] Compare assessment-flight and immutable-assignment designs; pin shared interfaces and race boundaries in the component plan.
 - [x] Agree. Proceed under the existing assignment, without another approval step.
