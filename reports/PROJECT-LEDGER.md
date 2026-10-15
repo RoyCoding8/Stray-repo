@@ -29,7 +29,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P01: persistent investigations | Working checkpoint; qualified below | One durable objective with continuing decisions and restart. |
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
-| P04: executable capabilities | Active; runtime integrated, acquisition/use gates pending | Construction, checked retention and later executable use. |
+| P04: executable capabilities | Integrated; final independent review and live study pending | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Planned | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
@@ -74,7 +74,7 @@ P04 task list:
 - [x] Scrap check. The selected ownership boundaries held; no replacement architecture was needed.
 - [x] Run integrated P04-A through P04-E and neighboring P01–P03 checks.
 - [x] Complete the experiment apparatus gate on the integrated source.
-- [ ] Finish independent GPT-6.1 Sol High verification, started after integration. Initial review found one construction-capture recovery defect and two offline evidence-linkage gaps; targeted repairs and re-verification are in progress.
+- [x] Finish independent GPT-6.1 Sol High verification after integration. All three findings are repaired and independently closed at `ba95df09`.
 - [ ] Run one prospectively bounded free-route construction and later-use experiment; preserve negative outcomes.
 - [ ] Consolidate, repair CI, remove owned worktrees and sync both backups.
 
@@ -113,7 +113,14 @@ real failing candidate. Ordinary failed tests produce failure receipts; the
 checker had required success even when validating a rejection. The follow-up
 repair binds each outcome to its typed worker status and recomputes failed,
 error and skipped-test results. A real wrong-method campaign now accompanies
-the successful fixture campaign. Final merged verification is in progress.
+the successful fixture campaign. At `ba95df09`, the final P04 gate passed
+**43 tests, zero skips**, in **285.53 seconds** on PostgreSQL 18. CI run
+`38675671161` passed all seven jobs at that revision. Final independent
+re-verification passed at `ba95df09`. Its real PostgreSQL/native probes passed
+2/2 in 20.16 seconds; positive, negative and invalid-constructor controls
+checked, and all six evidence-removal or contradictory-retention mutations
+were rejected. No material finding remains within this review scope.
+No P04 live inference has run yet. The prospective free-route study is next.
 
 The informative stopping condition is a working
 acquire/check/retain/select/execute path with substitution, applicability and
