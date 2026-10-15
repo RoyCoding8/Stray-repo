@@ -513,7 +513,8 @@ def _record(dsn: str, identity: str, kind: str, subject: str, data: dict) -> dic
 def _checked_use(dsn: str, genome: genome_module.Genome, name: str,
                  episode_id: str, artifacts_root: str | Path, *,
                  require_condition: bool = False) -> dict:
-    from . import task as task_module, verifier
+    from . import task as task_module
+    from . import verifier
 
     method = _capability(genome, name)
     if genome_module.load(dsn, artifacts_root, genome.digest) != genome:
