@@ -462,7 +462,7 @@ def _ack(dsn, agenda_id, flight, evidence):
             cur.execute("SELECT id,data FROM rsi_decisions WHERE subject=%s AND kind='p05.ack'"
                         " AND data->>'decision_id'=%s", (agenda_id, evidence["decision_id"]))
             prior = cur.fetchone()
-            if current["flight"] is None and prior is not None:
+            if prior is not None:
                 return (ResultCode.ALREADY_APPLIED, "flight already acknowledged",
                         dict(prior["data"] or {}), [], [])
             if (int(current["revision"]) != expected_revision
@@ -504,6 +504,27 @@ def _lesson_claim_ids(charter, opportunity_id):
     return sorted(refs)
 
 
+def _p01_incompatibility(config, opportunity, charter, agent):
+    lessons = _lesson_claim_ids(charter, opportunity["id"])
+    if (config.get("task") != opportunity["task_id"]
+            or config.get("genome") != opportunity["genome_id"]
+            or config.get("token_allocation") != charter["allocations"]["tokens"]["id"]
+            or config.get("cpu_allocation") != charter["allocations"]["cpu"]["id"]
+            or not set(lessons) <= set((config.get("context") or {}).get(
+                "required_claim_ids", []))):
+        return "P01 investigation differs from the pinned portfolio opportunity"
+    method = opportunity.get("method_request")
+    if config.get("method") != method:
+        return "P01 method request differs from the pinned portfolio opportunity"
+    if method is None and (agent is None or config.get("model") != agent.provider.model):
+        return "P01 worker model differs from investigation configuration"
+    if config["token_ceiling"] > opportunity["resource_ceilings"]["tokens"]:
+        return "P01 token ceiling exceeds the opportunity ceiling"
+    if config["timeout_ms"] > opportunity["timeout_ms"]:
+        return "P01 timeout exceeds the opportunity ceiling"
+    return None
+
+
 def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
                 staging_root, artifacts_root):
     inv_id = flight["investigation_id"]
@@ -521,21 +542,16 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
             context={"required_claim_ids": lessons} if lessons else None,
             staging_root=staging_root, artifacts_root=artifacts_root)
         state = investigation.read(dsn, inv_id)
-    config = state["config"]
-    if (config.get("task") != opportunity["task_id"]
-            or config.get("genome") != opportunity["genome_id"]
-            or config.get("token_allocation") != charter["allocations"]["tokens"]["id"]
-            or config.get("cpu_allocation") != charter["allocations"]["cpu"]["id"]
-            or not set(lessons) <= set((config.get("context") or {}).get(
-                "required_claim_ids", []))):
-        raise SettlementError("P01 investigation differs from the pinned portfolio opportunity")
+    incompatibility = _p01_incompatibility(state["config"], opportunity, charter, agent)
+    if incompatibility is not None:
+        raise SettlementError(incompatibility)
     return investigate.step(dsn, agent, checker, inv_id, staging_root=staging_root,
                             artifacts_root=artifacts_root,
                             target_revision=flight["target_revision"])
 
 
-def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root):
-    flight = state["flight"]
+def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root,
+            *, flight):
     opportunity = next(i for i in state["charter"]["opportunities"]
                        if i["id"] == flight["opportunity_id"])
     if loaded.get(opportunity["id"]) is None:
@@ -721,6 +737,12 @@ def _advance(dsn, agenda_id, state, snapshot):
 def _defer(dsn, agenda_id, state, snapshot, ranked):
     data = {"ranked": ranked, "reason": "no eligible opportunity",
             "event_epoch": snapshot["event_epoch"], "memory_revision": snapshot["memory_revision"]}
+    previous = state.get("last_result") or {}
+    if previous.get("status") == "deferred" and previous.get("ranked") == ranked:
+        if (state["source_epoch"] != snapshot["event_epoch"]
+                or state["memory_revision"] != snapshot["memory_revision"]):
+            _advance(dsn, agenda_id, state, snapshot)
+        return {"status": "deferred", **data}
     cmd = Command(request_id=f"p05-defer:{agenda_id}:{state['revision']}:{snapshot['event_epoch']}:{snapshot['memory_revision']}",
                   payload={"agenda_id": agenda_id, "revision": state["revision"], "data": data})
 
@@ -784,23 +806,25 @@ def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
         p01 = investigation.read(dsn, inv_id)
         history = investigation.export(dsn, inv_id) if p01 is not None else None
         spent = sum(d["kind"] == "worker" for d in history["decisions"]) if history else 0
-        lessons = set(_lesson_claim_ids(charter, item["id"]))
-        configured_lessons = set((p01["config"].get("context") or {}).get(
-            "required_claim_ids", [])) if p01 else lessons
+        incompatibility = (_p01_incompatibility(p01["config"], item, charter, agent)
+                           if p01 is not None else None)
         source_available = loaded.get(item["id"]) is not None
         ready = (p01 is None or (p01["status"] == "ready"
                  and p01["pending_decision"] is None and spent < item["max_steps"]))
-        context_ready = lessons <= configured_lessons
-        eligible = current_grant and source_available and context_ready and ready
+        eligible = current_grant and source_available and incompatibility is None and ready
         reason = ("eligible" if eligible else "agenda grant is no longer current"
                   if not current_grant else "catalogue source is unavailable"
-                  if not source_available else "investigation does not pin the required lesson refs"
-                  if not context_ready else "investigation is not ready")
+                  if not source_available else incompatibility if incompatibility is not None
+                  else "investigation is not ready")
+        token_units = (p01["config"]["token_ceiling"] if p01 is not None else
+                       item["resource_ceilings"]["tokens"])
         cpu_units = broker.exposure_schedule(broker.SANDBOX_EXEC, {"timeout_ms": 30_000})[0]
         if item.get("method_request") is not None:
+            native_timeout = (p01["config"]["timeout_ms"] if p01 is not None else
+                              item["timeout_ms"])
             cpu_units += broker.exposure_schedule(
-                broker.SANDBOX_EXEC, {"timeout_ms": item["timeout_ms"]})[0]
-        if item["resource_ceilings"]["tokens"] > free_tokens:
+                broker.SANDBOX_EXEC, {"timeout_ms": native_timeout})[0]
+        if token_units > free_tokens:
             eligible, reason = False, "shared token root has insufficient free units"
         if cpu_units > item["resource_ceilings"]["cpu"] or cpu_units > free_cpu:
             eligible, reason = False, "shared CPU root cannot cover native verifier exposure"
@@ -828,10 +852,10 @@ def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
         current = _row(dsn, agenda_id)
         if current is not None and current["flight"] is not None:
             return _finish(dsn, agent, checker, agenda_id, current, loaded,
-                           staging_root, artifacts_root)
+                           staging_root, artifacts_root, flight=current["flight"])
         return {"status": "stale", "reason": "source snapshot changed"}
     return _finish(dsn, agent, checker, agenda_id, _row(dsn, agenda_id), loaded,
-                   staging_root, artifacts_root)
+                   staging_root, artifacts_root, flight=flight)
 
 
 def wake(dsn, agent, checker, agenda_id, *, staging_root, artifacts_root):
@@ -841,13 +865,15 @@ def wake(dsn, agent, checker, agenda_id, *, staging_root, artifacts_root):
     charter = _parse(state["charter"])
     loaded = _load_catalogue(dsn, artifacts_root, charter, allow_missing=True)
     if state["flight"] is not None:
-        return _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root)
+        return _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root,
+                       artifacts_root, flight=state["flight"])
     if state["status"] != "active":
         return {"status": state["status"], "revision": state["revision"], "turns": state["turns"]}
     snapshot = _source_snapshot(dsn, state)
     memory_changed = (snapshot["memory_revision"] != state["memory_revision"]
                       and _relevant_memory_change(dsn, charter, state["memory_revision"]))
-    changed = (state["revision"] == 0 or memory_changed
+    cached_deferral = (state.get("last_result") or {}).get("status") == "deferred"
+    changed = (state["revision"] == 0 or cached_deferral or memory_changed
                or (snapshot["event_epoch"] != state["source_epoch"]
                    and _relevant(dsn, snapshot, agenda_id, charter)))
     if not changed:
