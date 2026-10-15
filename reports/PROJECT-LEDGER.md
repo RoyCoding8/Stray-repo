@@ -30,12 +30,12 @@ dependencies and build order. The three research themes are divided into ten par
 | P02: evidence and memory | Working checkpoint; qualified below | Reusable evidence and revisable claims with opposition. |
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
-| P05: autonomous agenda | Runtime slice integrated; qualification active | Experience changes what the system chooses to investigate next. |
+| P05: autonomous agenda | Working checkpoint; live unscored | Experience changes what the system chooses to investigate next. |
 | P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
-| P10: continuing campaigns and assessment | Planned | Bounded unattended operation, resume and longitudinal evidence. |
+| P10: continuing campaigns and assessment | Contract pinned; implementation next | Bounded unattended operation, resume and longitudinal evidence. |
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
@@ -64,8 +64,8 @@ P03 task list:
 - [x] Run a prospectively bounded free-route comparison and report its actual limits.
 - [x] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
-Current throughput checkpoint: P04 is closed at its qualified scope, including
-independent review, fixes, scratch archival and all seven CI jobs. P05 is active.
+Current throughput checkpoint: P05 is closed at its qualified mechanism scope.
+P10 is the next implementation, using the selected campaign contract.
 P05 runtime, feedback, concurrency/restart and comparison apparatus are integrated.
 The merged gate at `149342fb` passed 52 tests with no skips in 204.44 seconds
 on real PostgreSQL and bounded children. Both disposable databases were removed;
@@ -87,10 +87,26 @@ Sol High verification on that exact source passed 51 tests with zero skips in
 390.77 seconds, plus claim-specific public-path and altered-export probes. It
 closed material R1 through R5 and retained R6's stated minor boundary. These are
 separate verification scopes, not a combined whole-repository suite.
-The P10 ownership and assessment design is pinned at `63f69dcf`; implementation
-waits for P05 closure. The remaining work is the bounded live
-comparison, consolidation, CI and backup sync. Live agenda utility and learning
-remain unmeasured.
+P05's prospective free-route freeze at `260b0044` produced one real worker
+invocation per arm. Both returned `over_budget`; their pinned flights remain
+pending and the checker returns incomplete, with one unscored choice per arm.
+Worker-reported cumulative input/output usage was 93,921/1,129 for seed and
+187,368/1,540 for adaptive, above the frozen 5,000-token admission ceiling.
+Both token reservations settled by the 5,000-unit unknown-charge fallback;
+all four roots have zero reserved units. Admission charging does not establish
+a physical provider token limit. No ceiling was raised and neither operation
+was retried. [The live bundle](../experiments/agenda05/evidence/live1/README.md)
+preserves the exact outcomes; offline recomputation is byte-identical with route
+variables unset and an unreachable DSN. Task utility and learning remain unmeasured.
+All seven CI jobs passed at `a37bca24` in run `38774674479`, covering final P05
+source and public live evidence. The older run was cancelled, not a failed gate.
+The [independent review](../reviews/P05-REVIEW.md) records exact scopes and R6.
+The P10 ownership and assessment design is pinned in its component plan.
+All P05 worktrees and merged task branches are removed. Private scratch is
+archived in `.git/verification/p05-20261015.zip`, with 11,157 verified files.
+Automatic approval review blocked recursive deletion; raw completed scratch was
+moved to `.git/verification/p05-scratch-20261015` instead. Only `live1` remains
+under `D:/AI/tools/p05`, alongside the two preserved pending database anchors.
 
 P04 task list:
 - [x] Ground. Trace genome publication, bounded child execution, investigation decisions and retained use.
@@ -124,7 +140,18 @@ P05 task list:
   resumes verification with one worker invocation. These are mechanism results,
   not live learning evidence.
 - [x] Close material P05-R1 through R5 on the integrated source with independent Sol High verification.
-- [ ] Run the prospectively bounded free-route feedback sequence.
+- [x] Run the prospectively bounded free-route feedback sequence. Both arms stopped unscored at their frozen envelope; no feedback effect is claimed.
+- [x] Fix, debloat, confirm checkpoint CI and remove owned worktrees. Preserve the two pending live anchors and sync completed checkpoints to both backups.
+
+P10 task list:
+- [x] Ground existing agenda, gate, capability, grant and exposure ownership.
+- [x] Compare assessment-flight and immutable-assignment designs; pin shared interfaces and race boundaries in the component plan.
+- [x] Agree. Proceed under the existing assignment, without another approval step.
+- [ ] Implement isolated lifecycle, campaign-assessment and exact-applicability lanes.
+- [ ] Integrate and exercise the public CLI, P10-A through P10-F and neighboring component gates.
+- [ ] Scrap check. Retain the selected owners only if the integrated behavior supports them.
+- [ ] Complete independent GPT-6.1 Sol High verification after all implementation is integrated.
+- [ ] Freeze and run a bounded free-route campaign with interruptions, without requiring a learning win.
 - [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
 
 Remaining queue: P10 → P06 → P07 → P09 → P08. Each receives its own task list

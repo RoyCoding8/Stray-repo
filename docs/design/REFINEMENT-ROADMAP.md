@@ -47,10 +47,14 @@ operational and learning policies over the execution kernel. The master plan
 divides it into ten independently checkable parts. These refine stages 8–10
 rather than replace the original stages.
 
-The next implementation unit is P01, persistent investigations. Resolve its
-contract, implement its delivery slices and verify its working checkpoint before
-P02. Later components have plans now but need not be built together. Technology
-follows the mechanism; archived study APIs are not current implementation contracts.
+P01 through P05 have reached qualified component checkpoints. They provide a
+persistent investigator, revisioned memory, bounded context, executable method
+construction/use and autonomous agenda selection. Fixture mechanisms work;
+P04 and P05 live attempts remain unscored and establish no learning advantage.
+P10, continuing campaigns and protected longitudinal assessment, is next. It
+connects these owners before P06 replay and P07 learner revision. Exact status,
+verification and remaining work belong to the project ledger. Archived study
+APIs are not current implementation contracts.
 
 The genome may contain executable skill resources as well as instructions,
 harness settings and the improver's instructions. Editing these instructions

@@ -73,8 +73,8 @@ A part is working when its public consumer performs the declared behavior, its a
 
 Do not spend each batch demanding a sustained learning win. Close the mechanism build with attributable behavior and an informative outcome. P10 accumulates longer-term evidence. Formal promotion, deployment qualification and release remain separate milestones.
 
-P01 through P04 reached their qualified component checkpoints, including
-independent review, bounded live experiments, consolidation and CI. P05 is active.
+P01 through P05 reached their qualified component checkpoints, including
+independent review, bounded live experiments, consolidation and CI. P10 is next.
 Human direction on 2026-10-15 authorizes the remaining sequence P05, P10, P06,
 P07, P09, P08. Each part includes fixes, debloat, independent verification, cleanup
 and green CI before the next implementation starts. The ledger owns exact
