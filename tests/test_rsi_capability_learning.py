@@ -5,12 +5,13 @@ import sys
 from pathlib import Path
 
 import pytest
+from test_rsi_memory_integration import _create as _create_context_source
+from test_rsi_memory_integration import _task as _context_task
 
-from rsi import archive, capability, context, genome
+from rsi import archive, capability, context, genome, investigate
 from settlement import artifacts, broker, store
 from settlement.common import Command
 from settlement.launcher_codex import CodexLauncher, Provider
-
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "fake_capability.py"
@@ -39,34 +40,32 @@ METHOD_FILES = {
 }
 
 
-def _packet(dsn, artifacts_root, label: str, *, purpose: str = "Construct a number method."):
-    request_id = f"p04-context-{label}"
-    return context.build(
-        dsn,
-        {
-            "investigation_id": request_id,
-            "objective_revision": 0,
-            "state_revision": 0,
-            "decision_id": request_id + "-decision",
-            "attempt_id": request_id + "-attempt",
-            "operation_id": request_id + "-operation",
-            "continuation": {
-                "objective": purpose,
-                "objective_revision": 0,
-                "state_revision": 0,
-                "open_questions": [],
-                "artifact_refs": [],
-                "previous_observation": None,
-            },
-            "purpose": purpose,
-            "scope": {"domain": "capability-construction"},
-            "policy": "structured/1",
-            "limit": 10,
-            "required_observation_ids": [],
-            "required_claim_ids": [],
-        },
-        artifacts_root=artifacts_root,
+def _packet(tmp_path, dsn, label: str, *, purpose: str = "Construct a number method."):
+    source = _create_context_source(
+        tmp_path, dsn,
+        "p04-context-" + label,
+        _context_task("p04-context-task-" + label, purpose, empty=True),
+        objective=purpose,
     )
+    state = source["state"]
+    continuation = {
+        "objective": state["objective"],
+        "objective_revision": state["objective_revision"],
+        "state_revision": state["revision"],
+        "open_questions": state["open_questions"],
+        "artifact_refs": state["artifact_refs"],
+        "previous_observation": state["last_observation"],
+    }
+    request = investigate._context_request(
+        source["id"], state["objective_revision"], state["revision"],
+        "p04-context-decision-" + label,
+        "p04-context-attempt-" + label,
+        "p04-context-operation-" + label,
+        state["objective"], continuation, state["config"]["context"],
+    )
+    packet = context.build(dsn, request, artifacts_root=source["artifacts_root"])
+    assert packet["status"] == "ready"
+    return packet
 
 
 def _allocation(dsn, allocation_id: str, *, amount: int = 100_000) -> None:
@@ -82,9 +81,11 @@ def _allocation(dsn, allocation_id: str, *, amount: int = 100_000) -> None:
 def _case(tmp_path, dsn, *, mode: str = "valid", label: str = "case"):
     root = tmp_path / label
     staging_root = root / "staging"
-    artifacts_root = root / "artifacts"
+    # Match the existing P03 integration helper so the packet's selected
+    # evidence, if any, resolves in the same artifact store used by construct.
+    artifacts_root = tmp_path / "p02-artifacts"
     staging_root.mkdir(parents=True)
-    artifacts_root.mkdir()
+    artifacts_root.mkdir(exist_ok=True)
 
     parent = genome.Genome({
         "AGENTS.md": b"Use bounded, explicit procedures.\n",
@@ -103,8 +104,7 @@ def _case(tmp_path, dsn, *, mode: str = "valid", label: str = "case"):
         provider=Provider("http://fixture/v1", "fixture:free", "fixture"),
         allowed_overrides=genome.HARNESS_KEYS,
     )
-    packet = _packet(dsn, artifacts_root, label)
-    assert packet["status"] == "ready"
+    packet = _packet(tmp_path, dsn, label, purpose="Construct a number method.")
     return {
         "dsn": dsn,
         "root": root,
@@ -136,6 +136,14 @@ def _construct(case, *, operation_id: str, allocation_id: str | None = None,
 def _call_file(case, operation_id: str) -> Path:
     _, operation_dir = case["agent"].exec_dirs(operation_id, "")
     return Path(operation_dir) / "fake-calls.jsonl"
+
+
+def _read_evidence(case, digest: str) -> dict:
+    assert artifacts.artifact_available(case["dsn"], case["artifacts_root"], digest)
+    package = json.loads((case["artifacts_root"] / digest).read_bytes())
+    assert package["scope"] == "rsi-dev-evidence"
+    raw = bytes.fromhex(package["files"]["evidence.json"])
+    return json.loads(raw)
 
 
 def _assert_durable_run(case, operation_id: str, result: dict) -> None:
@@ -175,12 +183,33 @@ def test_construct_publishes_fixture_bytes_and_preserves_parent_files(migrated_d
     stored = archive.decision(migrated_db, "capability-construction:" + operation_id)
     assert stored is not None
     assert stored["data"]
+    request = archive.decision(migrated_db, "capability-construction:" + operation_id + ":request")
+    assert request is not None
+    evidence = _read_evidence(case, result["evidence"])
+    assert evidence["context_packet"] == case["context_packet"]
+    assert evidence["construction"]["interface"] == INTERFACE
+    assert evidence["construction"]["parent"] == case["parent"].digest
 
     operation = broker.read_operation(migrated_db, operation_id)
     instruction = operation["payload"]["payload"]["instruction"]
-    assert json.dumps(case["context_packet"], sort_keys=True, separators=(",", ":")) in instruction
-    assert "rsi-capability/1" in instruction
+    assert json.dumps({
+        "schema": "rsi-capability/1",
+        "interface": INTERFACE,
+        "entrypoint": "method.py:invoke",
+        "dependencies": ["python-stdlib"],
+        "effects": ["return", "solution-files"],
+        "limits": {"timeout_ms": 5000, "max_output_bytes": 65536},
+    }, sort_keys=True) in instruction
     assert "invoke(request)" in instruction
+    assert "request has exactly interface" in instruction
+    assert "value (finite JSON input)" in instruction
+    assert "files (public solution slots mapped to UTF-8 text)" in instruction
+    assert "context (admitted continuation and development evidence)" in instruction
+    assert "Return exactly a JSON-compatible object with value (finite JSON result)" in instruction
+    assert "files (solution slots mapped to UTF-8 text)" in instruction
+    assert "Returned file names must be a subset of request.files" in instruction
+    assert "calls your function unchanged" in instruction
+    assert "Use evidence.json for the public objective" in instruction
     _assert_durable_run(case, operation_id, result)
 
 
@@ -234,19 +263,16 @@ def test_construct_rejects_changed_identity_for_existing_operation(migrated_db, 
         kwargs["interface"] = "scalar-sum/1"
     elif changed == "context":
         kwargs["context_packet"] = _packet(
-            migrated_db, case["artifacts_root"], "identity-changed",
+            tmp_path, migrated_db, "identity-changed",
             purpose="Construct a method for a different stated purpose.",
         )
     else:
         allocation_id = "p04-tokens-identity-changed"
         _allocation(migrated_db, allocation_id)
 
-    second = _construct(
-        case, operation_id=operation_id, allocation_id=allocation_id, **kwargs,
-    )
+    with pytest.raises(capability.CapabilityError, match="identity was reused with different inputs"):
+        _construct(case, operation_id=operation_id, allocation_id=allocation_id, **kwargs)
 
-    assert second["status"] == "invalid"
-    assert second["child"] is None
     assert _call_file(case, operation_id).read_text(encoding="utf-8").count("\n") == 1
     assert store.allocation_status(migrated_db, case["allocation_id"]) == before
     assert len(store.operation_receipts(migrated_db, operation_id)) == 1
@@ -268,4 +294,3 @@ def test_retain_rejects_candidate_without_a_passing_method_episode(migrated_db, 
     )
 
     assert retention["status"] == "rejected"
-    assert retention["detail"]

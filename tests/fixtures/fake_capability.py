@@ -10,7 +10,6 @@ import json
 import sys
 from pathlib import Path
 
-
 mode, *args = sys.argv[1:]
 
 if args[:2] == ["debug", "models"]:
@@ -45,9 +44,8 @@ if mode in ("valid", "invalid", "outside"):
     }
     if mode == "invalid":
         descriptor["entrypoint"] = "../outside.py:invoke"
-    (skill / "capability.json").write_text(
-        json.dumps(descriptor, sort_keys=True, separators=(",", ":")) + "\n",
-        encoding="utf-8",
+    (skill / "capability.json").write_bytes(
+        (json.dumps(descriptor, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
     )
     (skill / "method.py").write_bytes(
         b"def invoke(request):\n"
