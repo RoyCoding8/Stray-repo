@@ -1,0 +1,92 @@
+{
+  "arms": {
+    "adaptive": {
+      "arm": "adaptive",
+      "choices": 1,
+      "evidence_basis": "attested runtime exports; no independent provider authentication",
+      "failed": 0,
+      "feedback_effects": [],
+      "resource_accounting": {
+        "domains": {
+          "cpu": {
+            "authorized": 3000000,
+            "consumed": 111,
+            "reserved": 0
+          },
+          "tokens": {
+            "authorized": 300000,
+            "consumed": 5000,
+            "reserved": 0
+          }
+        },
+        "scope": "direct agenda roots and their reservations; no child allocation authority",
+        "unknown_usage_operation_ids": [
+          "p01-worker-220b20a4fefb04c8dfc43d4c934a4578901fcbf2be3c6e95b0c357cbb901b282",
+          "rsi-verify-822077f8457101733c6649b6ff3c6ce7277b481195e26b0ab4b479cc20eb4d17"
+        ]
+      },
+      "schema": "p05-agenda-recomputed/1",
+      "task_results": [
+        {
+          "accounted_operations": [
+            "p01-worker-220b20a4fefb04c8dfc43d4c934a4578901fcbf2be3c6e95b0c357cbb901b282"
+          ],
+          "reason": "choice lacks settled acknowledgement",
+          "status": "unscored"
+        }
+      ],
+      "unscored": 1,
+      "verified": 0
+    },
+    "seed": {
+      "arm": "seed",
+      "choices": 1,
+      "evidence_basis": "attested runtime exports; no independent provider authentication",
+      "failed": 0,
+      "feedback_effects": [],
+      "resource_accounting": {
+        "domains": {
+          "cpu": {
+            "authorized": 3000000,
+            "consumed": 111,
+            "reserved": 0
+          },
+          "tokens": {
+            "authorized": 300000,
+            "consumed": 5000,
+            "reserved": 0
+          }
+        },
+        "scope": "direct agenda roots and their reservations; no child allocation authority",
+        "unknown_usage_operation_ids": [
+          "p01-worker-220b20a4fefb04c8dfc43d4c934a4578901fcbf2be3c6e95b0c357cbb901b282",
+          "rsi-verify-822077f8457101733c6649b6ff3c6ce7277b481195e26b0ab4b479cc20eb4d17"
+        ]
+      },
+      "schema": "p05-agenda-recomputed/1",
+      "task_results": [
+        {
+          "accounted_operations": [
+            "p01-worker-220b20a4fefb04c8dfc43d4c934a4578901fcbf2be3c6e95b0c357cbb901b282"
+          ],
+          "reason": "choice lacks settled acknowledgement",
+          "status": "unscored"
+        }
+      ],
+      "unscored": 1,
+      "verified": 0
+    }
+  },
+  "comparison_status": "incomplete",
+  "different_selections": false,
+  "evidence_basis": "attested runtime exports; no independent provider authentication",
+  "feedback_observed": {
+    "adaptive": false,
+    "seed": false
+  },
+  "same_genome": true,
+  "same_initial_evidence": true,
+  "same_task_packages": true,
+  "schema": "p05-agenda-pair/1",
+  "separate_allocation_pools": true
+}
