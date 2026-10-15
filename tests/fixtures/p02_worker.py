@@ -17,7 +17,7 @@ def emit(event):
 
 
 if args[:2] == ["debug", "models"]:
-    print(json.dumps({"models": [{"slug": "gpt-5.4", "context_window": 1024}]}))
+    print(json.dumps({"models": [{"slug": "gpt-6-luna", "context_window": 1024}]}))
     raise SystemExit(0)
 
 if args[:2] == ["debug", "prompt-input"]:

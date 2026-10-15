@@ -1,0 +1,110 @@
+{
+  "allocations": {
+    "p04-8d381b290abf-cpu": {
+      "authorized": 1800000,
+      "consumed": 0,
+      "domain": "cpu",
+      "id": "p04-8d381b290abf-cpu",
+      "reserved": 0
+    },
+    "p04-8d381b290abf-tokens": {
+      "authorized": 200000,
+      "consumed": 0,
+      "domain": "tokens",
+      "id": "p04-8d381b290abf-tokens",
+      "reserved": 0
+    }
+  },
+  "artifact_bytes": {},
+  "construction": {
+    "detail": "SettlementError",
+    "status": "unresolved"
+  },
+  "construction_calls": 1,
+  "construction_operation_id": "p04-construct-8d381b290abf",
+  "decisions": [
+    {
+      "actor": "fixed",
+      "data": {
+        "allocation_id": "p04-8d381b290abf-tokens",
+        "context_digest": "1a69e9e24671aa00ac851c91e8012cd228efb77cd6758f524c47f7999a6d4c2d",
+        "interface": "integer-summary/1",
+        "model": "openrouter/openrouter/free",
+        "name": "summary",
+        "operation_id": "p04-construct-8d381b290abf",
+        "parent": "f0869c1226a8ba6d757e19f32a17008a9a8f0cc8cba3d8a33c38195af68c8fa4",
+        "timeout_ms": 180000,
+        "token_ceiling": 100000
+      },
+      "id": "capability-construction:p04-construct-8d381b290abf:request",
+      "kind": "capability-construction-request",
+      "subject": "f0869c1226a8ba6d757e19f32a17008a9a8f0cc8cba3d8a33c38195af68c8fa4"
+    }
+  ],
+  "operations": [
+    {
+      "operation": {
+        "allocation_id": "p04-8d381b290abf-tokens",
+        "attempt_id": null,
+        "cancel_state": "none",
+        "created_at": "2026-10-14 23:29:08.053205-04:00",
+        "dispatch_state": "reconciled",
+        "execution_version": "",
+        "id": "p04-construct-8d381b290abf",
+        "launcher_id": "codex",
+        "payload": {
+          "_admitted_launcher": "codex",
+          "_authority_version": 1,
+          "_dispatch_generation": 1,
+          "_never_sent_proof": {
+            "claim": "never-sent",
+            "dispatch_generation": 1,
+            "provenance": "codex:prove_never_sent",
+            "subject": "p04-construct-8d381b290abf"
+          },
+          "budget_kind": "estimated-budget",
+          "effect": "agent-run",
+          "payload": {
+            "config": {},
+            "genome": "f0869c1226a8ba6d757e19f32a17008a9a8f0cc8cba3d8a33c38195af68c8fa4",
+            "harness": "codex",
+            "instruction": "Construct one reusable Python method in genome/skills/summary/. Edit only that directory. Preserve all other genome bytes. Use standard library only. Never read outside the workspace. Write SKILL.md with name and description frontmatter, capability.json with exactly this descriptor: {\"dependencies\": [\"python-stdlib\"], \"effects\": [\"return\", \"solution-files\"], \"entrypoint\": \"method.py:invoke\", \"interface\": \"integer-summary/1\", \"limits\": {\"max_output_bytes\": 65536, \"timeout_ms\": 5000}, \"schema\": \"rsi-capability/1\"}. Write method.py defining invoke(request). request has exactly interface (the version above), value (finite JSON input), files (public solution slots mapped to UTF-8 text), and context (admitted continuation and development evidence). For task episodes, context has exactly continuation (the original admitted context) and task_digest (the canonical task identity). Read continuation fields inside request[\"context\"][\"continuation\"]. Return exactly a JSON-compatible object with value (finite JSON result) and files (solution slots mapped to UTF-8 text). Returned file names must be a subset of request.files. Do not guess hidden paths. The fixed child adapter handles serialization. It calls your function unchanged. Use evidence.json for the public objective, method specification and development evidence. Do not claim to have passed independent checks. Explain the procedure in your final message.",
+            "task": "c1d8d62400825afb83a348959edbe4bfb8c9e2f8ed29108d8272aae928b31eeb",
+            "timeout_ms": 180000,
+            "token_ceiling": 100000
+          },
+          "retries": 0
+        },
+        "payload_digest": "867df541f12c8e01ab31afe229feb309d200ac1ab9d259cacb613de19e7f9595",
+        "provider_id": "",
+        "receipt_provenance": "",
+        "reconcile_state": "reconciled",
+        "reservation_id": "res-p04-construct-8d381b290abf",
+        "settled": false,
+        "updated_at": "2026-10-14 23:29:10.728739-04:00"
+      },
+      "receipts": []
+    }
+  ],
+  "parent": {
+    "digest": "f0869c1226a8ba6d757e19f32a17008a9a8f0cc8cba3d8a33c38195af68c8fa4",
+    "files": {
+      "AGENTS.md": "23205075626c6963206d6574686f6420636f6e74726163740a4d6574686f6473207265636569766520726571756573742e696e746572666163652c20726571756573742e76616c75652c20726571756573742e66696c657320616e6420726571756573742e636f6e746578742e2054686520726571756573746564206d6574686f6420696e7465726661636520697320696e74656765722d73756d6d6172792f312e20466f7220612066696e697465204a534f4e206c697374206f6620696e7465676572732c2072657475726e2061204a534f4e206f626a65637420636f6e7461696e696e6720636f756e742c20746f74616c2c206d696e696d756d20616e64206d6178696d756d3b206d696e696d756d20616e64206d6178696d756d20617265206e756c6c20666f7220616e20656d707479206c6973742e205772697465207468652073616d6520726573756c74206173205554462d38204a534f4e20746f20746865206465636c617265642073756d6d6172792e6a736f6e20736f6c7574696f6e20736c6f742e2055736520507974686f6e207374616e64617264206c696272617279206f6e6c792e0a"
+    },
+    "package": "eyJmaWxlcyI6eyJBR0VOVFMubWQiOiIyMzIwNTA3NTYyNmM2OTYzMjA2ZDY1NzQ2ODZmNjQyMDYzNmY2ZTc0NzI2MTYzNzQwYTRkNjU3NDY4NmY2NDczMjA3MjY1NjM2NTY5NzY2NTIwNzI2NTcxNzU2NTczNzQyZTY5NmU3NDY1NzI2NjYxNjM2NTJjMjA3MjY1NzE3NTY1NzM3NDJlNzY2MTZjNzU2NTJjMjA3MjY1NzE3NTY1NzM3NDJlNjY2OTZjNjU3MzIwNjE2ZTY0MjA3MjY1NzE3NTY1NzM3NDJlNjM2ZjZlNzQ2NTc4NzQyZTIwNTQ2ODY1MjA3MjY1NzE3NTY1NzM3NDY1NjQyMDZkNjU3NDY4NmY2NDIwNjk2ZTc0NjU3MjY2NjE2MzY1MjA2OTczMjA2OTZlNzQ2NTY3NjU3MjJkNzM3NTZkNmQ2MTcyNzkyZjMxMmUyMDQ2NmY3MjIwNjEyMDY2Njk2ZTY5NzQ2NTIwNGE1MzRmNGUyMDZjNjk3Mzc0MjA2ZjY2MjA2OTZlNzQ2NTY3NjU3MjczMmMyMDcyNjU3NDc1NzI2ZTIwNjEyMDRhNTM0ZjRlMjA2ZjYyNmE2NTYzNzQyMDYzNmY2ZTc0NjE2OTZlNjk2ZTY3MjA2MzZmNzU2ZTc0MmMyMDc0NmY3NDYxNmMyYzIwNmQ2OTZlNjk2ZDc1NmQyMDYxNmU2NDIwNmQ2MTc4Njk2ZDc1NmQzYjIwNmQ2OTZlNjk2ZDc1NmQyMDYxNmU2NDIwNmQ2MTc4Njk2ZDc1NmQyMDYxNzI2NTIwNmU3NTZjNmMyMDY2NmY3MjIwNjE2ZTIwNjU2ZDcwNzQ3OTIwNmM2OTczNzQyZTIwNTc3MjY5NzQ2NTIwNzQ2ODY1MjA3MzYxNmQ2NTIwNzI2NTczNzU2Yzc0MjA2MTczMjA1NTU0NDYyZDM4MjA0YTUzNGY0ZTIwNzQ2ZjIwNzQ2ODY1MjA2NDY1NjM2YzYxNzI2NTY0MjA3Mzc1NmQ2ZDYxNzI3OTJlNmE3MzZmNmUyMDczNmY2Yzc1NzQ2OTZmNmUyMDczNmM2Zjc0MmUyMDU1NzM2NTIwNTA3OTc0Njg2ZjZlMjA3Mzc0NjE2ZTY0NjE3MjY0MjA2YzY5NjI3MjYxNzI3OTIwNmY2ZTZjNzkyZTBhIn0sIm1hbmlmZXN0Ijp7ImZpbGVzIjpbeyJkaWdlc3QiOiIzOTI3Y2FhZDJhY2Y1YTEzNjUxZjk3ZmNkMTM1YTczMDcwODIzYmNkY2Y1ZDY1NGJhZjlmMzA3ZjY1Y2M2NmRhIiwia2luZCI6ImZpbGUiLCJwYXRoIjoiQUdFTlRTLm1kIiwic2l6ZSI6NDI4fV0sImhhcm5lc3MiOiJjb2RleCIsImtpbmQiOiJyc2ktZ2Vub21lIn0sInNjb3BlIjoicnNpLWdlbm9tZSJ9"
+  },
+  "route_model": "openrouter/openrouter/free",
+  "run_id": "8d381b290abf",
+  "schema": "p04-capability-campaign/1",
+  "source_manifest_digest": "96ab6950c04bb485b7feea0fc7fb0483748d09176d6a2a5d444cba877aa4d027",
+  "status": "unresolved",
+  "task": {
+    "digest": "7d6db8a575e6a7e52311920fa0d798a8535eb5c4d29473c5e2832c56abf02657",
+    "package": "eyJmaWxlcyI6eyJkcml2ZXIucHkiOiIyMjIyMjI0YjY1NzI2ZTY1NmMyZDZmNzc2ZTY1NjQyMDY0NzI2OTc2NjU3MjJlMjA1Mzc0NjE2NzY1NjQyMDc3Njk3NDY4MjA3MDcyNjk3Mzc0Njk2ZTY1MjA3NjY1NzI2OTY2Njk2NTcyMjA2NjY5NmM2NTczMmMyMDZlNjU3NjY1NzIyMDYxNjc2NTZlNzQyMDY2Njk2YzY1NzMyZTIyMjIyMjBkMGEwZDBhNjk2ZDcwNmY3Mjc0MjA2MzZmNmU3NDY1Nzg3NDZjNjk2MjBkMGE2OTZkNzA2ZjcyNzQyMDY5NmYwZDBhNjk2ZDcwNmY3Mjc0MjA2YTczNmY2ZTBkMGE2OTZkNzA2ZjcyNzQyMDZmNzMwZDBhNjY3MjZmNmQyMDcwNjE3NDY4NmM2OTYyMjA2OTZkNzA2ZjcyNzQyMDUwNjE3NDY4MGQwYTY5NmQ3MDZmNzI3NDIwNzM3OTczMGQwYTY5NmQ3MDZmNzI3NDIwNzU2ZTY5NzQ3NDY1NzM3NDBkMGEwZDBhMGQwYTY0NjU2NjIwNmQ2MTY5NmUyODI5M2EwZDBhMjAyMDIwMjA3MjZmNmY3NDIwM2QyMDUwNjE3NDY4Mjg1ZjVmNjY2OTZjNjU1ZjVmMjkyZTcyNjU3MzZmNmM3NjY1MjgyOTJlNzA2MTcyNjU2ZTc0MGQwYTIwMjAyMDIwNmY3MzJlNjM2ODY0Njk3MjI4NzI2ZjZmNzQyOTBkMGEyMDIwMjAyMDczNzk3MzJlNzA2MTc0NjgyZTY5NmU3MzY1NzI3NDI4MzAyYzIwNzM3NDcyMjg3MjZmNmY3NDI5MjkwZDBhMjAyMDIwMjA2YzZmNjcyMDNkMjA2OTZmMmU1Mzc0NzI2OTZlNjc0OTRmMjgyOTBkMGEyMDIwMjAyMDc3Njk3NDY4MjA2MzZmNmU3NDY1Nzg3NDZjNjk2MjJlNzI2NTY0Njk3MjY1NjM3NDVmNzM3NDY0NmY3NTc0Mjg2YzZmNjcyOTJjMjA2MzZmNmU3NDY1Nzg3NDZjNjk2MjJlNzI2NTY0Njk3MjY1NjM3NDVmNzM3NDY0NjU3MjcyMjg2YzZmNjcyOTNhMGQwYTIwMjAyMDIwMjAyMDIwMjA3Mzc1Njk3NDY1MjAzZDIwNzU2ZTY5NzQ3NDY1NzM3NDJlNTQ2NTczNzQ1Mzc1Njk3NDY1MjgyOTBkMGEyMDIwMjAyMDIwMjAyMDIwNmM2ZjYxNjQ2NTcyMjAzZDIwNzU2ZTY5NzQ3NDY1NzM3NDJlNTQ2NTczNzQ0YzZmNjE2NDY1NzIyODI5MGQwYTIwMjAyMDIwMjAyMDIwMjA2NjZmNzIyMDcyNjU2YzIwNjk2ZTIwNzM3OTczMmU2MTcyNjc3NjViMzEzYTVkM2EwZDBhMjAyMDIwMjAyMDIwMjAyMDIwMjAyMDIwNzM3NTY5NzQ2NTJlNjE2NDY0NTQ2NTczNzQ3MzI4NmM2ZjYxNjQ2NTcyMmU2YzZmNjE2NDU0NjU3Mzc0NzM0NjcyNmY2ZDRlNjE2ZDY1Mjg3MjY1NmM1YjNhMmQzMzVkMmU3MjY1NzA2YzYxNjM2NTI4MjIyZjIyMmMyMDIyMmUyMjI5MjkyOTBkMGEyMDIwMjAyMDIwMjAyMDIwNzI2NTczNzU2Yzc0MjAzZDIwNzU2ZTY5NzQ3NDY1NzM3NDJlNTQ2NTc4NzQ1NDY1NzM3NDUyNzU2ZTZlNjU3MjI4NzM3NDcyNjU2MTZkM2Q2YzZmNjcyOTJlNzI3NTZlMjg3Mzc1Njk3NDY1MjkwZDBhMjAyMDIwMjA3MDYxNzM3MzY1NjQyMDNkMjA3MjY1NzM3NTZjNzQyZTc0NjU3Mzc0NzM1Mjc1NmUyMDNlMjAzMDIwNjE2ZTY0MjA3MjY1NzM3NTZjNzQyZTc3NjE3MzUzNzU2MzYzNjU3MzczNjY3NTZjMjgyOTIwNjE2ZTY0MjA2ZTZmNzQyMDcyNjU3Mzc1NmM3NDJlNzM2YjY5NzA3MDY1NjQwZDBhMjAyMDIwMjA3MDcyNjk2ZTc0Mjg2YTczNmY2ZTJlNjQ3NTZkNzA3MzI4N2IyMjczNzQ2MTc0NzU3MzIyM2EyMDIyNmY2YjIyMjA2OTY2MjA3MDYxNzM3MzY1NjQyMDY1NmM3MzY1MjAyMjY1NzI3MjZmNzIyMjJjMjAyMjY0NjE3NDYxMjIzYTIwN2IwZDBhMjAyMDIwMjAyMDIwMjAyMDIyNzQ2NTczNzQ3MzIyM2EyMDcyNjU3Mzc1NmM3NDJlNzQ2NTczNzQ3MzUyNzU2ZTJjMjAyMjY2NjE2OTZjNzU3MjY1NzMyMjNhMjA2YzY1NmUyODcyNjU3Mzc1NmM3NDJlNjY2MTY5NmM3NTcyNjU3MzI5MmMwZDBhMjAyMDIwMjAyMDIwMjAyMDIyNjU3MjcyNmY3MjczMjIzYTIwNmM2NTZlMjg3MjY1NzM3NTZjNzQyZTY1NzI3MjZmNzI3MzI5MmMyMDIyNzM2YjY5NzA3MDY1NjQyMjNhMjA2YzY1NmUyODcyNjU3Mzc1NmM3NDJlNzM2YjY5NzA3MDY1NjQyOTJjMGQwYTIwMjAyMDIwMjAyMDIwMjAyMjZjNmY2NzIyM2EyMDZjNmY2NzJlNjc2NTc0NzY2MTZjNzU2NTI4Mjk1YjJkMzEzNjMwMzAzMDNhNWQ3ZDdkMjkyOTBkMGEwZDBhMGQwYTY5NjYyMDVmNWY2ZTYxNmQ2NTVmNWYyMDNkM2QyMDIyNWY1ZjZkNjE2OTZlNWY1ZjIyM2EwZDBhMjAyMDIwMjA2ZDYxNjk2ZTI4MjkwZDBhIiwicmVmZXJlbmNlL3N1bW1hcnkuanNvbiI6IjdiMjI2MzZmNzU2ZTc0MjIzYTMzMmMyMjZkNjE3ODY5NmQ3NTZkMjIzYTM3MmMyMjZkNjk2ZTY5NmQ3NTZkMjIzYTJkMzIyYzIyNzQ2Zjc0NjE2YzIyM2EzODdkMGEiLCJ2ZXJpZmllci90ZXN0X3N1bW1hcnkucHkiOiI2OTZkNzA2ZjcyNzQyMDZhNzM2ZjZlMGE2OTZkNzA2ZjcyNzQyMDc1NmU2OTc0NzQ2NTczNzQwYTY2NzI2ZjZkMjA3MDYxNzQ2ODZjNjk2MjIwNjk2ZDcwNmY3Mjc0MjA1MDYxNzQ2ODBhNjM2YzYxNzM3MzIwNTM3NTZkNmQ2MTcyNzk1NDY1NzM3NDI4NzU2ZTY5NzQ3NDY1NzM3NDJlNTQ2NTczNzQ0MzYxNzM2NTI5M2EwYTIwMjAyMDIwNjQ2NTY2MjA3NDY1NzM3NDVmNzM3NTZkNmQ2MTcyNzkyODczNjU2YzY2MjkzYTBhMjAyMDIwMjAyMDIwMjAyMDczNjU2YzY2MmU2MTczNzM2NTcyNzQ0NTcxNzU2MTZjMjg2YTczNmY2ZTJlNmM2ZjYxNjQ3MzI4NTA2MTc0NjgyODI3NzM3NTZkNmQ2MTcyNzkyZTZhNzM2ZjZlMjcyOTJlNzI2NTYxNjQ1Zjc0NjU3ODc0Mjg2NTZlNjM2ZjY0Njk2ZTY3M2QyNzc1NzQ2NjJkMzgyNzI5MjkyYzIwN2IyNzYzNmY3NTZlNzQyNzNhMjAzMzJjMjAyNzc0NmY3NDYxNmMyNzNhMjAzODJjMjAyNzZkNjk2ZTY5NmQ3NTZkMjczYTIwMmQzMjJjMjAyNzZkNjE3ODY5NmQ3NTZkMjczYTIwMzc3ZDI5MGEiLCJ3b3Jrc3BhY2Uvc3VtbWFyeS5qc29uIjoiIn0sIm1hbmlmZXN0Ijp7ImV2YWx1YXRvcl92ZXJzaW9uIjoiOGQwZmI1NjcyYTc5NzE2ZDZmZmZmYmZhMjg3M2RjNzAyNDgzYzYxNWIxODc2MjQ0ZjZiZjNjMTgxZDkwYzkwYSIsImZpbGVzIjpbeyJkaWdlc3QiOiI3ODlhMDRhMWFkM2UzZjY2OTVlOWUzNDNkNTBjY2ZlN2Q3YWIxNzA1Njc0NzUxN2EyODdlYmVlMmQ3NmQ3NzhlIiwia2luZCI6ImZpbGUiLCJwYXRoIjoiZHJpdmVyLnB5Iiwic2l6ZSI6MTA1NX0seyJkaWdlc3QiOiJhY2Y4ZTFhMjdlYmFhMzc4OWYzNDlmNzQxNzFjYzk5MTQwMzgwZGMyNDU4ZDRlN2M4MmI5ZjllYzg5MjY4MWU1Iiwia2luZCI6ImZpbGUiLCJwYXRoIjoicmVmZXJlbmNlL3N1bW1hcnkuanNvbiIsInNpemUiOjQ3fSx7ImRpZ2VzdCI6IjllOTc3NzJmNWMyMmY1YWFjMDFmOTZkNzlkMzJhZGFkZDJlMGY0YzNhMzViZDU0OGM5NjI3ZmZjY2NkZmNiMTgiLCJraW5kIjoiZmlsZSIsInBhdGgiOiJ2ZXJpZmllci90ZXN0X3N1bW1hcnkucHkiLCJzaXplIjoyNjF9LHsiZGlnZXN0IjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImtpbmQiOiJmaWxlIiwicGF0aCI6IndvcmtzcGFjZS9zdW1tYXJ5Lmpzb24iLCJzaXplIjowfV0sImluc3RydWN0aW9uIjoiSW1wbGVtZW50IHRoZSBwdWJsaWMgaW50ZWdlci1zdW1tYXJ5LzEgbWV0aG9kIGNvbnRyYWN0IGZvciB0aGUgaW5wdXQgWzMsIC0yLCA3XS4gV3JpdGUgc3VtbWFyeS5qc29uLiIsImtpbmQiOiJyc2ktdGFzayIsIm5hbWUiOiJwMDQtc3VtbWFyeS1kZXYiLCJydW50aW1lIjoiMy4xMy4xNCAobWFpbiwgSnVsIDIzIDIwMjYsIDE0OjQ0OjEwKSBbTVNDIHYuMTk0NCA2NCBiaXQgKEFNRDY0KV0iLCJzcGxpdCI6ImRldiIsInRlc3RfZmlsZXMiOlsidGVzdF9zdW1tYXJ5LnB5Il19LCJzY29wZSI6InJzaS10YXNrIn0=",
+    "reference": {
+      "summary.json": "{\"count\":3,\"maximum\":7,\"minimum\":-2,\"total\":8}\n"
+    },
+    "split": "dev"
+  },
+  "uses": []
+}

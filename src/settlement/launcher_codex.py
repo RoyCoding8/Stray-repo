@@ -48,8 +48,8 @@ class Provider:
     stream_retries: int = 10
     # Codex has no metadata for models outside its bundled catalog and falls
     # back to defaults. The launcher derives an entry for `model` from this
-    # bundled template (gpt-5.4: plain tool mode, 1M max context).
-    catalog_template: str = "gpt-5.4"
+    # bundled template. This supplies tool metadata; `model` still owns routing.
+    catalog_template: str = "gpt-6-luna"
 
 
 class CodexLauncher:

@@ -13,7 +13,7 @@ from pathlib import Path
 mode, *args = sys.argv[1:]
 
 if args[:2] == ["debug", "models"]:
-    print(json.dumps({"models": [{"slug": "gpt-5.4", "context_window": 1}]}))
+    print(json.dumps({"models": [{"slug": "gpt-6-luna", "context_window": 1}]}))
     raise SystemExit(0)
 
 if args[:2] == ["debug", "prompt-input"]:

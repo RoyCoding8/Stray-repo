@@ -120,7 +120,18 @@ re-verification passed at `ba95df09`. Its real PostgreSQL/native probes passed
 2/2 in 20.16 seconds; positive, negative and invalid-constructor controls
 checked, and all six evidence-removal or contradictory-retention mutations
 were rejected. No material finding remains within this review scope.
-No P04 live inference has run yet. The prospective free-route study is next.
+The prospective first study at `69716d9f` stopped before any model request.
+The installed Codex catalogue no longer contains the launcher's default
+`gpt-5.4` metadata template. The operation reconciled with never-sent proof,
+zero receipts and zero consumed/reserved units. The driver/checker preserve
+`unresolved`, not a model negative. Its frozen manifest and report are in
+`experiments/capability04/evidence/live1/`. A narrow launcher compatibility
+repair updates the metadata template without changing the free inference route;
+its regression failed before the repair. The installed catalogue and prompt
+isolation now pass without a model call. The affected gate passed 70 tests;
+three campaign tests refused the deliberately dirty pinned source tree. They
+will be rerun after committing the same source, without changing their assertions.
+Independent re-verification and a fresh freeze precede live inference.
 
 The informative stopping condition is a working
 acquire/check/retain/select/execute path with substitution, applicability and

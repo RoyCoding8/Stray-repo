@@ -10,7 +10,7 @@ from pathlib import Path
 
 mode, args = sys.argv[1], sys.argv[2:]
 if args[:2] == ["debug", "models"]:
-    print(json.dumps({"models": [{"slug": "gpt-5.4", "context_window": 1}]}))
+    print(json.dumps({"models": [{"slug": "gpt-6-luna", "context_window": 1}]}))
     sys.exit(0)
 if args[:2] == ["debug", "prompt-input"]:
     agents = Path("AGENTS.md")
