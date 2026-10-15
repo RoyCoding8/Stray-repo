@@ -10,8 +10,10 @@ from pathlib import Path
 import pytest
 
 from experiments.agenda05.check import recompute
+from experiments.agenda05.check import recompute_pair
 from experiments.agenda05.driver import build_scenario, run_arm
 from experiments.agenda05.freeze import freeze
+from isolation_db import disposable_db
 
 
 @pytest.mark.parametrize(("policy", "expected"), [
@@ -133,3 +135,24 @@ def test_fixture_timeout_preserves_pending_flight_and_unknown_usage(migrated_db,
     assert cost["usage_status"] == "unknown"
     assert worker in accounting["unknown_usage_operation_ids"]
     assert accounting["allocations"][cost["allocation_id"]]["reserved"] == 0
+
+
+def test_seed_and_adaptive_exports_are_a_bounded_pair(migrated_db, tmp_path):
+    repo = Path(__file__).resolve().parents[1]
+    bundle = tmp_path / "freeze"
+    scenario_path = tmp_path / "scenario.json"
+    scenario_path.write_text(json.dumps(build_scenario(
+        (datetime.now(UTC) + timedelta(hours=1)).isoformat())), encoding="utf-8")
+    frozen = freeze(repo, bundle, scenario_path)
+    seed = run_arm(repo, bundle, tmp_path / "seed", migrated_db, "seed", "fixture")
+    with disposable_db("p05pair") as adaptive_db:
+        adaptive = run_arm(repo, bundle, tmp_path / "adaptive", adaptive_db.dsn,
+                           "adaptive", "fixture")
+    pair = recompute_pair(frozen, [seed, adaptive])
+
+    assert pair["same_task_packages"] is True
+    assert pair["same_genome"] is True
+    assert pair["same_initial_evidence"] is True
+    assert pair["separate_allocation_pools"] is True
+    assert len(pair["arms"]["seed"]["task_results"]) == 3
+    assert len(pair["arms"]["adaptive"]["task_results"]) == 3
