@@ -9,7 +9,7 @@ from rsi import episode as ep
 from rsi import genome as g
 from rsi import task as t
 from rsi import verifier
-from settlement import broker, store
+from settlement import broker, db, store
 from settlement.common import Command, SettlementError
 from settlement.launcher_local import LocalLauncher
 
@@ -19,7 +19,9 @@ METHOD_SOURCE = '''from pathlib import Path
 
 def invoke(request):
     value = int(request["files"]["input.txt"].strip())
-    return {"value": {"answer": value + 3}, "files": {
+    return {"value": {"answer": value + 3,
+                       "task_digest": request["context"]["task_digest"],
+                       "continuation": request["context"]["continuation"]}, "files": {
         "calc.py": "def solve(value):\\n    return value + 3\\n",
         "input.txt": f"{value}\\n",
     }}
@@ -129,12 +131,18 @@ def test_method_output_reaches_pristine_verifier_and_native_trajectory(env):
     event = json.loads(bytes.fromhex(package["files"]["events.jsonl"]).decode().strip())
     operation = broker.read_operation(dsn, episode.operation_id)
     assert event["type"] == "method.invocation.result"
-    assert event["value"] == {"answer": 7}
+    assert event["value"] == {"answer": 7, "task_digest": task.digest,
+                              "continuation": {}}
     assert event["task"] == task.digest
     assert event["genome"] == genome.digest
     assert event["output_digest"]
     assert event["execution_version"] == operation["execution_version"]
     assert operation["payload"]["effect"] == broker.SANDBOX_EXEC
+    with db.connect(dsn) as conn:
+        artifact_format = conn.execute(
+            "SELECT format FROM artifact_versions WHERE digest = %s",
+            (episode.trajectory,)).fetchone()[0]
+    assert artifact_format == "native-jsonl"
 
 
 def test_noop_method_fails_the_same_pristine_verifier(env):
@@ -163,10 +171,12 @@ def test_changed_public_input_gets_a_new_invocation_and_result(env):
     assert second.status == "completed"
     package = json.loads((roots["artifacts_root"] / second.trajectory).read_bytes())
     event = json.loads(bytes.fromhex(package["files"]["events.jsonl"]).decode().strip())
-    assert event["value"] == {"answer": 12}
-    assert event["input_digest"] != json.loads(
-        bytes.fromhex(json.loads((roots["artifacts_root"] / first.trajectory).read_bytes())
-                      ["files"]["events.jsonl"]).decode().strip())["input_digest"]
+    first_package = json.loads((roots["artifacts_root"] / first.trajectory).read_bytes())
+    first_event = json.loads(bytes.fromhex(
+        first_package["files"]["events.jsonl"]).decode().strip())
+    assert event["value"] == {"answer": 12, "task_digest": changed_task.digest,
+                              "continuation": {}}
+    assert event["input_digest"] != first_event["input_digest"]
     assert second.workspace.joinpath("calc.py").read_text() == SOLUTION
     assert broker.read_operation(dsn, second.operation_id)["payload"]["effect"] == broker.SANDBOX_EXEC
 
@@ -174,16 +184,27 @@ def test_changed_public_input_gets_a_new_invocation_and_result(env):
 def test_same_operation_replays_once_and_rejects_changed_inputs(env):
     dsn, genome, task, launcher, _ = env
     first = _run(env)
+    (first.workspace / "calc.py").write_text("def solve(value): return -1\n")
     again = _run(env)
     assert again == first
+    assert (again.workspace / "calc.py").read_text() == SOLUTION
     assert launcher.dispatches[first.operation_id] == 1
 
     with pytest.raises(SettlementError):
         _run(env, request=_request(task, answer=5))
+
+    # Simulate a crash after method settlement but before the episode row exists.
+    with db.connect(dsn) as conn:
+        conn.execute("DELETE FROM rsi_episodes WHERE operation_id = %s",
+                     (first.operation_id,))
+        conn.commit()
     changed_task = _task(8)
     t.publish(dsn, changed_task, **env[4])
     with pytest.raises(SettlementError):
         _run(env, task=changed_task, request=_request(changed_task, answer=8))
+    with db.connect(dsn) as conn:
+        assert conn.execute("SELECT 1 FROM rsi_episodes WHERE operation_id = %s",
+                            (first.operation_id,)).fetchone() is None
     changed_genome = _genome(METHOD_SOURCE + "\n# changed package identity\n")
     g.publish(dsn, changed_genome, parent=genome.digest, origin="changed", **env[4])
     with pytest.raises(SettlementError):

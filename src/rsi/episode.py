@@ -137,9 +137,12 @@ def run_method_episode(dsn: str, launcher: Any, genome: g.Genome, *, name: str,
     _validate_method_request_files(request, task)
 
     # invoke owns the broker operation and returns its immutable result on replay.
-    # Materialize those returned bytes for the existing pristine verifier.
+    # The child sees context as {continuation, task_digest}; binding the canonical
+    # task here prevents a pre-episode-row replay from changing verifier identity.
+    method_request = {**request, "context": {
+        "continuation": request["context"], "task_digest": task.digest}}
     invocation = c.invoke(
-        dsn, launcher, genome, name, request, operation_id=operation_id,
+        dsn, launcher, genome, name, method_request, operation_id=operation_id,
         allocation_id=allocation_id, attempt_id=attempt_id,
         staging_root=staging_root, artifacts_root=artifacts_root,
         timeout_ms=timeout_ms,
