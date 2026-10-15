@@ -1,0 +1,270 @@
+{
+  "arms": {
+    "adaptive": {
+      "agenda_id": "p05-adaptive",
+      "charter": {
+        "allocations": {
+          "cpu": {
+            "id": "p05-adaptive-cpu",
+            "units": 3000000
+          },
+          "tokens": {
+            "id": "p05-adaptive-tokens",
+            "units": 300000
+          }
+        },
+        "deadline": "2026-10-15T19:02:50.671948+00:00",
+        "grant_version": 1,
+        "max_turns": 3,
+        "objective": "Use checked experience to select a discriminating addition probe.",
+        "opportunities": [
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "source",
+            "investigation_id": "p05-source",
+            "max_steps": 1,
+            "objective": "Use the checked addition rule on a contrasting input.",
+            "priority": 30,
+            "question": "Use the checked addition rule on a contrasting input.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "f19ed871f08850f7991eaa946a61bac3a912f2e8f033eec64c5c8db4997ed585",
+            "timeout_ms": 90000
+          },
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "priority-task",
+            "investigation_id": null,
+            "max_steps": 1,
+            "objective": "Check a routine addition case.",
+            "priority": 20,
+            "question": "Check a routine addition case.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "32de782648a5b0725bda9217ecefe29384f7adf5ef1c038dbefd23a1fffa0ab6",
+            "timeout_ms": 90000
+          },
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "scope-probe",
+            "investigation_id": "p05-probe",
+            "max_steps": 1,
+            "objective": "Discriminate general from narrow addition behavior.",
+            "priority": 1,
+            "question": "Discriminate general from narrow addition behavior.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "scope_probe": {
+              "changed_condition": "Implement add(a, b) so add(3, 8) returns 11.",
+              "competing_explanations": [
+                "the lesson generalizes",
+                "the lesson is task-specific"
+              ],
+              "lesson_refs": [
+                {
+                  "claim_id": "p05-addition-rule",
+                  "version": 1
+                }
+              ],
+              "source_opportunity_id": "source"
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "43e731cdbfb217f9896ea73735820bb05b36882f44b864de4b8485e61acd0408",
+            "timeout_ms": 90000
+          },
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "followup-probe",
+            "investigation_id": null,
+            "max_steps": 1,
+            "objective": "Check the probe lesson on a changed input.",
+            "priority": 1,
+            "question": "Check the probe lesson on a changed input.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "scope_probe": {
+              "changed_condition": "Implement add(a, b) so add(7, 11) returns 18.",
+              "competing_explanations": [
+                "the lesson generalizes",
+                "the lesson is task-specific"
+              ],
+              "lesson_refs": [
+                {
+                  "claim_id": "p05-addition-rule",
+                  "version": 1
+                }
+              ],
+              "source_opportunity_id": "scope-probe"
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "cff5ec5227f879f9acbfc30af9eea97175fd95b7f9e6cf9918d659a95439bc08",
+            "timeout_ms": 90000
+          }
+        ],
+        "policy": "adaptive/1"
+      },
+      "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+      "policy": "adaptive/1",
+      "task_ids": {
+        "followup": "cff5ec5227f879f9acbfc30af9eea97175fd95b7f9e6cf9918d659a95439bc08",
+        "priority": "32de782648a5b0725bda9217ecefe29384f7adf5ef1c038dbefd23a1fffa0ab6",
+        "probe": "43e731cdbfb217f9896ea73735820bb05b36882f44b864de4b8485e61acd0408",
+        "source": "f19ed871f08850f7991eaa946a61bac3a912f2e8f033eec64c5c8db4997ed585"
+      }
+    },
+    "seed": {
+      "agenda_id": "p05-seed",
+      "charter": {
+        "allocations": {
+          "cpu": {
+            "id": "p05-seed-cpu",
+            "units": 3000000
+          },
+          "tokens": {
+            "id": "p05-seed-tokens",
+            "units": 300000
+          }
+        },
+        "deadline": "2026-10-15T19:02:50.671948+00:00",
+        "grant_version": 1,
+        "max_turns": 3,
+        "objective": "Use checked experience to select a discriminating addition probe.",
+        "opportunities": [
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "source",
+            "investigation_id": "p05-source",
+            "max_steps": 1,
+            "objective": "Use the checked addition rule on a contrasting input.",
+            "priority": 30,
+            "question": "Use the checked addition rule on a contrasting input.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "f19ed871f08850f7991eaa946a61bac3a912f2e8f033eec64c5c8db4997ed585",
+            "timeout_ms": 90000
+          },
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "priority-task",
+            "investigation_id": null,
+            "max_steps": 1,
+            "objective": "Check a routine addition case.",
+            "priority": 20,
+            "question": "Check a routine addition case.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "32de782648a5b0725bda9217ecefe29384f7adf5ef1c038dbefd23a1fffa0ab6",
+            "timeout_ms": 90000
+          },
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "scope-probe",
+            "investigation_id": "p05-probe",
+            "max_steps": 1,
+            "objective": "Discriminate general from narrow addition behavior.",
+            "priority": 1,
+            "question": "Discriminate general from narrow addition behavior.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "scope_probe": {
+              "changed_condition": "Implement add(a, b) so add(3, 8) returns 11.",
+              "competing_explanations": [
+                "the lesson generalizes",
+                "the lesson is task-specific"
+              ],
+              "lesson_refs": [
+                {
+                  "claim_id": "p05-addition-rule",
+                  "version": 1
+                }
+              ],
+              "source_opportunity_id": "source"
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "43e731cdbfb217f9896ea73735820bb05b36882f44b864de4b8485e61acd0408",
+            "timeout_ms": 90000
+          },
+          {
+            "expected_observation": "The pristine addition verifier result.",
+            "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+            "id": "followup-probe",
+            "investigation_id": null,
+            "max_steps": 1,
+            "objective": "Check the probe lesson on a changed input.",
+            "priority": 1,
+            "question": "Check the probe lesson on a changed input.",
+            "resource_ceilings": {
+              "cpu": 3000000,
+              "tokens": 5000
+            },
+            "scope_probe": {
+              "changed_condition": "Implement add(a, b) so add(7, 11) returns 18.",
+              "competing_explanations": [
+                "the lesson generalizes",
+                "the lesson is task-specific"
+              ],
+              "lesson_refs": [
+                {
+                  "claim_id": "p05-addition-rule",
+                  "version": 1
+                }
+              ],
+              "source_opportunity_id": "scope-probe"
+            },
+            "stop_condition": "One checked P01 step.",
+            "task_id": "cff5ec5227f879f9acbfc30af9eea97175fd95b7f9e6cf9918d659a95439bc08",
+            "timeout_ms": 90000
+          }
+        ],
+        "policy": "seed/1"
+      },
+      "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+      "policy": "seed/1",
+      "task_ids": {
+        "followup": "cff5ec5227f879f9acbfc30af9eea97175fd95b7f9e6cf9918d659a95439bc08",
+        "priority": "32de782648a5b0725bda9217ecefe29384f7adf5ef1c038dbefd23a1fffa0ab6",
+        "probe": "43e731cdbfb217f9896ea73735820bb05b36882f44b864de4b8485e61acd0408",
+        "source": "f19ed871f08850f7991eaa946a61bac3a912f2e8f033eec64c5c8db4997ed585"
+      }
+    }
+  },
+  "choice_cap": 3,
+  "initial_evidence": {
+    "claim_id": "p05-addition-rule",
+    "genome_id": "083c88417a2eadc642d0e7c571748c711a4df780ec53290f27c27b2f2e52935b",
+    "source": "authored-from-scripted-pristine-example",
+    "task_id": "f19ed871f08850f7991eaa946a61bac3a912f2e8f033eec64c5c8db4997ed585",
+    "version": 1
+  },
+  "initial_evidence_sha256": "9449bf696c578d77a76fee135d2157b50e686953a1ebee8690cf8f964009063f",
+  "outcome_labels": {
+    "fixture": "authored-scripted",
+    "live": "openrouter-free"
+  },
+  "schema": "p05-agenda-scenario/1"
+}
