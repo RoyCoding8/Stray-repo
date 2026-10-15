@@ -630,18 +630,6 @@ def _source_investigations(dsn, agenda_id, option_id, item):
         return list(dict.fromkeys(row["id"] for row in cur.fetchall() if row["id"]))
 
 
-def _retained(dsn, item):
-    method = item.get("method_request")
-    if method is None:
-        return False
-    with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
-        cur.execute("SELECT 1 FROM rsi_decisions WHERE kind='capability-retention' AND subject=%s"
-                    " AND data->>'status'='retained' AND data->>'name'=%s"
-                    " AND data->>'interface'=%s LIMIT 1",
-                    (item["genome_id"], method["name"], method["interface"]))
-        return cur.fetchone() is not None
-
-
 def _checked_failed_lesson_use(dsn, agenda_id, item, charter, loaded, artifacts_root):
     probe = item.get("scope_probe")
     if probe is None:
@@ -849,10 +837,18 @@ def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
         if cpu_units > item["resource_ceilings"]["cpu"] or cpu_units > free_cpu:
             eligible, reason = False, "shared CPU root cannot cover native verifier exposure"
         triggered = False
-        if kind == "instrument":
-            triggered = _retained(dsn, item)
+        if kind == "instrument" and source_available:
+            method = item["method_request"]
+            availability = capability.eligibility(
+                dsn, genome=loaded[item["id"]][1], name=method["name"],
+                interface=method["interface"], task_id=item["task_id"],
+                value=method["value"], artifacts_root=artifacts_root)
+            triggered = availability["status"] == "selected"
             if not triggered:
-                eligible, reason = False, "no checked retention for the exact genome method interface"
+                eligible = False
+                reason = availability["reason"]
+                if "retention" in reason:
+                    reason = "no checked retention for the exact genome method interface: " + reason
         elif kind == "scope-probe":
             triggered = _checked_failed_lesson_use(dsn, agenda_id, item, charter, loaded, artifacts_root)
             if not triggered:

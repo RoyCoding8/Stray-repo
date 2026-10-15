@@ -6,7 +6,7 @@ from test_rsi_agenda import _grant
 from test_rsi_capability_integration import _genome, _qualify, _task
 from test_rsi_investigate import _scenario, _worker_calls
 
-from rsi import agenda, investigate, task
+from rsi import agenda, episode, genome, investigate, task, verifier
 from settlement import broker, store
 from settlement.common import Command
 from settlement.launcher_local import LocalLauncher
@@ -51,8 +51,6 @@ def test_retained_native_method_triggers_and_runs_agenda_instrument(
             payload={"allocation_id": domain, "domain": domain, "authorized": 100_000}))
     candidate = _genome()
     task_item = _task("p05-instrument-use", 9)
-    from rsi import genome
-
     genome.publish(migrated_db, candidate, parent=None,
                    origin="independent-authored-test", **roots)
     task.publish(migrated_db, task_item, **roots)
@@ -101,3 +99,67 @@ def test_retained_native_method_triggers_and_runs_agenda_instrument(
     operation = broker.read_operation(
         migrated_db, after_retention["investigation"]["last_observation"]["episode"])
     assert operation["payload"]["effect"] == broker.SANDBOX_EXEC
+
+
+def test_scoped_native_failure_is_excluded_before_agenda_pins_a_flight(
+    migrated_db, tmp_path
+):
+    roots = {"staging_root": tmp_path / "stage", "artifacts_root": tmp_path / "art"}
+    for domain in ("cpu", "tokens"):
+        store.seed_allocation(migrated_db, Command(
+            request_id="p10-scope-" + domain,
+            payload={"allocation_id": domain, "domain": domain, "authorized": 100_000}))
+    candidate = _genome()
+    genome.publish(migrated_db, candidate, parent=None, origin="authored-scope-test", **roots)
+    checker = LocalLauncher(tmp_path / "native")
+    checked, retained = _qualify((migrated_db, roots, candidate, checker, tmp_path))
+    assert checked.passed is True and retained["status"] == "retained"
+    target = _task("p10-scope-later", 9)
+    task.publish(migrated_db, target, **roots)
+    failed = episode.run_method_episode(
+        migrated_db, checker, candidate, name="maximum", task=target,
+        request={"interface": "sequence-maximum/1", "value": [-5, 3, 0],
+                 "files": {"answer.json": "null"}, "context": {}},
+        operation_id="p10-scope-failure", allocation_id="cpu", attempt_id=None, **roots)
+    verdict = verifier.verify_episode(
+        migrated_db, checker, checker, failed.operation_id,
+        allocation_id="cpu", attempt_id=None, **roots)
+    assert verdict.status == "failed" and verdict.passed is False
+    common = {
+        "task_id": target.digest, "genome_id": candidate.digest,
+        "objective": target.instruction, "question": "Check maximum on this input.",
+        "resource_ceilings": {"tokens": 5_000, "cpu": 200},
+        "timeout_ms": 5_000, "max_steps": 1,
+        "expected_observation": "A pristine verifier outcome.",
+        "stop_condition": "One checked native use.",
+    }
+    opportunities = [
+        {**common, "id": identity, "priority": priority,
+         "method_request": {"name": "maximum", "interface": "sequence-maximum/1",
+                            "value": value}}
+        for identity, priority, value in (
+            ("known-failing-input", 10, [-5, 3, 0]),
+            ("different-input", 1, [-5, 9, 2]))
+    ]
+    charter = {
+        "grant_version": 1, "objective": "Choose a method only within its checked scope.",
+        "allocations": {domain: {"id": domain, "units": 100_000}
+                        for domain in ("tokens", "cpu")},
+        "policy": "adaptive/1", "max_turns": 1,
+        "deadline": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+        "opportunities": opportunities,
+    }
+    _grant(migrated_db, charter, "p10-scope-agenda")
+    agenda.create(migrated_db, agenda_id="p10-scope-agenda", charter=charter,
+                  artifacts_root=roots["artifacts_root"])
+    result = agenda.wake(migrated_db, None, checker, "p10-scope-agenda", **roots)
+    assert result["status"] == "acknowledged"
+    assert result["investigation"]["last_observation"]["passed"] is True
+    state = agenda.read(migrated_db, "p10-scope-agenda")
+    assert state["flight"] is None and state["turns"] == 1
+    choice, = [row for row in agenda.export(migrated_db, "p10-scope-agenda")["decisions"]
+               if row["kind"] == "p05.choice"]
+    assert choice["data"]["opportunity_id"] == "different-input"
+    bad, = [row for row in choice["data"]["ranked"] if row["id"] == "known-failing-input"]
+    assert bad["eligible"] is False
+    assert "failed this exact condition" in bad["reason"]
