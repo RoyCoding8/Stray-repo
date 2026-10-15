@@ -12,7 +12,9 @@ not evidence about the free model's capability.
 The driver records `unresolved`; the offline checker preserves that status and
 checks zero uses. The exported operation records the stronger durable fact that
 it was reconciled with never-sent proof. It must not be rerun as a new study.
-The dedicated database is `p04_live_20261014a` on local port 55432.
+The dedicated database `p04_live_20261014a` was removed after exporting its
+never-sent evidence and privately archiving the runtime during P04 closeout.
+Offline recomputation needs no database.
 
 Recompute without model or database access:
 
