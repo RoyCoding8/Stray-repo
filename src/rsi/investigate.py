@@ -272,6 +272,7 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root,
             selection = capability.select(
                 dsn, "p04-select:" + identity, genome=current,
                 name=method_options["name"], interface=method_options["interface"],
+                task_id=item.digest, value=method_options["value"],
                 artifacts_root=artifacts_root)
             if selection["status"] != "selected":
                 return {**state, "capability_outcome": selection}
@@ -391,7 +392,8 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root,
             selection = admitted.get("selection", {})
             capability.validate_selection(
                 dsn, selection, genome=current, name=method_options["name"],
-                interface=method_options["interface"], artifacts_root=artifacts_root)
+                interface=method_options["interface"], task_id=item.digest,
+                value=method_options["value"], artifacts_root=artifacts_root)
             worker = checker
             ep = episode.run_method_episode(
                 dsn, checker, current, name=method_options["name"],

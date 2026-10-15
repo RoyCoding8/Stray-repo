@@ -22,6 +22,7 @@ from . import archive
 from . import genome as genome_module
 
 CAPABILITY_SCOPE = "rsi-capability-result"
+CAPABILITY_INPUT_SCOPE = "rsi-capability-input"
 MAX_TIMEOUT_MS = 300_000
 MAX_OUTPUT_BYTES = 1_048_576
 _DESCRIPTOR_KEYS = frozenset({"schema", "interface", "entrypoint", "dependencies",
@@ -105,6 +106,8 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
     capability = _capability(genome, name)
     clean_request, request_raw = _request(request, capability)
     input_digest = _sha(request_raw)
+    input_artifact_digest = _publish_request(
+        dsn, operation_id, request_raw, staging_root, artifacts_root)
     declared_limits = capability.descriptor["limits"]
     timeout = _ceiling(timeout_ms, declared_limits["timeout_ms"], MAX_TIMEOUT_MS,
                        "timeout_ms")
@@ -157,6 +160,9 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
                                       payload, operation_id, allocation_id, attempt_id)
         if any(prior_decision["data"].get(k) != v for k, v in expected.items()):
             raise CapabilityError("operation id already records different method inputs")
+        recorded_input = prior_decision["data"].get("input_artifact_digest")
+        if recorded_input is not None and recorded_input != input_artifact_digest:
+            raise CapabilityError("operation id already records different request bytes")
         replay = _replay(dsn, artifacts_root, prior_decision, capability,
                          input_digest, execution_version)
         if replay.output_digest:
@@ -200,9 +206,11 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
     data.update({"status": invocation.status, "seconds": invocation.seconds,
                  "detail": invocation.detail, "output_digest": invocation.output_digest,
                  "result_digest": invocation.output_digest,
-                 "containment": False, "profile": launcher.profile})
+                 "containment": False, "profile": launcher.profile,
+                 "input_artifact_digest": input_artifact_digest})
     archive.record(dsn, decision_id, kind="capability-use", actor="fixed",
                    subject=capability.digest, data=data)
+    _protect_artifact(dsn, input_artifact_digest, 'rsi-capability-input:' + operation_id)
     if invocation.output_digest:
         _protect_artifact(dsn, invocation.output_digest, 'rsi-capability-use:' + operation_id)
     return invocation
@@ -276,6 +284,23 @@ def _interpret(dsn: str, artifacts_root: str | Path,
     return Invocation(operation_id, capability.genome, capability.name, capability.digest,
                       input_digest, execution_version, "completed", output["value"],
                       tuple(sorted(output_files)), result_artifact, seconds, "")
+
+
+def _publish_request(dsn: str, operation_id: str, raw: bytes,
+                     staging_root: str | Path, artifacts_root: str | Path) -> str:
+    manifest = {"kind": CAPABILITY_INPUT_SCOPE, "operation_id": operation_id,
+                "files": [{"path": "request.json", "kind": "file", "size": len(raw),
+                           "digest": _sha(raw)}]}
+    receipt = artifacts.stage_package(
+        dsn, staging_root, manifest=manifest, files={"request.json": raw},
+        scope=CAPABILITY_INPUT_SCOPE, access_label="candidate",
+        format=CAPABILITY_INPUT_SCOPE, version="1")
+    result = artifacts.publish_package(
+        dsn, Command(request_id="rsi-capability-input-" + receipt["digest"],
+                     payload={"digest": receipt["digest"]}), artifacts_root, receipt)
+    if result.code not in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        raise CapabilityError(result.detail)
+    return receipt["digest"]
 
 
 def _publish_result(dsn: str, operation_id: str, raw: bytes,
@@ -486,129 +511,376 @@ def _record(dsn: str, identity: str, kind: str, subject: str, data: dict) -> dic
 
 
 def _checked_use(dsn: str, genome: genome_module.Genome, name: str,
-                 episode_id: str, artifacts_root: str | Path) -> dict:
-    from . import task, verifier
+                 episode_id: str, artifacts_root: str | Path, *,
+                 require_condition: bool = False) -> dict:
+    from . import task as task_module, verifier
 
     method = _capability(genome, name)
     if genome_module.load(dsn, artifacts_root, genome.digest) != genome:
-        raise CapabilityError('retention genome bytes changed')
-    use = archive.decision(dsn, 'capability-use:' + episode_id)
+        raise CapabilityError("retention genome bytes changed")
+    use = archive.decision(dsn, "capability-use:" + episode_id)
     with db.connect(dsn) as conn:
-        row = conn.execute('SELECT genome, task, status, trajectory FROM rsi_episodes '
-                           'WHERE operation_id=%s', (episode_id,)).fetchone()
-    if row is None or row[0] != genome.digest or row[2] != 'completed':
-        raise CapabilityError('retention needs a completed episode of this genome')
-    item = task.load(dsn, artifacts_root, row[1])
-    if item.split != 'dev':
-        raise CapabilityError('experimental retention accepts development checks only')
+        row = conn.execute(
+            "SELECT genome, task, status, trajectory FROM rsi_episodes WHERE operation_id=%s",
+            (episode_id,),
+        ).fetchone()
+    if row is None or row[0] != genome.digest or row[2] != "completed":
+        raise CapabilityError("checked use needs a completed episode of this genome")
+    item = task_module.load(dsn, artifacts_root, row[1])
+    if item.split != "dev":
+        raise CapabilityError("applicability evidence accepts development tasks only")
     verdict = verifier.read_verdict(dsn, episode_id, item.evaluator_version)
-    if verdict is None or verdict.passed is not True:
-        raise CapabilityError('retention requires a passing independent development check')
-    if use is None or use['kind'] != 'capability-use':
-        raise CapabilityError('retention requires a genuine method invocation')
-    data = use['data']
-    expected = {'executed_genome': genome.digest, 'requested_genome': genome.digest,
-                'executed_name': name, 'requested_name': name,
-                'method_digest': method.digest, 'interface': method.interface,
-                'operation_id': episode_id, 'status': 'completed'}
-    if any(data.get(k) != v for k, v in expected.items()):
-        raise CapabilityError('retention method does not match the checked invocation')
+    if (verdict is None or type(verdict.passed) is not bool
+            or verdict.status != ("passed" if verdict.passed else "failed")
+            or not verdict.solution):
+        raise CapabilityError("checked use needs a definitive pristine verifier outcome")
+    if (use is None or use["kind"] != "capability-use" or use["actor"] != "fixed"
+            or use["subject"] != method.digest):
+        raise CapabilityError("checked use needs its immutable capability decision")
+    data = use["data"]
+    expected = {"executed_genome": genome.digest, "requested_genome": genome.digest,
+                "executed_name": name, "requested_name": name,
+                "method_digest": method.digest, "interface": method.interface,
+                "operation_id": episode_id, "status": "completed"}
+    required = set(expected) | {"execution_version", "allocation_id", "attempt_id",
+                                "payload_digest", "input_digest", "output_digest"}
+    if (not required.issubset(data)
+            or any(data.get(k) != v for k, v in expected.items())):
+        raise CapabilityError("checked use does not match the executed method")
     operation = broker.read_operation(dsn, episode_id)
-    if (operation is None or operation['payload']['effect'] != broker.SANDBOX_EXEC
-            or operation['execution_version'] != data['execution_version']
-            or _sha(_canonical(operation['payload']['payload'])) != data['payload_digest']
-            or operation['allocation_id'] != data['allocation_id']
-            or operation['attempt_id'] != data['attempt_id']
-            or operation['dispatch_state'] not in ('observed', 'reconciled')
-            or not store.operation_receipts(dsn, episode_id)):
-        raise CapabilityError('retention requires the settled native operation')
-    digests = (data.get('output_digest'), verdict.solution, row[3])
-    if any(not digest or not artifacts.artifact_available(dsn, artifacts_root, digest)
-           for digest in digests):
-        raise CapabilityError('checked method evidence is unavailable')
-    result = json.loads((Path(artifacts_root) / data['output_digest']).read_bytes())
-    returned = json.loads(bytes.fromhex(result['files']['result.json']))
-    solution = json.loads((Path(artifacts_root) / verdict.solution).read_bytes())
-    actual = {path: bytes.fromhex(raw) for path, raw in solution['files'].items()}
-    if actual != {path: raw.encode('utf-8') for path, raw in returned['files'].items()}:
-        raise CapabilityError('development check did not grade the returned method files')
-    return {'method_digest': method.digest, 'interface': method.interface,
-            'task': item.digest, 'evaluator_version': item.evaluator_version,
-            'verdict': verdict.operation_id, 'solution': verdict.solution,
-            'output_digest': data['output_digest'], 'input_digest': data['input_digest']}
+    receipts = store.operation_receipts(dsn, episode_id)
+    payload = operation.get("payload", {}) if operation is not None else {}
+    if (operation is None or payload.get("effect") != broker.SANDBOX_EXEC
+            or operation.get("execution_version") != data["execution_version"]
+            or _sha(_canonical(payload.get("payload"))) != data["payload_digest"]
+            or operation.get("allocation_id") != data["allocation_id"]
+            or operation.get("attempt_id") != data["attempt_id"]
+            or operation.get("dispatch_state") not in ("observed", "reconciled")
+            or operation.get("settled") is not True or len(receipts) != 1
+            or receipts[0]["outcome"] != "success"):
+        raise CapabilityError("checked use needs one settled native operation")
+
+    expected_verifier = verifier.operation_id_for(episode_id, item.evaluator_version)
+    verifier_operation = broker.read_operation(dsn, verdict.operation_id)
+    verifier_receipts = store.operation_receipts(dsn, verdict.operation_id)
+    verifier_payload = (verifier_operation.get("payload", {})
+                        if verifier_operation is not None else {})
+    if (verdict.operation_id != expected_verifier or verifier_operation is None
+            or verifier_payload.get("effect") != broker.SANDBOX_EXEC
+            or verifier_operation.get("execution_version") != verdict.solution
+            or verifier_operation.get("dispatch_state") not in ("observed", "reconciled")
+            or verifier_operation.get("settled") is not True or len(verifier_receipts) != 1
+            or verifier_receipts[0]["outcome"] not in ("success", "failure")):
+        raise CapabilityError("checked use needs its settled pristine verifier result")
+    observed_verdict = verifier._result(
+        dsn, verdict.operation_id, item.evaluator_version, verdict.solution)
+    if (observed_verdict.operation_id != verdict.operation_id
+            or observed_verdict.evaluator_version != verdict.evaluator_version
+            or observed_verdict.solution != verdict.solution
+            or observed_verdict.status != verdict.status
+            or observed_verdict.passed is not verdict.passed):
+        raise CapabilityError("recorded verifier outcome differs from its settled receipt")
+
+    result_raw = _load_artifact_file(
+        dsn, artifacts_root, data.get("output_digest"), scope=CAPABILITY_SCOPE,
+        path="result.json", operation_id=episode_id)
+    try:
+        result_doc = json.loads(result_raw, parse_constant=_reject_constant)
+    except (TypeError, ValueError, UnicodeError) as exc:
+        raise CapabilityError("checked method result artifact is malformed") from exc
+    if (not isinstance(result_doc, dict) or set(result_doc) != {"value", "files"}
+            or not _is_json(result_doc["value"]) or not isinstance(result_doc["files"], dict)):
+        raise CapabilityError("checked method result artifact is malformed")
+    returned_files = _text_map(result_doc["files"])
+
+    if not artifacts.artifact_available(dsn, artifacts_root, verdict.solution):
+        raise CapabilityError("checked method evidence is unavailable")
+    solution_raw = (Path(artifacts_root) / verdict.solution).read_bytes()
+    if _sha(solution_raw) != verdict.solution:
+        raise CapabilityError("pristine verifier solution artifact changed")
+    try:
+        solution_doc = json.loads(solution_raw, parse_constant=_reject_constant)
+        manifest = solution_doc["manifest"]
+        if (solution_doc.get("scope") != "rsi-solution"
+                or manifest.get("kind") != "rsi-solution"
+                or manifest.get("task") != item.digest
+                or not isinstance(solution_doc["files"], dict)
+                or not isinstance(manifest.get("files"), list)):
+            raise ValueError("solution package identity differs")
+        entries = {entry["path"]: entry for entry in manifest["files"]}
+        if len(entries) != len(manifest["files"]) or set(entries) != set(solution_doc["files"]):
+            raise ValueError("solution package manifest differs")
+        actual = {}
+        for path, encoded in solution_doc["files"].items():
+            raw = bytes.fromhex(encoded)
+            if entries[path] != {"path": path, "kind": "file", "size": len(raw),
+                                 "digest": _sha(raw)}:
+                raise ValueError("solution file digest differs")
+            actual[path] = raw
+    except (KeyError, TypeError, ValueError, UnicodeError) as exc:
+        raise CapabilityError("pristine verifier solution package is invalid") from exc
+    expected_files = {path: raw.encode("utf-8") for path, raw in returned_files.items()}
+    if actual != expected_files:
+        raise CapabilityError("development check did not grade the returned method files")
+
+    trajectory_raw = _load_artifact_file(
+        dsn, artifacts_root, row[3], scope="rsi-trajectory", path="events.jsonl")
+    try:
+        lines = trajectory_raw.decode("utf-8").splitlines()
+        if len(lines) != 1:
+            raise ValueError("trajectory must contain one native use")
+        event = json.loads(lines[0], parse_constant=_reject_constant)
+        expected_event = {
+            "type": "method.invocation.result", "operation_id": episode_id,
+            "genome": genome.digest, "task": item.digest, "name": name,
+            "method_digest": method.digest, "input_digest": data["input_digest"],
+            "output_digest": data["output_digest"],
+            "execution_version": data["execution_version"],
+            "allocation_id": data["allocation_id"], "attempt_id": data["attempt_id"],
+            "status": "completed",
+        }
+        if any(event.get(key) != value for key, value in expected_event.items()):
+            raise ValueError("trajectory identity differs from the checked use")
+        if _canonical(event["value"]) != _canonical(result_doc["value"]):
+            raise ValueError("trajectory result differs from its published output")
+        file_rows = [{"slot": path, "size": len(raw.encode("utf-8")),
+                      "digest": _sha(raw.encode("utf-8"))}
+                     for path, raw in sorted(returned_files.items())]
+        if event["files"] != file_rows:
+            raise ValueError("trajectory files differ from the published output")
+    except (KeyError, TypeError, ValueError, UnicodeError) as exc:
+        raise CapabilityError("checked use trajectory is invalid") from exc
+
+    condition = None
+    input_artifact = data.get("input_artifact_digest")
+    if input_artifact is not None:
+        request_raw = _load_artifact_file(
+            dsn, artifacts_root, input_artifact, scope=CAPABILITY_INPUT_SCOPE,
+            path="request.json", operation_id=episode_id)
+        if _sha(request_raw) != data.get("input_digest"):
+            raise CapabilityError("bound request bytes differ from the method input digest")
+        try:
+            request = json.loads(request_raw, parse_constant=_reject_constant)
+            _clean, canonical = _request(request, method)
+            context = request["context"]
+            if (canonical != request_raw or not isinstance(context, dict)
+                    or set(context) != {"continuation", "task_digest"}
+                    or context["task_digest"] != item.digest):
+                raise ValueError("request does not bind the episode task")
+        except (KeyError, TypeError, ValueError, UnicodeError) as exc:
+            raise CapabilityError("bound method request is invalid") from exc
+        condition = {"task_id": item.digest, "value": request["value"],
+                     "value_digest": _sha(_canonical(request["value"]))}
+    elif require_condition:
+        raise CapabilityError("checked use lacks its immutable bound request artifact")
+
+    checked = {"method_digest": method.digest, "interface": method.interface,
+               "task": item.digest, "evaluator_version": item.evaluator_version,
+               "verdict": verdict.operation_id, "solution": verdict.solution,
+               "output_digest": data["output_digest"], "input_digest": data["input_digest"],
+               "passed": verdict.passed}
+    if condition is not None:
+        checked["condition"] = condition
+        checked["input_artifact_digest"] = input_artifact
+    return checked
+
+
+def _load_artifact_file(dsn: str, artifacts_root: str | Path, digest: str | None, *,
+                        scope: str, path: str, operation_id: str | None = None) -> bytes:
+    if (not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)
+            or not artifacts.artifact_available(dsn, artifacts_root, digest)):
+        raise CapabilityError("checked method artifact is unavailable")
+    try:
+        package_raw = (Path(artifacts_root) / digest).read_bytes()
+        if _sha(package_raw) != digest:
+            raise ValueError("package digest differs")
+        package = json.loads(package_raw, parse_constant=_reject_constant)
+        manifest = package["manifest"]
+        if (set(package) != {"manifest", "scope", "files"} or package["scope"] != scope
+                or manifest["kind"] != scope
+                or (operation_id is not None
+                    and manifest.get("operation_id") != operation_id)
+                or not isinstance(package["files"], dict)
+                or set(package["files"]) != {path}):
+            raise ValueError("package identity differs")
+        content = bytes.fromhex(package["files"][path])
+        expected = [{"path": path, "kind": "file", "size": len(content),
+                     "digest": _sha(content)}]
+        if manifest["files"] != expected:
+            raise ValueError("package file manifest differs")
+        return content
+    except (OSError, KeyError, TypeError, ValueError, UnicodeError) as exc:
+        raise CapabilityError("checked method artifact package is invalid") from exc
+
+
+def _selection_condition(task_id: str, value: Any) -> dict:
+    if not isinstance(task_id, str) or not re.fullmatch(r"[0-9a-f]{64}", task_id):
+        raise CapabilityError("selection task_id must be a canonical task digest")
+    if not _is_json(value):
+        raise CapabilityError("selection value must be finite JSON")
+    canonical = _canonical(value)
+    return {"task_id": task_id, "value": json.loads(canonical),
+            "value_digest": _sha(canonical)}
 
 
 def retain(dsn: str, retention_id: str, *, genome: genome_module.Genome, name: str,
            episode_id: str, artifacts_root: str | Path) -> dict:
     """Retain experimental use evidence, without promoting trust or generality."""
-    identity = 'capability-retention:' + retention_id
-    request = {'retention_id': retention_id, 'genome': genome.digest,
-               'name': name, 'episode_id': episode_id}
-    known = _known(dsn, identity, 'capability-retention', request)
+    identity = "capability-retention:" + retention_id
+    request = {"retention_id": retention_id, "genome": genome.digest,
+               "name": name, "episode_id": episode_id}
+    known = _known(dsn, identity, "capability-retention", request)
     if known is not None:
         return known
     try:
         checked = _checked_use(dsn, genome, name, episode_id, artifacts_root)
+        if checked["passed"] is not True:
+            raise CapabilityError("retention requires a passing independent development check")
     except SettlementError as exc:
-        report = {**request, 'status': 'rejected', 'reason': str(exc)}
+        report = {**request, "status": "rejected", "reason": str(exc)}
     else:
-        report = {**request, **checked, 'status': 'retained',
-                  'scope': 'experimental-interface', 'reason': 'passing development method use'}
-    return _record(dsn, identity, 'capability-retention', genome.digest, report)
+        report = {**request, **checked, "status": "retained",
+                  "scope": "experimental-interface", "reason": "passing development method use"}
+    return _record(dsn, identity, "capability-retention", genome.digest, report)
+
+
+def eligibility(dsn: str, *, genome: genome_module.Genome, name: str,
+                interface: str, task_id: str, value: Any,
+                artifacts_root: str | Path) -> dict:
+    """Compute fresh selection eligibility without recording a decision."""
+    condition = _selection_condition(task_id, value)
+    report = {"status": "declined", "executed_genome": None,
+              "executed_name": None, "method_digest": None, "retention_id": None}
+    try:
+        from . import task as task_module
+
+        item = task_module.load(dsn, artifacts_root, task_id)
+        if item.split != "dev":
+            raise CapabilityError("method selection accepts development tasks only")
+        method = _capability(genome, name)
+        if method.interface != interface:
+            raise CapabilityError("requested interface is outside the checked method interface")
+        with db.connect(dsn) as conn:
+            rows = conn.execute(
+                "SELECT d.data, e.created_at FROM rsi_decisions d"
+                " JOIN rsi_episodes e ON e.operation_id=d.data->>'episode_id'"
+                " WHERE d.kind='capability-retention' AND d.subject=%s"
+                " AND d.data->>'name'=%s AND d.data->>'status'='retained'"
+                " ORDER BY d.created_at,d.id", (genome.digest, name),
+            ).fetchall()
+        retained, retained_at = None, None
+        for prior, created_at in rows:
+            try:
+                checked = _checked_use(
+                    dsn, genome, name, prior["episode_id"], artifacts_root)
+            except (SettlementError, KeyError, TypeError, ValueError, OSError, AttributeError):
+                continue
+            core = ("method_digest", "interface", "task", "evaluator_version", "verdict",
+                    "solution", "output_digest", "input_digest")
+            if (checked["passed"] is True and not any(
+                    prior.get(key) != checked.get(key) for key in core)):
+                retained, retained_at = prior, created_at
+                break
+        if retained is None:
+            raise CapabilityError("method has no passing checked experimental retention")
+        contrary = _contrary_use(
+            dsn, genome, method, condition, retained_at, artifacts_root)
+        if contrary is not None:
+            report.update(reason="a checked later native use failed this exact condition",
+                          contrary_use=contrary)
+        else:
+            report.update(status="selected", executed_genome=genome.digest,
+                          executed_name=name, method_digest=method.digest,
+                          retention_id=retained["retention_id"],
+                          reason="checked exact interface; applicability remains conditional")
+    except SettlementError as exc:
+        report["reason"] = str(exc)
+    return report
 
 
 def select(dsn: str, selection_id: str, *, genome: genome_module.Genome, name: str,
-           interface: str, artifacts_root: str | Path) -> dict:
-    """Select a checked exact interface once; never substitute an incumbent."""
-    identity = 'capability-selection:' + selection_id
-    request = {'selection_id': selection_id, 'requested_genome': genome.digest,
-               'requested_name': name, 'interface': interface}
-    known = _known(dsn, identity, 'capability-selection', request)
+           interface: str, task_id: str, value: Any,
+           artifacts_root: str | Path) -> dict:
+    """Record selection eligibility for one canonical task and exact input value."""
+    condition = _selection_condition(task_id, value)
+    identity = "capability-selection:" + selection_id
+    request = {"selection_id": selection_id, "requested_genome": genome.digest,
+               "requested_name": name, "interface": interface, **condition}
+    known = _known(dsn, identity, "capability-selection", request)
     if known is not None:
         return known
-    report = {**request, 'status': 'declined', 'executed_genome': None,
-              'executed_name': None, 'method_digest': None, 'retention_id': None}
-    try:
-        method = _capability(genome, name)
-        if method.interface != interface:
-            raise CapabilityError('requested interface is outside the checked method interface')
-        with db.connect(dsn) as conn:
-            rows = conn.execute("SELECT data FROM rsi_decisions WHERE kind='capability-retention' "
-                                "AND subject=%s AND data->>'name'=%s "
-                                "AND data->>'status'='retained' ORDER BY id",
-                                (genome.digest, name)).fetchall()
-        if not rows:
-            raise CapabilityError('method has no checked experimental retention')
-        retained = rows[0][0]
-        checked = _checked_use(dsn, genome, name, retained['episode_id'], artifacts_root)
-        if any(retained.get(k) != v for k, v in checked.items()):
-            raise CapabilityError('retention differs from the independent checked use')
-        report.update(status='selected', executed_genome=genome.digest, executed_name=name,
-                      method_digest=method.digest, retention_id=retained['retention_id'],
-                      reason='checked exact interface; broader applicability unmeasured')
-    except SettlementError as exc:
-        report['reason'] = str(exc)
-    return _record(dsn, identity, 'capability-selection', genome.digest, report)
+    result = eligibility(dsn, genome=genome, name=name, interface=interface,
+                         task_id=task_id, value=value, artifacts_root=artifacts_root)
+    return _record(dsn, identity, "capability-selection", genome.digest,
+                   {**request, **result})
+
+
+def _contrary_use(dsn: str, genome: genome_module.Genome, method: Capability,
+                  condition: dict, retained_at, artifacts_root: str | Path) -> dict | None:
+    with db.connect(dsn) as conn:
+        rows = conn.execute(
+            "SELECT e.operation_id FROM rsi_episodes e"
+            " JOIN rsi_decisions d ON d.id='capability-use:' || e.operation_id"
+            " WHERE d.kind='capability-use' AND d.subject=%s"
+            " AND e.genome=%s AND e.task=%s AND e.status='completed'"
+            " AND e.created_at>%s AND d.data->>'executed_name'=%s"
+            " AND d.data->>'method_digest'=%s"
+            " ORDER BY e.created_at,e.operation_id",
+            (method.digest, genome.digest, condition["task_id"], retained_at,
+             method.name, method.digest),
+        ).fetchall()
+    for (episode_id,) in rows:
+        try:
+            checked = _checked_use(
+                dsn, genome, method.name, episode_id, artifacts_root, require_condition=True)
+        except (SettlementError, KeyError, TypeError, ValueError, OSError, AttributeError):
+            continue
+        observed = checked.get("condition")
+        if (checked["passed"] is False and observed is not None
+                and observed["task_id"] == condition["task_id"]
+                and observed["value_digest"] == condition["value_digest"]):
+            return {"episode_id": episode_id, "task_id": observed["task_id"],
+                    "value": observed["value"], "value_digest": observed["value_digest"],
+                    "input_digest": checked["input_digest"],
+                    "input_artifact_digest": checked["input_artifact_digest"],
+                    "method_digest": checked["method_digest"],
+                    "verdict": checked["verdict"], "solution": checked["solution"],
+                    "output_digest": checked["output_digest"]}
+    return None
 
 
 def validate_selection(dsn: str, selection: dict, *, genome: genome_module.Genome,
-                       name: str, interface: str, artifacts_root: str | Path) -> None:
-    """Validate the admitted selection rather than making a new choice on resume."""
-    if not isinstance(selection, dict) or selection.get('status') != 'selected':
-        raise CapabilityError('method use needs an admitted selection')
-    request = {'selection_id': selection.get('selection_id'),
-               'requested_genome': genome.digest, 'requested_name': name, 'interface': interface}
-    known = _known(dsn, 'capability-selection:' + str(request['selection_id']),
-                   'capability-selection', request)
+                       name: str, interface: str, task_id: str, value: Any,
+                       artifacts_root: str | Path) -> None:
+    """Validate the admitted selection without reconsidering later evidence."""
+    if not isinstance(selection, dict) or selection.get("status") != "selected":
+        raise CapabilityError("method use needs an admitted selection")
+    condition = _selection_condition(task_id, value)
+    request = {"selection_id": selection.get("selection_id"),
+               "requested_genome": genome.digest, "requested_name": name,
+               "interface": interface, **condition}
+    known = _known(dsn, "capability-selection:" + str(request["selection_id"]),
+                   "capability-selection", request)
     if known != selection:
-        raise CapabilityError('selection differs from the recorded choice')
-    retained = archive.decision(dsn, 'capability-retention:' + selection['retention_id'])
-    if retained is None or retained['data'].get('status') != 'retained':
-        raise CapabilityError('selected retention is unavailable')
-    checked = _checked_use(dsn, genome, name, retained['data']['episode_id'], artifacts_root)
-    if (checked['interface'] != interface or checked['method_digest'] != selection['method_digest']
-            or selection['executed_genome'] != genome.digest or selection['executed_name'] != name):
-        raise CapabilityError('selected method differs from its checked evidence')
+        raise CapabilityError("selection differs from the recorded choice")
+    from . import task as task_module
+
+    item = task_module.load(dsn, artifacts_root, task_id)
+    if item.split != "dev":
+        raise CapabilityError("method selection accepts development tasks only")
+    retained = archive.decision(dsn, "capability-retention:" + selection["retention_id"])
+    if retained is None or retained["data"].get("status") != "retained":
+        raise CapabilityError("selected retention is unavailable")
+    checked = _checked_use(dsn, genome, name, retained["data"]["episode_id"], artifacts_root)
+    core = ("method_digest", "interface", "task", "evaluator_version", "verdict",
+            "solution", "output_digest", "input_digest")
+    if (checked["passed"] is not True
+            or any(retained["data"].get(key) != checked.get(key) for key in core)
+            or checked["interface"] != interface
+            or selection["method_digest"] != checked["method_digest"]
+            or selection["executed_genome"] != genome.digest
+            or selection["executed_name"] != name):
+        raise CapabilityError("selected method differs from its checked evidence")
 
 
 def construct(dsn: str, agent: Any, parent: genome_module.Genome, *, name: str,
