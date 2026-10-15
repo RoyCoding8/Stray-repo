@@ -441,10 +441,14 @@ def recompute_pair(frozen: dict, reports: list[dict]) -> dict:
         "observations", [])]
     adaptive_source = [row.get("content") for row in adaptive.get("initial_investigation", {}).get(
         "observations", [])]
+    seed_claim = {key: value for key, value in seed.get("initial_claim", {}).items()
+                  if key != "support"}
+    adaptive_claim = {key: value for key, value in adaptive.get("initial_claim", {}).items()
+                      if key != "support"}
     if (seed_tasks != adaptive_tasks or seed_arm["genome_id"] != adaptive_arm["genome_id"]
             or seed.get("initial_evidence_sha256") != scenario["initial_evidence_sha256"]
             or adaptive.get("initial_evidence_sha256") != scenario["initial_evidence_sha256"]
-            or seed.get("initial_claim") != adaptive.get("initial_claim")
+            or seed_claim != adaptive_claim
             or seed_source != adaptive_source
             or any(not isinstance(row, list) or len(row) != 2 for row in roots)
             or set(roots[0]) & set(roots[1])
