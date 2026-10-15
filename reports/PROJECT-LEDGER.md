@@ -81,9 +81,14 @@ initial lesson support at `acfde4e9`; the public pair and altered-support test
 passed. P05-R6 is a minor return limitation: artifact loss immediately after
 choice persistence can raise once, while preserving the flight; restoration
 resumes with one child invocation. It does not justify another recovery owner.
+The merged P05 repairs at `7f59a909` passed the complete 65-test gate with zero
+skips in 377.72 seconds. Both disposable databases were dropped. Independent
+Sol High verification on that exact source passed 51 tests with zero skips in
+390.77 seconds, plus claim-specific public-path and altered-export probes. It
+closed material R1 through R5 and retained R6's stated minor boundary. These are
+separate verification scopes, not a combined whole-repository suite.
 The P10 ownership and assessment design is pinned at `63f69dcf`; implementation
-waits for P05 closure. The remaining work is repair integration, independent
-review closure, the bounded live
+waits for P05 closure. The remaining work is the bounded live
 comparison, consolidation, CI and backup sync. Live agenda utility and learning
 remain unmeasured.
 
@@ -118,7 +123,8 @@ P05 task list:
   missing-artifact path that cleared a pending flight. Restoring its package now
   resumes verification with one worker invocation. These are mechanism results,
   not live learning evidence.
-- [ ] Complete independent Sol High verification, then a bounded free-route feedback sequence.
+- [x] Close material P05-R1 through R5 on the integrated source with independent Sol High verification.
+- [ ] Run the prospectively bounded free-route feedback sequence.
 - [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
 
 Remaining queue: P10 → P06 → P07 → P09 → P08. Each receives its own task list

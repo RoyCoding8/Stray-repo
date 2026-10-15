@@ -53,15 +53,23 @@ broker reservations. Neither protocol publication nor a stored task grants autho
 Store each admitted round as one immutable `p10.assessment.assignment` decision in
 `rsi_decisions`. Its identity is deterministic from campaign and round; its
 transaction request also includes the expected agenda revision. Under the agenda
-row lock, require active status, that revision, no P01 flight and no unresolved
-earlier assignment. Insert the assignment and advance revision without charging a
-P01 turn. Derive pending assessment from the assignment and existing gate,
+row lock, require that revision, no P01 flight and no unresolved earlier assignment.
+Status must be active, or complete with a predeclared final round now due. Suspended
+and stopped owners admit no rounds. Insert the assignment and advance revision
+without charging a P01 turn. Derive pending assessment from the assignment and existing gate,
 operation, episode and verifier records. Do not store a second mutable cursor.
 
 Campaign-owned agendas reject direct public `agenda.wake` calls before execution.
 The campaign consumer uses the same internal agenda transition. This prevents a
 second public driver from admitting development work while assessment is pending.
 Ordinary P05 agendas retain their public wake behavior.
+
+Both development-choice and assessment-assignment admission use that same row
+lock. A pending assessment blocks a new development choice even if concurrent
+campaign consumers passed their earlier reads. Resolve pending assignment from
+immutable assignment and final gate decisions at this boundary; a preliminary
+runner check alone is insufficient. A changed revision or controlled status also
+refuses development admission before it can create a P01 flight.
 
 Add `suspended` to the existing agenda status constraint. Lifecycle controls take
 an expected revision. Suspend prevents new work and preserves the flight and
@@ -121,6 +129,38 @@ Use a short prospectively bounded free-route campaign with interruptions after
 review. Stop at the declared limits even when the result is incomplete or null.
 Extended learning observation is a later use of the campaign, not a condition
 for declaring its mechanisms implemented.
+
+### Shared implementation shape
+
+The charter's optional `assessment_protocol` is the published protocol digest.
+Protocol JSON uses `schema: "p10-assessment/1"` and a bounded ordered `rounds`
+array. Each round names `id`, `after_turn`, `epoch`, `parent`, `candidate`, `model`
+and `route_identity`. Turn milestones are nonnegative integers within the charter
+turn cap. Round identities are unique and milestones nondecreasing. Route identity
+is the SHA-256 of the launcher's base URL with trailing slashes removed, excluding credentials; model
+identity is separate. Epoch budget and execution declarations remain authoritative.
+
+The lifecycle lane owns `agenda.control(dsn, agenda_id, expected_revision, action)`
+for `suspend`, `resume` and `stop`, plus the common internal `agenda._wake` consumer.
+Public `agenda.wake` rejects campaign-owned charters. The same lane owns
+`agenda._pending_assessment(cur, agenda_id)`, which returns an immutable assignment
+without a matching final gate decision, or `None`. Both admission paths reuse it;
+neither infers completion from an empty operation set or a missing score.
+
+The campaign lane owns the protocol parser, artifact publication, assessment
+assignment, existing gate integration, public functions and CLI. `start` takes
+`campaign_id`, `charter`, `protocol`, `staging_root` and `artifacts_root`. `run`
+takes the campaign identity, both launchers, both roots, `max_wakes` and
+`wall_seconds`. Lifecycle wrappers use the existing agenda revision. Export and
+pure recomputation share one versioned bundle shape rather than separate live and
+fixture reports.
+
+The applicability lane binds `capability.select` and `validate_selection` to
+required `task_id` and `value` arguments, in addition to the existing genome,
+name and interface. Canonical task identity plus value defines the exact requested
+condition. Update P01 and all direct callers in the same wave. Admitted historical
+choices retain their identity; new selection decisions include the condition and
+the checked contrary evidence that caused any veto.
 
 ## Delivery slices
 
