@@ -211,6 +211,18 @@ def _roots_names(agenda_id: str) -> tuple[str, str]:
     return f"{agenda_id}-tokens", f"{agenda_id}-cpu"
 
 
+def _include_operations(dsn: str, history: dict, output: dict) -> None:
+    operation_ids = {row.get("data", {}).get("operation_id")
+                     for row in history.get("decisions", [])}
+    operation_ids.update(row.get("content", {}).get("verdict")
+                         for row in history.get("observations", []))
+    for operation_id in operation_ids - {None}:
+        output[operation_id] = {
+            "operation": broker.read_operation(dsn, operation_id),
+            "receipts": store.operation_receipts(dsn, operation_id),
+        }
+
+
 def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode: str,
             route_file: Path | None = None, codex: str = "codex") -> dict:
     if arm_id not in {"seed", "adaptive"} or mode not in {"fixture", "live"}:
@@ -296,18 +308,8 @@ def run_arm(repo: Path, bundle: Path, output: Path, dsn: str, arm_id: str, mode:
             continue
         history = investigation.export(dsn, data["investigation_id"])
         p01_exports[data["investigation_id"]] = history
-        for effect in history["effects"]:
-            operation_id = effect["id"]
-            operations[operation_id] = {
-                "operation": broker.read_operation(dsn, operation_id),
-                "receipts": store.operation_receipts(dsn, operation_id),
-            }
-    for effect in prior_history["effects"]:
-        operation_id = effect["id"]
-        operations[operation_id] = {
-            "operation": broker.read_operation(dsn, operation_id),
-            "receipts": store.operation_receipts(dsn, operation_id),
-        }
+        _include_operations(dsn, history, operations)
+    _include_operations(dsn, prior_history, operations)
     report = {"schema": "p05-agenda-arm/1", "freeze_sha256": hashlib.sha256(
               json.dumps(frozen, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
                          allow_nan=False).encode()).hexdigest(),
