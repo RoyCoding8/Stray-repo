@@ -140,15 +140,20 @@ def _verify_choice(report: dict, choice: dict, ack: dict, task_id: str,
                 "infra_failed", "timeout"}:
             raise ValueError("unscored verifier receipt was reported as a task result")
         return {"status": "unscored"}
-    counts = [result.get(key) for key in ("tests", "failures", "errors", "skipped")]
-    if any(type(value) is not int for value in counts) or counts[0] < 1 or any(v < 0 for v in counts):
-        raise ValueError("pristine verifier receipt lacks typed test counts")
+    counts = _test_counts(result)
     passed = verifier["receipt"]["outcome"] == "success" and counts[1:] == [0, 0, 0]
     status = "passed" if passed else "failed"
     if observation.get("passed") is not passed or observation.get("status") != status:
         raise ValueError("P01 verdict differs from recomputed pristine test result")
     return {"status": status, "tests": counts[0], "failures": counts[1],
             "errors": counts[2], "skipped": counts[3]}
+
+
+def _test_counts(result: dict) -> list[int]:
+    counts = [result.get(key) for key in ("tests", "failures", "errors", "skipped")]
+    if any(type(value) is not int for value in counts) or counts[0] < 1 or any(v < 0 for v in counts):
+        raise ValueError("pristine verifier receipt lacks typed test counts")
+    return counts
 
 
 def _verify_prior(report: dict, task_id: str, genome_id: str,
@@ -177,10 +182,11 @@ def _verify_prior(report: dict, task_id: str, genome_id: str,
     verifier_id = "rsi-verify-" + _sha(f"{data['operation_id']}:{evaluator}".encode())
     verifier = _receipt(None, operations, verifier_id, "sandbox-exec")
     result = verifier["result"]
+    counts = _test_counts(result) if result is not None else None
     if (result is None or verifier["operation"].get("attempt_id") != data.get("attempt_id")
             or verifier["operation"].get("execution_version") != solution
             or verifier["receipt"].get("outcome") != "success"
-            or result.get("failures") != 0 or result.get("errors") != 0):
+            or counts[1:] != [0, 0, 0]):
         raise ValueError("initial lesson is not supported by a pristine passing verifier")
 
 
@@ -442,9 +448,9 @@ def recompute_pair(frozen: dict, reports: list[dict]) -> dict:
     adaptive_source = [row.get("content") for row in adaptive.get("initial_investigation", {}).get(
         "observations", [])]
     seed_claim = {key: value for key, value in seed.get("initial_claim", {}).items()
-                  if key != "support"}
+                  if key not in {"support", "revision"}}
     adaptive_claim = {key: value for key, value in adaptive.get("initial_claim", {}).items()
-                      if key != "support"}
+                      if key not in {"support", "revision"}}
     if (seed_tasks != adaptive_tasks or seed_arm["genome_id"] != adaptive_arm["genome_id"]
             or seed.get("initial_evidence_sha256") != scenario["initial_evidence_sha256"]
             or adaptive.get("initial_evidence_sha256") != scenario["initial_evidence_sha256"]

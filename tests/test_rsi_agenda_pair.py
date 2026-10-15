@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import copy
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
 from isolation_db import disposable_db
 
 from experiments.agenda05 import driver
@@ -47,3 +49,16 @@ def test_valid_pair_without_failed_experience_remains_a_null_observation(
         assert arm["verified"] == 2
         assert arm["failed"] == arm["unscored"] == 0
         assert arm["feedback_effects"] == []
+
+    different_clock = copy.deepcopy(adaptive)
+    different_clock["initial_claim"]["revision"] += 100
+    assert recompute_pair(frozen, [seed, different_clock])["same_initial_evidence"] is True
+
+    for counts in ({"tests": 0}, {"skipped": 1}, {"tests": True}, {"failures": -1}):
+        invalid = copy.deepcopy(seed)
+        verifier_id = invalid["initial_investigation"]["observations"][0]["content"]["verdict"]
+        receipt = next(row for row in invalid["operations"]
+                       if row["operation_id"] == verifier_id)["receipts"][0]
+        receipt["content"]["data"]["worker"]["data"].update(counts)
+        with pytest.raises(ValueError):
+            recompute_pair(frozen, [invalid, adaptive])
