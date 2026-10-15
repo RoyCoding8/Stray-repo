@@ -32,7 +32,6 @@ def _child_wake(run, agenda_id, mode):
 
 
 def test_independent_wakes_share_one_choice_and_one_child_effect(migrated_db, tmp_path):
-    """RED regression: separate wakes must not dispatch the pinned P01 effect twice."""
     run = _scenario(migrated_db, tmp_path / "p01", "p05-concurrent", "pass-first")
     run["scenario"] = "pass-first"
     agenda_id = "p05-concurrent"
