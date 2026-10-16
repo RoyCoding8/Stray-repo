@@ -513,6 +513,7 @@ def _record(dsn: str, identity: str, kind: str, subject: str, data: dict) -> dic
 def _checked_use(dsn: str, genome: genome_module.Genome, name: str,
                  episode_id: str, artifacts_root: str | Path, *,
                  require_condition: bool = False) -> dict:
+    from . import gate
     from . import task as task_module
     from . import verifier
 
@@ -679,7 +680,7 @@ def _checked_use(dsn: str, genome: genome_module.Genome, name: str,
                "task": item.digest, "evaluator_version": item.evaluator_version,
                "verdict": verdict.operation_id, "solution": verdict.solution,
                "output_digest": data["output_digest"], "input_digest": data["input_digest"],
-               "passed": verdict.passed}
+               "passed": verdict.passed if gate._known_test_result(dsn, verdict) else None}
     if condition is not None:
         checked["condition"] = condition
         checked["input_artifact_digest"] = input_artifact

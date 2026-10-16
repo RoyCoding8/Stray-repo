@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import pytest
 
@@ -81,6 +82,9 @@ def test_later_failed_native_use_vetoes_only_future_exact_scope(env):
     dsn, roots, candidate, item, _launcher = env
     ep, checked = _use(env, "scope-qualified-use", context={})
     assert checked is not None and checked.passed is True
+    passing_tests = checked.detail["data"]["worker"]["data"]
+    assert passing_tests["tests"] - passing_tests["skipped"] > 0
+    assert passing_tests["failures"] == passing_tests["errors"] == 0
     retained = capability.retain(
         dsn, "scope-retention", genome=candidate, name="maximum",
         episode_id=ep.operation_id, artifacts_root=roots["artifacts_root"])
@@ -130,6 +134,9 @@ def test_later_failed_native_use_vetoes_only_future_exact_scope(env):
     failed_ep, failed_check = _use(env, "scope-later-failed-use", context={"mode": "contrary"})
     assert failed_ep.status == "completed"
     assert failed_check is not None and failed_check.passed is False
+    failed_tests = failed_check.detail["data"]["worker"]["data"]
+    assert failed_tests["tests"] > failed_tests["skipped"]
+    assert failed_tests["failures"] + failed_tests["errors"] > 0
 
     capability.validate_selection(
         dsn, admitted, genome=candidate, name="maximum", interface="sequence-maximum/1",
@@ -180,3 +187,42 @@ def test_later_failed_native_use_vetoes_only_future_exact_scope(env):
         interface="sequence-maximum/2", **condition,
         artifacts_root=roots["artifacts_root"])
     assert other_method["status"] == "selected"
+
+
+def test_all_skipped_later_native_check_does_not_veto_scope(env):
+    dsn, roots, candidate, item, launcher = env
+    ep, checked = _use(env, "scope-skipped-qualified-use", context={})
+    assert checked is not None and checked.passed is True
+    passing_tests = checked.detail["data"]["worker"]["data"]
+    assert passing_tests["tests"] - passing_tests["skipped"] > 0
+    assert passing_tests["failures"] == passing_tests["errors"] == 0
+    retained = capability.retain(
+        dsn, "scope-skipped-retention", genome=candidate, name="maximum",
+        episode_id=ep.operation_id, artifacts_root=roots["artifacts_root"])
+    assert retained["status"] == "retained"
+
+    skipped = replace(item, name="scope-all-skipped", verifier={"test_answer.py": (
+        "import unittest\n"
+        "class Answer(unittest.TestCase):\n"
+        "    @unittest.skip('unavailable test fixture')\n"
+        "    def test_value(self):\n"
+        "        self.fail('must not execute')\n").encode()})
+    task.publish(dsn, skipped, **roots)
+    skipped_env = (dsn, roots, candidate, skipped, launcher)
+    skipped_use, verdict = _use(skipped_env, "scope-skipped-later-use", context={})
+    assert skipped_use.status == "completed"
+    assert verdict is not None and verdict.passed is False
+    test_counts = verdict.detail["data"]["worker"]["data"]
+    assert {key: test_counts[key] for key in ("tests", "failures", "errors", "skipped")} == {
+        "tests": 1, "failures": 0, "errors": 0, "skipped": 1,
+    }
+    rejected = capability.retain(
+        dsn, "scope-skipped-use-retention", genome=candidate, name="maximum",
+        episode_id=skipped_use.operation_id, artifacts_root=roots["artifacts_root"])
+    assert rejected["status"] == "rejected"
+
+    selection = capability.select(
+        dsn, "scope-after-all-skipped", genome=candidate, name="maximum",
+        interface="sequence-maximum/1", task_id=skipped.digest, value=[1, 3, 2],
+        artifacts_root=roots["artifacts_root"])
+    assert selection["status"] == "selected"
