@@ -1,0 +1,19 @@
+{
+  "allocation_roots": {
+    "cpu": "p10-cpu-p10-live-20261016-01",
+    "tokens": "p10-tokens-p10-live-20261016-01"
+  },
+  "assessment_tasks": {
+    "assessment-anchor": "3047cb6a503cc796c8befca202372d5653a4fac357d9a565489d209810ff5abe",
+    "assessment-development": "89f7fc296faf75213b021e978d0dd592ea3beb3d2b1d7642ee9188c8be6f4fab",
+    "assessment-validation": "5940f85953dab3600d3b9a8160f48d0ecc91d7451fc1a9918bf42e9889546d67"
+  },
+  "campaign_id": "p10-live-20261016-01",
+  "candidate_genome": "8cb963dbfbb28901fb7758d38ee70c55290426c1f8d753d007dfdbe766222a53",
+  "development_task": "a195994e997c6f56a5c372817dea2dbdd7e0761da8b92ea956e00ca6ae0cded2",
+  "epoch": "c4c7fe8461a53cfc581bd0f21e9071145cbfedbe3a24ab05fcaef044873d5a19",
+  "grant_version": 1,
+  "model": "openrouter/openrouter/free",
+  "parent_genome": "039339dca7b81491710c89c721490cd07ade0136b31efbbdbc4b1d53b5f3707a",
+  "route_identity": "842e5ad0ddcece98bc923ea5932792a96802a1b58e660ef55afb2b19608f3337"
+}

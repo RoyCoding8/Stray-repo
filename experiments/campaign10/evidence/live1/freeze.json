@@ -1,0 +1,93 @@
+{
+  "caps": {
+    "action_timeout_ms": 90000,
+    "action_token_ceiling": 400000,
+    "after_turn": 1,
+    "assessment_rounds": 1,
+    "assessment_wall_seconds": 480,
+    "development_wall_seconds": 120,
+    "execution": "benchmark",
+    "max_turns": 1,
+    "max_wakes_per_run": 5,
+    "model_admissions_total": 6,
+    "root_cpu": 3000000,
+    "root_tokens": 2400000,
+    "total_wall_seconds": 600
+  },
+  "caps_sha256": "d83020de45162a1c7fb9c84199026907730b325226df3ce296fd320d5bd7ae8a",
+  "identities": {
+    "allocation_roots": {
+      "cpu": "p10-cpu-p10-live-20261016-01",
+      "tokens": "p10-tokens-p10-live-20261016-01"
+    },
+    "assessment_tasks": {
+      "assessment-anchor": "3047cb6a503cc796c8befca202372d5653a4fac357d9a565489d209810ff5abe",
+      "assessment-development": "89f7fc296faf75213b021e978d0dd592ea3beb3d2b1d7642ee9188c8be6f4fab",
+      "assessment-validation": "5940f85953dab3600d3b9a8160f48d0ecc91d7451fc1a9918bf42e9889546d67"
+    },
+    "campaign_id": "p10-live-20261016-01",
+    "candidate_genome": "8cb963dbfbb28901fb7758d38ee70c55290426c1f8d753d007dfdbe766222a53",
+    "development_task": "a195994e997c6f56a5c372817dea2dbdd7e0761da8b92ea956e00ca6ae0cded2",
+    "epoch": "c4c7fe8461a53cfc581bd0f21e9071145cbfedbe3a24ab05fcaef044873d5a19",
+    "grant_version": 1,
+    "model": "openrouter/openrouter/free",
+    "parent_genome": "039339dca7b81491710c89c721490cd07ade0136b31efbbdbc4b1d53b5f3707a",
+    "route_identity": "842e5ad0ddcece98bc923ea5932792a96802a1b58e660ef55afb2b19608f3337"
+  },
+  "identities_sha256": "6b1007d55fe1a69150313062c8606a27009674d64ef0eaef2de734cef30b05e7",
+  "mode": "live",
+  "mode_sha256": "247610f4dedd4ab7247d07dbda19c81ca9817f85820742cad49d407ffae9e4ed",
+  "prepared_at_epoch": 1792124720.7175803,
+  "prepared_at_epoch_sha256": "c2d2fa5eee6698b906060429583d01b5d6538fd7276d12244d0cab158b1f9270",
+  "protocol": {
+    "rounds": [
+      {
+        "after_turn": 1,
+        "candidate": "8cb963dbfbb28901fb7758d38ee70c55290426c1f8d753d007dfdbe766222a53",
+        "epoch": "c4c7fe8461a53cfc581bd0f21e9071145cbfedbe3a24ab05fcaef044873d5a19",
+        "id": "final-assessment",
+        "model": "openrouter/openrouter/free",
+        "parent": "039339dca7b81491710c89c721490cd07ade0136b31efbbdbc4b1d53b5f3707a",
+        "route_identity": "842e5ad0ddcece98bc923ea5932792a96802a1b58e660ef55afb2b19608f3337"
+      }
+    ],
+    "schema": "p10-assessment/1"
+  },
+  "protocol_sha256": "b77c9cc3fe499fc462305ea19668fbc4ebe812685d16a2e96c0ffa856b16b9bf",
+  "scenario_sha256": "6dae7829c42232f2145904c499cbfb3adb42f27e647f8946485c8e092c0679a6",
+  "schema": "p10-campaign-pilot-freeze/1",
+  "source_manifest": {
+    "experiments/campaign10/driver.py": "31bc815329c6ba2e7da2f2bb0f93346180c2c2dddc856c7e3d4bb867292a0b25",
+    "experiments/campaign10/fixture_worker.py": "3e77060188547c9ec26c31715cf53d6484fce90bc1fa173c115341daf3302180",
+    "experiments/campaign10/freeze.py": "a34d014d5dc5ed408c758211c8c046e2ab595f5e986f540d6d8e4a4189ec8678",
+    "experiments/campaign10/scenario.json": "0c2cb9baca9084b69df964fa855482c079a54771e13964b1bd48114ab26c5cc5",
+    "src/rsi/__init__.py": "a51fe6e741aaa54972861d303419fe7c84bfeff66bd5af14256c1660d06e19ae",
+    "src/rsi/_method_runner.py": "c107904e40048871bff060afcfe0380fd785d33d695e1f042d100a08cffb0261",
+    "src/rsi/_unittest_runner.py": "789a04a1ad3e3f6695e9e343d50ccfe7d7ab17056747517a287ebee2d76d778e",
+    "src/rsi/agenda.py": "728805fdcb623ad3d73ead101b80fc22d8dc437242c294088ecaaaf04dc54f81",
+    "src/rsi/agenda_policy.py": "e6ad96f149a4ce5b56cd52935c104f11631d1f0c3a49b11ed39a0b349a768aab",
+    "src/rsi/archive.py": "5e48da9fb3f4f8bcccc1c556b7d66c97764584dbc66ac3182a9f31cbb88b8389",
+    "src/rsi/campaign.py": "19c2ce25725d880f8e41fef75901c824612d84e0da0533de4c9a1235a43cb71f",
+    "src/rsi/capability.py": "f8069ef45428bd2ee559a27c683a6ade630bc71aa961836c3444d5d2a6e65cff",
+    "src/rsi/context.py": "eb32fbd1d157d585bf1dc6518da0865f7381922f2895cd71d10c0c3f3d0a55ac",
+    "src/rsi/episode.py": "35e64d19851b0dfc8c821d5b8a2259577bc163a0723f5388b77fdcef0b2dbd52",
+    "src/rsi/experience.py": "40140cf82eb44e020018f30d672a65e8b6428025749623b7399397318c5c716a",
+    "src/rsi/experiment.py": "880920f2f8171cbe621797fd93d72a037a625893048ae42de4788e6d339ca860",
+    "src/rsi/gate.py": "d7f86bd343a3c86ff0040de97dabf9feca7bb3300f542e54a439eab21ba2289b",
+    "src/rsi/genome.py": "e124e102eeaa416ff81f3f61c6e64ec7886dafcb700f2332e6e9341c5cd6f5be",
+    "src/rsi/improve.py": "95f9bc612e9be70342bd2d5054788345a32b842c2f3813fb4a44bc38cc38d5fc",
+    "src/rsi/investigate.py": "b491875baf5f6722dacd7f852b7dc3fe19dc2ab23cfff66097c2c7bac9cc3226",
+    "src/rsi/investigation.py": "c2c7855e9f86eb228abd9de385e10a6ecb0ede2711ad9dab2159dd4acc2dec21",
+    "src/rsi/loop.py": "98c01b93fe804660d47efa0e752b892f05c41fca363f8d22e209aee8d1d39b45",
+    "src/rsi/memory.py": "3755dd3bf58d0565b864f1bbea7bc2da24c13acf2b15e4ab395e02bba45fc28b",
+    "src/rsi/meta.py": "6398fa7247cdbf8cd620966d964bc06072d4329b1b1145b7bd5696fab712ae90",
+    "src/rsi/synthesis.py": "56c454f7e1b6b626ce1d19469c392a61c4077a4326030943bf2eac02d0d4990d",
+    "src/rsi/task.py": "0e1daeaedb9e7d4218ff1d11d427731003a3c67a95c3aca9ddfa70fe46d8a9b4",
+    "src/rsi/task_bank.py": "135a2f39fc9235ba63e05d617d4fb206c2806755629272a37c9907eed303ffc6",
+    "src/rsi/verifier.py": "402fe0310b7687cc1984f8cd47b50eab92390ce0ecb470b46826bdd6b77ec312",
+    "src/settlement/broker.py": "a5b3957fc49b6c81480ba7ce7d8336d2e12c5b6db62317288ee155c9294dc2d6",
+    "src/settlement/launcher_codex.py": "20c0a3d5e0089498555c1c55846a9cb154218f2c68614d93d4e5d61e00e186e3",
+    "src/settlement/launcher_local.py": "aa19ab281e7beff0496c8222f944ca404bc96b08c66efdbe2dbdd208b4851d3d"
+  },
+  "source_sha256": "91b8db991e2b53f35440753672b956cab5ed72c7e10bd73fce3af3d5b4c4ab6d"
+}

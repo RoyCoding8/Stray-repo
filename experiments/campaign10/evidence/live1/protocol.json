@@ -1,0 +1,14 @@
+{
+  "rounds": [
+    {
+      "after_turn": 1,
+      "candidate": "8cb963dbfbb28901fb7758d38ee70c55290426c1f8d753d007dfdbe766222a53",
+      "epoch": "c4c7fe8461a53cfc581bd0f21e9071145cbfedbe3a24ab05fcaef044873d5a19",
+      "id": "final-assessment",
+      "model": "openrouter/openrouter/free",
+      "parent": "039339dca7b81491710c89c721490cd07ade0136b31efbbdbc4b1d53b5f3707a",
+      "route_identity": "842e5ad0ddcece98bc923ea5932792a96802a1b58e660ef55afb2b19608f3337"
+    }
+  ],
+  "schema": "p10-assessment/1"
+}

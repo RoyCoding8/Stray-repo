@@ -1,0 +1,35 @@
+{
+  "allocations": {
+    "cpu": {
+      "id": "p10-cpu-p10-live-20261016-01",
+      "units": 3000000
+    },
+    "tokens": {
+      "id": "p10-tokens-p10-live-20261016-01",
+      "units": 2400000
+    }
+  },
+  "deadline": "2026-10-16T06:25:20.640008+00:00",
+  "grant_version": 1,
+  "max_turns": 1,
+  "objective": "Complete one development task, then run the frozen final comparison.",
+  "opportunities": [
+    {
+      "expected_observation": "A pristine development verifier result.",
+      "genome_id": "039339dca7b81491710c89c721490cd07ade0136b31efbbdbc4b1d53b5f3707a",
+      "id": "campaign-development",
+      "max_steps": 1,
+      "objective": "Complete the distinct campaign development task.",
+      "priority": 1,
+      "question": "Does the parent solve the supplied development task?",
+      "resource_ceilings": {
+        "cpu": 90000,
+        "tokens": 400000
+      },
+      "stop_condition": "Stop after the single turn or at the declared deadline.",
+      "task_id": "a195994e997c6f56a5c372817dea2dbdd7e0761da8b92ea956e00ca6ae0cded2",
+      "timeout_ms": 90000
+    }
+  ],
+  "policy": "seed/1"
+}

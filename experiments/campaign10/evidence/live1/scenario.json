@@ -1,0 +1,84 @@
+{
+  "candidate_advice": "Read the assigned instruction, inspect the existing code, and make the smallest correct implementation. Keep changes within the task workspace and run the supplied verifier. Before editing, list the edge cases implied by the interface and test those cases using the supplied verifier.",
+  "caps": {
+    "action_timeout_ms": 90000,
+    "action_token_ceiling": 400000,
+    "after_turn": 1,
+    "assessment_rounds": 1,
+    "assessment_wall_seconds": 480,
+    "development_wall_seconds": 120,
+    "execution": "benchmark",
+    "max_turns": 1,
+    "max_wakes_per_run": 5,
+    "model_admissions_total": 6,
+    "root_cpu": 3000000,
+    "root_tokens": 2400000,
+    "total_wall_seconds": 600
+  },
+  "claim_scope": "bounded campaign mechanism qualification; no acquisition, transfer, learning, or general autonomy claim",
+  "model": "openrouter/openrouter/free",
+  "parent_advice": "Read the assigned instruction, inspect the existing code, and make the smallest correct implementation. Keep changes within the task workspace and run the supplied verifier.",
+  "schema": "p10-campaign-pilot-scenario/1",
+  "tasks": [
+    {
+      "id": "campaign-development",
+      "instruction": "Implement sum_positive(values), returning the sum of values strictly greater than zero. Return zero for an empty input.",
+      "name": "p10-pilot-campaign-development",
+      "reference": {
+        "score.py": "def sum_positive(values):\n    return sum(value for value in values if value > 0)\n"
+      },
+      "split": "dev",
+      "tests": {
+        "test_score.py": "import unittest\nfrom score import sum_positive\n\nclass SumPositiveTests(unittest.TestCase):\n    def test_positive_and_nonpositive_values(self):\n        self.assertEqual(sum_positive([-2, 0, 3, 5]), 8)\n    def test_empty_values(self):\n        self.assertEqual(sum_positive([]), 0)\n"
+      },
+      "workspace": {
+        "score.py": "def sum_positive(values):\n    return 0\n"
+      }
+    },
+    {
+      "id": "assessment-development",
+      "instruction": "Implement first_nonempty(lines), returning the first string whose stripped value is nonempty, or None when no such string exists.",
+      "name": "p10-pilot-assessment-development",
+      "reference": {
+        "selection.py": "def first_nonempty(lines):\n    return next((line for line in lines if line.strip()), None)\n"
+      },
+      "split": "dev",
+      "tests": {
+        "test_selection.py": "import unittest\nfrom selection import first_nonempty\n\nclass FirstNonemptyTests(unittest.TestCase):\n    def test_skips_blank_lines(self):\n        self.assertEqual(first_nonempty([' ', ' item ', 'next']), ' item ')\n    def test_no_match(self):\n        self.assertIsNone(first_nonempty(['', '  ']))\n"
+      },
+      "workspace": {
+        "selection.py": "def first_nonempty(lines):\n    return None\n"
+      }
+    },
+    {
+      "id": "assessment-validation",
+      "instruction": "Implement merge_counts(left, right), returning a new dictionary whose counts are the sum of matching keys from both inputs. Do not mutate either input.",
+      "name": "p10-pilot-assessment-validation",
+      "reference": {
+        "counts.py": "def merge_counts(left, right):\n    merged = dict(left)\n    for key, value in right.items():\n        merged[key] = merged.get(key, 0) + value\n    return merged\n"
+      },
+      "split": "val",
+      "tests": {
+        "test_counts.py": "import unittest\nfrom counts import merge_counts\n\nclass MergeCountsTests(unittest.TestCase):\n    def test_combines_keys(self):\n        self.assertEqual(merge_counts({'a': 2}, {'a': 3, 'b': 1}), {'a': 5, 'b': 1})\n    def test_does_not_mutate_inputs(self):\n        left, right = {'a': 2}, {'b': 1}\n        merge_counts(left, right)\n        self.assertEqual(left, {'a': 2})\n        self.assertEqual(right, {'b': 1})\n"
+      },
+      "workspace": {
+        "counts.py": "def merge_counts(left, right):\n    return {}\n"
+      }
+    },
+    {
+      "id": "assessment-anchor",
+      "instruction": "Implement rotate_pair(pair), returning a new two-item tuple with the second item first. Raise ValueError unless pair has exactly two items.",
+      "name": "p10-pilot-assessment-anchor",
+      "reference": {
+        "pair_ops.py": "def rotate_pair(pair):\n    if len(pair) != 2:\n        raise ValueError('pair must contain two items')\n    return pair[1], pair[0]\n"
+      },
+      "split": "anchor",
+      "tests": {
+        "test_pair_ops.py": "import unittest\nfrom pair_ops import rotate_pair\n\nclass RotatePairTests(unittest.TestCase):\n    def test_rotates_two_items(self):\n        self.assertEqual(rotate_pair(('left', 'right')), ('right', 'left'))\n    def test_rejects_other_lengths(self):\n        with self.assertRaises(ValueError):\n            rotate_pair(('only',))\n"
+      },
+      "workspace": {
+        "pair_ops.py": "def rotate_pair(pair):\n    return pair\n"
+      }
+    }
+  ]
+}
