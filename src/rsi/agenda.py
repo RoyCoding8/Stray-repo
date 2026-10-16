@@ -28,10 +28,12 @@ from psycopg.types.json import Json
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode, SettlementError, StaleRevision
 
-from . import agenda_policy, capability, genome, investigate, investigation, memory, task, verifier
+from . import (agenda_policy, capability, genome, investigate, investigation,
+               memory, search, task, verifier)
 
 _MAX_OPTIONS = 64
 _MAX_TURNS = 100
+_POLICY_INTERFACE = "exploration-policy/1"
 
 
 def _json(value):
@@ -56,8 +58,20 @@ def _parse(charter):
                 "deadline", "opportunities"}
     if not isinstance(charter, dict) or required - charter.keys():
         raise SettlementError("charter is missing required fields")
-    if charter["policy"] not in {"seed/1", "adaptive/1"}:
-        raise SettlementError("policy must be seed/1 or adaptive/1")
+    policy = charter["policy"]
+    if isinstance(policy, str):
+        if policy not in {"seed/1", "adaptive/1"}:
+            raise SettlementError("policy must be seed/1, adaptive/1, or an exploration policy")
+    elif (not isinstance(policy, dict)
+          or set(policy) != {"genome", "name", "interface", "timeout_ms", "max_output_bytes"}
+          or any(not isinstance(policy.get(key), str) or not policy[key].strip()
+                 for key in ("genome", "name", "interface"))
+          or policy.get("interface") != _POLICY_INTERFACE):
+        raise SettlementError("native policy needs genome, name, exploration-policy/1, and bounds")
+    else:
+        _positive(policy.get("timeout_ms"), "policy.timeout_ms", capability.MAX_TIMEOUT_MS)
+        _positive(policy.get("max_output_bytes"), "policy.max_output_bytes",
+                  capability.MAX_OUTPUT_BYTES)
     if not isinstance(charter["objective"], str) or not charter["objective"].strip():
         raise SettlementError("objective must be non-empty")
     _positive(charter["grant_version"], "grant_version")
@@ -167,6 +181,29 @@ def _load_catalogue(dsn, artifacts_root, charter, *, allow_missing=False):
     return result
 
 
+def _load_policy(dsn, artifacts_root, charter, *, allow_missing=False):
+    policy = charter["policy"]
+    if isinstance(policy, str):
+        return None
+    try:
+        organism = genome.load(dsn, artifacts_root, policy["genome"])
+    except (SettlementError, OSError):
+        if allow_missing:
+            return None
+        raise
+    method = next((item for item in capability.catalogue(organism)
+                   if item.name == policy["name"] and item.interface == policy["interface"]), None)
+    if method is None:
+        if allow_missing:
+            return None
+        raise SettlementError("native policy does not name its genome's exact interface")
+    limits = method.descriptor["limits"]
+    if (policy["timeout_ms"] > limits["timeout_ms"]
+            or policy["max_output_bytes"] > limits["max_output_bytes"]):
+        raise SettlementError("native policy bounds exceed the method's declared limits")
+    return organism
+
+
 def _authority(cur, agenda_id, charter):
     version = charter["grant_version"]
     cur.execute("SELECT authority_version FROM control WHERE id=1")
@@ -178,6 +215,8 @@ def _authority(cur, agenda_id, charter):
     authority, envelope = dict(grant["authority_grant"] or {}), dict(grant["envelopes"] or {})
     tasks = {i["task_id"] for i in charter["opportunities"]}
     genomes = {i["genome_id"] for i in charter["opportunities"]}
+    if isinstance(charter["policy"], dict):
+        genomes.add(charter["policy"]["genome"])
     if (authority.get("kind") != "rsi-agenda" or authority.get("agenda_id") != agenda_id
             or not tasks <= set(authority.get("development_task_ids", []))
             or not genomes <= set(authority.get("genome_ids", []))
@@ -203,6 +242,7 @@ def create(dsn, *, agenda_id, charter, artifacts_root):
     charter, digest = _json(charter)
     charter = _parse(charter)
     _load_catalogue(dsn, artifacts_root, charter, allow_missing=True)
+    _load_policy(dsn, artifacts_root, charter)
 
     def save(cur, control):
         cur.execute("SELECT charter_digest FROM rsi_agendas WHERE agenda_id=%s", (agenda_id,))
@@ -547,8 +587,8 @@ def _p01_incompatibility(config, opportunity, charter, agent):
     return None
 
 
-def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
-                staging_root, artifacts_root):
+def _ensure_p01_state(dsn, agent, opportunity, flight, charter, loaded,
+                      staging_root, artifacts_root):
     inv_id = flight["investigation_id"]
     state = investigation.read(dsn, inv_id)
     lessons = _lesson_claim_ids(charter, opportunity["id"])
@@ -567,6 +607,61 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
     incompatibility = _p01_incompatibility(state["config"], opportunity, charter, agent)
     if incompatibility is not None:
         raise SettlementError(incompatibility)
+    return state
+
+
+def _target_was_observed(dsn, investigation_id, decision_id, attempt_id, operation_id):
+    history = investigation.export(dsn, investigation_id)
+    if history is None:
+        return False
+    decision = next((item for item in history["decisions"] if item["id"] == decision_id), None)
+    if (decision is None or decision["kind"] != "worker"
+            or decision["data"].get("attempt_id") != attempt_id
+            or decision["data"].get("operation_id") != operation_id):
+        return False
+    return any(item["decision_id"] == decision_id
+               and item["content"].get("episode") == operation_id
+               for item in history["observations"])
+
+
+def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
+                staging_root, artifacts_root):
+    state = _ensure_p01_state(dsn, agent, opportunity, flight, charter, loaded,
+                              staging_root, artifacts_root)
+    start = flight.get("start")
+    if start is not None:
+        target_revision = int(start["target_revision"])
+        decision_id, attempt_id, operation_id = (start[key] for key in
+                                                 ("decision_id", "attempt_id", "operation_id"))
+        pending = state.get("pending_decision")
+        if pending is not None:
+            if ((pending["id"], pending["attempt_id"], pending["operation_id"])
+                    != (decision_id, attempt_id, operation_id)
+                    or pending.get("visible_input") != start["visible_input"]):
+                raise StaleRevision("pending P01 input differs from the policy-pinned start")
+        elif not _target_was_observed(dsn, flight["investigation_id"],
+                                      decision_id, attempt_id, operation_id):
+            prepared = investigate.prepare_context(
+                dsn, flight["investigation_id"], target_revision=target_revision,
+                artifacts_root=artifacts_root)
+            if (prepared.get("visible_input") != start["visible_input"]
+                    or (prepared.get("decision_id"), prepared.get("attempt_id"),
+                        prepared.get("operation_id")) != (decision_id, attempt_id, operation_id)):
+                raise StaleRevision("prepared P01 input changed after policy admission")
+            investigate._require(investigation.decide(dsn, Command(
+                request_id="p01-decide:" + decision_id.removeprefix("p01-decision-"),
+                expected_revision=target_revision,
+                payload={"investigation_id": flight["investigation_id"],
+                         "decision_id": decision_id,
+                         "attempt_id": attempt_id,
+                         "operation_id": operation_id,
+                         "action": {"kind": "worker",
+                                    "explanation": "Attempt the open obligation using checked feedback.",
+                                    "intended_observation": investigate.QUESTION},
+                         "visible_input": start["visible_input"]})))
+        return investigate.step(dsn, agent, checker, flight["investigation_id"],
+                                staging_root=staging_root, artifacts_root=artifacts_root,
+                                target_revision=target_revision)
     return investigate.step(dsn, agent, checker, inv_id, staging_root=staging_root,
                             artifacts_root=artifacts_root,
                             target_revision=flight["target_revision"])
@@ -574,6 +669,9 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
 
 def _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root,
             *, flight):
+    if flight.get("kind") == "policy":
+        return _finish_policy(dsn, agent, checker, agenda_id, state, loaded,
+                              staging_root, artifacts_root, flight=flight)
     opportunity = next(i for i in state["charter"]["opportunities"]
                        if i["id"] == flight["opportunity_id"])
     if loaded.get(opportunity["id"]) is None:
@@ -799,16 +897,10 @@ def _stop(dsn, agenda_id, state, snapshot, reason):
         "status": "stale", "reason": result.detail}
 
 
-def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
-                    staging_root, artifacts_root):
+def _opportunity_options(dsn, agenda_id, state, loaded, agent, artifacts_root, *,
+                         free_tokens, free_cpu):
     charter = state["charter"]
-    deadline = datetime.fromisoformat(charter["deadline"])
-    if state["turns"] >= charter["max_turns"] or datetime.now(UTC) >= deadline:
-        return _stop(dsn, agenda_id, state, snapshot, "hard turn/deadline cap")
     current_grant = int(store.get_control(dsn)["authority_version"]) == charter["grant_version"]
-    token_root, cpu_root = (charter["allocations"]["tokens"]["id"],
-                            charter["allocations"]["cpu"]["id"])
-    free_tokens, free_cpu = store.allocation_free(dsn, token_root), store.allocation_free(dsn, cpu_root)
     options = []
     for item in charter["opportunities"]:
         kind = _kind(item)
@@ -852,7 +944,8 @@ def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
                 if "retention" in reason:
                     reason = "no checked retention for the exact genome method interface: " + reason
         elif kind == "scope-probe":
-            triggered = _checked_failed_lesson_use(dsn, agenda_id, item, charter, loaded, artifacts_root)
+            triggered = _checked_failed_lesson_use(
+                dsn, agenda_id, item, charter, loaded, artifacts_root)
             if not triggered:
                 eligible, reason = False, "no checked failed later use of the referenced learner-visible lesson"
         options.append({"id": item["id"], "eligible": eligible, "priority": item["priority"],
@@ -860,6 +953,23 @@ def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
                         "last_selected": _last_selected(dsn, agenda_id, item["id"]),
                         "reason": reason, "investigation_id": inv_id,
                         "target_revision": p01["revision"] if p01 else 0})
+    return options
+
+
+def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
+                    staging_root, artifacts_root):
+    charter = state["charter"]
+    deadline = datetime.fromisoformat(charter["deadline"])
+    if state["turns"] >= charter["max_turns"] or datetime.now(UTC) >= deadline:
+        return _stop(dsn, agenda_id, state, snapshot, "hard turn/deadline cap")
+    token_root, cpu_root = (charter["allocations"]["tokens"]["id"],
+                            charter["allocations"]["cpu"]["id"])
+    free_tokens, free_cpu = store.allocation_free(dsn, token_root), store.allocation_free(dsn, cpu_root)
+    # Fixed policies keep their existing resource and ranking path. Native policies
+    # use the same eligibility projection with their own CPU admission included.
+    options = _opportunity_options(
+        dsn, agenda_id, state, loaded, agent, artifacts_root,
+        free_tokens=free_tokens, free_cpu=free_cpu)
     ranked = agenda_policy.rank(options, charter["policy"])
     selected = next((option for option in ranked if option["eligible"]), None)
     if selected is None:
@@ -876,6 +986,638 @@ def _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
                    staging_root, artifacts_root, flight=flight)
 
 
+def _allocation_state(dsn, allocation_id):
+    with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("SELECT a.authorized,a.reserved,a.consumed,"
+                    "COALESCE(sum(child.authorized),0) AS children "
+                    "FROM allocations a LEFT JOIN allocations child ON child.parent_id=a.id "
+                    "WHERE a.id=%s GROUP BY a.id",
+                    (allocation_id,))
+        row = cur.fetchone()
+    if row is None:
+        raise SettlementError("agenda allocation root is missing")
+    result = {key: int(row[key]) for key in ("authorized", "reserved", "consumed")}
+    result["free"] = result["authorized"] - result["reserved"] - result["consumed"] - int(row["children"])
+    return result
+
+
+def _policy_admissions(dsn, agenda_id):
+    with db.read_connect(dsn) as conn:
+        row = conn.execute("SELECT count(*) FROM rsi_decisions"
+                           " WHERE subject=%s AND kind='p05.policy_admission'",
+                           (agenda_id,)).fetchone()
+    return int(row[0])
+
+
+def _method_worker_request(item, visible, method):
+    fields = ("objective", "objective_revision", "state_revision",
+              "open_questions", "artifact_refs", "previous_observation")
+    continuation = {**{field: visible[field] for field in fields},
+                    "context_packet": visible["context_packet"]}
+    return {"interface": method["interface"], "value": method["value"],
+            "files": {path: raw.decode("utf-8") for path, raw in item.workspace.items()},
+            "context": {"continuation": continuation, "task_digest": item.digest}}
+
+
+def _prepare_start(dsn, agent, checker, agenda_id, charter, option, loaded,
+                   staging_root, artifacts_root):
+    item = next(entry for entry in charter["opportunities"] if entry["id"] == option["id"])
+    state = _ensure_p01_state(
+        dsn, agent, item, option, charter, loaded, staging_root, artifacts_root)
+    if (state["revision"] != option["target_revision"] or state["status"] != "ready"
+            or state["pending_decision"] is not None):
+        return None, "P01 start changed while the option was being prepared"
+    prepared = investigate.prepare_context(
+        dsn, option["investigation_id"], target_revision=option["target_revision"],
+        artifacts_root=artifacts_root)
+    if "visible_input" not in prepared:
+        refusal = prepared.get("context_outcome") or prepared.get("capability_outcome")
+        return None, str((refusal or {}).get("reason") or "P01 could not prepare a visible input")[:512]
+    organism = loaded[option["id"]][1]
+    config = state["config"]
+    method = prepared["visible_input"].get("capability")
+    runtime = {"execution_version": ""}
+    if method is not None:
+        request = _method_worker_request(loaded[option["id"]][0], prepared["visible_input"],
+                                         config["method"])
+        plan = capability.plan_invocation(
+            checker, organism, config["method"]["name"], request,
+            timeout_ms=config["timeout_ms"])
+        runtime = {"execution_version": plan.execution_version, **dict(plan.runtime)}
+    return {
+        "investigation_id": option["investigation_id"],
+        "target_revision": option["target_revision"],
+        "decision_id": prepared["decision_id"],
+        "attempt_id": prepared["attempt_id"],
+        "operation_id": prepared["operation_id"],
+        "visible_input": prepared["visible_input"],
+        "task": loaded[option["id"]][0].digest,
+        "genome": organism.digest,
+        "model": config.get("model") or "",
+        "method": method,
+        "runtime": runtime,
+        "evaluator_version": loaded[option["id"]][0].evaluator_version,
+        "limits": {key: config[key] for key in
+                   ("timeout_ms", "token_ceiling", "max_steps",
+                    "token_allocation", "cpu_allocation")},
+    }, None
+
+
+def _policy_prefix(dsn, agenda_id):
+    history = export(dsn, agenda_id)
+    prefix = []
+    for decision in history["decisions"]:
+        data = dict(decision.get("data") or {})
+        if decision["kind"] == "p05.choice":
+            prefix.append({"kind": "choice", "opportunity_id": data.get("opportunity_id"),
+                           "turn": data.get("turn")})
+        elif decision["kind"] == "p05.ack":
+            observation = dict(data.get("observation") or {})
+            prefix.append({"kind": "observation", "opportunity_id": data.get("opportunity_id"),
+                           "status": observation.get("status"),
+                           "passed": observation.get("passed")})
+    return prefix
+
+
+def _prepared_policy_frame(dsn, agent, checker, agenda_id, state, loaded,
+                           staging_root, artifacts_root, *, free_tokens, free_cpu,
+                           policy_cpu, admissions_remaining):
+    charter = state["charter"]
+    options = _opportunity_options(
+        dsn, agenda_id, state, loaded, agent, artifacts_root,
+        free_tokens=free_tokens, free_cpu=free_cpu)
+    starts = {}
+    for option in options:
+        if not option["eligible"]:
+            continue
+        try:
+            start, refusal = _prepare_start(
+                dsn, agent, checker, agenda_id, charter, option, loaded,
+                staging_root, artifacts_root)
+        except (SettlementError, OSError, UnicodeError) as exc:
+            start, refusal = None, str(exc)[:512]
+        if refusal is not None:
+            option["eligible"], option["reason"] = False, refusal
+            continue
+        starts[option["id"]] = start
+    menu = []
+    for option in options:
+        item = next(entry for entry in charter["opportunities"] if entry["id"] == option["id"])
+        start = starts.get(option["id"])
+        row = {"opportunity_id": option["id"],
+               "objective": item["objective"], "question": item["question"],
+               "priority": option["priority"], "kind": option["kind"],
+               "triggered": option["triggered"], "last_selected": option["last_selected"],
+               "eligible": bool(start), "reason": option["reason"],
+               "task": item["task_id"], "genome": item["genome_id"],
+               "expected_observation": item["expected_observation"],
+               "stop_condition": item["stop_condition"],
+               "resource_ceilings": item["resource_ceilings"],
+               "target_revision": option["target_revision"]}
+        if start is not None:
+            row["prepared_input_digest"] = hashlib.sha256(json.dumps(
+                start["visible_input"], sort_keys=True, separators=(",", ":"),
+                ensure_ascii=False, allow_nan=False).encode("utf-8")).hexdigest()
+        menu.append(row)
+    visible = {"objective": charter["objective"], "menu": menu,
+               "prefix": _policy_prefix(dsn, agenda_id),
+               "limits": {"turns_remaining": max(0, charter["max_turns"] - state["turns"]),
+                          "policy_calls_remaining": admissions_remaining,
+                          "tokens_remaining": free_tokens,
+                          "cpu_remaining": free_cpu,
+                          "policy_cpu_units": policy_cpu,
+                          "deadline": charter["deadline"]}}
+    return visible, starts
+
+
+def _policy_identity(policy, organism, method, plan):
+    return {"genome": organism.digest, "name": policy["name"],
+            "interface": policy["interface"], "method_digest": method.digest,
+            "timeout_ms": policy["timeout_ms"],
+            "max_output_bytes": policy["max_output_bytes"],
+            "execution_version": plan.execution_version,
+            "runtime": dict(plan.runtime)}
+
+
+def _policy_request(visible):
+    return {"interface": _POLICY_INTERFACE, "value": visible, "files": {}, "context": {}}
+
+
+def _lock_allocation(cur, allocation_id):
+    cur.execute("SELECT authorized,reserved,consumed FROM allocations WHERE id=%s FOR UPDATE",
+                (allocation_id,))
+    row = cur.fetchone()
+    if row is None:
+        raise StaleRevision("agenda allocation root disappeared")
+    result = {key: int(row[key]) for key in ("authorized", "reserved", "consumed")}
+    cur.execute("SELECT COALESCE(sum(authorized),0) AS children FROM allocations WHERE parent_id=%s",
+                (allocation_id,))
+    children = int(cur.fetchone()["children"])
+    result["free"] = result["authorized"] - result["reserved"] - result["consumed"] - children
+    return result
+
+
+def _commit_policy_flight(dsn, agenda_id, state, snapshot, frame_digest,
+                          policy_identity, plan, resource_before, admissions_before):
+    charter = state["charter"]
+    revision = int(state["revision"])
+    identity = hashlib.sha256(
+        f"{agenda_id}:{revision}:{frame_digest}:{policy_identity['method_digest']}".encode()).hexdigest()
+    operation_id = "p05-policy-" + identity[:32]
+    flight = {"kind": "policy", "policy": policy_identity,
+              "policy_request_digest": plan.input_digest,
+              "operation_id": operation_id, "frame_digest": frame_digest,
+              "policy_cpu_units": broker.exposure_schedule(
+                  broker.SANDBOX_EXEC, {"timeout_ms": charter["policy"]["timeout_ms"]})[0],
+              "agenda_revision": revision + 1,
+              "grant_version": charter["grant_version"],
+              "deadline": charter["deadline"],
+              "admissions_before": admissions_before,
+              "source_snapshot": {"event_epoch": snapshot["event_epoch"],
+                                  "memory_revision": snapshot["memory_revision"]},
+              "resource_before": resource_before}
+    command = Command(
+        request_id=f"p05-policy-admit:{agenda_id}:{revision}:{frame_digest}",
+        payload={"agenda_id": agenda_id, "revision": revision,
+                 "frame_digest": frame_digest, "operation_id": operation_id})
+
+    def commit(cur, control):
+        cur.execute("SELECT * FROM rsi_agendas WHERE agenda_id=%s FOR UPDATE", (agenda_id,))
+        current = cur.fetchone()
+        if current is None or int(current["revision"]) != revision:
+            raise StaleRevision("agenda changed before policy admission")
+        if current["status"] != "active" or current["flight"] is not None:
+            raise StaleRevision("agenda no longer admits a policy flight")
+        if (int(current["revision"]) + 1 != flight["agenda_revision"]
+                or control["event_epoch"] != snapshot["event_epoch"]):
+            raise StaleRevision("policy source snapshot changed before admission")
+        if datetime.now(UTC) >= datetime.fromisoformat(charter["deadline"]):
+            raise StaleRevision("agenda deadline passed before policy admission")
+        if _pending_assessment(cur, agenda_id) is not None:
+            raise StaleRevision("an assessment assignment is pending")
+        cur.execute("SELECT revision FROM rsi_memory_clock WHERE id=1 FOR UPDATE")
+        memory_row = cur.fetchone()
+        if int(memory_row["revision"]) != snapshot["memory_revision"]:
+            raise StaleRevision("policy memory snapshot changed before admission")
+        _authority(cur, agenda_id, charter)
+        cur.execute("SELECT count(*) AS admissions FROM rsi_decisions WHERE subject=%s"
+                    " AND kind='p05.policy_admission'", (agenda_id,))
+        admissions = int(cur.fetchone()["admissions"])
+        if admissions >= charter["max_turns"]:
+            raise StaleRevision("native policy admission limit is exhausted")
+        for domain in ("tokens", "cpu"):
+            root_id = charter["allocations"][domain]["id"]
+            if _lock_allocation(cur, root_id) != resource_before[domain]:
+                raise StaleRevision(f"shared {domain} root changed before policy admission")
+        data = {"policy": policy_identity, "frame_digest": frame_digest,
+                "operation_id": operation_id,
+                "policy_request_digest": plan.input_digest,
+                "source_snapshot": flight["source_snapshot"],
+                "resource_before": resource_before,
+                "admission": admissions + 1}
+        _record(cur, agenda_id, "policy_admission", revision, data)
+        cur.execute("UPDATE rsi_agendas SET revision=revision+1,flight=%s,source_epoch=%s,"
+                    "memory_revision=%s,updated_at=now() WHERE agenda_id=%s",
+                    (Json(flight), snapshot["event_epoch"], snapshot["memory_revision"], agenda_id))
+        return (ResultCode.APPLIED, "native policy flight persisted", flight,
+                [("rsi.agenda.policy.admitted", {"agenda_id": agenda_id,
+                                                  "operation_id": operation_id,
+                                                  "frame_digest": frame_digest})], [])
+
+    result = store.transact(dsn, command, commit)
+    if result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        return result.data
+    if result.code == ResultCode.STALE_REVISION:
+        return None
+    raise SettlementError(result.detail)
+
+
+def _policy_operation(dsn, flight, cpu_allocation):
+    operation = broker.read_operation(dsn, flight["operation_id"])
+    if operation is None:
+        return {"status": "absent"}
+    payload = dict(operation.get("payload") or {})
+    if (payload.get("effect") != broker.SANDBOX_EXEC
+            or operation.get("allocation_id") != cpu_allocation
+            or operation.get("execution_version") != flight["policy"]["execution_version"]):
+        return {"status": "unknown", "operation": operation}
+    if (not operation.get("settled")
+            or operation.get("dispatch_state") not in {"observed", "reconciled"}
+            or operation.get("reconcile_state") in {"conflict", "unresolved"}):
+        return {"status": "pending", "operation": operation}
+    receipts = store.operation_receipts(dsn, flight["operation_id"])
+    if len(receipts) != 1 or not operation.get("reservation_id"):
+        return {"status": "pending", "operation": operation}
+    with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("SELECT allocation_id,amount,state FROM reservations WHERE id=%s",
+                    (operation["reservation_id"],))
+        reservation = cur.fetchone()
+    if (reservation is None or reservation["allocation_id"] != cpu_allocation
+            or reservation["state"] != "settled"):
+        return {"status": "pending", "operation": operation}
+    amount = int(reservation["amount"])
+    cost = payload.get("_receipt_actual_cost")
+    if cost is None:
+        cost = amount
+    if (amount != flight["policy_cpu_units"] or type(cost) is not int
+            or cost < 0 or cost > amount):
+        return {"status": "unknown", "operation": operation}
+    return {"status": "settled", "operation": operation,
+            "reservation_id": operation["reservation_id"],
+            "reservation_amount": amount, "cpu_units": cost,
+            "receipts": receipts}
+
+
+def _policy_result(invocation, starts):
+    if invocation.status != "completed":
+        return None, "native policy invocation " + invocation.status
+    if invocation.files:
+        return None, "native policy must return no files"
+    value = invocation.value
+    if not isinstance(value, dict) or not isinstance(value.get("action"), str):
+        return None, "native policy output must be a choose or stop object"
+    if value["action"] == "choose":
+        if set(value) != {"action", "opportunity_id"}:
+            return None, "native policy choice has an invalid shape"
+        opportunity_id = value.get("opportunity_id")
+        if not isinstance(opportunity_id, str) or opportunity_id not in starts:
+            return None, "native policy chose an ineligible opportunity"
+        return {"action": "choose", "opportunity_id": opportunity_id}, None
+    if value["action"] == "stop":
+        reason = value.get("reason")
+        if (set(value) != {"action", "reason"} or not isinstance(reason, str)
+                or not reason.strip() or len(reason.encode("utf-8")) > 1024):
+            return None, "native policy stop reason must be bounded and nonempty"
+        return {"action": "stop", "reason": reason}, None
+    return None, "native policy action must be choose or stop"
+
+
+def _check_policy_resources(dsn, charter, flight, evidence):
+    before = flight["resource_before"]
+    after = {domain: _allocation_state(dsn, charter["allocations"][domain]["id"])
+             for domain in ("tokens", "cpu")}
+    expected_cpu = dict(before["cpu"])
+    expected_cpu["consumed"] += evidence["cpu_units"]
+    expected_cpu["free"] -= evidence["cpu_units"]
+    if after["cpu"] != expected_cpu or after["tokens"] != before["tokens"]:
+        return None
+    return after
+
+
+def _revalidate_policy(dsn, agent, checker, agenda_id, state, charter, loaded,
+                       staging_root, artifacts_root, flight, frame, evidence):
+    snapshot = _source_snapshot(dsn, state)
+    if snapshot["memory_revision"] != flight["source_snapshot"]["memory_revision"]:
+        return None, "memory changed while the native policy ran"
+    resources = _check_policy_resources(dsn, charter, flight, evidence)
+    if resources is None:
+        return None, "shared agenda resources changed beyond the settled policy operation"
+    admissions_remaining = max(0, charter["max_turns"] - flight["admissions_before"])
+    # Reuse the pre-admission option budget; the root check accounts for the
+    # policy's own reservation settlement and rejects any other resource change.
+    limits = frame["visible"]["limits"]
+    visible, starts = _prepared_policy_frame(
+        dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root,
+        free_tokens=limits["tokens_remaining"],
+        free_cpu=limits["cpu_remaining"], policy_cpu=flight["policy_cpu_units"],
+        admissions_remaining=admissions_remaining)
+    if visible != frame["visible"] or starts != frame["starts"]:
+        return None, "prepared opportunity menu or P01 input changed while the native policy ran"
+    fresh = _source_snapshot(dsn, state)
+    if (fresh["event_epoch"] != snapshot["event_epoch"]
+            or fresh["memory_revision"] != snapshot["memory_revision"]):
+        return None, "source frontier changed during native policy revalidation"
+    if datetime.now(UTC) >= datetime.fromisoformat(charter["deadline"]):
+        return None, "agenda deadline passed while the native policy ran"
+    return {"snapshot": fresh, "resources": resources, "starts": starts}, None
+
+
+def _finish_policy(dsn, agent, checker, agenda_id, state, loaded,
+                   staging_root, artifacts_root, *, flight):
+    charter = state["charter"]
+    policy = charter["policy"]
+    organism = _load_policy(dsn, artifacts_root, charter, allow_missing=True)
+    if organism is None:
+        return {"status": "pending", "reason": "pinned policy source is unavailable"}
+    try:
+        frame = search.load_frame(dsn, flight["frame_digest"], artifacts_root=artifacts_root)
+        method = next(item for item in capability.catalogue(organism)
+                      if item.name == policy["name"] and item.interface == policy["interface"])
+        request = _policy_request(frame["visible"])
+        plan = capability.plan_invocation(
+            checker, organism, policy["name"], request,
+            timeout_ms=policy["timeout_ms"], max_output_bytes=policy["max_output_bytes"])
+    except (SettlementError, OSError, StopIteration) as exc:
+        return {"status": "pending", "reason": "pinned policy plan is unavailable: " + str(exc)[:256]}
+    identity = _policy_identity(policy, organism, method, plan)
+    if (identity != flight["policy"] or plan.input_digest != flight["policy_request_digest"]
+            or frame["source"].get("agenda_id") != agenda_id
+            or frame["source"].get("agenda_revision") + 1 != flight["agenda_revision"]):
+        return {"status": "pending", "reason": "pinned policy invocation identity no longer matches"}
+    cpu_id = charter["allocations"]["cpu"]["id"]
+    try:
+        invocation = capability.invoke(
+            dsn, checker, organism, policy["name"], request,
+            operation_id=flight["operation_id"], allocation_id=cpu_id, attempt_id=None,
+            staging_root=staging_root, artifacts_root=artifacts_root,
+            timeout_ms=policy["timeout_ms"], max_output_bytes=policy["max_output_bytes"])
+    except SettlementError as exc:
+        evidence = _policy_operation(dsn, flight, cpu_id)
+        if evidence["status"] == "absent":
+            snapshot = _source_snapshot(dsn, state)
+            return _close_policy_flight(
+                dsn, agenda_id, state, flight, snapshot,
+                {"kind": "policy_refusal", "operation_admitted": False,
+                 "reason": "native policy admission refused: " + str(exc)[:256]},
+                status="deferred", resources=None)
+        return {"status": "pending", "reason": "native policy operation remains unresolved"}
+    evidence = _policy_operation(dsn, flight, cpu_id)
+    if evidence["status"] != "settled":
+        return {"status": "pending", "reason": "native policy operation has no definitive settlement"}
+    decision, refusal = _policy_result(invocation, frame["starts"])
+    check, invalidation = _revalidate_policy(
+        dsn, agent, checker, agenda_id, state, charter, loaded,
+        staging_root, artifacts_root, flight, frame, evidence)
+    if check is None:
+        expired = datetime.now(UTC) >= datetime.fromisoformat(charter["deadline"])
+        return _close_policy_flight(
+            dsn, agenda_id, state, flight, _source_snapshot(dsn, state),
+            {"kind": "policy_refusal", "reason": invalidation},
+            status="stopped" if expired else "deferred", resources=None)
+    snapshot, resources = check["snapshot"], check["resources"]
+    policy_result = {"status": "completed", "value": invocation.value,
+                     "output_digest": invocation.output_digest,
+                     "operation_id": flight["operation_id"]}
+    if refusal is not None:
+        return _close_policy_flight(
+            dsn, agenda_id, state, flight, snapshot,
+            {"kind": "policy_refusal", "reason": refusal,
+             "policy_result": policy_result},
+            status="deferred", resources=resources)
+    if decision["action"] == "stop":
+        return _close_policy_flight(
+            dsn, agenda_id, state, flight, snapshot,
+            {"kind": "policy_stop", "reason": decision["reason"],
+             "policy_result": policy_result},
+            status="stopped", resources=resources)
+    opportunity_id = decision["opportunity_id"]
+    return _commit_policy_choice(
+        dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root,
+        flight, frame, opportunity_id, snapshot, resources, policy_result)
+
+
+def _lock_policy_transition(cur, control, agenda_id, revision, flight, snapshot,
+                            resources, *, require_authority, allow_expired):
+    cur.execute("SELECT * FROM rsi_agendas WHERE agenda_id=%s FOR UPDATE", (agenda_id,))
+    current = cur.fetchone()
+    if (current is None or int(current["revision"]) != revision
+            or current["flight"] != flight or current["status"] != "active"):
+        raise StaleRevision("native policy flight changed before transition")
+    if current["charter"]["deadline"] != flight["deadline"]:
+        raise StaleRevision("native policy deadline changed")
+    expired = datetime.now(UTC) >= datetime.fromisoformat(flight["deadline"])
+    if expired and not allow_expired:
+        raise StaleRevision("agenda deadline passed before policy transition")
+    if control["event_epoch"] != snapshot["event_epoch"]:
+        raise StaleRevision("agenda event frontier changed before policy transition")
+    cur.execute("SELECT revision FROM rsi_memory_clock WHERE id=1 FOR UPDATE")
+    memory_row = cur.fetchone()
+    if int(memory_row["revision"]) != snapshot["memory_revision"]:
+        raise StaleRevision("memory changed before policy transition")
+    if require_authority:
+        _authority(cur, agenda_id, current["charter"])
+    if resources is not None:
+        for domain in ("tokens", "cpu"):
+            if (_lock_allocation(cur, current["charter"]["allocations"][domain]["id"])
+                    != resources[domain]):
+                raise StaleRevision(f"shared {domain} root changed before policy transition")
+    return current
+
+
+def _close_policy_flight(dsn, agenda_id, state, flight, snapshot, decision,
+                         *, status, resources):
+    revision = int(state["revision"])
+    result_status = "stopped" if status == "stopped" else "deferred"
+    decision = {**decision, "operation_admitted": decision.get("operation_admitted", True)}
+    data = {**flight, **decision, "source_snapshot_after_policy": {
+        "event_epoch": snapshot["event_epoch"],
+        "memory_revision": snapshot["memory_revision"]}}
+    cmd = Command(request_id=f"p05-{decision['kind']}:{agenda_id}:{revision}",
+                  payload={"agenda_id": agenda_id, "revision": revision,
+                           "operation_id": flight["operation_id"], "decision": decision})
+
+    def close(cur, control):
+        _lock_policy_transition(
+            cur, control, agenda_id, revision, flight, snapshot, resources,
+            require_authority=False, allow_expired=status == "stopped")
+        _record(cur, agenda_id, decision["kind"], revision, data)
+        result = {"status": result_status, **decision, "frame_digest": flight["frame_digest"]}
+        cur.execute("UPDATE rsi_agendas SET revision=revision+1,status=%s,flight=NULL,"
+                    "source_epoch=%s,memory_revision=%s,last_result=%s,updated_at=now() "
+                    "WHERE agenda_id=%s",
+                    ("stopped" if status == "stopped" else "active",
+                     snapshot["event_epoch"], snapshot["memory_revision"], Json(result), agenda_id))
+        return (ResultCode.APPLIED, "native policy flight closed", result,
+                [("rsi.agenda.policy." + ("stopped" if status == "stopped" else "refused"),
+                  {"agenda_id": agenda_id, "operation_id": flight["operation_id"]})], [])
+
+    result = store.transact(dsn, cmd, close)
+    if result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        return result.data
+    if result.code == ResultCode.STALE_REVISION:
+        return {"status": "stale", "reason": result.detail}
+    raise SettlementError(result.detail)
+
+
+def _commit_policy_choice(dsn, agent, checker, agenda_id, state, loaded,
+                          staging_root, artifacts_root, flight, frame,
+                          opportunity_id, snapshot, resources, policy_result):
+    revision = int(state["revision"])
+    start = frame["starts"][opportunity_id]
+    choice_id = _choice_id(agenda_id, revision, "choice")
+    choice_flight = {**flight, "kind": "work", "opportunity_id": opportunity_id,
+                     "operation_admitted": True,
+                     "investigation_id": start["investigation_id"],
+                     "target_revision": start["target_revision"],
+                     "choice_id": choice_id, "start": start,
+                     "source_snapshot": {"event_epoch": snapshot["event_epoch"],
+                                         "memory_revision": snapshot["memory_revision"]},
+                     "resource_after_policy": resources,
+                     "policy_result": policy_result}
+    data = {"opportunity_id": opportunity_id, "investigation_id": start["investigation_id"],
+            "target_revision": start["target_revision"], "choice_id": choice_id,
+            "turn": int(state["turns"]) + 1, "policy": flight["policy"],
+            "frame_digest": flight["frame_digest"], "operation_id": flight["operation_id"],
+            "operation_admitted": True, "policy_result": policy_result,
+            "menu": frame["visible"]["menu"],
+            "source_snapshot": choice_flight["source_snapshot"]}
+    cmd = Command(request_id=f"p05-policy-choice:{agenda_id}:{revision}:{choice_id}",
+                  payload={"agenda_id": agenda_id, "revision": revision,
+                           "choice_id": choice_id, "opportunity_id": opportunity_id})
+
+    def commit(cur, control):
+        current = _lock_policy_transition(
+            cur, control, agenda_id, revision, flight, snapshot, resources,
+            require_authority=True, allow_expired=False)
+        if _pending_assessment(cur, agenda_id) is not None:
+            raise StaleRevision("an assessment assignment is pending")
+        cur.execute("SELECT revision,status,pending_decision_id FROM rsi_investigations "
+                    "WHERE investigation_id=%s FOR UPDATE", (start["investigation_id"],))
+        p01 = cur.fetchone()
+        if (p01 is None or int(p01["revision"]) != int(start["target_revision"])
+                or p01["status"] != "ready" or p01["pending_decision_id"] is not None):
+            raise StaleRevision("selected P01 start changed before policy choice")
+        _record(cur, agenda_id, "choice", revision, data)
+        cur.execute("UPDATE rsi_agendas SET revision=revision+1,turns=turns+1,flight=%s,"
+                    "source_epoch=%s,memory_revision=%s,updated_at=now() WHERE agenda_id=%s",
+                    (Json(choice_flight), snapshot["event_epoch"], snapshot["memory_revision"], agenda_id))
+        return (ResultCode.APPLIED, "native policy choice advanced to P01 work", choice_flight,
+                [("rsi.agenda.choice", {"agenda_id": agenda_id,
+                                          "opportunity_id": opportunity_id})], [])
+
+    result = store.transact(dsn, cmd, commit)
+    if result.code in (ResultCode.APPLIED, ResultCode.ALREADY_APPLIED):
+        return _finish(dsn, agent, checker, agenda_id, _row(dsn, agenda_id), loaded,
+                       staging_root, artifacts_root, flight=result.data)
+    if result.code == ResultCode.STALE_REVISION:
+        if "deadline passed" in result.detail:
+            current = _row(dsn, agenda_id)
+            return _close_policy_flight(
+                dsn, agenda_id, current, flight, _source_snapshot(dsn, current),
+                {"kind": "policy_refusal", "reason": result.detail},
+                status="stopped", resources=None)
+        return {"status": "stale", "reason": result.detail}
+    if result.code in (ResultCode.INVALID_INPUT, ResultCode.UNAUTHORIZED):
+        current = _row(dsn, agenda_id)
+        return _close_policy_flight(
+            dsn, agenda_id, current, flight, _source_snapshot(dsn, current),
+            {"kind": "policy_refusal", "reason": "agenda grant no longer authorizes P01 admission"},
+            status="stopped", resources=None)
+    raise SettlementError(result.detail)
+
+
+def _select_with_policy(dsn, agent, checker, agenda_id, state, snapshot, loaded,
+                        policy_genome, staging_root, artifacts_root):
+    charter = state["charter"]
+    if (state["turns"] >= charter["max_turns"]
+            or datetime.now(UTC) >= datetime.fromisoformat(charter["deadline"])):
+        return _stop(dsn, agenda_id, state, snapshot, "hard turn/deadline cap")
+    admissions = _policy_admissions(dsn, agenda_id)
+    if admissions >= charter["max_turns"]:
+        return _stop(dsn, agenda_id, state, snapshot, "native policy admission limit reached")
+    if policy_genome is None:
+        return _defer(dsn, agenda_id, state, snapshot,
+                      [{"eligible": False, "reason": "native policy source is unavailable"}])
+    policy = charter["policy"]
+    method = next((item for item in capability.catalogue(policy_genome)
+                   if item.name == policy["name"] and item.interface == policy["interface"]), None)
+    if method is None:
+        return _defer(dsn, agenda_id, state, snapshot,
+                      [{"eligible": False, "reason": "native policy interface is unavailable"}])
+    policy_cpu = broker.exposure_schedule(
+        broker.SANDBOX_EXEC, {"timeout_ms": policy["timeout_ms"]})[0]
+    token_id, cpu_id = (charter["allocations"]["tokens"]["id"],
+                        charter["allocations"]["cpu"]["id"])
+    resource_before = {"tokens": _allocation_state(dsn, token_id),
+                       "cpu": _allocation_state(dsn, cpu_id)}
+    if policy_cpu > resource_before["cpu"]["free"]:
+        return _defer(dsn, agenda_id, state, snapshot,
+                      [{"eligible": False, "reason": "shared CPU root cannot cover native policy exposure"}])
+    admissions_remaining = charter["max_turns"] - admissions
+    visible, starts = _prepared_policy_frame(
+        dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root,
+        free_tokens=resource_before["tokens"]["free"],
+        free_cpu=resource_before["cpu"]["free"] - policy_cpu,
+        policy_cpu=policy_cpu, admissions_remaining=admissions_remaining)
+    if not starts:
+        return _defer(dsn, agenda_id, state, snapshot, visible["menu"])
+    prepared_snapshot = _source_snapshot(dsn, state)
+    source = {"agenda_id": agenda_id, "agenda_revision": state["revision"],
+              "event_epoch": prepared_snapshot["event_epoch"],
+              "memory_revision": prepared_snapshot["memory_revision"],
+              "policy_admissions": admissions}
+    try:
+        frame_digest = search.publish_frame(
+            dsn, visible, starts, source,
+            staging_root=staging_root, artifacts_root=artifacts_root)
+        frame = search.load_frame(dsn, frame_digest, artifacts_root=artifacts_root)
+    except (SettlementError, OSError) as exc:
+        return _defer(dsn, agenda_id, state, snapshot,
+                      [{"eligible": False, "reason": "prepared policy frame unavailable: " + str(exc)[:256]}])
+    current_resources = {"tokens": _allocation_state(dsn, token_id),
+                         "cpu": _allocation_state(dsn, cpu_id)}
+    if current_resources != resource_before:
+        return {"status": "stale", "reason": "shared agenda resources changed while the frame was published"}
+    rechecked_visible, rechecked_starts = _prepared_policy_frame(
+        dsn, agent, checker, agenda_id, state, loaded, staging_root, artifacts_root,
+        free_tokens=current_resources["tokens"]["free"],
+        free_cpu=current_resources["cpu"]["free"] - policy_cpu,
+        policy_cpu=policy_cpu, admissions_remaining=admissions_remaining)
+    current_snapshot = _source_snapshot(dsn, state)
+    if (rechecked_visible != frame["visible"] or rechecked_starts != frame["starts"]
+            or current_snapshot["memory_revision"] != prepared_snapshot["memory_revision"]):
+        return {"status": "stale", "reason": "prepared inputs changed before policy admission"}
+    try:
+        plan = capability.plan_invocation(
+            checker, policy_genome, policy["name"], _policy_request(frame["visible"]),
+            timeout_ms=policy["timeout_ms"], max_output_bytes=policy["max_output_bytes"])
+    except SettlementError as exc:
+        return _defer(dsn, agenda_id, state, current_snapshot,
+                      [{"eligible": False, "reason": "native policy plan refused: " + str(exc)[:256]}])
+    identity = _policy_identity(policy, policy_genome, method, plan)
+    flight = _commit_policy_flight(
+        dsn, agenda_id, state, current_snapshot, frame_digest, identity, plan,
+        current_resources, admissions)
+    if flight is None:
+        current = _row(dsn, agenda_id)
+        if current is not None and current["flight"] is not None:
+            return _finish(dsn, agent, checker, agenda_id, current, loaded,
+                           staging_root, artifacts_root, flight=current["flight"])
+        return {"status": "stale", "reason": "source snapshot changed before policy admission"}
+    return _finish(dsn, agent, checker, agenda_id, _row(dsn, agenda_id), loaded,
+                   staging_root, artifacts_root, flight=flight)
+
+
 def _wake(dsn, agent, checker, agenda_id, *, staging_root, artifacts_root):
     state = _row(dsn, agenda_id)
     if state is None:
@@ -884,6 +1626,7 @@ def _wake(dsn, agent, checker, agenda_id, *, staging_root, artifacts_root):
         return {"status": state["status"], "revision": state["revision"], "turns": state["turns"]}
     charter = _parse(state["charter"])
     loaded = _load_catalogue(dsn, artifacts_root, charter, allow_missing=True)
+    policy_genome = _load_policy(dsn, artifacts_root, charter, allow_missing=True)
     if state["flight"] is not None:
         return _finish(dsn, agent, checker, agenda_id, state, loaded, staging_root,
                        artifacts_root, flight=state["flight"])
@@ -898,6 +1641,10 @@ def _wake(dsn, agent, checker, agenda_id, *, staging_root, artifacts_root):
         if snapshot["event_epoch"] != state["source_epoch"]:
             _advance(dsn, agenda_id, state, snapshot)
         return dict(state["last_result"] or {"status": "unchanged"})
+    if isinstance(charter["policy"], dict):
+        return _select_with_policy(
+            dsn, agent, checker, agenda_id, state, snapshot, loaded,
+            policy_genome, staging_root, artifacts_root)
     return _select_and_run(dsn, agent, checker, agenda_id, state, snapshot, loaded,
                            staging_root, artifacts_root)
 
