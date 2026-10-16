@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import sys
+import time
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 from fixtures.p10_campaign import ROOT, prepare_campaign
 
-from rsi import archive, episode, gate, genome, verifier
+from rsi import archive, campaign, episode, gate, genome, verifier
 from settlement import db
 from settlement.launcher_codex import CodexLauncher, Provider
 
@@ -133,3 +135,66 @@ def test_gate_exports_the_exact_historical_parent_checks_used_for_regression(
     assert task_.digest in {item["task"] for item in report["phases"]["regression"]}
     saved = archive.decision(migrated_db, "gate-baseline:p10-baseline-gate")
     assert saved["data"]["checks"] == report["regression_baseline"]
+
+
+def test_expired_charter_does_not_admit_a_due_assessment(migrated_db, tmp_path):
+    case = prepare_campaign(
+        migrated_db, tmp_path / "deadline", campaign_id="p10-expired-assessment",
+        round_count=1, max_turns=1,
+    )
+    case["protocol"]["rounds"][0]["after_turn"] = 0
+    case["charter"]["deadline"] = (datetime.now(UTC) + timedelta(seconds=1)).isoformat()
+    campaign.start(
+        migrated_db, campaign_id="p10-expired-assessment", charter=case["charter"],
+        protocol=case["protocol"], **case["run"]["roots"],
+    )
+    time.sleep(1.2)
+
+    outcome = campaign.run(
+        migrated_db, case["run"]["agent"], case["run"]["checker"],
+        "p10-expired-assessment", **case["run"]["roots"], max_wakes=2, wall_seconds=120,
+    )
+    bundle = campaign.export(
+        migrated_db, "p10-expired-assessment",
+        artifacts_root=case["run"]["roots"]["artifacts_root"],
+    )
+    assignments = [row for row in bundle["decisions"]
+                   if row["kind"] == "p10.assessment.assignment"]
+
+    assert outcome["status"] == "deadline", outcome
+    assert assignments == []
+    assert bundle["operations"] == []
+
+
+def test_expired_charter_still_recovers_an_admitted_assessment(migrated_db, tmp_path, monkeypatch):
+    case = prepare_campaign(
+        migrated_db, tmp_path / "recovery", campaign_id="p10-expired-recovery",
+        round_count=1, max_turns=1,
+    )
+    case["protocol"]["rounds"][0]["after_turn"] = 0
+    case["charter"]["deadline"] = (datetime.now(UTC) + timedelta(seconds=3)).isoformat()
+    campaign.start(
+        migrated_db, campaign_id="p10-expired-recovery", charter=case["charter"],
+        protocol=case["protocol"], **case["run"]["roots"],
+    )
+    queued = campaign.run(
+        migrated_db, case["run"]["agent"], case["run"]["checker"],
+        "p10-expired-recovery", **case["run"]["roots"], max_wakes=1, wall_seconds=120,
+    )
+    assert queued["status"] == "bound", queued
+    time.sleep(3.2)
+
+    recovered = []
+
+    def recover(_dsn, _campaign_id, assignment, *_args):
+        recovered.append(assignment["data"]["round_id"])
+        return {"status": "unscored", "reason": "recovery was admitted before deadline"}
+
+    monkeypatch.setattr(campaign, "_run_assignment", recover)
+    outcome = campaign.run(
+        migrated_db, case["run"]["agent"], case["run"]["checker"],
+        "p10-expired-recovery", **case["run"]["roots"], max_wakes=2, wall_seconds=120,
+    )
+
+    assert recovered == ["round-1"]
+    assert outcome["status"] == "unscored", outcome

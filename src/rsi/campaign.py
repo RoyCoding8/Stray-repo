@@ -7,14 +7,14 @@ import hashlib
 import json
 import math
 import time
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
-from settlement import artifacts, db, store
+from settlement import artifacts, broker, db, store
 from settlement.common import Command, ResultCode, SettlementError, StaleRevision, payload_digest
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
@@ -32,11 +32,9 @@ def _canonical(value):
     try:
         raw = json.dumps(value, sort_keys=True, separators=(",", ":"),
                          ensure_ascii=False, allow_nan=False).encode("utf-8")
-        if len(raw) > _MAX_PROTOCOL_BYTES:
-            raise ValueError("JSON exceeds byte bound")
         return json.loads(raw), raw
     except (TypeError, ValueError, UnicodeError) as exc:
-        raise SettlementError(f"campaign data must be bounded finite JSON: {exc}") from exc
+        raise SettlementError(f"campaign data must be finite JSON: {exc}") from exc
 
 
 def route_identity(base_url: str) -> str:
@@ -52,6 +50,8 @@ def route_identity(base_url: str) -> str:
 
 def _parse_protocol(protocol, max_turns):
     protocol, raw = _canonical(protocol)
+    if len(raw) > _MAX_PROTOCOL_BYTES:
+        raise SettlementError("assessment protocol exceeds byte bound")
     if not isinstance(protocol, dict) or set(protocol) != {"schema", "rounds"}:
         raise SettlementError("assessment protocol needs exactly schema and rounds")
     if protocol["schema"] != _PROTOCOL_SCHEMA:
@@ -228,6 +228,10 @@ def _gate_id(campaign_id, round_id):
     return "p10-gate-" + digest
 
 
+def _deadline_passed(charter):
+    return datetime.now(UTC) >= datetime.fromisoformat(charter["deadline"])
+
+
 def _assign_due(dsn, campaign_id, state, protocol):
     assigned_rows = agenda.export(dsn, campaign_id)["decisions"]
     assigned = {row["data"].get("round_id") for row in assigned_rows
@@ -264,6 +268,8 @@ def _assign_due(dsn, campaign_id, state, protocol):
         pending = agenda._pending_assessment(cur, campaign_id)
         if pending is not None:
             raise StaleRevision("an earlier assessment assignment is still pending")
+        if _deadline_passed(current["charter"]):
+            raise StaleRevision("campaign deadline passed before assessment assignment")
         cur.execute("SELECT 1 FROM rsi_decisions WHERE id=%s OR (subject=%s AND kind=%s AND data->>'round_id'=%s)",
                     (assignment_id, campaign_id, "p10.assessment.assignment", due["id"]))
         if cur.fetchone() is not None:
@@ -366,14 +372,23 @@ def run(dsn, agent, checker, campaign_id, *, staging_root, artifacts_root,
         due = next((item for item in protocol["rounds"] if item["id"] not in assigned_rounds
                     and item["after_turn"] <= state["turns"]), None)
         if due is not None:
+            if _deadline_passed(state["charter"]):
+                return {"status": "deadline", "revision": state["revision"], "results": results}
             admitted = _assign_due(dsn, campaign_id, state, protocol)
             if admitted is None:
+                current = agenda.read(dsn, campaign_id)
+                if current is not None and _pending(dsn, campaign_id) is not None:
+                    continue
+                if current is not None and _deadline_passed(current["charter"]):
+                    return {"status": "deadline", "revision": current["revision"], "results": results}
                 results.append({"status": "unchanged", "reason": "revision changed during admission"})
             else:
                 results.append({"status": "assigned", "round_id": due["id"]})
             continue
         if state["status"] == "complete":
             return {"status": "complete", "revision": state["revision"], "results": results}
+        if _deadline_passed(state["charter"]):
+            return {"status": "deadline", "revision": state["revision"], "results": results}
         if state["status"] != "active":
             return {"status": "control", "revision": state["revision"], "results": results}
         outcome = agenda._wake(dsn, agent, checker, campaign_id,
@@ -494,7 +509,7 @@ def export(dsn, campaign_id, *, artifacts_root):
                     operation_ids.add(verifier.operation_id_for(episode_id, evaluator))
     operations = _query_rows(
         dsn, "SELECT id,attempt_id,allocation_id,reservation_id,payload_digest,payload,"
-        "dispatch_state,reconcile_state,receipt_provenance,execution_version,settled,created_at "
+        "dispatch_state,reconcile_state,cancel_state,receipt_provenance,execution_version,settled,created_at "
         "FROM operations WHERE id=ANY(%s) ORDER BY id", (sorted(operation_ids),),
     ) if operation_ids else []
     present_ops = [row["id"] for row in operations]
@@ -517,8 +532,12 @@ def export(dsn, campaign_id, *, artifacts_root):
         (present_ops, present_ops),
     ) if present_ops else []
     allocation_ids = {state["charter"]["allocations"][key]["id"] for key in ("tokens", "cpu")}
+    allocation_ids.update(row["allocation_id"] for row in operations
+                          if row.get("allocation_id"))
+    allocation_ids.update(row["allocation_id"] for row in reservations
+                          if row.get("allocation_id"))
     allocations = _query_rows(
-        dsn, "SELECT id,domain,authorized,consumed,reserved,owner_scope FROM allocations "
+        dsn, "SELECT id,parent_id,domain,authorized,consumed,reserved,owner_scope FROM allocations "
         "WHERE id=ANY(%s) ORDER BY id", (sorted(allocation_ids),),
     )
     artifact_digests = {protocol_digest}
@@ -1065,6 +1084,17 @@ def recompute(bundle):
         gate_id = decision_id.removeprefix("gate:")
         if gate_id not in assigned_gates:
             problems.append(f"unassigned gate decision: {gate_id}")
+    historical_operations = {
+        operation_id
+        for baseline in baseline_rows
+        for check in (baseline.get("data", {}).get("checks", []) or [])
+        for operation_id in (check.get("episode"), check.get("verifier"))
+        if isinstance(operation_id, str)
+    }
+    resource_units = _resource_totals(
+        data.get("allocations", []), data.get("reservations", []), operations,
+        charter, campaign_id, historical_operations, problems,
+    )
     complete = (not problems and not unresolved and set(assignments_by_round) == set(rounds)
                 and all("gate:" + item["gate_id"] in decisions
                         for item in assignments_by_round.values()))
@@ -1073,22 +1103,120 @@ def recompute(bundle):
     return {"status": "consistent" if complete else "incomplete" if not problems else "tampered",
             "comparison_gain": comparison_gain, "learning_gain": False,
             "limitations": ["offline evidence cannot authenticate provider, wall time or compute attestations",
-                            "comparison outcomes do not establish transfer or improved learning"],
+                            "comparison outcomes do not establish transfer or improved learning",
+                            "resource units include exported historical regression support, not only campaign spend"],
             "problems": problems, "unresolved_operations": sorted(set(unresolved)),
-            "resource_units": _resource_totals(data.get("allocations", []),
-                                               data.get("reservations", []))}
+            "resource_units": resource_units}
 
 
-def _resource_totals(allocations, reservations):
-    domains = {row["id"]: row["domain"] for row in allocations}
+def _resource_totals(allocations, reservations, operations, charter, campaign_id,
+                     historical_operations, problems):
+    if not isinstance(allocations, list) or not isinstance(reservations, list):
+        problems.append("resource allocation or reservation evidence is missing")
+        return None
+    first_problem = len(problems)
+    allocation_rows = {}
+    for row in allocations:
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str) \
+                or row["id"] in allocation_rows:
+            problems.append("allocation evidence identity is invalid or duplicated")
+            continue
+        allocation_rows[row["id"]] = row
+    reservation_rows = {}
+    for row in reservations:
+        operation_id = row.get("operation_id") if isinstance(row, dict) else None
+        if not isinstance(operation_id, str):
+            problems.append("reservation evidence has no operation identity")
+            continue
+        reservation_rows.setdefault(operation_id, []).append(row)
+    if len(reservation_rows) != len(reservations):
+        problems.append("reservation evidence has a duplicate operation identity")
+
     totals = {"tokens": {"reserved": 0, "settled": 0, "uncertain": 0, "released": 0},
               "cpu": {"reserved": 0, "settled": 0, "uncertain": 0, "released": 0}}
-    for row in reservations:
-        domain = domains.get(row.get("allocation_id"))
-        state = row.get("state")
-        if domain in totals and state in totals[domain]:
-            totals[domain][state] += int(row.get("amount", 0))
-    return totals
+    roots = charter.get("allocations", {}) if isinstance(charter, dict) else {}
+    root_ids = {}
+    for domain in ("tokens", "cpu"):
+        root = roots.get(domain) if isinstance(roots, dict) else None
+        root_ids[domain] = root.get("id") if isinstance(root, dict) else None
+    allowed_scopes = {""}
+    if isinstance(campaign_id, str):
+        allowed_scopes.add(campaign_id)
+        allowed_scopes.add("rsi-agenda:" + campaign_id)
+    for domain, allocation_id in root_ids.items():
+        allocation = allocation_rows.get(allocation_id) if isinstance(allocation_id, str) else None
+        owner_scope = (allocation.get("owner_scope") or "") if allocation else None
+        root = roots.get(domain) if isinstance(roots, dict) else None
+        units = root.get("units") if isinstance(root, dict) else None
+        if (not isinstance(allocation_id, str) or allocation is None
+                or allocation.get("domain") != domain or allocation.get("parent_id") is not None
+                or owner_scope not in allowed_scopes or type(units) is not int
+                or type(allocation.get("authorized")) is not int
+                or allocation["authorized"] < units):
+            problems.append(f"campaign {domain} allocation root evidence is missing or invalid")
+
+    for operation_id, operation in operations.items():
+        linked = reservation_rows.get(operation_id, [])
+        reservation_id = operation.get("reservation_id")
+        expected_reservation_id = "res-" + operation_id if isinstance(operation_id, str) else None
+        if (len(linked) != 1 or reservation_id != expected_reservation_id
+                or linked[0].get("id") != reservation_id):
+            problems.append(f"operation has no unique required reservation: {operation_id}")
+            continue
+        reservation = linked[0]
+        allocation_id = operation.get("allocation_id")
+        if reservation.get("allocation_id") != allocation_id:
+            problems.append(f"operation reservation allocation differs: {operation_id}")
+            continue
+        allocation = allocation_rows.get(allocation_id) if isinstance(allocation_id, str) else None
+        if allocation is None or allocation.get("parent_id") is not None:
+            problems.append(f"operation allocation root is missing or invalid: {operation_id}")
+            continue
+
+        envelope = operation.get("payload")
+        effect = envelope.get("effect") if isinstance(envelope, dict) else None
+        effect_payload = envelope.get("payload") if isinstance(envelope, dict) else None
+        try:
+            prepared = {key: value for key, value in envelope.items()
+                        if not key.startswith("_")} if isinstance(envelope, dict) else None
+            if prepared is None or payload_digest(prepared) != operation.get("payload_digest"):
+                problems.append(f"operation payload digest differs from effect evidence: {operation_id}")
+            expected_domain = {broker.AGENT_RUN: "tokens", broker.SANDBOX_EXEC: "cpu"}.get(effect)
+            retries = envelope.get("retries", 0)
+            if (expected_domain is None or not isinstance(effect_payload, dict)
+                    or isinstance(retries, bool) or not isinstance(retries, int) or retries < 0):
+                raise ValueError("unsupported operation effect")
+            expected_amount, _ = broker.exposure_schedule(effect, effect_payload, retries)
+        except (KeyError, TypeError, ValueError):
+            problems.append(f"operation resource effect is invalid: {operation_id}")
+            continue
+        if allocation.get("domain") != expected_domain:
+            problems.append(f"operation allocation domain differs from effect: {operation_id}")
+        if (type(allocation.get("authorized")) is not int
+                or allocation["authorized"] < expected_amount):
+            problems.append(f"operation allocation does not authorize its reservation: {operation_id}")
+        if (operation_id not in historical_operations
+                and allocation_id != root_ids.get(expected_domain)):
+            problems.append(f"operation allocation differs from campaign root: {operation_id}")
+        amount = reservation.get("amount")
+        if type(amount) is not int or amount != expected_amount:
+            problems.append(f"operation reservation amount differs from effect: {operation_id}")
+        state = reservation.get("state")
+        known_settlement = (operation.get("settled") is True
+                            and operation.get("dispatch_state") in ("observed", "reconciled")
+                            and operation.get("reconcile_state") not in ("conflict", "unresolved"))
+        released = (state == "released" and operation.get("cancel_state") == "confirmed"
+                    and operation.get("dispatch_state") in ("cancelled", "reconciled")
+                    and operation.get("reconcile_state") == "reconciled")
+        if ((known_settlement and state != "settled")
+                or (not known_settlement and state not in ("reserved", "uncertain") and not released)):
+            problems.append(f"operation reservation state differs from settlement: {operation_id}")
+        if isinstance(state, str) and state in totals[expected_domain]:
+            totals[expected_domain][state] += amount if type(amount) is int else 0
+
+    if any(operation_id not in operations for operation_id in reservation_rows):
+        problems.append("reservation evidence has no matching operation")
+    return None if len(problems) != first_problem else totals
 
 
 def _read_route(path):

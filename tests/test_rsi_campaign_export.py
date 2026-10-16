@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import copy
+import json
 import sys
 
+import pytest
 from fixtures.p10_campaign import ROOT, prepare_campaign
 
 from rsi import campaign
+from settlement.common import SettlementError
 from settlement.launcher_codex import CodexLauncher, Provider
 
 
@@ -44,6 +47,17 @@ def _complete_export(dsn, tmp_path):
     )
     assert campaign.recompute(bundle)["status"] == "consistent"
     return bundle
+
+
+def test_assessment_protocol_keeps_its_own_byte_bound():
+    protocol = {"schema": "p10-assessment/1", "rounds": [{
+        "id": "x" * campaign._MAX_PROTOCOL_BYTES, "after_turn": 0,
+        "epoch": "epoch", "parent": "parent", "candidate": "candidate",
+        "model": "model", "route_identity": "0" * 64,
+    }]}
+
+    with pytest.raises(SettlementError, match="assessment protocol exceeds byte bound"):
+        campaign._parse_protocol(protocol, max_turns=1)
 
 
 def _assessment_gate(bundle):
@@ -149,3 +163,52 @@ def test_export_keeps_a_pending_gate_incomplete_not_tampered(migrated_db, tmp_pa
         "operations": bundle["operations"], "problems": report["problems"],
     }
     assert not report["problems"]
+
+
+def test_recompute_requires_exported_effect_reservations(migrated_db, tmp_path):
+    bundle = _complete_export(migrated_db, tmp_path)
+    assert bundle["reservations"]
+    baseline = campaign.recompute(bundle)
+    assert baseline["status"] == "consistent", baseline
+
+    without_reservations = copy.deepcopy(bundle)
+    without_reservations["reservations"] = []
+    wrong_amount = copy.deepcopy(bundle)
+    wrong_amount["reservations"][0]["amount"] += 1
+    wrong_root = copy.deepcopy(bundle)
+    wrong_root["reservations"][0]["allocation_id"] = next(
+        item["id"] for item in bundle["allocations"]
+        if item["id"] != wrong_root["reservations"][0]["allocation_id"]
+    )
+
+    for altered in (without_reservations, wrong_amount, wrong_root):
+        report = campaign.recompute(altered)
+        assert report["status"] == "tampered", report
+        assert report["comparison_gain"] is False
+        assert report["resource_units"] is None
+
+
+def test_six_round_export_exceeds_protocol_limit_and_recomputes(migrated_db, tmp_path):
+    case = prepare_campaign(
+        migrated_db, tmp_path / "prepare-large", campaign_id="p10-large-export",
+        round_count=6, max_turns=1,
+    )
+    campaign.start(
+        migrated_db, campaign_id="p10-large-export", charter=case["charter"],
+        protocol=case["protocol"], **case["run"]["roots"],
+    )
+    outcome = campaign.run(
+        migrated_db, case["run"]["agent"], case["run"]["checker"], "p10-large-export",
+        **case["run"]["roots"], max_wakes=20, wall_seconds=300,
+    )
+    assert outcome["status"] == "complete", outcome
+
+    bundle = campaign.export(
+        migrated_db, "p10-large-export",
+        artifacts_root=case["run"]["roots"]["artifacts_root"],
+    )
+    encoded = json.dumps(
+        bundle, sort_keys=True, separators=(",", ":"), ensure_ascii=False,
+    ).encode("utf-8")
+    assert len(encoded) > campaign._MAX_PROTOCOL_BYTES
+    assert campaign.recompute(bundle)["status"] == "consistent"
