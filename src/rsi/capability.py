@@ -73,6 +73,19 @@ class Invocation:
     detail: str
 
 
+@dataclass(frozen=True)
+class InvocationPlan:
+    capability: Capability
+    request_raw: bytes
+    input_digest: str
+    execution_version: str
+    inputs: tuple[tuple[str, bytes], ...]
+    runtime: Mapping[str, str]
+    bootstrap: str
+    timeout_ms: int
+    max_output_bytes: int
+
+
 def catalogue(genome: genome_module.Genome) -> tuple[Capability, ...]:
     """Return validated methods, each bound to all bytes under its skill folder."""
     names = sorted({rel.split("/")[1] for rel in genome.files
@@ -95,28 +108,18 @@ def catalogue(genome: genome_module.Genome) -> tuple[Capability, ...]:
     return tuple(found)
 
 
-def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
-           request: Mapping[str, Any], *, operation_id: str, allocation_id: str,
-           attempt_id: str | None, staging_root: str | Path,
-           artifacts_root: str | Path,
-           ownership_generation: int | None = None,
-           timeout_ms: int | None = None,
-           max_output_bytes: int | None = None) -> Invocation:
-    """Run one pinned method through the broker and publish its observed result."""
+def plan_invocation(launcher: Any, genome: genome_module.Genome, name: str,
+                    request: Mapping[str, Any], *, timeout_ms: int | None = None,
+                    max_output_bytes: int | None = None) -> InvocationPlan:
+    """Bind native input, method and runtime bytes without staging or dispatch."""
     capability = _capability(genome, name)
     clean_request, request_raw = _request(request, capability)
     input_digest = _sha(request_raw)
-    input_artifact_digest = _publish_request(
-        dsn, operation_id, request_raw, staging_root, artifacts_root)
     declared_limits = capability.descriptor["limits"]
     timeout = _ceiling(timeout_ms, declared_limits["timeout_ms"], MAX_TIMEOUT_MS,
                        "timeout_ms")
     output_limit = _ceiling(max_output_bytes, declared_limits["max_output_bytes"],
                             MAX_OUTPUT_BYTES, "max_output_bytes")
-    if not _nonempty(operation_id) or not _nonempty(allocation_id) or (
-            attempt_id is not None and not _nonempty(attempt_id)):
-        raise CapabilityError("operation and allocation identities are required")
-
     runner_raw = Path(__file__).with_name("_method_runner.py").read_bytes()
     runner_digest = _sha(runner_raw)
     python_version = sys.version
@@ -141,15 +144,39 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
     execution_version = "cap1-" + _sha(_canonical({
         "files": _file_manifest(tuple(sorted(bound_inputs.items()))),
         "runtime": runtime, "bootstrap": _sha(bootstrap.encode())}))
+    return InvocationPlan(
+        capability, request_raw, input_digest, execution_version,
+        tuple(sorted(bound_inputs.items())), MappingProxyType(runtime), bootstrap,
+        timeout, output_limit)
+
+
+def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
+           request: Mapping[str, Any], *, operation_id: str, allocation_id: str,
+           attempt_id: str | None, staging_root: str | Path,
+           artifacts_root: str | Path,
+           ownership_generation: int | None = None,
+           timeout_ms: int | None = None,
+           max_output_bytes: int | None = None) -> Invocation:
+    """Run one pinned method through the broker and publish its observed result."""
+    plan = plan_invocation(launcher, genome, name, request,
+                           timeout_ms=timeout_ms, max_output_bytes=max_output_bytes)
+    capability = plan.capability
+    input_digest, execution_version = plan.input_digest, plan.execution_version
+    output_limit = plan.max_output_bytes
+    if not _nonempty(operation_id) or not _nonempty(allocation_id) or (
+            attempt_id is not None and not _nonempty(attempt_id)):
+        raise CapabilityError("operation and allocation identities are required")
+    input_artifact_digest = _publish_request(
+        dsn, operation_id, plan.request_raw, staging_root, artifacts_root)
     input_dir, _ = launcher.exec_dirs(operation_id, execution_version)
     input_path = Path(input_dir)
     runner_path = input_path / "trusted_runner.py"
     meta_path = input_path / "identity.json"
 
     payload = {"profile": "local-process",
-               "argv": [python_executable, "-I", "-S", "-B", "-c", bootstrap,
+               "argv": [plan.runtime["python_executable"], "-I", "-S", "-B", "-c", plan.bootstrap,
                         str(runner_path), str(meta_path)],
-               "timeout_ms": timeout,
+               "timeout_ms": plan.timeout_ms,
                "max_output_bytes": MAX_OUTPUT_BYTES}
     payload = broker.validate_effect(broker.SANDBOX_EXEC, payload)
     decision_id = "capability-use:" + operation_id
@@ -174,11 +201,8 @@ def invoke(dsn: str, launcher: Any, genome: genome_module.Genome, name: str,
                 or prior.get("payload", {}).get("payload") != payload):
             raise CapabilityError("operation id already belongs to different invocation inputs")
     else:
-        launcher.stage_input(operation_id, execution_version, "request.json", request_raw)
-        launcher.stage_input(operation_id, execution_version, "trusted_runner.py", runner_raw)
-        for rel, raw in capability.files:
-            launcher.stage_input(operation_id, execution_version, "method/" + rel, raw)
-        launcher.stage_input(operation_id, execution_version, "identity.json", meta_raw)
+        for rel, raw in plan.inputs:
+            launcher.stage_input(operation_id, execution_version, rel, raw)
 
     prepared = broker.ensure_operation(dsn, operation_id=operation_id,
                                        effect=broker.SANDBOX_EXEC, payload=payload,
