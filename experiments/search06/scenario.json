@@ -1,0 +1,23 @@
+{
+  "schema": "p06-search-experiment/1",
+  "model": "openrouter/openrouter/free",
+  "caps": {
+    "action_timeout_ms": 90000,
+    "action_token_units": 400000,
+    "max_model_admissions": 2,
+    "max_repairs": 1,
+    "max_policy_decisions": 3,
+    "max_candidate_admissions": 1,
+    "max_use_turns": 1,
+    "max_use_seconds": 180,
+    "native_timeout_ms": 5000,
+    "native_output_bytes": 65536,
+    "execution": "uncontained-native-child"
+  },
+  "worlds": [
+    {"id": "world-a", "left": 4, "right": 5, "expected": 9},
+    {"id": "world-b", "left": -4, "right": 5, "expected": 1},
+    {"id": "world-c", "left": 0, "right": 3, "expected": 3}
+  ],
+  "authored_fixture_provenance": "fixed native methods and exploration policies authored for machinery qualification; not model-acquired"
+}
