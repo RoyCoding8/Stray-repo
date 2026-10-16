@@ -234,7 +234,7 @@ P06 task list:
 - [ ] Freeze and run one bounded free-route policy revision/use experiment; preserve gaps or negative outcomes.
 - [ ] Complete final consolidation and CI after independent review.
 - [x] Remove checkpoint worktrees and task branches; verify the completed scratch archive.
-- [ ] Synchronize checkpoint backups.
+- [x] Synchronize checkpoint backups to `origin` and `github`; verify remote equality.
 
 The shared native invocation plan is implemented at `3cb9f269`. Eight focused
 tests passed on real PostgreSQL and native children, including prospective versus
