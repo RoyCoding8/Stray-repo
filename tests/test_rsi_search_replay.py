@@ -5,13 +5,13 @@ import sys
 import uuid
 from pathlib import Path
 
+from rsi_search_fixture import worlds
+
 from rsi import capability, episode, genome, investigate, search, task, verifier
 from settlement import store
 from settlement.common import Command
 from settlement.launcher_codex import CodexLauncher, Provider
 from settlement.launcher_local import LocalLauncher
-
-from rsi_search_fixture import worlds
 
 ROOT = Path(__file__).resolve().parents[1]
 FAKE_WORKER = ROOT / "tests" / "fixtures" / "fake_investigate.py"
