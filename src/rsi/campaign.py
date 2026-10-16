@@ -912,6 +912,36 @@ def recompute(bundle):
             _clean_receipt(effect.get("id"), operations, receipt_rows,
                            unresolved, problems)
 
+    development_problem_count = len(problems)
+    opportunities = {item["id"]: item for item in charter.get("opportunities", [])}
+    for row in data.get("decisions", []):
+        if row.get("kind") != "p05.ack":
+            continue
+        ack = row.get("data", {})
+        observation = ack.get("observation")
+        if observation is None:  # A definitive pre-dispatch refusal has no graded episode.
+            continue
+        opportunity = opportunities.get(ack.get("opportunity_id"), {})
+        task_id = opportunity.get("task_id")
+        evaluator = (packages.get(task_id) or {}).get("manifest", {}).get("evaluator_version")
+        operation_id = ack.get("operation_id")
+        if not isinstance(operation_id, str) or not isinstance(evaluator, str):
+            problems.append(f"development acknowledgement identity is invalid: {row.get('id')}")
+            continue
+        derived, verifier_id = _derived_result(
+            operation_id, evaluator, operations, receipt_rows, episode_rows,
+            verdict_rows, unresolved, problems,
+        )
+        episode = episode_rows.get(operation_id, {})
+        if (derived is None or observation.get("episode") != operation_id
+                or observation.get("verdict") != verifier_id
+                or observation.get("passed") is not derived["passed"]
+                or observation.get("status") != derived["status"]
+                or episode.get("task") != task_id
+                or episode.get("genome") != opportunity.get("genome_id")):
+            problems.append(f"acknowledged development evidence is inconsistent: {operation_id}")
+    development_supported = len(problems) == development_problem_count
+
     for row in episodes_list:
         operation_id = row.get("operation_id")
         if row.get("status") != "completed" and isinstance(operation_id, str):
@@ -1096,7 +1126,7 @@ def recompute(bundle):
     resource_units = _resource_totals(
         data.get("allocations", []), data.get("reservations", []), operations,
         charter, campaign_id, historical_operations, problems,
-    )
+    ) if development_supported else None
     complete = (not problems and not unresolved and set(assignments_by_round) == set(rounds)
                 and all("gate:" + item["gate_id"] in decisions
                         for item in assignments_by_round.values()))

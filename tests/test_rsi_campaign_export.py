@@ -188,6 +188,29 @@ def test_recompute_requires_exported_effect_reservations(migrated_db, tmp_path):
         assert report["resource_units"] is None
 
 
+def test_recompute_requires_acknowledged_development_effects(migrated_db, tmp_path):
+    bundle = _complete_export(migrated_db, tmp_path)
+    acknowledged = [row["data"] for row in bundle["decisions"] if row["kind"] == "p05.ack"]
+    assert len(acknowledged) == 1
+    evidence = acknowledged[0]
+    required = {evidence["operation_id"], evidence["observation"]["verdict"]}
+    assert required <= {row["id"] for row in bundle["operations"]}
+    assert campaign.recompute(bundle)["status"] == "consistent"
+
+    altered = copy.deepcopy(bundle)
+    for field in ("operations", "receipts", "reservations", "episodes", "verdicts"):
+        key = "id" if field == "operations" else "operation_id"
+        altered[field] = [row for row in altered[field] if row[key] not in required]
+    # The authoritative choice, acknowledgement and investigation history remain.
+    assert altered["decisions"] == bundle["decisions"]
+    assert altered["investigations"] == bundle["investigations"]
+
+    report = campaign.recompute(altered)
+    assert report["status"] == "tampered", report
+    assert report["comparison_gain"] is False
+    assert report["resource_units"] is None
+
+
 def test_six_round_export_exceeds_protocol_limit_and_recomputes(migrated_db, tmp_path):
     case = prepare_campaign(
         migrated_db, tmp_path / "prepare-large", campaign_id="p10-large-export",
