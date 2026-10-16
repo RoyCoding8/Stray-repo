@@ -117,6 +117,31 @@ def test_freeze_rejects_protocol_and_source_identity_drift(tmp_path):
         verify_freeze(freeze_path)
 
 
+def test_assessment_reports_missing_export_evidence_as_incomplete(
+    migrated_db, tmp_path, monkeypatch
+):
+    campaign_id = "p10-fixture-export-loss"
+    run_dir = tmp_path / "evidence" / campaign_id
+    driver.prepare(migrated_db, campaign_id, run_dir, mode="fixture")
+    development = driver.step(migrated_db, campaign_id, run_dir, phase="development")
+    assert development["status"] == "development_complete_suspended"
+    trajectory = json.loads((run_dir / "bundle.json").read_text())["episodes"][0]["trajectory"]
+    export_snapshot = driver._evidence_snapshot
+
+    def lose_artifact_before_export(dsn, identity, directory):
+        (directory / "art" / trajectory).unlink()
+        return export_snapshot(dsn, identity, directory)
+
+    monkeypatch.setattr(driver, "_evidence_snapshot", lose_artifact_before_export)
+    result = driver.step(migrated_db, campaign_id, run_dir, phase="assessment")
+
+    assert result["recomputed"]["status"] == "tampered"
+    assert any("required artifact bytes are missing" in problem
+               for problem in result["recomputed"]["problems"])
+    assert result["status"] == "incomplete"
+    assert result["unfinished_campaigns"] == [campaign_id]
+
+
 def test_stopped_campaign_driver_admits_no_model_effect(migrated_db, tmp_path):
     campaign_id = "p10-fixture-stopped"
     run_dir = tmp_path / "evidence" / campaign_id

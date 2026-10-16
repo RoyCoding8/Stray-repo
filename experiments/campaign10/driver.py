@@ -341,11 +341,7 @@ def step(dsn: str, campaign_id: str, run_dir: Path, *, phase: str,
     else:
         evidence = _evidence_snapshot(dsn, campaign_id, run_dir)
         body.update(evidence)
-        if evidence["evidence_status"] == "unavailable":
-            body["status"] = "incomplete"
-            body["unfinished_campaigns"] = [campaign_id]
-            body["reason"] = "campaign export or recompute did not complete"
-        else:
+        if evidence["evidence_status"] != "unavailable":
             if run_result.get("status") in {"pending", "unscored", "deadline", "blocked", "unknown"}:
                 body["unfinished_campaigns"] = [campaign_id]
             if body["unresolved_operations"] and not body["unfinished_campaigns"]:
@@ -354,6 +350,11 @@ def step(dsn: str, campaign_id: str, run_dir: Path, *, phase: str,
                 body["status"] = "incomplete"
                 body["unfinished_campaigns"] = [campaign_id]
                 body["reason"] = "durable admission count exceeded the frozen cap"
+    qualified_evidence = {"consistent", "incomplete"} if is_development else {"consistent"}
+    if body.get("recomputed", {}).get("status") not in qualified_evidence:
+        body["status"] = "incomplete"
+        body["unfinished_campaigns"] = [campaign_id]
+        body["reason"] = "campaign export or recompute did not qualify this phase"
     body["elapsed_seconds"] = round(time.time() - started_at, 3)
     _json(result_path, body)
     return body
