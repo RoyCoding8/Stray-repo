@@ -16,7 +16,7 @@ from . import genome as genomes
 from . import task as tasks
 from .investigation import export, read
 
-__all__ = ["create", "export", "read", "run", "step"]
+__all__ = ["create", "export", "prepare_context", "read", "run", "step"]
 
 QUESTION = "Does the solution satisfy the task obligation?"
 POLICY = {"id": "task-seed/1"}
@@ -228,6 +228,93 @@ def create(dsn, agent, genome, *, investigation_id, task, token_allocation,
     return investigation.read(dsn, investigation_id)
 
 
+def prepare_context(dsn, investigation_id, *, target_revision, artifacts_root):
+    """Pin the exact visible input for one ready investigation revision."""
+    if type(target_revision) is not int or target_revision < 0:
+        raise SettlementError("target_revision must be a non-negative integer")
+    state = investigation.read(dsn, investigation_id)
+    if state is None:
+        raise SettlementError("unknown investigation " + investigation_id)
+    if state["domain"] != "task" or state["policy"] != POLICY:
+        raise SettlementError("unsupported investigation domain or seed policy")
+    if state["revision"] != target_revision:
+        raise StaleRevision("investigation revision differs from the preparation target")
+    if state["status"] != "ready" or state["pending_decision"] is not None:
+        raise StaleRevision("context preparation requires a ready investigation without a pending decision")
+
+    config = state["config"]
+    method_options = _method_options(config.get("method"))
+    item = tasks.load(dsn, artifacts_root, config["task"])
+    current = genomes.load(dsn, artifacts_root, config["genome"])
+    decision_id, attempt_id, operation_id = _step_ids(investigation_id, target_revision)
+    identity = decision_id.removeprefix("p01-decision-")
+    selection = None
+    if method_options is not None:
+        from . import capability
+
+        selection = capability.select(
+            dsn, "p04-select:" + identity, genome=current,
+            name=method_options["name"], interface=method_options["interface"],
+            task_id=item.digest, value=method_options["value"],
+            artifacts_root=artifacts_root)
+        if selection["status"] != "selected":
+            return {**state, "capability_outcome": selection}
+
+    continuation = {
+        "objective": state["objective"],
+        "objective_revision": state["objective_revision"],
+        "state_revision": state["revision"],
+        "open_questions": state["open_questions"],
+        "artifact_refs": state["artifact_refs"],
+        "previous_observation": state["last_observation"],
+    }
+    options = _context_options(config.get("context"), config.get("memory"), stored=True)
+    request = _context_request(
+        investigation_id, state["objective_revision"], target_revision,
+        decision_id, attempt_id, operation_id, state["objective"], continuation, options)
+    packet = context.build(dsn, request, artifacts_root=artifacts_root)
+    if packet.get("status") != "ready":
+        return {
+            **state,
+            "context_outcome": {
+                "status": "needs_information",
+                "request_id": identity,
+                "packet": packet,
+                "needs": packet.get("needs", []),
+            },
+        }
+    if not _packet_matches(packet, request):
+        return {
+            **state,
+            "context_outcome": {
+                "status": "stale",
+                "request_id": identity,
+                "reason": "context packet is not pinned to this decision request",
+            },
+        }
+    validation = context.validate(dsn, packet, artifacts_root=artifacts_root)
+    if validation.get("status") != "ready":
+        return {
+            **state,
+            "context_outcome": {
+                "status": validation.get("status"),
+                "request_id": identity,
+                "packet": packet,
+                "reason": validation.get("reason"),
+            },
+        }
+    visible = {**continuation, "context_packet": packet}
+    if selection is not None:
+        visible["capability"] = {"selection": selection, "request": method_options}
+    return {
+        **state,
+        "decision_id": decision_id,
+        "attempt_id": attempt_id,
+        "operation_id": operation_id,
+        "visible_input": visible,
+    }
+
+
 def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root,
          target_revision=None):
     """Finish a pending action or admit and perform at most one new worker action."""
@@ -259,72 +346,18 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root,
     method_options = _method_options(config.get("method"))
     if method_options is None and config["model"] != agent.provider.model:
         raise SettlementError("worker model differs from investigation configuration")
-    item = tasks.load(dsn, artifacts_root, config["task"])
-    current = genomes.load(dsn, artifacts_root, config["genome"])
     if pending is None:
-        decision_id, attempt_id, operation_id = _step_ids(
-            investigation_id, state["revision"])
-        identity = decision_id.removeprefix("p01-decision-")
-        selection = None
-        if method_options is not None:
-            from . import capability
-
-            selection = capability.select(
-                dsn, "p04-select:" + identity, genome=current,
-                name=method_options["name"], interface=method_options["interface"],
-                task_id=item.digest, value=method_options["value"],
-                artifacts_root=artifacts_root)
-            if selection["status"] != "selected":
-                return {**state, "capability_outcome": selection}
-        continuation = {
-            "objective": state["objective"],
-            "objective_revision": state["objective_revision"],
-            "state_revision": state["revision"],
-            "open_questions": state["open_questions"],
-            "artifact_refs": state["artifact_refs"],
-            "previous_observation": state["last_observation"],
-        }
-        options = _context_options(config.get("context"), config.get("memory"), stored=True)
-        request = _context_request(
-            investigation_id, state["objective_revision"], state["revision"],
-            decision_id, attempt_id, operation_id, state["objective"],
-            continuation, options)
-        packet = context.build(dsn, request, artifacts_root=artifacts_root)
-        if packet.get("status") != "ready":
-            return {
-                **state,
-                "context_outcome": {
-                    "status": "needs_information",
-                    "request_id": identity,
-                    "packet": packet,
-                    "needs": packet.get("needs", []),
-                },
-            }
-        if not _packet_matches(packet, request):
-            return {
-                **state,
-                "context_outcome": {
-                    "status": "stale",
-                    "request_id": identity,
-                    "reason": "context packet is not pinned to this decision request",
-                },
-            }
-        validation = context.validate(dsn, packet, artifacts_root=artifacts_root)
-        if validation.get("status") != "ready":
-            return {
-                **state,
-                "context_outcome": {
-                    "status": validation.get("status"),
-                    "request_id": identity,
-                    "packet": packet,
-                    "reason": validation.get("reason"),
-                },
-            }
-        visible = {**continuation, "context_packet": packet}
-        if selection is not None:
-            visible["capability"] = {"selection": selection, "request": method_options}
+        prepared = prepare_context(
+            dsn, investigation_id, target_revision=state["revision"],
+            artifacts_root=artifacts_root)
+        if "visible_input" not in prepared:
+            return prepared
+        decision_id = prepared["decision_id"]
+        attempt_id = prepared["attempt_id"]
+        operation_id = prepared["operation_id"]
         _require(investigation.decide(dsn, Command(
-            request_id="p01-decide:" + identity, expected_revision=state["revision"],
+            request_id="p01-decide:" + decision_id.removeprefix("p01-decision-"),
+            expected_revision=state["revision"],
             payload={"investigation_id": investigation_id,
                      "decision_id": decision_id,
                      "attempt_id": attempt_id,
@@ -332,9 +365,11 @@ def step(dsn, agent, checker, investigation_id, *, staging_root, artifacts_root,
                      "action": {"kind": "worker",
                                 "explanation": "Attempt the open obligation using checked feedback.",
                                 "intended_observation": QUESTION},
-                     "visible_input": visible})))
+                     "visible_input": prepared["visible_input"]})))
         state = investigation.read(dsn, investigation_id)
         pending = state["pending_decision"]
+    item = tasks.load(dsn, artifacts_root, config["task"])
+    current = genomes.load(dsn, artifacts_root, config["genome"])
     roots = {"staging_root": staging_root, "artifacts_root": artifacts_root}
     visible = pending["visible_input"]
     if "context_packet" in visible:
