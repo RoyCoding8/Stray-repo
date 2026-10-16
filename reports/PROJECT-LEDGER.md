@@ -231,6 +231,11 @@ P06 task list:
 - [ ] Freeze and run one bounded free-route policy revision/use experiment; preserve gaps or negative outcomes.
 - [ ] Scrap check, debloat, repair CI, remove owned worktrees and synchronize backups.
 
+The shared native invocation plan is implemented at `3cb9f269`. Eight focused
+tests passed on real PostgreSQL and native children, including prospective versus
+executed identity. This is a prerequisite, not P06 completion. Preparation,
+replay and agenda lanes remain in progress in disjoint temporary worktrees.
+
 Remaining queue: P06 → P07 → P09 → P08. Each receives its own task list
 when active. Qualified mechanisms do not imply acquisition, utility or learning.
 

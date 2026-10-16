@@ -30,8 +30,8 @@ Compare replay ranking with subsequent live results and report disagreement. A r
 
 ## Grounding and design sketch
 
-This sketch is prospective. P10 must close before P06 implementation starts.
-`agenda._select_and_run` currently builds eligible opportunities and calls fixed
+P10 closed before this implementation started. At that checkpoint,
+`agenda._select_and_run` built eligible opportunities and called fixed
 `seed/1` or `adaptive/1` ranking code. Its choice pins one P01 flight before
 execution. P01 records the actual P03 packet, worker input, operations and
 observations. P02 capture advances shared memory, so changing an earlier choice
@@ -244,6 +244,28 @@ ownership. The coordinator owns the shared native invocation plan and serial
 integration. Their disposable test namespaces are `ad1061xx`, `ad1062xx`,
 `ad1063xx` and `ad1060xx` respectively. A runtime-planning test must establish
 that the prospective identity equals the actual child operation's identity.
+
+The collector uses three small development worlds with two prepared alternatives
+per world. Execute recorded branches through P01 native methods and pristine
+verification. Run both authored screening policies against the identical frame
+and branch corpus. An extra unexecuted option and an absent continuation expose
+coverage gaps. These authored worlds qualify machinery, not learned competence.
+
+For the free-route slice, construct one exploration method from development
+history through the existing P04 constructor. Permit at most one repair after a
+completed unusable response. A transport timeout or unresolved effect stops the
+slice. Each model admission has a 90-second timeout and a 400,000-unit token
+reservation, with at most two admissions in total. Native execution keeps the
+method's declared limits. Record every construction and screening charge.
+
+Screen the model's unchanged method bytes on the development corpus. Eligibility
+for a fresh one-turn P05 charter requires supported coverage on every screening
+frame, no worse checked quality than the declared incumbent, valid closed
+actions, and known costs within the frozen allocation. A rejected or unavailable
+candidate ends with its named reason. An eligible candidate controls the fresh
+charter through the same public agenda path. Report its actual selection and
+checked result separately from replay. Neither eligibility nor one fresh use
+establishes sustained learning or general transfer.
 
 Use at least three small development worlds. Include agreeing policies,
 different supported first choices, an unexecuted option, a missing child,
