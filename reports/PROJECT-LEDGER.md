@@ -31,7 +31,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Working checkpoint; live unscored | Experience changes what the system chooses to investigate next. |
-| P06: search history and dreaming | Preparation and replay integrated; agenda and collector in progress | One-step supported replay; missing-child queries remain gaps. |
+| P06: search history and dreaming | Implementation integrated; paused before independent review and live qualification | One-step supported replay and executable agenda choice; missing-child queries remain gaps. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
@@ -66,7 +66,8 @@ P03 task list:
 
 Current throughput checkpoint: P01 through P05 are closed at their qualified
 component scope. P10 has finished independent review, its bounded pilot and
-consolidation. P06 is the active build. The
+consolidation. P06 is the active build, paused at the human's request after lane
+integration and coordinator review. The
 remaining queue is P06, P07, P09, then P08.
 
 Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
@@ -225,11 +226,15 @@ P06 task list:
 - [x] Sketch. Compare frozen frames and historical-prefix replay; challenge prospective alternative collection independently.
 - [x] Agree. Select the implementation contract in the existing component plan under the standing assignment.
 - [x] Implement the shared P01 context-preparation seam and qualify unchanged worker inputs.
-- [ ] Integrate immutable frames, supported replay, executable P05 policies and prospective branch collection.
+- [x] Integrate immutable frames, supported replay, executable P05 policies and prospective branch collection.
+- [x] Review the implementation lanes and repair reproduced integration defects.
 - [ ] Qualify P06-A through P06-E and neighboring components on the integrated path.
 - [ ] Complete independent GPT-6.1 Sol High verification after implementation.
+- [ ] Resolve the untrusted candidate execution boundary and prospective-use deadline before live launch.
 - [ ] Freeze and run one bounded free-route policy revision/use experiment; preserve gaps or negative outcomes.
-- [ ] Scrap check, debloat, repair CI, remove owned worktrees and synchronize backups.
+- [ ] Complete final consolidation and CI after independent review.
+- [x] Remove checkpoint worktrees and task branches; verify the completed scratch archive.
+- [ ] Synchronize checkpoint backups.
 
 The shared native invocation plan is implemented at `3cb9f269`. Eight focused
 tests passed on real PostgreSQL and native children, including prospective versus
@@ -246,14 +251,51 @@ three failing-before counterexamples. Policy charging now uses settled actual
 cost when available and keeps unknown amounts explicit. This qualifies one-step
 screening and missing-child queries, not supported multi-step replay.
 
-The preparation and search worktrees and merged branches are removed. Agenda
-policy ownership and the prospective collector remain in disjoint temporary
-worktrees. Campaign export integration must include attempt-less native policy
-operations. The collector must pin run identity before effects and derive its
-eligibility from offline recomputation. Independent review and the live slice
-remain unrun. The user requested a pause once these lanes finish and the
-coordinator reviews their work; do not start review, live work or P07 before a
-new continuation instruction.
+Agenda policy execution is integrated at `01d56fa4`. Coordinator review reproduced
+an existing fixed-policy agenda failure caused by a lost investigation identity;
+`85646475` repairs it. Campaign export now includes native policy operations that
+have no P01 attempt, with their artifacts, receipts and reservations (`95778cdf`).
+The public campaign regression failed before that repair. The integrated agenda,
+campaign-policy export and existing agenda gate passed **28 tests, zero skips**
+in 438.07 seconds. A separate preparation, native-plan and search/replay gate
+passed **26 tests, zero skips** in 101.62 seconds on PostgreSQL 18 and bounded
+native children. These are separate focused scopes, not a full-suite result.
+
+The experiment apparatus is integrated at `6519493a`, including reviewed lane
+corrections in `e7a6b4b7`. It collects three authored worlds and six executed
+branches, screens two authored policies on the same corpus, and preserves an
+unexecuted option and missing-child gaps. Construction requires the six captured
+development observations. Eligibility requires complete candidate and incumbent
+coverage, no worse checked quality, and known bounded screening costs. Pending
+or refused prospective use remains unscored; a checked failure is a completed
+negative. Frozen run identities and durable operation records own constructor
+admission accounting, rather than an output file. Fixture success demonstrates
+machinery, not model acquisition or learning.
+
+Two live-launch issues remain explicit in the [experiment instructions](../experiments/search06/README.md).
+Candidate screening currently uses an uncontained native child on the coordinator
+host, which conflicts with the current rule for untrusted candidate code. The
+freeze also starts the prospective-use deadline before construction, so it can
+expire before use. Resolve these boundaries before launching. Do not silently
+relax the execution rule or extend an active deadline.
+
+The coordinator's merged-source experiment gate passed **eight tests, zero
+skips**, in 161.16 seconds, including the real-PG/native three-world collector.
+Review then reproduced and fixed a direct-file CLI import failure in the live
+software preflight (`7b437cf1`), without provider access. Its new regression passed
+independently; the final non-collector gate passed **eight tests, zero skips,
+one deselected**, in 4.57 seconds. Ruff and whitespace checks passed. These runs
+are separate scopes. No full-suite or checkpoint CI result is claimed for P06.
+
+All existing implementation agents have finished and their work is merged. Their
+temporary worktrees and task branches are removed. Independent Sol review, live
+inference and P07 remain unstarted. The user requested this pause after current
+lane review; resume only on a new continuation instruction. P06 remains open.
+Completed scratch is archived at `.git/verification/p06-checkpoint-20261016.zip`.
+All 3,184 files were verified against their source SHA-256 digests. Automatic
+approval review rejected recursive removal with `blocked by policy`, so the
+archived raw directory `D:/AI/tools/p06` remains. No owned disposable test
+databases remain; the earlier live anchors were preserved.
 
 Remaining queue: P06 → P07 → P09 → P08. Each receives its own task list
 when active. Qualified mechanisms do not imply acquisition, utility or learning.

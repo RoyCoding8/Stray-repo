@@ -110,6 +110,9 @@ The current native child is bounded and uncontained. P06-C qualifies the seriali
 interface with literal future-value probes; it cannot prove hostile policy code
 cannot read coordinator files or databases. Keep that limitation explicit rather
 than claiming containment from a filtered JSON request.
+Authored fixtures qualify this interface. Untrusted model policy execution must
+first satisfy the repository's execution boundary; the current uncontained
+candidate screening path does not qualify for live launch.
 
 ### Informative qualification
 
