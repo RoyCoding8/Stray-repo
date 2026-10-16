@@ -54,6 +54,9 @@ Store each admitted round as one immutable `p10.assessment.assignment` decision 
 `rsi_decisions`. Its identity is deterministic from campaign and round; its
 transaction request also includes the expected agenda revision. Under the agenda
 row lock, require that revision, no P01 flight and no unresolved earlier assignment.
+The charter deadline must not have passed at this same admission boundary.
+An assignment admitted before expiry retains its identity and may be recovered;
+expiry cannot authorize a new round or discard an existing uncertain effect.
 Status must be active, or complete with a predeclared final round now due. Suspended
 and stopped owners admit no rounds. Insert the assignment and advance revision
 without charging a P01 turn. Derive pending assessment from the assignment and existing gate,
@@ -117,6 +120,11 @@ Export protocol and artifact bytes, P05 and P10 decisions, investigations, gate
 epochs/runs, exposure reservations, episodes, verdicts, operations and receipts.
 Include historical parent checks used by the regression phase. Deduplicate the
 resource union by operation identity and keep token and CPU units separate.
+Each exported operation requires its linked reservation and allocation/effect
+support. Missing support makes resource totals unknown, not zero. Label totals
+that include exported historical regression support separately from new campaign
+spend. The protocol's byte bound applies to protocol parsing, not to a larger
+valid multi-round evidence export.
 Recompute identities and known results from that bundle without database or route
 access. Missing or contradictory evidence cannot produce a gain verdict.
 Runtime/provider/compute attestations remain labeled; offline consistency checks

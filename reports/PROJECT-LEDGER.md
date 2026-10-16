@@ -3,7 +3,7 @@
 Current state and evidence. Removed studies are recoverable at
 `archive/pre-subtraction-2026-10`; implementation history lives in Git.
 
-## Research checkpoint (2026-10-15)
+## Research checkpoint (2026-10-16)
 
 Human direction: accept the existing prototype at its scope and research stronger
 components. Do not turn another brief live-route or improvement-proof campaign
@@ -65,7 +65,7 @@ P03 task list:
 - [x] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
 Current throughput checkpoint: P01 through P05 are closed at their qualified
-component scope. P10 is implementing the continuing campaign contract. The
+component scope. P10 is finishing independent review and its bounded pilot. The
 remaining queue is P06, P07, P09, then P08.
 
 Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
@@ -154,11 +154,30 @@ P10 task list:
   Independent Sol High review reproduced P10-R1 through R4: omitted reservation
   evidence accepted as zero cost, assessment admission after the charter deadline,
   all-skipped native checks treated as applicability failures, and protocol byte
-  limits incorrectly applied to larger valid exports. Two isolated Luna repair
-  lanes own campaign evidence/admission and capability scope respectively. Both
-  were interrupted before implementation and resumed from their existing tests.
-  Final joined qualification and independent repair review remain pending. No
-  P10 live effects have run. A learning win is not a prerequisite for this component.
+  limits incorrectly applied to larger valid exports. Both isolated Luna repair
+  lanes resumed from their existing tests and are merged. Campaign repairs
+  `99e95907` are integrated at `b6fb4fc4`: the three intended regressions failed
+  before repair; five database checks then passed in 214.63 seconds, including
+  recovery of an assignment admitted before expiry. The protocol-only byte-bound
+  test passed separately. Missing reservation support now gives unknown resource
+  totals rather than zero, and historical regression support is explicitly labeled.
+  The coordinator's joined component gate at `b6fb4fc4` passed 39 tests with
+  zero skips in 514.89 seconds. Sol independently passed the same 39-test scope
+  in 522.47 seconds and challenged reservation, allocation, effect, skipped-check
+  and post-assessment artifact-loss evidence. These are separate focused runs.
+  Its public restart probe additionally found R6: a due assessment blocked
+  recovery of an already-admitted development flight. R7 reproduced development
+  admission after slow ranking crossed the charter deadline. The isolated Luna
+  repair is merged at `0cd39057`. It retains the existing wake path and checks
+  the deadline under the agenda owner lock. Its committed-tip gate passed six
+  tests with zero skips in 100.33 seconds. Sol's separate neighboring gate at
+  `b6fb4fc4` passed 40 tests with zero skips in 552.51 seconds.
+  R8 reproduced an export that omitted acknowledged development effects and
+  falsely reduced total cost. The maintained test failed in 39.71 seconds before
+  `c6a8ca4a` required their original worker/verifier evidence. The original clean
+  export still recomputes consistent; deletion now gives tampered with unknown
+  resources. Final scoped independent closure and the export-file gate are
+  running. No P10 live effects have run. A learning win is not a prerequisite.
   R3 is merged at `1c2981d7`. The coordinator's exact-scope gate passed two
   tests with zero skips in 57.20 seconds; the lane also passed eleven adjacent
   capability/native checks. R5 at `c87a538e` fixes pilot completion classification
@@ -167,12 +186,15 @@ P10 task list:
   An earlier missing-artifact probe was rejected because later fixture work
   restored identical content; only the corrected export-boundary loss is evidence.
   The verified free route is available. No inference was needed for that check.
+  All seven CI jobs passed at `d3eb7fe7` in run `38847049599` and at `b6fb4fc4`
+  in run `38847989122`. Completed implementation worktrees and branches are
+  removed. Two empty databases left by interrupted test setup were also removed.
 - [x] Ground existing agenda, gate, capability, grant and exposure ownership.
 - [x] Compare assessment-flight and immutable-assignment designs; pin shared interfaces and race boundaries in the component plan.
 - [x] Agree. Proceed under the existing assignment, without another approval step.
 - [x] Implement isolated lifecycle, campaign-assessment and exact-applicability lanes.
-- [ ] Integrate and exercise the public CLI, P10-A through P10-F and neighboring component gates.
-- [ ] Scrap check. Retain the selected owners only if the integrated behavior supports them.
+- [x] Integrate and exercise the public CLI, P10-A through P10-F and neighboring component gates. Final repair closure remains below.
+- [x] Scrap check. The existing agenda owner, immutable assessment assignments and single wake path held; no new scheduler was added.
 - [ ] Complete independent GPT-6.1 Sol High verification after all implementation is integrated.
 - [ ] Freeze and run a bounded free-route campaign with interruptions, without requiring a learning win.
 - [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
