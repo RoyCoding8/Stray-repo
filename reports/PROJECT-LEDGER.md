@@ -35,7 +35,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
-| P10: continuing campaigns and assessment | Integrated; independent review repairs active | Bounded unattended operation, resume and longitudinal evidence. |
+| P10: continuing campaigns and assessment | Working checkpoint; final consolidation CI running | Bounded unattended operation, resume and longitudinal evidence. |
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
@@ -65,7 +65,8 @@ P03 task list:
 - [x] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
 Current throughput checkpoint: P01 through P05 are closed at their qualified
-component scope. P10 is finishing independent review and its bounded pilot. The
+component scope. P10 has finished independent review and its bounded pilot;
+final consolidation CI is running. The
 remaining queue is P06, P07, P09, then P08.
 
 Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
@@ -176,8 +177,11 @@ P10 task list:
   falsely reduced total cost. The maintained test failed in 39.71 seconds before
   `c6a8ca4a` required their original worker/verifier evidence. The original clean
   export still recomputes consistent; deletion now gives tampered with unknown
-  resources. Final scoped independent closure and the export-file gate are
-  running. No P10 live effects have run. A learning win is not a prerequisite.
+  resources. The final export-file gate passed six tests with zero skips in
+  239.71 seconds. Sol's final owner/deadline closure passed four cases with zero
+  skips in 60.57 seconds at `c6a8ca4a`; the original R8 counterexample also passed
+  closure. [The independent review](../reviews/P10-REVIEW.md) closes all eight
+  material findings and separates focused gates from whole-repository claims.
   R3 is merged at `1c2981d7`. The coordinator's exact-scope gate passed two
   tests with zero skips in 57.20 seconds; the lane also passed eleven adjacent
   capability/native checks. R5 at `c87a538e` fixes pilot completion classification
@@ -195,8 +199,18 @@ P10 task list:
 - [x] Implement isolated lifecycle, campaign-assessment and exact-applicability lanes.
 - [x] Integrate and exercise the public CLI, P10-A through P10-F and neighboring component gates. Final repair closure remains below.
 - [x] Scrap check. The existing agenda owner, immutable assessment assignments and single wake path held; no new scheduler was added.
-- [ ] Complete independent GPT-6.1 Sol High verification after all implementation is integrated.
-- [ ] Freeze and run a bounded free-route campaign with interruptions, without requiring a learning win.
+- [x] Complete independent GPT-6.1 Sol High verification after all implementation is integrated.
+- [x] Freeze and run a bounded free-route campaign with interruptions, without requiring a learning win.
+  Freeze `b7a08ea3` preceded all effects. The fresh-process development phase
+  admitted one worker, which timed out in 90.3 seconds with unknown tokens.
+  No verifier or assessment ran. The timeout receipt settled the 400,000-unit
+  token reservation by the unknown-charge fallback; provider usage and billing
+  are not measured. The P01 episode and P05 flight remain unfinished, and the
+  same campaign is suspended. No retry, replacement identity or ceiling raise
+  was made. [The public bundle](../experiments/campaign10/evidence/live1/README.md)
+  recomputes identically without a route or usable database, returning incomplete
+  with no consistency problems or gain verdict. Preserve its database anchor
+  `p10_live_20261015_01` and private `D:/AI/tools/p10/live1` run area.
 - [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
 
 Remaining queue: P10 → P06 → P07 → P09 → P08. Each receives its own task list

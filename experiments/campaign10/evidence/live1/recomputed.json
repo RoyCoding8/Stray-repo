@@ -1,0 +1,28 @@
+{
+  "comparison_gain": false,
+  "learning_gain": false,
+  "limitations": [
+    "offline evidence cannot authenticate provider, wall time or compute attestations",
+    "comparison outcomes do not establish transfer or improved learning",
+    "resource units include exported historical regression support, not only campaign spend"
+  ],
+  "problems": [],
+  "resource_units": {
+    "cpu": {
+      "released": 0,
+      "reserved": 0,
+      "settled": 0,
+      "uncertain": 0
+    },
+    "tokens": {
+      "released": 0,
+      "reserved": 0,
+      "settled": 400000,
+      "uncertain": 0
+    }
+  },
+  "status": "incomplete",
+  "unresolved_operations": [
+    "p01-worker-6167dd4de0b0eb3de727920db5118cfeb4bbe862299244c0dac0a4350a513dd9"
+  ]
+}
