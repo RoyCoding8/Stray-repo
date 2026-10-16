@@ -401,15 +401,24 @@ def evaluate(dsn: str, checker: Any, policy: dict, frames: list[str], branches: 
         branch = branch_docs.get(branch_digest)
         with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
             cur.execute("SELECT id,allocation_id,reservation_id,execution_version,settled,"
-                        "dispatch_state,reconcile_state FROM operations WHERE id=%s",
+                        "dispatch_state,reconcile_state,payload FROM operations WHERE id=%s",
                         (operation_id,))
             operation = cur.fetchone()
             reservation = None
             if operation and operation["reservation_id"]:
-                cur.execute("SELECT id,allocation_id,amount,state FROM reservations WHERE id=%s",
+                cur.execute("SELECT id,operation_id,allocation_id,amount,state FROM reservations "
+                            "WHERE id=%s",
                             (operation["reservation_id"],))
                 reservation = cur.fetchone()
+        if operation is not None:
+            operation = dict(operation)
+            payload = operation.pop("payload") or {}
+            operation["effect"] = payload.get("effect")
+            operation["actual_cost_present"] = "_receipt_actual_cost" in payload
+            operation["actual_cost"] = payload.get("_receipt_actual_cost")
         receipts = store.operation_receipts(dsn, operation_id)
+        for receipt in receipts:
+            receipt["operation_id"] = operation_id
         policy_output = ({"value": invocation.value,
                           "files": {slot: text.decode("utf-8")
                                     for slot, text in invocation.files}}
@@ -503,6 +512,61 @@ def recompute(bundle: dict) -> dict:
         if key in branch_index:
             raise SettlementError("offline branch corpus has conflicting opportunity evidence")
         branch_index[key] = digest
+    def policy_effect_evidence(row: dict, index: int) -> tuple[bool, int | None]:
+        """Validate a policy effect; unknown reservations leave only its cost unknown."""
+        invocation = row.get("invocation")
+        operation = row.get("operation")
+        receipts = row.get("receipts")
+        resources = row.get("resources")
+        expected_id = f"p06-policy-{bundle.get('evaluation_id')}-{index:04d}"
+        valid_receipt = (isinstance(receipts, list) and len(receipts) == 1
+                         and isinstance(receipts[0], dict)
+                         and isinstance(receipts[0].get("receipt_identity"), str)
+                         and bool(receipts[0]["receipt_identity"].strip())
+                         and receipts[0].get("operation_id") == expected_id
+                         and receipts[0].get("outcome") in ("success", "failure")
+                         and isinstance(receipts[0].get("content"), dict)
+                         and isinstance(receipts[0].get("provenance"), str)
+                         and bool(receipts[0]["provenance"].strip()))
+        reservation_valid = (isinstance(resources, dict)
+                             and isinstance(operation, dict)
+                             and isinstance(operation.get("reservation_id"), str)
+                             and bool(operation["reservation_id"])
+                             and resources.get("id") == operation.get("reservation_id")
+                             and resources.get("operation_id") == expected_id
+                             and resources.get("allocation_id") == bundle.get("allocation_id")
+                             and resources.get("state") == "settled"
+                             and type(resources.get("amount")) is int
+                             and resources["amount"] >= 0)
+        actual_cost = operation.get("actual_cost") if isinstance(operation, dict) else None
+        actual_cost_valid = (isinstance(operation, dict)
+                             and operation.get("actual_cost_present") is True
+                             and (actual_cost is None or type(actual_cost) is int
+                                  and actual_cost >= 0)
+                             and (actual_cost is None or not reservation_valid
+                                  or actual_cost <= resources["amount"]))
+        operation_valid = (isinstance(invocation, dict) and isinstance(operation, dict)
+                           and row.get("operation_id") == expected_id
+                           and operation.get("id") == expected_id
+                           and operation.get("effect") == "sandbox-exec"
+                           and isinstance(operation.get("reservation_id"), str)
+                           and bool(operation["reservation_id"])
+                           and operation.get("allocation_id") == bundle.get("allocation_id")
+                           and isinstance(operation.get("execution_version"), str)
+                           and bool(operation["execution_version"])
+                           and invocation.get("execution_version") == operation.get("execution_version")
+                           and operation.get("settled") is True
+                           and operation.get("dispatch_state") in ("observed", "reconciled")
+                           and operation.get("reconcile_state") not in ("conflict", "unresolved")
+                           and actual_cost_valid)
+        if not (valid_receipt and operation_valid):
+            return False, None
+        if actual_cost is not None:
+            return True, actual_cost
+        if reservation_valid:
+            return True, resources["amount"]
+        return True, None
+
     supported = gaps = stops = refusals = passed = failed = continuation_gaps = 0
     cpu_seconds = 0.0
     cpu_seconds_unknown = 0
@@ -522,37 +586,17 @@ def recompute(bundle: dict) -> dict:
             cpu_seconds += float(seconds)
         else:
             cpu_seconds_unknown += 1
-        operation = row.get("operation")
-        receipts = row.get("receipts")
-        valid_receipts = (isinstance(receipts, list) and len(receipts) == 1
-                          and isinstance(receipts[0], dict)
-                          and isinstance(receipts[0].get("receipt_identity"), str)
-                          and bool(receipts[0]["receipt_identity"])
-                          and receipts[0].get("outcome") in ("success", "failure")
-                          and isinstance(receipts[0].get("content"), dict)
-                          and isinstance(receipts[0].get("provenance"), str))
-        resources = row.get("resources")
-        reservation_known = (isinstance(operation, dict)
-                             and operation.get("id")
-                             == f"p06-policy-{bundle.get('evaluation_id')}-{index:04d}"
-                             and operation.get("allocation_id") == bundle.get("allocation_id")
-                             and isinstance(operation.get("execution_version"), str)
-                             and bool(operation["execution_version"])
-                             and operation.get("settled") is True
-                             and operation.get("dispatch_state") in ("observed", "reconciled")
-                             and operation.get("reconcile_state") not in ("conflict", "unresolved")
-                             and valid_receipts and isinstance(resources, dict)
-                             and resources.get("id") == operation.get("reservation_id")
-                             and resources.get("allocation_id") == bundle.get("allocation_id")
-                             and resources.get("state") == "settled"
-                             and type(resources.get("amount")) is int
-                             and resources["amount"] >= 0)
-        if reservation_known:
-            screening_cpu_units += resources["amount"]
+        effect_known, charged_units = policy_effect_evidence(row, index)
+        if effect_known and charged_units is not None:
+            screening_cpu_units += charged_units
         else:
             screening_cpu_units_unknown += 1
     for index, row in enumerate(results):
         if not isinstance(row, dict):
+            gaps += 1
+            continue
+        effect_known, _ = policy_effect_evidence(row, index)
+        if not effect_known:
             gaps += 1
             continue
         frame = frames.get(row.get("frame"))
@@ -561,7 +605,6 @@ def recompute(bundle: dict) -> dict:
         evaluation_id = bundle.get("evaluation_id")
         if (not isinstance(frame, dict)
                 or row.get("frame") != bundle["frames"][index]
-                or row.get("operation_id") != f"p06-policy-{evaluation_id}-{index:04d}"
                 or (branch_digest is not None
                     and (branch is None or branch_digest not in bundle["branches"]
                          or branch.get("frame") != row.get("frame")))):
@@ -575,26 +618,6 @@ def recompute(bundle: dict) -> dict:
         invocation = row.get("invocation", {})
         resources = row.get("resources")
         seconds = invocation.get("seconds") if isinstance(invocation, dict) else None
-        operation = row.get("operation")
-        receipts = row.get("receipts")
-        valid_receipts = (isinstance(receipts, list) and len(receipts) == 1
-                          and isinstance(receipts[0], dict)
-                          and isinstance(receipts[0].get("receipt_identity"), str)
-                          and bool(receipts[0]["receipt_identity"])
-                          and receipts[0].get("outcome") in ("success", "failure")
-                          and isinstance(receipts[0].get("content"), dict)
-                          and isinstance(receipts[0].get("provenance"), str))
-        if (not isinstance(operation, dict)
-                or operation.get("id") != row.get("operation_id")
-                or operation.get("allocation_id") != bundle.get("allocation_id")
-                or not isinstance(operation.get("execution_version"), str)
-                or not operation["execution_version"]
-                or invocation.get("execution_version") != operation.get("execution_version")
-                or operation.get("settled") is not True
-                or operation.get("dispatch_state") not in ("observed", "reconciled")
-                or operation.get("reconcile_state") in ("conflict", "unresolved")
-                or not valid_receipts):
-            gaps += 1
         output = row.get("policy_output")
         output_digest = invocation.get("output_digest")
         if output_digest is not None:

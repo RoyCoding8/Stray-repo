@@ -3,9 +3,9 @@ from __future__ import annotations
 import copy
 
 import pytest
+from rsi_search_fixture import bundle
 
 from rsi import search
-from rsi_search_fixture import bundle
 
 
 def test_offline_replay_recomputes_supported_outcome_and_screening_cost():
@@ -124,6 +124,23 @@ def test_offline_replay_counts_unsupported_or_forged_support_as_gap(mutation):
     assert search.recompute(changed)["gaps"] == 1
 
 
+@pytest.mark.parametrize("mutation", ["missing-receipt", "changed-receipt",
+                                       "changed-operation"])
+def test_policy_effect_evidence_is_required_for_supported_replay(mutation):
+    changed = bundle()
+    row = changed["results"][0]
+    if mutation == "missing-receipt":
+        row["receipts"] = []
+    elif mutation == "changed-receipt":
+        row["receipts"][0]["operation_id"] = "different-operation"
+    else:
+        row["operation"]["id"] = "different-operation"
+
+    result = search.recompute(changed)
+    assert result["supported"] == 0
+    assert result["gaps"] == 1
+
+
 def _set_policy_output(row, value):
     output = {"value": value, "files": {}}
     raw = search._canonical(output)
@@ -166,4 +183,25 @@ def test_screening_cost_includes_refusal_and_unknown_reservation_is_not_zero():
     assert result["screening_cpu_seconds"] == 0.02
     assert result["screening_cpu_units"] is None
     assert result["screening_cpu_units_known"] == 0
+    assert result["screening_cpu_units_unknown"] == 1
+
+
+def test_screening_cost_uses_actual_settled_charge_when_present():
+    data = bundle()
+    data["results"][0]["operation"]["actual_cost"] = 2
+
+    result = search.recompute(data)
+    assert result["supported"] == 1
+    assert result["screening_cpu_units"] == 2
+    assert result["screening_cpu_units_known"] == 2
+
+
+def test_infeasible_actual_charge_gaps_and_marks_cost_unknown():
+    data = bundle()
+    data["results"][0]["operation"]["actual_cost"] = 5
+
+    result = search.recompute(data)
+    assert result["supported"] == 0
+    assert result["gaps"] == 1
+    assert result["screening_cpu_units"] is None
     assert result["screening_cpu_units_unknown"] == 1
