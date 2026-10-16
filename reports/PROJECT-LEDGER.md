@@ -35,7 +35,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
-| P10: continuing campaigns and assessment | Contract pinned; implementation next | Bounded unattended operation, resume and longitudinal evidence. |
+| P10: continuing campaigns and assessment | Integrated; independent review repairs active | Bounded unattended operation, resume and longitudinal evidence. |
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
@@ -146,12 +146,23 @@ P10 task list:
   reproduced it through the CLI and repaired first-choice detection at
   `71b3a0d7`; all three CLI integration tests passed with zero skips in 69.40
   seconds. The campaign lane worktree and branch are removed. The bounded pilot
-  is completing fixture qualification against that fix. Final integration and
-  independent review are pending. No P10 live effects have run.
+  passed four fixture tests and is merged at `84daa699`. The broader integrated
+  gate observed 85 passed and one stale lifecycle status assertion in 982.79
+  seconds, with zero skips. CI reproduced that assertion. Its correction at
+  `d8a07815` passed the affected public refusal test; neither run is reported as
+  a green final component gate.
+  Independent Sol High review reproduced P10-R1 through R4: omitted reservation
+  evidence accepted as zero cost, assessment admission after the charter deadline,
+  all-skipped native checks treated as applicability failures, and protocol byte
+  limits incorrectly applied to larger valid exports. Two isolated Luna repair
+  lanes own campaign evidence/admission and capability scope respectively. Both
+  were interrupted before implementation and resumed from their existing tests.
+  Final joined qualification and independent repair review remain pending. No
+  P10 live effects have run. A learning win is not a prerequisite for this component.
 - [x] Ground existing agenda, gate, capability, grant and exposure ownership.
 - [x] Compare assessment-flight and immutable-assignment designs; pin shared interfaces and race boundaries in the component plan.
 - [x] Agree. Proceed under the existing assignment, without another approval step.
-- [ ] Implement isolated lifecycle, campaign-assessment and exact-applicability lanes.
+- [x] Implement isolated lifecycle, campaign-assessment and exact-applicability lanes.
 - [ ] Integrate and exercise the public CLI, P10-A through P10-F and neighboring component gates.
 - [ ] Scrap check. Retain the selected owners only if the integrated behavior supports them.
 - [ ] Complete independent GPT-6.1 Sol High verification after all implementation is integrated.
