@@ -28,8 +28,17 @@ from psycopg.types.json import Json
 from settlement import broker, db, store
 from settlement.common import Command, ResultCode, SettlementError, StaleRevision
 
-from . import (agenda_policy, capability, genome, investigate, investigation,
-               memory, search, task, verifier)
+from . import (
+    agenda_policy,
+    capability,
+    genome,
+    investigate,
+    investigation,
+    memory,
+    search,
+    task,
+    verifier,
+)
 
 _MAX_OPTIONS = 64
 _MAX_TURNS = 100
@@ -662,7 +671,7 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
         return investigate.step(dsn, agent, checker, flight["investigation_id"],
                                 staging_root=staging_root, artifacts_root=artifacts_root,
                                 target_revision=target_revision)
-    return investigate.step(dsn, agent, checker, inv_id, staging_root=staging_root,
+    return investigate.step(dsn, agent, checker, flight["investigation_id"], staging_root=staging_root,
                             artifacts_root=artifacts_root,
                             target_revision=flight["target_revision"])
 
@@ -1496,7 +1505,7 @@ def _commit_policy_choice(dsn, agent, checker, agenda_id, state, loaded,
                            "choice_id": choice_id, "opportunity_id": opportunity_id})
 
     def commit(cur, control):
-        current = _lock_policy_transition(
+        _lock_policy_transition(
             cur, control, agenda_id, revision, flight, snapshot, resources,
             require_authority=True, allow_expired=False)
         if _pending_assessment(cur, agenda_id) is not None:

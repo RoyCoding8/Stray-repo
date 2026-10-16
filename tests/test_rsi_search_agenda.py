@@ -1,20 +1,19 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 import pytest
+from test_rsi_agenda import _charter
+from test_rsi_capability_integration import _genome as _method_genome
+from test_rsi_capability_integration import _qualify as _qualify_method
+from test_rsi_capability_integration import _task as _method_task
+from test_rsi_investigate import _scenario, _worker_calls
 
 from rsi import agenda, genome, investigation, memory, search, task
 from settlement import broker, db, store
 from settlement.common import Command, SettlementError
 from settlement.launcher_local import LocalLauncher
-from test_rsi_capability_integration import _genome as _method_genome
-from test_rsi_capability_integration import _qualify as _qualify_method
-from test_rsi_capability_integration import _task as _method_task
-from test_rsi_agenda import _charter
-from test_rsi_investigate import _scenario, _worker_calls
-
 
 _INTERFACE = "exploration-policy/1"
 
@@ -120,7 +119,7 @@ def test_native_policy_replays_once_and_admits_its_exact_prepared_start(
         migrated_db, tmp_path, monkeypatch):
     run = _scenario(migrated_db, tmp_path / "run", "p06-agenda-replay", "pass-first")
     organism, launcher = _policy(run, tmp_path, action="choose", opportunity_id="second")
-    charter = _create(run, "p06-agenda-replay", organism)
+    _create(run, "p06-agenda-replay", organism)
     commit = agenda._commit_policy_choice
     interrupted = False
 
