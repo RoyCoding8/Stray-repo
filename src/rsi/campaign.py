@@ -465,7 +465,9 @@ def export(dsn, campaign_id, *, artifacts_root):
     investigations = [history for ident in sorted(investigation_ids)
                        if (history := investigation.export(dsn, ident)) is not None]
 
-    operation_ids = set()
+    policy_admissions = [row["data"] for row in decisions
+                         if row["kind"] == "p05.policy_admission"]
+    operation_ids = {item["operation_id"] for item in policy_admissions}
     for history in investigations:
         operation_ids.update(effect["id"] for effect in history["unresolved_effects"])
         operation_ids.update(effect["id"] for effect in _query_rows(
@@ -545,6 +547,16 @@ def export(dsn, campaign_id, *, artifacts_root):
     artifact_digests = {protocol_digest}
     artifact_digests.update(item["task_id"] for item in state["charter"]["opportunities"])
     artifact_digests.update(item["genome_id"] for item in state["charter"]["opportunities"])
+    for row in decisions:
+        if row["kind"] not in {"p05.policy_admission", "p05.policy_stop",
+                               "p05.policy_refusal", "p05.choice"}:
+            continue
+        item = row["data"]
+        if isinstance(item.get("policy"), dict):
+            artifact_digests.update(digest for digest in (
+                item["policy"]["genome"], item.get("frame_digest"),
+                (item.get("policy_result") or {}).get("output_digest"),
+            ) if digest)
     for epoch in epochs:
         artifact_digests.update(epoch["tasks"])
     for assignment in assignments:
@@ -904,6 +916,43 @@ def recompute(bundle):
 
     for operation_id in operations:
         _clean_receipt(operation_id, operations, receipt_rows, unresolved, problems)
+    policy_admissions = {}
+    policy_completions = {}
+    for row in data.get("decisions", []):
+        item = row.get("data", {})
+        if row.get("kind") == "p05.policy_admission":
+            operation_id = item.get("operation_id")
+            if not isinstance(operation_id, str) or not operation_id or operation_id in policy_admissions:
+                problems.append("invalid or duplicate agenda policy admission")
+                continue
+            policy_admissions[operation_id] = item
+        elif (row.get("kind") in {"p05.policy_stop", "p05.policy_refusal", "p05.choice"}
+              and isinstance(item.get("policy"), dict)):
+            operation_id = item.get("operation_id")
+            if not isinstance(operation_id, str) or not operation_id or operation_id in policy_completions:
+                problems.append("invalid or duplicate agenda policy completion")
+                continue
+            policy_completions[operation_id] = item
+    for operation_id, item in policy_completions.items():
+        admission = policy_admissions.get(operation_id)
+        if admission is None or any(item.get(key) != admission.get(key)
+                                    for key in ("policy", "frame_digest")):
+            problems.append(f"agenda policy completion has no matching admission: {operation_id}")
+    for operation_id, admission in policy_admissions.items():
+        operation = operations.get(operation_id)
+        completion = policy_completions.get(operation_id)
+        if completion is not None and completion.get("operation_admitted") is False:
+            if operation is not None or completion.get("policy_result") is not None:
+                problems.append(f"refused agenda policy has dispatched evidence: {operation_id}")
+            continue
+        if operation is None and operation_id not in policy_completions:
+            unresolved.append(operation_id)
+            continue
+        if (operation is None
+                or operation.get("execution_version") != (admission.get("policy") or {}).get("execution_version")
+                or operation.get("payload", {}).get("effect") != "sandbox-exec"
+                or operation.get("allocation_id") != charter.get("allocations", {}).get("cpu", {}).get("id")):
+            problems.append(f"agenda policy operation is missing or mismatched: {operation_id}")
     for operation_id, found in receipt_rows.items():
         if len(found) == 1 and payload_digest(found[0].get("content", {})) != found[0].get("content_digest"):
             problems.append(f"operation receipt digest is invalid: {operation_id}")
