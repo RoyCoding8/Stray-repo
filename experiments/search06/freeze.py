@@ -9,9 +9,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 try:
-    from .driver import MODEL, ROUTE_FILE, SOURCE_PATHS, _scenario, canonical, read_json
+    from .driver import CODEX, MODEL, ROUTE_FILE, SOURCE_PATHS, _scenario, canonical, read_json
 except ImportError:
-    from driver import MODEL, ROUTE_FILE, SOURCE_PATHS, _scenario, canonical, read_json
+    from driver import CODEX, MODEL, ROUTE_FILE, SOURCE_PATHS, _scenario, canonical, read_json
 
 
 def _sha(raw: bytes) -> str:
@@ -55,7 +55,6 @@ def _route(path: Path, mode: str) -> dict:
 def _software(root: Path, mode: str) -> dict:
     result = {}
     if mode == "live":
-        from .driver import CODEX
         if not CODEX.is_file():
             raise ValueError(f"Codex CLI is missing: {CODEX}")
         result["codex"] = {"path": str(CODEX.resolve()),

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import shutil
 from pathlib import Path
@@ -10,6 +11,23 @@ from experiments.search06 import driver
 from experiments.search06 import freeze as search_freeze
 from rsi import search
 from settlement.launcher_local import LocalLauncher
+
+
+def test_direct_file_freeze_can_pin_live_software_without_inference(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(str(driver.HERE))
+    spec = importlib.util.spec_from_file_location("p06_direct_freeze", driver.HERE / "freeze.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    executable = tmp_path / "fixture-codex"
+    executable.write_bytes(b"fixture executable identity")
+    monkeypatch.setattr(module, "CODEX", executable)
+
+    software = module._software(driver.ROOT, "live")
+
+    assert software == {"codex": {
+        "path": str(executable.resolve()),
+        "sha256": driver.sha(b"fixture executable identity"),
+    }}
 
 
 def test_collector_screens_identical_supported_corpus_and_recomputes_offline(
