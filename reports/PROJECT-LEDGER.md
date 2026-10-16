@@ -31,7 +31,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Working checkpoint; live unscored | Experience changes what the system chooses to investigate next. |
-| P06: search history and dreaming | Grounded; implementation contract selected | Supported replay screens policies and identifies live coverage needs. |
+| P06: search history and dreaming | Preparation integrated; replay and policy ownership in progress | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
@@ -224,7 +224,7 @@ P06 task list:
 - [x] Ground the actual P01/P03 input construction, P05 owner and reusable native method ABI.
 - [x] Sketch. Compare frozen frames and historical-prefix replay; challenge prospective alternative collection independently.
 - [x] Agree. Select the implementation contract in the existing component plan under the standing assignment.
-- [ ] Implement the shared P01 context-preparation seam and qualify unchanged worker inputs.
+- [x] Implement the shared P01 context-preparation seam and qualify unchanged worker inputs.
 - [ ] Integrate immutable frames, supported replay, executable P05 policies and prospective branch collection.
 - [ ] Qualify P06-A through P06-E and neighboring components on the integrated path.
 - [ ] Complete independent GPT-6.1 Sol High verification after implementation.
@@ -233,8 +233,14 @@ P06 task list:
 
 The shared native invocation plan is implemented at `3cb9f269`. Eight focused
 tests passed on real PostgreSQL and native children, including prospective versus
-executed identity. This is a prerequisite, not P06 completion. Preparation,
-replay and agenda lanes remain in progress in disjoint temporary worktrees.
+executed identity. P01 preparation landed in `a4750f45` and merged at `7fd5e0b4`.
+The coordinator's integrated preparation and native-plan gate passed six tests
+with no skips in 56.87 seconds. The lane also passed its 19-test P01/P03 combined
+gate before a test-only fixture correction, then its corrected four-test
+preparation file. These are focused gates, not a full-suite result.
+
+The preparation worktree and merged branch are removed. Replay, agenda policy
+ownership and the prospective collector remain in disjoint temporary worktrees.
 
 Remaining queue: P06 → P07 → P09 → P08. Each receives its own task list
 when active. Qualified mechanisms do not imply acquisition, utility or learning.
