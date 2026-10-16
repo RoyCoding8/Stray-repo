@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import json
+import shutil
+from pathlib import Path
+
+import pytest
 
 from experiments.search06 import driver
+from experiments.search06 import freeze as search_freeze
 from rsi import search
 from settlement.launcher_local import LocalLauncher
 
@@ -106,3 +111,121 @@ def test_offline_live_accounting_preserves_both_attempts_without_scoring(tmp_pat
     assert report["quality"] == "unscored"
     assert report["evaluations"] == {}
     assert report["construction_accounting"] == expected
+
+
+@pytest.mark.parametrize(("observation_status", "passed"), [("passed", True), ("failed", False)])
+def test_prospective_use_requires_acknowledged_checked_outcome(observation_status, passed):
+    observed = {"episode": "worker-1", "verdict": "check-1",
+                "status": observation_status, "passed": passed}
+    outcome = {"status": "acknowledged", "opportunity_id": "general",
+               "acknowledgement": {"observation": observed}}
+    state = {"status": "unresolved", "last_observation": observed}
+
+    result = driver._prospective_use_result(outcome, state)
+    assert result == {"status": "complete", "checked": True, "passed": passed,
+                      "selected_opportunity": "general", "observation": observed}
+
+    for incomplete in (
+        {**outcome, "status": "pending"},
+        {**outcome, "status": "deferred"},
+        {**outcome, "opportunity_id": "unknown"},
+    ):
+        result = driver._prospective_use_result(incomplete, state)
+        assert result["status"] == "unscored"
+        assert result["checked"] is False
+        assert result["passed"] is None
+
+
+def test_candidate_screen_requires_comparable_incumbent_evidence():
+    candidate = {"supported": 3, "gaps": 0, "stops": 0, "refusals": 0,
+                 "passed": 2, "screening_cpu_units": 500, "screening_cpu_units_unknown": 0}
+    incumbent = {"supported": 3, "gaps": 0, "stops": 0, "refusals": 0,
+                 "passed": 2, "screening_cpu_units": 600, "screening_cpu_units_unknown": 0}
+    assert driver._screen_eligibility(candidate, incumbent, 3, 1000)["eligible"] is True
+
+    incomplete = {**incumbent, "supported": 2, "gaps": 1, "passed": 0}
+    result = driver._screen_eligibility(candidate, incomplete, 3, 1000)
+    assert result["eligible"] is False
+    assert result["incumbent_coverage_all_frames"] is False
+    assert result["no_worse_checked_quality"] is False
+
+    unknown_cost = {**incumbent, "screening_cpu_units": None,
+                    "screening_cpu_units_unknown": 1}
+    result = driver._screen_eligibility(candidate, unknown_cost, 3, 1000)
+    assert result["eligible"] is False
+    assert result["incumbent_costs_known"] is False
+
+
+def test_fixture_freeze_rejects_collection_and_source_drift_and_reuses_run_identity(tmp_path):
+    root = tmp_path / "checkout"
+    for relative in driver.SOURCE_PATHS:
+        source = driver.ROOT / relative
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+    scenario_path = root / "experiments/search06/scenario.json"
+    scenario = driver._scenario(scenario_path)
+    collection = {
+        "schema": "p06-collection/1", "run_id": "fixture-collection",
+        "scenario_sha256": driver.sha(driver.canonical(scenario)),
+        "frames": ["frame-1", "frame-2", "frame-3"],
+        "branches": [f"branch-{index}" for index in range(6)],
+        "policies": {"authored-restricted": {}, "authored-general": {}},
+    }
+    collection_path = tmp_path / "collection.json"
+    freeze_path = tmp_path / "freeze.json"
+    collection_path.write_text(json.dumps(collection), encoding="utf-8")
+
+    frozen = search_freeze.freeze(
+        root, freeze_path, collection_path, mode="fixture", scenario_path=scenario_path)
+    verified = search_freeze.verify_freeze(
+        root, freeze_path, collection_path, scenario_path=scenario_path)
+    assert verified["live_plan"] == frozen["live_plan"]
+    assert driver._claim_run(frozen, freeze_path,
+                             Path(frozen["live_plan"]["run_output"])) == frozen["live_plan"]["run_id"]
+    assert driver._claim_run(verified, freeze_path,
+                             Path(frozen["live_plan"]["run_output"])) == frozen["live_plan"]["run_id"]
+    assert len(frozen["live_plan"]["operations"]["construction"]) == 2
+    assert len(frozen["live_plan"]["allocations"]["construction"]) == 2
+    with pytest.raises(ValueError, match="frozen directory"):
+        driver._claim_run(verified, freeze_path, tmp_path / "new-run")
+
+    changed_collection = {**collection, "branches": [*collection["branches"], "new"]}
+    collection_path.write_text(json.dumps(changed_collection), encoding="utf-8")
+    with pytest.raises(ValueError, match="collection_sha256"):
+        search_freeze.verify_freeze(
+            root, freeze_path, collection_path, scenario_path=scenario_path)
+
+    collection_path.write_text(json.dumps(collection), encoding="utf-8")
+    source_path = root / "src/rsi/search.py"
+    source_path.write_bytes(source_path.read_bytes() + b"\n# drift\n")
+    with pytest.raises(ValueError, match="source_sha256"):
+        search_freeze.verify_freeze(
+            root, freeze_path, collection_path, scenario_path=scenario_path)
+
+
+def test_constructor_accounting_comes_from_durable_prepared_operation(migrated_db, tmp_path):
+    from settlement import broker
+
+    roots = driver._roots(migrated_db, "durable-evidence", tokens=10_000, cpu=1_000)
+    operation_id = "p06-accounting-prepared"
+    payload = {"profile": "local-process", "argv": ["python", "-c", "pass"],
+               "timeout_ms": 100, "max_output_bytes": 1024}
+    prepared = broker.ensure_operation(
+        migrated_db, operation_id=operation_id, effect=broker.SANDBOX_EXEC,
+        payload=payload, allocation_id=roots["cpu"])
+    assert prepared.code.value == "applied"
+    assert not (tmp_path / "live-result.json").exists()
+
+    assert driver._construction_admissions(migrated_db, [operation_id, "not-admitted"]) == 1
+    evidence = driver._construction_evidence(migrated_db, [operation_id, "not-admitted"])
+    assert evidence["admissions"] == 1
+    assert evidence["reserved_units_known"] == prepared.data["exposure"]
+    assert evidence["reserved_units_unknown"] == 0
+    assert evidence["operations"][0]["dispatch_state"] == "prepared"
+    assert evidence["operations"][0]["reservation"] == {
+        "amount": prepared.data["exposure"], "state": "reserved"}
+    assert evidence["operations"][0]["receipts"] == []
+    assert evidence["operations"][1] == {
+        "operation_id": "not-admitted", "found": False,
+        "reservation": None, "receipts": []}

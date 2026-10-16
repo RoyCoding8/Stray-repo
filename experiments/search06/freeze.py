@@ -154,7 +154,7 @@ def verify_freeze(root: Path, path: Path, collection_path: Path, *,
     if frozen.get("scenario") != scenario or frozen.get("source_manifest") != source_manifest:
         raise ValueError("P06 frozen scenario or source manifest changed")
     if not isinstance(frozen.get("live_plan"), dict):
-        raise ValueError("P06 freeze has no prospective run plan")
+        raise TypeError("P06 freeze has no prospective run plan")
     unsigned = {key: value for key, value in frozen.items() if key != "freeze_sha256"}
     if frozen.get("freeze_sha256") != _sha(canonical(unsigned)):
         raise ValueError("P06 freeze digest is invalid")

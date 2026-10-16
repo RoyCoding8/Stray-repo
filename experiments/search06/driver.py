@@ -52,7 +52,7 @@ def write_json(path: Path, value: object) -> None:
 def read_json(path: Path) -> dict:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
-        raise ValueError(f"expected a JSON object in {path}")
+        raise TypeError(f"expected a JSON object in {path}")
     return value
 
 
@@ -207,24 +207,23 @@ def _construction_admissions(dsn: str, operation_ids: list[str]) -> int:
 
 def _construction_evidence(dsn: str, operation_ids: list[str]) -> dict:
     """Export durable constructor accounting through settlement's read APIs."""
-    from settlement import broker, store
-    from settlement import db
     from psycopg.rows import dict_row
+
+    from settlement import broker, db, store
 
     operations = []
     for operation_id in operation_ids:
         operation = broker.read_operation(dsn, operation_id)
         if operation is None:
             operations.append({"operation_id": operation_id, "found": False,
-                               "receipts": []})
+                               "reservation": None, "receipts": []})
             continue
         receipts = store.operation_receipts(dsn, operation_id)
-        with db.read_connect(dsn) as conn:
-            with conn.cursor(row_factory=dict_row) as cur:
-                cur.execute("SELECT amount, state FROM reservations WHERE id = %s",
-                            (operation.get("reservation_id"),))
-                reservation = cur.fetchone()
-                conn.commit()
+        with db.read_connect(dsn) as conn, conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("SELECT amount, state FROM reservations WHERE id = %s",
+                        (operation.get("reservation_id"),))
+            reservation = cur.fetchone()
+            conn.commit()
         operations.append({
             "operation_id": operation_id, "found": True,
             "dispatch_state": operation.get("dispatch_state"),
@@ -294,7 +293,6 @@ def _start(dsn, roots, task_item, candidate, value, investigation_id, native,
 def collect(dsn: str, output: Path, *, scenario_path: Path = SCENARIO) -> dict:
     """Publish each complete visible frame before executing its P01 branches."""
     from rsi import experience, genome, investigate, search, task
-    from rsi import capability
     from settlement.launcher_local import LocalLauncher
 
     scenario = _scenario(scenario_path)
@@ -546,6 +544,61 @@ def _recompute_construction_accounting(bundle: dict) -> dict:
                 for item in evidence["operations"]]}
 
 
+def _prospective_use_result(outcome: dict, investigation_state: dict | None) -> dict:
+    selected = outcome.get("opportunity_id") if isinstance(outcome, dict) else None
+    acknowledgement = outcome.get("acknowledgement") if isinstance(outcome, dict) else None
+    observation = (acknowledgement.get("observation")
+                   if isinstance(acknowledgement, dict) else None)
+    last = (investigation_state.get("last_observation")
+            if isinstance(investigation_state, dict) else None)
+    checked = (
+        outcome.get("status") == "acknowledged"
+        and selected in {"restricted", "general"}
+        and isinstance(observation, dict)
+        and observation.get("status") in {"passed", "failed"}
+        and type(observation.get("passed")) is bool
+        and observation["status"] == ("passed" if observation["passed"] else "failed")
+        and isinstance(last, dict)
+        and last.get("episode") == observation.get("episode")
+        and last.get("verdict") == observation.get("verdict")
+        and last.get("passed") is observation["passed"]
+        and last.get("status") == observation["status"])
+    return {"status": "complete" if checked else "unscored",
+            "checked": checked, "passed": observation["passed"] if checked else None,
+            "selected_opportunity": selected,
+            "observation": observation if checked else None}
+
+
+def _screen_eligibility(candidate: dict, incumbent: dict, frame_count: int,
+                        cost_ceiling: int) -> dict:
+    def coverage(value):
+        return (value.get("supported") == frame_count and value.get("gaps") == 0
+                and value.get("stops") == 0 and value.get("refusals") == 0)
+
+    def cost(value):
+        known = (value.get("screening_cpu_units_unknown") == 0
+                 and type(value.get("screening_cpu_units")) is int)
+        bounded = known and value["screening_cpu_units"] <= cost_ceiling
+        return known, bounded
+
+    candidate_coverage, incumbent_coverage = coverage(candidate), coverage(incumbent)
+    candidate_cost_known, candidate_cost_bounded = cost(candidate)
+    incumbent_cost_known, incumbent_cost_bounded = cost(incumbent)
+    comparable = incumbent_coverage and incumbent_cost_known and incumbent_cost_bounded
+    quality_ok = comparable and candidate.get("passed", -1) >= incumbent.get("passed", 0)
+    eligible = (candidate_coverage and candidate_cost_bounded and quality_ok)
+    return {"eligible": eligible, "coverage_all_frames": candidate_coverage,
+            "incumbent_coverage_all_frames": incumbent_coverage,
+            "no_worse_checked_quality": quality_ok,
+            "costs_known": candidate_cost_known,
+            "costs_bounded": candidate_cost_bounded,
+            "incumbent_costs_known": incumbent_cost_known,
+            "incumbent_costs_bounded": incumbent_cost_bounded,
+            "reason": None if eligible else
+            "candidate or incumbent lacked complete comparable coverage or bounded costs, "
+            "or candidate checked quality was lower"}
+
+
 def _route_provider(route_file: Path):
     from settlement.launcher_codex import Provider
     values = {}
@@ -597,8 +650,7 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
     run_id = _claim_run(frozen, freeze_path, output)
     scenario = _scenario()
     collection = read_json(collection_path)
-    from rsi import agenda, capability, experience, genome, investigate, task
-    from settlement import broker
+    from rsi import agenda, capability, experience, genome, investigate, search, task
     from settlement.launcher_codex import CodexLauncher
     from settlement.launcher_local import LocalLauncher
 
@@ -622,24 +674,38 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
     roots = _roots(dsn, run_id, tokens=800_000, cpu=2_400_000,
                    identities=plan["allocations"]["construction"])
 
-    # Build P03 context from an actual captured P01 observation in the collection.
-    frame = __import__("rsi.search", fromlist=["load_frame"]).load_frame(
-        dsn, collection["frames"][0], artifacts_root=artifacts)
-    source_start = frame["starts"]["general"]
-    source_observations = experience.capture_investigation(
-        dsn, source_start["investigation_id"], artifacts_root=artifacts)
-    if not source_observations:
-        raise RuntimeError("collection has no captured P01 experience for construction")
+    # Use all six captured outcomes: both executed methods in every frozen frame.
+    source_observations, source_branches = [], []
+    seen_observations = set()
+    for frame_digest in collection["frames"]:
+        frame = search.load_frame(dsn, frame_digest, artifacts_root=artifacts)
+        for opportunity in ("general", "restricted"):
+            start = frame["starts"][opportunity]
+            rows = experience.capture_investigation(
+                dsn, start["investigation_id"], artifacts_root=artifacts)
+            if not rows:
+                raise RuntimeError("a collected P01 branch has no captured experience")
+            for row in rows:
+                observation_id = row["observation_id"]
+                if observation_id not in seen_observations:
+                    seen_observations.add(observation_id)
+                    source_observations.append(row)
+            source_branches.append({"frame": frame_digest,
+                                    "opportunity_id": opportunity,
+                                    "investigation_id": start["investigation_id"],
+                                    "observation_ids": [row["observation_id"] for row in rows]})
+    if len(source_branches) != 6 or len(source_observations) != 6:
+        raise RuntimeError("construction requires six distinct captured branch observations")
     qualification = _sum_task(task, run_id + "-construction", 2, 3, 5)
     task.publish(dsn, qualification, staging_root=staging, artifacts_root=artifacts)
     parent = genome.Genome({
         "AGENTS.md": (
-            "Construct one exploration-policy/1 method that selects exactly one ID "
-            "from the visible menu using public development history. The request value "
-            "contains objective, menu, prefix, and limits. Return one object with value "
-            "equal to {action: choose, opportunity_id: selected_id} and empty files. "
-            "Use only the visible frame. Do not refer to hidden outcomes or claim checks.\n"
-        ).encode("utf-8")})
+            b"Construct one exploration-policy/1 method that selects exactly one ID "
+            b"from the visible menu using public development history. The request value "
+            b"contains objective, menu, prefix, and limits. Return one object with value "
+            b"equal to {action: choose, opportunity_id: selected_id} and empty files. "
+            b"Use only the visible frame. Do not refer to hidden outcomes or claim checks.\n"
+        )})
     _publish_genome(dsn, parent, staging, artifacts, origin="p06-constructor-parent:" + run_id)
     owner_id = run_id + "-context-owner"
     owner = investigate.create(
@@ -665,6 +731,7 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
               "admissions": _construction_admissions(dsn, plan["operations"]["construction"]),
               "provenance": {"source_observation_ids": [
                   row["observation_id"] for row in source_observations],
+                  "source_branches": source_branches,
                   "model_candidate": "not-yet-screened"}}
     try:
         construction = capability.construct(
@@ -673,7 +740,7 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
             allocation_id=roots["tokens"], token_ceiling=scenario["caps"]["action_token_units"],
             timeout_ms=scenario["caps"]["action_timeout_ms"],
             staging_root=staging, artifacts_root=artifacts)
-    except Exception as exc:  # preserve possible dispatch uncertainty and stop without retry
+    except Exception as exc:  # noqa: BLE001 - unknown dispatch exceptions must stop safely
         unresolved = {"status": "unresolved", "detail": type(exc).__name__,
                       "operation_id": plan["operations"]["construction"][0]}
         report["construction_attempts"].append(unresolved)
@@ -700,7 +767,7 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
                 allocation_id=roots["tokens"], token_ceiling=scenario["caps"]["action_token_units"],
                 timeout_ms=scenario["caps"]["action_timeout_ms"],
                 staging_root=staging, artifacts_root=artifacts)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - unknown repair dispatch must stop safely
             unresolved = {"status": "unresolved", "detail": type(exc).__name__,
                           "operation_id": plan["operations"]["construction"][1]}
             report["construction_attempts"].append(unresolved)
@@ -736,7 +803,6 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
     policy = {"genome": candidate.digest, "name": "choose-branch",
               "interface": POLICY_INTERFACE, "timeout_ms": 5000,
               "max_output_bytes": 65536}
-    from rsi import search
     primary_id = plan["operations"]["candidate_screen"]
     incumbent_id = plan["operations"]["incumbent_screen"]
     diagnostic_id = plan["operations"]["diagnostic_screen"]
@@ -754,7 +820,7 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
             dsn, native, policy, collection["frames"], collection["branches"],
             evaluation_id=diagnostic_id, allocation_id=diagnostic_roots["cpu"],
             max_decisions=2, staging_root=staging, artifacts_root=artifacts)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - replay effects stay unscored on uncertainty
         report.update(status="unscored", stop="screening effect unresolved",
                       screening={"status": "unresolved", "detail": type(exc).__name__},
                       admissions=_construction_admissions(
@@ -765,18 +831,10 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
     incumbent_result = search.recompute(incumbent)
     diagnostic_result = search.recompute(diagnostic)
     frames_count = len(collection["frames"])
-    coverage = (candidate_result["supported"] == frames_count
-                and candidate_result["gaps"] == 0
-                and candidate_result["stops"] == 0
-                and candidate_result["refusals"] == 0
-                and len(screening["results"]) == frames_count)
-    costs_known = (candidate_result["screening_cpu_units_unknown"] == 0
-                   and type(candidate_result["screening_cpu_units"]) is int)
-    costs_bounded = (costs_known
-                     and candidate_result["screening_cpu_units"]
-                     <= plan["screening_cpu_ceiling"])
-    quality_ok = candidate_result["passed"] >= incumbent_result["passed"]
-    eligible = coverage and costs_bounded and quality_ok
+    eligibility = _screen_eligibility(
+        candidate_result, incumbent_result, frames_count, plan["screening_cpu_ceiling"])
+    costs_bounded = eligibility["costs_bounded"]
+    eligible = eligibility["eligible"]
     report["screening"] = {"candidate": screening, "incumbent": incumbent,
                            "candidate_diagnostic": diagnostic,
                            "recomputed": {"candidate": candidate_result,
@@ -796,11 +854,7 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
                        candidate_result["screening_cpu_units_unknown"],
                        "ceiling": plan["screening_cpu_ceiling"],
                        "bounded": costs_bounded}
-    report["eligibility"] = {"eligible": eligible, "coverage_all_frames": coverage,
-                             "no_worse_checked_quality": quality_ok,
-                             "costs_known": costs_known, "costs_bounded": costs_bounded,
-                             "reason": None if eligible else
-                             "candidate failed replay coverage, checked quality, or cost bounds"}
+    report["eligibility"] = eligibility
     if not eligible:
         report.update(status="rejected", stop=report["eligibility"]["reason"])
         _save_live_report(dsn, output, report, plan["operations"]["construction"])
@@ -861,7 +915,7 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
     try:
         used = agenda.wake(dsn, agent, native, agenda_id,
                            staging_root=staging, artifacts_root=artifacts)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - agenda effects stay unscored on uncertainty
         report.update(status="unscored", stop="prospective-use effect unresolved",
                       prospective_use={"agenda_id": agenda_id,
                                        "status": "unresolved",
@@ -873,15 +927,9 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
     selected = outcome.get("opportunity_id")
     observation = (investigate.read(dsn, run_id + "-fresh-" + selected)
                    if selected in {"restricted", "general"} else None)
-    passed = (observation is not None and observation.get("status") == "completed"
-              and observation.get("last_observation", {}).get("passed") is True)
-    report.update(status="complete", prospective_use={"wake": used, "outcome": outcome,
-                                                        "agenda_id": agenda_id,
-                                                        "selected_opportunity": outcome.get("opportunity_id"),
-                                                        "checked": passed,
-                                                        "observation": (
-                                                            observation.get("last_observation")
-                                                            if observation else None)})
+    classified = _prospective_use_result(outcome, observation)
+    report.update(status=classified["status"], prospective_use={
+        "wake": used, "outcome": outcome, "agenda_id": agenda_id, **classified})
     _save_live_report(dsn, output, report, plan["operations"]["construction"])
     return report
 

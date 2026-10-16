@@ -15,12 +15,9 @@
     "execution": "uncontained-native-child"
   },
   "worlds": [
-    {"id": "agree-positive", "left": 4, "right": 5, "expected": 9,
-     "restricted_opportunity": "restricted", "general_opportunity": "general"},
-    {"id": "diverge-negative", "left": -4, "right": 5, "expected": 1,
-     "restricted_opportunity": "restricted", "general_opportunity": "general"},
-    {"id": "agree-zero", "left": 0, "right": 3, "expected": 3,
-     "restricted_opportunity": "general", "general_opportunity": "general"}
+    {"id": "world-a", "left": 4, "right": 5, "expected": 9},
+    {"id": "world-b", "left": -4, "right": 5, "expected": 1},
+    {"id": "world-c", "left": 0, "right": 3, "expected": 3}
   ],
   "authored_fixture_provenance": "fixed native methods and exploration policies authored for machinery qualification; not model-acquired"
 }
