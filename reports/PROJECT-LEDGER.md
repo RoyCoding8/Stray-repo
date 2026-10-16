@@ -159,6 +159,14 @@ P10 task list:
   were interrupted before implementation and resumed from their existing tests.
   Final joined qualification and independent repair review remain pending. No
   P10 live effects have run. A learning win is not a prerequisite for this component.
+  R3 is merged at `1c2981d7`. The coordinator's exact-scope gate passed two
+  tests with zero skips in 57.20 seconds; the lane also passed eleven adjacent
+  capability/native checks. R5 at `c87a538e` fixes pilot completion classification
+  when exported evidence is invalid. Its artifact-loss regression failed before
+  the fix, then all five pilot tests passed with zero skips in 87.85 seconds.
+  An earlier missing-artifact probe was rejected because later fixture work
+  restored identical content; only the corrected export-boundary loss is evidence.
+  The verified free route is available. No inference was needed for that check.
 - [x] Ground existing agenda, gate, capability, grant and exposure ownership.
 - [x] Compare assessment-flight and immutable-assignment designs; pin shared interfaces and race boundaries in the component plan.
 - [x] Agree. Proceed under the existing assignment, without another approval step.

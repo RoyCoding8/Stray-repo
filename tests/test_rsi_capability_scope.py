@@ -202,11 +202,11 @@ def test_all_skipped_later_native_check_does_not_veto_scope(env):
     assert retained["status"] == "retained"
 
     skipped = replace(item, name="scope-all-skipped", verifier={"test_answer.py": (
-        "import unittest\n"
-        "class Answer(unittest.TestCase):\n"
-        "    @unittest.skip('unavailable test fixture')\n"
-        "    def test_value(self):\n"
-        "        self.fail('must not execute')\n").encode()})
+        b"import unittest\n"
+        b"class Answer(unittest.TestCase):\n"
+        b"    @unittest.skip('unavailable test fixture')\n"
+        b"    def test_value(self):\n"
+        b"        self.fail('must not execute')\n")})
     task.publish(dsn, skipped, **roots)
     skipped_env = (dsn, roots, candidate, skipped, launcher)
     skipped_use, verdict = _use(skipped_env, "scope-skipped-later-use", context={})
