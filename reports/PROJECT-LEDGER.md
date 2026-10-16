@@ -31,11 +31,11 @@ dependencies and build order. The three research themes are divided into ten par
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Working checkpoint; live unscored | Experience changes what the system chooses to investigate next. |
-| P06: search history and dreaming | Planned | Supported replay screens policies and identifies live coverage needs. |
+| P06: search history and dreaming | Grounded; implementation contract selected | Supported replay screens policies and identifies live coverage needs. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
-| P10: continuing campaigns and assessment | Working checkpoint; final consolidation CI running | Bounded unattended operation, resume and longitudinal evidence. |
+| P10: continuing campaigns and assessment | Working checkpoint; live pilot incomplete | Bounded unattended operation, resume and longitudinal evidence. |
 
 These statuses describe the new component contracts, not the absence of reusable
 prototype code. Every component plan has delivery slices and behavioral checks.
@@ -65,8 +65,8 @@ P03 task list:
 - [x] Consolidate, repair CI, remove owned worktrees and sync backups before P04.
 
 Current throughput checkpoint: P01 through P05 are closed at their qualified
-component scope. P10 has finished independent review and its bounded pilot;
-final consolidation CI is running. The
+component scope. P10 has finished independent review, its bounded pilot and
+consolidation. P06 is the active build. The
 remaining queue is P06, P07, P09, then P08.
 
 Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
@@ -211,9 +211,27 @@ P10 task list:
   recomputes identically without a route or usable database, returning incomplete
   with no consistency problems or gain verdict. Preserve its database anchor
   `p10_live_20261015_01` and private `D:/AI/tools/p10/live1` run area.
-- [ ] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
+- [x] Fix, debloat, confirm checkpoint CI, remove owned worktrees and sync both backups.
+  CI run `38850311721` passed all seven jobs for final source at `44536de3`.
+  Run `38850893603` passed all seven at `10455e67`, including the public live
+  evidence. All P10 task worktrees and merged branches are removed. Completed
+  scratch is verified in `.git/verification/p10-20261016.zip`: 22,803 files,
+  each checked against its SHA-256 manifest. Its raw copy is consolidated under
+  `.git/verification/p10-scratch-20261016`; only the preserved live anchor remains
+  under `D:/AI/tools/p10`. Both checkpoint backups are synchronized.
 
-Remaining queue: P10 → P06 → P07 → P09 → P08. Each receives its own task list
+P06 task list:
+- [x] Ground the actual P01/P03 input construction, P05 owner and reusable native method ABI.
+- [x] Sketch. Compare frozen frames and historical-prefix replay; challenge prospective alternative collection independently.
+- [x] Agree. Select the implementation contract in the existing component plan under the standing assignment.
+- [ ] Implement the shared P01 context-preparation seam and qualify unchanged worker inputs.
+- [ ] Integrate immutable frames, supported replay, executable P05 policies and prospective branch collection.
+- [ ] Qualify P06-A through P06-E and neighboring components on the integrated path.
+- [ ] Complete independent GPT-6.1 Sol High verification after implementation.
+- [ ] Freeze and run one bounded free-route policy revision/use experiment; preserve gaps or negative outcomes.
+- [ ] Scrap check, debloat, repair CI, remove owned worktrees and synchronize backups.
+
+Remaining queue: P06 → P07 → P09 → P08. Each receives its own task list
 when active. Qualified mechanisms do not imply acquisition, utility or learning.
 
 ### P04 implementation and consolidation (2026-10-14)

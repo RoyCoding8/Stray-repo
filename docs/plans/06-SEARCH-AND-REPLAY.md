@@ -131,6 +131,113 @@ memory makes construction-context support an additional explicit condition.
 This is design input, not evidence of our utility or recursive improvement.
 [Primary source, section 3](https://arxiv.org/html/2609.14858v1).
 
+## Implementation contract
+
+The caller first prepares a development menu, gathers real branch evidence,
+screens an executable policy and then pins that policy in a new agenda:
+
+```python
+prepared = investigate.prepare_context(
+    dsn, investigation_id, target_revision=0, artifacts_root=artifacts_root)
+# Prepare every fresh alternative before executing any of their workers.
+# Publish the visible menu and exact option-specific inputs as one frame.
+branch = search.capture(
+    dsn, frame_digest, opportunity_id, artifacts_root=artifacts_root,
+    staging_root=staging_root)
+screen = search.evaluate(
+    dsn, checker, policy, frames, branches, allocation_id=screening_cpu_root,
+    staging_root=staging_root, artifacts_root=artifacts_root)
+# New charter only. Ordinary agenda.wake owns actual policy and worker effects.
+```
+
+### P01 preparation
+
+`investigate.prepare_context` owns the exact continuation, deterministic
+decision/attempt/operation IDs and P03 request used by `step`. It accepts only
+a ready start at the declared revision with no pending worker decision. It
+returns either ready plus the exact visible input, or the existing context/
+capability refusal. It does not admit a P01 decision or dispatch work. `step`
+uses this same implementation rather than rebuilding a second input shape.
+Preparation may pin P03 journal entries and capability selection evidence.
+
+The collector creates all fresh P01 starts, prepares their option-specific
+packets, validates those packets and then publishes its frame before any branch
+worker runs. Execute each selected collection branch through normal P01. A
+prepared but unexecuted action has no supported consequence. Existing
+continuations can be recorded as observed trajectories; this collector does not
+claim to fork their earlier mutable state.
+
+### Frame and branch objects
+
+Use existing immutable artifacts and `rsi_decisions`, not a new database or
+history owner. A frame separates its policy-visible request from provenance.
+The visible request names the objective, bounded eligible menu, learner-visible
+prefix, resource ceilings and option-specific input identities. Private source
+cursors and future results are outside that request. Each option pins the actual
+prepared P01 visible input, task/start bytes, genome/model or method closure,
+runtime, limits and evaluator. IDs appearing in a real input remain part of its
+digest; do not normalize them away to manufacture support.
+
+`search.capture` reconstructs a branch from its original P01 decision,
+observation, worker/verifier operations, receipts and artifacts. It verifies the
+prepared input against the actual consumed input. Known pristine results give a
+supported consequence. Unfinished, conflicting or unmatched work remains a gap.
+Record the actual child frame when one exists; never invent a next frame from
+the original chronology. Worker, verifier and policy resource evidence stays
+separate and attributable.
+
+`search.evaluate` executes the supplied genome's exploration method through
+`capability.invoke`, with `interface="exploration-policy/1"`, the visible frame
+as `value`, and empty `files` and `context`. The result has empty files and one
+closed action: `{"action":"choose","opportunity_id":"..."}` or
+`{"action":"stop","reason":"..."}`. An ineligible ID or malformed output is a
+policy refusal, distinct from a valid action lacking historical coverage.
+One-step and recorded-child evaluation use this same ABI. The pure offline
+recomputation checks inputs, support, quality, resource references and coverage;
+it does not execute candidate Python on the coordinator.
+
+### P05 integration
+
+Fixed `seed/1` and `adaptive/1` remain baselines. An executable charter policy
+names a published genome, method name, the exact interface and finite native
+timeout/output limits. Its genome must be included in the existing agenda grant.
+The policy budget permits at most `max_turns` native policy admissions, counted
+from durable decisions under the agenda lock. An invalid result cannot create an
+unbounded sequence of free retries or silently call a fixed policy.
+
+The existing flight holds either a pinned policy invocation or its selected P01
+work. A policy flight names its immutable frame and operation before dispatch.
+Restart recovers that same invocation. A known choice advances the flight
+atomically to work; a deliberate stop or definitive refusal is recorded and
+closed by the same owner. Uncertain effects keep the flight. No second driver,
+watcher or selection authority is introduced.
+
+Prepare option inputs before taking the source snapshot. After policy execution,
+rebuild the relevant menu and revalidate prepared dependencies. Account explicitly
+for that invocation's own charged CPU when comparing its source resource view.
+If external decision inputs changed, do not execute the obsolete choice. If they
+remain equal, take a fresh source frontier and retain the existing transactional
+epoch, memory, grant, revision and deadline fence at final admission. The
+policy's own events must neither cause perpetual self-invalidation nor exempt
+another actor's changes. Exhausted policy admissions stop rather than repeatedly
+spending against stale inputs.
+
+### Integration and qualification
+
+First land and verify the shared P01 preparation seam. Then use disjoint lanes
+for search artifacts/replay, P05 executable policy ownership, and the prospective
+collector/experiment. Pin their exact public signatures before fan-out. The
+coordinator runs the connected path and neighboring component gates before
+independent Sol High review, then runs the bounded free-route slice.
+
+Use at least three small development worlds. Include agreeing policies,
+different supported first choices, an unexecuted option, a missing child,
+changed consumed input and changed worker/runtime identity. Start every mutation
+from a clean accepted baseline. Check public P05 effect identity, a restart
+between policy admission and result consumption, relevant source changes during
+policy execution and literal future-value exclusion. Report supported decisions,
+gaps, deliberate stops, quality and costs without imputing missing outcomes.
+
 ## Working checkpoint
 
 The agenda uses versioned exploration code informed by discovery history. Background replay is bounded work under the same allocations, not a second independent scheduler. The [research notes](../design/COGNITIVE-RESEARCH-NOTES.md) explain the Dream-RSI connection and its limits.
