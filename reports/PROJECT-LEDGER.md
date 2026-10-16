@@ -31,7 +31,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Working checkpoint; live unscored | Experience changes what the system chooses to investigate next. |
-| P06: search history and dreaming | Preparation integrated; replay and policy ownership in progress | Supported replay screens policies and identifies live coverage needs. |
+| P06: search history and dreaming | Preparation and replay integrated; agenda and collector in progress | One-step supported replay; missing-child queries remain gaps. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
@@ -239,8 +239,21 @@ with no skips in 56.87 seconds. The lane also passed its 19-test P01/P03 combine
 gate before a test-only fixture correction, then its corrected four-test
 preparation file. These are focused gates, not a full-suite result.
 
-The preparation worktree and merged branch are removed. Replay, agenda policy
-ownership and the prospective collector remain in disjoint temporary worktrees.
+Replay is integrated at `23966efe`. The coordinator reran all 20 search and
+replay tests on PostgreSQL 18, with zero skips in 28.48 seconds. Review found and
+repaired policy receipt tampering that could still count as supported, with
+three failing-before counterexamples. Policy charging now uses settled actual
+cost when available and keeps unknown amounts explicit. This qualifies one-step
+screening and missing-child queries, not supported multi-step replay.
+
+The preparation and search worktrees and merged branches are removed. Agenda
+policy ownership and the prospective collector remain in disjoint temporary
+worktrees. Campaign export integration must include attempt-less native policy
+operations. The collector must pin run identity before effects and derive its
+eligibility from offline recomputation. Independent review and the live slice
+remain unrun. The user requested a pause once these lanes finish and the
+coordinator reviews their work; do not start review, live work or P07 before a
+new continuation instruction.
 
 Remaining queue: P06 → P07 → P09 → P08. Each receives its own task list
 when active. Qualified mechanisms do not imply acquisition, utility or learning.

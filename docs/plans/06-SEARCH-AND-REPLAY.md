@@ -58,8 +58,8 @@ remaining authorized resources and the current P01 starts. Store outcomes outsid
 the policy input. After the policy chooses, the trusted replay reader returns one
 of these distinct results:
 
-- `Supported`: a recorded consequence, its operation/receipt references, measured
-  resource fields and the actual recorded child frame.
+- `Supported`: a recorded consequence and its operation/receipt and resource
+  references. A continuation also needs its own recorded child frame.
 - `Gap`: the requested action or continuation lacks matching evidence. It receives
   no task grade and cannot be counted as a policy success or failure.
 - `Stopped`: the policy deliberately ends exploration under its declared rule.
@@ -71,8 +71,11 @@ executions have equivalent inputs. An unchanged global memory revision is not a
 substitute for checking the context actually consumed. Changed construction
 inputs invalidate support even if the task name stays the same.
 
-One-step screening compares policies on the same frozen frame. Adaptive replay
-follows recorded child frames only. After divergence, missing matching context
+One-step screening compares policies on the same frozen frame. The current
+implementation qualifies independent one-step decisions and reports a requested
+second decision as missing child coverage. It does not yet follow supported
+multi-step branches. Adaptive replay must follow recorded child frames only.
+After divergence, missing matching context
 or a child is a gap; do not silently continue through the original chronology.
 Report supported queries, gaps and deliberate stops separately, alongside outcome
 quality and resource vectors. Screening compute is an additional cost, not free
@@ -230,6 +233,10 @@ epoch, memory, grant, revision and deadline fence at final admission. The
 policy's own events must neither cause perpetual self-invalidation nor exempt
 another actor's changes. Exhausted policy admissions stop rather than repeatedly
 spending against stale inputs.
+
+Campaign exports include these native policy operations even though they have no
+P01 attempt. Durable policy admissions locate their receipts, reservations and
+execution identities; offline accounting must not omit their screening cost.
 
 ### Integration and qualification
 
