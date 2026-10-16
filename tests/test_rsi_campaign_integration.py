@@ -6,11 +6,13 @@ import json
 import os
 import subprocess
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
 from fixtures.p10_campaign import prepare_campaign
 
-from rsi import campaign
+from rsi import agenda, campaign
 from settlement import db
 
 
@@ -100,3 +102,87 @@ def test_fresh_process_resume_does_not_consume_the_first_development_choice(
     assert result["results"][0]["status"] == "acknowledged"
     state = _cli("inspect", *arguments)
     assert state["turns"] == 1 and state["flight_pending"] is False
+
+
+@pytest.mark.parametrize("expired", [False, True])
+def test_interrupted_development_flight_resumes_before_due_assessment(
+    migrated_db, tmp_path, monkeypatch, expired
+):
+    identity = "p10-flight-before-assessment-" + str(expired).lower()
+    case = prepare_campaign(migrated_db, tmp_path / "case", campaign_id=identity,
+                            round_count=1, max_turns=1)
+
+    class Clock(datetime):
+        current = datetime.now(UTC)
+
+        @classmethod
+        def now(cls, tz=None):
+            return cls.current if tz is None else cls.current.astimezone(tz)
+
+    deadline = Clock.current + timedelta(hours=1)
+    case["charter"]["deadline"] = deadline.isoformat()
+    campaign.start(migrated_db, campaign_id=identity, charter=case["charter"],
+                   protocol=case["protocol"], **case["run"]["roots"])
+    finish = agenda._finish
+
+    def interrupt(*args, **kwargs):
+        raise InterruptedError("process stopped after development admission")
+
+    monkeypatch.setattr(agenda, "_finish", interrupt)
+    with pytest.raises(InterruptedError):
+        campaign.run(migrated_db, case["run"]["agent"], case["run"]["checker"], identity,
+                     **case["run"]["roots"], max_wakes=1, wall_seconds=120)
+    admitted = campaign.inspect(migrated_db, identity)
+    assert admitted["flight_pending"] is True and admitted["turns"] == 1
+
+    if expired:
+        Clock.current = deadline + timedelta(seconds=1)
+        monkeypatch.setattr(campaign, "datetime", Clock)
+    monkeypatch.setattr(agenda, "_finish", finish)
+    resumed = campaign.run(migrated_db, case["run"]["agent"], case["run"]["checker"], identity,
+                           **case["run"]["roots"], max_wakes=8, wall_seconds=120)
+    assert resumed["status"] == ("deadline" if expired else "complete"), resumed
+    assert resumed["results"][0]["status"] == "acknowledged", resumed
+    final = campaign.inspect(migrated_db, identity)
+    assert final["flight_pending"] is False and final["turns"] == 1
+    if expired:
+        assert not any(result["status"] in {"assigned", "assessed"}
+                       for result in resumed["results"])
+
+
+def test_development_choice_commit_rechecks_deadline_under_owner_lock(
+    migrated_db, tmp_path, monkeypatch
+):
+    identity = "p10-choice-deadline-lock"
+    case = prepare_campaign(migrated_db, tmp_path / "case", campaign_id=identity,
+                            round_count=1, max_turns=1)
+
+    class Clock(datetime):
+        current = datetime.now(UTC)
+
+        @classmethod
+        def now(cls, tz=None):
+            return cls.current if tz is None else cls.current.astimezone(tz)
+
+    deadline = Clock.current + timedelta(seconds=10)
+    case["charter"]["deadline"] = deadline.isoformat()
+    campaign.start(migrated_db, campaign_id=identity, charter=case["charter"],
+                   protocol=case["protocol"], **case["run"]["roots"])
+    real_rank = agenda.agenda_policy.rank
+
+    def expire_after_ranking(options, policy):
+        ranked = real_rank(options, policy)
+        Clock.current = deadline + timedelta(seconds=1)
+        return ranked
+
+    monkeypatch.setattr(agenda, "datetime", Clock)
+    monkeypatch.setattr(agenda.agenda_policy, "rank", expire_after_ranking)
+    result = campaign.run(migrated_db, case["run"]["agent"], case["run"]["checker"], identity,
+                          **case["run"]["roots"], max_wakes=1, wall_seconds=60)
+    state = campaign.inspect(migrated_db, identity)
+    assert result["status"] == "stale", result
+    assert state["turns"] == 0 and state["flight_pending"] is False
+    bundle = campaign.export(migrated_db, identity,
+                             artifacts_root=case["run"]["roots"]["artifacts_root"])
+    assert bundle["operations"] == []
+    assert not any(row["kind"] == "choice" for row in bundle["decisions"])

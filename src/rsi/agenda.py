@@ -314,6 +314,8 @@ def _commit_choice(dsn, agenda_id, state, snapshot, choice):
             raise StaleRevision("agenda no longer admits development choices")
         if current["flight"] is not None:
             raise StaleRevision("another wake already pinned a flight")
+        if datetime.now(UTC) >= datetime.fromisoformat(current["charter"]["deadline"]):
+            raise StaleRevision("agenda deadline passed before choice admission")
         if _pending_assessment(cur, agenda_id) is not None:
             raise StaleRevision("an assessment assignment is pending")
         cur.execute("SELECT revision FROM rsi_memory_clock WHERE id=1 FOR UPDATE")

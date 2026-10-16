@@ -358,7 +358,8 @@ def run(dsn, agent, checker, campaign_id, *, staging_root, artifacts_root,
         state = agenda.read(dsn, campaign_id)
         if state["status"] in {"suspended", "stopped"}:
             return {"status": state["status"], "revision": state["revision"], "results": results}
-        pending = _pending(dsn, campaign_id)
+        flight_pending = state["flight"] is not None
+        pending = None if flight_pending else _pending(dsn, campaign_id)
         if pending is not None:
             outcome = _run_assignment(dsn, campaign_id, pending, agent, checker,
                                       staging_root, artifacts_root)
@@ -369,8 +370,9 @@ def run(dsn, agent, checker, campaign_id, *, staging_root, artifacts_root,
         assigned = agenda.export(dsn, campaign_id)["decisions"]
         assigned_rounds = {row["data"].get("round_id") for row in assigned
                            if row["kind"] == "p10.assessment.assignment"}
-        due = next((item for item in protocol["rounds"] if item["id"] not in assigned_rounds
-                    and item["after_turn"] <= state["turns"]), None)
+        due = None if flight_pending else next(
+            (item for item in protocol["rounds"] if item["id"] not in assigned_rounds
+             and item["after_turn"] <= state["turns"]), None)
         if due is not None:
             if _deadline_passed(state["charter"]):
                 return {"status": "deadline", "revision": state["revision"], "results": results}
@@ -385,11 +387,11 @@ def run(dsn, agent, checker, campaign_id, *, staging_root, artifacts_root,
             else:
                 results.append({"status": "assigned", "round_id": due["id"]})
             continue
-        if state["status"] == "complete":
+        if state["status"] == "complete" and not flight_pending:
             return {"status": "complete", "revision": state["revision"], "results": results}
-        if _deadline_passed(state["charter"]):
+        if not flight_pending and _deadline_passed(state["charter"]):
             return {"status": "deadline", "revision": state["revision"], "results": results}
-        if state["status"] != "active":
+        if state["status"] != "active" and not flight_pending:
             return {"status": "control", "revision": state["revision"], "results": results}
         outcome = agenda._wake(dsn, agent, checker, campaign_id,
                                staging_root=staging_root, artifacts_root=artifacts_root)
