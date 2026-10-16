@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from test_rsi_capability_integration import _genome
 
 from rsi import capability
@@ -27,7 +29,7 @@ def test_prepared_native_identity_is_effect_free_and_input_bound(tmp_path):
     assert first.execution_version.startswith("cap1-")
     assert len({first.execution_version, changed.execution_version,
                 bounded.execution_version}) == 3
-    assert first.runtime["python_executable"] == launcher.staged_python()
+    assert first.runtime["python_executable"] == str(Path(launcher.staged_python()).resolve())
     assert tuple((tmp_path / "native").rglob("*")) == before
 
 
