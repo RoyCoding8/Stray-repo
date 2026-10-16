@@ -178,6 +178,15 @@ prepared P01 visible input, task/start bytes, genome/model or method closure,
 runtime, limits and evaluator. IDs appearing in a real input remain part of its
 digest; do not normalize them away to manufacture support.
 
+For native methods, `capability.plan_invocation` derives the execution identity
+from the prepared request, method closure, trusted runner and Python runtime
+without staging or dispatch. `capability.invoke` executes that same plan. Pin
+the evaluator's task identity and runtime prospectively. Its eventual operation
+execution version includes the candidate solution and belongs in captured
+result evidence, not in the prepared frame. Existing agent-run records with no
+bound worker runtime remain unsupported for replay even when their observed
+test result is known.
+
 `search.capture` reconstructs a branch from its original P01 decision,
 observation, worker/verifier operations, receipts and artifacts. It verifies the
 prepared input against the actual consumed input. Known pristine results give a
@@ -229,6 +238,12 @@ for search artifacts/replay, P05 executable policy ownership, and the prospectiv
 collector/experiment. Pin their exact public signatures before fan-out. The
 coordinator runs the connected path and neighboring component gates before
 independent Sol High review, then runs the bounded free-route slice.
+
+Owned lanes are P01 preparation, search artifacts/replay, and P05 policy
+ownership. The coordinator owns the shared native invocation plan and serial
+integration. Their disposable test namespaces are `ad1061xx`, `ad1062xx`,
+`ad1063xx` and `ad1060xx` respectively. A runtime-planning test must establish
+that the prospective identity equals the actual child operation's identity.
 
 Use at least three small development worlds. Include agreeing policies,
 different supported first choices, an unexecuted option, a missing child,
