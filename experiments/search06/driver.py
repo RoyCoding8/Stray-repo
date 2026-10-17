@@ -9,6 +9,7 @@ import os
 import shutil
 import sys
 import uuid
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -63,6 +64,25 @@ def _scenario(path: Path = SCENARIO) -> dict:
     if len(value.get("worlds", [])) != 3 or value.get("caps", {}).get("max_model_admissions") != 2:
         raise ValueError("scenario differs from the frozen three-world, two-admission pilot")
     return value
+
+
+def _agenda_use_deadline(existing_agenda: dict | None, window_seconds: int,
+                         *, now: datetime | None = None) -> str:
+    if existing_agenda is not None:
+        charter = existing_agenda.get("charter")
+        deadline = charter.get("deadline") if isinstance(charter, dict) else None
+        if not isinstance(deadline, str):
+            raise ValueError("existing agenda has no durable use deadline")
+        try:
+            parsed = datetime.fromisoformat(deadline)
+        except ValueError as exc:
+            raise ValueError("existing agenda has an invalid durable use deadline") from exc
+        if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+            raise ValueError("existing agenda has a non-UTC durable use deadline")
+        return deadline
+    if type(window_seconds) is not int or window_seconds <= 0:
+        raise ValueError("agenda use window must be a positive number of seconds")
+    return ((now or datetime.now(UTC)) + timedelta(seconds=window_seconds)).isoformat()
 
 
 def _roots(dsn: str, tag: str, *, tokens: int, cpu: int,
@@ -907,10 +927,11 @@ def run_live(dsn: str, freeze_path: Path, collection_path: Path, output: Path,
                           "interface": POLICY_INTERFACE, "timeout_ms": 5000,
                           "max_output_bytes": 65536},
                "max_turns": 1,
-               "deadline": plan["agenda_deadline"],
                "opportunities": opportunities}
     _grant(dsn, agenda_id, charter, candidate.digest,
            [worker.digest for worker in workers.values()])
+    charter["deadline"] = _agenda_use_deadline(
+        agenda.read(dsn, agenda_id), frozen["caps"]["max_use_seconds"])
     agenda.create(dsn, agenda_id=agenda_id, charter=charter, artifacts_root=artifacts)
     try:
         used = agenda.wake(dsn, agent, native, agenda_id,

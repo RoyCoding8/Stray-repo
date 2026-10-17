@@ -56,7 +56,7 @@ made. Fixture qualification does not make the live slice ready. Do not place
 credentials or the route file in this experiment directory or its evidence
 exports.
 
-The live freeze also sets its P05 agenda deadline when the freeze is created.
-Because two 90-second construction actions can consume that interval before
-fresh use, the agenda deadline may expire before the prospective-use turn. This
-is an additional launch blocker until deadline pinning is reviewed.
+The live freeze pins the 180-second P05 use window as a duration. Its absolute
+deadline starts when the agenda is first created, after construction and
+screening. Resuming an existing run reuses the deadline in that durable agenda
+charter, including when the deadline has already passed.

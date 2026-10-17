@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 try:
@@ -84,7 +83,6 @@ def _live_plan(run_id: str, freeze_path: Path) -> dict:
             "diagnostic_screen": run_id + "-candidate-diagnostic",
             "agenda": run_id + "-agenda",
         },
-        "agenda_deadline": (datetime.now(UTC) + timedelta(seconds=180)).isoformat(),
         "screening_cpu_ceiling": 2_400_000,
     }
 

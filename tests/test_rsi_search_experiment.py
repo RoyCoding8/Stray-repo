@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import shutil
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -205,6 +206,8 @@ def test_fixture_freeze_rejects_collection_and_source_drift_and_reuses_run_ident
                              Path(frozen["live_plan"]["run_output"])) == frozen["live_plan"]["run_id"]
     assert len(frozen["live_plan"]["operations"]["construction"]) == 2
     assert len(frozen["live_plan"]["allocations"]["construction"]) == 2
+    assert "agenda_deadline" not in frozen["live_plan"]
+    assert frozen["caps"]["max_use_seconds"] == scenario["caps"]["max_use_seconds"]
     with pytest.raises(ValueError, match="frozen directory"):
         driver._claim_run(verified, freeze_path, tmp_path / "new-run")
 
@@ -220,6 +223,70 @@ def test_fixture_freeze_rejects_collection_and_source_drift_and_reuses_run_ident
     with pytest.raises(ValueError, match="source_sha256"):
         search_freeze.verify_freeze(
             root, freeze_path, collection_path, scenario_path=scenario_path)
+
+
+def test_agenda_use_window_starts_after_construction_and_survives_resume():
+    construction_finished = datetime(2026, 10, 16, 12, 3, tzinfo=UTC)
+    seconds = 180
+    deadline = driver._agenda_use_deadline(
+        None, seconds, now=construction_finished)
+
+    assert datetime.fromisoformat(deadline) == construction_finished + timedelta(seconds=seconds)
+
+    existing = {"charter": {"deadline": deadline}}
+    resumed_later = driver._agenda_use_deadline(
+        existing, seconds, now=construction_finished + timedelta(hours=1))
+    assert resumed_later == deadline
+
+    expired = "2026-10-16T11:00:00+00:00"
+    assert driver._agenda_use_deadline(
+        {"charter": {"deadline": expired}}, seconds,
+        now=construction_finished) == expired
+
+
+def test_agenda_use_deadline_is_durable_across_existing_agenda_resume(
+        migrated_db, tmp_path):
+    from test_rsi_agenda import _charter, _grant
+    from test_rsi_investigate import _scenario
+
+    from rsi import agenda
+
+    run = _scenario(migrated_db, tmp_path / "p01", "p06-deadline", "pass-first")
+    agenda_id = "p06-deadline-agenda"
+    charter = _charter(run, agenda_id=agenda_id)
+    window_seconds = 180
+    construction_finished = datetime.now(UTC) - timedelta(seconds=window_seconds + 60)
+    deadline = driver._agenda_use_deadline(
+        None, window_seconds, now=construction_finished)
+    charter["deadline"] = deadline
+    _grant(migrated_db, charter, agenda_id)
+    created = agenda.create(
+        migrated_db, agenda_id=agenda_id, charter=charter,
+        artifacts_root=run["roots"]["artifacts_root"])
+
+    persisted = agenda.read(migrated_db, agenda_id)
+    assert persisted["charter"] == created["charter"] == charter
+    assert datetime.fromisoformat(persisted["charter"]["deadline"]) < datetime.now(UTC)
+
+    resumed_deadline = driver._agenda_use_deadline(
+        persisted, window_seconds, now=datetime.now(UTC))
+    resumed = {**charter, "deadline": resumed_deadline}
+    assert resumed_deadline == deadline
+    assert agenda.create(
+        migrated_db, agenda_id=agenda_id, charter=resumed,
+        artifacts_root=run["roots"]["artifacts_root"]) == persisted
+    assert agenda.read(migrated_db, agenda_id)["charter"] == charter
+
+
+@pytest.mark.parametrize("stored_deadline", [None, "not-a-timestamp", "2026-10-16T12:00:00"])
+def test_existing_agenda_with_missing_or_invalid_deadline_cannot_restart_window(
+        stored_deadline):
+    existing = {"charter": {}}
+    if stored_deadline is not None:
+        existing["charter"]["deadline"] = stored_deadline
+
+    with pytest.raises(ValueError, match="durable use deadline"):
+        driver._agenda_use_deadline(existing, 180)
 
 
 def test_constructor_accounting_comes_from_durable_prepared_operation(migrated_db, tmp_path):
