@@ -567,6 +567,14 @@ def recompute(bundle: dict) -> dict:
             return True, resources["amount"]
         return True, None
 
+    def policy_invocation_matches(row: dict) -> bool:
+        """Bind the policy label to the method that produced the recorded action."""
+        invocation = row.get("invocation")
+        expected_digest = policy.get("method_digest")
+        actual_digest = invocation.get("method_digest") if isinstance(invocation, dict) else None
+        return (isinstance(expected_digest, str) and bool(expected_digest)
+                and actual_digest == expected_digest)
+
     supported = gaps = stops = refusals = passed = failed = continuation_gaps = 0
     cpu_seconds = 0.0
     cpu_seconds_unknown = 0
@@ -597,6 +605,9 @@ def recompute(bundle: dict) -> dict:
             continue
         effect_known, _ = policy_effect_evidence(row, index)
         if not effect_known:
+            gaps += 1
+            continue
+        if not policy_invocation_matches(row):
             gaps += 1
             continue
         frame = frames.get(row.get("frame"))
