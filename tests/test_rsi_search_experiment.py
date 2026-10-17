@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import shutil
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -205,6 +206,8 @@ def test_fixture_freeze_rejects_collection_and_source_drift_and_reuses_run_ident
                              Path(frozen["live_plan"]["run_output"])) == frozen["live_plan"]["run_id"]
     assert len(frozen["live_plan"]["operations"]["construction"]) == 2
     assert len(frozen["live_plan"]["allocations"]["construction"]) == 2
+    assert "agenda_deadline" not in frozen["live_plan"]
+    assert frozen["caps"]["max_use_seconds"] == scenario["caps"]["max_use_seconds"]
     with pytest.raises(ValueError, match="frozen directory"):
         driver._claim_run(verified, freeze_path, tmp_path / "new-run")
 
@@ -213,13 +216,31 @@ def test_fixture_freeze_rejects_collection_and_source_drift_and_reuses_run_ident
     with pytest.raises(ValueError, match="collection_sha256"):
         search_freeze.verify_freeze(
             root, freeze_path, collection_path, scenario_path=scenario_path)
-
     collection_path.write_text(json.dumps(collection), encoding="utf-8")
     source_path = root / "src/rsi/search.py"
     source_path.write_bytes(source_path.read_bytes() + b"\n# drift\n")
     with pytest.raises(ValueError, match="source_sha256"):
         search_freeze.verify_freeze(
             root, freeze_path, collection_path, scenario_path=scenario_path)
+
+
+def test_agenda_use_window_starts_after_construction_and_survives_resume():
+    construction_finished = datetime(2026, 10, 16, 12, 3, tzinfo=UTC)
+    seconds = 180
+    deadline = driver._agenda_use_deadline(
+        None, seconds, now=construction_finished)
+
+    assert datetime.fromisoformat(deadline) == construction_finished + timedelta(seconds=seconds)
+
+    existing = {"charter": {"deadline": deadline}}
+    resumed_later = driver._agenda_use_deadline(
+        existing, seconds, now=construction_finished + timedelta(hours=1))
+    assert resumed_later == deadline
+
+    expired = "2026-10-16T11:00:00+00:00"
+    assert driver._agenda_use_deadline(
+        {"charter": {"deadline": expired}}, seconds,
+        now=construction_finished) == expired
 
 
 def test_constructor_accounting_comes_from_durable_prepared_operation(migrated_db, tmp_path):
