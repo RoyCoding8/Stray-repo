@@ -95,6 +95,7 @@ def bundle(selected: str = "easy") -> dict:
                             "settled": True, "dispatch_state": "observed",
                             "reconcile_state": "clear"},
               "invocation": {"seconds": 0.02, "output_digest": output_digest,
+                             "method_digest": "fixture-method",
                              "execution_version": "fixture-policy-runtime-v1",
                              "status": "completed"}}
     branch_ids = list(items["branches"])

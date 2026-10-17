@@ -125,7 +125,8 @@ def test_offline_replay_counts_unsupported_or_forged_support_as_gap(mutation):
 
 
 @pytest.mark.parametrize("mutation", ["missing-receipt", "changed-receipt",
-                                       "changed-operation"])
+                                       "changed-operation", "changed-method",
+                                       "changed-execution"])
 def test_policy_effect_evidence_is_required_for_supported_replay(mutation):
     changed = bundle()
     row = changed["results"][0]
@@ -133,12 +134,30 @@ def test_policy_effect_evidence_is_required_for_supported_replay(mutation):
         row["receipts"] = []
     elif mutation == "changed-receipt":
         row["receipts"][0]["operation_id"] = "different-operation"
-    else:
+    elif mutation == "changed-operation":
         row["operation"]["id"] = "different-operation"
+    elif mutation == "changed-method":
+        row["invocation"]["method_digest"] = "another-closure"
+    else:
+        row["invocation"]["execution_version"] = "another-runtime"
 
     result = search.recompute(changed)
     assert result["supported"] == 0
     assert result["gaps"] == 1
+
+
+def test_offline_replay_does_not_relabel_an_executed_policy():
+    baseline = bundle()
+    assert search.recompute(baseline)["supported"] == 1
+    changed = copy.deepcopy(baseline)
+    for identity in (changed["policy"], changed["pinned_evaluation"]):
+        identity.update(genome="another-policy", name="another-method",
+                        method_digest="another-closure")
+
+    result = search.recompute(changed)
+
+    assert (result["supported"], result["gaps"]) == (0, 1)
+    assert result["screening_cpu_units"] == 4
 
 
 def _set_policy_output(row, value):

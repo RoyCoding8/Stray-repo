@@ -18,6 +18,7 @@ Only learner-visible sources count; timeouts and labels are not learning evidenc
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from datetime import UTC, datetime
@@ -643,13 +644,17 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
         decision_id, attempt_id, operation_id = (start[key] for key in
                                                  ("decision_id", "attempt_id", "operation_id"))
         pending = state.get("pending_decision")
+        visible_input = None
         if pending is not None:
             if ((pending["id"], pending["attempt_id"], pending["operation_id"])
                     != (decision_id, attempt_id, operation_id)
                     or pending.get("visible_input") != start["visible_input"]):
                 raise StaleRevision("pending P01 input differs from the policy-pinned start")
-        elif not _target_was_observed(dsn, flight["investigation_id"],
-                                      decision_id, attempt_id, operation_id):
+            visible_input = pending["visible_input"]
+        elif _target_was_observed(dsn, flight["investigation_id"],
+                                  decision_id, attempt_id, operation_id):
+            return state
+        else:
             prepared = investigate.prepare_context(
                 dsn, flight["investigation_id"], target_revision=target_revision,
                 artifacts_root=artifacts_root)
@@ -657,6 +662,35 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
                     or (prepared.get("decision_id"), prepared.get("attempt_id"),
                         prepared.get("operation_id")) != (decision_id, attempt_id, operation_id)):
                 raise StaleRevision("prepared P01 input changed after policy admission")
+            visible_input = prepared["visible_input"]
+
+        step_checker = checker
+        if state["config"].get("method") is not None:
+            organism = loaded[opportunity["id"]][1]
+            item = loaded[opportunity["id"]][0]
+            operation = broker.read_operation(dsn, operation_id)
+            pinned_runtime = start["runtime"]
+            pinned_version = pinned_runtime["execution_version"]
+            if operation is not None and (
+                    operation["payload"].get("effect") != broker.SANDBOX_EXEC
+                    or operation.get("execution_version") != pinned_version):
+                return state
+            if operation is not None and operation["dispatch_state"] in ("observed", "reconciled"):
+                payload = operation["payload"].get("payload") or {}
+                argv = payload.get("argv")
+                executable = pinned_runtime.get("python_executable")
+                if (not isinstance(argv, list) or not argv or argv[0] != executable
+                        or not isinstance(executable, str)):
+                    return state
+                step_checker = copy.copy(checker)
+                step_checker.staged_python = lambda: executable
+            plan = _native_start_plan(
+                step_checker, organism, item, visible_input, state["config"])
+            runtime = {"execution_version": plan.execution_version, **dict(plan.runtime)}
+            if runtime != pinned_runtime:
+                return state
+
+        if pending is None:
             investigate._require(investigation.decide(dsn, Command(
                 request_id="p01-decide:" + decision_id.removeprefix("p01-decision-"),
                 expected_revision=target_revision,
@@ -668,7 +702,7 @@ def _ensure_p01(dsn, agent, checker, opportunity, flight, charter, loaded,
                                     "explanation": "Attempt the open obligation using checked feedback.",
                                     "intended_observation": investigate.QUESTION},
                          "visible_input": start["visible_input"]})))
-        return investigate.step(dsn, agent, checker, flight["investigation_id"],
+        return investigate.step(dsn, agent, step_checker, flight["investigation_id"],
                                 staging_root=staging_root, artifacts_root=artifacts_root,
                                 target_revision=target_revision)
     return investigate.step(dsn, agent, checker, flight["investigation_id"], staging_root=staging_root,
@@ -1028,6 +1062,13 @@ def _method_worker_request(item, visible, method):
             "context": {"continuation": continuation, "task_digest": item.digest}}
 
 
+def _native_start_plan(checker, organism, item, visible_input, config):
+    request = _method_worker_request(item, visible_input, config["method"])
+    return capability.plan_invocation(
+        checker, organism, config["method"]["name"], request,
+        timeout_ms=config["timeout_ms"])
+
+
 def _prepare_start(dsn, agent, checker, agenda_id, charter, option, loaded,
                    staging_root, artifacts_root):
     item = next(entry for entry in charter["opportunities"] if entry["id"] == option["id"])
@@ -1047,11 +1088,8 @@ def _prepare_start(dsn, agent, checker, agenda_id, charter, option, loaded,
     method = prepared["visible_input"].get("capability")
     runtime = {"execution_version": ""}
     if method is not None:
-        request = _method_worker_request(loaded[option["id"]][0], prepared["visible_input"],
-                                         config["method"])
-        plan = capability.plan_invocation(
-            checker, organism, config["method"]["name"], request,
-            timeout_ms=config["timeout_ms"])
+        plan = _native_start_plan(
+            checker, organism, loaded[option["id"]][0], prepared["visible_input"], config)
         runtime = {"execution_version": plan.execution_version, **dict(plan.runtime)}
     return {
         "investigation_id": option["investigation_id"],
