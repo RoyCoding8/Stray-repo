@@ -1,15 +1,16 @@
 # P06 independent review
 
-Reviewed `10455e67..fccb59f5` on isolated branch `codex/p06-sol-review`.
-The initial verdict is **changes required**. Two material fixture-scope findings
-remain open. The existing focused gate passes, but it does not cover these
-counterexamples.
+Reviewed `10455e67..fccb59f5` on isolated branch `codex/p06-sol-review`, then
+independently examined the integrated repairs at
+`34653780d892ba607a3485446a38f4e29f6b3e97`. The integrated verdict is **changes
+required**. R1 and R2 are closed; the terminal-recovery probe reproduced material
+R4, a separate retention escape from conflicted worker evidence. R3 remains minor.
 
 ## Findings
 
 ### P06-R1. Offline replay can attribute an executed policy to different bytes
 
-Priority P2. Open.
+Priority P2. Closed at integrated source `34653780`.
 
 `src/rsi/search.py:484` compares the reported policy with its copied
 `pinned_evaluation`. `policy_effect_evidence` at line 515 checks operation and
@@ -38,7 +39,7 @@ recomputation. Merely comparing two copies of the requested policy is insufficie
 
 ### P06-R2. A persisted work choice can dispatch a different native runtime
 
-Priority P2. Open.
+Priority P2. Closed at integrated source `34653780`.
 
 `src/rsi/agenda.py:640` reads the work flight's prepared start. Its checks cover
 the visible input and decision, attempt, and operation IDs. The final call to
@@ -82,6 +83,100 @@ same completed invocation with a 1,025-byte reason to both parsers returns
 probe, not a claim about a live candidate. Consolidate the closed-action
 validation so the same executable result has the same interpretation.
 
+### P06-R4. Conflicted worker evidence can authorize capability retention
+
+Priority P2. Open at integrated source `34653780`.
+
+The probe starts with a completed, supported native agenda baseline. On a fresh
+agenda it interrupts the authored worker after the broker records its receipt
+but before `capability-use` is archived. It admits a different receipt body
+under the same receipt identity through `store.admit_receipt`. The worker remains
+`observed` and settled, but its reconciliation state is `conflict` and the
+receipt-conflict table contains one conflict. The intervention then changes the
+current interpreter to a distinct copied path and verifies that its plan differs.
+
+Recovery through the terminal checker view preserves the worker's original
+operation and execution identity, with one spawn and no new worker send. It also
+interprets the first receipt, archives a completed native capability result,
+and launches one bounded verifier on those returned files. P01 correctly
+retains the pending flight and emits no agenda acknowledgment. However, a new
+public `capability.retain` call for that exact worker episode returns
+`status=retained` while the worker is still conflicted. Retained capability
+evidence therefore escapes the P01 acknowledgment fence.
+
+`capability.invoke` at `src/rsi/capability.py:217` checks the terminal dispatch
+state and ordinary receipt count before interpreting the result, without
+checking conflict state. The authoritative retention boundary,
+`_checked_use` at line 574, also checks worker settlement, identity and ordinary
+receipt count but omits worker reconciliation and receipt-conflict evidence.
+Its later `gate._known_test_result` check validates the verifier operation;
+it does not reject the conflicted source worker.
+
+Reproduce with
+`tests/test_rsi_search_review.py::test_terminal_worker_receipt_recovery_preserves_identity_and_uncertainty[receipt-conflict]`.
+The final targeted probe passed its original-identity, spawn-count,
+verifier-only-send, pending-flight, no-acknowledgment and durable-conflict
+assertions, then failed because retention returned `retained` rather than
+`rejected`. The run had **one failure, zero passes, zero skips, and zero errors
+in 59.27 seconds**. Both disposable databases were dropped.
+
+Reject unresolved or conflicting source evidence at the capability evidence
+admission boundary. Merely blocking the agenda acknowledgment does not prevent
+another consumer from retaining the already published capability result.
+
+## Integrated repair assessment
+
+At `34653780`, replay compares the selected policy method digest with the
+observed invocation before classifying the action as supported. The shared
+fixture now supplies that observed identity. The relabeling probe retains
+screening cost while expecting a gap for the altered policy.
+
+Agenda recovery now recomputes the native plan and compares its complete
+runtime with the durable work start. The portable intervention copies the
+trusted current interpreter to a distinct path and asserts a different
+`execution_version` before resuming. It does not depend on virtual-environment
+symlink behavior and has no skip branch.
+
+The additional R2 probes cover absent, prepared, and dispatching worker
+operations. They expect a pending flight, unchanged worker operation, and no
+launcher send after runtime drift. The dispatching case already sent the
+original worker once and retains that one spawn.
+
+The terminal probe crashes after the broker saves the worker receipt but
+before `capability-use` is archived. It tests the `copy.copy` checker view with
+a different current interpreter. Successful recovery must retain the recorded
+worker operation and execution version, retain one worker spawn, and send only
+the expected verifier. The caller's checker must still return the changed
+interpreter. A conflicting admitted receipt must remain conflicted, with the
+flight pending and no acknowledgment. A changed pending visible input must
+raise `StaleRevision`, also preserving the flight and worker operation, with no
+send. A receipt conflict permits one verifier send while preserving the pending
+flight and no acknowledgment. That extra bounded verifier alone is not the
+material finding; accepting its conflicted worker as retention evidence is R4.
+
+The first integrated four-file run used `ad1069b1` and finished with **37 passed,
+3 failed, zero skips, and zero errors in 497.02 seconds**. Its exact files were
+`tests/test_rsi_search_review.py`, `tests/test_rsi_search.py`,
+`tests/test_rsi_search_replay.py`, and `tests/test_rsi_search_agenda.py`.
+All three failures were probe construction errors: an overly broad crash
+injector interrupted the policy invocation before a work flight existed,
+causing `KeyError: start`. The final probe restricts the crash to the authored
+`maximum` worker. This failed run is separate from final verification.
+
+A second probe-file run used `ad1069b2`: **six passed, one failed, zero skips,
+and zero errors in 319.01 seconds**. Its receipt-conflict case failed an overly
+strict zero-send expectation: the only new send was the expected verifier.
+The final assertion distinguishes that attributable verifier from a new worker
+dispatch and separately challenges authoritative retention. This run predates
+the retention assertion and does not close R4.
+
+The completed recovery-only probe-file run on `ad1069b3` had **seven passed,
+zero skips, and zero errors in 316.89 seconds**. It independently closed R1 and
+R2 and confirmed pending/no-acknowledgment behavior for receipt conflicts. It
+was collected before the public retention assertion was added. The subsequent
+single-case `ad1069b4` run, described in R4, is the final authoritative-evidence
+counterexample and remains failing. These counts are separate runs.
+
 ## Verified scope
 
 The original focused gate at `fccb59f5` passed **56 tests, zero skips, and zero
@@ -106,7 +201,7 @@ tests/test_rsi_agenda.py::test_definitive_pre_dispatch_refusal_closes_pinned_fli
 ```
 
 These runs are separate scopes. They are not a whole-repository suite or CI
-verification. The added review tests intentionally fail until the findings are
+verification. The initial review tests failed before the findings were
 repaired. A later single-test rerun strengthened R1 by supplying the correct
 observed method digest before its intervention. It failed in 2.20 seconds.
 Ruff passed on the final review test file through `uvx ruff check`.
@@ -123,6 +218,10 @@ PostgreSQL at `127.0.0.1:55432`. Both administrator and test DSNs were
 | Original focused gate | `ad1069a1` | `D:/AI/tools/p06/solad1069a1` | `D:/AI/tools/p06/sol-review-baseline.log` |
 | Initial counterexamples | `ad1069a2` | `D:/AI/tools/p06/solad1069a2` | `D:/AI/tools/p06/sol-review-counterexamples.log` |
 | Neighboring agenda checks | `ad1069a3` | `D:/AI/tools/p06/solad1069a3` | `D:/AI/tools/p06/sol-review-neighbor.log` |
+| Integrated four-file probe calibration | `ad1069b1` | `D:/AI/tools/p06/solad1069b1` | `D:/AI/tools/p06/sol-review-closure.log` |
+| Worker-only crash probe calibration | `ad1069b2` | `D:/AI/tools/p06/solad1069b2` | `D:/AI/tools/p06/sol-review-final-probes.log` |
+| Recovery checks before retention assertion | `ad1069b3` | `D:/AI/tools/p06/solad1069b3` | `D:/AI/tools/p06/sol-review-final.log` |
+| Authoritative retention counterexample | `ad1069b4` | `D:/AI/tools/p06/solad1069b4` | `D:/AI/tools/p06/sol-review-retention.log` |
 
 Each database run reported that it dropped its two disposable databases.
 No live database anchor was used.
@@ -135,7 +234,7 @@ The reviewed code and passing gate support the following fixture mechanics:
   Captured native branches compare that input and the recorded task, genome,
   execution, receipt, reservation, and artifact facts.
 - Serialized policy input excludes private future evidence. Replay and P05 both
-  execute policies through `capability.invoke`. R1 and R3 limit the claim that
+  execute policies through `capability.invoke`. R3 limits the claim that
   their complete policy assessments are equivalent.
 - Supported results, missing coverage, deliberate stops, and execution refusals
   remain distinct. A requested second decision is a missing-child gap.
@@ -144,7 +243,8 @@ The reviewed code and passing gate support the following fixture mechanics:
   explicit and cannot satisfy the candidate's bounded-cost eligibility check.
 - Policy admission and work choice persist tagged flights. Existing crash
   recovery and final resource, memory, grant, and deadline fences pass their
-  supplied checks. R2 exposes the missing native-runtime check on work resume.
+  supplied checks. Integrated recovery now compares the native runtime pinned
+  in the work choice before dispatch.
 - Campaign export includes policy operations that have no P01 attempt, along
   with their supporting policy and frame artifacts.
 - The apparatus uses a development-only P03 construction packet, checks the
@@ -174,7 +274,9 @@ policy benefit, or improvement of the learner.
 - [x] Run the original focused gate and neighboring agenda checks.
 - [x] Probe policy attribution and work recovery from accepted baselines.
 - [x] Record exact findings and verification boundaries.
-- [ ] Independently check integrated repairs and rerun the necessary gates.
+- [x] Independently close R1 and R2 on integrated source.
+- [x] Challenge terminal checker recovery and reproduce the R4 retention escape.
+- [ ] Independently verify R4 after the shared evidence admission repair.
 
 Prove It Works required real native execution for R2. Test Behavior, Not
 Implementation kept the probes tied to supported assessment and actual dispatch
