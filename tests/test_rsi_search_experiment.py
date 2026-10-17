@@ -216,6 +216,7 @@ def test_fixture_freeze_rejects_collection_and_source_drift_and_reuses_run_ident
     with pytest.raises(ValueError, match="collection_sha256"):
         search_freeze.verify_freeze(
             root, freeze_path, collection_path, scenario_path=scenario_path)
+
     collection_path.write_text(json.dumps(collection), encoding="utf-8")
     source_path = root / "src/rsi/search.py"
     source_path.write_bytes(source_path.read_bytes() + b"\n# drift\n")
@@ -241,6 +242,51 @@ def test_agenda_use_window_starts_after_construction_and_survives_resume():
     assert driver._agenda_use_deadline(
         {"charter": {"deadline": expired}}, seconds,
         now=construction_finished) == expired
+
+
+def test_agenda_use_deadline_is_durable_across_existing_agenda_resume(
+        migrated_db, tmp_path):
+    from test_rsi_agenda import _charter, _grant
+    from test_rsi_investigate import _scenario
+
+    from rsi import agenda
+
+    run = _scenario(migrated_db, tmp_path / "p01", "p06-deadline", "pass-first")
+    agenda_id = "p06-deadline-agenda"
+    charter = _charter(run, agenda_id=agenda_id)
+    window_seconds = 180
+    construction_finished = datetime.now(UTC) - timedelta(seconds=window_seconds + 60)
+    deadline = driver._agenda_use_deadline(
+        None, window_seconds, now=construction_finished)
+    charter["deadline"] = deadline
+    _grant(migrated_db, charter, agenda_id)
+    created = agenda.create(
+        migrated_db, agenda_id=agenda_id, charter=charter,
+        artifacts_root=run["roots"]["artifacts_root"])
+
+    persisted = agenda.read(migrated_db, agenda_id)
+    assert persisted["charter"] == created["charter"] == charter
+    assert datetime.fromisoformat(persisted["charter"]["deadline"]) < datetime.now(UTC)
+
+    resumed_deadline = driver._agenda_use_deadline(
+        persisted, window_seconds, now=datetime.now(UTC))
+    resumed = {**charter, "deadline": resumed_deadline}
+    assert resumed_deadline == deadline
+    assert agenda.create(
+        migrated_db, agenda_id=agenda_id, charter=resumed,
+        artifacts_root=run["roots"]["artifacts_root"]) == persisted
+    assert agenda.read(migrated_db, agenda_id)["charter"] == charter
+
+
+@pytest.mark.parametrize("stored_deadline", [None, "not-a-timestamp", "2026-10-16T12:00:00"])
+def test_existing_agenda_with_missing_or_invalid_deadline_cannot_restart_window(
+        stored_deadline):
+    existing = {"charter": {}}
+    if stored_deadline is not None:
+        existing["charter"]["deadline"] = stored_deadline
+
+    with pytest.raises(ValueError, match="durable use deadline"):
+        driver._agenda_use_deadline(existing, 180)
 
 
 def test_constructor_accounting_comes_from_durable_prepared_operation(migrated_db, tmp_path):

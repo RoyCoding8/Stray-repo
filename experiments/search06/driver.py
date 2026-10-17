@@ -69,9 +69,16 @@ def _scenario(path: Path = SCENARIO) -> dict:
 def _agenda_use_deadline(existing_agenda: dict | None, window_seconds: int,
                          *, now: datetime | None = None) -> str:
     if existing_agenda is not None:
-        deadline = (existing_agenda.get("charter") or {}).get("deadline")
+        charter = existing_agenda.get("charter")
+        deadline = charter.get("deadline") if isinstance(charter, dict) else None
         if not isinstance(deadline, str):
             raise ValueError("existing agenda has no durable use deadline")
+        try:
+            parsed = datetime.fromisoformat(deadline)
+        except ValueError as exc:
+            raise ValueError("existing agenda has an invalid durable use deadline") from exc
+        if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+            raise ValueError("existing agenda has a non-UTC durable use deadline")
         return deadline
     if type(window_seconds) is not int or window_seconds <= 0:
         raise ValueError("agenda use window must be a positive number of seconds")
