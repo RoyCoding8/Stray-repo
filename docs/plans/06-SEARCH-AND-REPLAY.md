@@ -114,6 +114,28 @@ Authored fixtures qualify this interface. Untrusted model policy execution must
 first satisfy the repository's execution boundary; the current uncontained
 candidate screening path does not qualify for live launch.
 
+The 2026-10-16 execution assessment compared two ways to remove this limit.
+A closed JSON policy language could run in a trusted bounded interpreter, but
+would also change construction, descriptors and the space of policies being
+studied. It is a representation choice, not containment for Python methods.
+The preferred shared runtime direction preserves the current Python ABI and
+uses the existing WSL2 Ubuntu installation. A trusted bwrap smoke process
+demonstrated a separate user namespace with no Windows mounts. Docker and
+runsc are absent. WSL has systemd and cgroup v2, with CPU, memory and process
+controllers available under `user-0.slice`; bwrap has size-limited tmpfs.
+These observations establish feasibility only. No candidate ran there.
+
+A WSL adapter must qualify Linux-owned wall deadlines, aggregate resource
+bounds, read-only input staging, absent host/network access and recovery under
+the existing operation identity before it can execute model methods. Pin the
+runtime/profile in the invocation fingerprint and report the actual profile in
+receipts. The current invocation hardcodes `local-process` and coordinator
+Python identity, so wrapping its command in `wsl.exe` would misstate execution.
+Do not build a separate P06 sandbox or silently replace Python with a restricted
+language. Until the shared boundary is implemented and independently reviewed,
+fixture mechanics and live launch remain separate gates. Construction alone
+cannot satisfy P06-E or establish policy utility.
+
 ### Informative qualification
 
 Use several small worlds with supported alternatives, incomplete histories and

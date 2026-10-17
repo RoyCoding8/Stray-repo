@@ -9,8 +9,8 @@ The human has authorized all remaining parts. Finish each component's fixes,
 debloat, independent verification, cleanup and green CI before implementing the
 next. Follow [the master plan](docs/plans/MASTER-PLAN.md) in order: P05, P10, P06,
 P07, P09, P08. The ledger owns the active task list and exact evidence boundaries.
-P10 is next. Its selected ownership and shared interfaces are pinned in
-[the campaign plan](docs/plans/10-CAMPAIGNS.md). Implement and qualify that contract.
+The ledger names the active component and its remaining work. Use that
+component's plan for its selected ownership, interfaces and acceptance checks.
 
 Do not rerun old study prompts or rebuild completed slices without a current
 assignment. Follow session instructions before delegation. No paid model or Jev

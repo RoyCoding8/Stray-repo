@@ -31,7 +31,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Working checkpoint; live unscored | Experience changes what the system chooses to investigate next. |
-| P06: search history and dreaming | Implementation integrated; paused before independent review and live qualification | One-step supported replay and executable agenda choice; missing-child queries remain gaps. |
+| P06: search history and dreaming | Implementation integrated; live-launch repairs and final qualification active | One-step supported replay and executable agenda choice; missing-child queries remain gaps. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
@@ -66,8 +66,8 @@ P03 task list:
 
 Current throughput checkpoint: P01 through P05 are closed at their qualified
 component scope. P10 has finished independent review, its bounded pilot and
-consolidation. P06 is the active build, paused at the human's request after lane
-integration and coordinator review. The
+consolidation. P06 resumed on 2026-10-16 after the requested pause. The integrated
+checkpoint's CI passed; live-launch repairs precede final independent review. The
 remaining queue is P06, P07, P09, then P08.
 
 Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
@@ -230,7 +230,9 @@ P06 task list:
 - [x] Review the implementation lanes and repair reproduced integration defects.
 - [ ] Qualify P06-A through P06-E and neighboring components on the integrated path.
 - [ ] Complete independent GPT-6.1 Sol High verification after implementation.
-- [ ] Resolve the untrusted candidate execution boundary and prospective-use deadline before live launch.
+- [x] Compare existing WSL isolation with restricted policy execution. Preserve the Python ABI and record the shared-runtime prerequisites in the P06 plan.
+- [x] Repair prospective-use deadline ownership, with real-store restart and expiration checks.
+- [ ] Resolve the untrusted candidate execution boundary before live launch.
 - [ ] Freeze and run one bounded free-route policy revision/use experiment; preserve gaps or negative outcomes.
 - [ ] Complete final consolidation and CI after independent review.
 - [x] Remove checkpoint worktrees and task branches; verify the completed scratch archive.
@@ -274,10 +276,14 @@ machinery, not model acquisition or learning.
 
 Two live-launch issues remain explicit in the [experiment instructions](../experiments/search06/README.md).
 Candidate screening currently uses an uncontained native child on the coordinator
-host, which conflicts with the current rule for untrusted candidate code. The
-freeze also starts the prospective-use deadline before construction, so it can
-expire before use. Resolve these boundaries before launching. Do not silently
-relax the execution rule or extend an active deadline.
+host, which conflicts with the current rule for untrusted candidate code.
+Resolve the shared execution boundary before launching. The deadline repair
+at `a6786d47` freezes a duration and starts it at first agenda creation after
+construction and screening. A real-store regression proves that resume preserves
+the existing expired deadline rather than renewing it. The lane's complete
+apparatus file passed 14 tests with zero skips; coordinator qualification follows.
+Two read-only execution assessments found a plausible WSL/bwrap/cgroup path, but
+its resource enforcement and recovery are unqualified. No model policy was run.
 
 The coordinator's merged-source experiment gate passed **eight tests, zero
 skips**, in 161.16 seconds, including the real-PG/native three-world collector.
@@ -287,10 +293,12 @@ independently; the final non-collector gate passed **eight tests, zero skips,
 one deselected**, in 4.57 seconds. Ruff and whitespace checks passed. These runs
 are separate scopes. No full-suite or checkpoint CI result is claimed for P06.
 
-All existing implementation agents have finished and their work is merged. Their
-temporary worktrees and task branches are removed. Independent Sol review, live
-inference and P07 remain unstarted. The user requested this pause after current
-lane review; resume only on a new continuation instruction. P06 remains open.
+The earlier implementation agents finished and their work was merged. Their
+temporary worktrees and task branches were removed. The human resumed the work
+on 2026-10-16. Current Luna lanes own deadline repair and two read-only execution
+design comparisons. Independent Sol review follows these implementation repairs;
+live inference and P07 remain unstarted. CI run `38947664019` passed at the paused
+checkpoint `e8767e62`. P06 remains open.
 Completed scratch is archived at `.git/verification/p06-checkpoint-20261016.zip`.
 All 3,184 files were verified against their source SHA-256 digests. Automatic
 approval review rejected recursive removal with `blocked by policy`, so the
