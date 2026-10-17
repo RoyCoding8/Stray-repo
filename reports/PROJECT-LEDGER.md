@@ -31,7 +31,7 @@ dependencies and build order. The three research themes are divided into ten par
 | P03: context construction | Working checkpoint; qualified below | A bounded evidence-selection policy consumed by actual decisions. |
 | P04: executable capabilities | Working checkpoint; live unscored | Construction, checked retention and later executable use. |
 | P05: autonomous agenda | Working checkpoint; live unscored | Experience changes what the system chooses to investigate next. |
-| P06: search history and dreaming | Implementation integrated; live-launch repairs and final qualification active | One-step supported replay and executable agenda choice; missing-child queries remain gaps. |
+| P06: search history and dreaming | Fixture engineering independently qualified; live execution boundary open | One-step supported replay and executable agenda choice; missing-child queries remain gaps. |
 | P07: learner revision | Planned | An inherited executable learner controls later successor production. |
 | P08: temporary teams | Planned | Retained coordination controls dispatch, joins and rework. |
 | P09: representations and transfer | Planned | Qualified abstractions execute on meaningfully changed work. |
@@ -66,8 +66,8 @@ P03 task list:
 
 Current throughput checkpoint: P01 through P05 are closed at their qualified
 component scope. P10 has finished independent review, its bounded pilot and
-consolidation. P06 resumed on 2026-10-16 after the requested pause. The integrated
-checkpoint's CI passed; live-launch repairs precede final independent review. The
+consolidation. P06 resumed on 2026-10-16 after the requested pause. Deadline and
+identity repairs are independently reviewed; checkpoint CI is pending. The
 remaining queue is P06, P07, P09, then P08.
 
 Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
@@ -229,81 +229,80 @@ P06 task list:
 - [x] Integrate immutable frames, supported replay, executable P05 policies and prospective branch collection.
 - [x] Review the implementation lanes and repair reproduced integration defects.
 - [ ] Qualify P06-A through P06-E and neighboring components on the integrated path.
-- [ ] Complete independent GPT-6.1 Sol High verification after implementation.
+- [x] Complete independent GPT-6.1 Sol High verification of the integrated fixture implementation.
 - [x] Compare existing WSL isolation with restricted policy execution. Preserve the Python ABI and record the shared-runtime prerequisites in the P06 plan.
 - [x] Repair prospective-use deadline ownership, with real-store restart and expiration checks.
+- [x] Close independent P06-R1: bind offline policy evidence to the actual executable invocation, including relabel counterexamples.
+- [x] Close independent P06-R2: revalidate the policy-pinned native runtime before a resumed work flight can dispatch.
+- [x] Close independent P06-R4: reject conflicted checked-use evidence during retention and selection.
 - [ ] Resolve the untrusted candidate execution boundary before live launch.
 - [ ] Freeze and run one bounded free-route policy revision/use experiment; preserve gaps or negative outcomes.
 - [ ] Complete final consolidation and CI after independent review.
-- [x] Remove checkpoint worktrees and task branches; verify the completed scratch archive.
-- [x] Synchronize checkpoint backups to `origin` and `github`; verify remote equality.
+- [x] Remove current repair/review worktrees and task branches; preserve the completed scratch archive.
+- [ ] Synchronize the reviewed checkpoint to `origin` and `github`; verify remote equality.
 
-The shared native invocation plan is implemented at `3cb9f269`. Eight focused
-tests passed on real PostgreSQL and native children, including prospective versus
-executed identity. P01 preparation landed in `a4750f45` and merged at `7fd5e0b4`.
-The coordinator's integrated preparation and native-plan gate passed six tests
-with no skips in 56.87 seconds. The lane also passed its 19-test P01/P03 combined
-gate before a test-only fixture correction, then its corrected four-test
-preparation file. These are focused gates, not a full-suite result.
+P06 now has one shared prospective native invocation plan, exact P01 input
+preparation, immutable decision frames and evidence-backed one-step replay.
+P05 executes the same exploration-policy ABI and persists either its policy
+invocation or selected work under the existing flight owner. Campaign exports
+include policy operations without P01 attempts. Missing children, mismatched
+inputs and unknown costs remain gaps rather than invented grades.
 
-Replay is integrated at `23966efe`. The coordinator reran all 20 search and
-replay tests on PostgreSQL 18, with zero skips in 28.48 seconds. Review found and
-repaired policy receipt tampering that could still count as supported, with
-three failing-before counterexamples. Policy charging now uses settled actual
-cost when available and keeps unknown amounts explicit. This qualifies one-step
-screening and missing-child queries, not supported multi-step replay.
+The apparatus collects three authored worlds with six executed alternatives,
+screens two authored policies on the same corpus and preserves an unexecuted
+option. Construction consumes all six captured development observations through
+P03. Eligibility requires full candidate and incumbent coverage, no worse checked
+quality and known bounded costs. Durable operations own the two construction
+admissions. Pending prospective use stays unscored; checked failure is a completed
+negative. These fixtures qualify mechanics, not acquisition or learning.
 
-Agenda policy execution is integrated at `01d56fa4`. Coordinator review reproduced
-an existing fixed-policy agenda failure caused by a lost investigation identity;
-`85646475` repairs it. Campaign export now includes native policy operations that
-have no P01 attempt, with their artifacts, receipts and reservations (`95778cdf`).
-The public campaign regression failed before that repair. The integrated agenda,
-campaign-policy export and existing agenda gate passed **28 tests, zero skips**
-in 438.07 seconds. A separate preparation, native-plan and search/replay gate
-passed **26 tests, zero skips** in 101.62 seconds on PostgreSQL 18 and bounded
-native children. These are separate focused scopes, not a full-suite result.
+Deadline repair `a6786d47` freezes a use duration and starts the absolute deadline
+at first durable agenda creation after screening. A real-store test proves an
+expired deadline remains expired on resume. The coordinator's complete apparatus
+gate passed **14 tests, zero skips in 139.20 seconds** on PostgreSQL 18 and bounded
+authored children at `fccb59f5`.
 
-The experiment apparatus is integrated at `6519493a`, including reviewed lane
-corrections in `e7a6b4b7`. It collects three authored worlds and six executed
-branches, screens two authored policies on the same corpus, and preserves an
-unexecuted option and missing-child gaps. Construction requires the six captured
-development observations. Eligibility requires complete candidate and incumbent
-coverage, no worse checked quality, and known bounded screening costs. Pending
-or refused prospective use remains unscored; a checked failure is a completed
-negative. Frozen run identities and durable operation records own constructor
-admission accounting, rather than an output file. Fixture success demonstrates
-machinery, not model acquisition or learning.
+The [independent review](../reviews/P06-REVIEW.md) reproduced two material holes
+despite its original **56-test, zero-skip gate in 476.08 seconds**. P06-R1 could
+relabel observed policy execution as another policy; `ce8c3d2c` binds the observed
+method digest during recomputation. P06-R2 could change native runtime after a
+persisted work choice; `9c7321d4`, integrated at `81bd9122`, rechecks the plan
+before dispatch and recovers terminal evidence only under its recorded identity.
+Sol independently closed R1/R2. Its terminal receipt probe then reproduced
+P06-R4: a conflicted worker remained pending in P01 but could still qualify
+capability retention. Repair `353fac29` rejects conflicted or unresolved worker
+and verifier evidence in the shared checked-use owner. The maintained public
+regression failed before that repair; afterward the complete capability
+integration file passed **eight tests, zero skips in 93.47 seconds**. Fresh
+retention, fresh selection and revalidation of an earlier selection are covered.
+Sol independently closed R4 with **three tests, zero skips/errors in 78.05
+seconds** at `e0c919a2`. Its earlier seven recovery probes separately passed in
+316.89 seconds. The final verdict is PASS for fixture engineering scope.
+P06-R3, the stop-reason length disagreement, and one bounded verifier invocation
+before late conflict refusal remain minor. Neither authorizes uncertain evidence
+or duplicate worker dispatch. The coordinator's integrated
+search/replay, native agenda recovery and two fixed-policy neighbor checks passed
+**37 tests, zero skips in 335.20 seconds** at `81bd9122`. Both disposable databases
+were dropped. The earlier R1 search/replay gate separately passed 23 tests in
+35.63 seconds. These are focused scopes, not a whole-repository suite.
 
-Two live-launch issues remain explicit in the [experiment instructions](../experiments/search06/README.md).
-Candidate screening currently uses an uncontained native child on the coordinator
-host, which conflicts with the current rule for untrusted candidate code.
-Resolve the shared execution boundary before launching. The deadline repair
-at `a6786d47` freezes a duration and starts it at first agenda creation after
-construction and screening. A real-store regression proves that resume preserves
-the existing expired deadline rather than renewing it. The lane's complete
-apparatus file passed 14 tests with zero skips; coordinator qualification follows.
-Two read-only execution assessments found a plausible WSL/bwrap/cgroup path, but
-its resource enforcement and recovery are unqualified. No model policy was run.
+P06 remains open. Candidate screening uses an uncontained native child, which
+does not meet the current rule for untrusted code. Read-only execution assessments
+prefer a shared WSL/bwrap runtime over changing Python policies into a closed
+language. A trusted namespace smoke worked; aggregate resource enforcement,
+Linux-owned deadlines, input isolation and restart recovery remain unqualified.
+The [component plan](../docs/plans/06-SEARCH-AND-REPLAY.md) owns those prerequisites.
+No acquired policy or live model call ran in this batch. P07 has not started.
 
-The coordinator's merged-source experiment gate passed **eight tests, zero
-skips**, in 161.16 seconds, including the real-PG/native three-world collector.
-Review then reproduced and fixed a direct-file CLI import failure in the live
-software preflight (`7b437cf1`), without provider access. Its new regression passed
-independently; the final non-collector gate passed **eight tests, zero skips,
-one deselected**, in 4.57 seconds. Ruff and whitespace checks passed. These runs
-are separate scopes. No full-suite or checkpoint CI result is claimed for P06.
-
-The earlier implementation agents finished and their work was merged. Their
-temporary worktrees and task branches were removed. The human resumed the work
-on 2026-10-16. Current Luna lanes own deadline repair and two read-only execution
-design comparisons. Independent Sol review follows these implementation repairs;
-live inference and P07 remain unstarted. CI run `38947664019` passed at the paused
-checkpoint `e8767e62`. P06 remains open.
-Completed scratch is archived at `.git/verification/p06-checkpoint-20261016.zip`.
-All 3,184 files were verified against their source SHA-256 digests. Automatic
-approval review rejected recursive removal with `blocked by policy`, so the
-archived raw directory `D:/AI/tools/p06` remains. No owned disposable test
-databases remain; the earlier live anchors were preserved.
+CI run `38947664019` passed all seven jobs at the paused `e8767e62` checkpoint;
+run `38985662749` passed all seven at `fccb59f5`. These precede the final identity
+repairs. Current checkpoint CI and backup synchronization remain pending.
+All owned worktrees and task branches are removed; only the main checkout and
+unrelated architecture-handoff branch remain. Owned disposable databases were
+dropped. Earlier live anchors are preserved. Completed scratch
+is archived at `.git/verification/p06-checkpoint-20261016.zip`, with 3,184 source
+files checked against SHA-256 digests. Automatic approval review previously
+blocked recursive deletion, so archived raw scratch remains at `D:/AI/tools/p06`.
 
 Remaining queue: P06 → P07 → P09 → P08. Each receives its own task list
 when active. Qualified mechanisms do not imply acquisition, utility or learning.

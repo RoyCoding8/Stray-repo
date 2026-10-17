@@ -131,6 +131,12 @@ the existing operation identity before it can execute model methods. Pin the
 runtime/profile in the invocation fingerprint and report the actual profile in
 receipts. The current invocation hardcodes `local-process` and coordinator
 Python identity, so wrapping its command in `wsl.exe` would misstate execution.
+The launcher must supply the target runtime descriptor to the shared invocation
+planner, including Linux Python identity and the enforced execution profile.
+Keep existing local fingerprints reproducible for pending operations. Translate
+only staged input/output paths at the launcher boundary, and use a non-root
+identity inside the sandbox. A CPU rate quota alone is not a total CPU budget;
+the declared resource limit must match what the Linux owner actually enforces.
 Do not build a separate P06 sandbox or silently replace Python with a restricted
 language. Until the shared boundary is implemented and independently reviewed,
 fixture mechanics and live launch remain separate gates. Construction alone
@@ -151,6 +157,9 @@ fresh opportunities. Freeze the exact call/resource/wall caps before effects.
 Stop on construction failure, insufficient support, unresolved effects or the
 declared limits. Preserve replay/live disagreement. No sustained learning win is
 required to close the component mechanism.
+Freeze the prospective-use duration rather than a deadline that runs down during
+construction. First agenda creation owns the absolute deadline; resume reads that
+same immutable charter, including when its deadline has expired.
 
 Dream-RSI motivates reusing recorded branches to revise executable exploration
 policies while keeping the discovery worker and evaluator fixed. Its replay
