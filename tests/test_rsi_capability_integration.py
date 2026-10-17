@@ -145,6 +145,35 @@ def test_noop_fails_the_same_check_and_is_not_retained(env):
     assert store.allocation_status(dsn, "cpu")["consumed"] > 0
 
 
+@pytest.mark.parametrize("conflicted_effect", ["worker", "verifier"])
+def test_conflicted_checked_use_cannot_retain_or_authorize_selection(env, conflicted_effect):
+    dsn, roots, candidate, _launcher, _ = env
+    checked, retained = _qualify(env)
+    assert checked.passed is True and retained["status"] == "retained"
+    condition = {"genome": candidate, "name": "maximum", "interface": "sequence-maximum/1",
+                 "task_id": _task("qualification", 3).digest, "value": [-5, 3, 0],
+                 "artifacts_root": roots["artifacts_root"]}
+    selected = capability.select(dsn, "before-conflict", **condition)
+    assert selected["status"] == "selected"
+    operation_id = "qualification" if conflicted_effect == "worker" else checked.operation_id
+    receipt, = store.operation_receipts(dsn, operation_id)
+    conflict = store.admit_receipt(dsn, Command(
+        request_id="conflicting-checked-use",
+        payload={"operation_id": operation_id, "receipt_identity": receipt["receipt_identity"],
+                 "outcome": receipt["outcome"],
+                 "content": {**receipt["content"], "different_receipt": True},
+                 "provenance": receipt["provenance"]}))
+    assert conflict.data["conflict"] is True
+    assert broker.read_operation(dsn, operation_id)["reconcile_state"] == "conflict"
+
+    refused = capability.retain(dsn, "after-conflict", genome=candidate, name="maximum",
+                                episode_id="qualification", artifacts_root=roots["artifacts_root"])
+    assert refused["status"] == "rejected"
+    assert capability.select(dsn, "after-conflict", **condition)["status"] == "declined"
+    with pytest.raises(capability.CapabilityError):
+        capability.validate_selection(dsn, selected, **condition)
+
+
 def test_retention_refuses_a_passing_check_of_substituted_output(env):
     dsn, roots, candidate, launcher, _ = env
     item = _task("substituted-check", 99)
