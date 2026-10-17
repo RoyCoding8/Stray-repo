@@ -67,7 +67,7 @@ P03 task list:
 Current throughput checkpoint: P01 through P05 are closed at their qualified
 component scope. P10 has finished independent review, its bounded pilot and
 consolidation. P06 resumed on 2026-10-16 after the requested pause. Deadline and
-identity repairs are independently reviewed; checkpoint CI is pending. The
+identity repairs are independently reviewed; all seven checkpoint CI jobs passed. The
 remaining queue is P06, P07, P09, then P08.
 
 Final P05 source `7f59a909` passed its 65-test gate with zero skips in 377.72
@@ -237,9 +237,9 @@ P06 task list:
 - [x] Close independent P06-R4: reject conflicted checked-use evidence during retention and selection.
 - [ ] Resolve the untrusted candidate execution boundary before live launch.
 - [ ] Freeze and run one bounded free-route policy revision/use experiment; preserve gaps or negative outcomes.
-- [ ] Complete final consolidation and CI after independent review.
+- [x] Complete fixture checkpoint consolidation and CI after independent review. Full P06 qualification remains open above.
 - [x] Remove current repair/review worktrees and task branches; preserve the completed scratch archive.
-- [ ] Synchronize the reviewed checkpoint to `origin` and `github`; verify remote equality.
+- [x] Synchronize the reviewed checkpoint to `origin` and `github`; verify remote equality.
 
 P06 now has one shared prospective native invocation plan, exact P01 input
 preparation, immutable decision frames and evidence-backed one-step replay.
@@ -294,9 +294,10 @@ Linux-owned deadlines, input isolation and restart recovery remain unqualified.
 The [component plan](../docs/plans/06-SEARCH-AND-REPLAY.md) owns those prerequisites.
 No acquired policy or live model call ran in this batch. P07 has not started.
 
-CI run `38947664019` passed all seven jobs at the paused `e8767e62` checkpoint;
-run `38985662749` passed all seven at `fccb59f5`. These precede the final identity
-repairs. Current checkpoint CI and backup synchronization remain pending.
+CI run `38989258134` passed all seven jobs on reviewed source checkpoint
+`e4c4d3b91e0ba18b41a62031e035d155862a23d3`, including the final identity repairs.
+Both backups were verified equal to that checkpoint. This closing ledger update
+changes no source or test files.
 All owned worktrees and task branches are removed; only the main checkout and
 unrelated architecture-handoff branch remain. Owned disposable databases were
 dropped. Earlier live anchors are preserved. Completed scratch
