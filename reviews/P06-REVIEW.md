@@ -1,10 +1,12 @@
 # P06 independent review
 
 Reviewed `10455e67..fccb59f5` on isolated branch `codex/p06-sol-review`, then
-independently examined the integrated repairs at
-`34653780d892ba607a3485446a38f4e29f6b3e97`. The integrated verdict is **changes
-required**. R1 and R2 are closed; the terminal-recovery probe reproduced material
-R4, a separate retention escape from conflicted worker evidence. R3 remains minor.
+independently checked the R1/R2 integration at `34653780` and R4 repair
+`353fac29`, integrated in this review tree at
+`e0c919a2`. The final verdict is **PASS for the claimed fixture engineering
+scope**. R1, R2 and R4 are closed with observed proof. R3 remains minor, as does
+the bounded verifier work before late refusal described below. P06 remains open
+and P06-E remains live unqualified.
 
 ## Findings
 
@@ -85,7 +87,8 @@ validation so the same executable result has the same interpretation.
 
 ### P06-R4. Conflicted worker evidence can authorize capability retention
 
-Priority P2. Open at integrated source `34653780`.
+Priority P2. Reproduced at `34653780`; closed by `353fac29`, independently
+verified at review integration `e0c919a2`.
 
 The probe starts with a completed, supported native agenda baseline. On a fresh
 agenda it interrupts the authored worker after the broker records its receipt
@@ -175,7 +178,48 @@ zero skips, and zero errors in 316.89 seconds**. It independently closed R1 and
 R2 and confirmed pending/no-acknowledgment behavior for receipt conflicts. It
 was collected before the public retention assertion was added. The subsequent
 single-case `ad1069b4` run, described in R4, is the final authoritative-evidence
-counterexample and remains failing. These counts are separate runs.
+counterexample at `34653780`. These counts are separate runs; the subsequent
+repair and final closure run follow.
+
+### R4 closure at the shared capability evidence boundary
+
+Commit `353fac29` adds worker and verifier reconciliation checks inside
+`capability._checked_use`. Both reject `conflict` and `unresolved` before
+returning authoritative checked-use evidence. The repair uses the broker's
+existing durable reconciliation state; it adds no parallel history owner or
+recovery state. The original terminal public-retention counterexample now
+passes: the worker and flight retain their recorded identities, the conflict
+remains inspectable, no acknowledgment escapes, and fresh retention is rejected.
+
+The maintained worker/verifier conflict regression starts from passing native
+qualification, retention and selection. After admitting a real conflicting
+receipt, fresh retention is rejected, fresh selection declines, and validation
+of the previously selected capability raises `CapabilityError`. Historical
+retention and selection decisions remain immutable records. Their stored
+statuses describe the prior decision; current eligibility and use validation
+recheck source evidence through `_checked_use`.
+
+The independent closure run at `e0c919a2` passed **three tests, zero skips, and
+zero errors in 78.05 seconds**. Its exact scope was:
+
+```text
+tests/test_rsi_search_review.py::test_terminal_worker_receipt_recovery_preserves_identity_and_uncertainty[receipt-conflict]
+tests/test_rsi_capability_integration.py::test_conflicted_checked_use_cannot_retain_or_authorize_selection[worker]
+tests/test_rsi_capability_integration.py::test_conflicted_checked_use_cannot_retain_or_authorize_selection[verifier]
+```
+
+Minor residual behavior: terminal recovery still publishes the completed native
+result and launches one bounded, attributable verifier before P01 refuses the
+conflicted source. This is extra work on unresolved evidence, not a duplicate
+worker send or accepted assessment. The passing terminal probe verifies the
+original worker operation and execution version, one worker spawn, only the
+expected verifier send, a pending flight, no acknowledgment, a retained durable
+conflict, and rejected capability retention. Moving this refusal earlier is a
+minor efficiency improvement; no material fixture-scope finding remains open.
+
+Ruff passed on both affected test files, and `git diff --check` passed. This is
+targeted independent closure, not a repeated broad gate, whole-repository test
+run, CI result, or live qualification.
 
 ## Verified scope
 
@@ -222,6 +266,7 @@ PostgreSQL at `127.0.0.1:55432`. Both administrator and test DSNs were
 | Worker-only crash probe calibration | `ad1069b2` | `D:/AI/tools/p06/solad1069b2` | `D:/AI/tools/p06/sol-review-final-probes.log` |
 | Recovery checks before retention assertion | `ad1069b3` | `D:/AI/tools/p06/solad1069b3` | `D:/AI/tools/p06/sol-review-final.log` |
 | Authoritative retention counterexample | `ad1069b4` | `D:/AI/tools/p06/solad1069b4` | `D:/AI/tools/p06/sol-review-retention.log` |
+| Independent R4 closure | `ad1069c1` | `D:/AI/tools/p06/solad1069c1` | `D:/AI/tools/p06/sol-review-r4-closure.log` |
 
 Each database run reported that it dropped its two disposable databases.
 No live database anchor was used.
@@ -276,7 +321,7 @@ policy benefit, or improvement of the learner.
 - [x] Record exact findings and verification boundaries.
 - [x] Independently close R1 and R2 on integrated source.
 - [x] Challenge terminal checker recovery and reproduce the R4 retention escape.
-- [ ] Independently verify R4 after the shared evidence admission repair.
+- [x] Independently verify R4 after the shared evidence admission repair.
 
 Prove It Works required real native execution for R2. Test Behavior, Not
 Implementation kept the probes tied to supported assessment and actual dispatch
