@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import shutil
+import sys
 from datetime import datetime, timedelta
 
 import pytest
@@ -256,7 +258,11 @@ def test_predispatch_policy_refusal_records_no_operation(migrated_db, tmp_path, 
     assert _worker_calls(run["worker_log"]) == []
 
 
-def test_native_method_choice_pins_the_dispatched_worker_identity(migrated_db, tmp_path):
+@pytest.mark.parametrize(("crash_after_operation", "change_runtime"), [
+    (False, False), (False, True), (True, True),
+])
+def test_pending_native_work_recovers_only_with_its_policy_pinned_runtime(
+        migrated_db, tmp_path, monkeypatch, crash_after_operation, change_runtime):
     agenda_id = "p06-policy-native-worker"
     run = _scenario(migrated_db, tmp_path / "run", agenda_id, "pass-first")
     policy, checker = _policy(run, tmp_path, action="choose", opportunity_id="first")
@@ -273,26 +279,30 @@ def test_native_method_choice_pins_the_dispatched_worker_identity(migrated_db, t
         (migrated_db, run["roots"], organism, checker, tmp_path))
     assert checked.passed is True and retained["status"] == "retained"
 
-    charter = _charter(run, agenda_id=agenda_id)
-    charter["allocations"] = {domain: {"id": domain, "units": 100_000}
-                              for domain in ("tokens", "cpu")}
-    charter["policy"] = {"genome": policy.digest, "name": "explore",
-                         "interface": _INTERFACE, "timeout_ms": 10_000,
-                         "max_output_bytes": 65_536}
-    opportunity = charter["opportunities"][0]
-    opportunity.update(task_id=use_task.digest, genome_id=organism.digest,
-                       investigation_id=agenda_id + "-p01",
-                       objective=use_task.instruction, timeout_ms=5_000,
-                       method_request={"name": "maximum", "interface": "sequence-maximum/1",
-                                       "value": [-5, 9, 2]})
-    _grant(migrated_db, charter, agenda_id)
-    agenda.create(migrated_db, agenda_id=agenda_id, charter=charter,
-                  artifacts_root=run["roots"]["artifacts_root"])
+    def create_native_agenda(identity, grant_version):
+        charter = _charter(run, agenda_id=identity)
+        charter["grant_version"] = grant_version
+        charter["allocations"] = {domain: {"id": domain, "units": 100_000}
+                                  for domain in ("tokens", "cpu")}
+        charter["policy"] = {"genome": policy.digest, "name": "explore",
+                             "interface": _INTERFACE, "timeout_ms": 10_000,
+                             "max_output_bytes": 65_536}
+        opportunity = charter["opportunities"][0]
+        opportunity.update(task_id=use_task.digest, genome_id=organism.digest,
+                           investigation_id=identity + "-p01",
+                           objective=use_task.instruction, timeout_ms=5_000,
+                           method_request={"name": "maximum", "interface": "sequence-maximum/1",
+                                           "value": [-5, 9, 2]})
+        _grant(migrated_db, charter, identity)
+        agenda.create(migrated_db, agenda_id=identity, charter=charter,
+                      artifacts_root=run["roots"]["artifacts_root"])
 
-    result = agenda.wake(migrated_db, None, checker, agenda_id, **run["roots"])
+    create_native_agenda(agenda_id + "-baseline", 1)
+
+    result = agenda.wake(migrated_db, None, checker, agenda_id + "-baseline", **run["roots"])
 
     assert result["status"] == "acknowledged"
-    choice, = (row for row in agenda.export(migrated_db, agenda_id)["decisions"]
+    choice, = (row for row in agenda.export(migrated_db, agenda_id + "-baseline")["decisions"]
                if row["kind"] == "p05.choice")
     start = search.load_frame(
         migrated_db, choice["data"]["frame_digest"],
@@ -304,6 +314,68 @@ def test_native_method_choice_pins_the_dispatched_worker_identity(migrated_db, t
     branch = search.capture(
         migrated_db, choice["data"]["frame_digest"], "first", **run["roots"])
     assert branch["status"] == "supported"
+
+    resume_id = agenda_id + "-resume"
+    create_native_agenda(resume_id, 2)
+    if crash_after_operation:
+        observe = investigation.observe
+
+        def crash_after_observed_operation(dsn, command):
+            if command.payload.get("investigation_id") == resume_id + "-p01":
+                raise RuntimeError("crash after native operation observation")
+            return observe(dsn, command)
+
+        monkeypatch.setattr(investigation, "observe", crash_after_observed_operation)
+        with pytest.raises(RuntimeError, match="crash after native operation observation"):
+            agenda.wake(migrated_db, None, checker, resume_id, **run["roots"])
+    else:
+        finish = agenda._finish
+
+        def crash_after_work_choice(*args, **kwargs):
+            if kwargs["flight"].get("kind") == "work":
+                raise RuntimeError("crash before native worker dispatch")
+            return finish(*args, **kwargs)
+
+        monkeypatch.setattr(agenda, "_finish", crash_after_work_choice)
+        with pytest.raises(RuntimeError, match="crash before native worker dispatch"):
+            agenda.wake(migrated_db, None, checker, resume_id, **run["roots"])
+    flight = agenda.read(migrated_db, resume_id)["flight"]
+    assert flight["kind"] == "work"
+    operation_id = flight["start"]["operation_id"]
+    operation = broker.read_operation(migrated_db, operation_id)
+    if crash_after_operation:
+        assert operation is not None
+        assert operation["dispatch_state"] in ("observed", "reconciled")
+        operation_before_resume = operation
+        spawns_before_resume = _spawn_count(checker, operation)
+    else:
+        assert operation is None
+
+    if not crash_after_operation:
+        monkeypatch.setattr(agenda, "_finish", finish)
+    if crash_after_operation:
+        monkeypatch.setattr(investigation, "observe", observe)
+    if change_runtime:
+        alternate_python = tmp_path / "trusted-python-copy.exe"
+        shutil.copy2(sys.executable, alternate_python)
+        monkeypatch.setattr(checker, "staged_python", lambda: str(alternate_python))
+        state = investigation.read(migrated_db, resume_id + "-p01")
+        plan = agenda._native_start_plan(
+            checker, organism, use_task, flight["start"]["visible_input"], state["config"])
+        assert plan.execution_version != flight["start"]["runtime"]["execution_version"]
+
+    resumed = agenda.wake(migrated_db, None, checker, resume_id, **run["roots"])
+    operation = broker.read_operation(migrated_db, operation_id)
+    if change_runtime and not crash_after_operation:
+        assert resumed["status"] == "pending"
+        assert operation is None
+        assert agenda.read(migrated_db, resume_id)["flight"] == flight
+    else:
+        assert resumed["status"] == "acknowledged"
+        assert operation["execution_version"] == flight["start"]["runtime"]["execution_version"]
+        if crash_after_operation:
+            assert operation == operation_before_resume
+            assert _spawn_count(checker, operation) == spawns_before_resume
 
 
 @pytest.mark.parametrize("mutation", ["support", "resource", "deadline"])
