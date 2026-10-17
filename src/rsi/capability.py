@@ -581,6 +581,7 @@ def _checked_use(dsn: str, genome: genome_module.Genome, name: str,
             or operation.get("allocation_id") != data["allocation_id"]
             or operation.get("attempt_id") != data["attempt_id"]
             or operation.get("dispatch_state") not in ("observed", "reconciled")
+            or operation.get("reconcile_state") in ("conflict", "unresolved")
             or operation.get("settled") is not True or len(receipts) != 1
             or receipts[0]["outcome"] != "success"):
         raise CapabilityError("checked use needs one settled native operation")
@@ -594,6 +595,7 @@ def _checked_use(dsn: str, genome: genome_module.Genome, name: str,
             or verifier_payload.get("effect") != broker.SANDBOX_EXEC
             or verifier_operation.get("execution_version") != verdict.solution
             or verifier_operation.get("dispatch_state") not in ("observed", "reconciled")
+            or verifier_operation.get("reconcile_state") in ("conflict", "unresolved")
             or verifier_operation.get("settled") is not True or len(verifier_receipts) != 1
             or verifier_receipts[0]["outcome"] not in ("success", "failure")):
         raise CapabilityError("checked use needs its settled pristine verifier result")
