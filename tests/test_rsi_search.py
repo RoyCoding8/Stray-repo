@@ -8,8 +8,14 @@ from rsi_search_fixture import bundle
 from rsi import search
 
 
+def _bundle(selected: str = "easy") -> dict:
+    data = bundle(selected)
+    data["results"][0]["invocation"]["method_digest"] = data["policy"]["method_digest"]
+    return data
+
+
 def test_offline_replay_recomputes_supported_outcome_and_screening_cost():
-    baseline = bundle()
+    baseline = _bundle()
     assert len(baseline["branches"]) == 2
     assert {baseline["branch_artifacts"][key]["frame"]
             for key in baseline["branches"]} == set(baseline["frames"])
@@ -24,14 +30,14 @@ def test_offline_replay_recomputes_supported_outcome_and_screening_cost():
 
 
 def test_same_frame_corpus_supports_a_different_policy_choice():
-    result = search.recompute(bundle("hard"))
+    result = search.recompute(_bundle("hard"))
 
     assert (result["supported"], result["passed"], result["failed"], result["gaps"]) == (
         1, 0, 1, 0)
 
 
 def test_eligible_choice_without_a_recorded_branch_is_a_charged_gap():
-    data = bundle()
+    data = _bundle()
     row = data["results"][0]
     hard_digest = next(digest for digest in data["branches"]
                        if data["branch_artifacts"][digest]["opportunity_id"] == "hard")
@@ -48,7 +54,7 @@ def test_eligible_choice_without_a_recorded_branch_is_a_charged_gap():
 
 
 def test_requested_child_query_is_gap_without_capture_provenance():
-    data = bundle()
+    data = _bundle()
     data["max_decisions"] = 2
     data["pinned_evaluation"]["max_decisions"] = 2
     row = data["results"][0]
@@ -71,7 +77,7 @@ def test_requested_child_query_is_gap_without_capture_provenance():
 @pytest.mark.parametrize("mutation", ["unexecuted", "missing-child", "input",
                                        "worker", "runtime", "future"])
 def test_offline_replay_counts_unsupported_or_forged_support_as_gap(mutation):
-    baseline = bundle()
+    baseline = _bundle()
     assert search.recompute(baseline)["supported"] == 1
     changed = copy.deepcopy(baseline)
     row = changed["results"][0]
@@ -125,20 +131,39 @@ def test_offline_replay_counts_unsupported_or_forged_support_as_gap(mutation):
 
 
 @pytest.mark.parametrize("mutation", ["missing-receipt", "changed-receipt",
-                                       "changed-operation"])
+                                       "changed-operation", "changed-method",
+                                       "changed-execution"])
 def test_policy_effect_evidence_is_required_for_supported_replay(mutation):
-    changed = bundle()
+    changed = _bundle()
     row = changed["results"][0]
     if mutation == "missing-receipt":
         row["receipts"] = []
     elif mutation == "changed-receipt":
         row["receipts"][0]["operation_id"] = "different-operation"
-    else:
+    elif mutation == "changed-operation":
         row["operation"]["id"] = "different-operation"
+    elif mutation == "changed-method":
+        row["invocation"]["method_digest"] = "another-closure"
+    else:
+        row["invocation"]["execution_version"] = "another-runtime"
 
     result = search.recompute(changed)
     assert result["supported"] == 0
     assert result["gaps"] == 1
+
+
+def test_offline_replay_does_not_relabel_an_executed_policy():
+    baseline = _bundle()
+    assert search.recompute(baseline)["supported"] == 1
+    changed = copy.deepcopy(baseline)
+    for identity in (changed["policy"], changed["pinned_evaluation"]):
+        identity.update(genome="another-policy", name="another-method",
+                        method_digest="another-closure")
+
+    result = search.recompute(changed)
+
+    assert (result["supported"], result["gaps"]) == (0, 1)
+    assert result["screening_cpu_units"] == 4
 
 
 def _set_policy_output(row, value):
@@ -155,7 +180,7 @@ def _set_policy_output(row, value):
 
 
 def test_screening_cost_includes_deliberate_stop():
-    data = bundle()
+    data = _bundle()
     row = data["results"][0]
     row.update(status="stop", selected=None, reason="all remaining work exceeds budget",
                branch=None, branch_status=None, outcome=None, quality=None)
@@ -171,7 +196,7 @@ def test_screening_cost_includes_deliberate_stop():
 
 
 def test_screening_cost_includes_refusal_and_unknown_reservation_is_not_zero():
-    data = bundle()
+    data = _bundle()
     row = data["results"][0]
     row.update(status="refused", selected=None, reason="choice is malformed",
                branch=None, branch_status=None, outcome=None, quality=None)
@@ -187,7 +212,7 @@ def test_screening_cost_includes_refusal_and_unknown_reservation_is_not_zero():
 
 
 def test_screening_cost_uses_actual_settled_charge_when_present():
-    data = bundle()
+    data = _bundle()
     data["results"][0]["operation"]["actual_cost"] = 2
 
     result = search.recompute(data)
@@ -197,7 +222,7 @@ def test_screening_cost_uses_actual_settled_charge_when_present():
 
 
 def test_infeasible_actual_charge_gaps_and_marks_cost_unknown():
-    data = bundle()
+    data = _bundle()
     data["results"][0]["operation"]["actual_cost"] = 5
 
     result = search.recompute(data)

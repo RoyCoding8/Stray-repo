@@ -221,6 +221,8 @@ def test_native_policy_receives_only_visible_frame_and_runs_once(migrated_db, tm
 
     assert result["results"][0]["status"] == "choose"
     assert result["results"][0]["selected"] == "easy"
+    assert (result["results"][0]["invocation"]["method_digest"]
+            == result["policy"]["method_digest"])
     assert result["recomputed"]["supported"] == 1
     assert "future-secret" not in json.dumps(
         result["results"][0]["invocation"], sort_keys=True)
